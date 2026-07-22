@@ -6,7 +6,8 @@ beforeEach(() => {
   ;(window as Window & { api: unknown }).api = {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
-    close: vi.fn()
+    close: vi.fn(),
+    pickFolder: vi.fn().mockResolvedValue('D:\\projects\\demo')
   }
 })
 
@@ -14,15 +15,17 @@ afterEach(() => {
   cleanup()
 })
 
+async function startSession() {
+  render(<App />)
+  fireEvent.click(screen.getByRole('button', { name: 'Pick a project folder' }))
+  await screen.findByText('demo')
+}
+
 describe('shell', () => {
   test('renders app chrome labels', () => {
     render(<App />)
     expect(screen.getByText('Claude Wrapper')).toBeTruthy()
     expect(screen.getByText('New session')).toBeTruthy()
-    expect(screen.getByPlaceholderText('Message Claude…')).toBeTruthy()
-    expect(
-      screen.getByText('Claude can make mistakes. Verify important information.')
-    ).toBeTruthy()
   })
 
   test('window controls call window.api', () => {
@@ -35,13 +38,17 @@ describe('shell', () => {
     expect(window.api.close).toHaveBeenCalledOnce()
   })
 
-  test('renders static conversation', () => {
-    render(<App />)
+  test('started session renders static conversation and input', async () => {
+    await startSession()
     expect(screen.getByText('TODAY')).toBeTruthy()
     expect(screen.getByText('What does this repo do?')).toBeTruthy()
     expect(screen.getByText('Nice. Where should I start reading?')).toBeTruthy()
     expect(
       screen.getByText('It wraps the Claude Code CLI in a desktop app:')
+    ).toBeTruthy()
+    expect(screen.getByPlaceholderText('Message Claude…')).toBeTruthy()
+    expect(
+      screen.getByText('Claude can make mistakes. Verify important information.')
     ).toBeTruthy()
   })
 })

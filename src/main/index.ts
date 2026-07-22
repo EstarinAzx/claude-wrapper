@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join } from 'node:path'
+import { setSessionCwd } from './session'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -49,6 +50,17 @@ ipcMain.on('window:toggle-maximize', (event) => {
 ipcMain.on('window:close', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
   win?.close()
+})
+
+ipcMain.handle('session:pick-folder', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (!win) return null
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+    properties: ['openDirectory']
+  })
+  if (canceled || filePaths.length === 0) return null
+  setSessionCwd(filePaths[0])
+  return filePaths[0]
 })
 
 app.whenReady().then(createWindow)

@@ -1,4 +1,6 @@
-export default function Titlebar() {
+const basename = (p: string): string => p.split(/[\\/]/).filter(Boolean).pop() ?? p
+
+export default function Titlebar({ cwd }: { cwd: string | null }) {
   return (
     <header className="titlebar">
       <div className="titlebar-left">
@@ -6,7 +8,13 @@ export default function Titlebar() {
         <span className="app-name">Claude Wrapper</span>
       </div>
       <div className="titlebar-center">
-        <span className="session-title">New session</span>
+        {cwd ? (
+          <span className="session-title" title={cwd}>
+            {basename(cwd)}
+          </span>
+        ) : (
+          <span className="session-title">New session</span>
+        )}
       </div>
       <div className="titlebar-right">
         <button
