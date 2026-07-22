@@ -3,9 +3,11 @@ import Titlebar from './components/Titlebar'
 import Chat from './components/Chat'
 import InputBar from './components/InputBar'
 import Welcome from './components/Welcome'
+import { useChat } from './useChat'
 
 export default function App() {
   const [cwd, setCwd] = useState<string | null>(null)
+  const { messages, busy, send } = useChat()
 
   const pickFolder = async (): Promise<void> => {
     const folder = await window.api.pickFolder()
@@ -17,8 +19,8 @@ export default function App() {
       <Titlebar cwd={cwd} />
       {cwd ? (
         <>
-          <Chat />
-          <InputBar />
+          <Chat messages={messages} />
+          <InputBar busy={busy} onSend={send} />
         </>
       ) : (
         <Welcome onPick={pickFolder} />

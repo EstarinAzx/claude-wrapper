@@ -1,4 +1,33 @@
-export default function InputBar() {
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+
+interface InputBarProps {
+  busy: boolean
+  onSend: (text: string) => void
+}
+
+export default function InputBar({ busy, onSend }: InputBarProps) {
+  const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (!busy) inputRef.current?.focus()
+  }, [busy])
+
+  const submit = (): void => {
+    if (busy) return
+    const text = value
+    if (!text.trim()) return
+    onSend(text)
+    setValue('')
+  }
+
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      submit()
+    }
+  }
+
   return (
     <footer className="input-bar">
       <div className="input-pill">
@@ -18,12 +47,22 @@ export default function InputBar() {
           </svg>
         </button>
         <input
+          ref={inputRef}
           className="message-input"
           type="text"
           placeholder="Message Claude…"
-          readOnly
+          value={value}
+          disabled={busy}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={onKeyDown}
         />
-        <button type="button" className="send-btn" aria-label="Send">
+        <button
+          type="button"
+          className="send-btn"
+          aria-label="Send"
+          disabled={busy}
+          onClick={submit}
+        >
           <svg
             width="16"
             height="16"

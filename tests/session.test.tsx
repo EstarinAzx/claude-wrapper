@@ -10,7 +10,9 @@ beforeEach(() => {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
     close: vi.fn(),
-    pickFolder
+    pickFolder,
+    sendPrompt: vi.fn(),
+    onChatEvent: vi.fn().mockReturnValue(() => {})
   }
 })
 

@@ -1,6 +1,10 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join } from 'node:path'
-import { setSessionCwd } from './session'
+import { createEngine } from './engine'
+import { getSessionCwd, setSessionCwd } from './session'
+import type { Engine } from '../shared/engine-types'
+
+let engine: Engine | null = null
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -60,7 +64,18 @@ ipcMain.handle('session:pick-folder', async (event) => {
   })
   if (canceled || filePaths.length === 0) return null
   setSessionCwd(filePaths[0])
+  engine = createEngine(getSessionCwd)
   return filePaths[0]
+})
+
+ipcMain.on('chat:send', (event, text: string) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (!engine) {
+    engine = createEngine(getSessionCwd)
+  }
+  void engine.runTurn(String(text), (e) => {
+    win?.webContents.send('chat:event', e)
+  })
 })
 
 app.whenReady().then(createWindow)

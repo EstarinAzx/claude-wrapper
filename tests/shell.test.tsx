@@ -7,7 +7,9 @@ beforeEach(() => {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
     close: vi.fn(),
-    pickFolder: vi.fn().mockResolvedValue('D:\\projects\\demo')
+    pickFolder: vi.fn().mockResolvedValue('D:\\projects\\demo'),
+    sendPrompt: vi.fn(),
+    onChatEvent: vi.fn().mockReturnValue(() => {})
   }
 })
 
@@ -38,14 +40,10 @@ describe('shell', () => {
     expect(window.api.close).toHaveBeenCalledOnce()
   })
 
-  test('started session renders static conversation and input', async () => {
+  test('started session renders empty chat shell and armed input', async () => {
     await startSession()
     expect(screen.getByText('TODAY')).toBeTruthy()
-    expect(screen.getByText('What does this repo do?')).toBeTruthy()
-    expect(screen.getByText('Nice. Where should I start reading?')).toBeTruthy()
-    expect(
-      screen.getByText('It wraps the Claude Code CLI in a desktop app:')
-    ).toBeTruthy()
+    expect(screen.queryByText('What does this repo do?')).toBeNull()
     expect(screen.getByPlaceholderText('Message Claude…')).toBeTruthy()
     expect(
       screen.getByText('Claude can make mistakes. Verify important information.')
