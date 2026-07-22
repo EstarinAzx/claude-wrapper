@@ -9,15 +9,15 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**Last leg landed:** #3 (Folder pick → session start) — squash-merged to main as `c6be38c`, ticket closed with breadcrumb.
+**Last leg landed:** #4 (First chat turn end to end, text only) — squash-merged to main as `b60c0dd`, ticket closed with breadcrumb.
 
-**Next ticket:** #4 — First chat turn end to end, text only (only unblocked `ready-for-agent`; #5–#7 hang off it, #8 off the batch).
+**Next ticket:** #5 — Tool cards (oldest unblocked `ready-for-agent`; #7 Stop button is also unblocked, #6 permissions hangs off #5, #8 polish off the batch).
 
 **Landmines:**
-- Fresh `npm install` may skip Electron's postinstall: `npm run dev` then fails with "Error: Electron uninstall". Fix: `node node_modules/electron/install.js`.
-- `vite` must stay `^7` while `electron-vite` is v5 (peer range); `@vitejs/plugin-react` pinned `^5` to match. Don't bump vite to 8.
-- TypeScript pinned exact `7.0.2` (native compiler) — deliberate, don't loosen or downgrade.
-- Preload surface is `window.api` (`WrapperApi` in `src/preload/index.d.ts`); extend it there for engine IPC, don't invent a second bridge. Promise-returning mocks in tests need `vi.fn<() => Promise<...>>()` or web typecheck fails.
-- Session cwd for the engine: `getSessionCwd()` from `src/main/session.ts` — set by the `session:pick-folder` handler; #4 should read it, not re-plumb.
-- `Chat.tsx` is still the static sample conversation — #4 replaces it with real message state; it only renders once a session started (`App` gates on `cwd`), tests start sessions via the `startSession` helper pattern in `tests/shell.test.tsx`.
-- #4 needs `@anthropic-ai/claude-agent-sdk` added as a dependency (engine in main process per spec #1); the fake-engine seam from the spec's Testing Decisions is the test boundary, not IPC mocks.
+- #5/#6 need new engine event kinds: extend the `EngineEvent` union in `src/shared/engine-types.ts` (currently `text-delta` / `turn-end` / `error`) — don't invent a second channel; `chat:event` carries everything.
+- The engine forwards SDK messages in `src/main/engine.ts` — tool_use/tool_result arrive as SDK `assistant`/`user` messages (content blocks), NOT stream_events; the mapping switch needs new arms. `SdkMessage` is structural on purpose so `tests/engine.test.ts` can stub without SDK types.
+- #6 (canUseTool) and #7 (interrupt) require the streaming-input engine rewrite — see `.context/decisions/2026-07-23-engine-per-turn-resume.md`. #5 alone does NOT: tool cards are display-only and per-turn query still emits tool events.
+- Fake-engine seam: renderer tests script events via `tests/chat-harness.ts` `emit()`; keep new UI tests on that harness, no IPC mocks.
+- Real-SDK manual run still pending (see Open questions in `active-work.md`) — first human `npm run dev` should verify CLI-login auth + streamed deltas.
+- Fresh `npm install` may skip Electron's postinstall: `npm run dev` fails with "Error: Electron uninstall". Fix: `node node_modules/electron/install.js`.
+- `vite` stays `^7`, `@vitejs/plugin-react` `^5`, TypeScript pinned exact `7.0.2` — don't bump any of them.

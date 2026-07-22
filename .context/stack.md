@@ -17,7 +17,8 @@ tags: [context, stack]
 - vitest 4 + @testing-library/react + jsdom for the shell tests
 
 ## Key libraries
-- Claude Agent SDK (`@anthropic-ai/claude-agent-sdk`) — planned engine, not yet installed (lands with #4)
+- Claude Agent SDK (`@anthropic-ai/claude-agent-sdk` ^0.3.217) — the engine, wrapped in `src/main/engine.ts` (see [[2026-07-23-engine-per-turn-resume]])
+- `react-markdown` ^10 + `rehype-highlight` ^7 — assistant markdown + code highlighting in the renderer
 
 ## Env vars
 - `ELECTRON_RENDERER_URL` — set by electron-vite dev, main loads it over the built file
