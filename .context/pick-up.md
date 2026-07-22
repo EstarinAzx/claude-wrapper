@@ -9,15 +9,15 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**Last leg landed:** #4 (First chat turn end to end, text only) — squash-merged to main as `b60c0dd`, ticket closed with breadcrumb.
+**Last leg landed:** #5 (Tool cards) — squash-merged to main as `c5526a4`, ticket closed with breadcrumb.
 
-**Next ticket:** #5 — Tool cards (oldest unblocked `ready-for-agent`; #7 Stop button is also unblocked, #6 permissions hangs off #5, #8 polish off the batch).
+**Next ticket:** #6 — Permission allow/deny round-trip (oldest unblocked `ready-for-agent`; #7 Stop button and #8 Frost Mono polish are also unblocked).
 
 **Landmines:**
-- #5/#6 need new engine event kinds: extend the `EngineEvent` union in `src/shared/engine-types.ts` (currently `text-delta` / `turn-end` / `error`) — don't invent a second channel; `chat:event` carries everything.
-- The engine forwards SDK messages in `src/main/engine.ts` — tool_use/tool_result arrive as SDK `assistant`/`user` messages (content blocks), NOT stream_events; the mapping switch needs new arms. `SdkMessage` is structural on purpose so `tests/engine.test.ts` can stub without SDK types.
-- #6 (canUseTool) and #7 (interrupt) require the streaming-input engine rewrite — see `.context/decisions/2026-07-23-engine-per-turn-resume.md`. #5 alone does NOT: tool cards are display-only and per-turn query still emits tool events.
-- Fake-engine seam: renderer tests script events via `tests/chat-harness.ts` `emit()`; keep new UI tests on that harness, no IPC mocks.
-- Real-SDK manual run still pending (see Open questions in `active-work.md`) — first human `npm run dev` should verify CLI-login auth + streamed deltas.
+- #6 requires replacing per-turn `query()` + `resume` with one long-lived streaming-input query; read `.context/decisions/2026-07-23-engine-per-turn-resume.md` before touching `src/main/engine.ts`. Keep the public `Engine` interface and `chat:event` boundary stable.
+- SDK `canUseTool` exists only with streaming input. Permission response must hold the callback open across IPC, then resolve Allow/Deny without killing the session. Deny must let Claude continue to a text answer.
+- Extend existing tool card keyed by `toolUseId`; do not create a permission-only event channel/component. Tool cards now store compact result summaries at event ingestion.
+- Fake-engine seam: renderer tests script events via `tests/chat-harness.ts` `emit()`; permission tests should exercise the pending callback through the public preload API, not mock component internals.
+- Real-SDK manual run still pending (see Open questions in `active-work.md`) — first human `npm run dev` should verify CLI-login auth, streamed deltas, SDK tool message shapes, and permission behavior.
 - Fresh `npm install` may skip Electron's postinstall: `npm run dev` fails with "Error: Electron uninstall". Fix: `node node_modules/electron/install.js`.
 - `vite` stays `^7`, `@vitejs/plugin-react` `^5`, TypeScript pinned exact `7.0.2` — don't bump any of them.

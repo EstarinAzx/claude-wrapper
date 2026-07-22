@@ -7,36 +7,37 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-23 by Fable 5 (relay leg 3, auto)_
-_At commit: b60c0dd on main_
+_Last updated: 2026-07-23 by Fable 5 (relay leg 4, auto)_
+_At commit: c5526a4 on main_
 
 ## Current focus
-Ticket loop running via `/relay N=1` (state: `.claude/relay/relay-leg.md`, body: `.claude/relay-leg.md`). Leg 3 landed #4; queue continues at #5.
+Ticket loop running via `/relay N=1` (state: `.claude/relay/relay-leg.md`, body: `.claude/relay-leg.md`). Leg 4 landed #5; queue continues at #6.
 
 ## State
 - **In flight:** nothing (leg boundary)
-- **Done this leg:** #4 squash-merged as `b60c0dd`: first chat turn end to end (text only). Engine `src/main/engine.ts` wraps the Agent SDK (per-turn `query()` + `resume`, injectable `queryFn` for tests); `chat:send`/`chat:event` IPC; preload `sendPrompt`/`onChatEvent`; renderer `useChat` + streaming markdown (react-markdown + rehype-highlight, Frost Mono code styles) + typing dots + error rows + auto-scroll (`isNearBottom`). Shared event union in `src/shared/engine-types.ts`. Tests 27 across 5 files; fake-engine harness `tests/chat-harness.ts`.
+- **Done this session:** #5 squash-merged as `c5526a4`: engine maps SDK `tool_use` / `tool_result` content blocks onto `chat:event`; renderer interleaves Frost Mono tool cards with streamed assistant segments and updates cards by tool-use id. Tool failure status is semantic, and result summaries are computed once at event ingestion. Tests: 47 across 7 files.
 - **Blocked:** nothing
 
 ## Pick up here
-See [[pick-up]] — next frontier is issue #5 (Tool cards), oldest unblocked `ready-for-agent` (#7 also unblocked; #6 hangs off #5).
+See [[pick-up]] — next frontier is issue #6 (Permission allow/deny round-trip), now unblocked after #5 closed. It requires the planned engine streaming-input rewrite before wiring permission IPC and card actions.
 
 ## Skills for next session
-- superpowers TDD — leg 3 pattern held: Fable writes failing tests + shared types, Grok implements to spec, Fable reviews + gates
-- wisp-slot — bind `haiku` → `xai/grok-4.5` (leg 3 ran two parallel Grok agents on one lease, clean bind/revert)
-- impeccable — tool cards (#5) are a real design slice; DESIGN.md + `docs/design/frost-mono-reference.png` are the references
+- superpowers TDD — write fake-engine allow/deny tests before the streaming-input and IPC implementation
+- wisp-slot — bind `haiku` to `xai/grok-4.5` for bounded grunt implementation, then restore after every agent finishes
+- impeccable — Allow/Deny actions extend the ToolCard design slice; preserve Frost Mono hierarchy and accessibility
 
 ## Open questions
-- Real-SDK manual run still unverified (needs a human at `npm run dev`): CLI-login auth through the SDK, and whether turns always produce stream deltas (engine forwards only deltas — a delta-less turn would render empty). Flagged in #4's close comment.
+- Real-SDK manual run still unverified (needs a human at `npm run dev`): CLI-login auth, streamed deltas, and actual SDK assistant/user tool message shapes.
 
 ## Recent context
-- Engine upgrade path: #6 (canUseTool) and #7 (interrupt) need streaming-input mode — see [[2026-07-23-engine-per-turn-resume]]; swap is contained inside `createEngine`
-- Renderer tests drive the fake-engine seam via `tests/chat-harness.ts` (`fakeChatApi()` → `emit()` scripted events); engine SDK-mapping tests stub `QueryFn` (`tests/engine.test.ts`)
-- `window.api` is still the single bridge (`WrapperApi`); vitest include is now `tests/**/*.test.{ts,tsx}`; `src/shared/` is in both tsconfig includes
-- Gate for every leg: `npm run typecheck` + `npm test` + `npm run build`
+- #6 and #7 require streaming-input mode; see [[2026-07-23-engine-per-turn-resume]]. Keep the `Engine` boundary stable while replacing internals.
+- Tool event path is complete: structural SDK mapping in `src/main/engine.ts`, shared discriminated union in `src/shared/engine-types.ts`, lazy text/tool segments in `useChat`, and fake-engine tests in `tests/toolcards.test.tsx`.
+- Tool cards store compact result summaries rather than full tool output; permissions should update the existing card keyed by `toolUseId`, not create a second channel or parallel component.
+- Gate for every leg remains `npm run typecheck` + `npm test` + `npm run build`.
 
 ## Related
 - [[overview]]
 - [[decisions]]
 - [[happy-path]]
 - [[pick-up]]
+- [[2026-07-23-engine-per-turn-resume]]
