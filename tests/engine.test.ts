@@ -95,3 +95,112 @@ describe('engine', () => {
     expect(events[0].type).toBe('error')
   })
 })
+
+const toolUse = (id: string, name: string, input: Record<string, unknown>) => ({
+  type: 'tool_use' as const,
+  id,
+  name,
+  input
+})
+
+describe('engine tool events', () => {
+  test('assistant tool_use blocks map to tool-use events, text blocks ignored', async () => {
+    const assistantMsg: SdkMessage = {
+      type: 'assistant',
+      session_id: 'sess-1',
+      message: {
+        content: [
+          { type: 'text', text: 'Let me check.' },
+          toolUse('tu-1', 'Bash', { command: 'ls' })
+        ]
+      }
+    }
+    const { fn } = stubQuery([[init, assistantMsg, success]])
+    const engine = createEngine(() => 'D:\\proj', fn)
+    const events = await collect(engine, 'hi')
+    expect(events).toEqual([
+      { type: 'tool-use', id: 'tu-1', name: 'Bash', input: { command: 'ls' } },
+      { type: 'turn-end' }
+    ])
+  })
+
+  test('two tool_use blocks in one assistant message emit in order', async () => {
+    const assistantMsg: SdkMessage = {
+      type: 'assistant',
+      session_id: 'sess-1',
+      message: {
+        content: [
+          toolUse('tu-1', 'Read', { file_path: 'a.ts' }),
+          toolUse('tu-2', 'Grep', { pattern: 'foo' })
+        ]
+      }
+    }
+    const { fn } = stubQuery([[init, assistantMsg, success]])
+    const engine = createEngine(() => 'D:\\proj', fn)
+    const events = await collect(engine, 'hi')
+    expect(events.slice(0, 2)).toEqual([
+      { type: 'tool-use', id: 'tu-1', name: 'Read', input: { file_path: 'a.ts' } },
+      { type: 'tool-use', id: 'tu-2', name: 'Grep', input: { pattern: 'foo' } }
+    ])
+  })
+
+  test('user tool_result with string content maps to tool-result', async () => {
+    const resultMsg: SdkMessage = {
+      type: 'user',
+      session_id: 'sess-1',
+      message: {
+        content: [{ type: 'tool_result', tool_use_id: 'tu-1', content: 'file-a\nfile-b' }]
+      }
+    }
+    const { fn } = stubQuery([[init, resultMsg, success]])
+    const engine = createEngine(() => 'D:\\proj', fn)
+    const events = await collect(engine, 'hi')
+    expect(events[0]).toEqual({
+      type: 'tool-result',
+      id: 'tu-1',
+      text: 'file-a\nfile-b',
+      isError: false
+    })
+  })
+
+  test('tool_result array content flattens text blocks and carries is_error', async () => {
+    const resultMsg: SdkMessage = {
+      type: 'user',
+      session_id: 'sess-1',
+      message: {
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'tu-2',
+            is_error: true,
+            content: [
+              { type: 'text', text: 'boom' },
+              { type: 'text', text: 'trace' }
+            ]
+          }
+        ]
+      }
+    }
+    const { fn } = stubQuery([[init, resultMsg, success]])
+    const engine = createEngine(() => 'D:\\proj', fn)
+    const events = await collect(engine, 'hi')
+    expect(events[0]).toEqual({
+      type: 'tool-result',
+      id: 'tu-2',
+      text: 'boom\ntrace',
+      isError: true
+    })
+  })
+
+  test('user message with plain string content emits nothing', async () => {
+    const echoMsg: SdkMessage = {
+      type: 'user',
+      session_id: 'sess-1',
+      message: { content: 'hi' }
+    }
+    const { fn } = stubQuery([[init, echoMsg, success]])
+    const engine = createEngine(() => 'D:\\proj', fn)
+    const events = await collect(engine, 'hi')
+    expect(events).toEqual([{ type: 'turn-end' }])
+  })
+})

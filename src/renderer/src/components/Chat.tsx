@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 import type { ChatMessage } from '../useChat'
 import { isNearBottom } from '../autoscroll'
+import ToolCard from './ToolCard'
 
 function Avatar() {
   return <span className="avatar" aria-hidden="true" />
@@ -20,9 +21,10 @@ function Typing() {
 
 interface ChatProps {
   messages: ChatMessage[]
+  busy: boolean
 }
 
-export default function Chat({ messages }: ChatProps) {
+export default function Chat({ messages, busy }: ChatProps) {
   const scrollerRef = useRef<HTMLElement | null>(null)
   const nearBottomRef = useRef(true)
 
@@ -40,7 +42,11 @@ export default function Chat({ messages }: ChatProps) {
     } else {
       el.scrollTop = el.scrollHeight
     }
-  }, [messages])
+  }, [messages, busy])
+
+  const last = messages[messages.length - 1]
+  const showTyping =
+    busy && !(last?.role === 'assistant' && last.text !== '')
 
   return (
     <main className="chat" ref={scrollerRef} onScroll={onScroll}>
@@ -66,22 +72,27 @@ export default function Chat({ messages }: ChatProps) {
               </div>
             )
           }
-          // assistant
+          if (m.role === 'tool') {
+            return <ToolCard key={m.id} message={m} />
+          }
           return (
             <div key={m.id} className="msg msg-assistant">
               <Avatar />
-              {m.text === '' ? (
-                <Typing />
-              ) : (
-                <div className="assistant-body">
-                  <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                    {m.text}
-                  </ReactMarkdown>
-                </div>
-              )}
+              <div className="assistant-body">
+                <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                  {m.text}
+                </ReactMarkdown>
+              </div>
             </div>
           )
         })}
+
+        {showTyping ? (
+          <div className="msg msg-assistant">
+            <Avatar />
+            <Typing />
+          </div>
+        ) : null}
       </div>
     </main>
   )

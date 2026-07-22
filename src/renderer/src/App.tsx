@@ -19,7 +19,7 @@ export default function App() {
       <Titlebar cwd={cwd} />
       {cwd ? (
         <>
-          <Chat messages={messages} />
+          <Chat messages={messages} busy={busy} />
           <InputBar busy={busy} onSend={send} />
         </>
       ) : (

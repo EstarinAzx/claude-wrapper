@@ -422,6 +422,62 @@ body {
   line-height: 1.5;
 }
 
+/* ── tool card ── */
+
+.tool-card {
+  margin-left: 40px;
+  max-width: 75%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: var(--fs-ui);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tool-card + .tool-card {
+  margin-top: -16px;
+}
+
+.tool-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tool-card-name {
+  color: var(--text);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.tool-card-key {
+  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tool-card-result {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-card-pending {
+  color: var(--text-faint);
+}
+
+.tool-card-error .tool-card-result {
+  color: oklch(0.55 0.16 25);
+}
+
 /* ── markdown ── */
 
 .assistant-body pre {
