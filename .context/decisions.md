@@ -1,7 +1,7 @@
 ---
 type: decisions-index
 project: claude-wrapper
-updated: 2026-07-22
+updated: 2026-07-23
 tags: [context, decisions]
 ---
 
@@ -10,6 +10,7 @@ tags: [context, decisions]
 Settled questions. One file per decision in `decisions/`. Newest first.
 
 <!-- one line per entry, newest at top -->
+- [[2026-07-23-bg-isolation-none]] — background legs edit the shared checkout (worktree.bgIsolation none)
 - [[2026-07-22-glassy-acrylic-visual]] — glassy/acrylic visual identity (Win11 acrylic + glassmorphism)
 - [[2026-07-22-dev-run-only]] — npm run dev only, no installer
 - [[2026-07-22-react-vite-ts7]] — React + Vite + TypeScript 7.0.2 renderer
