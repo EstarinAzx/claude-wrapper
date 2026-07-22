@@ -1,27 +1,31 @@
 ---
 type: stack
 project: claude-wrapper
-updated: 2026-07-22
+updated: 2026-07-23
 tags: [context, stack]
 ---
 
 # Stack
 
-(needs review — settled during grill, nothing installed yet)
-
 ## Languages & runtime
-- Electron (planned — version TBD)
-- Node.js (Claude Code CLI host)
+- TypeScript 7.0.2 (native compiler, pinned exact — deliberate, don't loosen)
+- Electron ^43 (main: CJS output, no `"type": "module"` in package.json)
+- Node.js (Electron main / tooling)
 
 ## Frameworks
-- TBD by grill (web UI layer undecided)
+- React 19 renderer, electron-vite 5 build (vite pinned `^7` — electron-vite 5 peers ^5–^7, vite 8 breaks; `@vitejs/plugin-react` `^5` to match)
+- vitest 4 + @testing-library/react + jsdom for the shell tests
 
 ## Key libraries
-- Claude Code CLI — the wrapped engine (spawned process vs SDK: undecided)
+- Claude Agent SDK (`@anthropic-ai/claude-agent-sdk`) — planned engine, not yet installed (lands with #4)
 
 ## Env vars
-(none yet)
+- `ELECTRON_RENDERER_URL` — set by electron-vite dev, main loads it over the built file
+
+## Gotchas
+- Fresh install may skip Electron's postinstall → "Error: Electron uninstall" on `npm run dev`; fix with `node node_modules/electron/install.js`
 
 ## Related
 
 - [[overview]] — project shape
+- [[2026-07-22-react-vite-ts7]] — stack decision

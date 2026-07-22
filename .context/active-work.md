@@ -1,39 +1,40 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-07-22
+updated: 2026-07-23
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-07-22 by Fable 5 (auto)_
-_At commit: uncommitted (no commits yet)_
+_Last updated: 2026-07-23 by Fable 5 (relay leg 1, auto)_
+_At commit: 5e019a9 on main_
 
 ## Current focus
-Init funnel complete. Spec is GitHub issue #1; slices #2–#8 with native blocking links, all `ready-for-agent`. Implementation loop not started.
+Ticket loop running via `/relay N=1` (state: `.claude/relay/relay-leg.md`, body: `.claude/relay-leg.md`). Leg 1 landed #2; queue continues at #3.
 
 ## State
-- **In flight:** nothing
-- **Done this session:** grill (7 decisions in [[decisions]]), happy-path MVD, PRD → issue #1, tickets #2–#8 with dependency edges, Frost Mono reference at `docs/design/frost-mono-reference.png`, tracker config (`docs/agents/`, `CLAUDE.md`), triage labels on repo
+- **In flight:** nothing (leg boundary)
+- **Done this leg:** repo bootstrap commit (`8430cbb`), then #2 squash-merged as `5e019a9`: electron-vite scaffold (Electron 43 / Vite 7 / React 19 / TS 7.0.2 native), frameless acrylic window, custom titlebar with IPC min/max/close via `window.api`, static Frost Mono chat shell, `DESIGN.md` + `PRODUCT.md`, vitest shell tests (3/3), spec #1 relabeled (dropped `ready-for-agent` so the frontier query can't pick it)
 - **Blocked:** nothing
 
 ## Pick up here
-Frontier = issue #2 (Scaffold + Frost Mono acrylic shell) — only unblocked ticket. Start with `/preset scope` on #2, or `/loop /preset ticket-loop` to run the queue. Note: repo has zero commits — first slice should include the initial commit of `.context/`, `docs/`, `CLAUDE.md`.
+See [[pick-up]] — next frontier is issue #3 (Folder pick → session start), the only unblocked `ready-for-agent` ticket.
 
 ## Skills for next session
-- preset (scope / ticket-loop) — enter the work loop on #2
-- impeccable — design engine for the shell/polish tickets (#2, #8)
+- impeccable — design context is `PRODUCT.md`/`DESIGN.md` at repo root (already synthesized; loader finds them)
+- wisp-slot — leg 1 pattern: bind `haiku` → `xai/grok-4.5` for grunt implementation, restore after
 
 ## Open questions
 (none)
 
 ## Recent context
-- Visual identity = Frost Mono reference image + acrylic; distilled spec lives in [[2026-07-22-glassy-acrylic-visual]] and an issue #1 comment
-- Test strategy: single fake-engine seam; real SDK manual-only
-- TypeScript 7.0.2 confirmed as npm `latest` (native compiler) — deliberate, don't downgrade
+- Grok-4.5 subagents wrote main/preload and renderer to exact specs; review found only an em-dash copy violation (fixed inline)
+- `npm run dev` smoke-tested headless (window boots, 4 electron processes); acrylic material unverified by eye — worth one manual look
+- Gate for every leg: `npm run typecheck` + `npm test` + `npm run build`
 
 ## Related
 - [[overview]]
 - [[decisions]]
 - [[happy-path]]
+- [[pick-up]]

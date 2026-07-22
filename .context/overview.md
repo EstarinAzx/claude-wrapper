@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-07-22
+updated: 2026-07-23
 tags: [context, overview]
 ---
 
@@ -11,21 +11,29 @@ tags: [context, overview]
 **One-liner:** Electron app that wraps the Claude Code CLI — Claude Code runs under the hood, a web UI replaces the raw terminal.
 
 ## Layout
-(no code yet — layout lands after first slice)
+- `src/main/` — Electron main process (window creation, acrylic config, IPC handlers)
+- `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
+- `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens)
+- `tests/` — vitest + testing-library shell tests (jsdom, `vitest.config.ts`)
+- `DESIGN.md` / `PRODUCT.md` — Frost Mono design system + product context (impeccable reads these)
+- `docs/design/frost-mono-reference.png` — canonical visual reference
 
 ## How to run
-(not established yet)
+- `npm run dev` — electron-vite dev (Electron window)
+- `npm run typecheck` / `npm test` / `npm run build` — the merge gate
 
 ## Where to look first
-- `docs/prd.md` — the PRD (once written)
-- GitHub issues — vertical slices
+- GitHub issue #1 — the spec; #3–#8 — remaining vertical slices
+- `.context/pick-up.md` — current frontier + landmines
 
 ## Conventions
-(none yet)
+- One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
+- `.context/` commits ride main only
 
 ## Map
 
 - [[stack]] — languages, frameworks, env vars
 - [[active-work]] — current handoff state
+- [[pick-up]] — frontier ticket + landmines
 - [[decisions]] — settled questions
 - [[happy-path]] — golden-path MVD

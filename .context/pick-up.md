@@ -9,11 +9,13 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**Last leg landed:** nothing yet — init funnel only (spec #1, tickets #2–#8, no commits).
+**Last leg landed:** #2 (Scaffold + Frost Mono acrylic shell) — squash-merged to main as `5e019a9`, ticket closed with breadcrumb.
 
-**Next ticket:** #2 — Scaffold + Frost Mono acrylic shell (only unblocked `ready-for-agent`).
+**Next ticket:** #3 — Folder pick → session start (only unblocked `ready-for-agent`; #4–#8 hang off it and #2).
 
 **Landmines:**
-- `main` has ZERO commits — commit the existing tree first (`chore: repo bootstrap`) before branching (relay-leg Firing step 3).
-- TypeScript must be 7.0.2 (native compiler, npm `latest`) — deliberate, don't let a scaffold template downgrade it.
-- Visual reference: `docs/design/frost-mono-reference.png` + acrylic; distilled spec in `.context/decisions/2026-07-22-glassy-acrylic-visual.md`.
+- Fresh `npm install` may skip Electron's postinstall: `npm run dev` then fails with "Error: Electron uninstall". Fix: `node node_modules/electron/install.js`.
+- `vite` must stay `^7` while `electron-vite` is v5 (peer range); `@vitejs/plugin-react` pinned `^5` to match. Don't bump vite to 8.
+- TypeScript pinned exact `7.0.2` (native compiler) — deliberate, don't loosen or downgrade.
+- Preload surface is `window.api` (`src/preload/index.d.ts`); extend it there for session/engine IPC, don't invent a second bridge.
+- `Chat.tsx` is a static sample conversation — #4 replaces it with real state; #3 likely adds the session header (chosen folder) around it.
