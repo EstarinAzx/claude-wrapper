@@ -7,47 +7,63 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-23 by Opus 4.8 (interactive session)_
-_At commit: c7e06d5 on main_
+_Last updated: 2026-07-23 by relay `relay-leg` leg 1 (background, unattended)_
+_At commit: 67a22c5 on main_
 
 ## Current focus
 
-Between features. This session did the **real-SDK manual run** (long-deferred human-gated verification) and, off the back of it, landed a **Tailwind 4 + darker-palette** change. No feature currently in flight.
+Draining the **spec #9** queue (session history / switching / agents view) via
+the `relay-leg` relay chain — one ticket per leg, `max_legs 8`, serial (N=1).
+Leg 1 landed **#10**; the chain hands off to leg 2 for **#11**.
 
 ## State
 
-- **In flight:** nothing.
-- **Done this session:**
-  - **Manual run (real CLI login).** Verified against the live SDK: auth via CLI login resolves (folder pick → cwd → turn runs), multi-turn + session context persist, tool cards render (Glob/Bash), streaming renders (long TCP answer), visual chrome matches Frost Mono. Two findings recorded as decisions: the wrapper **inherits host permissions by design** ([[2026-07-23-permission-inherits-host]] — no Allow/Deny card fires because the host runs `bypassPermissions`), and **persistent acrylic-on-blur is deferred** ([[2026-07-23-persistent-glass-deferred]]).
-  - **Tailwind 4 adopted** (`c7e06d5`, fast-forwarded to main). Tokens moved into a Tailwind `@theme` block, preflight off, legacy `:root` aliases keep component CSS unchanged; palette deepened to match the reference (wash 0.16→0.12, alpha 0.6→0.64). Gate green (typecheck, 76/76, build). See [[2026-07-23-tailwind4-tokens]]. `DESIGN.md` synced.
-- **Blocked:** nothing.
+- **In flight (background):** relay chain `relay-leg`. Leg 1 done; leg 2 spawns
+  for #11. Self-paced, edits the shared checkout ([[2026-07-23-bg-isolation-none]]).
+- **Done this leg (#10, `67a22c5`):** engine is session-aware. Captures the SDK
+  `session_id` into closure state, surfaced via **`sessionId(): string | null`**
+  on the `Engine` interface — an accessor, not a new `EngineEvent`
+  ([[2026-07-23-session-id-accessor-not-event]]). `runTurn` gained `resume?: string`
+  → SDK query `options.resume`, set only when provided. Streaming / tools /
+  permissions / stop / legible-error copy untouched; `EngineEvent` unchanged so
+  the renderer never moved. Gate green: typecheck · **81/81** · build.
+- **Blocked:** nothing. #11 unblocked + independent; #12 waits on #11;
+  #13 waits on #10 (done) + #12; #14 waits on #13.
 
 ## Pick up here
 
-See [[pick-up]]. No open work ticket. Two carried-forward items: interrupt (#4) is the one manual-run spine step still unverified, and persistent-glass is a documented follow-up if the owner wants to spend a dep or switch to Mica.
+See [[pick-up]] — next unblocked `ready-for-agent` is **#11** (list sessions in a
+left sidebar). If the relay chain is still live in `claude agents`, leg 2 is
+already on it; only pick up by hand if the chain died (crash / `max_legs` /
+`stop: true` before the queue emptied).
 
-## Skills for next session
+## Skills for next leg
 
-- impeccable — any further visual work re-runs the loader; tokens now live in Tailwind `@theme`, `DESIGN.md` is current.
-- If picking up persistent-glass: it's a main-process / native Win11 task, not impeccable. Start from [[2026-07-23-persistent-glass-deferred]].
+- **#11 = store-reader + pure `summary()` + sidebar.** New main-process session-
+  store module reads `~/.claude/projects/<enc-cwd>/*.jsonl` (enc = every
+  non-alphanumeric → `-`, forward only); `summary()` is pure (fixture-testable,
+  no fs). Sidebar UI runs **impeccable** vs `docs/design/frost-mono-reference.png`;
+  reuse the `tests/session.test.tsx` / `chat-harness.ts` renderer seam and ADD
+  aria-labels — never rename the pinned ones.
+- **#13 (resume UX)** consumes `sessionId()` + `runTurn(..., resume)`. Ceiling
+  noted in [[2026-07-23-session-id-accessor-not-event]]: retargeting resume on a
+  live engine means rebuilding the cached query (or `close()` + fresh engine on
+  foreground switch), since `ensureQuery` early-returns once built.
 
-## Open questions
+## Deferred (own future specs)
 
-- **Interrupt (#4) unverified.** Stop mid-turn → real result subtype should map to `turn-aborted` ("Cancelled"), not a red error card. Not exercised in the run (owner let turns finish). Needs a human at `npm run dev`: send a long prompt, hit Stop.
-- Persistent acrylic-on-blur: native-acrylic (drag lag + native dep + undocumented API) vs Mica (loses blur-behind). Undecided; deferred.
+Fancy spatial agents-view (session boxes in a canvas), live-tail external
+sessions, N-concurrent engines, fork-on-resume, global project switcher.
 
-## Recent context
+## Open loose ends
 
-- Permission card + `permission-request` event + Allow/Deny renderer all still exist and are test-pinned; they fire only when the *host* permission policy would prompt. Do not isolate the wrapper from host settings (owner rejected that).
-- Tailwind utilities generate on demand only (none emitted yet — nothing uses them; infra is in place for future work). `bg-wash` / `text-mint` / `rounded-bubble` are available.
-- Gate remains `npm run typecheck` + `npm test` + `npm run build`. Test count is 76.
-- Not pushed. Local main is ahead of `origin/main` by 3 commits (arrow-fn refactor, error-card fix, this Tailwind commit).
+- Local `main` pushed through this leg's wrap-up (relay body pushes each leg).
+- **Ecosystem:** the global relay skill was edited during setup (per-leg naming)
+  → per CLAUDE.md, sync the ecosystem-kb vault + `/preset health` before any
+  template push (not a relay-leg concern; carry for an interactive session).
 
 ## Related
 
-- [[overview]]
-- [[decisions]]
-- [[pick-up]]
-- [[2026-07-23-tailwind4-tokens]]
-- [[2026-07-23-permission-inherits-host]]
-- [[2026-07-23-persistent-glass-deferred]]
+- [[overview]] · [[decisions]] · [[pick-up]] · [[happy-path]]
+- [[2026-07-23-session-id-accessor-not-event]] · [[2026-07-23-engine-per-turn-resume]]
+- Spec #9 + tickets #11–#14 on the tracker (canonical).
