@@ -10,6 +10,7 @@ tags: [context, decisions]
 Settled questions. One file per decision in `decisions/`. Newest first.
 
 <!-- one line per entry, newest at top -->
+- [[2026-07-23-busy-switch-block-not-detach]] — #14 resolves the mid-stream caveat by *blocking* (rows + New chat disabled while `busy`), not graceful detach; refresh = focus + manual button + stale-drop req-id
 - [[2026-07-23-resume-via-target-close-rebuild]] — resume/switch = `chat:target` close()s + rebuilds engine with `resume`; renderer owns `activeSessionId`; id read via accessor; mid-stream teardown caveat handed to #14
 - [[2026-07-23-transcript-parser-pure-renderer-summarises]] — replay = pure main `parseTranscript` → shared `TranscriptMessage`; renderer summarises tool results; replay is read-only
 - [[2026-07-23-session-id-accessor-not-event]] — engine surfaces `session_id` via `sessionId()` accessor (not a new EngineEvent); `runTurn` gains `resume`

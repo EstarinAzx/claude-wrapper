@@ -7,76 +7,63 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-23 by relay `relay-leg` leg 4 (background, unattended)_
-_At commit: 053ea95 on main_
+_Last updated: 2026-07-23 by relay `relay-leg` leg 5 (background, unattended)_
+_At commit: 80591fb on main_
 
 ## Current focus
 
-Draining the **spec #9** queue (session history / switching / agents view) via
-the `relay-leg` relay chain — one ticket per leg, `max_legs 8`, serial (N=1).
-Legs 1–4 landed **#10 → #11 → #12 → #13**; the chain hands off to leg 5 for the
-last ticket, **#14**.
+**None active.** The **spec #9** batch (session history / switching / agents
+view) is fully delivered and the spec is closed. The `relay-leg` chain drained
+its queue one ticket per leg (legs 1–5: **#10 → #11 → #12 → #13 → #14**) and has
+signalled `stop: true` — no leg 6. Nothing is queued for an agent.
 
 ## State
 
-- **In flight (background):** relay chain `relay-leg`. Legs 1–4 done; leg 5
-  spawns for #14. Self-paced, edits the shared checkout
-  ([[2026-07-23-bg-isolation-none]]).
-- **Done this leg (#13, `053ea95`):** reopening a session now continues it in
-  place — resume, not a fork. Design in
-  [[2026-07-23-resume-via-target-close-rebuild]].
-  - **Renderer:** `useChat` gained `activeSessionId`; `openSession(id)` replays
-    the transcript **and** `window.api.targetSession(id)`; `newChat()` clears the
-    pane + `targetSession(null)`; `turn-end` reads the earned id via
-    `window.api.currentSessionId()`. `replay` was folded into `openSession`.
-  - **Sidebar:** active row highlighted (`aria-current="true"` + `.session-row-btn-active`
-    mint bar) via a new `activeId` prop; a `New chat` icon button in the head
-    (`.sidebar-head-actions` wrapper); the list refetches on `activeId` change so
-    a fresh session joins it once it earns an id.
-  - **Main/preload:** new `chat:target` (close engine + cancel perms + stash
-    `pendingResume`) and `chat:session-id` (accessor) IPC; `chat:send` threads
-    `pendingResume` into `runTurn`; folder pick clears it. Preload exposes
-    `targetSession` + `currentSessionId`.
+- **Relay chain `relay-leg`: complete.** #14 was the last ticket; the body's
+  queue-empty branch fired, so the chain stopped itself (no further legs). State
+  file `.claude/relay/relay-leg.md` carries `stop: true`.
+- **Done this leg (#14, `80591fb`):** refresh + busy-switch polish, renderer-only.
+  - **Refresh:** `Sidebar.tsx` now refreshes the session list on window `focus`
+    and via a manual **Refresh sessions** button (`aria-label="Refresh sessions"`,
+    first child of `.sidebar-head-actions`). The fetch is a stable `refresh`
+    callback with a monotonic request-id ref that drops stale/out-of-order
+    responses; still also fires on `[cwd, activeId]` (keeps the fresh-session-
+    joins + highlight behaviour). A session created in an external terminal now
+    appears after a refresh, no restart.
+  - **Busy-switch = block:** while a turn streams (`busy`), session rows and
+    **New chat** are `disabled`, and `useChat.openSession`/`newChat` early-return
+    on `busy`. Mid-stream switching is impossible → no half-streamed answer can
+    leak into another pane; the `chat:target` unconditional `close()` is never hit
+    mid-turn. Stop is the escape hatch. See
+    [[2026-07-23-busy-switch-block-not-detach]].
   - Grunt impl by a Grok subagent (slot `haiku` → `xai/grok-4.5`); reviewed +
-    integrated by Fable, slot reverted clean. Gate green: typecheck · **104/104**
-    · build.
-- **Blocked:** nothing. #14 is the last open `ready-for-agent` in spec #9.
+    integrated by Fable, slot reverted clean. Gate green: typecheck ·
+    **109/109** · build.
+- **Blocked:** nothing.
 
 ## Pick up here
 
-See [[pick-up]] — next is **#14** (refresh + busy-switch polish). If the relay
-chain is still live in `claude agents`, leg 5 is already on it; only pick up by
-hand if the chain died (crash / `max_legs` / `stop: true` before the queue
-emptied). #14 empties the spec #9 queue → the chain then signals `stop: true`.
-
-## Skills for next leg
-
-- **#14 = refresh + busy-switch polish** (last ticket in spec #9):
-  - **Sidebar refresh:** a manual refresh affordance + refresh-on-focus for the
-    session list, generalising #13's current refetch-on-`activeId` in
-    `Sidebar.tsx` (which was the minimal way to make a fresh session appear).
-  - **Busy-switch (the real carry from #13):** `chat:target` in
-    `src/main/index.ts` currently `engine.close()`s **unconditionally**, so
-    switching sessions (or New chat) *mid-stream* tears down the running turn and
-    the renderer sees a `query closed` error. #14 should detach/finish the
-    foreground turn gracefully before retargeting. Spec keeps **one live engine**
-    — no concurrent streaming. See
-    [[2026-07-23-resume-via-target-close-rebuild]].
+The batch is done — there is no next relay ticket. Only open issue is **#1**
+(the original MVP umbrella spec, unlabelled), which is not agent-ready work.
+Future effort starts a new spec (see Deferred) via the normal
+`/preset init` → to-spec → to-tickets flow, not this chain.
 
 ## Deferred (own future specs)
 
 Fancy spatial agents-view (session boxes in a canvas), live-tail external
 sessions, N-concurrent engines, fork-on-resume, global project switcher.
+Busy-switch could later graduate from *block* to *detach-with-notice* — the
+reversal path is written in [[2026-07-23-busy-switch-block-not-detach]].
 
 ## Open loose ends
 
-- Local `main` pushed through this leg's wrap-up (relay body pushes each leg).
-- **Sidebar visual pass (still open from #11):** rows use the Frost Mono tokens
+- **Sidebar visual pass (open since #11):** rows use the Frost Mono tokens
   directly rather than a fresh impeccable pass; a live Electron visual check vs
   `docs/design/frost-mono-reference.png` was deferred (no automatable
-  folder-picker in an unattended leg). #13 added the active-row mint bar + a
-  New chat button in the head — worth an eyeball in an interactive session
-  (does the New chat glyph + active bar read right against the reference?).
+  folder-picker in an unattended leg). #13 added the active-row mint bar + New
+  chat button; #14 added the **Refresh** glyph beside them — worth an eyeball in
+  an interactive session (do the three head glyphs + active bar read right
+  against the reference?).
 - **Ecosystem:** the global relay skill was edited during setup (per-leg naming)
   → per CLAUDE.md, sync the ecosystem-kb vault + `/preset health` before any
   template push (not a relay-leg concern; carry for an interactive session).
@@ -84,7 +71,7 @@ sessions, N-concurrent engines, fork-on-resume, global project switcher.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[happy-path]]
-- [[2026-07-23-resume-via-target-close-rebuild]] ·
-  [[2026-07-23-transcript-parser-pure-renderer-summarises]] ·
+- [[2026-07-23-busy-switch-block-not-detach]] ·
+  [[2026-07-23-resume-via-target-close-rebuild]] ·
   [[2026-07-23-session-id-accessor-not-event]] · [[2026-07-23-bg-isolation-none]]
-- Spec #9 + ticket #14 on the tracker (canonical).
+- Spec #9 (closed) + tickets #10–#14 (all closed) on the tracker.

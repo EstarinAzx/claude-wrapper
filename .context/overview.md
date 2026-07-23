@@ -23,8 +23,9 @@ tags: [context, overview]
 - `npm run typecheck` / `npm test` / `npm run build` — the merge gate
 
 ## Where to look first
-- GitHub issue #1 — the spec; #3–#8 — remaining vertical slices
-- `.context/pick-up.md` — current frontier + landmines
+- `.context/pick-up.md` — current frontier + landmines (currently: queue empty)
+- Tracker: spec #1 (MVP, umbrella) and spec #9 (session history batch, closed —
+  tickets #10–#14 all delivered) hold the history
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
