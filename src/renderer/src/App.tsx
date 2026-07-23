@@ -7,7 +7,7 @@ import { useChat } from './useChat'
 
 export default function App() {
   const [cwd, setCwd] = useState<string | null>(null)
-  const { messages, busy, send } = useChat()
+  const { messages, busy, send, respondToPermission } = useChat()
 
   const pickFolder = async (): Promise<void> => {
     const folder = await window.api.pickFolder()
@@ -19,7 +19,11 @@ export default function App() {
       <Titlebar cwd={cwd} />
       {cwd ? (
         <>
-          <Chat messages={messages} busy={busy} />
+          <Chat
+            messages={messages}
+            busy={busy}
+            onPermission={respondToPermission}
+          />
           <InputBar busy={busy} onSend={send} />
         </>
       ) : (

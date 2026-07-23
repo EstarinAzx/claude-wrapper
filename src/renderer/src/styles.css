@@ -478,6 +478,52 @@ body {
   color: oklch(0.55 0.16 25);
 }
 
+.tool-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.tool-perm-btn {
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font-family: var(--font);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  padding: 4px 12px;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-app-region: no-drag;
+}
+
+.tool-perm-btn:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.tool-perm-allow {
+  background: var(--mint);
+  border-color: transparent;
+  color: var(--mint-ink);
+}
+
+.tool-perm-allow:hover {
+  background: var(--mint-press);
+}
+
+.tool-perm-deny {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.tool-perm-deny:hover {
+  background: oklch(0.92 0.01 210 / 0.06);
+  color: var(--text);
+}
+
 /* ── markdown ── */
 
 .assistant-body pre {

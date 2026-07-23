@@ -1,11 +1,16 @@
 import { vi } from 'vitest'
 import { act } from '@testing-library/react'
-import type { EngineEvent } from '../src/shared/engine-types'
+import { createPermissionBroker } from '../src/main/permission-broker'
+import type { EngineEvent, PermissionDecision } from '../src/shared/engine-types'
 
 // Test-side stand-in for preload+main plumbing: the scripted engine seam.
-// Tests drive `emit` as the fake engine's event stream.
+// Tests drive `emit` as the fake engine's event stream; permission responses
+// settle through the real main-process broker.
 export function fakeChatApi(folder = 'D:\\projects\\demo') {
   const prompts: string[] = []
+  const permissionResponses: Array<{ toolUseId: string; decision: PermissionDecision }> =
+    []
+  const broker = createPermissionBroker()
   const listeners = new Set<(e: EngineEvent) => void>()
   const api = {
     minimize: vi.fn(),
@@ -14,6 +19,10 @@ export function fakeChatApi(folder = 'D:\\projects\\demo') {
     pickFolder: vi.fn<() => Promise<string | null>>().mockResolvedValue(folder),
     sendPrompt: (text: string): void => {
       prompts.push(text)
+    },
+    respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {
+      permissionResponses.push({ toolUseId, decision })
+      broker.respond(toolUseId, decision)
     },
     onChatEvent: (cb: (e: EngineEvent) => void): (() => void) => {
       listeners.add(cb)
@@ -25,5 +34,7 @@ export function fakeChatApi(folder = 'D:\\projects\\demo') {
       listeners.forEach((l) => l(e))
     })
   }
-  return { api, prompts, emit }
+  const waitForPermission = (toolUseId: string): Promise<PermissionDecision> =>
+    broker.request({ toolUseId, signal: new AbortController().signal })
+  return { api, prompts, permissionResponses, emit, waitForPermission }
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 import type { ChatMessage } from '../useChat'
+import type { PermissionDecision } from '../../../shared/engine-types'
 import { isNearBottom } from '../autoscroll'
 import ToolCard from './ToolCard'
 
@@ -22,9 +23,10 @@ function Typing() {
 interface ChatProps {
   messages: ChatMessage[]
   busy: boolean
+  onPermission?: (toolUseId: string, decision: PermissionDecision) => void
 }
 
-export default function Chat({ messages, busy }: ChatProps) {
+export default function Chat({ messages, busy, onPermission }: ChatProps) {
   const scrollerRef = useRef<HTMLElement | null>(null)
   const nearBottomRef = useRef(true)
 
@@ -73,7 +75,9 @@ export default function Chat({ messages, busy }: ChatProps) {
             )
           }
           if (m.role === 'tool') {
-            return <ToolCard key={m.id} message={m} />
+            return (
+              <ToolCard key={m.id} message={m} onPermission={onPermission} />
+            )
           }
           return (
             <div key={m.id} className="msg msg-assistant">

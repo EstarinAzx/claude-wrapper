@@ -1,4 +1,4 @@
-import type { EngineEvent } from '../shared/engine-types'
+import type { EngineEvent, PermissionDecision } from '../shared/engine-types'
 
 export interface WrapperApi {
   minimize: () => void
@@ -6,6 +6,7 @@ export interface WrapperApi {
   close: () => void
   pickFolder: () => Promise<string | null>
   sendPrompt: (text: string) => void
+  respondToPermission: (toolUseId: string, decision: PermissionDecision) => void
   onChatEvent: (cb: (e: EngineEvent) => void) => () => void
 }
 
