@@ -129,18 +129,31 @@ body {
   white-space: nowrap;
 }
 
-/* read-only backend indicator: reflects launch mode (native vs wisped) */
+/* backend indicator + toggle: reflects the live mode (native vs wisped) and,
+   when wisp routing is available, flips it on click */
 .backend-pill {
   flex-shrink: 0;
   padding: 2px 9px;
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
+  background: transparent;
+  font-family: inherit;
   font-size: var(--fs-micro);
   font-weight: 600;
   letter-spacing: 0.02em;
+  line-height: 1.3;
   color: var(--text-muted);
   white-space: nowrap;
+  cursor: default;
   -webkit-app-region: no-drag;
+}
+
+.backend-pill:not(:disabled) {
+  cursor: pointer;
+}
+
+.backend-pill:not(:disabled):hover {
+  filter: brightness(1.12);
 }
 
 .backend-pill--wisped {

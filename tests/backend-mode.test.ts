@@ -6,6 +6,7 @@ import {
   resolveSpawnEnv,
   initBackendMode,
   getBackendMode,
+  setBackendMode,
   isWispedAvailable,
   getSpawnEnv
 } from '../src/main/backend-mode'
@@ -105,5 +106,24 @@ describe('process-wide state', () => {
 
     initBackendMode(plainEnv)
     expect(getSpawnEnv(wispEnv)).not.toHaveProperty('ANTHROPIC_BASE_URL')
+  })
+
+  test('setBackendMode flips the current mode', () => {
+    initBackendMode(wispEnv)
+    expect(getBackendMode()).toBe('wisped')
+    setBackendMode('native')
+    expect(getBackendMode()).toBe('native')
+    setBackendMode('wisped')
+    expect(getBackendMode()).toBe('wisped')
+  })
+
+  test('a flip changes what the next spawn env resolves to', () => {
+    initBackendMode(wispEnv)
+    // wisped launch → flip to native → the proxy vars drop out of the spawn env
+    setBackendMode('native')
+    expect(getSpawnEnv(wispEnv)).not.toHaveProperty('ANTHROPIC_BASE_URL')
+    // flip back → the snapshotted proxy endpoint returns
+    setBackendMode('wisped')
+    expect(getSpawnEnv(plainEnv)).toHaveProperty('ANTHROPIC_BASE_URL', 'http://127.0.0.1:41184')
   })
 })

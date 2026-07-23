@@ -1,6 +1,6 @@
 import type { EngineEvent, PermissionDecision } from '../shared/engine-types'
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
-import type { BackendInfo } from '../shared/backend-types'
+import type { BackendInfo, BackendMode } from '../shared/backend-types'
 
 export interface WrapperApi {
   minimize: () => void
@@ -12,6 +12,8 @@ export interface WrapperApi {
   targetSession: (id: string | null) => void
   currentSessionId: () => Promise<string | null>
   backendMode: () => Promise<BackendInfo>
+  setBackendMode: (mode: BackendMode) => void
+  onBackendChanged: (cb: (info: BackendInfo) => void) => () => void
   sendPrompt: (text: string) => void
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void

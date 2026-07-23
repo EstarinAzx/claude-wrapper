@@ -2,7 +2,13 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createEngine } from './engine'
-import { initBackendMode, getSpawnEnv, getBackendMode, isWispedAvailable } from './backend-mode'
+import {
+  initBackendMode,
+  getSpawnEnv,
+  getBackendMode,
+  setBackendMode,
+  isWispedAvailable
+} from './backend-mode'
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
@@ -143,6 +149,29 @@ ipcMain.handle('chat:session-id', (event) => {
 ipcMain.handle('backend:mode', (event) => {
   if (!isTrustedIpc(event)) return { mode: 'native', wispedAvailable: false }
   return { mode: getBackendMode(), wispedAvailable: isWispedAvailable() }
+})
+
+// Guarded write: flip the backend the next turn spawns against. Carries only the
+// target mode enum. Reuses the chat:target teardown (close the engine, cancel
+// pending permissions, null the engine) and additionally drops the resume target
+// so the flip lands in a FRESH chat, not a resume of the prior conversation. The
+// lazy chat:send rebuilds the engine with the new mode's spawn env. Locked to
+// native when the launch env carried no wisp routing. Broadcasts the resolved
+// mode back so the pill + renderer re-render.
+ipcMain.on('backend:set-mode', (event, mode: unknown) => {
+  if (!isTrustedIpc(event)) return
+  if (mode !== 'native' && mode !== 'wisped') return
+  if (mode === 'wisped' && !isWispedAvailable()) return
+  setBackendMode(mode)
+  engine?.close()
+  permissionBroker.cancelAll()
+  engine = null
+  pendingResume = null
+  const win = BrowserWindow.fromWebContents(event.sender)
+  win?.webContents.send('backend:changed', {
+    mode: getBackendMode(),
+    wispedAvailable: isWispedAvailable()
+  })
 })
 
 ipcMain.on('chat:send', (event, text: string) => {

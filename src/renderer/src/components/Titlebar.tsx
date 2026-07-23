@@ -1,36 +1,57 @@
-import type { BackendInfo } from '../../../shared/backend-types'
+import type { BackendInfo, BackendMode } from '../../../shared/backend-types'
 
 const basename = (p: string): string => p.split(/[\\/]/).filter(Boolean).pop() ?? p
 
-const BackendPill = ({ backend }: { backend: BackendInfo }) => {
+const BackendPill = ({
+  backend,
+  busy,
+  onFlip
+}: {
+  backend: BackendInfo
+  busy: boolean
+  onFlip?: (target: BackendMode) => void
+}) => {
   const wisped = backend.mode === 'wisped'
   const label = wisped ? 'Wisped' : 'Native'
-  const title = backend.wispedAvailable
-    ? `Backend: ${label}`
-    : 'Launched without Wisp routing — native only'
+  const target: BackendMode = wisped ? 'native' : 'wisped'
+  // Flippable only when the launch env carried wisp routing (else native-locked)
+  // and no turn is streaming (mid-stream switch is blocked, per #14).
+  const canFlip = backend.wispedAvailable && !busy && !!onFlip
+  const title = !backend.wispedAvailable
+    ? 'Launched without Wisp routing — native only'
+    : canFlip
+      ? `Backend: ${label} — click to switch`
+      : `Backend: ${label}`
   return (
-    <span
+    <button
+      type="button"
       className={`backend-pill${wisped ? ' backend-pill--wisped' : ''}`}
       aria-label="Backend mode"
       title={title}
+      disabled={!canFlip}
+      onClick={() => onFlip?.(target)}
     >
       {label}
-    </span>
+    </button>
   )
 }
 
 const Titlebar = ({
   cwd,
-  backend
+  backend,
+  busy = false,
+  onFlip
 }: {
   cwd: string | null
   backend: BackendInfo | null
+  busy?: boolean
+  onFlip?: (target: BackendMode) => void
 }) => (
   <header className="titlebar">
     <div className="titlebar-left">
       <span className="logo-mark" aria-hidden="true" />
       <span className="app-name">Claude Wrapper</span>
-      {backend && <BackendPill backend={backend} />}
+      {backend && <BackendPill backend={backend} busy={busy} onFlip={onFlip} />}
     </div>
     <div className="titlebar-center">
       {cwd ? (

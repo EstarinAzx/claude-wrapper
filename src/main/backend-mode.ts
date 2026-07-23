@@ -68,6 +68,12 @@ export const initBackendMode = (env: NodeJS.ProcessEnv): void => {
 
 export const getBackendMode = (): BackendMode => currentMode
 
+/** Flip the live mode. In-memory only — no persistence, matching the launch-env
+ *  intent model; a caller must reject 'wisped' when the launch env lacked it. */
+export const setBackendMode = (mode: BackendMode): void => {
+  currentMode = mode
+}
+
 export const isWispedAvailable = (): boolean => wispedAvailable(snapshot)
 
 /** The resolved spawn env for the current mode, built on the given base env. */
