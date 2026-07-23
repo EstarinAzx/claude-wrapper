@@ -143,7 +143,8 @@ const mapResultError = (subtype: string): string => {
 export const createEngine = (
   getCwd: () => string | null,
   requestPermission: RequestPermissionFn,
-  queryFn: QueryFn = defaultQuery
+  queryFn: QueryFn = defaultQuery,
+  getEnv: () => NodeJS.ProcessEnv = () => process.env
 ): Engine & { close(): void } => {
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
@@ -300,7 +301,10 @@ export const createEngine = (
     const options: Record<string, unknown> = {
       cwd,
       includePartialMessages: true,
-      canUseTool
+      canUseTool,
+      // options.env REPLACES the child env wholesale (see sdk.d.ts). getEnv
+      // returns the full env resolved for the active backend mode.
+      env: getEnv()
     }
     // ponytail: resume binds at query construction; the streaming query is built
     // once and cached, so resume only takes effect on the query-building turn.

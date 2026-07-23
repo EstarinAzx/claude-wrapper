@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createEngine } from './engine'
+import { initBackendMode, getSpawnEnv } from './backend-mode'
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
@@ -14,9 +15,16 @@ const permissionBroker = createPermissionBroker()
 const rendererFile = join(__dirname, '../renderer/index.html')
 const rendererUrl = pathToFileURL(rendererFile).href
 
+// Snapshot the launch env once; the initial backend mode matches how the app
+// was launched (wisp env present → wisped, else native).
+initBackendMode(process.env)
+
 const makeEngine = (): ReturnType<typeof createEngine> =>
-  createEngine(getSessionCwd, ({ toolUseId, signal }) =>
-    permissionBroker.request({ toolUseId, signal })
+  createEngine(
+    getSessionCwd,
+    ({ toolUseId, signal }) => permissionBroker.request({ toolUseId, signal }),
+    undefined,
+    () => getSpawnEnv(process.env)
   )
 
 const isTrustedIpc = (

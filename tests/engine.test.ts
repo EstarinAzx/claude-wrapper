@@ -724,3 +724,28 @@ describe('engine session id + resume', () => {
     expect(calls[0].options).not.toHaveProperty('resume')
   })
 })
+
+describe('engine backend env', () => {
+  test('passes the resolved env from getEnv straight into query options.env', async () => {
+    const wispedEnv = { PATH: '/bin', ANTHROPIC_BASE_URL: 'http://127.0.0.1:41184' }
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, () => wispedEnv)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options.env).toEqual(wispedEnv)
+  })
+
+  test('a native env (wisp vars absent) is passed through unchanged', async () => {
+    const nativeEnv = { PATH: '/bin', HOME: '/home' }
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, () => nativeEnv)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options.env).toEqual(nativeEnv)
+    expect(calls[0].options.env).not.toHaveProperty('ANTHROPIC_BASE_URL')
+  })
+})
