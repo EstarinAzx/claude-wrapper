@@ -422,6 +422,13 @@ body {
   line-height: 1.5;
 }
 
+.msg-notice {
+  align-self: center;
+  color: var(--text-faint);
+  font-size: var(--fs-ui);
+  line-height: 1.4;
+}
+
 /* ── tool card ── */
 
 .tool-card {

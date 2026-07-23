@@ -7,6 +7,7 @@ const api = {
   close: (): void => ipcRenderer.send('window:close'),
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('session:pick-folder'),
   sendPrompt: (text: string): void => ipcRenderer.send('chat:send', text),
+  stopTurn: (): void => ipcRenderer.send('chat:stop'),
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {
     ipcRenderer.send('chat:permission-response', toolUseId, decision)
   },

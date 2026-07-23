@@ -3,9 +3,10 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 interface InputBarProps {
   busy: boolean
   onSend: (text: string) => void
+  onStop: () => void
 }
 
-export default function InputBar({ busy, onSend }: InputBarProps) {
+export default function InputBar({ busy, onSend, onStop }: InputBarProps) {
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
 
@@ -59,24 +60,38 @@ export default function InputBar({ busy, onSend }: InputBarProps) {
         <button
           type="button"
           className="send-btn"
-          aria-label="Send"
-          disabled={busy}
-          onClick={submit}
+          aria-label={busy ? 'Stop' : 'Send'}
+          onClick={busy ? onStop : submit}
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M8 12V4" />
-            <path d="M4 7l4-4 4 4" />
-          </svg>
+          {busy ? (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="4.5" y="4.5" width="7" height="7" rx="1" />
+            </svg>
+          ) : (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M8 12V4" />
+              <path d="M4 7l4-4 4 4" />
+            </svg>
+          )}
         </button>
       </div>
       <p className="footer-line">Claude can make mistakes. Verify important information.</p>

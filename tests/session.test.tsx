@@ -12,6 +12,7 @@ beforeEach(() => {
     close: vi.fn(),
     pickFolder,
     sendPrompt: vi.fn(),
+    stopTurn: vi.fn(),
     respondToPermission: vi.fn(),
     onChatEvent: vi.fn().mockReturnValue(() => {})
   }

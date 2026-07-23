@@ -20,6 +20,7 @@ export function fakeChatApi(folder = 'D:\\projects\\demo') {
     sendPrompt: (text: string): void => {
       prompts.push(text)
     },
+    stopTurn: vi.fn(),
     respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {
       permissionResponses.push({ toolUseId, decision })
       broker.respond(toolUseId, decision)

@@ -79,6 +79,13 @@ export default function Chat({ messages, busy, onPermission }: ChatProps) {
               <ToolCard key={m.id} message={m} onPermission={onPermission} />
             )
           }
+          if (m.role === 'notice') {
+            return (
+              <div key={m.id} className="msg msg-notice">
+                {m.text}
+              </div>
+            )
+          }
           return (
             <div key={m.id} className="msg msg-assistant">
               <Avatar />

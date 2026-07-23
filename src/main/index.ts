@@ -130,6 +130,12 @@ ipcMain.on(
   }
 )
 
+ipcMain.on('chat:stop', (event) => {
+  if (!isTrustedIpc(event)) return
+  engine?.interrupt()
+  permissionBroker.cancelAll()
+})
+
 app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => app.quit())

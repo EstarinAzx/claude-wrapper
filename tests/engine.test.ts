@@ -61,6 +61,18 @@ async function collect(
   return events
 }
 
+// Legible-failure copy pinned by ticket #7 — keep in sync with src/main/engine.ts
+const STREAM_ENDED =
+  'Claude session ended unexpectedly. Pick the folder again to restart.'
+const CLI_MISSING =
+  'Claude CLI not found. Install Claude Code, then pick the folder again. (spawn claude ENOENT)'
+const CLI_SIGNED_OUT =
+  'Claude CLI is not signed in. Run claude in a terminal to sign in, then pick the folder again. (Invalid API key · Please run /login)'
+const TURN_FAILED =
+  'Claude hit an error during this turn. Send a new prompt to try again.'
+const MAX_TURNS =
+  'Claude stopped early: maximum turns reached. Send a new prompt to continue.'
+
 const init: SdkMessage = { type: 'system', subtype: 'init', session_id: 'sess-1' }
 const delta = (text: string): SdkMessage => ({
   type: 'stream_event',
@@ -179,7 +191,7 @@ describe('engine', () => {
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 20))
     ])
     expect(second).toEqual([
-      { type: 'error', message: 'query stream ended' }
+      { type: 'error', message: STREAM_ENDED }
     ])
     expect(calls).toHaveLength(1)
   })
@@ -192,7 +204,7 @@ describe('engine', () => {
     await Promise.resolve()
     close()
     await expect(first).resolves.toEqual([
-      { type: 'error', message: 'query stream ended' }
+      { type: 'error', message: STREAM_ENDED }
     ])
 
     const second = await Promise.race([
@@ -200,7 +212,7 @@ describe('engine', () => {
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 20))
     ])
     expect(second).toEqual([
-      { type: 'error', message: 'query stream ended' }
+      { type: 'error', message: STREAM_ENDED }
     ])
     expect(calls).toHaveLength(1)
   })
@@ -259,7 +271,7 @@ describe('engine', () => {
     expect(attempts).toBe(2)
   })
 
-  test('error result maps to an error event', async () => {
+  test('error result maps to a legible error event', async () => {
     const errorResult: SdkMessage = {
       type: 'result',
       subtype: 'error_during_execution',
@@ -273,17 +285,44 @@ describe('engine', () => {
     push(init)
     push(errorResult)
     const events = await turn
-    expect(events[events.length - 1].type).toBe('error')
+    expect(events[events.length - 1]).toEqual({ type: 'error', message: TURN_FAILED })
   })
 
-  test('a throwing query surfaces as an error event, promise still resolves', async () => {
+  test('max-turns result maps to a legible error event', async () => {
+    const errorResult: SdkMessage = {
+      type: 'result',
+      subtype: 'error_max_turns',
+      session_id: 'sess-1',
+      is_error: true
+    }
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(errorResult)
+    const events = await turn
+    expect(events[events.length - 1]).toEqual({ type: 'error', message: MAX_TURNS })
+  })
+
+  test('a missing CLI (ENOENT) surfaces as a legible error, promise still resolves', async () => {
     const fn: QueryFn = () =>
       (async function* (): AsyncGenerator<SdkMessage> {
         throw new Error('spawn claude ENOENT')
       })()
     const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
     const events = await collect(engine, 'hi')
-    expect(events).toEqual([{ type: 'error', message: 'spawn claude ENOENT' }])
+    expect(events).toEqual([{ type: 'error', message: CLI_MISSING }])
+  })
+
+  test('a signed-out CLI surfaces as a legible error', async () => {
+    const fn: QueryFn = () =>
+      (async function* (): AsyncGenerator<SdkMessage> {
+        throw new Error('Invalid API key · Please run /login')
+      })()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const events = await collect(engine, 'hi')
+    expect(events).toEqual([{ type: 'error', message: CLI_SIGNED_OUT }])
   })
 
   test('missing session cwd surfaces as an error event', async () => {
@@ -517,5 +556,92 @@ describe('engine canUseTool / permissions', () => {
     await turn
     expect(events).toContainEqual({ type: 'text-delta', text: 'Understood.' })
     expect(events).toContainEqual({ type: 'turn-end' })
+  })
+})
+
+describe('engine interrupt', () => {
+  // streamingStub whose query object also exposes interrupt(), like the real SDK Query
+  function interruptibleStub() {
+    const base = streamingStub()
+    let interrupts = 0
+    const fn: QueryFn = (args) =>
+      Object.assign(base.fn(args), {
+        interrupt: async (): Promise<void> => {
+          interrupts += 1
+        }
+      })
+    return { ...base, fn, interruptCount: () => interrupts }
+  }
+
+  const abortedResult: SdkMessage = {
+    type: 'result',
+    subtype: 'error_during_execution',
+    session_id: 'sess-1',
+    is_error: true
+  }
+
+  test('interrupt during a turn maps the next result to turn-aborted, not error', async () => {
+    const stub = interruptibleStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), stub.fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    stub.push(init)
+    stub.push(delta('Half a thou'))
+    engine.interrupt()
+    stub.push(abortedResult)
+    const events = await turn
+    expect(stub.interruptCount()).toBe(1)
+    expect(events).toEqual([
+      { type: 'text-delta', text: 'Half a thou' },
+      { type: 'turn-aborted' }
+    ])
+  })
+
+  test('post-interrupt success result also maps to turn-aborted', async () => {
+    const stub = interruptibleStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), stub.fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    stub.push(init)
+    engine.interrupt()
+    stub.push(success)
+    const events = await turn
+    expect(events).toEqual([{ type: 'turn-aborted' }])
+  })
+
+  test('after an interrupt the same query serves the next turn', async () => {
+    const stub = interruptibleStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), stub.fn)
+    const first = collect(engine, 'first')
+    await Promise.resolve()
+    engine.interrupt()
+    stub.push(abortedResult)
+    await first
+
+    const second = collect(engine, 'second')
+    await Promise.resolve()
+    stub.push(delta('fresh'))
+    stub.push(success)
+    const events = await second
+    expect(events).toEqual([
+      { type: 'text-delta', text: 'fresh' },
+      { type: 'turn-end' }
+    ])
+    expect(stub.calls).toHaveLength(1)
+  })
+
+  test('interrupt with no active turn is a no-op', async () => {
+    const stub = interruptibleStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), stub.fn)
+    engine.interrupt()
+    expect(stub.interruptCount()).toBe(0)
+
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    stub.push(success)
+    await expect(turn).resolves.toContainEqual({ type: 'turn-end' })
+
+    engine.interrupt()
+    expect(stub.interruptCount()).toBe(0)
   })
 })

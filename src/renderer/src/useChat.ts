@@ -6,6 +6,7 @@ export type ChatMessage =
   | { id: string; role: 'user'; text: string }
   | { id: string; role: 'assistant'; text: string }
   | { id: string; role: 'error'; text: string }
+  | { id: string; role: 'notice'; text: string }
   | {
       id: string
       role: 'tool'
@@ -110,6 +111,17 @@ export function useChat() {
           { id: uid(), role: 'error', text: e.message }
         ])
         setBusy(false)
+      } else if (e.type === 'turn-aborted') {
+        assistantIdRef.current = null
+        setMessages((prev) => [
+          ...prev.map((m) =>
+            m.role === 'tool' && m.result === null
+              ? { ...m, permission: 'denied' as const, result: 'Cancelled' }
+              : m
+          ),
+          { id: uid(), role: 'notice', text: 'Stopped' }
+        ])
+        setBusy(false)
       }
     })
     return unsub
@@ -127,6 +139,11 @@ export function useChat() {
     [busy]
   )
 
+  const stop = useCallback(() => {
+    if (!busy) return
+    window.api.stopTurn()
+  }, [busy])
+
   const respondToPermission = useCallback(
     (toolUseId: string, decision: PermissionDecision) => {
       window.api.respondToPermission(toolUseId, decision)
@@ -143,5 +160,5 @@ export function useChat() {
     []
   )
 
-  return { messages, busy, send, respondToPermission }
+  return { messages, busy, send, stop, respondToPermission }
 }

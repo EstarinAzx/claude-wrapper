@@ -60,6 +60,11 @@ export type RequestPermissionFn = (req: {
   signal: AbortSignal
 }) => Promise<PermissionDecision>
 
+type QueryHandle = AsyncIterable<SdkMessage> & {
+  close?: () => void
+  interrupt?: () => Promise<void>
+}
+
 // Pushable async queue of user messages for streaming-input mode.
 function createMessageQueue(): {
   push: (msg: SDKUserMessage) => void
@@ -117,23 +122,45 @@ function toUserMessage(text: string): SDKUserMessage {
   }
 }
 
+function mapStreamError(raw: string): string {
+  if (/ENOENT/i.test(raw)) {
+    return `Claude CLI not found. Install Claude Code, then pick the folder again. (${raw})`
+  }
+  if (/log ?in|api key|authentication|unauthorized|credentials/i.test(raw)) {
+    return `Claude CLI is not signed in. Run claude in a terminal to sign in, then pick the folder again. (${raw})`
+  }
+  return raw
+}
+
+function mapResultError(subtype: string): string {
+  if (subtype === 'error_during_execution') {
+    return 'Claude hit an error during this turn. Send a new prompt to try again.'
+  }
+  if (subtype === 'error_max_turns') {
+    return 'Claude stopped early: maximum turns reached. Send a new prompt to continue.'
+  }
+  return subtype
+}
+
 export function createEngine(
   getCwd: () => string | null,
   requestPermission: RequestPermissionFn,
   queryFn: QueryFn = defaultQuery
 ): Engine & { close(): void } {
   let queue: ReturnType<typeof createMessageQueue> | null = null
-  let currentQuery: (AsyncIterable<SdkMessage> & { close?: () => void }) | null = null
+  let currentQuery: QueryHandle | null = null
   let consumeStarted = false
   let activeOnEvent: ((e: EngineEvent) => void) | null = null
   let turnResolve: (() => void) | null = null
   let terminalError: string | null = null
+  let interrupting = false
 
   function emit(e: EngineEvent): void {
     activeOnEvent?.(e)
   }
 
   function finishTurn(): void {
+    interrupting = false
     const r = turnResolve
     turnResolve = null
     activeOnEvent = null
@@ -216,10 +243,12 @@ export function createEngine(
         }
       }
     } else if (msg.type === 'result') {
-      if (msg.is_error || msg.subtype !== 'success') {
+      if (interrupting) {
+        emit({ type: 'turn-aborted' })
+      } else if (msg.is_error || msg.subtype !== 'success') {
         emit({
           type: 'error',
-          message: String(msg.subtype ?? 'error')
+          message: mapResultError(String(msg.subtype ?? 'error'))
         })
       } else {
         emit({ type: 'turn-end' })
@@ -273,7 +302,7 @@ export function createEngine(
         canUseTool
       }
     })
-    currentQuery = stream
+    currentQuery = stream as QueryHandle
 
     if (!consumeStarted) {
       consumeStarted = true
@@ -282,13 +311,15 @@ export function createEngine(
           for await (const msg of stream) {
             handleMessage(msg)
           }
-          terminalError ??= 'query stream ended'
+          terminalError ??=
+            'Claude session ended unexpectedly. Pick the folder again to restart.'
           if (turnResolve) {
             emit({ type: 'error', message: terminalError })
             finishTurn()
           }
         } catch (err) {
-          terminalError = err instanceof Error ? err.message : String(err)
+          const raw = err instanceof Error ? err.message : String(err)
+          terminalError = mapStreamError(raw)
           emit({ type: 'error', message: terminalError })
           finishTurn()
         } finally {
@@ -335,6 +366,12 @@ export function createEngine(
     })
   }
 
+  const interrupt = (): void => {
+    if (turnResolve === null) return
+    interrupting = true
+    void currentQuery?.interrupt?.().catch(() => {})
+  }
+
   const close = (): void => {
     terminalError = 'query closed'
     queue?.end()
@@ -348,5 +385,5 @@ export function createEngine(
     }
   }
 
-  return { runTurn, close }
+  return { runTurn, interrupt, close }
 }

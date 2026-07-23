@@ -6,6 +6,7 @@ export interface WrapperApi {
   close: () => void
   pickFolder: () => Promise<string | null>
   sendPrompt: (text: string) => void
+  stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void
   onChatEvent: (cb: (e: EngineEvent) => void) => () => void
 }

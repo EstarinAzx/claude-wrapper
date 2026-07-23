@@ -9,6 +9,7 @@ beforeEach(() => {
     close: vi.fn(),
     pickFolder: vi.fn().mockResolvedValue('D:\\projects\\demo'),
     sendPrompt: vi.fn(),
+    stopTurn: vi.fn(),
     respondToPermission: vi.fn(),
     onChatEvent: vi.fn().mockReturnValue(() => {})
   }

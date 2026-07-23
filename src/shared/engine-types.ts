@@ -11,8 +11,10 @@ export type EngineEvent =
       input: Record<string, unknown>
     }
   | { type: 'turn-end' }
+  | { type: 'turn-aborted' }
   | { type: 'error'; message: string }
 
 export interface Engine {
   runTurn(prompt: string, onEvent: (e: EngineEvent) => void): Promise<void>
+  interrupt(): void
 }
