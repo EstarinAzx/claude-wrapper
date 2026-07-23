@@ -38,7 +38,8 @@ relabel plus a comment.
    before any branching.
 4. **Branch.** `ticket/<id>-<slug>` off main.
 5. **Work — Fable leads, Grok grunts.**
-   - **You (Fable) own:** reading the ticket + spec (#1) + relevant
+   - **You (Fable) own:** reading the ticket + its parent spec (the `## Parent`
+     the ticket names) + relevant
      `.context/decisions/`, architecture, file layout, interfaces/types, task
      decomposition, code review, integration, and the gate. Route through
      skills as the work demands (superpowers TDD for logic; impeccable for the

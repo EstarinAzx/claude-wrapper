@@ -9,36 +9,41 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**No open work ticket.** This session ran the real-SDK manual verification and landed a
-Tailwind 4 + darker-palette change (`c7e06d5` on main, gate green). Two carried-forward
-items below; neither is started.
+**Target ticket: #10** (oldest unblocked `ready-for-agent`). Batch = spec **#9**
+(session history / switching / agents view). Frontier: **#10 and #11 are both
+unblocked** — pick #10 first (N=1, oldest). Then #11, then #12 → #13 → #14 as
+blockers clear.
 
-**Carried forward (pick either, or ask the owner):**
-- **Interrupt (#4)** — the one manual-run spine step still unverified. Needs a human at
-  `npm run dev`: send a long prompt, click **Stop** mid-stream, confirm it shows
-  "Cancelled" / turn-aborted, not a red error card. Pure verification, no code expected.
-- **Persistent acrylic-on-blur** — deferred with a documented trade-off
-  ([[2026-07-23-persistent-glass-deferred]]). Only pick up if the owner wants to spend a
-  native/FFI dep (keep exact glass, drag-lag cost) or switch to Mica (native, stable,
-  loses blur-behind). Main-process work (`src/main/index.ts:38`), NOT impeccable.
+**Queue (spec #9):**
+- **#10** Engine surfaces `session_id` + accepts resume — *no blockers* (prefactor, engine seam)
+- **#11** List sessions in a left sidebar — *no blockers* (store reader + pure `summary()` + sidebar)
+- **#12** Open a past session — replay transcript — blocked by #11 (pure lenient parser)
+- **#13** Resume — continue a reopened session *(MVD)* — blocked by #10, #12
+- **#14** Refresh + busy-switch polish — blocked by #13
 
-**Landmines (unchanged + new):**
-- Renderer tests pin aria-labels ("Send"/"Stop"/"Allow"/"Deny"/"Typing"), placeholder
-  "Message Claude…", and classes `.tool-card` / `.tool-card-error` / `.assistant-body` /
-  `.msg-notice` / `.msg-error`. Don't rename them.
-- Legible-error copy in `src/main/engine.ts` is pinned character-for-character by
+**Done since last leg:** interrupt (old #4) verified by owner at `npm run dev`
+(Stop mid-stream → "Stopped", no red card). MVP spine fully closed.
+
+**Landmines (carry into every ticket):**
+- Reuse test seams: engine `queryFn` stub (`tests/engine.test.ts` `streamingStub`,
+  inspect `calls[].options`) for session_id + `resume`; one NEW pure parser seam
+  (fixture JSONL string → messages, no fs); renderer sidebar via existing
+  testing-library seam (`tests/session.test.tsx`, `chat-harness.ts`).
+- Native store is source of truth: `~/.claude/projects/<enc-cwd>/*.jsonl`.
+  `enc` = every non-alphanumeric char → `-` (verified `D---claude-...-4`).
+  Applied forward only (cwd→dir); never reversed. Parser is **lenient** — map
+  known line types, skip unknown, never throw.
+- Renderer tests pin aria-labels ("Send"/"Stop"/"Allow"/"Deny"/"Typing"),
+  placeholder "Message Claude…", classes `.tool-card` / `.tool-card-error` /
+  `.assistant-body` / `.msg-notice` / `.msg-error`. Sidebar ADDS labels, never
+  renames these.
+- Legible-error copy in `src/main/engine.ts` is character-pinned by
   `tests/engine.test.ts`.
-- **Tailwind 4 is in.** Tokens live in the `@theme` block in `src/renderer/src/styles.css`;
-  preflight is deliberately OFF (turning it on clobbers the mint markdown/list markers and
-  button styling). Legacy `--wash` / `--mint` / `--r-bubble` names are `:root` aliases of
-  the `--color-*` / `--radius-*` `@theme` vars — change a value in `@theme`, not the alias.
-  See [[2026-07-23-tailwind4-tokens]].
-- **Don't "fix" the missing permission card.** The wrapper inherits host Claude Code
-  permissions on purpose; no Allow/Deny card fires under the host's `bypassPermissions`.
-  See [[2026-07-23-permission-inherits-host]]. Do not add `permissionMode`/`settingSources`.
-- Mint accent budget is fully spent; `DESIGN.md` motion section is the sanctioned motion set.
-- Fresh `npm install` may skip Electron's postinstall → `npm run dev` fails with
-  "Error: Electron uninstall". Fix: `node node_modules/electron/install.js`.
-- Pins that must not move: `vite ^7`, `@vitejs/plugin-react ^5`, `typescript 7.0.2`.
-- Not pushed. Local main is 3 commits ahead of `origin/main`. Branch
-  `feat/tailwind4-frost-dark` still exists (merged, safe to delete).
+- Don't add `permissionMode` / `settingSources` — wrapper inherits host
+  permissions by design ([[2026-07-23-permission-inherits-host]]).
+- Tailwind 4 `@theme` tokens in `src/renderer/src/styles.css`; preflight OFF.
+  Change values in `@theme`, not the `:root` aliases. UI slices run impeccable
+  vs `docs/design/frost-mono-reference.png`.
+- Fresh `npm install` may skip Electron postinstall → `node node_modules/electron/install.js`.
+  Pins that must not move: `vite ^7`, `@vitejs/plugin-react ^5`, `typescript 7.0.2`.
+- Not pushed: local `main` is 3 commits ahead of `origin/main`.
