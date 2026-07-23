@@ -10,6 +10,8 @@ const api = {
   listSessions: (): Promise<SessionMeta[]> => ipcRenderer.invoke('session:list'),
   loadTranscript: (id: string): Promise<TranscriptMessage[]> =>
     ipcRenderer.invoke('session:transcript', id),
+  targetSession: (id: string | null): void => ipcRenderer.send('chat:target', id),
+  currentSessionId: (): Promise<string | null> => ipcRenderer.invoke('chat:session-id'),
   sendPrompt: (text: string): void => ipcRenderer.send('chat:send', text),
   stopTurn: (): void => ipcRenderer.send('chat:stop'),
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {

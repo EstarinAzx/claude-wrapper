@@ -214,6 +214,12 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.sidebar-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .sidebar-title {
   font-size: var(--fs-micro);
   font-weight: 600;
@@ -306,6 +312,12 @@ body {
   outline: none;
   background: oklch(0.92 0.01 210 / 0.08);
   box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
+}
+
+.session-row-btn-active,
+.session-row-btn-active:hover {
+  background: oklch(0.87 0.07 180 / 0.1);
+  box-shadow: inset 2px 0 0 0 var(--color-mint);
 }
 
 .session-row-title {

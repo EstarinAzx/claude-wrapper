@@ -27,7 +27,17 @@ const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
   </svg>
 )
 
-const Sidebar = ({ cwd, onOpen }: { cwd: string; onOpen?: (id: string) => void }) => {
+const Sidebar = ({
+  cwd,
+  activeId,
+  onOpen,
+  onNewChat
+}: {
+  cwd: string
+  activeId?: string | null
+  onOpen?: (id: string) => void
+  onNewChat?: () => void
+}) => {
   const [sessions, setSessions] = useState<SessionMeta[]>([])
   const [collapsed, setCollapsed] = useState(false)
 
@@ -39,7 +49,7 @@ const Sidebar = ({ cwd, onOpen }: { cwd: string; onOpen?: (id: string) => void }
     return () => {
       live = false
     }
-  }, [cwd])
+  }, [cwd, activeId])
 
   if (collapsed) {
     return (
@@ -61,15 +71,33 @@ const Sidebar = ({ cwd, onOpen }: { cwd: string; onOpen?: (id: string) => void }
     <aside className="sidebar" aria-label="Sessions">
       <div className="sidebar-head">
         <span className="sidebar-title">Sessions</span>
-        <button
-          type="button"
-          className="sidebar-toggle"
-          aria-label="Collapse sessions"
-          aria-expanded={true}
-          onClick={() => setCollapsed(true)}
-        >
-          <Chevron dir="left" />
-        </button>
+        <div className="sidebar-head-actions">
+          <button
+            type="button"
+            className="sidebar-toggle"
+            aria-label="New chat"
+            onClick={() => onNewChat?.()}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path
+                d="M7 2.5v9M2.5 7h9"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="sidebar-toggle"
+            aria-label="Collapse sessions"
+            aria-expanded={true}
+            onClick={() => setCollapsed(true)}
+          >
+            <Chevron dir="left" />
+          </button>
+        </div>
       </div>
       {sessions.length === 0 ? (
         <div className="sidebar-empty">No sessions yet</div>
@@ -80,11 +108,13 @@ const Sidebar = ({ cwd, onOpen }: { cwd: string; onOpen?: (id: string) => void }
             const meta = [relTime(s.lastUpdated), s.messageCount ? `${s.messageCount} msg` : '']
               .filter(Boolean)
               .join(' · ')
+            const active = s.id === activeId
             return (
               <li key={s.id} className="session-row">
                 <button
                   type="button"
-                  className="session-row-btn"
+                  className={active ? 'session-row-btn session-row-btn-active' : 'session-row-btn'}
+                  aria-current={active ? 'true' : undefined}
                   onClick={() => onOpen?.(s.id)}
                 >
                   <span className="session-row-title" title={label}>

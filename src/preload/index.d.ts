@@ -8,6 +8,8 @@ export interface WrapperApi {
   pickFolder: () => Promise<string | null>
   listSessions: () => Promise<SessionMeta[]>
   loadTranscript: (id: string) => Promise<TranscriptMessage[]>
+  targetSession: (id: string | null) => void
+  currentSessionId: () => Promise<string | null>
   sendPrompt: (text: string) => void
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void

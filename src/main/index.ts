@@ -9,6 +9,7 @@ import { listSessions, readTranscript } from './session-store'
 import type { PermissionDecision } from '../shared/engine-types'
 
 let engine: ReturnType<typeof createEngine> | null = null
+let pendingResume: string | null = null
 const permissionBroker = createPermissionBroker()
 const rendererFile = join(__dirname, '../renderer/index.html')
 const rendererUrl = pathToFileURL(rendererFile).href
@@ -102,6 +103,7 @@ ipcMain.handle('session:pick-folder', async (event) => {
   permissionBroker.cancelAll()
   setSessionCwd(filePaths[0])
   engine = makeEngine()
+  pendingResume = null
   return filePaths[0]
 })
 
@@ -115,15 +117,32 @@ ipcMain.handle('session:transcript', async (event, id: string) => {
   return readTranscript(getSessionCwd(), String(id))
 })
 
+ipcMain.on('chat:target', (event, id: unknown) => {
+  if (!isTrustedIpc(event)) return
+  engine?.close()
+  permissionBroker.cancelAll()
+  engine = null
+  pendingResume = typeof id === 'string' && id ? id : null
+})
+
+ipcMain.handle('chat:session-id', (event) => {
+  if (!isTrustedIpc(event)) return null
+  return engine?.sessionId() ?? null
+})
+
 ipcMain.on('chat:send', (event, text: string) => {
   if (!isTrustedIpc(event)) return
   const win = BrowserWindow.fromWebContents(event.sender)
   if (!engine) {
     engine = makeEngine()
   }
-  void engine.runTurn(String(text), (e) => {
-    win?.webContents.send('chat:event', e)
-  })
+  void engine.runTurn(
+    String(text),
+    (e) => {
+      win?.webContents.send('chat:event', e)
+    },
+    pendingResume ?? undefined
+  )
 })
 
 ipcMain.on(

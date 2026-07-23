@@ -8,15 +8,12 @@ import { useChat } from './useChat'
 
 const App = () => {
   const [cwd, setCwd] = useState<string | null>(null)
-  const { messages, busy, send, stop, respondToPermission, replay } = useChat()
+  const { messages, busy, activeSessionId, send, stop, respondToPermission, openSession, newChat } =
+    useChat()
 
   const pickFolder = async (): Promise<void> => {
     const folder = await window.api.pickFolder()
     if (folder) setCwd(folder)
-  }
-
-  const openSession = async (id: string): Promise<void> => {
-    replay(await window.api.loadTranscript(id))
   }
 
   return (
@@ -24,7 +21,7 @@ const App = () => {
       <Titlebar cwd={cwd} />
       {cwd ? (
         <div className="workspace">
-          <Sidebar cwd={cwd} onOpen={openSession} />
+          <Sidebar cwd={cwd} activeId={activeSessionId} onOpen={openSession} onNewChat={newChat} />
           <div className="main-col">
             <Chat
               messages={messages}

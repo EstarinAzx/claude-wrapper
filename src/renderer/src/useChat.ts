@@ -47,6 +47,7 @@ const toChatMessage = (m: TranscriptMessage): ChatMessage => {
 export const useChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [busy, setBusy] = useState(false)
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   // Track the live assistant message id without stale closures on event handlers
   const assistantIdRef = useRef<string | null>(null)
 
@@ -120,6 +121,9 @@ export const useChat = () => {
       } else if (e.type === 'turn-end') {
         assistantIdRef.current = null
         setBusy(false)
+        void window.api.currentSessionId().then((id) => {
+          if (id) setActiveSessionId(id)
+        })
       } else if (e.type === 'error') {
         assistantIdRef.current = null
         setMessages((prev) => [
@@ -164,11 +168,24 @@ export const useChat = () => {
     window.api.stopTurn()
   }, [busy])
 
-  // Replace the pane with a past session's replayed transcript (read-only).
-  const replay = useCallback((transcript: TranscriptMessage[]) => {
+  // Open a past session: replay its transcript (read-only history) and point the
+  // engine at it so the next turn continues in place (resume), not a fork.
+  const openSession = useCallback(async (id: string) => {
+    const transcript = await window.api.loadTranscript(id)
     assistantIdRef.current = null
     setBusy(false)
     setMessages(transcript.map(toChatMessage))
+    setActiveSessionId(id)
+    window.api.targetSession(id)
+  }, [])
+
+  // Start a fresh conversation: clear the pane and drop any resume target.
+  const newChat = useCallback(() => {
+    assistantIdRef.current = null
+    setBusy(false)
+    setMessages([])
+    setActiveSessionId(null)
+    window.api.targetSession(null)
   }, [])
 
   const respondToPermission = useCallback(
@@ -187,5 +204,5 @@ export const useChat = () => {
     []
   )
 
-  return { messages, busy, send, stop, respondToPermission, replay }
+  return { messages, busy, activeSessionId, send, stop, respondToPermission, openSession, newChat }
 }

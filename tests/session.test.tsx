@@ -13,6 +13,8 @@ beforeEach(() => {
     pickFolder,
     listSessions: vi.fn().mockResolvedValue([]),
     loadTranscript: vi.fn().mockResolvedValue([]),
+    targetSession: vi.fn(),
+    currentSessionId: vi.fn().mockResolvedValue(null),
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),

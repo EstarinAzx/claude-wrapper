@@ -10,6 +10,8 @@ beforeEach(() => {
     pickFolder: vi.fn().mockResolvedValue('D:\\projects\\demo'),
     listSessions: vi.fn().mockResolvedValue([]),
     loadTranscript: vi.fn().mockResolvedValue([]),
+    targetSession: vi.fn(),
+    currentSessionId: vi.fn().mockResolvedValue(null),
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),

@@ -18,6 +18,8 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
     pickFolder: vi.fn().mockResolvedValue('D:\\projects\\demo'),
     listSessions,
     loadTranscript,
+    targetSession: vi.fn(),
+    currentSessionId: vi.fn().mockResolvedValue(null),
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),
