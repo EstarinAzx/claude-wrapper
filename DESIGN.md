@@ -49,13 +49,22 @@ One family (Segoe UI Variable, native Win11). Body 15/1.6. UI labels 13. Divider
 - Titlebar: height 48px, full-width drag region (`-webkit-app-region: drag`; controls `no-drag`). Left: 22px mint rounded-square mark + app name 600. Center: session title, `--text-muted`. Right: min / max / close, 40px hit targets, muted glyphs, subtle hover wash (close hovers red-tinted `oklch(0.55 0.16 25 / 0.9)`).
 - User bubble: right-aligned, max-width 60%, `--bubble`, radius `--r-bubble`, padding 12px 16px.
 - Assistant message: no bubble. 28px mint circle avatar left, text beside it; list items use mint en-dash markers.
-- Typing indicator: avatar + three 6px mint dots (static in the shell ticket).
+- Typing indicator: avatar + three 6px mint dots, staggered opacity pulse.
+- Chat scrollbar: thin neutral thumb (10px gutter, 3px transparent inset), transparent track; never Chromium's default bar.
 - Input bar: pill, `--surface`, hairline `--border`, paperclip icon left (muted), placeholder "Message Claude…" in `--text-faint`, 36px mint circular send button right with ↑ in `--mint-ink`.
 - Footer: centered `--fs-micro` `--text-faint` line under the input: "Claude can make mistakes. Verify important information."
 
 ## Motion
 
-Shell ticket ships none beyond 150ms ease-out (cubic-bezier(0.22, 1, 0.36, 1)) hover transitions on window controls and send. No load choreography.
+All transitions 150ms, entries 200ms, ease-out cubic-bezier(0.22, 1, 0.36, 1). The full set, nothing else:
+
+- Message entry (bubbles, assistant text, tool cards, notices): 200ms fade + 4px rise, opacity/transform only.
+- Typing dots: staggered 1.2s opacity pulse (loading state).
+- Send/stop button: hover fill shift, active scale 0.92.
+- Input pill: focus-within hairline brighten.
+- Window controls: hover wash.
+
+All motion conveys state. No load choreography, no layout-property animation. `prefers-reduced-motion: reduce` disables everything.
 
 ## Bans in force
 
