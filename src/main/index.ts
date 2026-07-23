@@ -5,7 +5,7 @@ import { createEngine } from './engine'
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
-import { listSessions } from './session-store'
+import { listSessions, readTranscript } from './session-store'
 import type { PermissionDecision } from '../shared/engine-types'
 
 let engine: ReturnType<typeof createEngine> | null = null
@@ -108,6 +108,11 @@ ipcMain.handle('session:pick-folder', async (event) => {
 ipcMain.handle('session:list', async (event) => {
   if (!isTrustedIpc(event)) return []
   return listSessions(getSessionCwd())
+})
+
+ipcMain.handle('session:transcript', async (event, id: string) => {
+  if (!isTrustedIpc(event)) return []
+  return readTranscript(getSessionCwd(), String(id))
 })
 
 ipcMain.on('chat:send', (event, text: string) => {

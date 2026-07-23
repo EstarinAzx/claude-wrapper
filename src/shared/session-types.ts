@@ -10,3 +10,19 @@ export interface SessionMeta {
   // Count of user + assistant message lines in the transcript.
   messageCount: number
 }
+
+// One replayed message from a parsed session transcript. Mirrors the renderer's
+// ChatMessage user/assistant/tool cases, minus renderer-transient fields (the
+// renderer assigns its own id + permission when it maps these back on replay).
+export type TranscriptMessage =
+  | { role: 'user'; text: string }
+  | { role: 'assistant'; text: string }
+  | {
+      role: 'tool'
+      toolUseId: string
+      name: string
+      input: Record<string, unknown>
+      // Raw tool_result text, or null if the session has no result for it yet.
+      result: string | null
+      isError: boolean
+    }

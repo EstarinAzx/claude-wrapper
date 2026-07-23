@@ -1,5 +1,5 @@
 import type { EngineEvent, PermissionDecision } from '../shared/engine-types'
-import type { SessionMeta } from '../shared/session-types'
+import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 
 export interface WrapperApi {
   minimize: () => void
@@ -7,6 +7,7 @@ export interface WrapperApi {
   close: () => void
   pickFolder: () => Promise<string | null>
   listSessions: () => Promise<SessionMeta[]>
+  loadTranscript: (id: string) => Promise<TranscriptMessage[]>
   sendPrompt: (text: string) => void
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void

@@ -27,7 +27,7 @@ const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
   </svg>
 )
 
-const Sidebar = ({ cwd }: { cwd: string }) => {
+const Sidebar = ({ cwd, onOpen }: { cwd: string; onOpen?: (id: string) => void }) => {
   const [sessions, setSessions] = useState<SessionMeta[]>([])
   const [collapsed, setCollapsed] = useState(false)
 
@@ -82,10 +82,16 @@ const Sidebar = ({ cwd }: { cwd: string }) => {
               .join(' · ')
             return (
               <li key={s.id} className="session-row">
-                <span className="session-row-title" title={label}>
-                  {label}
-                </span>
-                {meta ? <span className="session-row-meta">{meta}</span> : null}
+                <button
+                  type="button"
+                  className="session-row-btn"
+                  onClick={() => onOpen?.(s.id)}
+                >
+                  <span className="session-row-title" title={label}>
+                    {label}
+                  </span>
+                  {meta ? <span className="session-row-meta">{meta}</span> : null}
+                </button>
               </li>
             )
           })}

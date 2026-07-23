@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { EngineEvent, PermissionDecision } from '../../shared/engine-types'
+import type { TranscriptMessage } from '../../shared/session-types'
 import { resultSummary } from './toolSummaries'
 
 export type ChatMessage =
@@ -22,6 +23,25 @@ let nextId = 0
 const uid = (): string => {
   nextId += 1
   return String(nextId)
+}
+
+// Map a parsed transcript message to the renderer's ChatMessage. Tool results
+// are summarised the same way the live tool-result event is, so a replayed
+// tool card reads identically to a live one; historical permission is null.
+const toChatMessage = (m: TranscriptMessage): ChatMessage => {
+  if (m.role === 'tool') {
+    return {
+      id: uid(),
+      role: 'tool',
+      toolUseId: m.toolUseId,
+      name: m.name,
+      input: m.input,
+      result: m.result === null ? null : resultSummary(m.result),
+      isError: m.isError,
+      permission: null
+    }
+  }
+  return { id: uid(), role: m.role, text: m.text }
 }
 
 export const useChat = () => {
@@ -144,6 +164,13 @@ export const useChat = () => {
     window.api.stopTurn()
   }, [busy])
 
+  // Replace the pane with a past session's replayed transcript (read-only).
+  const replay = useCallback((transcript: TranscriptMessage[]) => {
+    assistantIdRef.current = null
+    setBusy(false)
+    setMessages(transcript.map(toChatMessage))
+  }, [])
+
   const respondToPermission = useCallback(
     (toolUseId: string, decision: PermissionDecision) => {
       window.api.respondToPermission(toolUseId, decision)
@@ -160,5 +187,5 @@ export const useChat = () => {
     []
   )
 
-  return { messages, busy, send, stop, respondToPermission }
+  return { messages, busy, send, stop, respondToPermission, replay }
 }

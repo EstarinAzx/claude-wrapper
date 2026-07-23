@@ -1,7 +1,8 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import type { SessionMeta } from '../shared/session-types'
+import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
+import { parseTranscript } from './transcript'
 
 export const encodeCwd = (cwd: string): string => cwd.replace(/[^a-zA-Z0-9]/g, '-')
 
@@ -83,4 +84,21 @@ export const listSessions = async (cwd: string | null): Promise<SessionMeta[]> =
   }
   metas.sort((a, b) => b.lastUpdated - a.lastUpdated)
   return metas
+}
+
+// Read one session's transcript from the native store and parse it to the
+// replay message list. Unreadable/missing file → [] (lenient, like listSessions).
+export const readTranscript = async (
+  cwd: string | null,
+  id: string
+): Promise<TranscriptMessage[]> => {
+  if (!cwd || !id) return []
+  const file = join(homedir(), '.claude', 'projects', encodeCwd(cwd), `${id}.jsonl`)
+  let raw: string
+  try {
+    raw = await readFile(file, 'utf8')
+  } catch {
+    return []
+  }
+  return parseTranscript(raw)
 }

@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { EngineEvent, PermissionDecision } from '../shared/engine-types'
-import type { SessionMeta } from '../shared/session-types'
+import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 
 const api = {
   minimize: (): void => ipcRenderer.send('window:minimize'),
@@ -8,6 +8,8 @@ const api = {
   close: (): void => ipcRenderer.send('window:close'),
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('session:pick-folder'),
   listSessions: (): Promise<SessionMeta[]> => ipcRenderer.invoke('session:list'),
+  loadTranscript: (id: string): Promise<TranscriptMessage[]> =>
+    ipcRenderer.invoke('session:transcript', id),
   sendPrompt: (text: string): void => ipcRenderer.send('chat:send', text),
   stopTurn: (): void => ipcRenderer.send('chat:stop'),
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {
