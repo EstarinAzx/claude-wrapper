@@ -7,16 +7,16 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-23 by Fable 5 (relay leg 7, auto)_
-_At commit: a558efa on main_
+_Last updated: 2026-07-23 by Fable 5 (relay leg 8, auto)_
+_At commit: e103a41 on main_
 
 ## Current focus
 
-Ticket loop running via `/relay N=1` (state: `.claude/relay/relay-leg.md`, body: `.claude/relay-leg.md`). Leg 7 landed #8, the last `ready-for-agent` ticket. **Agent queue is empty**; only #1 (spec umbrella) stays open. Next leg confirms queue-done and stops the chain.
+**Relay chain closed.** Leg 8 confirmed queue empty (only #1, the spec umbrella, remains open) and set `stop: true` in `.claude/relay/relay-leg.md`. No next leg spawned. MVP slices #3–#8 all landed. Remaining work is human-only: the real-SDK manual run (see [[pick-up]]).
 
 ## State
 
-- **In flight:** nothing (leg boundary)
+- **In flight:** nothing (chain closed)
 - **Done this session:** #8 squash-merged as `a558efa`: CSS-only Frost Mono polish through impeccable. Markdown ul gets mint en-dash markers (ol markers mint via `::marker`), typing dots pulse with 150ms stagger, messages/tool cards enter with 200ms fade + 4px rise, send/stop press scale 0.92, input pill focus-within hairline brighten, thin neutral chat scrollbar, `prefers-reduced-motion` guard. Dead `.assistant-list` CSS deleted. DESIGN.md motion/layout synced. No TSX changes; 75/75 tests, typecheck, build green.
 - **Blocked:** nothing
 
