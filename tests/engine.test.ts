@@ -287,6 +287,30 @@ describe('engine', () => {
     expect(events[events.length - 1]).toEqual({ type: 'error', message: TURN_FAILED })
   })
 
+  // SDKResultSuccess allows is_error: true with subtype: 'success' (sdk.d.ts).
+  // Discriminator is subtype — is_error alone must not paint a bare "success" error card.
+  test('subtype success ends the turn even when is_error is true', async () => {
+    const oddSuccess: SdkMessage = {
+      type: 'result',
+      subtype: 'success',
+      session_id: 'sess-1',
+      is_error: true,
+      result: 'full text'
+    }
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(delta('hi back'))
+    push(oddSuccess)
+    const events = await turn
+    expect(events).toEqual([
+      { type: 'text-delta', text: 'hi back' },
+      { type: 'turn-end' }
+    ])
+  })
+
   test('max-turns result maps to a legible error event', async () => {
     const errorResult: SdkMessage = {
       type: 'result',

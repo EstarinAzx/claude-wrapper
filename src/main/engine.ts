@@ -243,13 +243,14 @@ export const createEngine = (
     } else if (msg.type === 'result') {
       if (interrupting) {
         emit({ type: 'turn-aborted' })
-      } else if (msg.is_error || msg.subtype !== 'success') {
+      } else if (msg.subtype === 'success') {
+        // subtype is the discriminator — SDKResultSuccess can carry is_error: true
+        emit({ type: 'turn-end' })
+      } else {
         emit({
           type: 'error',
           message: mapResultError(String(msg.subtype ?? 'error'))
         })
-      } else {
-        emit({ type: 'turn-end' })
       }
       finishTurn()
     }
