@@ -9,18 +9,16 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**Last leg landed:** #7 (Stop button + legible failure) — squash-merged to main as `bb63e0d`, ticket closed with breadcrumb.
+**Last leg landed:** #8 (Frost Mono polish pass) — squash-merged to main as `a558efa`, ticket closed with breadcrumb. CSS-only; DESIGN.md synced.
 
-**Next ticket:** #8 — Frost Mono polish pass (last open `ready-for-agent`; after it the agent queue is empty — #1 is the spec umbrella, not a work ticket).
+**Next ticket:** queue empty. No open `ready-for-agent` issues remain; #1 (spec umbrella) is the only open issue and is not a work ticket. The relay chain's next leg should confirm this and stop.
 
-**Landmines:**
-- #8 is a design pass: route through impeccable (gates already pass: PRODUCT.md + DESIGN.md real, register `product`). Reference is `docs/design/frost-mono-reference.png`; DESIGN.md is law (bans: side-stripes, gradient text, extra glass layers, card grids, em dashes).
-- Mint accent budget is fully spent (logo, avatar, send/stop slot, list markers, typing dots). Polish adds zero new accent.
-- The send button now morphs to Stop while busy (`InputBar.tsx`) — any send-button polish must handle both states; Stop stays enabled while the input is disabled.
-- `turn-aborted` renders `.msg-notice` ("Stopped", centered, `--text-faint`) — distinct from `.msg-error`; keep the distinction.
-- "No regressions" AC = the existing 75-test suite stays green; renderer tests pin aria-labels ("Send"/"Stop"/"Allow"/"Deny"), placeholder "Message Claude…", `.msg-notice` class, "Cancelled"/"Denied" strings. Don't rename those in polish.
-- Motion rules: 150–250ms, ease-out (cubic-bezier(0.22, 1, 0.36, 1)), no layout-property animation, no load choreography.
-- Legible-error copy in `src/main/engine.ts` is pinned character-for-character by `tests/engine.test.ts` — don't reword casually.
-- Real-SDK manual run still pending (see Open questions in `active-work.md`).
+**Leftovers for a human:**
+- Real-SDK manual run (`npm run dev` with a live CLI login): verify auth shapes, streamed deltas, real permission prompts, real interrupt subtype, and #8's polish side-by-side with `docs/design/frost-mono-reference.png`.
+
+**Landmines (for any future ticket):**
+- Renderer tests pin aria-labels ("Send"/"Stop"/"Allow"/"Deny"/"Typing"), placeholder "Message Claude…", `.msg-notice` class, "Cancelled"/"Denied" strings, footer disclaimer text.
+- Legible-error copy in `src/main/engine.ts` is pinned character-for-character by `tests/engine.test.ts`.
+- Mint accent budget fully spent (logo, avatar, send/stop slot, list markers, typing dots); DESIGN.md motion section is now the sanctioned motion set.
 - Fresh `npm install` may skip Electron's postinstall: `npm run dev` fails with "Error: Electron uninstall". Fix: `node node_modules/electron/install.js`.
 - `vite` stays `^7`, `@vitejs/plugin-react` `^5`, TypeScript pinned exact `7.0.2` — don't bump any of them.
