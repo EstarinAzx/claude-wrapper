@@ -7,33 +7,33 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-23 by Fable 5 (relay leg 5, auto)_
-_At commit: 5206ee1 on main_
+_Last updated: 2026-07-23 by Fable 5 (relay leg 6, auto)_
+_At commit: bb63e0d on main_
 
 ## Current focus
-Ticket loop running via `/relay N=1` (state: `.claude/relay/relay-leg.md`, body: `.claude/relay-leg.md`). Leg 5 landed #6; queue continues at #7.
+Ticket loop running via `/relay N=1` (state: `.claude/relay/relay-leg.md`, body: `.claude/relay-leg.md`). Leg 6 landed #7; queue continues at #8 (last agent ticket).
 
 ## State
 - **In flight:** nothing (leg boundary)
-- **Done this session:** #6 squash-merged as `5206ee1`: engine swapped to one long-lived streaming-input SDK query with `canUseTool`; permission requests render Allow/Deny on the existing tool card (upsert by `toolUseId`); responses flow preload → IPC → main permission broker; deny returns `interrupt:false` so the turn continues. Also: IPC sender/navigation trust checks, engine terminal-on-stream-death, queue end on close. Tests: 64 across 10 files.
+- **Done this session:** #7 squash-merged as `bb63e0d`: engine `interrupt()` on the long-lived streaming query; post-interrupt result (any subtype) maps to `turn-aborted`, rendered as a quiet centered `Stopped` notice (`.msg-notice`), not an error; send button morphs in place to an enabled Stop while busy; `chat:stop` IPC (isTrustedIpc-gated) also `cancelAll()`s pending permissions so `canUseTool` never parks; legible error copy for ENOENT / signed-out CLI / `error_max_turns` / `error_during_execution` / idle stream end. Tests: 75 across 12 files.
 - **Blocked:** nothing
 
 ## Pick up here
-See [[pick-up]] — next frontier is issue #7 (Stop button + legible failure), unblocked. #8 (Frost Mono polish) is blocked by #7.
+See [[pick-up]] — next frontier is issue #8 (Frost Mono polish pass), unblocked. After #8 the agent queue is empty (only #1, the spec umbrella, stays open).
 
 ## Skills for next session
-- superpowers TDD — fake-engine interrupt tests before wiring `Query.interrupt()`
-- wisp-slot — bind `haiku` to `xai/grok-4.5` for bounded grunt implementation, restore after agents finish
-- impeccable — Stop button joins the input bar slice; Frost Mono, accent budget already spent on send
+- impeccable — #8 is the design pass itself; PRODUCT.md/DESIGN.md gates already pass, register: product, reference `docs/design/frost-mono-reference.png`
+- wisp-slot — optional for grunt slices; leg 6 pattern (bind `haiku` → `xai/grok-4.5`, restore after agents finish) worked cleanly
+- superpowers TDD — #8's "no regressions" AC leans on the existing 75-test suite; new behavior (motion, indicators) still gets tests first where testable
 
 ## Open questions
-- Real-SDK manual run still unverified (needs a human at `npm run dev`): CLI-login auth, streamed deltas, real permission prompt shapes, gated-tool end-to-end.
+- Real-SDK manual run still unverified (needs a human at `npm run dev`): CLI-login auth shapes, streamed deltas, real permission prompts, real interrupt result subtype. Engine's auth-error copy is pattern-matched best effort until then.
 
 ## Recent context
-- Engine now holds the live `Query` (`currentQuery` in `src/main/engine.ts`) — #7's `interrupt()` is a small addition, but `runTurn` rejects overlapping turns, so Stop must resolve the active turn cleanly.
-- Dead stream = terminal engine by decision [[2026-07-23-engine-terminal-on-stream-death]]; recovery is a fresh engine via folder pick.
-- Permission machinery: `src/main/permission-broker.ts` (pending map, abort→deny, cancelAll), `src/main/navigation.ts` (renderer URL trust), `chat:permission-response` IPC gated by `isTrustedIpc`.
-- Tool cards: permission state lives on the tool message (`permission: 'pending' | 'denied' | null`); terminal error cancels unresolved cards ('Cancelled'); denied cards ignore the follow-up denial tool-result.
+- Engine event vocabulary now: text-delta / tool-use / tool-result / permission-request / turn-end / turn-aborted / error (`src/shared/engine-types.ts`); `Engine.interrupt()` is part of the interface.
+- Interrupt design: `interrupting` flag set in `interrupt()`, consumed on the next `result` message regardless of subtype, reset in `finishTurn` so stream death can't leak it. Same query keeps serving later turns; terminal-on-stream-death decision unchanged ([[2026-07-23-engine-terminal-on-stream-death]]).
+- Legible-failure copy lives in `src/main/engine.ts` (`mapStreamError` / `mapResultError`) and is pinned character-for-character by `tests/engine.test.ts`.
+- Mint accent budget (send/stop slot, logo, avatar, list markers, typing dots) is fully spent — #8 must polish within it, not add accent.
 - Gate for every leg remains `npm run typecheck` + `npm test` + `npm run build`.
 
 ## Related
