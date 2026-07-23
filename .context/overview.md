@@ -13,7 +13,7 @@ tags: [context, overview]
 ## Layout
 - `src/main/` — Electron main process (window creation, acrylic config, IPC handlers)
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
-- `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens)
+- `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS)
 - `tests/` — vitest + testing-library shell tests (jsdom, `vitest.config.ts`)
 - `DESIGN.md` / `PRODUCT.md` — Frost Mono design system + product context (impeccable reads these)
 - `docs/design/frost-mono-reference.png` — canonical visual reference

@@ -10,6 +10,9 @@ tags: [context, decisions]
 Settled questions. One file per decision in `decisions/`. Newest first.
 
 <!-- one line per entry, newest at top -->
+- [[2026-07-23-tailwind4-tokens]] — Tailwind 4 adopted; OKLCH tokens in `@theme`, preflight off, legacy `:root` aliases
+- [[2026-07-23-permission-inherits-host]] — wrapper inherits host Claude Code permissions by design (no Allow/Deny card under host bypassPermissions)
+- [[2026-07-23-persistent-glass-deferred]] — acrylic-on-blur flip left as Win11 default; persistence deferred (native-dep vs Mica trade-off)
 - [[2026-07-23-engine-terminal-on-stream-death]] — dead streaming query is terminal; recovery = new engine via folder pick
 - [[2026-07-23-engine-per-turn-resume]] — engine MVP per-turn query+resume; streaming input deferred to #6/#7 (superseded by #6: streaming input landed)
 - [[2026-07-23-bg-isolation-none]] — background legs edit the shared checkout (worktree.bgIsolation none)

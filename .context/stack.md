@@ -14,6 +14,7 @@ tags: [context, stack]
 
 ## Frameworks
 - React 19 renderer, electron-vite 5 build (vite pinned `^7` — electron-vite 5 peers ^5–^7, vite 8 breaks; `@vitejs/plugin-react` `^5` to match)
+- Tailwind 4 (`tailwindcss` + `@tailwindcss/vite`, renderer plugin only). Tokens in a `@theme` block in `styles.css`; preflight off; legacy `:root` aliases keep component CSS unchanged (see [[2026-07-23-tailwind4-tokens]])
 - vitest 4 + @testing-library/react + jsdom for the shell tests
 
 ## Key libraries
