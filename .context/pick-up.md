@@ -27,6 +27,15 @@ Start: read `.context/overview.md` + `active-work.md`.
   [[2026-07-24-click-flip-backend-toggle]]. Gate green: typecheck · **137/137** ·
   build.
 
+**Also landed (interactive, post-chain) — permission-mode toggle (`16b0884`):**
+a second titlebar pill cycles **Bypass → Accept Edits → Ask**, pinning
+`permissionMode` into SDK query options (`src/main/permission-mode.ts`, default
+**bypass**). Guarded IPC `permission:set-mode` rebuilds the engine but resumes
+the current session (conversation kept, unlike a backend flip). Reverses
+[[2026-07-23-permission-inherits-host]] → [[2026-07-24-in-app-permission-mode-toggle]].
+⚠️ **Default bypass = auto-run every tool, no confirmation.** Gate green
+(153/153).
+
 **Next unblocked `ready-for-agent` ticket:** none — **queue empty.** The only
 open issue is **#1** (original MVP umbrella spec, unlabelled), which is not
 agent-ready. New work needs a fresh spec.

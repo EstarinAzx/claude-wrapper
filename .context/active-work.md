@@ -7,12 +7,31 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-24, relay `ticket-loop` leg 3 (final)_
-_At commit: 0660ce6 on main_
+_Last updated: 2026-07-24, interactive session (post-spec-#16 follow-up)_
+_At commit: 16b0884 on main_
 
 ## Current focus
 
-**None active.** The **spec #16** batch (Native ⇄ Wisped backend toggle) is
+**None active.**
+
+## Done (interactive, post-chain) — permission-mode toggle (`16b0884`)
+
+Owner-requested: a **second titlebar pill** cycles **Bypass → Accept Edits →
+Ask**, pinning `permissionMode` into the SDK query options. New
+`src/main/permission-mode.ts` (in-memory, **default `bypassPermissions`**) + pure
+`toPermissionOptions` (bypass adds `allowDangerouslySkipPermissions`). Engine
+gained a 5th injected getter `getPermissionOptions` (mirrors `getEnv`); guarded
+IPC `permission:set-mode` rebuilds the engine but **resumes the current session**
+(`pendingResume`) so the conversation is kept — unlike a backend flip. Pill
+disabled while `busy`; **Bypass carries a danger tint**. **Reverses**
+[[2026-07-23-permission-inherits-host]] → see
+[[2026-07-24-in-app-permission-mode-toggle]]. Gate green: typecheck · **153/153**
+· build.
+
+⚠️ **Landmine — default bypass:** the app now auto-runs every tool (Bash writes/
+deletes/network, edits) with **no confirmation** by default, whole session, until
+the user cycles to Ask/Accept Edits. Deliberate owner choice. Not host-inherited
+anymore. The **spec #16** batch (Native ⇄ Wisped backend toggle) is
 fully delivered and the spec is closed. The `ticket-loop` relay chain drained
 its queue one ticket per leg (legs 1–3: **#17 → #18 → #19**) and has signalled
 `stop: true` — no leg 4. Nothing is queued for an agent. (Spec #9 —
