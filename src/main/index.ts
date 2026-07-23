@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createEngine } from './engine'
-import { initBackendMode, getSpawnEnv } from './backend-mode'
+import { initBackendMode, getSpawnEnv, getBackendMode, isWispedAvailable } from './backend-mode'
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
@@ -136,6 +136,13 @@ ipcMain.on('chat:target', (event, id: unknown) => {
 ipcMain.handle('chat:session-id', (event) => {
   if (!isTrustedIpc(event)) return null
   return engine?.sessionId() ?? null
+})
+
+// Read-only: the renderer pill asks which backend the app launched against.
+// Carries the mode enum + availability flag only — never the proxy secret.
+ipcMain.handle('backend:mode', (event) => {
+  if (!isTrustedIpc(event)) return { mode: 'native', wispedAvailable: false }
+  return { mode: getBackendMode(), wispedAvailable: isWispedAvailable() }
 })
 
 ipcMain.on('chat:send', (event, text: string) => {

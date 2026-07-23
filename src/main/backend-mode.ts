@@ -3,7 +3,8 @@
 // The wisp values are snapshotted from the launch env — the app never derives
 // the proxy endpoint or token any other way, and never persists them.
 
-export type BackendMode = 'native' | 'wisped'
+import type { BackendMode } from '../shared/backend-types'
+export type { BackendMode }
 
 // The launch-env vars that constitute "wisped": the proxy endpoint, its token,
 // and the gateway model-discovery flag. ANTHROPIC_BASE_URL is the load-bearing

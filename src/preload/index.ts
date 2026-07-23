@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { EngineEvent, PermissionDecision } from '../shared/engine-types'
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
+import type { BackendInfo } from '../shared/backend-types'
 
 const api = {
   minimize: (): void => ipcRenderer.send('window:minimize'),
@@ -12,6 +13,7 @@ const api = {
     ipcRenderer.invoke('session:transcript', id),
   targetSession: (id: string | null): void => ipcRenderer.send('chat:target', id),
   currentSessionId: (): Promise<string | null> => ipcRenderer.invoke('chat:session-id'),
+  backendMode: (): Promise<BackendInfo> => ipcRenderer.invoke('backend:mode'),
   sendPrompt: (text: string): void => ipcRenderer.send('chat:send', text),
   stopTurn: (): void => ipcRenderer.send('chat:stop'),
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {

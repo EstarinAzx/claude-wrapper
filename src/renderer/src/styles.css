@@ -129,6 +129,26 @@ body {
   white-space: nowrap;
 }
 
+/* read-only backend indicator: reflects launch mode (native vs wisped) */
+.backend-pill {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+
+.backend-pill--wisped {
+  border-color: transparent;
+  background: var(--mint);
+  color: var(--mint-ink);
+}
+
 .titlebar-center {
   position: absolute;
   left: 50%;

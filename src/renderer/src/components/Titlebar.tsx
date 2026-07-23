@@ -1,10 +1,36 @@
+import type { BackendInfo } from '../../../shared/backend-types'
+
 const basename = (p: string): string => p.split(/[\\/]/).filter(Boolean).pop() ?? p
 
-const Titlebar = ({ cwd }: { cwd: string | null }) => (
+const BackendPill = ({ backend }: { backend: BackendInfo }) => {
+  const wisped = backend.mode === 'wisped'
+  const label = wisped ? 'Wisped' : 'Native'
+  const title = backend.wispedAvailable
+    ? `Backend: ${label}`
+    : 'Launched without Wisp routing — native only'
+  return (
+    <span
+      className={`backend-pill${wisped ? ' backend-pill--wisped' : ''}`}
+      aria-label="Backend mode"
+      title={title}
+    >
+      {label}
+    </span>
+  )
+}
+
+const Titlebar = ({
+  cwd,
+  backend
+}: {
+  cwd: string | null
+  backend: BackendInfo | null
+}) => (
   <header className="titlebar">
     <div className="titlebar-left">
       <span className="logo-mark" aria-hidden="true" />
       <span className="app-name">Claude Wrapper</span>
+      {backend && <BackendPill backend={backend} />}
     </div>
     <div className="titlebar-center">
       {cwd ? (

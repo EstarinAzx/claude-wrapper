@@ -15,6 +15,7 @@ beforeEach(() => {
     loadTranscript: vi.fn().mockResolvedValue([]),
     targetSession: vi.fn(),
     currentSessionId: vi.fn().mockResolvedValue(null),
+    backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),
