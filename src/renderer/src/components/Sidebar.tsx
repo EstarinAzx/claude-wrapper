@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SessionMeta } from '../../../shared/session-types'
 
 const relTime = (ms: number): string => {
@@ -30,26 +30,35 @@ const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
 const Sidebar = ({
   cwd,
   activeId,
+  busy,
   onOpen,
   onNewChat
 }: {
   cwd: string
   activeId?: string | null
+  busy?: boolean
   onOpen?: (id: string) => void
   onNewChat?: () => void
 }) => {
   const [sessions, setSessions] = useState<SessionMeta[]>([])
   const [collapsed, setCollapsed] = useState(false)
+  const reqIdRef = useRef(0)
+
+  const refresh = useCallback(() => {
+    const reqId = ++reqIdRef.current
+    void window.api.listSessions().then((list) => {
+      if (reqId === reqIdRef.current) setSessions(list)
+    })
+  }, [])
 
   useEffect(() => {
-    let live = true
-    void window.api.listSessions().then((list) => {
-      if (live) setSessions(list)
-    })
-    return () => {
-      live = false
-    }
-  }, [cwd, activeId])
+    refresh()
+  }, [cwd, activeId, refresh])
+
+  useEffect(() => {
+    window.addEventListener('focus', refresh)
+    return () => window.removeEventListener('focus', refresh)
+  }, [refresh])
 
   if (collapsed) {
     return (
@@ -75,7 +84,32 @@ const Sidebar = ({
           <button
             type="button"
             className="sidebar-toggle"
+            aria-label="Refresh sessions"
+            onClick={refresh}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path
+                d="M11.5 7a4.5 4.5 0 1 1-1.3-3.2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+              <path
+                d="M11.5 2v2.2H9.3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="sidebar-toggle"
             aria-label="New chat"
+            disabled={busy}
             onClick={() => onNewChat?.()}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
@@ -115,6 +149,7 @@ const Sidebar = ({
                   type="button"
                   className={active ? 'session-row-btn session-row-btn-active' : 'session-row-btn'}
                   aria-current={active ? 'true' : undefined}
+                  disabled={busy}
                   onClick={() => onOpen?.(s.id)}
                 >
                   <span className="session-row-title" title={label}>

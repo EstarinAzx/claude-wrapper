@@ -171,22 +171,24 @@ export const useChat = () => {
   // Open a past session: replay its transcript (read-only history) and point the
   // engine at it so the next turn continues in place (resume), not a fork.
   const openSession = useCallback(async (id: string) => {
+    if (busy) return
     const transcript = await window.api.loadTranscript(id)
     assistantIdRef.current = null
     setBusy(false)
     setMessages(transcript.map(toChatMessage))
     setActiveSessionId(id)
     window.api.targetSession(id)
-  }, [])
+  }, [busy])
 
   // Start a fresh conversation: clear the pane and drop any resume target.
   const newChat = useCallback(() => {
+    if (busy) return
     assistantIdRef.current = null
     setBusy(false)
     setMessages([])
     setActiveSessionId(null)
     window.api.targetSession(null)
-  }, [])
+  }, [busy])
 
   const respondToPermission = useCallback(
     (toolUseId: string, decision: PermissionDecision) => {

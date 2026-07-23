@@ -21,7 +21,7 @@ const App = () => {
       <Titlebar cwd={cwd} />
       {cwd ? (
         <div className="workspace">
-          <Sidebar cwd={cwd} activeId={activeSessionId} onOpen={openSession} onNewChat={newChat} />
+          <Sidebar cwd={cwd} activeId={activeSessionId} busy={busy} onOpen={openSession} onNewChat={newChat} />
           <div className="main-col">
             <Chat
               messages={messages}

@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach, vi, type Mock } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import App from '../src/renderer/src/App'
 import type { SessionMeta, TranscriptMessage } from '../src/shared/session-types'
 
@@ -95,5 +95,29 @@ describe('session sidebar', () => {
     // Tool card renders as in the live chat (name + summarised result).
     expect(screen.getByText('Read')).toBeTruthy()
     expect(screen.getByText('ok')).toBeTruthy()
+  })
+
+  test('refreshes the session list on window focus', async () => {
+    setup([])
+    listSessions.mockResolvedValueOnce([]).mockResolvedValue([
+      { id: 'ext-1', title: 'External chat', lastUpdated: 3000, messageCount: 1 }
+    ])
+    await startSession()
+    expect(await screen.findByText('No sessions yet')).toBeTruthy()
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+    })
+    expect(await screen.findByText('External chat')).toBeTruthy()
+  })
+
+  test('the manual Refresh control refetches the session list', async () => {
+    setup([])
+    listSessions.mockResolvedValueOnce([]).mockResolvedValue([
+      { id: 'ext-2', title: 'Reloaded chat', lastUpdated: 3000, messageCount: 1 }
+    ])
+    await startSession()
+    expect(await screen.findByText('No sessions yet')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh sessions' }))
+    expect(await screen.findByText('Reloaded chat')).toBeTruthy()
   })
 })
