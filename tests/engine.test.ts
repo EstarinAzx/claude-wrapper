@@ -725,6 +725,39 @@ describe('engine session id + resume', () => {
   })
 })
 
+describe('engine permission options', () => {
+  test('spreads injected permission options into query options', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(
+      () => 'D:\\proj',
+      autoAllow(),
+      fn,
+      () => process.env,
+      () => ({ permissionMode: 'bypassPermissions', allowDangerouslySkipPermissions: true })
+    )
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options).toMatchObject({
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true
+    })
+  })
+
+  test('no permission options injected → options carry no permissionMode', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options).not.toHaveProperty('permissionMode')
+    // canUseTool stays wired regardless of mode
+    expect(typeof calls[0].options.canUseTool).toBe('function')
+  })
+})
+
 describe('engine backend env', () => {
   test('passes the resolved env from getEnv straight into query options.env', async () => {
     const wispedEnv = { PATH: '/bin', ANTHROPIC_BASE_URL: 'http://127.0.0.1:41184' }

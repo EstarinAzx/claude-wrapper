@@ -144,7 +144,11 @@ export const createEngine = (
   getCwd: () => string | null,
   requestPermission: RequestPermissionFn,
   queryFn: QueryFn = defaultQuery,
-  getEnv: () => NodeJS.ProcessEnv = () => process.env
+  getEnv: () => NodeJS.ProcessEnv = () => process.env,
+  // Extra query options for the active permission mode (permissionMode + the
+  // bypass danger flag). Injected like getEnv so the engine stays decoupled
+  // from the permission-mode store. Empty by default → SDK default behaviour.
+  getPermissionOptions: () => Record<string, unknown> = () => ({})
 ): Engine & { close(): void } => {
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
@@ -304,7 +308,10 @@ export const createEngine = (
       canUseTool,
       // options.env REPLACES the child env wholesale (see sdk.d.ts). getEnv
       // returns the full env resolved for the active backend mode.
-      env: getEnv()
+      env: getEnv(),
+      // permissionMode (+ bypass danger flag) for the active permission mode.
+      // canUseTool stays wired above — the SDK only invokes it when the mode asks.
+      ...getPermissionOptions()
     }
     // ponytail: resume binds at query construction; the streaming query is built
     // once and cached, so resume only takes effect on the query-building turn.

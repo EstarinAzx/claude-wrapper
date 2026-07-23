@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { EngineEvent, PermissionDecision } from '../shared/engine-types'
+import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 
@@ -20,6 +20,16 @@ const api = {
     ipcRenderer.on('backend:changed', listener)
     return () => {
       ipcRenderer.removeListener('backend:changed', listener)
+    }
+  },
+  permissionMode: (): Promise<PermissionMode> => ipcRenderer.invoke('permission:mode'),
+  setPermissionMode: (mode: PermissionMode): void =>
+    ipcRenderer.send('permission:set-mode', mode),
+  onPermissionChanged: (cb: (mode: PermissionMode) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, mode: PermissionMode): void => cb(mode)
+    ipcRenderer.on('permission:changed', listener)
+    return () => {
+      ipcRenderer.removeListener('permission:changed', listener)
     }
   },
   sendPrompt: (text: string): void => ipcRenderer.send('chat:send', text),

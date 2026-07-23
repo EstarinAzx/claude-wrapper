@@ -1,4 +1,4 @@
-import type { EngineEvent, PermissionDecision } from '../shared/engine-types'
+import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 
@@ -14,6 +14,9 @@ export interface WrapperApi {
   backendMode: () => Promise<BackendInfo>
   setBackendMode: (mode: BackendMode) => void
   onBackendChanged: (cb: (info: BackendInfo) => void) => () => void
+  permissionMode: () => Promise<PermissionMode>
+  setPermissionMode: (mode: PermissionMode) => void
+  onPermissionChanged: (cb: (mode: PermissionMode) => void) => () => void
   sendPrompt: (text: string) => void
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void

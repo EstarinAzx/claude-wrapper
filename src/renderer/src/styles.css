@@ -129,9 +129,10 @@ body {
   white-space: nowrap;
 }
 
-/* backend indicator + toggle: reflects the live mode (native vs wisped) and,
-   when wisp routing is available, flips it on click */
-.backend-pill {
+/* titlebar toggles: backend indicator (native vs wisped) + permission mode.
+   Both share the pill shell; each carries its own accent variant. */
+.backend-pill,
+.perm-pill {
   flex-shrink: 0;
   padding: 2px 9px;
   border-radius: var(--r-pill);
@@ -148,11 +149,13 @@ body {
   -webkit-app-region: no-drag;
 }
 
-.backend-pill:not(:disabled) {
+.backend-pill:not(:disabled),
+.perm-pill:not(:disabled) {
   cursor: pointer;
 }
 
-.backend-pill:not(:disabled):hover {
+.backend-pill:not(:disabled):hover,
+.perm-pill:not(:disabled):hover {
   filter: brightness(1.12);
 }
 
@@ -160,6 +163,14 @@ body {
   border-color: transparent;
   background: var(--mint);
   color: var(--mint-ink);
+}
+
+/* Bypass = auto-run every tool, no prompt. Danger tint (error hue) so the
+   live-fire mode is never ambiguous; Accept Edits / Ask stay neutral. */
+.perm-pill--bypass {
+  border-color: oklch(0.55 0.12 25 / 0.45);
+  background: oklch(0.35 0.06 25 / 0.35);
+  color: oklch(0.82 0.09 25);
 }
 
 .titlebar-center {

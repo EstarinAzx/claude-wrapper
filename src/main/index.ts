@@ -9,6 +9,7 @@ import {
   setBackendMode,
   isWispedAvailable
 } from './backend-mode'
+import { getPermissionMode, setPermissionMode, toPermissionOptions } from './permission-mode'
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
@@ -30,7 +31,8 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
     getSessionCwd,
     ({ toolUseId, signal }) => permissionBroker.request({ toolUseId, signal }),
     undefined,
-    () => getSpawnEnv(process.env)
+    () => getSpawnEnv(process.env),
+    () => toPermissionOptions(getPermissionMode())
   )
 
 const isTrustedIpc = (
@@ -172,6 +174,31 @@ ipcMain.on('backend:set-mode', (event, mode: unknown) => {
     mode: getBackendMode(),
     wispedAvailable: isWispedAvailable()
   })
+})
+
+// Read-only: the renderer pill asks the current in-app permission mode.
+ipcMain.handle('permission:mode', (event) => {
+  if (!isTrustedIpc(event)) return 'default'
+  return getPermissionMode()
+})
+
+// Guarded write: change how the next turn's tool calls are approved
+// (bypassPermissions / acceptEdits / default). Rebuilds the engine so the new
+// mode binds at query construction — but PRESERVES the conversation by resuming
+// the current session id, unlike a backend flip which starts fresh. The pill is
+// disabled while a turn streams (renderer), so this never lands mid-stream.
+// Broadcasts the resolved mode so the pill re-renders.
+ipcMain.on('permission:set-mode', (event, mode: unknown) => {
+  if (!isTrustedIpc(event)) return
+  if (mode !== 'bypassPermissions' && mode !== 'acceptEdits' && mode !== 'default') return
+  setPermissionMode(mode)
+  const resume = engine?.sessionId() ?? pendingResume
+  engine?.close()
+  permissionBroker.cancelAll()
+  engine = null
+  pendingResume = resume
+  const win = BrowserWindow.fromWebContents(event.sender)
+  win?.webContents.send('permission:changed', getPermissionMode())
 })
 
 ipcMain.on('chat:send', (event, text: string) => {

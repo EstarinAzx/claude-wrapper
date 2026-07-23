@@ -1,6 +1,48 @@
 import type { BackendInfo, BackendMode } from '../../../shared/backend-types'
+import type { PermissionMode } from '../../../shared/engine-types'
 
 const basename = (p: string): string => p.split(/[\\/]/).filter(Boolean).pop() ?? p
+
+const PERM_LABEL: Record<PermissionMode, string> = {
+  bypassPermissions: 'Bypass',
+  acceptEdits: 'Accept Edits',
+  default: 'Ask'
+}
+// Click cycles Bypass → Accept Edits → Ask → Bypass.
+const PERM_NEXT: Record<PermissionMode, PermissionMode> = {
+  bypassPermissions: 'acceptEdits',
+  acceptEdits: 'default',
+  default: 'bypassPermissions'
+}
+
+const PermissionPill = ({
+  mode,
+  busy,
+  onCycle
+}: {
+  mode: PermissionMode
+  busy: boolean
+  onCycle?: (next: PermissionMode) => void
+}) => {
+  const bypass = mode === 'bypassPermissions'
+  const canCycle = !busy && !!onCycle
+  const next = PERM_NEXT[mode]
+  const title = canCycle
+    ? `Permissions: ${PERM_LABEL[mode]} — click for ${PERM_LABEL[next]}`
+    : `Permissions: ${PERM_LABEL[mode]}`
+  return (
+    <button
+      type="button"
+      className={`perm-pill${bypass ? ' perm-pill--bypass' : ''}`}
+      aria-label="Permission mode"
+      title={title}
+      disabled={!canCycle}
+      onClick={() => onCycle?.(next)}
+    >
+      {PERM_LABEL[mode]}
+    </button>
+  )
+}
 
 const BackendPill = ({
   backend,
@@ -39,19 +81,26 @@ const BackendPill = ({
 const Titlebar = ({
   cwd,
   backend,
+  permission,
   busy = false,
-  onFlip
+  onFlip,
+  onCyclePermission
 }: {
   cwd: string | null
   backend: BackendInfo | null
+  permission?: PermissionMode | null
   busy?: boolean
   onFlip?: (target: BackendMode) => void
+  onCyclePermission?: (next: PermissionMode) => void
 }) => (
   <header className="titlebar">
     <div className="titlebar-left">
       <span className="logo-mark" aria-hidden="true" />
       <span className="app-name">Claude Wrapper</span>
       {backend && <BackendPill backend={backend} busy={busy} onFlip={onFlip} />}
+      {permission && (
+        <PermissionPill mode={permission} busy={busy} onCycle={onCyclePermission} />
+      )}
     </div>
     <div className="titlebar-center">
       {cwd ? (
