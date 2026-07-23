@@ -9,26 +9,23 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-> **Queue empty — relay chain finished.** The `relay-leg` chain drained the
-> spec #9 batch (legs 1–5: #10 → #11 → #12 → #13 → #14) and signalled
-> `stop: true`; there is no leg 6 and nothing is running in the background. Spec
-> #9 is closed. Do **not** restart the chain — there is no ticket for it to pick.
+> **Queue empty — relay chain finished.** The `ticket-loop` chain drained the
+> spec #16 batch (legs 1–3: #17 → #18 → #19) and signalled `stop: true`; there
+> is no leg 4 and nothing is running in the background. Spec #16 is closed. Do
+> **not** restart the chain — there is no ticket for it to pick. (Spec #9 —
+> session history, tickets #10–#14 — was closed earlier.)
 
-**This leg landed #14 (`80591fb`)** — refresh + busy-switch polish, renderer-only:
-- Sidebar refreshes on window focus + a manual **Refresh sessions** button
-  (stale-drop via a monotonic request-id ref); external-terminal sessions now
-  appear without an app restart.
-- Mid-stream switching is **blocked**: session rows + New chat are `disabled`
-  while `busy`, and `useChat.openSession`/`newChat` guard on `busy` — no
-  half-streamed answer can leak into another pane. Stop is the escape hatch. See
-  [[2026-07-23-busy-switch-block-not-detach]].
-- Gate green: typecheck · **109/109** · build.
-
-**Also landed (interactive, post-chain) — #15 (`31e7910`):** the visible
-busy-state affordance #14 lacked. Disabled session rows + New chat now dim to
-0.55 + `pointer-events: none` while a turn streams (active mint bar stays,
-dimmed); head glyph gap 2px→4px. CSS-only, via impeccable/polish vs Frost Mono;
-closed the #11 sidebar-eyeball loose end. Gate green (109/109).
+**This leg landed #19 (`0660ce6`)** — click-to-flip backend toggle:
+- Titlebar pill → `<button>`; clicking flips the backend via new guarded IPC
+  **`backend:set-mode`**, which reuses the `chat:target` teardown and clears the
+  resume target so the flip is a **fresh chat**. `wisped` is refused when the
+  launch env lacked wisp routing (native-lock).
+- Main **broadcasts `backend:changed`**; `App` subscribes on mount and the pill
+  re-renders from the broadcast. The lazy `chat:send` rebuilds the engine → next
+  turn spawns against the new mode via the #17 resolver.
+- Pill `disabled` while `busy` (reuses #14 block) + when wisped unavailable. See
+  [[2026-07-24-click-flip-backend-toggle]]. Gate green: typecheck · **137/137** ·
+  build.
 
 **Next unblocked `ready-for-agent` ticket:** none — **queue empty.** The only
 open issue is **#1** (original MVP umbrella spec, unlabelled), which is not

@@ -7,38 +7,35 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-24, interactive session (post-chain follow-up #15)_
-_At commit: 31e7910 on main_
+_Last updated: 2026-07-24, relay `ticket-loop` leg 3 (final)_
+_At commit: 0660ce6 on main_
 
 ## Current focus
 
-**None active.** The **spec #9** batch (session history / switching / agents
-view) is fully delivered and the spec is closed. The `relay-leg` chain drained
-its queue one ticket per leg (legs 1–5: **#10 → #11 → #12 → #13 → #14**) and has
-signalled `stop: true` — no leg 6. Nothing is queued for an agent.
+**None active.** The **spec #16** batch (Native ⇄ Wisped backend toggle) is
+fully delivered and the spec is closed. The `ticket-loop` relay chain drained
+its queue one ticket per leg (legs 1–3: **#17 → #18 → #19**) and has signalled
+`stop: true` — no leg 4. Nothing is queued for an agent. (Spec #9 —
+session history — was closed earlier; tickets #10–#14.)
 
 ## State
 
-- **Relay chain `relay-leg`: complete.** #14 was the last ticket; the body's
-  queue-empty branch fired, so the chain stopped itself (no further legs). State
-  file `.claude/relay/relay-leg.md` carries `stop: true`.
-- **Done this leg (#14, `80591fb`):** refresh + busy-switch polish, renderer-only.
-  - **Refresh:** `Sidebar.tsx` now refreshes the session list on window `focus`
-    and via a manual **Refresh sessions** button (`aria-label="Refresh sessions"`,
-    first child of `.sidebar-head-actions`). The fetch is a stable `refresh`
-    callback with a monotonic request-id ref that drops stale/out-of-order
-    responses; still also fires on `[cwd, activeId]` (keeps the fresh-session-
-    joins + highlight behaviour). A session created in an external terminal now
-    appears after a refresh, no restart.
-  - **Busy-switch = block:** while a turn streams (`busy`), session rows and
-    **New chat** are `disabled`, and `useChat.openSession`/`newChat` early-return
-    on `busy`. Mid-stream switching is impossible → no half-streamed answer can
-    leak into another pane; the `chat:target` unconditional `close()` is never hit
-    mid-turn. Stop is the escape hatch. See
-    [[2026-07-23-busy-switch-block-not-detach]].
-  - Grunt impl by a Grok subagent (slot `haiku` → `xai/grok-4.5`); reviewed +
-    integrated by Fable, slot reverted clean. Gate green: typecheck ·
-    **109/109** · build.
+- **Relay chain `ticket-loop`: complete.** #19 was the last ticket; the
+  queue-empty branch fired, so the chain stopped itself. State file
+  `.claude/relay/ticket-loop.md` carries `stop: true`.
+- **Done this leg (#19, `0660ce6`):** click-to-flip backend toggle.
+  - Titlebar pill is now a `<button>`; clicking it flips the backend. New
+    guarded one-way IPC **`backend:set-mode`** takes the target mode, reuses the
+    `chat:target` teardown (`engine.close()` + `cancelAll()` + `engine=null`) and
+    clears `pendingResume` so the flip lands in a **fresh chat**. Refuses `wisped`
+    when the launch env carried no wisp routing (native-lock).
+  - Main **broadcasts `backend:changed`**; `App` subscribes on mount and the pill
+    re-renders from the broadcast (authoritative, so the native-lock no-op keeps
+    the pill put). The lazy `chat:send` rebuilds the engine → next turn spawns
+    against the new mode via the #17 resolver, no extra plumbing.
+  - Pill `disabled` while `busy` (reuses #14 block) and when wisped unavailable.
+  - See [[2026-07-24-click-flip-backend-toggle]]. Gate green: typecheck ·
+    **137/137** · build.
 - **Blocked:** nothing.
 
 ## Pick up here
