@@ -14,17 +14,16 @@ afterEach(() => {
   cleanup()
 })
 
-async function startSession() {
+const startSession = async () => {
   render(<App />)
   fireEvent.click(screen.getByRole('button', { name: 'Pick a project folder' }))
   await screen.findByText('demo')
 }
 
-function input(): HTMLInputElement {
-  return screen.getByPlaceholderText('Message Claude…') as HTMLInputElement
-}
+const input = (): HTMLInputElement =>
+  screen.getByPlaceholderText('Message Claude…') as HTMLInputElement
 
-function send(text: string) {
+const send = (text: string) => {
   fireEvent.change(input(), { target: { value: text } })
   fireEvent.keyDown(input(), { key: 'Enter' })
 }

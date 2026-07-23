@@ -19,7 +19,7 @@ afterEach(() => {
   cleanup()
 })
 
-async function startSession() {
+const startSession = async () => {
   render(<App />)
   fireEvent.click(screen.getByRole('button', { name: 'Pick a project folder' }))
   await screen.findByText('demo')

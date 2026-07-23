@@ -9,7 +9,7 @@ interface ToolCardProps {
   onPermission?: (toolUseId: string, decision: PermissionDecision) => void
 }
 
-export default function ToolCard({ message, onPermission }: ToolCardProps) {
+const ToolCard = ({ message, onPermission }: ToolCardProps) => {
   const { name, input, result, isError, permission, toolUseId } = message
   const key = keyInput(input)
   const pending = permission === 'pending'
@@ -50,3 +50,5 @@ export default function ToolCard({ message, onPermission }: ToolCardProps) {
     </div>
   )
 }
+
+export default ToolCard

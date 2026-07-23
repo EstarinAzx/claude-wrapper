@@ -5,7 +5,7 @@ import InputBar from './components/InputBar'
 import Welcome from './components/Welcome'
 import { useChat } from './useChat'
 
-export default function App() {
+const App = () => {
   const [cwd, setCwd] = useState<string | null>(null)
   const { messages, busy, send, stop, respondToPermission } = useChat()
 
@@ -32,3 +32,5 @@ export default function App() {
     </div>
   )
 }
+
+export default App

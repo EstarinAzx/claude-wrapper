@@ -12,26 +12,22 @@ const permissionBroker = createPermissionBroker()
 const rendererFile = join(__dirname, '../renderer/index.html')
 const rendererUrl = pathToFileURL(rendererFile).href
 
-function makeEngine(): ReturnType<typeof createEngine> {
-  return createEngine(getSessionCwd, ({ toolUseId, signal }) =>
+const makeEngine = (): ReturnType<typeof createEngine> =>
+  createEngine(getSessionCwd, ({ toolUseId, signal }) =>
     permissionBroker.request({ toolUseId, signal })
   )
-}
 
-function isTrustedIpc(
+const isTrustedIpc = (
   event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent
-): boolean {
-  return (
-    event.senderFrame === event.sender.mainFrame &&
-    isTrustedRendererUrl(
-      event.senderFrame?.url ?? event.sender.getURL(),
-      process.env['ELECTRON_RENDERER_URL'],
-      rendererUrl
-    )
+): boolean =>
+  event.senderFrame === event.sender.mainFrame &&
+  isTrustedRendererUrl(
+    event.senderFrame?.url ?? event.sender.getURL(),
+    process.env['ELECTRON_RENDERER_URL'],
+    rendererUrl
   )
-}
 
-function createWindow(): void {
+const createWindow = (): void => {
   const win = new BrowserWindow({
     width: 1100,
     height: 780,
@@ -53,10 +49,7 @@ function createWindow(): void {
     void shell.openExternal(url)
     return { action: 'deny' }
   })
-  const blockExternalNavigation = (
-    event: Electron.Event,
-    url: string
-  ): void => {
+  const blockExternalNavigation = (event: Electron.Event, url: string): void => {
     if (isTrustedRendererUrl(url, process.env['ELECTRON_RENDERER_URL'], rendererUrl)) {
       return
     }

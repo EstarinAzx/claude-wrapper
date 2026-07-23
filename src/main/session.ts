@@ -1,9 +1,7 @@
 let sessionCwd: string | null = null
 
-export function getSessionCwd(): string | null {
-  return sessionCwd
-}
+export const getSessionCwd = (): string | null => sessionCwd
 
-export function setSessionCwd(cwd: string): void {
+export const setSessionCwd = (cwd: string): void => {
   sessionCwd = cwd
 }

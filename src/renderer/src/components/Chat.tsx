@@ -6,19 +6,15 @@ import type { PermissionDecision } from '../../../shared/engine-types'
 import { isNearBottom } from '../autoscroll'
 import ToolCard from './ToolCard'
 
-function Avatar() {
-  return <span className="avatar" aria-hidden="true" />
-}
+const Avatar = () => <span className="avatar" aria-hidden="true" />
 
-function Typing() {
-  return (
-    <div className="typing" aria-label="Typing">
-      <span className="typing-dot" />
-      <span className="typing-dot" />
-      <span className="typing-dot" />
-    </div>
-  )
-}
+const Typing = () => (
+  <div className="typing" aria-label="Typing">
+    <span className="typing-dot" />
+    <span className="typing-dot" />
+    <span className="typing-dot" />
+  </div>
+)
 
 interface ChatProps {
   messages: ChatMessage[]
@@ -26,7 +22,7 @@ interface ChatProps {
   onPermission?: (toolUseId: string, decision: PermissionDecision) => void
 }
 
-export default function Chat({ messages, busy, onPermission }: ChatProps) {
+const Chat = ({ messages, busy, onPermission }: ChatProps) => {
   const scrollerRef = useRef<HTMLElement | null>(null)
   const nearBottomRef = useRef(true)
 
@@ -108,3 +104,5 @@ export default function Chat({ messages, busy, onPermission }: ChatProps) {
     </main>
   )
 }
+
+export default Chat

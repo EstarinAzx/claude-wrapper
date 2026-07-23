@@ -6,7 +6,7 @@ interface InputBarProps {
   onStop: () => void
 }
 
-export default function InputBar({ busy, onSend, onStop }: InputBarProps) {
+const InputBar = ({ busy, onSend, onStop }: InputBarProps) => {
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
 
@@ -98,3 +98,5 @@ export default function InputBar({ busy, onSend, onStop }: InputBarProps) {
     </footer>
   )
 }
+
+export default InputBar

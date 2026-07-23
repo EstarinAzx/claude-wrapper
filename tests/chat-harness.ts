@@ -6,7 +6,7 @@ import type { EngineEvent, PermissionDecision } from '../src/shared/engine-types
 // Test-side stand-in for preload+main plumbing: the scripted engine seam.
 // Tests drive `emit` as the fake engine's event stream; permission responses
 // settle through the real main-process broker.
-export function fakeChatApi(folder = 'D:\\projects\\demo') {
+export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
   const prompts: string[] = []
   const permissionResponses: Array<{ toolUseId: string; decision: PermissionDecision }> =
     []

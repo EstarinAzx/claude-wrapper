@@ -9,7 +9,7 @@ import {
 import type { EngineEvent, PermissionDecision } from '../src/shared/engine-types'
 
 /** Streaming-input stub: one long-lived async iterable the test can push into. */
-function streamingStub() {
+const streamingStub = () => {
   const calls: Array<{ options: Record<string, unknown> }> = []
   let msgQ: SdkMessage[] = []
   let wake: (() => void) | null = null
@@ -32,6 +32,7 @@ function streamingStub() {
         /* keep consuming user messages */
       }
     })()
+    // ponytail: generators require function*; no arrow form
     return (async function* () {
       while (!closed || msgQ.length > 0) {
         while (msgQ.length === 0 && !closed) {
@@ -48,14 +49,12 @@ function streamingStub() {
   return { fn, calls, push, close }
 }
 
-function autoAllow(): RequestPermissionFn {
-  return async () => 'allow'
-}
+const autoAllow = (): RequestPermissionFn => async () => 'allow'
 
-async function collect(
+const collect = async (
   engine: ReturnType<typeof createEngine>,
   prompt: string
-): Promise<EngineEvent[]> {
+): Promise<EngineEvent[]> => {
   const events: EngineEvent[] = []
   await engine.runTurn(prompt, (e) => events.push(e))
   return events
@@ -561,7 +560,7 @@ describe('engine canUseTool / permissions', () => {
 
 describe('engine interrupt', () => {
   // streamingStub whose query object also exposes interrupt(), like the real SDK Query
-  function interruptibleStub() {
+  const interruptibleStub = () => {
     const base = streamingStub()
     let interrupts = 0
     const fn: QueryFn = (args) =>

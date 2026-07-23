@@ -8,7 +8,7 @@ type Pending = {
   onAbort: () => void
 }
 
-export function createPermissionBroker() {
+export const createPermissionBroker = () => {
   const pending = new Map<string, Pending>()
 
   const respond = (toolUseId: string, decision: RendererDecision): boolean => {

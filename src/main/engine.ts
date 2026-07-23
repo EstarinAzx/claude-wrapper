@@ -66,11 +66,11 @@ type QueryHandle = AsyncIterable<SdkMessage> & {
 }
 
 // Pushable async queue of user messages for streaming-input mode.
-function createMessageQueue(): {
+const createMessageQueue = (): {
   push: (msg: SDKUserMessage) => void
   end: () => void
   iterable: AsyncIterable<SDKUserMessage>
-} {
+} => {
   const buf: SDKUserMessage[] = []
   let wake: (() => void) | null = null
   let done = false
@@ -113,16 +113,14 @@ const defaultQuery: QueryFn = ({ prompt, options }) =>
     options: options as Parameters<typeof query>[0]['options']
   }) as AsyncIterable<SdkMessage>
 
-function toUserMessage(text: string): SDKUserMessage {
-  return {
-    type: 'user',
-    message: { role: 'user', content: text },
-    parent_tool_use_id: null,
-    origin: { kind: 'human' }
-  }
-}
+const toUserMessage = (text: string): SDKUserMessage => ({
+  type: 'user',
+  message: { role: 'user', content: text },
+  parent_tool_use_id: null,
+  origin: { kind: 'human' }
+})
 
-function mapStreamError(raw: string): string {
+const mapStreamError = (raw: string): string => {
   if (/ENOENT/i.test(raw)) {
     return `Claude CLI not found. Install Claude Code, then pick the folder again. (${raw})`
   }
@@ -132,7 +130,7 @@ function mapStreamError(raw: string): string {
   return raw
 }
 
-function mapResultError(subtype: string): string {
+const mapResultError = (subtype: string): string => {
   if (subtype === 'error_during_execution') {
     return 'Claude hit an error during this turn. Send a new prompt to try again.'
   }
@@ -142,11 +140,11 @@ function mapResultError(subtype: string): string {
   return subtype
 }
 
-export function createEngine(
+export const createEngine = (
   getCwd: () => string | null,
   requestPermission: RequestPermissionFn,
   queryFn: QueryFn = defaultQuery
-): Engine & { close(): void } {
+): Engine & { close(): void } => {
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
   let consumeStarted = false
@@ -155,11 +153,11 @@ export function createEngine(
   let terminalError: string | null = null
   let interrupting = false
 
-  function emit(e: EngineEvent): void {
+  const emit = (e: EngineEvent): void => {
     activeOnEvent?.(e)
   }
 
-  function finishTurn(): void {
+  const finishTurn = (): void => {
     interrupting = false
     const r = turnResolve
     turnResolve = null
@@ -167,7 +165,7 @@ export function createEngine(
     r?.()
   }
 
-  function handleMessage(msg: SdkMessage): void {
+  const handleMessage = (msg: SdkMessage): void => {
     if (msg.type === 'stream_event') {
       const event = msg.event as {
         type?: string
@@ -257,7 +255,7 @@ export function createEngine(
     }
   }
 
-  function ensureQuery(cwd: string): void {
+  const ensureQuery = (cwd: string): void => {
     if (queue !== null) return
     queue = createMessageQueue()
 
@@ -330,10 +328,10 @@ export function createEngine(
     }
   }
 
-  async function runTurn(
+  const runTurn = async (
     prompt: string,
     onEvent: (e: EngineEvent) => void
-  ): Promise<void> {
+  ): Promise<void> => {
     const cwd = getCwd()
     if (cwd === null) {
       onEvent({ type: 'error', message: 'No session folder selected' })

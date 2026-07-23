@@ -1,8 +1,8 @@
-export function isTrustedRendererUrl(
+export const isTrustedRendererUrl = (
   url: string,
   devUrl = process.env['ELECTRON_RENDERER_URL'],
   packagedUrl?: string
-): boolean {
+): boolean => {
   try {
     if (packagedUrl) {
       const candidate = new URL(url)

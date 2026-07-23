@@ -19,12 +19,12 @@ export type ChatMessage =
     }
 
 let nextId = 0
-function uid(): string {
+const uid = (): string => {
   nextId += 1
   return String(nextId)
 }
 
-export function useChat() {
+export const useChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [busy, setBusy] = useState(false)
   // Track the live assistant message id without stale closures on event handlers
