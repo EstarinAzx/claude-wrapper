@@ -668,3 +668,59 @@ describe('engine interrupt', () => {
     expect(stub.interruptCount()).toBe(0)
   })
 })
+
+describe('engine session id + resume', () => {
+  test('sessionId is null before any message', () => {
+    const { fn } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    expect(engine.sessionId()).toBeNull()
+  })
+
+  test('captures session_id from a system message and surfaces it via accessor', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init) // system message, session_id 'sess-1'
+    push(success)
+    await turn
+    expect(engine.sessionId()).toBe('sess-1')
+  })
+
+  test('captures session_id from a result message', async () => {
+    const resultMsg: SdkMessage = {
+      type: 'result',
+      subtype: 'success',
+      session_id: 'sess-9',
+      is_error: false
+    }
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(resultMsg)
+    await turn
+    expect(engine.sessionId()).toBe('sess-9')
+  })
+
+  test('a resume target is passed straight into query options.resume', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = engine.runTurn('hi', () => {}, 'sess-prior')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options.resume).toBe('sess-prior')
+  })
+
+  test('a fresh turn passes no resume', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(success)
+    await turn
+    expect(calls[0].options).not.toHaveProperty('resume')
+  })
+})

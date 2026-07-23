@@ -152,6 +152,7 @@ export const createEngine = (
   let turnResolve: (() => void) | null = null
   let terminalError: string | null = null
   let interrupting = false
+  let currentSessionId: string | null = null
 
   const emit = (e: EngineEvent): void => {
     activeOnEvent?.(e)
@@ -166,6 +167,9 @@ export const createEngine = (
   }
 
   const handleMessage = (msg: SdkMessage): void => {
+    const sid = (msg as { session_id?: unknown }).session_id
+    if (typeof sid === 'string') currentSessionId = sid
+
     if (msg.type === 'stream_event') {
       const event = msg.event as {
         type?: string
@@ -256,7 +260,7 @@ export const createEngine = (
     }
   }
 
-  const ensureQuery = (cwd: string): void => {
+  const ensureQuery = (cwd: string, resume?: string): void => {
     if (queue !== null) return
     queue = createMessageQueue()
 
@@ -293,13 +297,18 @@ export const createEngine = (
       }
     }
 
+    const options: Record<string, unknown> = {
+      cwd,
+      includePartialMessages: true,
+      canUseTool
+    }
+    // ponytail: resume binds at query construction; the streaming query is built
+    // once and cached, so resume only takes effect on the query-building turn.
+    if (resume !== undefined) options.resume = resume
+
     const stream = queryFn({
       prompt: queue.iterable,
-      options: {
-        cwd,
-        includePartialMessages: true,
-        canUseTool
-      }
+      options
     })
     currentQuery = stream as QueryHandle
 
@@ -331,7 +340,8 @@ export const createEngine = (
 
   const runTurn = async (
     prompt: string,
-    onEvent: (e: EngineEvent) => void
+    onEvent: (e: EngineEvent) => void,
+    resume?: string
   ): Promise<void> => {
     const cwd = getCwd()
     if (cwd === null) {
@@ -349,7 +359,7 @@ export const createEngine = (
 
     activeOnEvent = onEvent
     try {
-      ensureQuery(cwd)
+      ensureQuery(cwd, resume)
     } catch (err) {
       queue = null
       consumeStarted = false
@@ -384,5 +394,7 @@ export const createEngine = (
     }
   }
 
-  return { runTurn, interrupt, close }
+  const sessionId = (): string | null => currentSessionId
+
+  return { runTurn, interrupt, close, sessionId }
 }

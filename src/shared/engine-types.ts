@@ -15,6 +15,7 @@ export type EngineEvent =
   | { type: 'error'; message: string }
 
 export interface Engine {
-  runTurn(prompt: string, onEvent: (e: EngineEvent) => void): Promise<void>
+  runTurn(prompt: string, onEvent: (e: EngineEvent) => void, resume?: string): Promise<void>
   interrupt(): void
+  sessionId(): string | null
 }
