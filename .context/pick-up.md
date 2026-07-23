@@ -9,15 +9,16 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**Last leg landed:** #5 (Tool cards) — squash-merged to main as `c5526a4`, ticket closed with breadcrumb.
+**Last leg landed:** #6 (Permission allow/deny round-trip) — squash-merged to main as `5206ee1`, ticket closed with breadcrumb.
 
-**Next ticket:** #6 — Permission allow/deny round-trip (oldest unblocked `ready-for-agent`; #7 Stop button and #8 Frost Mono polish are also unblocked).
+**Next ticket:** #7 — Stop button + legible failure (only unblocked `ready-for-agent`; #8 Frost Mono polish is blocked by #7).
 
 **Landmines:**
-- #6 requires replacing per-turn `query()` + `resume` with one long-lived streaming-input query; read `.context/decisions/2026-07-23-engine-per-turn-resume.md` before touching `src/main/engine.ts`. Keep the public `Engine` interface and `chat:event` boundary stable.
-- SDK `canUseTool` exists only with streaming input. Permission response must hold the callback open across IPC, then resolve Allow/Deny without killing the session. Deny must let Claude continue to a text answer.
-- Extend existing tool card keyed by `toolUseId`; do not create a permission-only event channel/component. Tool cards now store compact result summaries at event ingestion.
-- Fake-engine seam: renderer tests script events via `tests/chat-harness.ts` `emit()`; permission tests should exercise the pending callback through the public preload API, not mock component internals.
-- Real-SDK manual run still pending (see Open questions in `active-work.md`) — first human `npm run dev` should verify CLI-login auth, streamed deltas, SDK tool message shapes, and permission behavior.
+- Engine already keeps the live streaming `Query` (`currentQuery`, `src/main/engine.ts`) — wire Stop through `Query.interrupt()` (streaming-input mode only, already active). Do NOT use `close()` for Stop: `close()` is terminal by design ([[2026-07-23-engine-terminal-on-stream-death]]); Stop must leave the session usable for the next turn.
+- `runTurn` rejects overlap ("A turn is already running") and holds one `turnResolve`; an interrupt must still end the active turn cleanly (SDK emits a result after interrupt — verify what subtype and map it to a legible chat state, not a raw error).
+- Pending permission during Stop: resolve via `permissionBroker` (abort signal → deny) so `canUseTool` never stays parked.
+- Renderer permission state is on the tool message; terminal errors already cancel unresolved cards — reuse that path, don't add a second cancel mechanism.
+- All privileged IPC handlers require `isTrustedIpc`; add the interrupt channel behind the same check.
+- Real-SDK manual run still pending (see Open questions in `active-work.md`).
 - Fresh `npm install` may skip Electron's postinstall: `npm run dev` fails with "Error: Electron uninstall". Fix: `node node_modules/electron/install.js`.
 - `vite` stays `^7`, `@vitejs/plugin-react` `^5`, TypeScript pinned exact `7.0.2` — don't bump any of them.
