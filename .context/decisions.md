@@ -10,6 +10,7 @@ tags: [context, decisions]
 Settled questions. One file per decision in `decisions/`. Newest first.
 
 <!-- one line per entry, newest at top -->
+- [[2026-07-23-transcript-parser-pure-renderer-summarises]] — replay = pure main `parseTranscript` → shared `TranscriptMessage`; renderer summarises tool results; replay is read-only
 - [[2026-07-23-session-id-accessor-not-event]] — engine surfaces `session_id` via `sessionId()` accessor (not a new EngineEvent); `runTurn` gains `resume`
 - [[2026-07-23-tailwind4-tokens]] — Tailwind 4 adopted; OKLCH tokens in `@theme`, preflight off, legacy `:root` aliases
 - [[2026-07-23-permission-inherits-host]] — wrapper inherits host Claude Code permissions by design (no Allow/Deny card under host bypassPermissions)

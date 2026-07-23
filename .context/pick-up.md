@@ -15,51 +15,53 @@ Start: read `.context/overview.md` + `active-work.md`.
 > `.claude/relay/relay-leg.md` shows `stop: true` before the queue emptied).
 > Kill it with `/relay stop relay-leg`.
 
-**Target ticket: #12** (open a past session — replay transcript) — oldest open
-unblocked `ready-for-agent`. Batch = spec **#9**. After #12: #13 → #14 by
-creation order (oldest-first frontier; no native dependency edges, so honour
-this order).
+**Target ticket: #13** (resume — continue a reopened session, MVD) — oldest open
+unblocked `ready-for-agent`. Batch = spec **#9**. After #13: #14 by creation
+order (oldest-first frontier; no native dependency edges, so honour this order).
 
 **Queue (spec #9):**
 - ~~**#10** Engine surfaces `session_id` + accepts resume~~ — **DONE** `67a22c5`
 - ~~**#11** List sessions in a left sidebar~~ — **DONE** `f6644c2`
-  (`session-store.ts`: `encodeCwd` + pure `summary()` + `listSessions()`;
-  `session:list` IPC; `Sidebar`; 90/90).
-- **#12** Open a past session — replay transcript — *unblocked, next* (new pure
-  lenient transcript parser + make sidebar rows openable)
-- **#13** Resume — continue a reopened session *(MVD)* — consumes `sessionId()`
-  + `runTurn(..., resume)`
+- ~~**#12** Open a past session — replay transcript~~ — **DONE** `bb94e3d`
+  (`transcript.ts` pure `parseTranscript`; `TranscriptMessage` shared type;
+  `readTranscript` + `session:transcript` IPC + `loadTranscript` preload;
+  sidebar rows → buttons → `useChat.replay`; 99/99)
+- **#13** Resume — continue a reopened session *(MVD)* — *unblocked, next*
 - **#14** Refresh + busy-switch polish
 
-**Done last leg (#11, `f6644c2`):** past sessions list in a collapsible left
-sidebar. Read seam for #12 is ready: `window.api.listSessions()` →
-`SessionMeta[]`; `SessionMeta.id` = filename stem == sessionId = the join key to
-load one session's `*.jsonl`. Sidebar rows are read-only (`.session-row`) — #12
-makes them openable.
+**Done last leg (#12, `bb94e3d`):** clicking a sidebar row replays its
+transcript into the chat (read-only). Seam for #13 is ready:
+`window.api.loadTranscript(id)` → `TranscriptMessage[]` → `useChat.replay()`
+renders it, but the input is **not** yet armed to continue.
+
+**#13 shape:** on opening a row, remember its `id`; sending should route through
+the engine with that `id` as `resume` so appended turns land in the same
+`*.jsonl`. Add a "New chat" control (fresh session, no resume).
 
 **Landmines (carry into every ticket):**
-- **#12 parser:** reuse the lenient line-parse shape from `summary()` in
-  `src/main/session-store.ts` — split lines, `JSON.parse` in try/catch, map
-  known types (`user`/`assistant`, `message.content` is string OR an array of
-  `{type:'text',text}` blocks; also tool_use/tool_result blocks), skip unknown,
-  never throw. Keep it a NEW **pure** seam (fixture JSONL string → messages, no
-  fs) so it's fixture-testable like `tests/session-store.test.ts`.
-- **Native store is source of truth:** `~/.claude/projects/<enc-cwd>/*.jsonl`.
-  `enc` = every non-alphanumeric char → `-` (see `encodeCwd`). Applied forward
-  only; never reversed.
-- Main process holds the session cwd and owns fs; IPC returns data, the renderer
-  never gets raw fs access. Guard every new channel with the existing
-  `isTrustedIpc` check.
+- **Resume ceiling:** the streaming query is built once and cached
+  (`ensureQuery` early-returns once the queue exists), so retargeting `resume`
+  on a *live* engine means rebuilding the query (or `close()` + a fresh engine
+  on foreground switch). See [[2026-07-23-session-id-accessor-not-event]].
 - Engine exposes `sessionId(): string | null` + `runTurn(prompt, onEvent,
-  resume?)`. Do NOT reintroduce a `session-id` event (accessor was deliberate —
-  [[2026-07-23-session-id-accessor-not-event]]).
+  resume?)`. Do NOT reintroduce a `session-id` event (accessor was deliberate).
+- **Replay seam (#12):** `parseTranscript` is a NEW **pure** main function
+  (fixture JSONL string → `TranscriptMessage[]`, no fs) — reuse it, don't
+  re-parse. Tool results are summarised in the renderer (`resultSummary` in
+  `useChat.toChatMessage`), NOT in the parser (parser keeps raw text). See
+  [[2026-07-23-transcript-parser-pure-renderer-summarises]].
+- **Native store is source of truth:** `~/.claude/projects/<enc-cwd>/*.jsonl`.
+  `enc` = every non-alphanumeric char → `-` (see `encodeCwd`). Forward only.
+- Main process holds the session cwd and owns fs; IPC returns data, the renderer
+  never gets raw fs access. Guard every new channel with `isTrustedIpc`.
 - Renderer tests pin aria-labels ("Send"/"Stop"/"Allow"/"Deny"/"Typing"/
   "Minimize"/"Maximize"/"Close", plus sidebar's "Collapse sessions"/"Expand
   sessions"/"Sessions" landmark), placeholder "Message Claude…", classes
   `.tool-card` / `.tool-card-error` / `.assistant-body` / `.msg-notice` /
-  `.msg-error` / `.session-row`. ADD labels, never rename these. Every
-  `window.api` mock (inline in tests + `tests/chat-harness.ts`) must include
-  `listSessions` or an App-render test throws.
+  `.msg-error` / `.session-row` / `.session-row-btn`. ADD labels, never rename.
+  Every `window.api` mock (inline in tests + `tests/chat-harness.ts`) must now
+  include **both** `listSessions` and `loadTranscript` or an App-render test
+  throws.
 - Legible-error copy in `src/main/engine.ts` is character-pinned by
   `tests/engine.test.ts`.
 - Don't add `permissionMode` / `settingSources` — wrapper inherits host
