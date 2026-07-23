@@ -21,6 +21,10 @@ tags: [context, overview]
 ## How to run
 - `npm run dev` — electron-vite dev (Electron window)
 - `npm run typecheck` / `npm test` / `npm run build` — the merge gate
+- **GUI check (agent/headless):** `run-desktop` skill —
+  `node .claude/skills/run-desktop/driver.mjs [--cycle]` launches the built app,
+  reads the titlebar pills, screenshots the window (needs `npm run build` +
+  `npm i --no-save playwright-core`)
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: queue empty)

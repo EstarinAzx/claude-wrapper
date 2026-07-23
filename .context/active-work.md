@@ -31,7 +31,13 @@ disabled while `busy`; **Bypass carries a danger tint**. **Reverses**
 ⚠️ **Landmine — default bypass:** the app now auto-runs every tool (Bash writes/
 deletes/network, edits) with **no confirmation** by default, whole session, until
 the user cycles to Ask/Accept Edits. Deliberate owner choice. Not host-inherited
-anymore. The **spec #16** batch (Native ⇄ Wisped backend toggle) is
+anymore.
+
+**Live eyeball — passed.** Launched the built app (wisp shell) via the new
+`run-desktop` skill (Playwright `_electron`, `58916b8`): backend pill `Wisped`
+(mint), permission pill `Bypass` (red danger tint); `--cycle` flipped them to
+`Native` / `Accept Edits`. Both pills are real buttons, both re-render from the
+main broadcast. Repeatable: `node .claude/skills/run-desktop/driver.mjs --cycle`. The **spec #16** batch (Native ⇄ Wisped backend toggle) is
 fully delivered and the spec is closed. The `ticket-loop` relay chain drained
 its queue one ticket per leg (legs 1–3: **#17 → #18 → #19**) and has signalled
 `stop: true` — no leg 4. Nothing is queued for an agent. (Spec #9 —
