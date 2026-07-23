@@ -6,38 +6,45 @@ Theme: dark, forced by the scene (owner running coding sessions at night on a Wi
 
 Color strategy: Restrained. Mint accent ≤10% of surface, spent only on: logo mark, assistant avatar, send button, list markers, typing dots.
 
-## Tokens (CSS custom properties, OKLCH)
+## Tokens (Tailwind 4 `@theme`, OKLCH)
+
+Tokens live in Tailwind 4's `@theme` block in `styles.css` (namespaced so
+utilities like `bg-wash`, `text-mint`, `rounded-bubble` are generated for new
+work). Short legacy names (`--wash`, `--mint`, `--r-bubble`, `--fs-body`, …) are
+kept as `:root` aliases, so component CSS reads unchanged. Tailwind preflight is
+intentionally **off** (the app has its own reset; preflight would clobber the
+markdown list markers and button styling).
 
 ```css
-:root {
-  /* neutrals, tinted toward the accent hue (h≈200) */
-  --wash: oklch(0.16 0.008 210 / 0.6);        /* app wash over OS acrylic */
-  --surface: oklch(0.24 0.008 210 / 0.55);    /* titlebar, input pill */
-  --bubble: oklch(0.29 0.007 220 / 0.9);      /* user prompt bubble */
-  --border: oklch(0.92 0.01 210 / 0.08);      /* hairlines */
-  --text: oklch(0.94 0.008 190);
-  --text-muted: oklch(0.68 0.01 200);
-  --text-faint: oklch(0.53 0.01 210);
+@theme {
+  /* neutrals, tinted toward the accent hue (h≈210) — deep near-black, matches reference */
+  --color-wash: oklch(0.12 0.008 210 / 0.64);      /* app wash over OS acrylic */
+  --color-surface: oklch(0.19 0.008 210 / 0.58);   /* titlebar, input pill */
+  --color-bubble: oklch(0.27 0.007 220 / 0.9);     /* user prompt bubble */
+  --color-border: oklch(0.92 0.01 210 / 0.08);     /* hairlines */
+  --color-text: oklch(0.94 0.008 190);
+  --color-text-muted: oklch(0.68 0.01 200);
+  --color-text-faint: oklch(0.53 0.01 210);
 
   /* the one accent: frost mint */
-  --mint: oklch(0.87 0.07 180);
-  --mint-press: oklch(0.8 0.08 182);
-  --mint-ink: oklch(0.25 0.02 200);           /* glyphs on mint fills */
+  --color-mint: oklch(0.87 0.07 180);
+  --color-mint-press: oklch(0.8 0.08 182);
+  --color-mint-ink: oklch(0.25 0.02 200);          /* glyphs on mint fills */
 
   /* shape */
-  --r-bubble: 16px;
-  --r-pill: 999px;
-  --r-mark: 7px;                              /* logo rounded square */
+  --radius-bubble: 16px;
+  --radius-pill: 999px;
+  --radius-mark: 7px;                              /* logo rounded square */
 
   /* type */
-  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-  --fs-body: 15px;
-  --fs-ui: 13px;
-  --fs-micro: 11px;
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --text-body: 15px;
+  --text-ui: 13px;
+  --text-micro: 11px;
 }
 ```
 
-Never `#000`/`#fff`. Backgrounds under the acrylic must stay translucent; `html, body { background: transparent }`, the app root paints `--wash`.
+Never `#000`/`#fff`. Backgrounds under the acrylic must stay translucent; `html, body { background: transparent }`, the app root paints `--wash`. Wash/surface/bubble were deepened from the original 0.16/0.24/0.29 lightness to read as flat near-black against the reference (the desktop bleeds through the acrylic until the persistent-glass follow-up lands).
 
 ## Type
 

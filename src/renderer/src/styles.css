@@ -1,28 +1,56 @@
-:root {
-  /* neutrals, tinted toward the accent hue (h≈200) */
-  --wash: oklch(0.16 0.008 210 / 0.6);        /* app wash over OS acrylic */
-  --surface: oklch(0.24 0.008 210 / 0.55);    /* titlebar, input pill */
-  --bubble: oklch(0.29 0.007 220 / 0.9);      /* user prompt bubble */
-  --border: oklch(0.92 0.01 210 / 0.08);      /* hairlines */
-  --text: oklch(0.94 0.008 190);
-  --text-muted: oklch(0.68 0.01 200);
-  --text-faint: oklch(0.53 0.01 210);
+/* Tailwind 4, no preflight: the app keeps its own reset (below) and its custom
+   markdown / list-marker / button styling. Preflight would clobber those. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  /* neutrals, tinted toward the accent hue (h≈210) — deep near-black, matches
+     docs/design/frost-mono-reference.png */
+  --color-wash: oklch(0.12 0.008 210 / 0.64);      /* app wash over OS acrylic */
+  --color-surface: oklch(0.19 0.008 210 / 0.58);   /* titlebar, input pill */
+  --color-bubble: oklch(0.27 0.007 220 / 0.9);     /* user prompt bubble */
+  --color-border: oklch(0.92 0.01 210 / 0.08);     /* hairlines */
+  --color-text: oklch(0.94 0.008 190);
+  --color-text-muted: oklch(0.68 0.01 200);
+  --color-text-faint: oklch(0.53 0.01 210);
 
   /* the one accent: frost mint */
-  --mint: oklch(0.87 0.07 180);
-  --mint-press: oklch(0.8 0.08 182);
-  --mint-ink: oklch(0.25 0.02 200);           /* glyphs on mint fills */
+  --color-mint: oklch(0.87 0.07 180);
+  --color-mint-press: oklch(0.8 0.08 182);
+  --color-mint-ink: oklch(0.25 0.02 200);          /* glyphs on mint fills */
 
   /* shape */
-  --r-bubble: 16px;
-  --r-pill: 999px;
-  --r-mark: 7px;                              /* logo rounded square */
+  --radius-bubble: 16px;
+  --radius-pill: 999px;
+  --radius-mark: 7px;                              /* logo rounded square */
 
   /* type */
-  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-  --fs-body: 15px;
-  --fs-ui: 13px;
-  --fs-micro: 11px;
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --text-body: 15px;
+  --text-ui: 13px;
+  --text-micro: 11px;
+}
+
+:root {
+  /* legacy aliases: existing component CSS keeps these short names, zero churn */
+  --wash: var(--color-wash);
+  --surface: var(--color-surface);
+  --bubble: var(--color-bubble);
+  --border: var(--color-border);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --text-faint: var(--color-text-faint);
+  --mint: var(--color-mint);
+  --mint-press: var(--color-mint-press);
+  --mint-ink: var(--color-mint-ink);
+  --r-bubble: var(--radius-bubble);
+  --r-pill: var(--radius-pill);
+  --r-mark: var(--radius-mark);
+  --font: var(--font-sans);
+  --fs-body: var(--text-body);
+  --fs-ui: var(--text-ui);
+  --fs-micro: var(--text-micro);
 }
 
 *,
