@@ -1,7 +1,7 @@
 ---
 type: pick-up
 project: claude-wrapper
-updated: 2026-07-23
+updated: 2026-07-24
 tags: [context, pick-up]
 ---
 
@@ -23,6 +23,12 @@ Start: read `.context/overview.md` + `active-work.md`.
   half-streamed answer can leak into another pane. Stop is the escape hatch. See
   [[2026-07-23-busy-switch-block-not-detach]].
 - Gate green: typecheck · **109/109** · build.
+
+**Also landed (interactive, post-chain) — #15 (`31e7910`):** the visible
+busy-state affordance #14 lacked. Disabled session rows + New chat now dim to
+0.55 + `pointer-events: none` while a turn streams (active mint bar stays,
+dimmed); head glyph gap 2px→4px. CSS-only, via impeccable/polish vs Frost Mono;
+closed the #11 sidebar-eyeball loose end. Gate green (109/109).
 
 **Next unblocked `ready-for-agent` ticket:** none — **queue empty.** The only
 open issue is **#1** (original MVP umbrella spec, unlabelled), which is not

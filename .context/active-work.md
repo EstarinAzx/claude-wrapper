@@ -1,14 +1,14 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-07-23
+updated: 2026-07-24
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-07-23 by relay `relay-leg` leg 5 (background, unattended)_
-_At commit: 80591fb on main_
+_Last updated: 2026-07-24, interactive session (post-chain follow-up #15)_
+_At commit: 31e7910 on main_
 
 ## Current focus
 
@@ -57,13 +57,16 @@ reversal path is written in [[2026-07-23-busy-switch-block-not-detach]].
 
 ## Open loose ends
 
-- **Sidebar visual pass (open since #11):** rows use the Frost Mono tokens
-  directly rather than a fresh impeccable pass; a live Electron visual check vs
-  `docs/design/frost-mono-reference.png` was deferred (no automatable
-  folder-picker in an unattended leg). #13 added the active-row mint bar + New
-  chat button; #14 added the **Refresh** glyph beside them — worth an eyeball in
-  an interactive session (do the three head glyphs + active bar read right
-  against the reference?).
+- **Sidebar visual pass (open since #11):** the deferred live eyeball happened
+  (interactive session, 2026-07-24). The three head glyphs + active bar read
+  right against the reference, and it surfaced one gap: #14's busy-block had
+  **no visual affordance** (disabled rows looked identical mid-stream). Fixed in
+  **#15 (`31e7910`)** — disabled rows + New chat now dim to 0.55 +
+  `pointer-events: none` while streaming (active mint bar stays, dimmed), and the
+  head glyph gap went 2px→4px. Routed through impeccable/polish vs Frost Mono.
+  Remaining: no full impeccable *redesign* of the rows (they still use the tokens
+  directly), but nothing reads wrong — treat as closed unless a deeper pass is
+  wanted.
 - **Ecosystem:** the global relay skill was edited during setup (per-leg naming)
   → per CLAUDE.md, sync the ecosystem-kb vault + `/preset health` before any
   template push (not a relay-leg concern; carry for an interactive session).
