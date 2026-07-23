@@ -8,6 +8,7 @@ beforeEach(() => {
     toggleMaximize: vi.fn(),
     close: vi.fn(),
     pickFolder: vi.fn().mockResolvedValue('D:\\projects\\demo'),
+    listSessions: vi.fn().mockResolvedValue([]),
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),

@@ -11,6 +11,7 @@ beforeEach(() => {
     toggleMaximize: vi.fn(),
     close: vi.fn(),
     pickFolder,
+    listSessions: vi.fn().mockResolvedValue([]),
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),

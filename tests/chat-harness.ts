@@ -17,6 +17,7 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
     toggleMaximize: vi.fn(),
     close: vi.fn(),
     pickFolder: vi.fn<() => Promise<string | null>>().mockResolvedValue(folder),
+    listSessions: vi.fn().mockResolvedValue([]),
     sendPrompt: (text: string): void => {
       prompts.push(text)
     },

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Titlebar from './components/Titlebar'
+import Sidebar from './components/Sidebar'
 import Chat from './components/Chat'
 import InputBar from './components/InputBar'
 import Welcome from './components/Welcome'
@@ -18,14 +19,17 @@ const App = () => {
     <div className="app">
       <Titlebar cwd={cwd} />
       {cwd ? (
-        <>
-          <Chat
-            messages={messages}
-            busy={busy}
-            onPermission={respondToPermission}
-          />
-          <InputBar busy={busy} onSend={send} onStop={stop} />
-        </>
+        <div className="workspace">
+          <Sidebar cwd={cwd} />
+          <div className="main-col">
+            <Chat
+              messages={messages}
+              busy={busy}
+              onPermission={respondToPermission}
+            />
+            <InputBar busy={busy} onSend={send} onStop={stop} />
+          </div>
+        </div>
       ) : (
         <Welcome onPick={pickFolder} />
       )}
