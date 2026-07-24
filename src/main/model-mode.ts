@@ -5,16 +5,17 @@
 // --json` shelled on demand (the app's first and only child_process use, kept
 // here behind an injectable fetch so the pure list logic stays unit-testable).
 //
-// Build-check outcome (options.model routing) — NOT live-probed (an unattended
-// relay leg; the live turn probe was declined). Derived from deterministic CLI
-// evidence: `wisp routing` rows are exactly the four families, and the session
-// bridge rewrites ONLY the family tokens (opus/sonnet/haiku/fable) per request.
-// So a family id routes through the bridge; an alias name does not (it is not a
-// family). We therefore route an alias by its RESOLVED model id (target.model,
-// e.g. grok-4.5) — the string the Wisp BYOK gateway itself knows from `wisp
-// routing --json`. If a future live check shows resolved-model ids don't route,
-// the fallback is a family REBIND (slot skill) — out of scope for a per-chat
-// pill because it mutates global routing (and would hijack other sessions).
+// options.model routing — LIVE-CONFIRMED 2026-07-24. The Wisp bridge resolves a
+// request's model string through its routing map (`wisp routing`): both the four
+// FAMILY names AND the ALIAS names route. A raw RESOLVED model id does NOT:
+//   claude-wisp -p … --model grok      → responds   (alias name)
+//   claude-wisp -p … --model sonnet    → responds   (family name)
+//   claude-wisp -p … --model grok-4.5  → no response, hangs   (resolved id)
+// So we send the alias NAME as options.model (see parseAliases), not target.model.
+// The earlier build guessed the opposite (resolved id) and shipped the hang in
+// #23; this is the fix. (A raw model id would need a family REBIND via the slot
+// skill, which mutates global routing and would hijack other sessions — wrong for
+// a per-chat pill anyway.)
 
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
@@ -48,7 +49,10 @@ export const parseAliases = (routingJson: string): ModelOption[] => {
         const name = (a as { name?: unknown })?.name
         const model = (a as { target?: { model?: unknown } })?.target?.model
         if (typeof name !== 'string' || typeof model !== 'string') return null
-        return { id: model, label: name, group: 'alias' }
+        // id is the alias NAME — the Wisp bridge resolves alias names per request
+        // (like families); a raw resolved model id (grok-4.5) is NOT routed and
+        // hangs the turn (live-confirmed). target.model is only a validity gate.
+        return { id: name, label: name, group: 'alias' }
       })
       .filter((o): o is ModelOption => o !== null)
   } catch {

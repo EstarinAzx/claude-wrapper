@@ -47,10 +47,14 @@ describe('toModelOptions', () => {
 })
 
 describe('parseAliases', () => {
-  test('maps each alias to { id: resolved model, label: name }', () => {
+  // The id IS the alias NAME (what the Wisp bridge resolves per request) — NOT the
+  // resolved model id, which the bridge does not route (confirmed live: `--model
+  // grok` responds, `--model grok-4.5` hangs). A valid target.model is still
+  // required as a sanity gate: an alias resolving to nothing isn't offered.
+  test('maps each alias to { id: name, label: name }', () => {
     expect(parseAliases(routingJson)).toEqual([
-      { id: 'grok-4.5', label: 'grok', group: 'alias' },
-      { id: 'gpt-5.6-sol', label: 'sol', group: 'alias' }
+      { id: 'grok', label: 'grok', group: 'alias' },
+      { id: 'sol', label: 'sol', group: 'alias' }
     ])
   })
 
@@ -62,7 +66,7 @@ describe('parseAliases', () => {
         { target: { model: 'no-name' } }
       ]
     })
-    expect(parseAliases(json)).toEqual([{ id: 'm-1', label: 'ok', group: 'alias' }])
+    expect(parseAliases(json)).toEqual([{ id: 'ok', label: 'ok', group: 'alias' }])
   })
 
   test('tolerates garbage / missing aliases → []', () => {
