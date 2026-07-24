@@ -10,6 +10,7 @@ import {
   isWispedAvailable
 } from './backend-mode'
 import { getPermissionMode, setPermissionMode, toPermissionOptions } from './permission-mode'
+import { clampZoom } from '../shared/zoom'
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
@@ -199,6 +200,16 @@ ipcMain.on('permission:set-mode', (event, mode: unknown) => {
   pendingResume = resume
   const win = BrowserWindow.fromWebContents(event.sender)
   win?.webContents.send('permission:changed', getPermissionMode())
+})
+
+// Guarded write: the renderer owns the zoom-level number (persisted in its own
+// localStorage) and pushes it here to scale the whole page via webContents zoom.
+// clampZoom is the trust boundary — a garbage IPC payload can't drive an absurd
+// factor; Number(undefined/NaN) collapses to the default.
+ipcMain.on('zoom:set', (event, level: unknown) => {
+  if (!isTrustedIpc(event)) return
+  const win = BrowserWindow.fromWebContents(event.sender)
+  win?.webContents.setZoomFactor(clampZoom(Number(level)))
 })
 
 ipcMain.on('chat:send', (event, text: string) => {

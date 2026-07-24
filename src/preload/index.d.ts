@@ -17,6 +17,7 @@ export interface WrapperApi {
   permissionMode: () => Promise<PermissionMode>
   setPermissionMode: (mode: PermissionMode) => void
   onPermissionChanged: (cb: (mode: PermissionMode) => void) => () => void
+  setZoom: (level: number) => void
   sendPrompt: (text: string) => void
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void

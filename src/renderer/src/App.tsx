@@ -7,6 +7,7 @@ import Chat from './components/Chat'
 import InputBar from './components/InputBar'
 import Welcome from './components/Welcome'
 import { useChat } from './useChat'
+import { useZoom } from './useZoom'
 
 const App = () => {
   const [cwd, setCwd] = useState<string | null>(null)
@@ -14,6 +15,7 @@ const App = () => {
   const [permission, setPermission] = useState<PermissionMode | null>(null)
   const { messages, busy, activeSessionId, send, stop, respondToPermission, openSession, newChat } =
     useChat()
+  useZoom()
 
   // Read the launch mode once, then track flips the main side broadcasts.
   useEffect(() => {

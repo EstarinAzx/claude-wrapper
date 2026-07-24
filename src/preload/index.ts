@@ -32,6 +32,7 @@ const api = {
       ipcRenderer.removeListener('permission:changed', listener)
     }
   },
+  setZoom: (level: number): void => ipcRenderer.send('zoom:set', level),
   sendPrompt: (text: string): void => ipcRenderer.send('chat:send', text),
   stopTurn: (): void => ipcRenderer.send('chat:stop'),
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {

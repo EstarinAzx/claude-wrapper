@@ -18,6 +18,7 @@ beforeEach(() => {
     permissionMode: vi.fn().mockResolvedValue('bypassPermissions'),
     setPermissionMode: vi.fn(),
     onPermissionChanged: vi.fn().mockReturnValue(() => {}),
+    setZoom: vi.fn(),
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),

@@ -26,6 +26,7 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
     currentSessionId: vi.fn<() => Promise<string | null>>().mockResolvedValue(null),
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),
     setBackendMode: vi.fn(),
+    setZoom: vi.fn(),
     sendPrompt: (text: string): void => {
       prompts.push(text)
     },
