@@ -81,6 +81,15 @@ describe('first chat turn', () => {
     expect(code?.textContent).toContain('const x = 1')
   })
 
+  test('GFM table markdown renders a <table>, not raw pipes', async () => {
+    await startSession()
+    send('show table')
+    harness.emit({ type: 'text-delta', text: '| A | B |\n| - | - |\n| 1 | 2 |\n' })
+    const table = document.body.querySelector('.assistant-body table')
+    expect(table).toBeTruthy()
+    expect(table?.querySelectorAll('td').length).toBe(2)
+  })
+
   test('turn end re-arms the input', async () => {
     await startSession()
     send('hi')

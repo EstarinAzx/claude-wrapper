@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import type { ChatMessage } from '../useChat'
 import type { PermissionDecision } from '../../../shared/engine-types'
@@ -92,7 +93,10 @@ const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
             <div key={m.id} className="msg msg-assistant">
               <Avatar />
               <div className="assistant-body">
-                <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
+                >
                   {m.text}
                 </ReactMarkdown>
               </div>

@@ -9,34 +9,28 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**Last session (interactive):** delivered + CLOSED **spec #20** (all four slices
-on main, gate-green) and hotfixed a shipped bug. main at **`f94f1a2`**.
+**Last session (interactive):** fixed the markdown-tables bug and CLOSED the
+one remaining standalone task. main was at **`fd178b1`**; this session's fix
+commits on top.
 
-- **#24 subagent viewer** → `76349e6`, live-eyeballed (row + drawer render under
-  Wisped/Bypass). Spec #20 closed.
-- **grok-alias hang HOTFIX** → `f94f1a2`: the model pill now sends the Wisp alias
-  **name** as `options.model`, not the resolved id (a resolved id hangs the turn).
-  See [[2026-07-24-wisp-alias-routes-by-name]].
-- Subagent upstream-refusal question: **resolved, not our bug** — owner ran grok
-  subagents fine via a `/slot` rebind. No tracker issue.
+- **markdown tables render as raw text → FIXED.** Added `remark-gfm@^4.0.1` +
+  `remarkPlugins={[remarkGfm]}` to `Chat.tsx`. GFM tables/strikethrough/
+  task-lists/autolinks now render in the main chat **and** the subagent drawer
+  (reuses `<Chat>`). New `tests/chat.test.tsx` case asserts a `| … |` table
+  renders a `<table>`. Gate green: typecheck · **215/215** test · build.
 
-## Next task — markdown tables render as raw text (small, ~1 file)
+## Next task — NONE queued; needs a fresh spec
 
-`src/renderer/src/components/Chat.tsx:95` renders assistant markdown with
-`<ReactMarkdown rehypePlugins={[rehypeHighlight]}>` and **no `remarkPlugins`**;
-`remark-gfm` is **not** a dependency. react-markdown v10 needs `remark-gfm` for
-GFM **tables** (and strikethrough / task-lists / autolinks), so a model emitting a
-`| … | … |` table shows as raw inline pipes (owner hit this live). **Fix:** add
-`remark-gfm` + `remarkPlugins={[remarkGfm]}`. This also fixes the **subagent
-drawer** (it reuses `<Chat>`). Add a `tests/chat.test.tsx` case asserting a table
-markdown renders a `<table>`. Owner floated "or a snippet block" — proper table
-rendering is the cleaner call. Then run the gate (typecheck · test · build).
+**Queue is empty.** All specs closed (#9, #16, #20), no open `ready-for-agent`
+tickets. New product work needs a fresh spec — **owner-pick, not agent
+auto-pick**. Run `/preset init` (→ grill → `/hp` → to-spec → to-tickets) on
+whatever the owner chooses.
 
-After that, **queue is empty** — new product work needs a fresh spec
-(`/preset init` → to-spec → to-tickets); owner-pick, not agent auto-pick. Deferred
-options in [[active-work]] (#24 follow-ons: historical/nested subagents, Agents
-panel, live subagent streaming; plus spatial agents-view, N-concurrent engines,
-fork-on-resume, global project switcher).
+Deferred options to draw from (all in [[active-work]]): #24 follow-ons —
+historical/nested subagents, dedicated Agents panel, live subagent token
+streaming (`forwardSubagentText`); plus spatial agents-view, live-tail external
+sessions, N-concurrent engines, fork-on-resume, global project switcher,
+busy-switch detach-with-notice.
 
 ## Landmines (still live)
 
