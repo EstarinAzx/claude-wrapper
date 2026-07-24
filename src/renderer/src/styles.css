@@ -237,10 +237,29 @@ body {
   width: 248px;
   flex-shrink: 0;
   min-height: 0;
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--surface);
   border-right: 1px solid var(--border);
+}
+
+/* Drag grip on the rail's right edge — a thin invisible strip that widens the
+   1px border into a comfortable col-resize target. Absent on the collapsed
+   rail (that branch never renders it), so resize is inert while collapsed. */
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 1;
+  touch-action: none;
+}
+
+.sidebar-resize-handle:hover {
+  background: var(--accent, oklch(0.7 0.12 210 / 0.35));
 }
 
 .sidebar-collapsed {

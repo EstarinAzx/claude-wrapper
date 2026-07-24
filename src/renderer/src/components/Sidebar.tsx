@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SessionMeta } from '../../../shared/session-types'
+import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
+
+const WIDTH_KEY = 'sidebar-width'
+
+const readStoredWidth = (): number => {
+  const raw = window.localStorage.getItem(WIDTH_KEY)
+  return clampSidebarWidth(raw === null ? DEFAULT_SIDEBAR_WIDTH : Number(raw))
+}
 
 const relTime = (ms: number): string => {
   if (!ms) return ''
@@ -42,7 +50,34 @@ const Sidebar = ({
 }) => {
   const [sessions, setSessions] = useState<SessionMeta[]>([])
   const [collapsed, setCollapsed] = useState(false)
+  const [width, setWidthState] = useState(readStoredWidth)
   const reqIdRef = useRef(0)
+
+  // Persist UI-layout prefs (this width); engine-intent state stays in-memory.
+  const setWidth = useCallback((px: number): void => {
+    const clamped = clampSidebarWidth(px)
+    setWidthState(clamped)
+    window.localStorage.setItem(WIDTH_KEY, String(clamped))
+  }, [])
+
+  // Drag the right edge: capture the start point + width, then track pointer
+  // moves on the window (not the thin handle) until release so the drag keeps
+  // following even when the cursor outruns the 6px grip.
+  const startResize = useCallback(
+    (e: React.PointerEvent): void => {
+      e.preventDefault()
+      const startX = e.clientX
+      const startWidth = width
+      const onMove = (ev: PointerEvent): void => setWidth(startWidth + (ev.clientX - startX))
+      const onUp = (): void => {
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+      }
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
+    },
+    [width, setWidth]
+  )
 
   const refresh = useCallback(() => {
     const reqId = ++reqIdRef.current
@@ -77,7 +112,7 @@ const Sidebar = ({
   }
 
   return (
-    <aside className="sidebar" aria-label="Sessions">
+    <aside className="sidebar" aria-label="Sessions" style={{ width }}>
       <div className="sidebar-head">
         <span className="sidebar-title">Sessions</span>
         <div className="sidebar-head-actions">
@@ -162,6 +197,13 @@ const Sidebar = ({
           })}
         </ul>
       )}
+      <div
+        className="sidebar-resize-handle"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize sidebar"
+        onPointerDown={startResize}
+      />
     </aside>
   )
 }

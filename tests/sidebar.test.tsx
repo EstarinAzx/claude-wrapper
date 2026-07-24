@@ -42,6 +42,7 @@ const startSession = async (): Promise<void> => {
 
 afterEach(() => {
   cleanup()
+  window.localStorage.clear()
 })
 
 describe('session sidebar', () => {
@@ -126,5 +127,56 @@ describe('session sidebar', () => {
     expect(await screen.findByText('No sessions yet')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Refresh sessions' }))
     expect(await screen.findByText('Reloaded chat')).toBeTruthy()
+  })
+})
+
+// jsdom has no PointerEvent constructor, so we dispatch the drag as plain
+// MouseEvents carrying clientX — the window listeners key off type + clientX.
+const dragHandleBy = (handle: Element, fromX: number, toX: number): void => {
+  fireEvent(handle, new MouseEvent('pointerdown', { clientX: fromX, bubbles: true, cancelable: true }))
+  act(() => {
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: toX }))
+    window.dispatchEvent(new MouseEvent('pointerup', {}))
+  })
+}
+
+describe('sidebar resize', () => {
+  const rail = (): HTMLElement => screen.getByRole('complementary', { name: 'Sessions' })
+
+  test('applies the default width on mount', async () => {
+    setup([])
+    await startSession()
+    expect(rail().style.width).toBe('248px')
+  })
+
+  test('dragging the handle widens the rail and persists the width', async () => {
+    setup([])
+    await startSession()
+    dragHandleBy(screen.getByRole('separator', { name: 'Resize sidebar' }), 300, 360)
+    expect(rail().style.width).toBe('308px') // 248 + (360 - 300)
+    expect(window.localStorage.getItem('sidebar-width')).toBe('308')
+  })
+
+  test('clamps at the max bound on an oversized drag', async () => {
+    setup([])
+    await startSession()
+    dragHandleBy(screen.getByRole('separator', { name: 'Resize sidebar' }), 0, 2000)
+    expect(rail().style.width).toBe('480px')
+    expect(window.localStorage.getItem('sidebar-width')).toBe('480')
+  })
+
+  test('restores a persisted width on mount', async () => {
+    window.localStorage.setItem('sidebar-width', '320')
+    setup([])
+    await startSession()
+    expect(rail().style.width).toBe('320px')
+  })
+
+  test('exposes no resize handle while collapsed (resize is inert)', async () => {
+    setup([{ id: 'a', title: 'Keep me', lastUpdated: 1000, messageCount: 1 }])
+    await startSession()
+    await screen.findByText('Keep me')
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse sessions' }))
+    expect(screen.queryByRole('separator', { name: 'Resize sidebar' })).toBeNull()
   })
 })
