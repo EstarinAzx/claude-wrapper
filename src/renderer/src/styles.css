@@ -259,7 +259,7 @@ body {
 }
 
 .sidebar-resize-handle:hover {
-  background: var(--accent, oklch(0.7 0.12 210 / 0.35));
+  background: color-mix(in oklch, var(--mint) 50%, transparent);
 }
 
 .sidebar-collapsed {
