@@ -7,128 +7,101 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-24, interactive session (post-spec-#16 follow-up)_
-_At commit: 16b0884 on main_
+_Last updated: 2026-07-24, interactive wrap-up (post spec-#20 + grok hotfix)_
+_At commit: f94f1a2 on main_
 
 ## Current focus
 
-**Spec #20 batch queued for the `ticket-loop` relay.** Grilled + specced
-2026-07-24 (interactive `/preset init`). One spec, 4 `ready-for-agent` tracer
-slices, quick-wins-first, none blocking:
+**Spec #20 delivered and CLOSED.** All four tracer slices landed on main, one
+squash commit per ticket, each gate-green — drained one ticket per `ticket-loop`
+relay leg (legs 1–4, unattended-bypass):
 
-- **#21 Zoom / bigger UI** — Electron `webContents` zoom, default ~1.1,
-  `Ctrl/Cmd +/-/0`, persist via `localStorage`.
-- **#22 Resizable sidebar** — drag right edge, ~180–480px, persist via
-  `localStorage` (first UI-pref persistence; engine-intent state stays in-memory).
-- **#23 Model picker (input box)** — pill → SDK `options.model`; list dynamic +
-  mode-aware from `wisp routing --json` (Wisped: families+aliases; Native:
-  families only); switch **keeps conversation** (rebuild+resume, permission-pill
-  precedent); disabled while busy; new `model-mode.ts` + IPC `model:list`/`model:set`.
-- **#24 Subagent viewer** — hybrid: live list from stream heartbeat
-  (`parent_tool_use_id` buckets), click → disk preview via `getSubagentMessages`;
-  Task-card grows list, click → read-only drawer; **live-only, flat one level**.
+- **#21 Zoom / bigger UI** → `d400918`
+- **#22 Resizable sidebar** → `7b296fa` (+ `29816d0`: resize-handle hover uses `--mint`)
+- **#23 Model picker (input box)** → `c802ecb` (+ **`f94f1a2`** grok-alias hotfix, below)
+- **#24 Subagent working-list + read-only viewer** → `76349e6`
 
-Decisions: [[2026-07-24-ui-polish-model-picker-subagent-viewer]]. Landmines
-(carried into tickets): correlate live `parent_tool_use_id` ↔ persisted `agentId`;
-verify a Wisp **alias** routes as `options.model`; add new `window.api` channels to
-every mock + `chat-harness.ts`; guard every IPC with `isTrustedIpc`.
+No open `ready-for-agent` tickets remain. Closed specs: #9 (#10–#14), #16
+(#17–#19), #20 (#21–#24). #1 (MVP umbrella, unlabelled) is out of scope.
 
-**Run it:** `/relay N=1 /preset ticket-loop` (self-paced, one ticket per leg,
-bypass) drains #21→#24 then the closing leg closes spec #20.
+## Done this session (interactive, post-relay-chain)
 
-## Done (interactive, post-chain) — permission-mode toggle (`16b0884`)
+### #24 subagent viewer — live-eyeballed ✓ (`76349e6`)
+Task cards grow a live `.subagent-row` (type + running/done/failed); clicking
+opens a read-only `SubagentDrawer` slide-over reusing `<Chat>`. Engine buckets
+`parent_tool_use_id`-tagged messages into a `subagent` event, drops them from the
+main transcript (no leak), drains in-flight ones to `failed` on abort/error/close.
+`subagent-store` reads the transcript tree on demand; correlation
+**`agent-<id>.meta.json` `toolUseId` === live `parent_tool_use_id`**. Guarded IPC
+`subagents:list` / `subagents:transcript`; `window.api` added to all four mocks.
+Live eyeball (Wisped/Bypass) via a `run-desktop` companion driver confirmed the
+row renders and the drawer loads — proving the **Wisp bridge forwards
+`parent_tool_use_id`** (the one thing unverifiable unattended). Gate: 214/214.
 
-Owner-requested: a **second titlebar pill** cycles **Bypass → Accept Edits →
-Ask**, pinning `permissionMode` into the SDK query options. New
-`src/main/permission-mode.ts` (in-memory, **default `bypassPermissions`**) + pure
-`toPermissionOptions` (bypass adds `allowDangerouslySkipPermissions`). Engine
-gained a 5th injected getter `getPermissionOptions` (mirrors `getEnv`); guarded
-IPC `permission:set-mode` rebuilds the engine but **resumes the current session**
-(`pendingResume`) so the conversation is kept — unlike a backend flip. Pill
-disabled while `busy`; **Bypass carries a danger tint**. **Reverses**
-[[2026-07-23-permission-inherits-host]] → see
-[[2026-07-24-in-app-permission-mode-toggle]]. Gate green: typecheck · **153/153**
-· build.
+### grok-alias hang HOTFIX ✓ (`f94f1a2`)
+Picking a Wisp **alias** in the model pill (e.g. grok) hung the turn forever.
+Root cause (live-confirmed): `parseAliases` set the option `id` to the **resolved
+model id** (`grok-4.5`), so `options.model=grok-4.5` — but the Wisp bridge routes
+by **name** (families + aliases), never a raw model id. Proof: `claude-wisp -p …
+--model grok` → responds; `--model grok-4.5` → hangs. Fix: option `id` = alias
+name. Verified in-app (picked grok → real response). Reverses the #23 build's
+"route by resolved id" guess. See
+[[2026-07-24-wisp-alias-routes-by-name]].
 
-⚠️ **Landmine — default bypass:** the app now auto-runs every tool (Bash writes/
-deletes/network, edits) with **no confirmation** by default, whole session, until
-the user cycles to Ask/Accept Edits. Deliberate owner choice. Not host-inherited
-anymore.
+## Known issues / not-our-bug
 
-**Live eyeball — passed.** Launched the built app (wisp shell) via the new
-`run-desktop` skill (Playwright `_electron`, `58916b8`): backend pill `Wisped`
-(mint), permission pill `Bypass` (red danger tint); `--cycle` flipped them to
-`Native` / `Accept Edits`. Both pills are real buttons, both re-render from the
-main broadcast. Repeatable: `node .claude/skills/run-desktop/driver.mjs --cycle`. The **spec #16** batch (Native ⇄ Wisped backend toggle) is
-fully delivered and the spec is closed. The `ticket-loop` relay chain drained
-its queue one ticket per leg (legs 1–3: **#17 → #18 → #19**) and has signalled
-`stop: true` — no leg 4. Nothing is queued for an agent. (Spec #9 —
-session history — was closed earlier; tickets #10–#14.)
-
-## State
-
-- **Relay chain `ticket-loop`: complete.** #19 was the last ticket; the
-  queue-empty branch fired, so the chain stopped itself. State file
-  `.claude/relay/ticket-loop.md` carries `stop: true`.
-- **Done this leg (#19, `0660ce6`):** click-to-flip backend toggle.
-  - Titlebar pill is now a `<button>`; clicking it flips the backend. New
-    guarded one-way IPC **`backend:set-mode`** takes the target mode, reuses the
-    `chat:target` teardown (`engine.close()` + `cancelAll()` + `engine=null`) and
-    clears `pendingResume` so the flip lands in a **fresh chat**. Refuses `wisped`
-    when the launch env carried no wisp routing (native-lock).
-  - Main **broadcasts `backend:changed`**; `App` subscribes on mount and the pill
-    re-renders from the broadcast (authoritative, so the native-lock no-op keeps
-    the pill put). The lazy `chat:send` rebuilds the engine → next turn spawns
-    against the new mode via the #17 resolver, no extra plumbing.
-  - Pill `disabled` while `busy` (reuses #14 block) and when wisped unavailable.
-  - See [[2026-07-24-click-flip-backend-toggle]]. Gate green: typecheck ·
-    **137/137** · build.
-- **Blocked:** nothing.
+- **Subagents refusing upstream (RESOLVED — not a wrapper bug).** Task subagents
+  were seen refusing with 0 tool uses on both opus and sonnet routes
+  (`[Response truncated: refusal]`) — diagnosed as the Wisp bridge / CLI harness,
+  not claude-wrapper (the wrapper faithfully streams + displays it, and #24
+  correctly shows the refusal). Owner then ran grok subagents fine via a `/slot`
+  rebind (haiku→grok snapshot/bind/revert) — `GROK_SLOT_OK` / `WROTE_OK` /
+  `DELETED_OK`. Subagent deploy is confirmed working; no tracker issue filed.
 
 ## Pick up here
 
-**New batch ready:** spec **#20** with 4 `ready-for-agent` tickets **#21–#24**
-(all frontier, none blocked). Start the drain with:
+**Next task — markdown tables don't render (small, ~1 file).** The assistant
+chat renders markdown via `src/renderer/src/components/Chat.tsx:95`
+`<ReactMarkdown rehypePlugins={[rehypeHighlight]}>` with **no `remarkPlugins`**,
+and `remark-gfm` is **not** a dependency. react-markdown v10 needs `remark-gfm`
+for GFM **tables** (also strikethrough / task-lists / autolinks), so a model
+emitting a `| … | … |` table shows as raw inline pipes (owner hit this). Fix: add
+`remark-gfm` dep + `remarkPlugins={[remarkGfm]}`. Fixes the **subagent drawer**
+too (it reuses `<Chat>`). Add a `chat.test.tsx` case that a table renders as a
+`<table>`. Owner also floated "or a snippet block" — proper table rendering is
+the cleaner call, decide at build.
 
-```
-/relay N=1 /preset ticket-loop
-```
-
-One ticket per leg, self-paced, unattended-bypass. It picks the oldest open
-unblocked `ready-for-agent` ticket each firing (→ #21 first), works it
-end-to-end, gates, breadcrumbs, relays a fresh leg; queue-empty → stops and the
-final leg closes spec #20. Kill: `/relay stop ticket-loop` or hand-edit
-`stop: true` into `.claude/relay/ticket-loop.md` (currently `stop: true` from the
-prior chain — a fresh `/relay` re-inits it). The prior spec-#16 chain is done;
-#1 (MVP umbrella, unlabelled) remains out of scope.
+Beyond that, **queue is empty** — new product work needs a fresh spec
+(`/preset init` → to-spec → to-tickets). Owner-pick, not agent auto-pick.
 
 ## Deferred (own future specs)
 
-Fancy spatial agents-view (session boxes in a canvas), live-tail external
-sessions, N-concurrent engines, fork-on-resume, global project switcher.
-Busy-switch could later graduate from *block* to *detach-with-notice* — the
-reversal path is written in [[2026-07-23-busy-switch-block-not-detach]].
+From #24 scope: historical subagent browsing (surface subagents on a loaded past
+session), nested subagents (agents spawned by agents, beyond top level), a
+dedicated right-hand Agents panel, full live token-by-token subagent streaming
+(`forwardSubagentText`). Older: spatial agents-view, live-tail external sessions,
+N-concurrent engines, fork-on-resume, global project switcher. Busy-switch could
+graduate from *block* to *detach-with-notice* ([[2026-07-23-busy-switch-block-not-detach]]).
 
-## Open loose ends
+## Landmines (carried forward)
 
-- **Sidebar visual pass (open since #11):** the deferred live eyeball happened
-  (interactive session, 2026-07-24). The three head glyphs + active bar read
-  right against the reference, and it surfaced one gap: #14's busy-block had
-  **no visual affordance** (disabled rows looked identical mid-stream). Fixed in
-  **#15 (`31e7910`)** — disabled rows + New chat now dim to 0.55 +
-  `pointer-events: none` while streaming (active mint bar stays, dimmed), and the
-  head glyph gap went 2px→4px. Routed through impeccable/polish vs Frost Mono.
-  Remaining: no full impeccable *redesign* of the rows (they still use the tokens
-  directly), but nothing reads wrong — treat as closed unless a deeper pass is
-  wanted.
-- **Ecosystem:** the global relay skill was edited during setup (per-leg naming)
-  → per CLAUDE.md, sync the ecosystem-kb vault + `/preset health` before any
-  template push (not a relay-leg concern; carry for an interactive session).
+- **Wisp `options.model` = the alias/family NAME, never a resolved model id** — a
+  resolved id hangs the turn. New model-routing work must send names. See
+  [[2026-07-24-wisp-alias-routes-by-name]].
+- **New `window.api` channel → add to ALL FOUR mock sites** or App-render tests
+  throw: `tests/chat-harness.ts` + inline mocks in `tests/sidebar.test.tsx`,
+  `tests/session.test.tsx`, `tests/shell.test.tsx`. Guard every IPC with
+  `isTrustedIpc`.
+- **Subagent correlation:** live `parent_tool_use_id` ↔ persisted `agentId` via
+  `agent-<id>.meta.json` `toolUseId`. `subagent-store` reads the tree directly
+  (SDK `getSubagentMessages`/`listSubagents` don't expose the meta sidecar);
+  `parseTranscript(raw, { includeSidechain: true })` for a subagent's own file.
+- Resume ceiling + `sessionId()` accessor + native-store facts + Tailwind `@theme`
+  + engine legible-error pins — unchanged, see [[pick-up]].
 
 ## Related
 
-- [[overview]] · [[decisions]] · [[pick-up]] · [[happy-path]]
-- [[2026-07-23-busy-switch-block-not-detach]] ·
-  [[2026-07-23-resume-via-target-close-rebuild]] ·
-  [[2026-07-23-session-id-accessor-not-event]] · [[2026-07-23-bg-isolation-none]]
-- Spec #9 (closed) + tickets #10–#14 (all closed) on the tracker.
+- [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-24-wisp-alias-routes-by-name]] ·
+  [[2026-07-24-ui-polish-model-picker-subagent-viewer]] ·
+  [[2026-07-24-in-app-permission-mode-toggle]]
