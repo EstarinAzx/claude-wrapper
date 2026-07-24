@@ -16,6 +16,7 @@ import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
 import { listSessions, readTranscript } from './session-store'
+import { listSubagents, readSubagentTranscript } from './subagent-store'
 import type { PermissionDecision } from '../shared/engine-types'
 
 let engine: ReturnType<typeof createEngine> | null = null
@@ -135,6 +136,24 @@ ipcMain.handle('session:transcript', async (event, id: string) => {
   if (!isTrustedIpc(event)) return []
   return readTranscript(getSessionCwd(), String(id))
 })
+
+// Read-only: the subagent drawer asks for a session's spawned subagents,
+// correlated to the Task tool_use ids the renderer holds from live cards. Reads
+// the persisted transcript tree on demand — no watching. Carries id/type only.
+ipcMain.handle('subagents:list', async (event, sessionId: unknown) => {
+  if (!isTrustedIpc(event)) return []
+  return listSubagents(getSessionCwd(), String(sessionId))
+})
+
+// Read-only: load one subagent's full conversation for the drawer, resolved by
+// the parent Task tool_use id. Lenient [] when not yet on disk.
+ipcMain.handle(
+  'subagents:transcript',
+  async (event, sessionId: unknown, parentToolUseId: unknown) => {
+    if (!isTrustedIpc(event)) return []
+    return readSubagentTranscript(getSessionCwd(), String(sessionId), String(parentToolUseId))
+  }
+)
 
 ipcMain.on('chat:target', (event, id: unknown) => {
   if (!isTrustedIpc(event)) return

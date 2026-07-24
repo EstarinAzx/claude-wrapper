@@ -22,6 +22,9 @@ export type SdkMessage =
   | {
       type: 'assistant'
       session_id?: string
+      // Non-null when this assistant message is a subagent's forwarded output;
+      // it is the id of the Task tool_use that spawned the subagent.
+      parent_tool_use_id?: string | null
       message: {
         content: Array<{
           type: string
@@ -35,6 +38,7 @@ export type SdkMessage =
   | {
       type: 'user'
       session_id?: string
+      parent_tool_use_id?: string | null
       message: {
         content:
           | string
@@ -162,6 +166,10 @@ export const createEngine = (
   let terminalError: string | null = null
   let interrupting = false
   let currentSessionId: string | null = null
+  // Task tool_use ids that have produced forwarded subagent output this engine.
+  // A `running` subagent event fires once per id (on the first tagged block);
+  // the id is cleared when the Task's own tool_result marks it done/failed.
+  const subagentParents = new Set<string>()
 
   const emit = (e: EngineEvent): void => {
     activeOnEvent?.(e)
@@ -175,9 +183,37 @@ export const createEngine = (
     r?.()
   }
 
+  // A turn that aborts/errors/closes may leave subagents whose Task tool_result
+  // never arrived — flip each still-open one to failed so its row stops pulsing
+  // "running…". Only called on the failure paths; a successful turn has already
+  // drained them via the Task tool_results.
+  const drainSubagents = (): void => {
+    for (const id of subagentParents) {
+      emit({ type: 'subagent', parentToolUseId: id, status: 'failed' })
+    }
+    subagentParents.clear()
+  }
+
   const handleMessage = (msg: SdkMessage): void => {
     const sid = (msg as { session_id?: unknown }).session_id
     if (typeof sid === 'string') currentSessionId = sid
+
+    // Subagent output (Task tool) arrives tagged with parent_tool_use_id. Bucket
+    // it into a per-agent presence event and DROP it from the main transcript —
+    // the wrapper shows subagents in their own drawer, not inline. forwardSubagentText
+    // stays off, so only tool_use/tool_result blocks land here (never text deltas).
+    const parent = (msg as { parent_tool_use_id?: unknown }).parent_tool_use_id
+    if (
+      typeof parent === 'string' &&
+      parent.length > 0 &&
+      (msg.type === 'assistant' || msg.type === 'user')
+    ) {
+      if (!subagentParents.has(parent)) {
+        subagentParents.add(parent)
+        emit({ type: 'subagent', parentToolUseId: parent, status: 'running' })
+      }
+      return
+    }
 
     if (msg.type === 'stream_event') {
       const event = msg.event as {
@@ -244,22 +280,31 @@ export const createEngine = (
                 .map((entry) => entry.text)
                 .join('\n')
             }
-            emit({
-              type: 'tool-result',
-              id: (block as { tool_use_id: string }).tool_use_id,
-              text,
-              isError: (block as { is_error?: unknown }).is_error === true
-            })
+            const toolUseId = (block as { tool_use_id: string }).tool_use_id
+            const isError = (block as { is_error?: unknown }).is_error === true
+            emit({ type: 'tool-result', id: toolUseId, text, isError })
+            // A Task tool_result closes out its subagent: flip the presence
+            // event to done/failed so the working-list stops showing "running".
+            if (subagentParents.has(toolUseId)) {
+              subagentParents.delete(toolUseId)
+              emit({
+                type: 'subagent',
+                parentToolUseId: toolUseId,
+                status: isError ? 'failed' : 'done'
+              })
+            }
           }
         }
       }
     } else if (msg.type === 'result') {
       if (interrupting) {
+        drainSubagents()
         emit({ type: 'turn-aborted' })
       } else if (msg.subtype === 'success') {
         // subtype is the discriminator — SDKResultSuccess can carry is_error: true
         emit({ type: 'turn-end' })
       } else {
+        drainSubagents()
         emit({
           type: 'error',
           message: mapResultError(String(msg.subtype ?? 'error'))
@@ -339,12 +384,14 @@ export const createEngine = (
           terminalError ??=
             'Claude session ended unexpectedly. Pick the folder again to restart.'
           if (turnResolve) {
+            drainSubagents()
             emit({ type: 'error', message: terminalError })
             finishTurn()
           }
         } catch (err) {
           const raw = err instanceof Error ? err.message : String(err)
           terminalError = mapStreamError(raw)
+          drainSubagents()
           emit({ type: 'error', message: terminalError })
           finishTurn()
         } finally {
@@ -406,6 +453,7 @@ export const createEngine = (
     queue = null
     consumeStarted = false
     if (turnResolve) {
+      drainSubagents()
       emit({ type: 'error', message: 'query closed' })
       finishTurn()
     }

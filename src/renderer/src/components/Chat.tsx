@@ -20,9 +20,10 @@ interface ChatProps {
   messages: ChatMessage[]
   busy: boolean
   onPermission?: (toolUseId: string, decision: PermissionDecision) => void
+  onOpenSubagent?: (parentToolUseId: string, agentType: string) => void
 }
 
-const Chat = ({ messages, busy, onPermission }: ChatProps) => {
+const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
   const scrollerRef = useRef<HTMLElement | null>(null)
   const nearBottomRef = useRef(true)
 
@@ -72,7 +73,12 @@ const Chat = ({ messages, busy, onPermission }: ChatProps) => {
           }
           if (m.role === 'tool') {
             return (
-              <ToolCard key={m.id} message={m} onPermission={onPermission} />
+              <ToolCard
+                key={m.id}
+                message={m}
+                onPermission={onPermission}
+                onOpenSubagent={onOpenSubagent}
+              />
             )
           }
           if (m.role === 'notice') {

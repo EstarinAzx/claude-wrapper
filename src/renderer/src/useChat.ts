@@ -17,6 +17,9 @@ export type ChatMessage =
       result: string | null
       isError: boolean
       permission: 'pending' | 'denied' | null
+      // Set when this tool call is a Task that spawned a subagent, tracking its
+      // live status. Absent for ordinary tools. Drives the subagent row + drawer.
+      subagent?: 'running' | 'done' | 'failed'
     }
 
 let nextId = 0
@@ -28,7 +31,8 @@ const uid = (): string => {
 // Map a parsed transcript message to the renderer's ChatMessage. Tool results
 // are summarised the same way the live tool-result event is, so a replayed
 // tool card reads identically to a live one; historical permission is null.
-const toChatMessage = (m: TranscriptMessage): ChatMessage => {
+// Exported so the subagent drawer renders a loaded transcript identically.
+export const toChatMessage = (m: TranscriptMessage): ChatMessage => {
   if (m.role === 'tool') {
     return {
       id: uid(),
@@ -115,6 +119,17 @@ export const useChat = () => {
                     isError: e.isError,
                     permission: null
                   }
+              : m
+          )
+        )
+      } else if (e.type === 'subagent') {
+        // Stamp the parent Task card with its subagent's live status. Keyed by
+        // parentToolUseId (== the Task card's toolUseId); the card renders a
+        // clickable subagent row from this field.
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.role === 'tool' && m.toolUseId === e.parentToolUseId
+              ? { ...m, subagent: e.status }
               : m
           )
         )

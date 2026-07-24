@@ -10,6 +10,8 @@ beforeEach(() => {
     pickFolder: vi.fn().mockResolvedValue('D:\\projects\\demo'),
     listSessions: vi.fn().mockResolvedValue([]),
     loadTranscript: vi.fn().mockResolvedValue([]),
+    listSubagents: vi.fn().mockResolvedValue([]),
+    subagentTranscript: vi.fn().mockResolvedValue([]),
     targetSession: vi.fn(),
     currentSessionId: vi.fn().mockResolvedValue(null),
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),

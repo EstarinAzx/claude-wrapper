@@ -2,6 +2,7 @@ import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { ModelInfo } from '../shared/model-types'
+import type { SubagentInfo } from '../shared/subagent-types'
 
 export interface WrapperApi {
   minimize: () => void
@@ -10,6 +11,11 @@ export interface WrapperApi {
   pickFolder: () => Promise<string | null>
   listSessions: () => Promise<SessionMeta[]>
   loadTranscript: (id: string) => Promise<TranscriptMessage[]>
+  listSubagents: (sessionId: string) => Promise<SubagentInfo[]>
+  subagentTranscript: (
+    sessionId: string,
+    parentToolUseId: string
+  ) => Promise<TranscriptMessage[]>
   targetSession: (id: string | null) => void
   currentSessionId: () => Promise<string | null>
   backendMode: () => Promise<BackendInfo>

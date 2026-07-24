@@ -31,6 +31,8 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
     pickFolder: vi.fn<() => Promise<string | null>>().mockResolvedValue(folder),
     listSessions: vi.fn().mockResolvedValue([]),
     loadTranscript: vi.fn().mockResolvedValue([]),
+    listSubagents: vi.fn().mockResolvedValue([]),
+    subagentTranscript: vi.fn().mockResolvedValue([]),
     targetSession: vi.fn(),
     currentSessionId: vi.fn<() => Promise<string | null>>().mockResolvedValue(null),
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),

@@ -3,6 +3,7 @@ import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { ModelInfo } from '../shared/model-types'
+import type { SubagentInfo } from '../shared/subagent-types'
 
 const api = {
   minimize: (): void => ipcRenderer.send('window:minimize'),
@@ -12,6 +13,13 @@ const api = {
   listSessions: (): Promise<SessionMeta[]> => ipcRenderer.invoke('session:list'),
   loadTranscript: (id: string): Promise<TranscriptMessage[]> =>
     ipcRenderer.invoke('session:transcript', id),
+  listSubagents: (sessionId: string): Promise<SubagentInfo[]> =>
+    ipcRenderer.invoke('subagents:list', sessionId),
+  subagentTranscript: (
+    sessionId: string,
+    parentToolUseId: string
+  ): Promise<TranscriptMessage[]> =>
+    ipcRenderer.invoke('subagents:transcript', sessionId, parentToolUseId),
   targetSession: (id: string | null): void => ipcRenderer.send('chat:target', id),
   currentSessionId: (): Promise<string | null> => ipcRenderer.invoke('chat:session-id'),
   backendMode: (): Promise<BackendInfo> => ipcRenderer.invoke('backend:mode'),

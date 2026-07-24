@@ -14,7 +14,15 @@ const extractText = (content: unknown): string => {
   return ''
 }
 
-export const parseTranscript = (raw: string): TranscriptMessage[] => {
+// Parse a native JSONL transcript to the replay message list. Main-session
+// transcripts tag subagent lines with `isSidechain: true` and those are dropped
+// by default (they belong to the subagent, not the main thread). A subagent's
+// OWN transcript file is entirely sidechain lines, so the subagent viewer passes
+// { includeSidechain: true } to keep them.
+export const parseTranscript = (
+  raw: string,
+  opts: { includeSidechain?: boolean } = {}
+): TranscriptMessage[] => {
   const messages: TranscriptMessage[] = []
   const toolsById = new Map<string, ToolMessage>()
 
@@ -30,7 +38,7 @@ export const parseTranscript = (raw: string): TranscriptMessage[] => {
       continue
     }
 
-    if (rec.isSidechain === true) continue
+    if (rec.isSidechain === true && !opts.includeSidechain) continue
 
     const type = rec.type
     const message = rec.message as { content?: unknown } | undefined

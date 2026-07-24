@@ -11,6 +11,14 @@ export type EngineEvent =
   | { type: 'text-delta'; text: string }
   | { type: 'tool-use'; id: string; name: string; input: Record<string, unknown> }
   | { type: 'tool-result'; id: string; text: string; isError: boolean }
+  // A subagent (spawned by a Task tool call) is present under its parent tool
+  // call. Bucketed by parentToolUseId — the id of the Task tool_use that spawned
+  // it, which also equals the persisted agent-<id>.meta.json `toolUseId`, so the
+  // renderer can later resolve it to a disk transcript. `running` fires once when
+  // the subagent's first tagged block arrives; `done`/`failed` on the Task's own
+  // (main-thread) tool_result. Subagent output itself never leaks into the main
+  // transcript.
+  | { type: 'subagent'; parentToolUseId: string; status: 'running' | 'done' | 'failed' }
   | {
       type: 'permission-request'
       id: string

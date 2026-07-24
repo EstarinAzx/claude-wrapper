@@ -490,6 +490,134 @@ describe('engine tool events', () => {
   })
 })
 
+describe('engine subagents', () => {
+  const subAssistant = (parent: string): SdkMessage => ({
+    type: 'assistant',
+    session_id: 'sess-1',
+    parent_tool_use_id: parent,
+    message: { content: [toolUse('sub-tu-1', 'Read', { file_path: 'x.ts' })] }
+  })
+  const subResult = (parent: string): SdkMessage => ({
+    type: 'user',
+    session_id: 'sess-1',
+    parent_tool_use_id: parent,
+    message: {
+      content: [{ type: 'tool_result', tool_use_id: 'sub-tu-1', content: 'contents' }]
+    }
+  })
+  const taskResult = (id: string, isError = false): SdkMessage => ({
+    type: 'user',
+    session_id: 'sess-1',
+    message: {
+      content: [{ type: 'tool_result', tool_use_id: id, content: 'summary', is_error: isError }]
+    }
+  })
+
+  test('subagent tool_use is bucketed into a running event, never leaked as a tool card', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(subAssistant('task-1'))
+    push(success)
+    const events = await turn
+    expect(events).toEqual([
+      { type: 'subagent', parentToolUseId: 'task-1', status: 'running' },
+      { type: 'turn-end' }
+    ])
+    // no tool-use for the subagent's inner Read leaked to the main transcript
+    expect(events).not.toContainEqual(
+      expect.objectContaining({ type: 'tool-use', id: 'sub-tu-1' })
+    )
+  })
+
+  test('subagent tool_result does not leak; running fires once across many tagged blocks', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(subAssistant('task-1'))
+    push(subResult('task-1'))
+    push(subAssistant('task-1'))
+    push(success)
+    const events = await turn
+    const running = events.filter((e) => e.type === 'subagent')
+    expect(running).toEqual([{ type: 'subagent', parentToolUseId: 'task-1', status: 'running' }])
+    expect(events).not.toContainEqual(
+      expect.objectContaining({ type: 'tool-result', id: 'sub-tu-1' })
+    )
+  })
+
+  test("the Task's own tool_result flips the subagent to done and still shows the Task card", async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(subAssistant('task-1'))
+    push(taskResult('task-1'))
+    push(success)
+    const events = await turn
+    expect(events).toEqual([
+      { type: 'subagent', parentToolUseId: 'task-1', status: 'running' },
+      { type: 'tool-result', id: 'task-1', text: 'summary', isError: false },
+      { type: 'subagent', parentToolUseId: 'task-1', status: 'done' },
+      { type: 'turn-end' }
+    ])
+  })
+
+  test('a failed Task tool_result flips the subagent to failed', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(subAssistant('task-1'))
+    push(taskResult('task-1', true))
+    push(success)
+    const events = await turn
+    expect(events).toContainEqual({
+      type: 'subagent',
+      parentToolUseId: 'task-1',
+      status: 'failed'
+    })
+  })
+
+  test('a main-thread tool_result with no prior subagent activity emits no subagent event', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskResult('plain-tool'))
+    push(success)
+    const events = await turn
+    expect(events.some((e) => e.type === 'subagent')).toBe(false)
+  })
+
+  test('an in-flight subagent is flipped to failed when the turn aborts', async () => {
+    const base = streamingStub()
+    const fn: QueryFn = (args) =>
+      Object.assign(base.fn(args), { interrupt: async (): Promise<void> => {} })
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    base.push(init)
+    base.push(subAssistant('task-1')) // subagent now "running", no Task result yet
+    engine.interrupt()
+    base.push({ type: 'result', subtype: 'error_during_execution', session_id: 'sess-1', is_error: true })
+    const events = await turn
+    expect(events).toContainEqual({
+      type: 'subagent',
+      parentToolUseId: 'task-1',
+      status: 'failed'
+    })
+    expect(events).toContainEqual({ type: 'turn-aborted' })
+  })
+})
+
 describe('engine canUseTool / permissions', () => {
   test('canUseTool awaits injected permission then returns exact allow result', async () => {
     let resolvePerm!: (d: PermissionDecision) => void

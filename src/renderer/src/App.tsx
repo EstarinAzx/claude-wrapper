@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar'
 import Chat from './components/Chat'
 import InputBar from './components/InputBar'
 import Welcome from './components/Welcome'
+import SubagentDrawer from './components/SubagentDrawer'
 import { useChat } from './useChat'
 import { useZoom } from './useZoom'
 
@@ -14,6 +15,10 @@ const App = () => {
   const [backend, setBackend] = useState<BackendInfo | null>(null)
   const [permission, setPermission] = useState<PermissionMode | null>(null)
   const [model, setModel] = useState<string | null>(null)
+  const [openSubagent, setOpenSubagent] = useState<{
+    parentToolUseId: string
+    agentType: string
+  } | null>(null)
   const { messages, busy, activeSessionId, send, stop, respondToPermission, openSession, newChat } =
     useChat()
   useZoom()
@@ -82,6 +87,9 @@ const App = () => {
               messages={messages}
               busy={busy}
               onPermission={respondToPermission}
+              onOpenSubagent={(parentToolUseId, agentType) =>
+                setOpenSubagent({ parentToolUseId, agentType })
+              }
             />
             <InputBar
               busy={busy}
@@ -91,6 +99,13 @@ const App = () => {
               onPickModel={pickModel}
             />
           </div>
+          {openSubagent ? (
+            <SubagentDrawer
+              parentToolUseId={openSubagent.parentToolUseId}
+              agentType={openSubagent.agentType}
+              onClose={() => setOpenSubagent(null)}
+            />
+          ) : null}
         </div>
       ) : (
         <Welcome onPick={pickFolder} />
