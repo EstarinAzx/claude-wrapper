@@ -12,7 +12,29 @@ _At commit: 16b0884 on main_
 
 ## Current focus
 
-**None active.**
+**Spec #20 batch queued for the `ticket-loop` relay.** Grilled + specced
+2026-07-24 (interactive `/preset init`). One spec, 4 `ready-for-agent` tracer
+slices, quick-wins-first, none blocking:
+
+- **#21 Zoom / bigger UI** — Electron `webContents` zoom, default ~1.1,
+  `Ctrl/Cmd +/-/0`, persist via `localStorage`.
+- **#22 Resizable sidebar** — drag right edge, ~180–480px, persist via
+  `localStorage` (first UI-pref persistence; engine-intent state stays in-memory).
+- **#23 Model picker (input box)** — pill → SDK `options.model`; list dynamic +
+  mode-aware from `wisp routing --json` (Wisped: families+aliases; Native:
+  families only); switch **keeps conversation** (rebuild+resume, permission-pill
+  precedent); disabled while busy; new `model-mode.ts` + IPC `model:list`/`model:set`.
+- **#24 Subagent viewer** — hybrid: live list from stream heartbeat
+  (`parent_tool_use_id` buckets), click → disk preview via `getSubagentMessages`;
+  Task-card grows list, click → read-only drawer; **live-only, flat one level**.
+
+Decisions: [[2026-07-24-ui-polish-model-picker-subagent-viewer]]. Landmines
+(carried into tickets): correlate live `parent_tool_use_id` ↔ persisted `agentId`;
+verify a Wisp **alias** routes as `options.model`; add new `window.api` channels to
+every mock + `chat-harness.ts`; guard every IPC with `isTrustedIpc`.
+
+**Run it:** `/relay N=1 /preset ticket-loop` (self-paced, one ticket per leg,
+bypass) drains #21→#24 then the closing leg closes spec #20.
 
 ## Done (interactive, post-chain) — permission-mode toggle (`16b0884`)
 
@@ -65,10 +87,20 @@ session history — was closed earlier; tickets #10–#14.)
 
 ## Pick up here
 
-The batch is done — there is no next relay ticket. Only open issue is **#1**
-(the original MVP umbrella spec, unlabelled), which is not agent-ready work.
-Future effort starts a new spec (see Deferred) via the normal
-`/preset init` → to-spec → to-tickets flow, not this chain.
+**New batch ready:** spec **#20** with 4 `ready-for-agent` tickets **#21–#24**
+(all frontier, none blocked). Start the drain with:
+
+```
+/relay N=1 /preset ticket-loop
+```
+
+One ticket per leg, self-paced, unattended-bypass. It picks the oldest open
+unblocked `ready-for-agent` ticket each firing (→ #21 first), works it
+end-to-end, gates, breadcrumbs, relays a fresh leg; queue-empty → stops and the
+final leg closes spec #20. Kill: `/relay stop ticket-loop` or hand-edit
+`stop: true` into `.claude/relay/ticket-loop.md` (currently `stop: true` from the
+prior chain — a fresh `/relay` re-inits it). The prior spec-#16 chain is done;
+#1 (MVP umbrella, unlabelled) remains out of scope.
 
 ## Deferred (own future specs)
 

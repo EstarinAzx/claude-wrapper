@@ -9,11 +9,16 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-> **Queue empty — relay chain finished.** The `ticket-loop` chain drained the
-> spec #16 batch (legs 1–3: #17 → #18 → #19) and signalled `stop: true`; there
-> is no leg 4 and nothing is running in the background. Spec #16 is closed. Do
-> **not** restart the chain — there is no ticket for it to pick. (Spec #9 —
-> session history, tickets #10–#14 — was closed earlier.)
+> **New batch ready — spec #20, tickets #21–#24.** Grilled + specced 2026-07-24
+> (`/preset init`): Electron zoom (#21), resizable sidebar (#22), input-box model
+> picker (#23), subagent viewer (#24) — all `ready-for-agent`, none blocked,
+> quick-wins-first. **Drain with `/relay N=1 /preset ticket-loop`** (one ticket
+> per leg, self-paced, unattended-bypass → #21 first, self-closes spec #20 when
+> the queue empties). Decisions:
+> [[2026-07-24-ui-polish-model-picker-subagent-viewer]]; details in
+> [[active-work]]. The prior spec-#16 chain (#17→#19) + spec #9 (#10–#14) are
+> closed; `.claude/relay/ticket-loop.md` still holds the old `stop: true` — a
+> fresh `/relay` re-inits it.
 
 **This leg landed #19 (`0660ce6`)** — click-to-flip backend toggle:
 - Titlebar pill → `<button>`; clicking flips the backend via new guarded IPC
