@@ -3,6 +3,14 @@ import { act } from '@testing-library/react'
 import { createPermissionBroker } from '../src/main/permission-broker'
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../src/shared/engine-types'
 import type { BackendInfo } from '../src/shared/backend-types'
+import type { ModelInfo, ModelOption } from '../src/shared/model-types'
+
+const FAMILY_MODELS: ModelOption[] = [
+  { id: 'opus', label: 'Opus', group: 'family' },
+  { id: 'sonnet', label: 'Sonnet', group: 'family' },
+  { id: 'haiku', label: 'Haiku', group: 'family' },
+  { id: 'fable', label: 'Fable', group: 'family' }
+]
 
 // Test-side stand-in for preload+main plumbing: the scripted engine seam.
 // Tests drive `emit` as the fake engine's event stream; permission responses
@@ -15,6 +23,7 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
   const listeners = new Set<(e: EngineEvent) => void>()
   const backendListeners = new Set<(info: BackendInfo) => void>()
   const permListeners = new Set<(mode: PermissionMode) => void>()
+  const modelListeners = new Set<(model: string | null) => void>()
   const api = {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
@@ -50,6 +59,14 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
     onPermissionChanged: (cb: (mode: PermissionMode) => void): (() => void) => {
       permListeners.add(cb)
       return () => permListeners.delete(cb)
+    },
+    listModels: vi
+      .fn<() => Promise<ModelInfo>>()
+      .mockResolvedValue({ models: FAMILY_MODELS, current: null }),
+    setModel: vi.fn(),
+    onModelChanged: (cb: (model: string | null) => void): (() => void) => {
+      modelListeners.add(cb)
+      return () => modelListeners.delete(cb)
     }
   }
   const emit = (e: EngineEvent): void => {
@@ -67,6 +84,11 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
       permListeners.forEach((l) => l(mode))
     })
   }
+  const emitModel = (model: string | null): void => {
+    act(() => {
+      modelListeners.forEach((l) => l(model))
+    })
+  }
   const waitForPermission = (toolUseId: string): Promise<PermissionDecision> =>
     broker.request({ toolUseId, signal: new AbortController().signal })
   return {
@@ -76,6 +98,7 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
     emit,
     emitBackend,
     emitPermission,
+    emitModel,
     waitForPermission
   }
 }

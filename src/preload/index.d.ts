@@ -1,6 +1,7 @@
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
+import type { ModelInfo } from '../shared/model-types'
 
 export interface WrapperApi {
   minimize: () => void
@@ -17,6 +18,9 @@ export interface WrapperApi {
   permissionMode: () => Promise<PermissionMode>
   setPermissionMode: (mode: PermissionMode) => void
   onPermissionChanged: (cb: (mode: PermissionMode) => void) => () => void
+  listModels: () => Promise<ModelInfo>
+  setModel: (model: string | null) => void
+  onModelChanged: (cb: (model: string | null) => void) => () => void
   setZoom: (level: number) => void
   sendPrompt: (text: string) => void
   stopTurn: () => void

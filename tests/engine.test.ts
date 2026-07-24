@@ -758,6 +758,35 @@ describe('engine permission options', () => {
   })
 })
 
+describe('engine model options', () => {
+  test('spreads injected model options into query options', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(
+      () => 'D:\\proj',
+      autoAllow(),
+      fn,
+      () => process.env,
+      () => ({}),
+      () => ({ model: 'opus' })
+    )
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options).toMatchObject({ model: 'opus' })
+  })
+
+  test('no model options injected → options carry no model', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options).not.toHaveProperty('model')
+  })
+})
+
 describe('engine backend env', () => {
   test('passes the resolved env from getEnv straight into query options.env', async () => {
     const wispedEnv = { PATH: '/bin', ANTHROPIC_BASE_URL: 'http://127.0.0.1:41184' }

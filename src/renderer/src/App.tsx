@@ -13,6 +13,7 @@ const App = () => {
   const [cwd, setCwd] = useState<string | null>(null)
   const [backend, setBackend] = useState<BackendInfo | null>(null)
   const [permission, setPermission] = useState<PermissionMode | null>(null)
+  const [model, setModel] = useState<string | null>(null)
   const { messages, busy, activeSessionId, send, stop, respondToPermission, openSession, newChat } =
     useChat()
   useZoom()
@@ -27,6 +28,13 @@ const App = () => {
   useEffect(() => {
     void window.api.permissionMode().then(setPermission)
     return window.api.onPermissionChanged(setPermission)
+  }, [])
+
+  // Read the current model once (for the pill label), then track picks the main
+  // broadcasts. The pickable list itself is fetched on demand when the pill opens.
+  useEffect(() => {
+    void window.api.listModels().then((info) => setModel(info.current))
+    return window.api.onModelChanged(setModel)
   }, [])
 
   const pickFolder = async (): Promise<void> => {
@@ -48,6 +56,14 @@ const App = () => {
     window.api.setPermissionMode(next)
   }
 
+  // Pick a model: main rebuilds the engine but resumes the conversation (like the
+  // permission pill) and broadcasts the new model (→ pill). Optimistic local set
+  // so the label updates before the broadcast lands.
+  const pickModel = (next: string | null): void => {
+    setModel(next)
+    window.api.setModel(next)
+  }
+
   return (
     <div className="app">
       <Titlebar
@@ -67,7 +83,13 @@ const App = () => {
               busy={busy}
               onPermission={respondToPermission}
             />
-            <InputBar busy={busy} onSend={send} onStop={stop} />
+            <InputBar
+              busy={busy}
+              model={model}
+              onSend={send}
+              onStop={stop}
+              onPickModel={pickModel}
+            />
           </div>
         </div>
       ) : (

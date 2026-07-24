@@ -1,12 +1,82 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import type { ModelOption } from '../../../shared/model-types'
 
 interface InputBarProps {
   busy: boolean
+  model: string | null
   onSend: (text: string) => void
   onStop: () => void
+  onPickModel: (model: string | null) => void
 }
 
-const InputBar = ({ busy, onSend, onStop }: InputBarProps) => {
+// Bottom-right model pill. The list is fetched on demand each time the menu
+// opens (mode-aware, live from wisp routing); disabled while a turn streams so a
+// pick never lands mid-stream. The label maps the current id back to its option
+// label when known, else shows the raw id, else "Default" (the CLI default).
+const ModelPill = ({
+  model,
+  busy,
+  onPick
+}: {
+  model: string | null
+  busy: boolean
+  onPick: (model: string | null) => void
+}) => {
+  const [open, setOpen] = useState(false)
+  const [options, setOptions] = useState<ModelOption[]>([])
+
+  const label = options.find((o) => o.id === model)?.label ?? model ?? 'Default'
+
+  const toggle = (): void => {
+    if (busy) return
+    const next = !open
+    setOpen(next)
+    if (next) void window.api.listModels().then((info) => setOptions(info.models))
+  }
+
+  const pick = (id: string | null): void => {
+    onPick(id)
+    setOpen(false)
+  }
+
+  return (
+    <div className="model-pill-wrap">
+      {open && <button type="button" className="model-backdrop" aria-hidden="true" tabIndex={-1} onClick={() => setOpen(false)} />}
+      <button
+        type="button"
+        className="model-pill"
+        aria-label="Model"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={`Model: ${label}`}
+        disabled={busy}
+        onClick={toggle}
+      >
+        {label}
+      </button>
+      {open && (
+        <div className="model-menu" role="menu">
+          <button type="button" className="model-menu-item" role="menuitem" onClick={() => pick(null)}>
+            Default
+          </button>
+          {options.map((o) => (
+            <button
+              key={`${o.group}:${o.id}`}
+              type="button"
+              className="model-menu-item"
+              role="menuitem"
+              onClick={() => pick(o.id)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const InputBar = ({ busy, model, onSend, onStop, onPickModel }: InputBarProps) => {
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
 
@@ -94,7 +164,10 @@ const InputBar = ({ busy, onSend, onStop }: InputBarProps) => {
           )}
         </button>
       </div>
-      <p className="footer-line">Claude can make mistakes. Verify important information.</p>
+      <div className="input-foot">
+        <p className="footer-line">Claude can make mistakes. Verify important information.</p>
+        <ModelPill model={model} busy={busy} onPick={onPickModel} />
+      </div>
     </footer>
   )
 }

@@ -148,7 +148,11 @@ export const createEngine = (
   // Extra query options for the active permission mode (permissionMode + the
   // bypass danger flag). Injected like getEnv so the engine stays decoupled
   // from the permission-mode store. Empty by default → SDK default behaviour.
-  getPermissionOptions: () => Record<string, unknown> = () => ({})
+  getPermissionOptions: () => Record<string, unknown> = () => ({}),
+  // Extra query options for the active model (options.model, or {} for the CLI
+  // default). Injected like getPermissionOptions — the engine stays decoupled
+  // from the model-mode store.
+  getModelOptions: () => Record<string, unknown> = () => ({})
 ): Engine & { close(): void } => {
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
@@ -311,7 +315,9 @@ export const createEngine = (
       env: getEnv(),
       // permissionMode (+ bypass danger flag) for the active permission mode.
       // canUseTool stays wired above — the SDK only invokes it when the mode asks.
-      ...getPermissionOptions()
+      ...getPermissionOptions(),
+      // options.model for the active model pick (absent → CLI default).
+      ...getModelOptions()
     }
     // ponytail: resume binds at query construction; the streaming query is built
     // once and cached, so resume only takes effect on the query-building turn.

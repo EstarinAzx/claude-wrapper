@@ -10,6 +10,7 @@ import {
   isWispedAvailable
 } from './backend-mode'
 import { getPermissionMode, setPermissionMode, toPermissionOptions } from './permission-mode'
+import { getModelMode, setModelMode, toModelOptions, listModels } from './model-mode'
 import { clampZoom } from '../shared/zoom'
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
@@ -33,7 +34,8 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
     ({ toolUseId, signal }) => permissionBroker.request({ toolUseId, signal }),
     undefined,
     () => getSpawnEnv(process.env),
-    () => toPermissionOptions(getPermissionMode())
+    () => toPermissionOptions(getPermissionMode()),
+    () => toModelOptions(getModelMode())
   )
 
 const isTrustedIpc = (
@@ -200,6 +202,34 @@ ipcMain.on('permission:set-mode', (event, mode: unknown) => {
   pendingResume = resume
   const win = BrowserWindow.fromWebContents(event.sender)
   win?.webContents.send('permission:changed', getPermissionMode())
+})
+
+// Read-only: the input-box model pill asks for the pickable models. The list is
+// mode-aware (Wisped adds the router's custom aliases) and shelled on demand
+// from `wisp routing --json` — never watched. Carries model ids + labels only.
+ipcMain.handle('model:list', async (event) => {
+  if (!isTrustedIpc(event)) return { models: [], current: null }
+  return listModels(getBackendMode())
+})
+
+// Guarded write: pick the model the next turn runs against (a model id, or null
+// for the CLI default). Like the permission pill, rebuilds the engine but
+// RESUMES the current session so the conversation is kept. The pill is disabled
+// while a turn streams (renderer), so this never lands mid-stream. Broadcasts
+// the resolved model so the pill re-renders.
+ipcMain.on('model:set', (event, model: unknown) => {
+  if (!isTrustedIpc(event)) return
+  if (model !== null && (typeof model !== 'string' || model.length === 0 || model.length > 80)) {
+    return
+  }
+  setModelMode(model)
+  const resume = engine?.sessionId() ?? pendingResume
+  engine?.close()
+  permissionBroker.cancelAll()
+  engine = null
+  pendingResume = resume
+  const win = BrowserWindow.fromWebContents(event.sender)
+  win?.webContents.send('model:changed', getModelMode())
 })
 
 // Guarded write: the renderer owns the zoom-level number (persisted in its own

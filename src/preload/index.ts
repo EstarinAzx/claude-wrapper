@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
+import type { ModelInfo } from '../shared/model-types'
 
 const api = {
   minimize: (): void => ipcRenderer.send('window:minimize'),
@@ -30,6 +31,15 @@ const api = {
     ipcRenderer.on('permission:changed', listener)
     return () => {
       ipcRenderer.removeListener('permission:changed', listener)
+    }
+  },
+  listModels: (): Promise<ModelInfo> => ipcRenderer.invoke('model:list'),
+  setModel: (model: string | null): void => ipcRenderer.send('model:set', model),
+  onModelChanged: (cb: (model: string | null) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, model: string | null): void => cb(model)
+    ipcRenderer.on('model:changed', listener)
+    return () => {
+      ipcRenderer.removeListener('model:changed', listener)
     }
   },
   setZoom: (level: number): void => ipcRenderer.send('zoom:set', level),

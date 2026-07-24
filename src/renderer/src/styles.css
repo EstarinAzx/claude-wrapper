@@ -132,7 +132,8 @@ body {
 /* titlebar toggles: backend indicator (native vs wisped) + permission mode.
    Both share the pill shell; each carries its own accent variant. */
 .backend-pill,
-.perm-pill {
+.perm-pill,
+.model-pill {
   flex-shrink: 0;
   padding: 2px 9px;
   border-radius: var(--r-pill);
@@ -150,13 +151,72 @@ body {
 }
 
 .backend-pill:not(:disabled),
-.perm-pill:not(:disabled) {
+.perm-pill:not(:disabled),
+.model-pill:not(:disabled) {
   cursor: pointer;
 }
 
 .backend-pill:not(:disabled):hover,
-.perm-pill:not(:disabled):hover {
+.perm-pill:not(:disabled):hover,
+.model-pill:not(:disabled):hover {
   filter: brightness(1.12);
+}
+
+/* input-box footer: mistake disclaimer on the left, model pill bottom-right. */
+.input-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* the pill anchors its pop-up menu, which opens UPWARD (it sits at the bottom). */
+.model-pill-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.model-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.model-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  min-width: 148px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: var(--r-mark);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 8px 28px oklch(0 0 0 / 0.35);
+}
+
+.model-menu-item {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.model-menu-item:hover {
+  background: oklch(0.92 0.01 210 / 0.05);
 }
 
 .backend-pill--wisped {
