@@ -47,15 +47,17 @@ relabel plus a comment.
      `docs/design/frost-mono-reference.png`).
    - **Grok subagents get the grunt implementation** via the slot skill
      (wisp-slot:slot), family `haiku`, target `xai/grok-4.5`:
-     a. *Preflight.* Bridge reachable + `wisp routing` prints the map. A
-        pre-existing `~/.claude/slot/lease-haiku.json` at leg boot means a
-        previous leg died mid-slot — the chain is serial (N=1), so no live
-        agent can hold it: restore the prior route from the lease, verify,
-        delete it, continue. (Deliberate unattended adaptation of the skill's
-        ask-the-user step.)
-     b. *Bind.* Snapshot + write lease per the slot skill, then
-        `wisp routing set haiku xai/grok-4.5`, verify. Any `warning:` line →
-        do NOT spawn; restore, delete lease, use the fallback below.
+     a. *Preflight.* Bridge reachable + `wisp routing` prints the map. The
+        recovery record is the **snapshot store**, not a lease file — the old
+        `~/.claude/slot/lease-<family>.json` files are gone. `wisp snapshot
+        haiku` erroring `already snapshotted (<value>)` at leg boot means a
+        previous leg died mid-slot; the chain is serial (N=1), so no live agent
+        can hold it: `wisp snapshot revert haiku`, verify, then snapshot fresh.
+        (Deliberate unattended adaptation of the skill's ask-the-user step.)
+        Never run bare `wisp snapshot` — with no family it snapshots every row.
+     b. *Bind.* `wisp snapshot haiku` FIRST, then `wisp routing set haiku
+        xai/grok-4.5`, then verify the row changed. Any `warning:` line → do NOT
+        spawn; `wisp snapshot revert haiku` and use the fallback below.
      c. *Spawn.* Agent tool, `model: "haiku"`, `subagent_type:
         "general-purpose"`, description `grok-4.5: <short task>`. Independent
         chunks may spawn in parallel — same family, one lease. Each task
@@ -64,9 +66,10 @@ relabel plus a comment.
         and repo conventions. Grok writes code + its unit tests and reports
         what it did.
      d. *Hold + restore.* Iron Rule: restore `haiku` only after EVERY Grok
-        agent of this leg has finished. Then guarded restore from the lease,
-        verify, delete the lease — before the gate, so a crash later never
-        strands the route.
+        agent of this leg has finished. Then `wisp snapshot revert haiku` —
+        surface the `revert haiku -> … (was …)` line it prints — and confirm
+        the row is back, before the gate, so a crash later never strands the
+        route.
      e. *Review.* Read every Grok diff yourself; fix or redo anything below
         bar. Grok output is draft — you own what lands.
    - **Fallback.** Bridge down, `wisp` too old, or bind fails → implement it

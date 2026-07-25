@@ -1,7 +1,7 @@
 ---
 type: decisions-index
 project: claude-wrapper
-updated: 2026-07-24
+updated: 2026-07-25
 tags: [context, decisions]
 ---
 
@@ -10,6 +10,8 @@ tags: [context, decisions]
 Settled questions. One file per decision in `decisions/`. Newest first.
 
 <!-- one line per entry, newest at top -->
+- [[2026-07-25-attachments-embed-images-paths-for-files]] — spec #26: images embed as base64 blocks, non-images go by absolute path for the agent to Read; text-only sends stay a plain string (pinned); caps in one pure policy module; replay shows chips because one persisted screenshot measured 263 KB of base64
+- [[2026-07-25-agents-surface-task-messages-not-text-forwarding]] — spec #25: Agents panel feeds on SDK `task_started`/`task_progress`/`task_updated` (spike #27 gates it) instead of `forwardSubagentText`; one panel with list ⇄ map, disk+live merge, nesting via on-disk `parentAgentId`, deterministic SVG map
 - [[2026-07-24-wisp-alias-routes-by-name]] — model pill sends the Wisp alias/family **name** as `options.model`, never the resolved model id (a resolved id hangs the turn); reverses #23's untested "route by resolved id" guess, fixed in `f94f1a2`
 - [[2026-07-24-ui-polish-model-picker-subagent-viewer]] — batch spec (4 slices, quick-wins-first): Electron zoom (persist), resizable sidebar (localStorage — first UI-pref persistence), input-box model picker (dynamic `wisp routing --json`, mode-aware, keep-conversation), subagent viewer (hybrid: live heartbeat list + disk `getSubagentMessages` preview, Task-card drawer, live+flat)
 - [[2026-07-24-in-app-permission-mode-toggle]] — owner-requested: titlebar pill cycles Bypass→Accept Edits→Ask, pins `permissionMode` into SDK options (bypass adds the danger flag); **default bypass** (auto-run all tools); rebuild-but-resume keeps the conversation; **supersedes** `permission-inherits-host`
