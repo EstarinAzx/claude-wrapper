@@ -27,11 +27,11 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: #29, drained
+- `.context/pick-up.md` — current frontier + landmines (currently: #30, drained
   by a `/relay` chain running `.claude/relay-leg.md`)
 - Tracker: open specs #25 (Agents surface) and #26 (Attachments), tickets
-  #29–#35 open and #27/#28 closed; closed specs #9 / #16 / #20 and umbrella #1
-  hold the history
+  #30–#35 open and #27/#28/#29 closed; closed specs #9 / #16 / #20 and umbrella
+  #1 hold the history
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first

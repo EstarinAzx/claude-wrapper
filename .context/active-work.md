@@ -7,8 +7,8 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-25, relay leg 2 (`.claude/relay-leg.md`, N=1) — ticket #28_
-_At commit: `c02f482` on main (+ this leg's `.context/` commit)_
+_Last updated: 2026-07-25, relay leg 3 (`.claude/relay-leg.md`, N=1) — ticket #29_
+_At commit: `397c0a1` on main (+ this leg's `.context/` commit)_
 
 ## Current focus
 
@@ -18,65 +18,86 @@ Prior specs #9, #16, #20 stay closed; #1 (MVP umbrella, unlabelled) is out of
 scope.
 
 Leg 1 delivered **#27** (the spike, no production code). Leg 2 delivered **#28**,
-the Agents dock — the complete disk-fed tracer bullet for the surface, which
-unblocked both #30 and #31.
+the Agents dock. Leg 3 delivered **#29**, the send-payload prefactor, which
+unblocked #32. Three of nine tickets are down; the Agents spec and the
+Attachments spec each have one ticket ready.
 
 ## Ticket graph (native GitHub dependencies)
 
 ```
 #27 spike ✅──┐
-              ├──> #30 live rows
+              ├──> #30 live rows      ← next
 #28 dock  ✅──┴──> #31 nesting ──> #33 map
 
-#29 prefactor ──> #32 paste ──┬──> #34 paperclip
-                              └──> #35 replay chips
+#29 prefactor ✅──> #32 paste ──┬──> #34 paperclip
+                                └──> #35 replay chips
 ```
 
-Unblocked right now: **#29, #30, #31**. No cross-spec edges — a stall on one
+Unblocked right now: **#30, #31, #32**. No cross-spec edges — a stall on one
 spec never blocks the other.
 
 | # | Ticket | Spec | State |
 |---|---|---|---|
 | 27 | Spike: confirm the CLI emits the task messages | #25 | **closed** — confirmed |
 | 28 | Agents dock, hydrated from disk | #25 | **closed** — `c02f482` |
-| 29 | Prefactor: widen the send payload to text + attachments | #26 | open, unblocked ← **next** |
-| 30 | Live agent rows from task messages | #25 | open, unblocked (freed by #28) |
-| 31 | Nested agents as a tree | #25 | open, unblocked (freed by #28) |
-| 32 | Paste an image and send it | #26 | blocked by #29 |
+| 29 | Prefactor: widen the send payload to text + attachments | #26 | **closed** — `397c0a1` |
+| 30 | Live agent rows from task messages | #25 | open, unblocked ← **next** |
+| 31 | Nested agents as a tree | #25 | open, unblocked |
+| 32 | Paste an image and send it | #26 | open, unblocked (freed by #29) |
 | 33 | Map mode for the Agents panel | #25 | blocked by #31 |
 | 34 | Paperclip: file picker and by-path attachments | #26 | blocked by #32 |
 | 35 | Attachments survive replay | #26 | blocked by #32 |
 
-## Done this leg (#28)
+## Done this leg (#29)
 
-Agents dock end to end, fed entirely from disk. Gate green: typecheck ·
-**238/238** (+23: 6 store, 17 dock) · build.
+The send path was string-only from the renderer through IPC to the engine. It
+now carries a `SendPayload`; the renderer sends an empty attachment list
+everywhere, so nothing about the UI changed. Gate green: typecheck ·
+**248/248** (+10: 7 normalize, 3 engine) · build.
 
-- **`AgentsDock.tsx`** (new) — in-flow resizable `aside` on the right of the
-  workspace mirroring the Sessions rail; width persists under
-  `agents-dock-width`, reusing the existing pure `clampSidebarWidth` module
-  rather than adding a second one. Titlebar toggle sits ahead of min/max/close
-  behind a hairline, absent until a folder is open. `DESIGN.md` updated.
-- **Sidecar parser widened** — `description`, `model`, `spawnDepth`,
-  `parentAgentId` kept; absent fields omitted, not zero-filled.
-- **`listSubagents` → `SubagentInfo[] | null`** — `[]` none spawned (ENOENT),
-  `null` could not read. Contract in
-  [[2026-07-25-agents-dock-disk-contract]].
-- **No new IPC channel** — `subagents:list` already existed, guarded, and was in
-  all four mocks. The four-mock-sites landmine did **not** fire this leg.
-- **Drawer fix (outside the stated scope, required by an acceptance criterion)**
-  — it resolved its own session id from the engine, but a rail-opened session
-  has no engine until the next turn, so the drawer came up empty on exactly the
-  past-session case the dock exists to open. It now takes the looked-at session
-  as an optional prop, engine as fallback.
+- **`src/shared/attachment-types.ts`** (new) — `Attachment`
+  (`{kind:'image', mediaType, data}` | `{kind:'path', path}`), `SendPayload`,
+  `EMBEDDABLE_IMAGE_TYPES` (png/jpeg/gif/webp), and `normalizeSendPayload`.
+- **Engine** — `runTurn(payload, …)`; `toUserMessage` keeps a plain string when
+  the list is empty and builds content blocks when it is not.
+- **`chat:send`** carries the payload behind the unchanged `isTrustedIpc` guard,
+  with `normalizeSendPayload` replacing the old `String(text)` coercion.
+- **Harness** — `prompts` widened from `string[]` to `SendPayload[]`, touching
+  the assertions in `chat` / `resume` / `stop` as the ticket predicted.
 
-Implementation of the store chunk was delegated to one Grok subagent through a
-`haiku` Slot rebind; reviewed and cleaned up (deduplicated `parseMeta`'s restated
-return type into a `ParsedMeta` derived from `SubagentInfo`). Slot reverted
-before the gate.
+The harness/assertion churn and the `normalizeSendPayload` unit tests were
+delegated to one Grok subagent through a `haiku` Slot rebind, reviewed and
+landed as written; the Slot was reverted before the gate. The engine seam and
+the regression guard were written directly.
 
 ## Facts established this leg (don't re-derive)
 
+- **The attachment encoding is already built** — #29 shipped both branches, not
+  just the empty one. **#32 needs the composer and the policy module, no engine
+  work.** Full contract in
+  [[2026-07-25-send-payload-encoding-lands-in-the-prefactor]].
+- **The embeddable media-type allowlist lives in the transport type** as
+  `EMBEDDABLE_IMAGE_TYPES`. #32's policy module imports it rather than restating
+  it. `ImageMediaType` is exactly the union the API image block wants, so no cast
+  is needed anywhere.
+- **The core-path pin is mutation-verified** — forcing the engine to always build
+  an array makes `a text-only send keeps plain-string content` fail. The guard
+  works; if it ever goes red the bug is in the code.
+- **The four-mock-sites landmine did not fire for #29** — it added no new
+  `window.api` channel. Only the *shape* carried by `sendPrompt` changed, and the
+  three inline mocks use bare `vi.fn()`, so they needed no edit. **#34 is now the
+  only remaining ticket that trips it** (the file-picker channel is new).
+- **`tests/engine.test.ts` has a `capturingStub()` helper** now (streamingStub
+  plus a capture of the user messages pushed into the prompt stream) and a
+  `sendOne(payload)` one-turn helper. Seam-1 assertions for #32 should reuse
+  them rather than re-inlining the capture.
+
+## Facts from #28 (still current)
+
+- **`listSubagents` returns `SubagentInfo[] | null`** — `[]` none spawned
+  (ENOENT), `null` could not read. #30's live merge shares this list and must
+  preserve the split, and must not zero-fill absent sidecar fields. Contract in
+  [[2026-07-25-agents-dock-disk-contract]].
 - **A sidecar's `model` is the family word asked for, not the resolved target** —
   spec #25's Further Notes are wrong on this. See
   [[2026-07-25-sidecar-model-is-family-not-resolved]].
@@ -127,7 +148,8 @@ before the gate.
 - **Persisted images are big:** one screenshot = 263 KB of base64 in the session
   jsonl. Hence chips on replay, not thumbnails.
 - **`SDKUserMessage.message` is an Anthropic `MessageParam`** → image and
-  document blocks are legal; the string-only path is the wrapper's choice.
+  document blocks are legal; the string-only path was the wrapper's choice, and
+  #29 removed it.
 
 ## Known issues / not-our-bug
 
@@ -141,7 +163,7 @@ before the gate.
 
 The relay chain owns the queue; see [[pick-up]]. If it stalls, the frontier
 query is: oldest open `ready-for-agent` issue with
-`issue_dependencies_summary.blocked_by == 0` — currently **#29**.
+`issue_dependencies_summary.blocked_by == 0` — currently **#30**.
 
 ## Deferred (still no spec)
 
@@ -158,15 +180,14 @@ map pan/zoom, token totals for historical agents.
   resolved id hangs the turn. See [[2026-07-24-wisp-alias-routes-by-name]].
 - **Never run bare `wisp snapshot`** — with no family argument it snapshots
   *every* row, and a held `haiku` snapshot blocks the next `/slot` rebind. Clear
-  with `wisp snapshot revert <family>` per row.
+  with `wisp snapshot revert <family>` per row. (`wisp snapshot list` is not a
+  subcommand — the CLI only takes `snapshot [row]` / `snapshot revert [row]`.)
 - **New `window.api` channel → add to ALL FOUR mock sites** or App-render tests
   throw: `tests/chat-harness.ts` + inline mocks in `tests/sidebar.test.tsx`,
   `tests/session.test.tsx`, `tests/shell.test.tsx`. Guard every IPC with
-  `isTrustedIpc`. **#29 and #34 still trip this** (#28 did not — it added no
-  channel).
-- **#29 is the regression-risk ticket** — it touches the core prompt path. The
-  text-only-stays-a-plain-string test is the guard; never let it be "fixed" by
-  updating the expectation.
+  `isTrustedIpc`. **Only #34 still trips this** — #29 added no channel.
+- **Never let the plain-string pin be "fixed" by updating its expectation** — see
+  [[2026-07-25-send-payload-encoding-lands-in-the-prefactor]].
 - **Don't re-simplify the drawer's `sessionId` prop away** — see
   [[2026-07-25-agents-dock-disk-contract]].
 - Resume ceiling + `sessionId()` accessor + native-store facts + Tailwind
@@ -175,7 +196,8 @@ map pan/zoom, token totals for historical agents.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-25-agents-dock-disk-contract]] ·
+- [[2026-07-25-send-payload-encoding-lands-in-the-prefactor]] ·
+  [[2026-07-25-agents-dock-disk-contract]] ·
   [[2026-07-25-sidecar-model-is-family-not-resolved]]
 - [[2026-07-25-task-messages-confirmed-live-shape]] ·
   [[2026-07-25-agents-surface-task-messages-not-text-forwarding]] ·

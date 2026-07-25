@@ -10,6 +10,7 @@ tags: [context, decisions]
 Settled questions. One file per decision in `decisions/`. Newest first.
 
 <!-- one line per entry, newest at top -->
+- [[2026-07-25-send-payload-encoding-lands-in-the-prefactor]] — #29 shipped the full attachment encoding, not just the empty-list pipe: #32 needs the composer and policy module but no engine work, the embeddable media-type allowlist lives in `attachment-types.ts` as `EMBEDDABLE_IMAGE_TYPES`, and `normalizeSendPayload` is the new trust boundary on `chat:send`
 - [[2026-07-25-agents-dock-disk-contract]] — #28 pins what #30's live merge inherits: `listSubagents` returns `null` for "could not read" vs `[]` for "none spawned" (ENOENT is the discriminator), absent sidecar fields stay absent rather than zero-filled, and no new IPC channel was needed; plus the drawer now takes the looked-at session as a prop because a rail-opened session has no engine to ask
 - [[2026-07-25-sidecar-model-is-family-not-resolved]] — a sidecar's `model` records the family word asked for (`haiku`), not what served the turn (`xai/grok-4.5`) — corrects spec #25's Further Notes; measured coverage across 28 real sidecars: `model` on 18, `parentAgentId` on none
 - [[2026-07-25-task-messages-confirmed-live-shape]] — spike #27 confirms the CLI emits all three task messages (#30 keeps full scope); plus the runtime shape that constrains it — `task_notification` is the real completion signal, `task_updated` is terminal-only, `local_bash` tasks share the stream, and nested agents are invisible to `parent_tool_use_id`
