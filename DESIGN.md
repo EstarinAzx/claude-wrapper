@@ -53,7 +53,8 @@ One family (Segoe UI Variable, native Win11). Body 15/1.6. UI labels 13. Divider
 ## Layout
 
 - Chat column: max-width 760px, centered; messages breathe (24px vertical gaps, 40px around the date divider).
-- Titlebar: height 48px, full-width drag region (`-webkit-app-region: drag`; controls `no-drag`). Left: 22px mint rounded-square mark + app name 600. Center: session title, `--text-muted`. Right: min / max / close, 40px hit targets, muted glyphs, subtle hover wash (close hovers red-tinted `oklch(0.55 0.16 25 / 0.9)`).
+- Titlebar: height 48px, full-width drag region (`-webkit-app-region: drag`; controls `no-drag`). Left: 22px mint rounded-square mark + app name 600. Center: session title, `--text-muted`. Right: the Agents-dock toggle, then a hairline separator, then min / max / close, 40px hit targets, muted glyphs, subtle hover wash (close hovers red-tinted `oklch(0.55 0.16 25 / 0.9)`). The Agents toggle is a centered 28px rounded square, not a 40px full-height cell, so the window-control run stays its own group and the toggle is never a mis-click away from Close; it is absent until a project folder is open, and takes a mint tint while the dock is showing.
+- Agents dock: in-flow resizable `aside` on the right of the workspace (`--surface`, hairline `border-left`), mirroring the Sessions rail — same 44px head, same row shell, grip on the edge that faces the chat. In-flow, never an overlay: opening it narrows the chat rather than covering it.
 - User bubble: right-aligned, max-width 60%, `--bubble`, radius `--r-bubble`, padding 12px 16px.
 - Assistant message: no bubble. 28px mint circle avatar left, text beside it; list items use mint en-dash markers.
 - Typing indicator: avatar + three 6px mint dots, staggered opacity pulse.

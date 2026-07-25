@@ -139,7 +139,8 @@ ipcMain.handle('session:transcript', async (event, id: string) => {
 
 // Read-only: the subagent drawer asks for a session's spawned subagents,
 // correlated to the Task tool_use ids the renderer holds from live cards. Reads
-// the persisted transcript tree on demand — no watching. Carries id/type only.
+// the persisted transcript tree on demand — no watching. Returns null when the
+// agent directory could not be read (distinct from [] meaning none spawned).
 ipcMain.handle('subagents:list', async (event, sessionId: unknown) => {
   if (!isTrustedIpc(event)) return []
   return listSubagents(getSessionCwd(), String(sessionId))

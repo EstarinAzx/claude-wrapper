@@ -9,6 +9,9 @@ import {
 
 const slash = (p: string): string => p.replace(/\\/g, '/')
 
+// Mimic Node's ErrnoException so the store can distinguish missing from denied.
+const enoent = (): Error => Object.assign(new Error('ENOENT'), { code: 'ENOENT' })
+
 // In-memory io keyed by forward-slash paths. Both readdir and readFile normalise
 // their (possibly backslash) argument so the store's win32 path.join output hits.
 const fakeIo = (files: Record<string, string>): SubagentIo => ({
@@ -18,12 +21,12 @@ const fakeIo = (files: Record<string, string>): SubagentIo => ({
       .filter((p) => p.startsWith(d + '/'))
       .map((p) => p.slice(d.length + 1))
       .filter((rest) => !rest.includes('/'))
-    if (names.length === 0) throw new Error('ENOENT')
+    if (names.length === 0) throw enoent()
     return names
   },
   readFile: async (file) => {
     const hit = files[slash(file)]
-    if (hit === undefined) throw new Error('ENOENT')
+    if (hit === undefined) throw enoent()
     return hit
   }
 })
@@ -31,8 +34,12 @@ const fakeIo = (files: Record<string, string>): SubagentIo => ({
 // The subagents dir for cwd 'D:\proj' / session 's1' (encodeCwd → 'D--proj').
 const DIR = `${slash(homedir())}/.claude/projects/D--proj/s1/subagents`
 
-const meta = (toolUseId: string, agentType: string): string =>
-  JSON.stringify({ agentType, description: 'd', toolUseId, spawnDepth: 1 })
+const meta = (
+  toolUseId: string,
+  agentType: string,
+  extra: Record<string, unknown> = {}
+): string =>
+  JSON.stringify({ agentType, description: 'd', toolUseId, spawnDepth: 1, ...extra })
 
 const subJsonl = [
   JSON.stringify({
@@ -65,13 +72,53 @@ describe('parseMeta', () => {
   test('extracts toolUseId + agentType', () => {
     expect(parseMeta(meta('call-9', 'Explore'))).toEqual({
       toolUseId: 'call-9',
-      agentType: 'Explore'
+      agentType: 'Explore',
+      description: 'd',
+      spawnDepth: 1
     })
   })
   test('missing toolUseId or garbage → null', () => {
     expect(parseMeta('{}')).toBeNull()
     expect(parseMeta('not json')).toBeNull()
     expect(parseMeta(JSON.stringify({ agentType: 'x' }))).toBeNull()
+  })
+  test('all six fields map through', () => {
+    expect(
+      parseMeta(
+        JSON.stringify({
+          toolUseId: 'call-1',
+          agentType: 'Explore',
+          description: 'look around',
+          model: 'sonnet',
+          spawnDepth: 2,
+          parentAgentId: 'parent-9'
+        })
+      )
+    ).toEqual({
+      toolUseId: 'call-1',
+      agentType: 'Explore',
+      description: 'look around',
+      model: 'sonnet',
+      spawnDepth: 2,
+      parentAgentId: 'parent-9'
+    })
+  })
+  test('optional keys omitted entirely when sidecar lacks them', () => {
+    const result = parseMeta(JSON.stringify({ toolUseId: 'call-1', agentType: 'Explore' }))
+    expect(result).toEqual({ toolUseId: 'call-1', agentType: 'Explore' })
+    expect(Object.keys(result ?? {})).toEqual(['toolUseId', 'agentType'])
+  })
+  test('non-numeric spawnDepth and empty model are dropped', () => {
+    const result = parseMeta(
+      JSON.stringify({
+        toolUseId: 'call-1',
+        agentType: 'Explore',
+        model: '',
+        spawnDepth: 'deep'
+      })
+    )
+    expect(result).toEqual({ toolUseId: 'call-1', agentType: 'Explore' })
+    expect(Object.keys(result ?? {})).toEqual(['toolUseId', 'agentType'])
   })
 })
 
@@ -87,12 +134,16 @@ describe('listSubagents', () => {
     expect(infos).toContainEqual({
       parentToolUseId: 'call-parent-1',
       agentId: 'a1',
-      agentType: 'Explore'
+      agentType: 'Explore',
+      description: 'd',
+      spawnDepth: 1
     })
     expect(infos).toContainEqual({
       parentToolUseId: 'call-parent-2',
       agentId: 'b2',
-      agentType: 'general-purpose'
+      agentType: 'general-purpose',
+      description: 'd',
+      spawnDepth: 1
     })
   })
 
@@ -103,6 +154,61 @@ describe('listSubagents', () => {
   test('null cwd or empty session → []', async () => {
     expect(await listSubagents(null, 's1', fakeIo({}))).toEqual([])
     expect(await listSubagents('D:\\proj', '', fakeIo({}))).toEqual([])
+  })
+
+  test('nested sidecar surfaces parentAgentId', async () => {
+    const io = fakeIo({
+      [`${DIR}/agent-child.meta.json`]: meta('call-nested', 'Explore', {
+        parentAgentId: 'agent-parent'
+      })
+    })
+    const infos = await listSubagents('D:\\proj', 's1', io)
+    expect(infos).toContainEqual({
+      parentToolUseId: 'call-nested',
+      agentId: 'child',
+      agentType: 'Explore',
+      description: 'd',
+      spawnDepth: 1,
+      parentAgentId: 'agent-parent'
+    })
+  })
+
+  test('non-ENOENT readdir error → null', async () => {
+    const io: SubagentIo = {
+      readdir: async () => {
+        throw Object.assign(new Error('EACCES'), { code: 'EACCES' })
+      },
+      readFile: async () => {
+        throw enoent()
+      }
+    }
+    expect(await listSubagents('D:\\proj', 's1', io)).toBeNull()
+  })
+
+  test('unreadable sidecar is skipped; siblings still list', async () => {
+    const base = fakeIo({
+      [`${DIR}/agent-ok.meta.json`]: meta('call-ok', 'Explore'),
+      [`${DIR}/agent-bad.meta.json`]: meta('call-bad', 'Explore')
+    })
+    const io: SubagentIo = {
+      readdir: base.readdir,
+      readFile: async (file) => {
+        if (slash(file).endsWith('agent-bad.meta.json')) {
+          throw Object.assign(new Error('EACCES'), { code: 'EACCES' })
+        }
+        return base.readFile(file)
+      }
+    }
+    const infos = await listSubagents('D:\\proj', 's1', io)
+    expect(infos).toEqual([
+      {
+        parentToolUseId: 'call-ok',
+        agentId: 'ok',
+        agentType: 'Explore',
+        description: 'd',
+        spawnDepth: 1
+      }
+    ])
   })
 })
 

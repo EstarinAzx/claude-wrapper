@@ -7,6 +7,13 @@ interface SubagentDrawerProps {
   // already holds. The drawer resolves it to a disk transcript on the main side.
   parentToolUseId: string
   agentType: string
+  // The session the app is looking at, when it knows. A session opened from the
+  // rail has no engine behind it until the next turn runs, so asking the main
+  // side for "the current session id" would answer null and the drawer would
+  // come up empty — which is precisely the past-session case the Agents dock
+  // opens. Absent (a fresh live turn that has not ended yet) falls back to the
+  // engine, which does have an id mid-turn.
+  sessionId?: string | null
   onClose: () => void
 }
 
@@ -15,12 +22,20 @@ interface SubagentDrawerProps {
 // turn once the engine has one), then loads the transcript on demand. Flat one
 // level: a replayed subagent tool card carries no `subagent` field, so it renders
 // no further row and can't open a nested drawer.
-const SubagentDrawer = ({ parentToolUseId, agentType, onClose }: SubagentDrawerProps) => {
+const SubagentDrawer = ({
+  parentToolUseId,
+  agentType,
+  sessionId,
+  onClose
+}: SubagentDrawerProps) => {
   const [messages, setMessages] = useState<ChatMessage[] | null>(null)
 
   useEffect(() => {
     let live = true
-    void window.api.currentSessionId().then((sid) => {
+    const resolve = sessionId
+      ? Promise.resolve(sessionId)
+      : window.api.currentSessionId()
+    void resolve.then((sid) => {
       if (!sid) {
         if (live) setMessages([])
         return
@@ -32,7 +47,7 @@ const SubagentDrawer = ({ parentToolUseId, agentType, onClose }: SubagentDrawerP
     return () => {
       live = false
     }
-  }, [parentToolUseId])
+  }, [parentToolUseId, sessionId])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {

@@ -11,7 +11,7 @@ export interface WrapperApi {
   pickFolder: () => Promise<string | null>
   listSessions: () => Promise<SessionMeta[]>
   loadTranscript: (id: string) => Promise<TranscriptMessage[]>
-  listSubagents: (sessionId: string) => Promise<SubagentInfo[]>
+  listSubagents: (sessionId: string) => Promise<SubagentInfo[] | null>
   subagentTranscript: (
     sessionId: string,
     parentToolUseId: string

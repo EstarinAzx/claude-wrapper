@@ -7,6 +7,7 @@ import Chat from './components/Chat'
 import InputBar from './components/InputBar'
 import Welcome from './components/Welcome'
 import SubagentDrawer from './components/SubagentDrawer'
+import AgentsDock from './components/AgentsDock'
 import { useChat } from './useChat'
 import { useZoom } from './useZoom'
 
@@ -19,6 +20,7 @@ const App = () => {
     parentToolUseId: string
     agentType: string
   } | null>(null)
+  const [agentsOpen, setAgentsOpen] = useState(false)
   const { messages, busy, activeSessionId, send, stop, respondToPermission, openSession, newChat } =
     useChat()
   useZoom()
@@ -76,8 +78,10 @@ const App = () => {
         backend={backend}
         permission={permission}
         busy={busy}
+        agentsOpen={agentsOpen}
         onFlip={flipBackend}
         onCyclePermission={cyclePermission}
+        onToggleAgents={cwd ? () => setAgentsOpen((v) => !v) : undefined}
       />
       {cwd ? (
         <div className="workspace">
@@ -99,10 +103,20 @@ const App = () => {
               onPickModel={pickModel}
             />
           </div>
+          {agentsOpen ? (
+            <AgentsDock
+              sessionId={activeSessionId}
+              onOpenAgent={(parentToolUseId, agentType) =>
+                setOpenSubagent({ parentToolUseId, agentType })
+              }
+              onClose={() => setAgentsOpen(false)}
+            />
+          ) : null}
           {openSubagent ? (
             <SubagentDrawer
               parentToolUseId={openSubagent.parentToolUseId}
               agentType={openSubagent.agentType}
+              sessionId={activeSessionId}
               onClose={() => setOpenSubagent(null)}
             />
           ) : null}

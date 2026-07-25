@@ -3,8 +3,14 @@
 // `subagent` event's parentToolUseId and the on-disk `agent-<id>.meta.json`
 // `toolUseId`); `agentId` is the on-disk transcript id. The renderer opens a
 // subagent by parentToolUseId — the id it already has from the live Task card.
+// `description`, `model`, `spawnDepth`, and `parentAgentId` come straight from
+// the sidecar and are absent (not zero/empty) when the sidecar omits them.
 export interface SubagentInfo {
   parentToolUseId: string
   agentId: string
   agentType: string
+  description?: string
+  model?: string
+  spawnDepth?: number
+  parentAgentId?: string
 }

@@ -78,20 +78,49 @@ const BackendPill = ({
   )
 }
 
+// Toggles the right-hand Agents dock. Sits with the window controls rather than
+// the left-hand state pills because it governs what the right side of the
+// workspace shows, not what the next turn runs against — a hairline separates it
+// so it is never mistaken for a window button.
+const AgentsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => (
+  <button
+    type="button"
+    className={`agents-toggle${open ? ' agents-toggle--on' : ''}`}
+    aria-label="Agents panel"
+    aria-pressed={open}
+    title={open ? 'Agents panel — click to hide' : 'Agents panel — click to show'}
+    onClick={onToggle}
+  >
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <line x1="3.6" y1="7" x2="9.4" y2="4" stroke="currentColor" strokeWidth="1.2" />
+      <line x1="3.6" y1="7" x2="9.4" y2="10" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="2.7" cy="7" r="1.4" fill="currentColor" />
+      <circle cx="10.3" cy="3.7" r="1.4" fill="currentColor" />
+      <circle cx="10.3" cy="10.3" r="1.4" fill="currentColor" />
+    </svg>
+  </button>
+)
+
 const Titlebar = ({
   cwd,
   backend,
   permission,
   busy = false,
+  agentsOpen = false,
   onFlip,
-  onCyclePermission
+  onCyclePermission,
+  onToggleAgents
 }: {
   cwd: string | null
   backend: BackendInfo | null
   permission?: PermissionMode | null
   busy?: boolean
+  agentsOpen?: boolean
   onFlip?: (target: BackendMode) => void
   onCyclePermission?: (next: PermissionMode) => void
+  // Absent until a project folder is open — there is no workspace to dock to
+  // before that, so the control simply is not rendered.
+  onToggleAgents?: () => void
 }) => (
   <header className="titlebar">
     <div className="titlebar-left">
@@ -112,6 +141,12 @@ const Titlebar = ({
       )}
     </div>
     <div className="titlebar-right">
+      {onToggleAgents ? (
+        <>
+          <AgentsToggle open={agentsOpen} onToggle={onToggleAgents} />
+          <span className="titlebar-sep" aria-hidden="true" />
+        </>
+      ) : null}
       <button
         type="button"
         className="win-btn"

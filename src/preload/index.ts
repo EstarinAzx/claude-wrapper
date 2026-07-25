@@ -13,7 +13,7 @@ const api = {
   listSessions: (): Promise<SessionMeta[]> => ipcRenderer.invoke('session:list'),
   loadTranscript: (id: string): Promise<TranscriptMessage[]> =>
     ipcRenderer.invoke('session:transcript', id),
-  listSubagents: (sessionId: string): Promise<SubagentInfo[]> =>
+  listSubagents: (sessionId: string): Promise<SubagentInfo[] | null> =>
     ipcRenderer.invoke('subagents:list', sessionId),
   subagentTranscript: (
     sessionId: string,

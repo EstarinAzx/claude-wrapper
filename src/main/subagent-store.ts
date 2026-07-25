@@ -33,11 +33,21 @@ const nodeIo: SubagentIo = {
 const subagentsDir = (cwd: string, sessionId: string): string =>
   join(homedir(), '.claude', 'projects', encodeCwd(cwd), sessionId, 'subagents')
 
+// Detect a missing path without string-matching the message — Node sets .code.
+const isMissing = (e: unknown): boolean =>
+  (e as NodeJS.ErrnoException | null)?.code === 'ENOENT'
+
+// The sidecar's own view of an agent: everything SubagentInfo carries except the
+// two fields the caller contributes — agentId (from the filename) and
+// parentToolUseId (this file's `toolUseId`, renamed on the way out). Derived from
+// SubagentInfo rather than restated so the two can't drift apart.
+type ParsedMeta = Omit<SubagentInfo, 'parentToolUseId' | 'agentId'> & { toolUseId: string }
+
 // Parse an agent-<id>.meta.json sidecar. Null on garbage or a missing toolUseId
-// (a subagent we can't correlate is not surfaced).
-export const parseMeta = (
-  raw: string
-): { toolUseId: string; agentType: string } | null => {
+// (a subagent we can't correlate is not surfaced). Optional fields are included
+// only when the sidecar actually carries a usable value — omitted otherwise so
+// the UI can tell "no data" from "zero/empty".
+export const parseMeta = (raw: string): ParsedMeta | null => {
   let obj: unknown
   try {
     obj = JSON.parse(raw)
@@ -45,29 +55,52 @@ export const parseMeta = (
     return null
   }
   if (!obj || typeof obj !== 'object') return null
-  const rec = obj as { toolUseId?: unknown; agentType?: unknown }
+  const rec = obj as {
+    toolUseId?: unknown
+    agentType?: unknown
+    description?: unknown
+    model?: unknown
+    spawnDepth?: unknown
+    parentAgentId?: unknown
+  }
   if (typeof rec.toolUseId !== 'string' || !rec.toolUseId) return null
-  return {
+  const out: ParsedMeta = {
     toolUseId: rec.toolUseId,
     agentType: typeof rec.agentType === 'string' ? rec.agentType : ''
   }
+  if (typeof rec.description === 'string' && rec.description) {
+    out.description = rec.description
+  }
+  if (typeof rec.model === 'string' && rec.model) {
+    out.model = rec.model
+  }
+  if (typeof rec.spawnDepth === 'number' && Number.isFinite(rec.spawnDepth)) {
+    out.spawnDepth = rec.spawnDepth
+  }
+  if (typeof rec.parentAgentId === 'string' && rec.parentAgentId) {
+    out.parentAgentId = rec.parentAgentId
+  }
+  return out
 }
 
 // List a session's subagents by reading their meta sidecars, correlating each to
-// the Task tool_use that spawned it. Lenient: unreadable dir/files are skipped,
-// mirroring session-store.
+// the Task tool_use that spawned it. Returns [] when the session never spawned
+// any (no subagents/ directory → ENOENT) and null when the directory exists but
+// could not be read (permission errors and the like) — the panel treats those
+// as distinct states. Per-file failures stay lenient: one bad sidecar is
+// skipped, the rest still list.
 export const listSubagents = async (
   cwd: string | null,
   sessionId: string,
   io: SubagentIo = nodeIo
-): Promise<SubagentInfo[]> => {
+): Promise<SubagentInfo[] | null> => {
   if (!cwd || !sessionId) return []
   const dir = subagentsDir(cwd, sessionId)
   let names: string[]
   try {
     names = await io.readdir(dir)
-  } catch {
-    return []
+  } catch (e) {
+    return isMissing(e) ? [] : null
   }
   const infos: SubagentInfo[] = []
   for (const name of names) {
@@ -76,10 +109,11 @@ export const listSubagents = async (
     try {
       const meta = parseMeta(await io.readFile(join(dir, name)))
       if (meta) {
+        const { toolUseId, ...rest } = meta
         infos.push({
-          parentToolUseId: meta.toolUseId,
+          parentToolUseId: toolUseId,
           agentId,
-          agentType: meta.agentType
+          ...rest
         })
       }
     } catch {
@@ -99,7 +133,7 @@ export const readSubagentTranscript = async (
   io: SubagentIo = nodeIo
 ): Promise<TranscriptMessage[]> => {
   if (!cwd || !sessionId || !parentToolUseId) return []
-  const match = (await listSubagents(cwd, sessionId, io)).find(
+  const match = ((await listSubagents(cwd, sessionId, io)) ?? []).find(
     (i) => i.parentToolUseId === parentToolUseId
   )
   if (!match) return []
