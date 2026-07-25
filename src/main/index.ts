@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { readFile, stat } from 'node:fs/promises'
 import { createEngine } from './engine'
 import {
   initBackendMode,
@@ -13,6 +14,12 @@ import { getPermissionMode, setPermissionMode, toPermissionOptions } from './per
 import { getModelMode, setModelMode, toModelOptions, listModels } from './model-mode'
 import { clampZoom } from '../shared/zoom'
 import { normalizeSendPayload } from '../shared/attachment-types'
+import {
+  MAX_IMAGE_BYTES,
+  isEmbeddable,
+  mediaTypeForPath,
+  type Candidate
+} from '../shared/attachment-policy'
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
@@ -136,6 +143,41 @@ ipcMain.handle('session:list', async (event) => {
 ipcMain.handle('session:transcript', async (event, id: string) => {
   if (!isTrustedIpc(event)) return []
   return readTranscript(getSessionCwd(), String(id))
+})
+
+// File picker returns policy Candidates rather than bare paths: an embeddable
+// image must carry its bytes to be embedded, and the read is capped so a huge
+// image simply falls through to the by-path route the policy module already has.
+ipcMain.handle('attachments:pick', async (event): Promise<Candidate[]> => {
+  if (!isTrustedIpc(event)) return []
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (!win) return []
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+    properties: ['openFile', 'multiSelections']
+  })
+  if (canceled || filePaths.length === 0) return []
+
+  return Promise.all(
+    filePaths.map(async (filePath): Promise<Candidate> => {
+      const mediaType = mediaTypeForPath(filePath)
+      const candidate: Candidate = {
+        name: basename(filePath),
+        mediaType,
+        path: filePath
+      }
+      if (!isEmbeddable(mediaType)) return candidate
+      // Stat before read so a 500 MB file is never loaded just to be rejected.
+      // One unreadable file still returns as a path Candidate — don't fail the pick.
+      try {
+        const info = await stat(filePath)
+        if (info.size > MAX_IMAGE_BYTES) return candidate
+        candidate.data = await readFile(filePath, { encoding: 'base64' })
+      } catch {
+        // Leave data absent; the path route still works.
+      }
+      return candidate
+    })
+  )
 })
 
 // Read-only: the subagent drawer asks for a session's spawned subagents,

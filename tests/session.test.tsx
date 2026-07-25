@@ -11,6 +11,7 @@ beforeEach(() => {
     toggleMaximize: vi.fn(),
     close: vi.fn(),
     pickFolder,
+    pickFiles: vi.fn().mockResolvedValue([]),
     listSessions: vi.fn().mockResolvedValue([]),
     loadTranscript: vi.fn().mockResolvedValue([]),
     listSubagents: vi.fn().mockResolvedValue([]),

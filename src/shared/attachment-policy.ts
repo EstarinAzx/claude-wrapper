@@ -35,8 +35,33 @@ export type Verdict =
   | { verdict: 'accept'; name: string; attachment: Attachment }
   | { verdict: 'reject'; name: string; reason: string }
 
-const isEmbeddable = (mediaType: string): mediaType is ImageMediaType =>
+export const isEmbeddable = (mediaType: string): mediaType is ImageMediaType =>
   (EMBEDDABLE_IMAGE_TYPES as readonly string[]).includes(mediaType)
+
+// The picker hands us a bare path — no File.type to read — so the extension is
+// the only signal for "is this an embeddable image?". Dependency-free so the
+// renderer can share it; take the extension only from the last path segment so
+// a dot in a parent directory never masquerades as one.
+export const mediaTypeForPath = (path: string): string => {
+  const base = path.split(/[/\\]/).pop() ?? ''
+  const dot = base.lastIndexOf('.')
+  // No dot, or a leading-dot name (`.gitignore`), is not an extension.
+  if (dot <= 0) return 'application/octet-stream'
+  const ext = base.slice(dot + 1).toLowerCase()
+  switch (ext) {
+    case 'png':
+      return 'image/png'
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg'
+    case 'gif':
+      return 'image/gif'
+    case 'webp':
+      return 'image/webp'
+    default:
+      return 'application/octet-stream'
+  }
+}
 
 /** Decoded byte length of a base64 string, without decoding it. */
 export const decodedBytes = (base64: string): number => {

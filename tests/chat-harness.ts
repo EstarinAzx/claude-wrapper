@@ -5,6 +5,7 @@ import type { EngineEvent, PermissionDecision, PermissionMode } from '../src/sha
 import type { BackendInfo } from '../src/shared/backend-types'
 import type { ModelInfo, ModelOption } from '../src/shared/model-types'
 import type { SendPayload } from '../src/shared/attachment-types'
+import type { Candidate } from '../src/shared/attachment-policy'
 
 const FAMILY_MODELS: ModelOption[] = [
   { id: 'opus', label: 'Opus', group: 'family' },
@@ -30,6 +31,7 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
     toggleMaximize: vi.fn(),
     close: vi.fn(),
     pickFolder: vi.fn<() => Promise<string | null>>().mockResolvedValue(folder),
+    pickFiles: vi.fn<() => Promise<Candidate[]>>().mockResolvedValue([]),
     listSessions: vi.fn().mockResolvedValue([]),
     loadTranscript: vi.fn().mockResolvedValue([]),
     listSubagents: vi.fn().mockResolvedValue([]),

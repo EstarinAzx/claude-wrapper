@@ -146,6 +146,23 @@ const InputBar = ({ busy, model, onSend, onStop, onPickModel }: InputBarProps) =
     })
   }
 
+  // Same policy fold as paste so embed-vs-path routing and the count budget stay
+  // one route regardless of source. An empty result is cancel — leave the tray
+  // and any existing rejection message untouched rather than folding nothing.
+  const openPicker = (): void => {
+    if (busy) return
+    void window.api.pickFiles().then((candidates) => {
+      if (candidates.length === 0) return
+      setTray((prev) => {
+        const { accepted, rejected } = admitAttachments(prev.items.length, candidates)
+        return {
+          items: [...prev.items, ...accepted.map((a) => ({ id: chipId(), ...a }))],
+          rejections: rejected
+        }
+      })
+    })
+  }
+
   const removeItem = (id: string): void => {
     setTray((prev) => ({ ...prev, items: prev.items.filter((i) => i.id !== id) }))
   }
@@ -218,7 +235,13 @@ const InputBar = ({ busy, model, onSend, onStop, onPickModel }: InputBarProps) =
         </div>
       ) : null}
       <div className="input-pill">
-        <button type="button" className="attach-btn" aria-label="Attach" tabIndex={-1}>
+        <button
+          type="button"
+          className="attach-btn"
+          aria-label="Attach files"
+          disabled={busy}
+          onClick={openPicker}
+        >
           <svg
             width="18"
             height="18"

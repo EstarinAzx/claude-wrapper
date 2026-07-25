@@ -4,12 +4,14 @@ import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { SendPayload } from '../shared/attachment-types'
+import type { Candidate } from '../shared/attachment-policy'
 
 export interface WrapperApi {
   minimize: () => void
   toggleMaximize: () => void
   close: () => void
   pickFolder: () => Promise<string | null>
+  pickFiles: () => Promise<Candidate[]>
   listSessions: () => Promise<SessionMeta[]>
   loadTranscript: (id: string) => Promise<TranscriptMessage[]>
   listSubagents: (sessionId: string) => Promise<SubagentInfo[] | null>

@@ -252,6 +252,27 @@ describe('engine', () => {
     ])
   })
 
+  // #34's paperclip makes mixing routine — a screenshot and the file behind it
+  // are one message. The two routes must not bleed: paths stay text, images stay
+  // blocks, and the path list trails the prompt inside the single text block.
+  test('a mixed message keeps images as blocks and paths in the one text block', async () => {
+    const inputs = await sendOne({
+      text: 'why does this look wrong',
+      attachments: [
+        { kind: 'image', mediaType: 'image/png', data: 'AAAB' },
+        { kind: 'path', path: 'D:\\proj\\Button.tsx' },
+        { kind: 'path', path: 'D:\\proj\\theme.css' }
+      ]
+    })
+    expect(inputs[0]?.message.content).toEqual([
+      {
+        type: 'text',
+        text: 'why does this look wrong\n\nAttached files:\nD:\\proj\\Button.tsx\nD:\\proj\\theme.css'
+      },
+      { type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'AAAB' } }
+    ])
+  })
+
   test('rejects an overlapping turn without corrupting the active turn', async () => {
     const { fn, push } = streamingStub()
     const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)

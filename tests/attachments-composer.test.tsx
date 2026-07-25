@@ -1,9 +1,21 @@
 import { readFileSync } from 'node:fs'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, createEvent, cleanup, waitFor } from '@testing-library/react'
+import {
+  render,
+  screen,
+  fireEvent,
+  createEvent,
+  cleanup,
+  waitFor,
+  act
+} from '@testing-library/react'
 import App from '../src/renderer/src/App'
 import { fakeChatApi } from './chat-harness'
-import { MAX_ATTACHMENTS, MAX_IMAGE_BYTES } from '../src/shared/attachment-policy'
+import {
+  MAX_ATTACHMENTS,
+  MAX_IMAGE_BYTES,
+  type Candidate
+} from '../src/shared/attachment-policy'
 
 let harness: ReturnType<typeof fakeChatApi>
 
@@ -213,5 +225,156 @@ describe('the policy module refusing inline', () => {
 
     await waitFor(() => expect(chips()).toHaveLength(1))
     expect(rejects()).toHaveLength(0)
+  })
+})
+
+// The picker resolves off the event loop and the tray folds in a `.then`, so the
+// microtask has to be flushed before asserting — including for a cancel, where
+// the whole point is that nothing moved and a premature assertion would pass
+// vacuously.
+const pick = async (candidates: Candidate[]): Promise<void> => {
+  harness.api.pickFiles.mockResolvedValue(candidates)
+  fireEvent.click(screen.getByRole('button', { name: 'Attach files' }))
+  await act(async () => {})
+}
+
+describe('the paperclip file picker', () => {
+  test('keyboard reachable and labelled', async () => {
+    await startSession()
+    const btn = screen.getByRole('button', { name: 'Attach files' })
+    // tabIndex={-1} is what made it decorative; its absence is the fix.
+    expect(btn.getAttribute('tabindex')).toBeNull()
+  })
+
+  test('clicking opens the picker', async () => {
+    await startSession()
+    fireEvent.click(screen.getByRole('button', { name: 'Attach files' }))
+    expect(harness.api.pickFiles).toHaveBeenCalledOnce()
+  })
+
+  test('chosen files become chips naming them', async () => {
+    await startSession()
+    await pick([
+      {
+        name: 'shot.png',
+        mediaType: 'image/png',
+        data: b64(PNG),
+        path: 'D:\\proj\\shot.png'
+      },
+      {
+        name: 'notes.pdf',
+        mediaType: 'application/pdf',
+        path: 'D:\\proj\\notes.pdf'
+      }
+    ])
+
+    expect(chips()).toHaveLength(2)
+    expect(screen.getByText('shot.png')).toBeTruthy()
+    expect(screen.getByText('notes.pdf')).toBeTruthy()
+    const shot = chips().find((c) => c.textContent?.includes('shot.png'))
+    const notes = chips().find((c) => c.textContent?.includes('notes.pdf'))
+    expect(shot?.querySelector('.chip-thumb')).toBeTruthy()
+    expect(notes?.querySelector('.chip-thumb')).toBeNull()
+  })
+
+  // Both halves of the tray are pinned: a cancel that folded its empty batch
+  // through the policy would keep the chip and silently wipe the rejection.
+  test('cancelling changes nothing — chip and rejection both survive', async () => {
+    await startSession()
+    paste([
+      imageFile('shot.png', 'image/png', PNG),
+      new File([new Uint8Array([1])], 'notes.pdf', { type: 'application/pdf' })
+    ])
+    await waitFor(() => expect(chips()).toHaveLength(1))
+    expect(rejects()).toHaveLength(1)
+
+    await pick([])
+
+    expect(chips()).toHaveLength(1)
+    expect(rejects()).toHaveLength(1)
+    expect(rejects()[0]?.textContent).toContain('notes.pdf')
+  })
+
+  test('a picked image embeds; a picked non-image goes by path', async () => {
+    await startSession()
+    await pick([
+      {
+        name: 'shot.png',
+        mediaType: 'image/png',
+        data: b64(PNG),
+        path: 'D:\\proj\\shot.png'
+      },
+      {
+        name: 'notes.pdf',
+        mediaType: 'application/pdf',
+        path: 'D:\\proj\\notes.pdf'
+      }
+    ])
+
+    send('look')
+
+    expect(harness.prompts).toEqual([
+      {
+        text: 'look',
+        attachments: [
+          { kind: 'image', mediaType: 'image/png', data: b64(PNG) },
+          { kind: 'path', path: 'D:\\proj\\notes.pdf' }
+        ]
+      }
+    ])
+  })
+
+  test('mixed sources in one message', async () => {
+    await startSession()
+    paste([imageFile('pasted.png', 'image/png', PNG)])
+    await waitFor(() => expect(chips()).toHaveLength(1))
+
+    await pick([
+      {
+        name: 'picked.jpg',
+        mediaType: 'image/jpeg',
+        data: b64(JPEG),
+        path: 'D:\\proj\\picked.jpg'
+      },
+      {
+        name: 'notes.pdf',
+        mediaType: 'application/pdf',
+        path: 'D:\\proj\\notes.pdf'
+      }
+    ])
+
+    send('all three')
+
+    expect(harness.prompts).toEqual([
+      {
+        text: 'all three',
+        attachments: [
+          { kind: 'image', mediaType: 'image/png', data: b64(PNG) },
+          { kind: 'image', mediaType: 'image/jpeg', data: b64(JPEG) },
+          { kind: 'path', path: 'D:\\proj\\notes.pdf' }
+        ]
+      }
+    ])
+  })
+
+  test('the count cap is shared across sources', async () => {
+    await startSession()
+    const files = Array.from({ length: MAX_ATTACHMENTS }, (_, i) =>
+      imageFile(`shot-${i}.png`, 'image/png', PNG)
+    )
+    paste(files)
+    await waitFor(() => expect(chips()).toHaveLength(MAX_ATTACHMENTS))
+
+    await pick([
+      {
+        name: 'extra.pdf',
+        mediaType: 'application/pdf',
+        path: 'D:\\proj\\extra.pdf'
+      }
+    ])
+
+    expect(chips()).toHaveLength(MAX_ATTACHMENTS)
+    expect(rejects()).toHaveLength(1)
+    expect(rejects()[0]?.textContent).toContain('extra.pdf')
   })
 })

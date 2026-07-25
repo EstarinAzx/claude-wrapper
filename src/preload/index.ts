@@ -5,12 +5,14 @@ import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { SendPayload } from '../shared/attachment-types'
+import type { Candidate } from '../shared/attachment-policy'
 
 const api = {
   minimize: (): void => ipcRenderer.send('window:minimize'),
   toggleMaximize: (): void => ipcRenderer.send('window:toggle-maximize'),
   close: (): void => ipcRenderer.send('window:close'),
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('session:pick-folder'),
+  pickFiles: (): Promise<Candidate[]> => ipcRenderer.invoke('attachments:pick'),
   listSessions: (): Promise<SessionMeta[]> => ipcRenderer.invoke('session:list'),
   loadTranscript: (id: string): Promise<TranscriptMessage[]> =>
     ipcRenderer.invoke('session:transcript', id),

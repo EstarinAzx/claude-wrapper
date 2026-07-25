@@ -5,6 +5,7 @@ import {
   decodedBytes,
   judgeAttachment,
   admitAttachments,
+  mediaTypeForPath,
   type Candidate
 } from '../src/shared/attachment-policy'
 import { EMBEDDABLE_IMAGE_TYPES } from '../src/shared/attachment-types'
@@ -46,6 +47,56 @@ describe('decodedBytes', () => {
 
   test('two padding chars decode to 1 byte', () => {
     expect(decodedBytes('AA==')).toBe(1)
+  })
+})
+
+describe('mediaTypeForPath', () => {
+  test('.png → image/png', () => {
+    expect(mediaTypeForPath('shot.png')).toBe('image/png')
+  })
+
+  test('.jpg → image/jpeg', () => {
+    expect(mediaTypeForPath('shot.jpg')).toBe('image/jpeg')
+  })
+
+  test('.jpeg → image/jpeg', () => {
+    expect(mediaTypeForPath('shot.jpeg')).toBe('image/jpeg')
+  })
+
+  test('.gif → image/gif', () => {
+    expect(mediaTypeForPath('shot.gif')).toBe('image/gif')
+  })
+
+  test('.webp → image/webp', () => {
+    expect(mediaTypeForPath('shot.webp')).toBe('image/webp')
+  })
+
+  test('uppercase extension is case-insensitive', () => {
+    expect(mediaTypeForPath('SHOT.PNG')).toBe('image/png')
+  })
+
+  test('unknown extension falls back to octet-stream', () => {
+    expect(mediaTypeForPath('notes.pdf')).toBe('application/octet-stream')
+  })
+
+  test('no extension at all is octet-stream', () => {
+    expect(mediaTypeForPath('README')).toBe('application/octet-stream')
+  })
+
+  test('dot in a parent directory does not count as an extension', () => {
+    expect(mediaTypeForPath('D:\\my.folder\\README')).toBe('application/octet-stream')
+  })
+
+  test('dotfile is not an extension', () => {
+    expect(mediaTypeForPath('.gitignore')).toBe('application/octet-stream')
+  })
+
+  test('forward-slash separator works', () => {
+    expect(mediaTypeForPath('/tmp/photos/shot.png')).toBe('image/png')
+  })
+
+  test('backslash separator works', () => {
+    expect(mediaTypeForPath('D:\\photos\\shot.jpeg')).toBe('image/jpeg')
   })
 })
 
