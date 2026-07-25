@@ -4,6 +4,7 @@ import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
+import type { SendPayload } from '../shared/attachment-types'
 
 const api = {
   minimize: (): void => ipcRenderer.send('window:minimize'),
@@ -51,7 +52,7 @@ const api = {
     }
   },
   setZoom: (level: number): void => ipcRenderer.send('zoom:set', level),
-  sendPrompt: (text: string): void => ipcRenderer.send('chat:send', text),
+  sendPrompt: (payload: SendPayload): void => ipcRenderer.send('chat:send', payload),
   stopTurn: (): void => ipcRenderer.send('chat:stop'),
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {
     ipcRenderer.send('chat:permission-response', toolUseId, decision)

@@ -57,7 +57,10 @@ describe('stop button', () => {
     expect(document.querySelector('.msg-error')).toBeNull()
 
     send('again')
-    expect(harness.prompts).toEqual(['hello', 'again'])
+    expect(harness.prompts).toEqual([
+      { text: 'hello', attachments: [] },
+      { text: 'again', attachments: [] }
+    ])
   })
 
   test('turn-aborted cancels a pending permission card', async () => {
@@ -89,6 +92,9 @@ describe('legible failure', () => {
     expect(input().disabled).toBe(false)
 
     send('again')
-    expect(harness.prompts).toEqual(['hello', 'again'])
+    expect(harness.prompts).toEqual([
+      { text: 'hello', attachments: [] },
+      { text: 'again', attachments: [] }
+    ])
   })
 })

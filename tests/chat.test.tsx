@@ -39,7 +39,7 @@ describe('first chat turn', () => {
   test('Enter sends the prompt: user bubble appears, input clears and disarms', async () => {
     await startSession()
     send('hello there')
-    expect(harness.prompts).toEqual(['hello there'])
+    expect(harness.prompts).toEqual([{ text: 'hello there', attachments: [] }])
     expect(screen.getByText('hello there')).toBeTruthy()
     expect(input().value).toBe('')
     expect(input().disabled).toBe(true)
@@ -106,7 +106,10 @@ describe('first chat turn', () => {
     send('second question')
     harness.emit({ type: 'text-delta', text: 'second answer' })
     harness.emit({ type: 'turn-end' })
-    expect(harness.prompts).toEqual(['first question', 'second question'])
+    expect(harness.prompts).toEqual([
+      { text: 'first question', attachments: [] },
+      { text: 'second question', attachments: [] }
+    ])
     expect(screen.getByText('first question')).toBeTruthy()
     expect(screen.getByText('first answer')).toBeTruthy()
     expect(screen.getByText('second question')).toBeTruthy()
@@ -125,6 +128,6 @@ describe('first chat turn', () => {
     await startSession()
     fireEvent.change(input(), { target: { value: 'via button' } })
     fireEvent.click(screen.getByLabelText('Send'))
-    expect(harness.prompts).toEqual(['via button'])
+    expect(harness.prompts).toEqual([{ text: 'via button', attachments: [] }])
   })
 })

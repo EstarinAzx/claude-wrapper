@@ -5,6 +5,7 @@ import type {
   EngineEvent,
   PermissionDecision
 } from '../shared/engine-types'
+import type { SendPayload } from '../shared/attachment-types'
 
 export type SdkMessage =
   | { type: 'system'; subtype: string; session_id: string }
@@ -117,12 +118,43 @@ const defaultQuery: QueryFn = ({ prompt, options }) =>
     options: options as Parameters<typeof query>[0]['options']
   }) as AsyncIterable<SdkMessage>
 
-const toUserMessage = (text: string): SDKUserMessage => ({
-  type: 'user',
-  message: { role: 'user', content: text },
-  parent_tool_use_id: null,
-  origin: { kind: 'human' }
-})
+type ContentBlock = Exclude<SDKUserMessage['message']['content'], string>[number]
+
+// With no attachments the content stays a PLAIN STRING — the app's core path,
+// byte-identical to the string-only channel this replaced, and pinned by
+// engine.test.ts. Do not "fix" that test by letting it become an array.
+// Otherwise: one text block, then one image block per embedded image. Non-image
+// attachments are never embedded; their absolute paths are appended to the
+// prompt text so the agent opens them with its own file tools.
+const toUserMessage = ({ text, attachments }: SendPayload): SDKUserMessage => {
+  const paths = attachments.filter((a) => a.kind === 'path')
+  const prompt =
+    paths.length === 0
+      ? text
+      : `${text}\n\nAttached files:\n${paths.map((p) => p.path).join('\n')}`
+
+  const content: SDKUserMessage['message']['content'] =
+    attachments.length === 0
+      ? prompt
+      : [
+          { type: 'text', text: prompt },
+          ...attachments
+            .filter((a) => a.kind === 'image')
+            .map(
+              (img): ContentBlock => ({
+                type: 'image',
+                source: { type: 'base64', media_type: img.mediaType, data: img.data }
+              })
+            )
+        ]
+
+  return {
+    type: 'user',
+    message: { role: 'user', content },
+    parent_tool_use_id: null,
+    origin: { kind: 'human' }
+  }
+}
 
 const mapStreamError = (raw: string): string => {
   if (/ENOENT/i.test(raw)) {
@@ -403,7 +435,7 @@ export const createEngine = (
   }
 
   const runTurn = async (
-    prompt: string,
+    payload: SendPayload,
     onEvent: (e: EngineEvent) => void,
     resume?: string
   ): Promise<void> => {
@@ -435,7 +467,7 @@ export const createEngine = (
 
     return new Promise<void>((resolve) => {
       turnResolve = resolve
-      queue!.push(toUserMessage(prompt))
+      queue!.push(toUserMessage(payload))
     })
   }
 

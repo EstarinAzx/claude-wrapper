@@ -75,7 +75,7 @@ describe('resume — continue a reopened session (#13)', () => {
     fireEvent.change(input(), { target: { value: 'keep going' } })
     fireEvent.keyDown(input(), { key: 'Enter' })
 
-    expect(harness.prompts).toEqual(['keep going'])
+    expect(harness.prompts).toEqual([{ text: 'keep going', attachments: [] }])
   })
 
   test('New chat clears the pane and starts a fresh (unresumed) session', async () => {

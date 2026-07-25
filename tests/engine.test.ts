@@ -7,6 +7,10 @@ import {
   type RequestPermissionFn
 } from '../src/main/engine'
 import type { EngineEvent, PermissionDecision } from '../src/shared/engine-types'
+import type { SendPayload } from '../src/shared/attachment-types'
+
+/** An ordinary text-only send — what the composer produces today. */
+const p = (text: string): SendPayload => ({ text, attachments: [] })
 
 /** Streaming-input stub: one long-lived async iterable the test can push into. */
 const streamingStub = () => {
@@ -49,6 +53,19 @@ const streamingStub = () => {
   return { fn, calls, push, close }
 }
 
+/** streamingStub, plus a capture of every user message pushed into the prompt. */
+const capturingStub = () => {
+  const inputs: SDKUserMessage[] = []
+  const base = streamingStub()
+  const fn: QueryFn = ({ prompt, options }) => {
+    void (async () => {
+      for await (const message of prompt) inputs.push(message)
+    })()
+    return base.fn({ prompt: (async function* () {})(), options })
+  }
+  return { fn, inputs, calls: base.calls, push: base.push }
+}
+
 const autoAllow = (): RequestPermissionFn => async () => 'allow'
 
 const collect = async (
@@ -56,7 +73,7 @@ const collect = async (
   prompt: string
 ): Promise<EngineEvent[]> => {
   const events: EngineEvent[] = []
-  await engine.runTurn(prompt, (e) => events.push(e))
+  await engine.runTurn(p(prompt), (e) => events.push(e))
   return events
 }
 
@@ -83,6 +100,17 @@ const success: SdkMessage = {
   session_id: 'sess-1',
   is_error: false,
   result: 'full text'
+}
+
+/** Run one turn and hand back the user messages the engine pushed for it. */
+const sendOne = async (payload: SendPayload): Promise<SDKUserMessage[]> => {
+  const { fn, inputs, push } = capturingStub()
+  const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+  const turn = engine.runTurn(payload, () => {})
+  await Promise.resolve()
+  push(success)
+  await turn
+  return inputs
 }
 
 describe('engine', () => {
@@ -122,14 +150,7 @@ describe('engine', () => {
   })
 
   test('streaming input creates query once across two turns', async () => {
-    const inputs: SDKUserMessage[] = []
-    const { fn: baseFn, calls, push } = streamingStub()
-    const fn: QueryFn = ({ prompt, options }) => {
-      void (async () => {
-        for await (const message of prompt) inputs.push(message)
-      })()
-      return baseFn({ prompt: (async function* () {})(), options })
-    }
+    const { fn, inputs, calls, push } = capturingStub()
     const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
 
     const t1 = collect(engine, 'first')
@@ -153,6 +174,40 @@ describe('engine', () => {
         message: { role: 'user', content: 'second' },
         origin: { kind: 'human' }
       })
+    ])
+  })
+
+  // THE CORE-PATH PIN (#29). Every ordinary message the app sends takes this
+  // branch. If it ever fails, the bug is in src/main/engine.ts — do NOT "fix" it
+  // by teaching the expectation to accept an array.
+  test('a text-only send keeps plain-string content', async () => {
+    const inputs = await sendOne({ text: 'hello', attachments: [] })
+    expect(inputs).toHaveLength(1)
+    expect(inputs[0]?.message.content).toBe('hello')
+    expect(Array.isArray(inputs[0]?.message.content)).toBe(false)
+  })
+
+  test('an image attachment becomes a text block plus a base64 image block', async () => {
+    const inputs = await sendOne({
+      text: 'what is wrong here',
+      attachments: [{ kind: 'image', mediaType: 'image/png', data: 'AAAB' }]
+    })
+    expect(inputs[0]?.message.content).toEqual([
+      { type: 'text', text: 'what is wrong here' },
+      {
+        type: 'image',
+        source: { type: 'base64', media_type: 'image/png', data: 'AAAB' }
+      }
+    ])
+  })
+
+  test('a by-path attachment rides in the text block, not as a block of its own', async () => {
+    const inputs = await sendOne({
+      text: 'read this',
+      attachments: [{ kind: 'path', path: 'D:\\proj\\notes.pdf' }]
+    })
+    expect(inputs[0]?.message.content).toEqual([
+      { type: 'text', text: 'read this\n\nAttached files:\nD:\\proj\\notes.pdf' }
     ])
   })
 
@@ -237,7 +292,7 @@ describe('engine', () => {
       )
     }
     const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
-    void engine.runTurn('hi', () => {})
+    void engine.runTurn(p('hi'), () => {})
     await Promise.resolve()
     await input.next()
     const pendingInput = input.next()
@@ -266,7 +321,7 @@ describe('engine', () => {
     await expect(collect(engine, 'hi')).resolves.toEqual([
       { type: 'error', message: 'query setup failed' }
     ])
-    void engine.runTurn('retry', () => {})
+    void engine.runTurn(p('retry'), () => {})
     expect(attempts).toBe(2)
   })
 
@@ -630,7 +685,7 @@ describe('engine canUseTool / permissions', () => {
     const engine = createEngine(() => 'D:\\proj', requestPermission, fn)
 
     const events: EngineEvent[] = []
-    const turn = engine.runTurn('hi', (e) => events.push(e))
+    const turn = engine.runTurn(p('hi'), (e) => events.push(e))
     await Promise.resolve()
 
     const canUseTool = calls[0].options.canUseTool as (
@@ -676,7 +731,7 @@ describe('engine canUseTool / permissions', () => {
     const engine = createEngine(() => 'D:\\proj', requestPermission, fn)
 
     const events: EngineEvent[] = []
-    const turn = engine.runTurn('hi', (e) => events.push(e))
+    const turn = engine.runTurn(p('hi'), (e) => events.push(e))
     await Promise.resolve()
 
     const canUseTool = calls[0].options.canUseTool as (
@@ -834,7 +889,7 @@ describe('engine session id + resume', () => {
   test('a resume target is passed straight into query options.resume', async () => {
     const { fn, calls, push } = streamingStub()
     const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
-    const turn = engine.runTurn('hi', () => {}, 'sess-prior')
+    const turn = engine.runTurn(p('hi'), () => {}, 'sess-prior')
     await Promise.resolve()
     push(success)
     await turn

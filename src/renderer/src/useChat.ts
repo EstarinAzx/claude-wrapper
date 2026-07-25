@@ -173,7 +173,9 @@ export const useChat = () => {
       assistantIdRef.current = null
       setMessages((prev) => [...prev, { id: uid(), role: 'user', text }])
       setBusy(true)
-      window.api.sendPrompt(text)
+      // ponytail: attachments always empty here — #29 widens the pipe only; the
+      // composer that can fill it lands with paste (#32) and the paperclip (#34).
+      window.api.sendPrompt({ text, attachments: [] })
     },
     [busy]
   )

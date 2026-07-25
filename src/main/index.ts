@@ -12,6 +12,7 @@ import {
 import { getPermissionMode, setPermissionMode, toPermissionOptions } from './permission-mode'
 import { getModelMode, setModelMode, toModelOptions, listModels } from './model-mode'
 import { clampZoom } from '../shared/zoom'
+import { normalizeSendPayload } from '../shared/attachment-types'
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
@@ -262,14 +263,16 @@ ipcMain.on('zoom:set', (event, level: unknown) => {
   win?.webContents.setZoomFactor(clampZoom(Number(level)))
 })
 
-ipcMain.on('chat:send', (event, text: string) => {
+// The channel carries a payload (prompt text + attachments), not a bare string.
+// normalizeSendPayload is the trust boundary that String(text) used to be.
+ipcMain.on('chat:send', (event, payload: unknown) => {
   if (!isTrustedIpc(event)) return
   const win = BrowserWindow.fromWebContents(event.sender)
   if (!engine) {
     engine = makeEngine()
   }
   void engine.runTurn(
-    String(text),
+    normalizeSendPayload(payload),
     (e) => {
       win?.webContents.send('chat:event', e)
     },

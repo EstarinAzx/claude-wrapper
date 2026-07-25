@@ -3,6 +3,7 @@ import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
+import type { SendPayload } from '../shared/attachment-types'
 
 export interface WrapperApi {
   minimize: () => void
@@ -28,7 +29,7 @@ export interface WrapperApi {
   setModel: (model: string | null) => void
   onModelChanged: (cb: (model: string | null) => void) => () => void
   setZoom: (level: number) => void
-  sendPrompt: (text: string) => void
+  sendPrompt: (payload: SendPayload) => void
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void
   onChatEvent: (cb: (e: EngineEvent) => void) => () => void

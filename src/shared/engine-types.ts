@@ -1,3 +1,5 @@
+import type { SendPayload } from './attachment-types'
+
 export type PermissionDecision = 'allow' | 'deny'
 
 // The permission modes the app exposes as an in-app toggle. A subset of the
@@ -30,7 +32,11 @@ export type EngineEvent =
   | { type: 'error'; message: string }
 
 export interface Engine {
-  runTurn(prompt: string, onEvent: (e: EngineEvent) => void, resume?: string): Promise<void>
+  runTurn(
+    payload: SendPayload,
+    onEvent: (e: EngineEvent) => void,
+    resume?: string
+  ): Promise<void>
   interrupt(): void
   sessionId(): string | null
 }

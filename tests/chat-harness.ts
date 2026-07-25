@@ -4,6 +4,7 @@ import { createPermissionBroker } from '../src/main/permission-broker'
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../src/shared/engine-types'
 import type { BackendInfo } from '../src/shared/backend-types'
 import type { ModelInfo, ModelOption } from '../src/shared/model-types'
+import type { SendPayload } from '../src/shared/attachment-types'
 
 const FAMILY_MODELS: ModelOption[] = [
   { id: 'opus', label: 'Opus', group: 'family' },
@@ -16,7 +17,7 @@ const FAMILY_MODELS: ModelOption[] = [
 // Tests drive `emit` as the fake engine's event stream; permission responses
 // settle through the real main-process broker.
 export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
-  const prompts: string[] = []
+  const prompts: SendPayload[] = []
   const permissionResponses: Array<{ toolUseId: string; decision: PermissionDecision }> =
     []
   const broker = createPermissionBroker()
@@ -38,8 +39,8 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),
     setBackendMode: vi.fn(),
     setZoom: vi.fn(),
-    sendPrompt: (text: string): void => {
-      prompts.push(text)
+    sendPrompt: (payload: SendPayload): void => {
+      prompts.push(payload)
     },
     stopTurn: vi.fn(),
     respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {
