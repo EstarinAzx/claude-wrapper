@@ -3,6 +3,7 @@ import type { AgentRow, LiveAgent, SubagentInfo } from '../../../shared/subagent
 import { mergeAgents } from '../../../shared/subagent-types'
 import { buildAgentTree, flattenAgentTree } from '../../../shared/agent-layout'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
+import AgentMap from './AgentMap'
 
 // One indent step, in px. Small on purpose: the dock is ~248px wide by default,
 // so a deep spine has to stay legible rather than march off the right edge.
@@ -74,7 +75,18 @@ const AgentsDock = ({
 }) => {
   const [state, setState] = useState<DockState>({ status: 'loading' })
   const [width, setWidthState] = useState(readStoredWidth)
+  const [mode, setMode] = useState<'list' | 'map'>('list')
+  // One selection shared by list and map — toggling modes must not drop it.
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const reqIdRef = useRef(0)
+
+  const openAgent = useCallback(
+    (parentToolUseId: string, agentType: string): void => {
+      setSelectedId(parentToolUseId)
+      onOpenAgent(parentToolUseId, agentType)
+    },
+    [onOpenAgent]
+  )
 
   // Same persistence split as the sessions rail: UI-layout prefs live in
   // localStorage, engine-intent state stays in memory.
@@ -142,6 +154,45 @@ const AgentsDock = ({
       />
       <div className="agents-dock-head">
         <span className="agents-dock-title">Agents</span>
+        <div className="agents-dock-modes">
+          <button
+            type="button"
+            className="agents-dock-mode"
+            aria-label="List view"
+            aria-pressed={mode === 'list'}
+            onClick={() => setMode('list')}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path
+                d="M2 3h8M2 6h8M2 9h8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="agents-dock-mode"
+            aria-label="Map view"
+            aria-pressed={mode === 'map'}
+            onClick={() => setMode('map')}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path
+                d="M6 3.4v2.2M6 5.6L3.4 8M6 5.6L8.6 8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+              <circle cx="6" cy="2.6" r="1.1" fill="currentColor" stroke="none" />
+              <circle cx="3" cy="9" r="1.1" fill="currentColor" stroke="none" />
+              <circle cx="9" cy="9" r="1.1" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+        </div>
         <button
           type="button"
           className="sidebar-toggle"
@@ -171,6 +222,8 @@ const AgentsDock = ({
         <div className="agents-dock-empty" role="status">
           No agents in this session.
         </div>
+      ) : mode === 'map' ? (
+        <AgentMap rows={rows} selectedId={selectedId} onOpenAgent={openAgent} />
       ) : (
         <ul className="agent-list">
           {nodes.map(({ row: a, depth }) => {
@@ -180,23 +233,25 @@ const AgentsDock = ({
               .filter(Boolean)
               .join(' · ')
             const stats = liveStats(a)
+            const selected = selectedId === a.parentToolUseId
             return (
               <li
                 key={a.parentToolUseId}
                 // aria-level carries the depth that is otherwise only in the
                 // padding — indentation a screen reader cannot see is not a tree.
                 aria-level={depth + 1}
+                aria-current={selected ? 'true' : undefined}
                 // Untouched at the top level, so a session with no nesting (the
                 // common case) renders with no inline style at all.
                 style={depth > 0 ? { paddingLeft: depth * INDENT_PX } : undefined}
                 className={`agent-row${a.status ? ` agent-row--${a.status}` : ''}${
                   depth > 0 ? ' agent-row--nested' : ''
-                }`}
+                }${selected ? ' agent-row--selected' : ''}`}
               >
                 <button
                   type="button"
                   className="agent-row-btn"
-                  onClick={() => onOpenAgent(a.parentToolUseId, a.agentType)}
+                  onClick={() => openAgent(a.parentToolUseId, a.agentType)}
                 >
                   <span className="agent-row-head">
                     {a.status ? <span className="agent-row-dot" aria-hidden="true" /> : null}

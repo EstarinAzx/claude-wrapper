@@ -722,6 +722,167 @@ body {
   text-overflow: ellipsis;
 }
 
+/* Map mode. Encoding: shape = kind (rounded square = session, circle = agent,
+   diamond = failed), colour = status. Diamonds read smaller than circles at equal
+   radius, so failed nodes stay unmistakable even at 4px and in greyscale. Toggle
+   stays in the head at all times so empty states don't reflow the chrome. */
+.agents-dock-modes {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  margin-right: 4px;
+}
+
+.agents-dock-mode {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.agents-dock-mode:hover {
+  color: var(--text-muted);
+}
+
+.agents-dock-mode[aria-pressed='true'] {
+  background: oklch(0.92 0.01 210 / 0.08);
+  color: var(--text);
+}
+
+.agents-dock-mode:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
+}
+
+.agent-row--selected > .agent-row-btn {
+  background: oklch(0.92 0.01 210 / 0.08);
+}
+
+.agent-map {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 12px 18px;
+}
+
+.agent-map::-webkit-scrollbar {
+  width: 8px;
+}
+
+.agent-map::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.agent-map::-webkit-scrollbar-thumb {
+  background: oklch(0.92 0.01 210 / 0.12);
+  border-radius: var(--r-pill);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+.agent-map::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.92 0.01 210 / 0.2);
+}
+
+.agent-map-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.agent-map-edge {
+  fill: none;
+  stroke: oklch(0.92 0.01 210 / 0.16);
+  stroke-width: 1;
+}
+
+.agent-map-node {
+  cursor: pointer;
+  outline: none;
+}
+
+.agent-map-node-session rect {
+  fill: var(--surface);
+  stroke: var(--text-muted);
+  stroke-width: 1.25;
+}
+
+.agent-map-glyph {
+  transition:
+    fill 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    stroke 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.agent-map-node--running .agent-map-glyph {
+  fill: var(--mint);
+  stroke: none;
+}
+
+.agent-map-node--done .agent-map-glyph {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+}
+
+.agent-map-node--failed .agent-map-glyph {
+  fill: oklch(0.6 0.16 25);
+  stroke: none;
+}
+
+.agent-map-node--unknown .agent-map-glyph {
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+/* The alpha lives in the fill, not in `opacity`: subagent-pulse animates opacity
+   between 1 and 0.35, so an opacity-based tint would be overridden and the halo
+   would flash near-solid mint instead of breathing. */
+.agent-map-halo {
+  fill: color-mix(in oklch, var(--mint) 22%, transparent);
+  animation: subagent-pulse 1.4s ease-in-out infinite;
+}
+
+.agent-map-hover {
+  fill: transparent;
+  transition: fill 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.agent-map-node:hover .agent-map-hover {
+  fill: oklch(0.92 0.01 210 / 0.08);
+}
+
+.agent-map-node:focus-visible .agent-map-hover {
+  fill: oklch(0.92 0.01 210 / 0.08);
+}
+
+/* Keyboard focus must stay unmistakable on every status — mint stroke on the
+   glyph itself, since the selection ring only mounts when selected. */
+.agent-map-node:focus-visible .agent-map-glyph {
+  stroke: var(--mint);
+  stroke-width: 1.5;
+}
+
+.agent-map-ring {
+  fill: none;
+  stroke: var(--mint);
+  stroke-width: 1;
+}
+
+.agent-map-hit {
+  fill: transparent;
+}
+
 /* ── chat ── */
 
 .chat {

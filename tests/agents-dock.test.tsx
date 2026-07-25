@@ -464,6 +464,149 @@ describe('agents dock — nesting', () => {
   })
 })
 
+describe('agents dock — map mode', () => {
+  const liveEvent = (over: Record<string, unknown> = {}): EngineEvent =>
+    ({
+      type: 'subagent',
+      parentToolUseId: 'toolu-1',
+      status: 'running',
+      agentType: 'general-purpose',
+      description: 'Reading notes.txt',
+      ...over
+    }) as EngineEvent
+
+  const showAgents = async (agents: SubagentInfo[]): Promise<void> => {
+    harness.api.listSubagents.mockResolvedValue(agents)
+    await startSession([sess('sess-1', 'past work')])
+    fireEvent.click(await screen.findByText('past work'))
+    openDock()
+  }
+
+  test('the Map toggle swaps the list for the map', async () => {
+    await showAgents([agent({ description: 'look around' })])
+    expect(await screen.findByText('look around')).toBeTruthy()
+    expect(within(dock()).getByRole('list')).toBeTruthy()
+
+    fireEvent.click(within(dock()).getByRole('button', { name: 'Map view' }))
+
+    expect(within(dock()).queryByRole('list')).toBeNull()
+    expect(within(dock()).getByRole('group', { name: 'Agent map' })).toBeTruthy()
+
+    fireEvent.click(within(dock()).getByRole('button', { name: 'List view' }))
+
+    expect(within(dock()).getByRole('list')).toBeTruthy()
+    expect(within(dock()).queryByRole('group', { name: 'Agent map' })).toBeNull()
+  })
+
+  test('every agent gets a node whose name starts with its type', async () => {
+    await showAgents([
+      agent({ parentToolUseId: 'task-1', agentId: 'a1', agentType: 'Explore' }),
+      agent({ parentToolUseId: 'task-2', agentId: 'a2', agentType: 'Plan' }),
+      agent({ parentToolUseId: 'task-3', agentId: 'a3', agentType: 'general-purpose' })
+    ])
+    expect(await screen.findByText('Explore')).toBeTruthy()
+
+    fireEvent.click(within(dock()).getByRole('button', { name: 'Map view' }))
+
+    const map = within(dock()).getByRole('group', { name: 'Agent map' })
+    const nodes = within(map)
+      .getAllByRole('button')
+      .filter((el) => /^(Explore|Plan|general-purpose)/.test(el.getAttribute('aria-label') ?? ''))
+    expect(nodes).toHaveLength(3)
+  })
+
+  test('clicking a node opens the drawer for that agent', async () => {
+    harness.api.subagentTranscript.mockResolvedValue([
+      { role: 'assistant', text: 'found the config' }
+    ])
+    await showAgents([agent({ description: 'look around' })])
+    expect(await screen.findByText('look around')).toBeTruthy()
+
+    fireEvent.click(within(dock()).getByRole('button', { name: 'Map view' }))
+    fireEvent.click(within(dock()).getByRole('button', { name: /^Explore/ }))
+
+    expect(await screen.findByText('found the config')).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: 'Subagent Explore' })).toBeTruthy()
+    expect(harness.api.subagentTranscript).toHaveBeenCalledWith('sess-1', 'task-1')
+  })
+
+  test('selection is preserved across the list/map toggle', async () => {
+    await showAgents([
+      agent({ parentToolUseId: 'task-1', agentId: 'a1', agentType: 'Explore', description: 'one' }),
+      agent({ parentToolUseId: 'task-2', agentId: 'a2', agentType: 'Plan', description: 'two' })
+    ])
+    expect(await screen.findByText('one')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('one'))
+    fireEvent.click(within(dock()).getByRole('button', { name: 'Map view' }))
+
+    const selected = within(dock()).getByRole('button', { name: /^Explore/ })
+    expect(selected.getAttribute('aria-current')).toBe('true')
+  })
+
+  test('a live agent shows up as a node in map mode', async () => {
+    await startSession()
+    openDock()
+    harness.emit(liveEvent())
+    expect(await screen.findByText('general-purpose')).toBeTruthy()
+
+    fireEvent.click(within(dock()).getByRole('button', { name: 'Map view' }))
+
+    expect(
+      within(dock()).getByRole('button', { name: /^general-purpose/ })
+    ).toBeTruthy()
+  })
+
+  test('a failed live agent carries the failed status class, with no status text', async () => {
+    await startSession()
+    openDock()
+    harness.emit(liveEvent({ status: 'failed' }))
+    expect(await screen.findByText('failed')).toBeTruthy()
+
+    fireEvent.click(within(dock()).getByRole('button', { name: 'Map view' }))
+
+    const node = within(dock()).getByRole('button', { name: /^general-purpose/ })
+    // SVG <g> exposes className as SVGAnimatedString, not a string.
+    expect(node.getAttribute('class')).toContain('agent-map-node--failed')
+    expect(within(dock()).queryByText('failed')).toBeNull()
+  })
+
+  // The hit circles are sized from the tightest gap between siblings. A nested
+  // spine stacks parent and child on one x in different bands, so measuring that
+  // as a gap collapses every target to r=0 and the whole map goes dead to the
+  // mouse. jsdom does no hit testing, so a click test cannot see this: assert the
+  // radius itself.
+  test('nested nodes keep a clickable hit target', async () => {
+    await showAgents([
+      agent({ parentToolUseId: 't1', agentId: 'a', agentType: 'Explore' }),
+      agent({ parentToolUseId: 't2', agentId: 'b', agentType: 'Plan', parentAgentId: 'a' }),
+      agent({ parentToolUseId: 't3', agentId: 'c', agentType: 'Review', parentAgentId: 'b' })
+    ])
+    expect(await screen.findByText('Explore')).toBeTruthy()
+
+    fireEvent.click(within(dock()).getByRole('button', { name: 'Map view' }))
+
+    const hits = within(dock())
+      .getByRole('group', { name: 'Agent map' })
+      .querySelectorAll('.agent-map-hit')
+    expect(hits).toHaveLength(3)
+    for (const hit of hits) {
+      expect(Number(hit.getAttribute('r'))).toBeGreaterThan(0)
+    }
+  })
+
+  test('exactly one agent still renders a map', async () => {
+    await showAgents([agent({ description: 'solo' })])
+    expect(await screen.findByText('solo')).toBeTruthy()
+
+    fireEvent.click(within(dock()).getByRole('button', { name: 'Map view' }))
+
+    const map = within(dock()).getByRole('group', { name: 'Agent map' })
+    expect(within(map).getAllByRole('button')).toHaveLength(1)
+    expect(map.querySelector('.agent-map-node-session')).toBeTruthy()
+  })
+})
+
 describe('agents dock — width', () => {
   test('applies the default width on mount', async () => {
     await startSession()
