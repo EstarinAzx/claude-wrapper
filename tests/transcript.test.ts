@@ -106,4 +106,90 @@ describe('parseTranscript', () => {
       },
     ])
   })
+
+  test('image + text user content emits text and one attachment marker', () => {
+    const raw =
+      '{"type":"user","message":{"role":"user","content":[{"type":"image","source":{"type":"base64","media_type":"image/png","data":"AAAABBBBCCCC"}},{"type":"text","text":"[Image #1] what is this"}]}}'
+    expect(parseTranscript(raw)).toEqual([
+      {
+        role: 'user',
+        text: '[Image #1] what is this',
+        attachments: [{ kind: 'image', mediaType: 'image/png' }],
+      },
+    ])
+  })
+
+  test('attachment payload (base64 data) is never forwarded', () => {
+    const raw =
+      '{"type":"user","message":{"role":"user","content":[{"type":"image","source":{"type":"base64","media_type":"image/png","data":"AAAABBBBCCCC"}},{"type":"text","text":"see this"}]}}'
+    expect(JSON.stringify(parseTranscript(raw))).not.toContain('AAAABBBBCCCC')
+  })
+
+  test('block with a filename produces name on the marker', () => {
+    const raw =
+      '{"type":"user","message":{"role":"user","content":[{"type":"image","name":"diagram.png","source":{"type":"base64","media_type":"image/png","data":"xx"}},{"type":"text","text":"diagram"}]}}'
+    expect(parseTranscript(raw)).toEqual([
+      {
+        role: 'user',
+        text: 'diagram',
+        attachments: [{ kind: 'image', mediaType: 'image/png', name: 'diagram.png' }],
+      },
+    ])
+  })
+
+  test('unknown block kind is recorded, not dropped', () => {
+    const raw =
+      '{"type":"user","message":{"role":"user","content":[{"type":"widget"},{"type":"text","text":"with widget"}]}}'
+    expect(parseTranscript(raw)).toEqual([
+      {
+        role: 'user',
+        text: 'with widget',
+        attachments: [{ kind: 'widget' }],
+      },
+    ])
+  })
+
+  test('attachment-only message (document, no text) yields empty text + marker', () => {
+    const raw =
+      '{"type":"user","message":{"role":"user","content":[{"type":"document","source":{"type":"base64","media_type":"application/pdf","data":"JVBERi0x"}}]}}'
+    expect(parseTranscript(raw)).toEqual([
+      {
+        role: 'user',
+        text: '',
+        attachments: [{ kind: 'document', mediaType: 'application/pdf' }],
+      },
+    ])
+  })
+
+  // Deliberate pin: pure-array-text user messages are CLI noise (skill
+  // injections, "[Request interrupted by user]") and must keep parsing to [].
+  test('array of only text blocks still parses to nothing', () => {
+    const raw =
+      '{"type":"user","message":{"role":"user","content":[{"type":"text","text":"Base directory for this skill: /tmp"}]}}'
+    expect(parseTranscript(raw)).toEqual([])
+  })
+
+  test('plain string user message has no attachments key (absent-not-empty)', () => {
+    const raw = '{"type":"user","message":{"role":"user","content":"just text"}}'
+    const msgs = parseTranscript(raw)
+    expect(msgs).toHaveLength(1)
+    const msg = msgs[0]
+    expect(msg.role).toBe('user')
+    expect('attachments' in msg).toBe(false)
+  })
+
+  test('several images in one message produce markers in source order', () => {
+    const raw =
+      '{"type":"user","message":{"role":"user","content":[{"type":"image","source":{"type":"base64","media_type":"image/png","data":"aa"}},{"type":"image","source":{"type":"base64","media_type":"image/jpeg","data":"bb"}},{"type":"text","text":"two pics"}]}}'
+    expect(parseTranscript(raw)).toEqual([
+      {
+        role: 'user',
+        text: 'two pics',
+        attachments: [
+          { kind: 'image', mediaType: 'image/png' },
+          { kind: 'image', mediaType: 'image/jpeg' },
+        ],
+      },
+    ])
+  })
 })

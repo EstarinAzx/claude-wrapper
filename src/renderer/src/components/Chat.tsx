@@ -62,6 +62,9 @@ const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
             // Images that went out with the prompt render as thumbnails above the
             // words, so the transcript confirms what the model was actually shown.
             const images = (m.attachments ?? []).filter((a) => a.kind === 'image')
+            // A reopened session names what was attached; the bytes are not
+            // replayed, so this is a chip and not a thumbnail.
+            const markers = m.attachmentMarkers ?? []
             return (
               <div key={m.id} className="msg msg-user">
                 <div className="bubble">
@@ -75,6 +78,20 @@ const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
                           alt="Attached image"
                         />
                       ))}
+                    </div>
+                  ) : null}
+                  {markers.length ? (
+                    <div className="bubble-chips">
+                      {markers.map((a, i) => {
+                        const label = a.name ?? a.mediaType ?? a.kind
+                        return (
+                          <span key={i} className="attachment-chip">
+                            <span className="chip-name" title={label}>
+                              {label}
+                            </span>
+                          </span>
+                        )
+                      })}
                     </div>
                   ) : null}
                   {m.text}

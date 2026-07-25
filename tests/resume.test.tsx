@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
 import App from '../src/renderer/src/App'
 import { fakeChatApi } from './chat-harness'
 import type { SessionMeta } from '../src/shared/session-types'
@@ -110,5 +110,85 @@ describe('resume — continue a reopened session (#13)', () => {
 
     const row = await screen.findByText('Fresh chat')
     expect((row.closest('button') as HTMLButtonElement).getAttribute('aria-current')).toBe('true')
+  })
+})
+
+describe('resume — replayed attachments (#35)', () => {
+  test('replayed chips render in the right message', async () => {
+    harness.api.listSessions.mockResolvedValue([meta('sess-1', 'My chat')])
+    harness.api.loadTranscript.mockResolvedValue([
+      {
+        role: 'user',
+        text: 'look at this',
+        attachments: [
+          { kind: 'image', mediaType: 'image/png' },
+          { kind: 'document', mediaType: 'application/pdf', name: 'spec.pdf' }
+        ]
+      },
+      { role: 'assistant', text: 'sure' }
+    ])
+    await startSession()
+
+    fireEvent.click(await screen.findByText('My chat'))
+    expect(await screen.findByText('look at this')).toBeTruthy()
+
+    const userBubble = screen.getByText('look at this').closest('.msg-user') as HTMLElement
+    const chipEls = userBubble.querySelectorAll('.attachment-chip')
+    expect(chipEls).toHaveLength(2)
+    expect(within(userBubble).getByText('image/png')).toBeTruthy()
+    expect(within(userBubble).getByText('spec.pdf')).toBeTruthy()
+  })
+
+  test('no thumbnail on replay', async () => {
+    harness.api.listSessions.mockResolvedValue([meta('sess-1', 'My chat')])
+    harness.api.loadTranscript.mockResolvedValue([
+      {
+        role: 'user',
+        text: 'look at this',
+        attachments: [{ kind: 'image', mediaType: 'image/png' }]
+      },
+      { role: 'assistant', text: 'sure' }
+    ])
+    await startSession()
+
+    fireEvent.click(await screen.findByText('My chat'))
+    expect(await screen.findByText('look at this')).toBeTruthy()
+
+    const userBubble = screen.getByText('look at this').closest('.msg-user') as HTMLElement
+    expect(userBubble.querySelectorAll('img')).toHaveLength(0)
+  })
+
+  test('a replayed message with no attachments is unchanged', async () => {
+    harness.api.listSessions.mockResolvedValue([meta('sess-1', 'My chat')])
+    harness.api.loadTranscript.mockResolvedValue([
+      { role: 'user', text: 'just text' },
+      { role: 'assistant', text: 'ok' }
+    ])
+    await startSession()
+
+    fireEvent.click(await screen.findByText('My chat'))
+    expect(await screen.findByText('just text')).toBeTruthy()
+
+    const userBubble = screen.getByText('just text').closest('.msg-user') as HTMLElement
+    expect(userBubble.querySelector('.bubble-chips')).toBeNull()
+  })
+
+  test('an unknown kind still shows something', async () => {
+    harness.api.listSessions.mockResolvedValue([meta('sess-1', 'My chat')])
+    harness.api.loadTranscript.mockResolvedValue([
+      {
+        role: 'user',
+        text: 'mystery',
+        attachments: [{ kind: 'widget' }]
+      },
+      { role: 'assistant', text: 'got it' }
+    ])
+    await startSession()
+
+    fireEvent.click(await screen.findByText('My chat'))
+    expect(await screen.findByText('mystery')).toBeTruthy()
+
+    const userBubble = screen.getByText('mystery').closest('.msg-user') as HTMLElement
+    expect(within(userBubble).getByText('widget')).toBeTruthy()
   })
 })

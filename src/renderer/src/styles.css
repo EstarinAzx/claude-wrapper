@@ -1308,6 +1308,26 @@ body {
   margin-bottom: 0;
 }
 
+/* Replay markers: same flex shell as thumbs, no image data to show. */
+.bubble-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* The composer chip is 38px tall because it wraps a 28px thumb and a remove
+   button. A replay chip is a bare label with neither, so it collapses to the
+   text — at which point the inherited 12px radius is already a pill. */
+.bubble-chips .attachment-chip {
+  min-height: 0;
+  padding: 3px 10px;
+}
+
+.bubble-chips:last-child {
+  margin-bottom: 0;
+}
+
 /* ── error ── */
 
 .msg-error {

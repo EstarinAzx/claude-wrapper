@@ -1,14 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Attachment } from '../../shared/attachment-types'
 import type { EngineEvent, PermissionDecision } from '../../shared/engine-types'
-import type { TranscriptMessage } from '../../shared/session-types'
+import type { AttachmentMarker, TranscriptMessage } from '../../shared/session-types'
 import type { LiveAgent } from '../../shared/subagent-types'
 import { resultSummary } from './toolSummaries'
 
 export type ChatMessage =
-  // `attachments` is absent — not empty — on an ordinary text send, so the
-  // transcript renders byte-identically to before attachments existed.
-  | { id: string; role: 'user'; text: string; attachments?: Attachment[] }
+  // `attachments` holds live image bytes and renders thumbnails;
+  // `attachmentMarkers` holds replay-only kinds/names and renders chips. Two
+  // fields, not one, because the payload is deliberately not replayed on
+  // reopen. Both are absent — not empty — when there is nothing to show, so an
+  // ordinary text message renders byte-identically to before either existed.
+  | {
+      id: string
+      role: 'user'
+      text: string
+      attachments?: Attachment[]
+      attachmentMarkers?: AttachmentMarker[]
+    }
   | { id: string; role: 'assistant'; text: string }
   | { id: string; role: 'error'; text: string }
   | { id: string; role: 'notice'; text: string }
@@ -48,6 +57,18 @@ export const toChatMessage = (m: TranscriptMessage): ChatMessage => {
       isError: m.isError,
       permission: null
     }
+  }
+  if (m.role === 'user') {
+    const msg: Extract<ChatMessage, { role: 'user' }> = {
+      id: uid(),
+      role: 'user',
+      text: m.text
+    }
+    // Replay markers only — live bytes never cross IPC on reopen.
+    if (m.attachments && m.attachments.length) {
+      msg.attachmentMarkers = m.attachments
+    }
+    return msg
   }
   return { id: uid(), role: m.role, text: m.text }
 }
