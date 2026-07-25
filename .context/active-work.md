@@ -7,20 +7,21 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-25, relay leg 7 (`.claude/relay-leg.md`, N=1) — ticket #33_
-_At commit: `c357ed7` on main (+ this leg's `.context/` commit)_
+_Last updated: 2026-07-25, relay leg 8 (`.claude/relay-leg.md`, N=1) — ticket #34_
+_At commit: `b374f23` on main (+ this leg's `.context/` commit)_
 
 ## Current focus
 
 **A `/relay` chain is draining the tracer tickets, one per leg, unattended.**
 **Spec #25 Agents surface is delivered and closed.** One spec is still open:
-**#26 Attachments**, owing #34 and #35. Prior specs #9, #16, #20 stay closed;
+**#26 Attachments**, owing **#35 alone**. Prior specs #9, #16, #20 stay closed;
 #1 (MVP umbrella, unlabelled) is out of scope.
 
-Legs 1–7 delivered **#27** (spike, no production code), **#28** (the Agents
+Legs 1–8 delivered **#27** (spike, no production code), **#28** (the Agents
 dock), **#29** (the send-payload prefactor), **#30** (live agent rows), **#31**
-(nesting), **#32** (paste an image) and **#33** (map mode). **Seven of nine are
-down; two remain, both unblocked**, so the chain picks by age from here.
+(nesting), **#32** (paste an image), **#33** (map mode) and **#34** (the
+paperclip). **Eight of nine are down. #35 is the last ticket in the queue, and
+landing it should close #26 and empty the chain.**
 
 ## Ticket graph (native GitHub dependencies)
 
@@ -28,12 +29,12 @@ down; two remain, both unblocked**, so the chain picks by age from here.
 #27 spike ✅──┐
               ├──> #30 live rows ✅
 #28 dock  ✅──┴──> #31 nesting ✅──> #33 map ✅     spec #25 CLOSED
-#29 prefactor ✅──> #32 paste ✅──┬──> #34 paperclip   ← next is #34
-                                  └──> #35 replay chips
+#29 prefactor ✅──> #32 paste ✅──┬──> #34 paperclip ✅
+                                  └──> #35 replay chips  ← last one
 ```
 
-Unblocked right now: **#34, #35** — both open tickets. No cross-spec edges.
-**#26 closes when #34 and #35 land**, and that empties the queue.
+Unblocked right now: **#35**, the only open ticket. No cross-spec edges.
+**#26 closes when #35 lands**, and that empties the queue.
 
 | # | Ticket | Spec | State |
 |---|---|---|---|
@@ -44,101 +45,101 @@ Unblocked right now: **#34, #35** — both open tickets. No cross-spec edges.
 | 31 | Nested agents as a tree | #25 | **closed** — `1888440` |
 | 32 | Paste an image and send it | #26 | **closed** — `3b7a77c` |
 | 33 | Map mode for the Agents panel | #25 | **closed** — `c357ed7` |
-| 34 | Paperclip: file picker and by-path attachments | #26 | open, unblocked ← **next** |
-| 35 | Attachments survive replay | #26 | open, unblocked |
+| 34 | Paperclip: file picker and by-path attachments | #26 | **closed** — `b374f23` |
+| 35 | Attachments survive replay | #26 | open, unblocked ← **next / last** |
 
-## Done this leg (#33)
+## Done this leg (#34)
 
-Gate green: typecheck · **364/364** (+19) · build. Full rationale in
-[[2026-07-25-map-geometry-is-a-pure-slot-layout]].
+Gate green: typecheck · **384/384** (+20) · build. Full rationale in
+[[2026-07-25-picker-returns-candidates-not-paths]].
 
-- **`layoutAgentMap` in `src/shared/agent-layout.ts`** (new, pure) — the geometry
-  half beside the tree. Calls `buildAgentTree`, only places the result. Returns
-  `nodes` (coords + `kind` + `depth` + `row`), `edges` (both endpoints inlined),
-  `width` / `height` / `nodeRadius`, all in abstract viewBox units.
-- **`src/renderer/src/components/AgentMap.tsx`** (new) — hand-rolled SVG, no new
-  dependency. Cubic-elbow edges under the nodes; each agent is a focusable
-  `role="button"` group with an `aria-label` and a `<title>`.
-- **`AgentsDock`** — icon-only List/Map toggle in the head; one `selectedId` and
-  one `openAgent` handler shared by both modes; the map is fed the same merged
-  disk-plus-live `rows` the list uses.
-- **`styles.css`** — the map section, plus `.agent-row--selected`.
+- **`attachments:pick`** in `src/main/index.ts` — `ipcMain.handle`, `isTrustedIpc`
+  guard, `dialog.showOpenDialog` with `['openFile', 'multiSelections']`. Resolves
+  policy **`Candidate[]`**, not bare paths: main derives the name (`basename`)
+  and media type, and reads base64 bytes itself — only for the four allowlisted
+  image types and only after `stat` confirms `MAX_IMAGE_BYTES`. Cancel, no
+  window, untrusted sender, wrong type, too big, unreadable → path-only or `[]`.
+- **`mediaTypeForPath`** in `src/shared/attachment-policy.ts` — extension →
+  media type, dependency-free (the module is shared with the renderer). Reads
+  the extension off the **last path segment only**, so `D:\my.folder\README` and
+  `.gitignore` both have none. **`isEmbeddable` is now exported** so main asks
+  the policy module instead of re-casting the allowlist.
+- **`pickFiles`** on `window.api` (preload + `WrapperApi`), registered at all
+  four mock sites.
+- **The paperclip is real** — `onClick`, `aria-label="Attach files"`,
+  `tabIndex={-1}` removed, `disabled={busy}`. `.attach-btn` gets
+  `cursor: pointer`, a hover lift scoped `:not(:disabled)`, and joins the shared
+  `:disabled` rule.
+- **One fold, both sources** — `openPicker` runs `admitAttachments` exactly as
+  `onPaste` does, so embed-vs-path routing and the count budget are one route.
+  **No policy change was needed**, as the #32 note predicted.
 
-Two Grok subagents through a `haiku` Slot rebind (geometry, then component),
-both reviewed; the Slot was reverted before the gate. Review changed four
-things: `role="img"` → `role="group"`, the halo alpha moved into the fill,
-`MapNode` became a union discriminated on `kind` (which removed the draft's
-non-null assertion — there were **zero** in `src/` before it), and hit-target
-sizing was added and then corrected to measure within a depth band.
+Two Grok subagents through a `haiku` Slot rebind (the IPC half, the renderer
+half), both reviewed; the Slot was reverted before the gate. Review changed four
+things: `isEmbeddable` exported rather than the allowlist re-cast in main,
+`.attach-btn:hover` scoped `:not(:disabled)`, the composer test helper collapsed
+to a click plus `await act(async () => {})` (the draft's before/after-count dance
+could assert before the `.then` ran), and the cancel test strengthened to hold a
+**rejection as well as a chip**.
 
 ## Facts established this leg (don't re-derive)
 
+- **The picker needs NO new CSP grant.** A picked image comes back as base64 and
+  renders from the same `data:` URL a paste does. The #32 note's warning that
+  "#34's `file:` thumbnail needs its own grant" does not apply — but it still
+  stands for any future source that is a real URL.
+- **Verified live in the built app** with `dialog.showOpenDialog` stubbed in
+  main, which runs the **real handler** (main has no unit tests): the dialog
+  received `{properties: ['openFile', 'multiSelections']}`; a picked PNG decoded
+  to **1593×1140** (not a broken icon); `CLAUDE.md` came back a name-only chip;
+  cancelling left both chips; the button reads `Attach files`, has no
+  `tabindex`, is focusable, and computes `cursor: pointer`.
+- **A cancel must return BEFORE the fold.** Folding `[]` keeps the chips but
+  silently wipes an existing rejection message — mutation-verified, and the
+  obvious chip-only version of the test passes the mutation. The test holds a
+  rejection too.
+- **Skipping the read == failing it.** An oversized image is never read, so it
+  arrives path-only and takes the fall-through — no new rejection branch, and
+  no 500 MB file in memory.
+- **`playwright-core` will not load from a driver outside the tree by file-URL
+  import** — it is CJS with an exports map, so `import(…/index.js)` yields no
+  `_electron`. Use `createRequire(pathToFileURL(REPO + '/package.json'))` and
+  `require('playwright-core')`; the driver still lives outside the repo.
+
+## Facts from #33 / #31 / #30 (still current)
+
 - **`role="img"` on an interactive SVG hides its buttons from assistive tech** —
-  an `img` role makes the whole subtree presentational. Testing-library still
-  finds the buttons, so no test in this suite can catch it. Use `role="group"`.
-- **`opacity` loses to an animation that keyframes `opacity`.** The reused
-  `subagent-pulse` animates 1 → 0.35, so a static `opacity: 0.18` tint is
-  overridden and the element flashes near-solid. Put the alpha in the colour
-  (`color-mix`) and let the keyframe own opacity.
-- **Hit-target sizing must be measured within a depth band.** A nested spine
-  stacks parent and child on the same x; measuring the gap across all nodes reads
-  zero and collapses every hit circle to `r=0`. jsdom does no hit testing, so the
-  guard is an assertion on the radius (`nested nodes keep a clickable hit
-  target`, mutation-verified).
-- **Geometry is pure and stays out of the DOM tests.** `tests/agent-layout.test.ts`
-  pins depth separation, edge/node consistency, determinism across an
-  equal-but-distinct input, canvas bounds and sibling separation at 1 / 5 / 28
-  agents. The dock tests only assert wiring.
-- **The map fits without scrolling at both ends of the resize range** — measured
-  in the built app on a real 7-agent session: 223.1px of SVG inside 247.1px at
-  default, 155.1 inside 179.1 at the 180px floor, no scrollbar on either axis,
-  smallest hit target 24.2px / 16.8px.
-- **Every status colour was verified by computed style in Chromium**, not jsdom:
-  running `oklch(0.87 0.07 180)`, done hollow + `0.68 0.01 200` at 1.5, failed
-  `oklch(0.6 0.16 25)`, unknown hollow + faint + `2px 2px` dash, halo
-  `oklch(0.87 0.07 180 / 0.22)`.
-- **Running and failed nodes have not been seen on a live turn.** A historical
-  session has no status, so all seven rendered as the dashed unknown ring
-  (correct). The mint and red paths are confirmed by computed style and unit test
-  only.
-
-## Facts from #31 (still current)
-
-- **`spawnDepth` is not tree depth.** `AgentNode.depth` is computed by the walk.
-- **A nested agent reads as top-level while it is live**, then nests on the next
-  disk read. Accepted lag, by decision. The map inherits this.
-- **Nothing disappears from the tree or the map.** Orphans, self-parents and
-  cycle members degrade to roots; every input row appears exactly once.
-- **The `parentAgentId` passthrough is mutation-verified.**
-- **No GUI pass is possible for nesting** — `parentAgentId` is on 0 of 28 real
-  sidecars, so a live run renders flat. Fabricated-fixture territory.
-
-## Facts from #30 (still current)
-
-- **`taskToParent` is the bash filter.** `task_progress`/`task_updated` carry no
-  `task_type`, so ids are only ever registered from a `local_agent`
-  `task_started` and any message with an unregistered `task_id` is dropped.
-- **The `parent_tool_use_id` path was kept, not replaced** — it is the presence
-  floor; both sources upsert the same key.
-- **Absent-not-zero is enforced in three places** (engine `assignDefined`, merge,
-  render) and **both halves are mutation-verified**.
-- **A settled agent is not re-failed by the drain.**
-- **Elapsed is the CLI's `duration_ms`**, rendered as given.
-- `tests/engine.test.ts > engine task messages` holds the **real wire shapes**.
-- **The sessions rail renders `<li>` too** — scope dock counts with `within(dock())`.
+  use `role="group"`. Testing-library cannot catch it.
+- **A static `opacity` loses to an animation that keyframes `opacity`** — put
+  the alpha in the colour.
+- **Hit-target sizing must be measured within a depth band**, or a nested spine
+  collapses every hit circle to `r=0`.
+- **Geometry is pure and stays out of the DOM tests** — `agent-layout.test.ts`
+  asserts layout as data; the dock tests only assert wiring.
+- **The map fits without scrolling at both ends of the resize range**, measured
+  on a real 7-agent session; every status colour verified by computed style.
+- **`spawnDepth` is not tree depth**; **a nested agent reads as top-level while
+  live**, then nests on the next disk read (accepted lag, list and map both).
+- **Nothing disappears from the tree or map** — orphans, self-parents and cycle
+  members degrade to roots.
+- **`taskToParent` is the `local_bash` filter**, not just a lookup: ids are
+  registered only from a `local_agent` `task_started`.
+- **Absent-not-zero is enforced in engine + merge + render**, both halves
+  mutation-verified. **A settled agent is not re-failed by the drain.**
+- **The sessions rail renders `<li>` too** — scope dock counts with
+  `within(dock())`.
 
 ## Facts from #32 / #29 / #28 / #27 (still current)
 
 - **The renderer CSP is part of the attachment feature.** No `img-src` means
   `default-src 'self'` blocks every `data:` URL while the DOM looks perfect.
-  jsdom never applies CSP. Any new image source (`blob:`, `file:`) fails the same
-  silent way.
+  jsdom never applies CSP.
 - **An empty text block is rejected by the API**; an attachments-only send omits
   it. **A rejection must not consume the count budget.** Both mutation-verified.
-- **Too big to embed falls through to the path route**, so **#34 needs no policy
-  change**.
+- **Too big to embed falls through to the path route.**
 - **`normalizeSendPayload` is the trust boundary on `chat:send`.**
-- **`tests/engine.test.ts` has `capturingStub()` and `sendOne(payload)`.**
+- **`tests/engine.test.ts` has `capturingStub()` and `sendOne(payload)`**, and
+  now a mixed image+path message test that #35 inherits.
 - **`listSubagents` returns `SubagentInfo[] | null`** — `[]` none spawned
   (ENOENT), `null` could not read; the dock shows live rows on the `null` branch.
 - **A sidecar's `model` is the family word asked for**, not the resolved target.
@@ -166,7 +167,7 @@ sizing was added and then corrected to measure within a depth band.
 The relay chain owns the queue; see [[pick-up]]. If it stalls, the frontier
 query is: oldest open `ready-for-agent` issue with
 `issue_dependencies_summary.blocked_by == 0`, ignoring the spec parent —
-currently **#34**. Note **#25 is now closed**, so only **#26** needs skipping.
+currently **#35**, the last one. Only **#26** needs skipping (#25 is closed).
 
 ## Deferred (still no spec)
 
@@ -177,8 +178,11 @@ out-of-scope: drag-and-drop attachments, thumbnails on replay, multiline
 composer. From #25's: cross-session agent archive, agent control (kill/retry),
 map pan/zoom, token totals for historical agents. From #31: nesting a **live**
 agent before its sidecar lands. From #32: no capability gating by model, and no
-`blob:` URL path for very large pastes. New from #33: no node labels in the map,
-and no inset for a fan-out past ~40 agents (marked `ponytail:` in the module).
+`blob:` URL path for very large pastes. From #33: no node labels in the map, and
+no inset for a fan-out past ~40 agents (marked `ponytail:` in the module). New
+from #34: no drag-and-drop, no directory pick, no dialog `filters` (every file
+type is pickable, non-images just go by path), and no unit test for the
+main-process handler.
 
 ## Landmines (carried forward)
 
@@ -189,7 +193,8 @@ and no inset for a fan-out past ~40 agents (marked `ponytail:` in the module).
   subcommand; the retired `~/.claude/slot/lease-*.json` files are gone.)
 - **New `window.api` channel → add to ALL FOUR mock sites** or App-render tests
   throw: `tests/chat-harness.ts` + inline mocks in `sidebar`/`session`/`shell`
-  tests. Guard every IPC with `isTrustedIpc`. **#34 trips this.**
+  tests. Guard every IPC with `isTrustedIpc`. #34 tripped this; **#35 needs no
+  new channel**, so it should not.
 - **Never let the plain-string pin be "fixed" by updating its expectation** —
   `a text-only send keeps plain-string content` is mutation-verified.
 - Resume ceiling + `sessionId()` accessor + native-store facts + Tailwind
@@ -198,7 +203,8 @@ and no inset for a fan-out past ~40 agents (marked `ponytail:` in the module).
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-25-map-geometry-is-a-pure-slot-layout]] ·
+- [[2026-07-25-picker-returns-candidates-not-paths]] ·
+  [[2026-07-25-map-geometry-is-a-pure-slot-layout]] ·
   [[2026-07-25-attachment-policy-and-the-csp-that-blocked-it]] ·
   [[2026-07-25-agent-tree-edge-is-the-sidecar]] ·
   [[2026-07-25-live-rows-two-sources-one-event]] ·
