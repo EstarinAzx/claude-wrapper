@@ -9,70 +9,81 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**Last leg (relay leg 4, `.claude/relay-leg.md`, N=1):** landed **#30**, live
-agent rows. The engine had no `type: 'system'` branch and dropped the entire task
-lifecycle; it now has one, and the single `subagent` event was **widened, not
-duplicated**. main is at **`f869f1f`** plus this leg's `.context/` commit. Gate
-green (typecheck · 291/291 · build), tree clean, ticket closed, branch deleted.
+**Last leg (relay leg 5, `.claude/relay-leg.md`, N=1):** landed **#31**, nested
+agents as a tree. Nesting comes from the sidecar's `parentAgentId` **alone** —
+the live `taskToParent` / `Agent`-block edge that #30's decision nominated was
+declined ([[2026-07-25-agent-tree-edge-is-the-sidecar]]). main is at
+**`1888440`** plus this leg's `.context/` commit. Gate green (typecheck ·
+310/310 · build), tree clean, ticket closed, branch deleted.
 
-Closing #30 unblocked nothing new — **#31 and #32 were already unblocked.**
+Closing #31 unblocked **#33** (map mode).
 
-## Next task — #31, then the frontier
+## Next task — #32, then the frontier
 
 ```
 #27 ✅──┐
         ├──> #30 ✅
-#28 ✅──┴──> #31 nesting ──> #33 map     ← next
-#29 ✅──> #32 paste ──┬──> #34 paperclip
+#28 ✅──┴──> #31 ✅──> #33 map
+#29 ✅──> #32 paste ──┬──> #34 paperclip     ← next is #32
                       └──> #35 replay chips
 ```
 
-Unblocked now: **#31, #32**. Frontier query (oldest open `ready-for-agent` with
-`issue_dependencies_summary.blocked_by == 0`) picks **#31**. Full table in
-[[active-work]].
+Unblocked now: **#32, #33**. Frontier query (oldest open `ready-for-agent` with
+`issue_dependencies_summary.blocked_by == 0`) picks **#32 — Paste an image and
+send it**. Full table in [[active-work]].
 
-## What #31 must not re-derive
+## What #32 must not re-derive
 
-Full detail in [[2026-07-25-live-rows-two-sources-one-event]] and
-[[2026-07-25-task-messages-confirmed-live-shape]]:
+Full detail in [[2026-07-25-send-payload-encoding-lands-in-the-prefactor]] and
+[[2026-07-25-attachments-embed-images-paths-for-files]]:
 
-- **The tree cannot be built from forwarded traffic.** A nested subagent's
-  traffic is *never* forwarded — every forwarded message stays tagged with the
-  **outer** agent's id. The nested agent surfaces only through its own task
-  messages, plus the `Agent` tool_use block (inside a message tagged with the
-  outer agent's id) that names the nested task's `tool_use_id`. That block is the
-  parent edge. **No depth field exists on any message.**
-- **`taskToParent` in `src/main/engine.ts` is the hook** — it already maps
-  `task_id` → spawning tool_use id, and it is the bash filter, so don't bypass
-  it. `subagentEvent()` is the single builder; add nested fields there and they
-  reach the panel for free.
-- **`tests/engine.test.ts > engine task messages`** holds the real wire shapes
-  (from the #27 spike JSONL) as reusable fixtures — `taskStarted()`,
-  `taskProgress()`, `taskNotification()` all take overrides.
-- **#31 has no local fixtures.** `parentAgentId` appears on **0 of 28** real
-  sidecars in this store, so the nesting path must be tested with fabricated
-  ones.
-- `mergeAgents(disk, live)` in `src/shared/subagent-types.ts` is pure and
-  unit-tested — extend it rather than adding a second merge.
+- **The engine half is already built.** #29 shipped both branches of the
+  encoding, so **#32 is composer + policy module only — no engine work.** Do not
+  re-open `src/main/engine.ts` to "add" image blocks; they already send.
+- **`EMBEDDABLE_IMAGE_TYPES` lives in `src/shared/attachment-types.ts`** —
+  import it into the policy module, don't restate the allowlist.
+- **`normalizeSendPayload` is the trust boundary on `chat:send`.** The policy
+  module enforces caps in the renderer *before* IPC; the boundary check stays.
+- **`tests/engine.test.ts` has `capturingStub()` and `sendOne(payload)`** — the
+  engine-seam assertions (one image, several images) reuse them rather than
+  re-inlining a capture.
+- Caps are order-of: 5 MB decoded per image, 10 attachments per message. Exact
+  numbers are tunable; that they live in **one pure module** with direct tests
+  per outcome is the fixed part.
+- The composer stays a **single-line input**. No model-capability gating — a
+  text-only provider's error surfaces through the engine's existing
+  legible-error mapping.
 
 ## Landmines (still live)
 
+- **Never let the plain-string pin be "fixed" by updating its expectation.**
+  `a text-only send keeps plain-string content` in `tests/engine.test.ts` is
+  mutation-verified; if it reds, the bug is in `src/main/engine.ts`. #32's own
+  acceptance list repeats this as a criterion.
+- **New `window.api` channel → add to ALL FOUR mock sites** (`tests/chat-harness.ts`
+  + inline in `sidebar`/`session`/`shell` tests) or App-render tests throw. Guard
+  every IPC with `isTrustedIpc`. **#34 trips this; #32 should not need a channel**
+  — a paste is renderer-local.
+- **One persisted screenshot measured 263 KB of base64** — which is why replay
+  shows chips, not thumbnails (#35's problem, not #32's).
+- **`spawnDepth` is not tree depth** (new, #31). It is sidecar metadata;
+  `AgentNode.depth` is computed by `buildAgentTree`. #33 must not confuse them.
+- **#33 must call `buildAgentTree` from `src/shared/agent-layout.ts`** rather
+  than deriving parentage again — that module exists to be the one traversal.
+  `flattenAgentTree` is pre-order. Orphans, self-parents and cycle members
+  degrade to roots; preserve that in the map.
+- **The `parentAgentId` passthrough in `mergeAgents` is mutation-verified** —
+  deleting it reds `tests/agents-merge.test.ts` and the three-deep test in
+  `tests/agents-dock.test.tsx`.
 - **`taskToParent` is the `local_bash` filter, not just a lookup.**
   `task_progress`/`task_updated` carry no `task_type`, so a per-message
   `task_type` check cannot work. Register ids only from a `local_agent`
   `task_started`; drop any message whose `task_id` is unregistered.
 - **Absent must stay absent** in engine (`assignDefined`), merge and render.
-  Mutation-verified both ways: writing `?? 0` in the engine reds the
-  absent-usage tests, opening the `local_agent` filter reds the Bash test. If
-  either goes red, the bug is in the code — never "fix" the expectation.
-- **Never let the plain-string pin be "fixed" by updating its expectation.**
-  `a text-only send keeps plain-string content` in `tests/engine.test.ts` is
-  mutation-verified; if it goes red the bug is in `src/main/engine.ts`.
+  Mutation-verified both ways — if either reds, the bug is in the code, never
+  the expectation.
 - **The sessions rail renders `<li>` too** — scope any dock list-item assertion
-  with `within(dock())` or it double-counts. (Cost leg 4 one red test.)
-- **New `window.api` channel → add to ALL FOUR mock sites** (`tests/chat-harness.ts`
-  + inline in `sidebar`/`session`/`shell` tests) or App-render tests throw. Guard
-  every IPC with `isTrustedIpc`. **Only #34 still trips this** — #30 added none.
+  with `within(dock())` or it double-counts.
 - **Wisp `options.model` = alias/family NAME, never a resolved model id** (hangs
   otherwise) — [[2026-07-24-wisp-alias-routes-by-name]].
 - **Never run bare `wisp snapshot`** — with no family it snapshots every row, and
@@ -84,18 +95,17 @@ Full detail in [[2026-07-25-live-rows-two-sources-one-event]] and
   answers `Not logged in · Please run /login`. Anything needing a real turn must
   run wisped.
 - **`listSubagents` returns `SubagentInfo[] | null`** — `[]` none spawned
-  (ENOENT), `null` could not read. The dock now shows live rows even on the
-  `null` branch; preserve that.
+  (ENOENT), `null` could not read. The dock shows live rows even on the `null`
+  branch; preserve that.
 - **Don't re-simplify `SubagentDrawer`'s `sessionId` prop away.** A session opened
-  from the rail has no engine until the next turn, so the engine answers `null`
-  and the drawer comes up empty.
+  from the rail has no engine until the next turn, so the engine answers `null`.
 - **Don't re-derive** (details in [[active-work]]): the #27 spike facts
   (`task_notification` is the completion signal · `task_updated` is
   terminal-only · filter `task_type === 'local_agent'` · one correlation key plus
   a separate `task_id` · `total_tokens` is cumulative context, labelled `ctx` ·
-  `description` beats `summary` · the tool is named `Agent`); a sidecar's `model`
-  is the family word asked for, not what served the turn; one persisted
-  screenshot is 263 KB of base64.
+  the tool is named `Agent`); a sidecar's `model` is the family word asked for,
+  not what served the turn; `parentAgentId` is on 0 of 28 real sidecars, so
+  anything testing nesting needs fabricated fixtures.
 - Native store `~/.claude/projects/<enc-cwd>/…` (`encodeCwd`); resume ceiling
   (query built once, retarget = close + rebuild); `sessionId()` accessor (no
   `session-id` event); Tailwind `@theme` tokens (preflight off, accent
@@ -106,11 +116,14 @@ Full detail in [[2026-07-25-live-rows-two-sources-one-event]] and
 
 ## Test helpers worth reusing
 
-- `tests/engine.test.ts` — **`capturingStub()`** (streamingStub + a capture of
-  every user message pushed into the prompt stream) and **`sendOne(payload)`**
-  for #32; **`taskStarted()` / `taskProgress()` / `taskNotification()`** for #31.
+- `tests/engine.test.ts` — **`capturingStub()`** and **`sendOne(payload)`** for
+  #32; **`taskStarted()` / `taskProgress()` / `taskNotification()`** for live
+  task-message work.
+- `tests/agent-layout.test.ts` — pure-data tree tests; extend these for #33's
+  geometry rather than testing the map through the DOM.
 - `tests/agents-dock.test.tsx` — `liveEvent(over)` builds a widened `subagent`
-  event; `harness.emit()` pushes it through the real hook.
+  event; `harness.emit()` pushes it through the real hook; the `nesting` block
+  has `showAgents(agents)` + `listRows()` helpers.
 - `tests/live-agents.test.tsx` — `renderHook` pattern for testing `useChat`
   state directly, without rendering `App`.
 
@@ -118,6 +131,8 @@ Full detail in [[2026-07-25-live-rows-two-sources-one-event]] and
 `node .claude/skills/run-desktop/driver.mjs [--cycle]` — reads the titlebar pills
 + screenshots the built app (needs `npm run build` + `npm i --no-save
 playwright-core`; `--no-save` leaves package.json and the lockfile untouched).
+**#32 is a good candidate for a real GUI pass** (paste is a live browser event);
+#31 was not, because nothing on disk is nested.
 
 **Driving a real disk-hydrated session** (what #28 used, reusable): launch the
 built app, stub `dialog.showOpenDialog` in the MAIN process via Playwright

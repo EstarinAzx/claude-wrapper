@@ -27,10 +27,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: #31, drained
+- `.context/pick-up.md` — current frontier + landmines (currently: #32, drained
   by a `/relay` chain running `.claude/relay-leg.md`)
 - Tracker: open specs #25 (Agents surface) and #26 (Attachments), tickets
-  #31–#35 open and #27–#30 closed; closed specs #9 / #16 / #20 and umbrella
+  #32–#35 open and #27–#31 closed; closed specs #9 / #16 / #20 and umbrella
   #1 hold the history
 
 ## Conventions
