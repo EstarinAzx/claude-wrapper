@@ -38,6 +38,11 @@ export interface AgentRow {
   parentToolUseId: string
   agentType: string
   agentId?: string
+  // The `agentId` of the agent that spawned this one, absent when the session
+  // spawned it directly. Disk-only by nature: the live task stream never reveals
+  // parentage (a nested agent's traffic is not forwarded), so a nested agent
+  // reads as top-level until its sidecar lands. This is the tree's only edge.
+  parentAgentId?: string
   description?: string
   model?: string
   spawnDepth?: number
@@ -69,6 +74,7 @@ export const mergeAgents = (disk: SubagentInfo[], live: LiveAgent[]): AgentRow[]
     if (description !== undefined) row.description = description
 
     if (d?.agentId !== undefined) row.agentId = d.agentId
+    if (d?.parentAgentId !== undefined) row.parentAgentId = d.parentAgentId
     if (d?.model !== undefined) row.model = d.model
     if (d?.spawnDepth !== undefined) row.spawnDepth = d.spawnDepth
 

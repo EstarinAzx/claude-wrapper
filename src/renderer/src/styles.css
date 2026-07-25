@@ -619,6 +619,16 @@ body {
   display: flex;
 }
 
+/* A nested row gets a hairline in its parent's column — at this row density
+   indentation alone reads as an accident. Only nested rows carry it, so a
+   session that spawned nothing nested stays a clean flat list. */
+.agent-row--nested > .agent-row-btn {
+  border-left: 1px solid oklch(0.92 0.01 210 / 0.12);
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+  padding-left: 9px;
+}
+
 .agent-row-btn {
   flex: 1;
   min-width: 0;

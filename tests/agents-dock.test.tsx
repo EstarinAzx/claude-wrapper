@@ -371,6 +371,99 @@ describe('agents dock — live rows', () => {
   })
 })
 
+// The tree half. Depth comes from the sidecar's parentAgentId alone — the pure
+// assembly is covered in agent-layout.test.ts, so these are seam tests: does the
+// panel render the tree, and is a nested agent still openable.
+describe('agents dock — nesting', () => {
+  const listRows = (): HTMLElement[] => within(dock()).getAllByRole('listitem')
+
+  const showAgents = async (agents: SubagentInfo[]): Promise<void> => {
+    harness.api.listSubagents.mockResolvedValue(agents)
+    await startSession([sess('sess-1', 'past work')])
+    fireEvent.click(await screen.findByText('past work'))
+    openDock()
+  }
+
+  const spine = (): SubagentInfo[] => [
+    agent({ parentToolUseId: 'task-1', agentId: 'root-a', description: 'top level' }),
+    agent({
+      parentToolUseId: 'task-2',
+      agentId: 'kid-b',
+      agentType: 'general-purpose',
+      description: 'spawned by the explorer',
+      parentAgentId: 'root-a'
+    }),
+    agent({
+      parentToolUseId: 'task-3',
+      agentId: 'grandkid-c',
+      agentType: 'Plan',
+      description: 'spawned by the kid',
+      parentAgentId: 'kid-b'
+    })
+  ]
+
+  test('an agent spawned by another renders indented directly beneath it, three deep', async () => {
+    await showAgents(spine())
+    expect(await screen.findByText('spawned by the kid')).toBeTruthy()
+
+    const rows = listRows()
+    expect(rows.map((li) => li.querySelector('.agent-row-desc')?.textContent)).toEqual([
+      'top level',
+      'spawned by the explorer',
+      'spawned by the kid'
+    ])
+    // Indentation is the depth, and it keeps stepping past two levels.
+    expect(rows.map((li) => li.style.paddingLeft)).toEqual(['', '14px', '28px'])
+    // The same depth reaches a screen reader, which cannot see the padding.
+    expect(rows.map((li) => li.getAttribute('aria-level'))).toEqual(['1', '2', '3'])
+  })
+
+  test('clicking a nested agent opens its conversation in the drawer', async () => {
+    harness.api.subagentTranscript.mockResolvedValue([
+      { role: 'assistant', text: 'the grandchild reported back' }
+    ])
+    await showAgents(spine())
+    expect(await screen.findByText('spawned by the kid')).toBeTruthy()
+    // Pin that the row being clicked is genuinely a nested one, or this passes
+    // just as well against a flat list.
+    expect(listRows()[2].style.paddingLeft).toBe('28px')
+
+    fireEvent.click(screen.getByText('spawned by the kid'))
+
+    expect(await screen.findByText('the grandchild reported back')).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: 'Subagent Plan' })).toBeTruthy()
+    // Depth is no barrier: the drawer resolves by tool-use id like any other row.
+    expect(harness.api.subagentTranscript).toHaveBeenCalledWith('sess-1', 'task-3')
+  })
+
+  test('a session with no nesting is a flat list with no indentation at all', async () => {
+    await showAgents([
+      agent({ parentToolUseId: 'task-1', agentId: 'a1', description: 'first' }),
+      agent({ parentToolUseId: 'task-2', agentId: 'a2', description: 'second' })
+    ])
+    expect(await screen.findByText('second')).toBeTruthy()
+
+    const rows = listRows()
+    expect(rows).toHaveLength(2)
+    expect(rows.map((li) => li.style.paddingLeft)).toEqual(['', ''])
+    expect(dock().querySelectorAll('.agent-row--nested')).toHaveLength(0)
+  })
+
+  test('an agent naming a parent that is missing from the list still renders', async () => {
+    await showAgents([
+      agent({
+        parentToolUseId: 'task-9',
+        agentId: 'orphan',
+        description: 'parent is not here',
+        parentAgentId: 'never-listed'
+      })
+    ])
+
+    expect(await screen.findByText('parent is not here')).toBeTruthy()
+    expect(listRows()[0].style.paddingLeft).toBe('')
+  })
+})
+
 describe('agents dock — width', () => {
   test('applies the default width on mount', async () => {
     await startSession()

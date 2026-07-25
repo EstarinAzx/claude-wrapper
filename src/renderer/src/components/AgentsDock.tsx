@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AgentRow, LiveAgent, SubagentInfo } from '../../../shared/subagent-types'
 import { mergeAgents } from '../../../shared/subagent-types'
+import { buildAgentTree, flattenAgentTree } from '../../../shared/agent-layout'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
+
+// One indent step, in px. Small on purpose: the dock is ~248px wide by default,
+// so a deep spine has to stay legible rather than march off the right edge.
+const INDENT_PX = 14
 
 const WIDTH_KEY = 'agents-dock-width'
 
@@ -121,6 +126,11 @@ const AgentsDock = ({
   // start. The disk-flavoured empty states only speak when there is nothing.
   const rows = mergeAgents(state.status === 'ok' ? state.agents : [], liveAgents)
 
+  // Nest by parentAgentId, then flatten back to one <li> per agent. Flat-with-a-
+  // depth rather than nested <ul>s: nesting is rare (~1 agent in 185), and the
+  // flat shape keeps the common case a plain list with nothing extra in the DOM.
+  const nodes = flattenAgentTree(buildAgentTree(rows))
+
   return (
     <aside className="agents-dock" aria-label="Agents" style={{ width }}>
       <div
@@ -163,7 +173,7 @@ const AgentsDock = ({
         </div>
       ) : (
         <ul className="agent-list">
-          {rows.map((a) => {
+          {nodes.map(({ row: a, depth }) => {
             // Absent fields are dropped, never rendered as a zero or a blank —
             // a sidecar that never recorded a model must not read as "no model".
             const meta = [a.model, a.spawnDepth === undefined ? '' : `depth ${a.spawnDepth}`]
@@ -173,7 +183,15 @@ const AgentsDock = ({
             return (
               <li
                 key={a.parentToolUseId}
-                className={`agent-row${a.status ? ` agent-row--${a.status}` : ''}`}
+                // aria-level carries the depth that is otherwise only in the
+                // padding — indentation a screen reader cannot see is not a tree.
+                aria-level={depth + 1}
+                // Untouched at the top level, so a session with no nesting (the
+                // common case) renders with no inline style at all.
+                style={depth > 0 ? { paddingLeft: depth * INDENT_PX } : undefined}
+                className={`agent-row${a.status ? ` agent-row--${a.status}` : ''}${
+                  depth > 0 ? ' agent-row--nested' : ''
+                }`}
               >
                 <button
                   type="button"

@@ -164,6 +164,26 @@ describe('mergeAgents', () => {
     expect(rows[0].agentType).toBe('Explore')
   })
 
+  // The tree's only edge. It rides through the merge untouched because the live
+  // stream has no parentage to contribute — and it must stay absent, not empty,
+  // for a top-level agent, or every row would claim a parent named ''.
+  test('parentAgentId survives the merge and stays absent when the sidecar omits it', () => {
+    const rows = mergeAgents(
+      [
+        disk({ parentToolUseId: 't9', agentId: 'child', parentAgentId: 'boss' }),
+        disk({ parentToolUseId: 't10', agentId: 'boss' })
+      ],
+      [live({ parentToolUseId: 't9', status: 'running' })]
+    )
+    expect(rows[0].parentAgentId).toBe('boss')
+    expect('parentAgentId' in rows[1]).toBe(false)
+  })
+
+  test('a live-only row has no parentAgentId — the stream never reports parentage', () => {
+    const rows = mergeAgents([], [live({ parentToolUseId: 't11', status: 'running' })])
+    expect('parentAgentId' in rows[0]).toBe(false)
+  })
+
   test('disk description is kept when live omits description', () => {
     const rows = mergeAgents(
       [disk({ parentToolUseId: 't8', agentId: 'a8', description: 'from disk' })],
