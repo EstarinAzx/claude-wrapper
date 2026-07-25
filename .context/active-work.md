@@ -7,34 +7,33 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-25, relay leg 6 (`.claude/relay-leg.md`, N=1) — ticket #32_
-_At commit: `3b7a77c` on main (+ this leg's `.context/` commit)_
+_Last updated: 2026-07-25, relay leg 7 (`.claude/relay-leg.md`, N=1) — ticket #33_
+_At commit: `c357ed7` on main (+ this leg's `.context/` commit)_
 
 ## Current focus
 
-**A `/relay` chain is draining nine tracer tickets, one per leg, unattended.**
-Two disjoint specs are open: **#25 Agents surface** and **#26 Attachments**.
-Prior specs #9, #16, #20 stay closed; #1 (MVP umbrella, unlabelled) is out of
-scope.
+**A `/relay` chain is draining the tracer tickets, one per leg, unattended.**
+**Spec #25 Agents surface is delivered and closed.** One spec is still open:
+**#26 Attachments**, owing #34 and #35. Prior specs #9, #16, #20 stay closed;
+#1 (MVP umbrella, unlabelled) is out of scope.
 
-Legs 1–6 delivered **#27** (spike, no production code), **#28** (the Agents
+Legs 1–7 delivered **#27** (spike, no production code), **#28** (the Agents
 dock), **#29** (the send-payload prefactor), **#30** (live agent rows), **#31**
-(nesting) and **#32** (paste an image). Six of nine are down. Closing #32
-unblocked **#34** and **#35**, so **all three remaining tickets are unblocked**
-and the chain picks by age from here.
+(nesting), **#32** (paste an image) and **#33** (map mode). **Seven of nine are
+down; two remain, both unblocked**, so the chain picks by age from here.
 
 ## Ticket graph (native GitHub dependencies)
 
 ```
 #27 spike ✅──┐
               ├──> #30 live rows ✅
-#28 dock  ✅──┴──> #31 nesting ✅──> #33 map          ← next is #33
-#29 prefactor ✅──> #32 paste ✅──┬──> #34 paperclip
+#28 dock  ✅──┴──> #31 nesting ✅──> #33 map ✅     spec #25 CLOSED
+#29 prefactor ✅──> #32 paste ✅──┬──> #34 paperclip   ← next is #34
                                   └──> #35 replay chips
 ```
 
-Unblocked right now: **#33, #34, #35** — every open ticket. No cross-spec edges.
-Neither spec can close yet: #25 still owes #33, #26 still owes #34 and #35.
+Unblocked right now: **#34, #35** — both open tickets. No cross-spec edges.
+**#26 closes when #34 and #35 land**, and that empties the queue.
 
 | # | Ticket | Spec | State |
 |---|---|---|---|
@@ -44,66 +43,75 @@ Neither spec can close yet: #25 still owes #33, #26 still owes #34 and #35.
 | 30 | Live agent rows from task messages | #25 | **closed** — `f869f1f` |
 | 31 | Nested agents as a tree | #25 | **closed** — `1888440` |
 | 32 | Paste an image and send it | #26 | **closed** — `3b7a77c` |
-| 33 | Map mode for the Agents panel | #25 | open, unblocked ← **next** |
-| 34 | Paperclip: file picker and by-path attachments | #26 | open, unblocked |
+| 33 | Map mode for the Agents panel | #25 | **closed** — `c357ed7` |
+| 34 | Paperclip: file picker and by-path attachments | #26 | open, unblocked ← **next** |
 | 35 | Attachments survive replay | #26 | open, unblocked |
 
-## Done this leg (#32)
+## Done this leg (#33)
 
-Gate green: typecheck · **345/345** (+35) · build. Full rationale in
-[[2026-07-25-attachment-policy-and-the-csp-that-blocked-it]].
+Gate green: typecheck · **364/364** (+19) · build. Full rationale in
+[[2026-07-25-map-geometry-is-a-pure-slot-layout]].
 
-- **`src/shared/attachment-policy.ts`** (new, pure) — the one place caps, the
-  allowlist and routing live. `judgeAttachment(candidate, attachedCount)` →
-  embed / by-path / reject; `admitAttachments(count, candidates)` folds a batch.
-  `MAX_IMAGE_BYTES` 5 MB decoded, `MAX_ATTACHMENTS` 10; the allowlist is
-  imported from `attachment-types`, never restated.
-- **`InputBar`** — `onPaste` intercepts `clipboardData.files` only; every file
-  goes through the policy module rather than being filtered in the composer.
-  Chip tray above the pill, inline rejections, rendered only when non-empty.
-- **`useChat.send(text, attachments)`** — attachments alone are a valid message.
-- **`Chat`** — the sent user bubble renders its thumbnails.
-- **`src/main/engine.ts`** — the only engine change: an empty text block is
-  omitted, not blanked (see below).
-- **`src/renderer/index.html`** — `img-src 'self' data:` added to the CSP.
+- **`layoutAgentMap` in `src/shared/agent-layout.ts`** (new, pure) — the geometry
+  half beside the tree. Calls `buildAgentTree`, only places the result. Returns
+  `nodes` (coords + `kind` + `depth` + `row`), `edges` (both endpoints inlined),
+  `width` / `height` / `nodeRadius`, all in abstract viewBox units.
+- **`src/renderer/src/components/AgentMap.tsx`** (new) — hand-rolled SVG, no new
+  dependency. Cubic-elbow edges under the nodes; each agent is a focusable
+  `role="button"` group with an `aria-label` and a `<title>`.
+- **`AgentsDock`** — icon-only List/Map toggle in the head; one `selectedId` and
+  one `openAgent` handler shared by both modes; the map is fed the same merged
+  disk-plus-live `rows` the list uses.
+- **`styles.css`** — the map section, plus `.agent-row--selected`.
 
-The policy module + its 19 unit tests were delegated to one Grok subagent
-through a `haiku` Slot rebind, reviewed and landed with three cleanups (two
-`as string` casts removed by destructuring, a fractional byte count floored, and
-`the limit is 5.0 MB` made `5 MB`). The Slot was reverted before the gate.
+Two Grok subagents through a `haiku` Slot rebind (geometry, then component),
+both reviewed; the Slot was reverted before the gate. Review changed four
+things: `role="img"` → `role="group"`, the halo alpha moved into the fill,
+`MapNode` became a union discriminated on `kind` (which removed the draft's
+non-null assertion — there were **zero** in `src/` before it), and hit-target
+sizing was added and then corrected to measure within a depth band.
 
 ## Facts established this leg (don't re-derive)
 
-- **The renderer CSP is part of the attachment feature.** With no `img-src`,
-  `default-src 'self'` blocks every `data:` URL and thumbnails render as broken
-  icons **while the DOM looks perfect**. jsdom never loads images, so no seam
-  test can see this. The grant is pinned by `tests/attachments-composer.test.tsx`.
-  Any new image source (`blob:`, `file:`) will fail exactly this silently.
-- **An empty text block is rejected by the API.** An attachments-only send omits
-  the block rather than blanking it. Mutation-verified.
-- **A rejection must not consume the count budget** — which is why the fold
-  lives in the policy module, not the composer. Mutation-verified.
-- **Too big to embed falls through to the path route** when a `path` exists, so
-  **#34 needs no policy change**.
-- **The live GUI pass is what caught both defects.** A real Ctrl+V of a real
-  clipboard image through the built app; the 345-test suite reported green.
-  Recipe below, reusable.
+- **`role="img"` on an interactive SVG hides its buttons from assistive tech** —
+  an `img` role makes the whole subtree presentational. Testing-library still
+  finds the buttons, so no test in this suite can catch it. Use `role="group"`.
+- **`opacity` loses to an animation that keyframes `opacity`.** The reused
+  `subagent-pulse` animates 1 → 0.35, so a static `opacity: 0.18` tint is
+  overridden and the element flashes near-solid. Put the alpha in the colour
+  (`color-mix`) and let the keyframe own opacity.
+- **Hit-target sizing must be measured within a depth band.** A nested spine
+  stacks parent and child on the same x; measuring the gap across all nodes reads
+  zero and collapses every hit circle to `r=0`. jsdom does no hit testing, so the
+  guard is an assertion on the radius (`nested nodes keep a clickable hit
+  target`, mutation-verified).
+- **Geometry is pure and stays out of the DOM tests.** `tests/agent-layout.test.ts`
+  pins depth separation, edge/node consistency, determinism across an
+  equal-but-distinct input, canvas bounds and sibling separation at 1 / 5 / 28
+  agents. The dock tests only assert wiring.
+- **The map fits without scrolling at both ends of the resize range** — measured
+  in the built app on a real 7-agent session: 223.1px of SVG inside 247.1px at
+  default, 155.1 inside 179.1 at the 180px floor, no scrollbar on either axis,
+  smallest hit target 24.2px / 16.8px.
+- **Every status colour was verified by computed style in Chromium**, not jsdom:
+  running `oklch(0.87 0.07 180)`, done hollow + `0.68 0.01 200` at 1.5, failed
+  `oklch(0.6 0.16 25)`, unknown hollow + faint + `2px 2px` dash, halo
+  `oklch(0.87 0.07 180 / 0.22)`.
+- **Running and failed nodes have not been seen on a live turn.** A historical
+  session has no status, so all seven rendered as the dashed unknown ring
+  (correct). The mint and red paths are confirmed by computed style and unit test
+  only.
 
 ## Facts from #31 (still current)
 
 - **`spawnDepth` is not tree depth.** `AgentNode.depth` is computed by the walk.
-  #33 must not confuse the two.
 - **A nested agent reads as top-level while it is live**, then nests on the next
-  disk read. Accepted lag, by decision.
-- **Nothing disappears from the tree.** Orphans, self-parents and cycle members
-  degrade to roots; every input row appears exactly once.
-- **The `parentAgentId` passthrough is mutation-verified** — deleting it in
-  `mergeAgents` reds `tests/agents-merge.test.ts` and the three-deep test in
-  `tests/agents-dock.test.tsx`.
+  disk read. Accepted lag, by decision. The map inherits this.
+- **Nothing disappears from the tree or the map.** Orphans, self-parents and
+  cycle members degrade to roots; every input row appears exactly once.
+- **The `parentAgentId` passthrough is mutation-verified.**
 - **No GUI pass is possible for nesting** — `parentAgentId` is on 0 of 28 real
   sidecars, so a live run renders flat. Fabricated-fixture territory.
-- `tests/agent-layout.test.ts` is pure-data and fast; extend it for #33's
-  geometry rather than testing the map through the DOM.
 
 ## Facts from #30 (still current)
 
@@ -119,10 +127,17 @@ through a `haiku` Slot rebind, reviewed and landed with three cleanups (two
 - `tests/engine.test.ts > engine task messages` holds the **real wire shapes**.
 - **The sessions rail renders `<li>` too** — scope dock counts with `within(dock())`.
 
-## Facts from #29 / #28 / #27 (still current)
+## Facts from #32 / #29 / #28 / #27 (still current)
 
-- **`normalizeSendPayload` is the trust boundary on `chat:send`**; the renderer
-  enforces policy before IPC, and the boundary check stays.
+- **The renderer CSP is part of the attachment feature.** No `img-src` means
+  `default-src 'self'` blocks every `data:` URL while the DOM looks perfect.
+  jsdom never applies CSP. Any new image source (`blob:`, `file:`) fails the same
+  silent way.
+- **An empty text block is rejected by the API**; an attachments-only send omits
+  it. **A rejection must not consume the count budget.** Both mutation-verified.
+- **Too big to embed falls through to the path route**, so **#34 needs no policy
+  change**.
+- **`normalizeSendPayload` is the trust boundary on `chat:send`.**
 - **`tests/engine.test.ts` has `capturingStub()` and `sendOne(payload)`.**
 - **`listSubagents` returns `SubagentInfo[] | null`** — `[]` none spawned
   (ENOENT), `null` could not read; the dock shows live rows on the `null` branch.
@@ -141,15 +156,17 @@ through a `haiku` Slot rebind, reviewed and landed with three cleanups (two
   in · Please run /login` with the wisp vars stripped. Native-mode behaviour is
   assumed, not measured.
 - The GUI driver launches with `--disable-gpu`, so screenshots show a flat wash
-  instead of acrylic, and `page.screenshot()` clips a window wider than the
-  viewport. Measure geometry in the DOM, not off the image.
+  instead of acrylic, and **both `page.screenshot({clip})` and
+  `locator.screenshot()` mis-frame a window wider than the viewport**. Measure
+  geometry in the DOM (`getBoundingClientRect`, `getComputedStyle`), never off
+  the image.
 
 ## Pick up here
 
 The relay chain owns the queue; see [[pick-up]]. If it stalls, the frontier
 query is: oldest open `ready-for-agent` issue with
-`issue_dependencies_summary.blocked_by == 0`, ignoring the two spec parents —
-currently **#33**.
+`issue_dependencies_summary.blocked_by == 0`, ignoring the spec parent —
+currently **#34**. Note **#25 is now closed**, so only **#26** needs skipping.
 
 ## Deferred (still no spec)
 
@@ -159,9 +176,9 @@ project switcher. Busy-switch could graduate from *block* to
 out-of-scope: drag-and-drop attachments, thumbnails on replay, multiline
 composer. From #25's: cross-session agent archive, agent control (kill/retry),
 map pan/zoom, token totals for historical agents. From #31: nesting a **live**
-agent before its sidecar lands. New from #32: no capability gating by model (a
-text-only provider's refusal surfaces through the engine's legible-error map),
-and no `blob:` URL path for very large pastes.
+agent before its sidecar lands. From #32: no capability gating by model, and no
+`blob:` URL path for very large pastes. New from #33: no node labels in the map,
+and no inset for a fan-out past ~40 agents (marked `ponytail:` in the module).
 
 ## Landmines (carried forward)
 
@@ -172,7 +189,7 @@ and no `blob:` URL path for very large pastes.
   subcommand; the retired `~/.claude/slot/lease-*.json` files are gone.)
 - **New `window.api` channel → add to ALL FOUR mock sites** or App-render tests
   throw: `tests/chat-harness.ts` + inline mocks in `sidebar`/`session`/`shell`
-  tests. Guard every IPC with `isTrustedIpc`. **Only #34 still trips this.**
+  tests. Guard every IPC with `isTrustedIpc`. **#34 trips this.**
 - **Never let the plain-string pin be "fixed" by updating its expectation** —
   `a text-only send keeps plain-string content` is mutation-verified.
 - Resume ceiling + `sessionId()` accessor + native-store facts + Tailwind
@@ -181,7 +198,8 @@ and no `blob:` URL path for very large pastes.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-25-attachment-policy-and-the-csp-that-blocked-it]] ·
+- [[2026-07-25-map-geometry-is-a-pure-slot-layout]] ·
+  [[2026-07-25-attachment-policy-and-the-csp-that-blocked-it]] ·
   [[2026-07-25-agent-tree-edge-is-the-sidecar]] ·
   [[2026-07-25-live-rows-two-sources-one-event]] ·
   [[2026-07-25-send-payload-encoding-lands-in-the-prefactor]] ·
