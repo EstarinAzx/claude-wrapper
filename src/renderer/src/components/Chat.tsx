@@ -59,9 +59,26 @@ const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
 
         {messages.map((m) => {
           if (m.role === 'user') {
+            // Images that went out with the prompt render as thumbnails above the
+            // words, so the transcript confirms what the model was actually shown.
+            const images = (m.attachments ?? []).filter((a) => a.kind === 'image')
             return (
               <div key={m.id} className="msg msg-user">
-                <div className="bubble">{m.text}</div>
+                <div className="bubble">
+                  {images.length ? (
+                    <div className="bubble-thumbs">
+                      {images.map((img, i) => (
+                        <img
+                          key={i}
+                          className="bubble-thumb"
+                          src={`data:${img.mediaType};base64,${img.data}`}
+                          alt="Attached image"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                  {m.text}
+                </div>
               </div>
             )
           }

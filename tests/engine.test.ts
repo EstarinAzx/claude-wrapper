@@ -201,6 +201,47 @@ describe('engine', () => {
     ])
   })
 
+  // What the composer produces when several screenshots are pasted into one
+  // message: the text leads, then one image block each, in the order attached.
+  test('several images become one text block followed by an image block each', async () => {
+    const inputs = await sendOne({
+      text: 'compare these',
+      attachments: [
+        { kind: 'image', mediaType: 'image/png', data: 'AAAB' },
+        { kind: 'image', mediaType: 'image/jpeg', data: 'BBBC' },
+        { kind: 'image', mediaType: 'image/webp', data: 'CCCD' }
+      ]
+    })
+    expect(inputs[0]?.message.content).toEqual([
+      { type: 'text', text: 'compare these' },
+      { type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'AAAB' } },
+      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'BBBC' } },
+      { type: 'image', source: { type: 'base64', media_type: 'image/webp', data: 'CCCD' } }
+    ])
+  })
+
+  // An empty text block is rejected by the API, so a wordless "look at this"
+  // must carry the image alone rather than an empty block in front of it.
+  test('an image with no text sends the image block alone', async () => {
+    const inputs = await sendOne({
+      text: '',
+      attachments: [{ kind: 'image', mediaType: 'image/gif', data: 'DDDE' }]
+    })
+    expect(inputs[0]?.message.content).toEqual([
+      { type: 'image', source: { type: 'base64', media_type: 'image/gif', data: 'DDDE' } }
+    ])
+  })
+
+  test('a by-path attachment with no text drops the blank lead, keeping the list', async () => {
+    const inputs = await sendOne({
+      text: '',
+      attachments: [{ kind: 'path', path: 'D:\\proj\\notes.pdf' }]
+    })
+    expect(inputs[0]?.message.content).toEqual([
+      { type: 'text', text: 'Attached files:\nD:\\proj\\notes.pdf' }
+    ])
+  })
+
   test('a by-path attachment rides in the text block, not as a block of its own', async () => {
     const inputs = await sendOne({
       text: 'read this',

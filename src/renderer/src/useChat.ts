@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { Attachment } from '../../shared/attachment-types'
 import type { EngineEvent, PermissionDecision } from '../../shared/engine-types'
 import type { TranscriptMessage } from '../../shared/session-types'
 import type { LiveAgent } from '../../shared/subagent-types'
 import { resultSummary } from './toolSummaries'
 
 export type ChatMessage =
-  | { id: string; role: 'user'; text: string }
+  // `attachments` is absent — not empty — on an ordinary text send, so the
+  // transcript renders byte-identically to before attachments existed.
+  | { id: string; role: 'user'; text: string; attachments?: Attachment[] }
   | { id: string; role: 'assistant'; text: string }
   | { id: string; role: 'error'; text: string }
   | { id: string; role: 'notice'; text: string }
@@ -183,16 +186,19 @@ export const useChat = () => {
     return unsub
   }, [])
 
+  // "look at this" with an image and no words is a message, so attachments alone
+  // are enough to send. The composer has already run them through the attachment
+  // policy; this is the last stop before the IPC boundary re-checks them.
   const send = useCallback(
-    (raw: string) => {
+    (raw: string, attachments: Attachment[] = []) => {
       const text = raw.trim()
-      if (!text || busy) return
+      if ((!text && attachments.length === 0) || busy) return
       assistantIdRef.current = null
-      setMessages((prev) => [...prev, { id: uid(), role: 'user', text }])
+      const message: Extract<ChatMessage, { role: 'user' }> = { id: uid(), role: 'user', text }
+      if (attachments.length) message.attachments = attachments
+      setMessages((prev) => [...prev, message])
       setBusy(true)
-      // ponytail: attachments always empty here — #29 widens the pipe only; the
-      // composer that can fill it lands with paste (#32) and the paperclip (#34).
-      window.api.sendPrompt({ text, attachments: [] })
+      window.api.sendPrompt({ text, attachments })
     },
     [busy]
   )

@@ -1024,6 +1024,123 @@ body {
   cursor: default;
 }
 
+/* ── attachment tray ── */
+
+/* Rendered only when something is attached, so the resting composer is unchanged.
+   Width-matched to the pill it sits above, and flush with its edge. */
+.attachment-tray {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 760px;
+}
+
+/* Same shell as a tool card — surface, hairline, 12px, UI type — because a chip
+   is the same kind of object: a small panel reporting one thing. */
+.attachment-chip,
+.attachment-reject {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  border-radius: 12px;
+  font-size: var(--fs-ui);
+  line-height: 1.4;
+  animation: msg-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.attachment-chip {
+  gap: 8px;
+  max-width: 240px;
+  padding: 4px 6px 4px 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.chip-thumb {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  /* Shows through a transparent PNG instead of the surface swallowing it. */
+  background: var(--border);
+}
+
+.chip-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-app-region: no-drag;
+}
+
+.chip-remove:hover {
+  background: oklch(0.92 0.01 210 / 0.08);
+  color: var(--text);
+}
+
+.chip-remove:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 1px;
+}
+
+/* The error bubble's hue at chip weight: a refusal explains itself where the
+   item would have been, not at send time. */
+.attachment-reject {
+  padding: 4px 12px;
+  border: 1px solid oklch(0.55 0.12 25 / 0.35);
+  background: oklch(0.35 0.06 25 / 0.28);
+  color: oklch(0.78 0.08 25);
+}
+
+.reject-name {
+  font-weight: 600;
+}
+
+/* ── attachment thumbnails in the transcript ── */
+
+.bubble-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* Fixed height reserves the row before the image decodes, so the transcript
+   never jumps. Hairline keeps a pale screenshot off the bubble. */
+.bubble-thumb {
+  display: block;
+  height: 120px;
+  width: auto;
+  max-width: 220px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.bubble-thumbs:last-child {
+  margin-bottom: 0;
+}
+
 /* ── error ── */
 
 .msg-error {

@@ -131,13 +131,17 @@ const toUserMessage = ({ text, attachments }: SendPayload): SDKUserMessage => {
   const prompt =
     paths.length === 0
       ? text
-      : `${text}\n\nAttached files:\n${paths.map((p) => p.path).join('\n')}`
+      : [text, `Attached files:\n${paths.map((p) => p.path).join('\n')}`]
+          .filter(Boolean)
+          .join('\n\n')
 
   const content: SDKUserMessage['message']['content'] =
     attachments.length === 0
       ? prompt
       : [
-          { type: 'text', text: prompt },
+          // "Look at this" with no words is a valid message, but an EMPTY text
+          // block is not — the API rejects one — so it is omitted, not blanked.
+          ...(prompt ? [{ type: 'text' as const, text: prompt }] : []),
           ...attachments
             .filter((a) => a.kind === 'image')
             .map(
