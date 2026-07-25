@@ -670,6 +670,48 @@ body {
   text-overflow: ellipsis;
 }
 
+.agent-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Only live rows carry a dot — a disk row has no status to show. Reuses the
+   inline subagent row's pulse so the two surfaces read as one language. */
+.agent-row-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-faint);
+}
+
+.agent-row--running .agent-row-dot {
+  background: var(--mint);
+  animation: subagent-pulse 1.4s ease-in-out infinite;
+}
+
+.agent-row--failed .agent-row-dot {
+  background: oklch(0.6 0.16 25);
+}
+
+.agent-row-status {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+}
+
+.agent-row-stats {
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── chat ── */
 
 .chat {

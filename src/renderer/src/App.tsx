@@ -21,8 +21,17 @@ const App = () => {
     agentType: string
   } | null>(null)
   const [agentsOpen, setAgentsOpen] = useState(false)
-  const { messages, busy, activeSessionId, send, stop, respondToPermission, openSession, newChat } =
-    useChat()
+  const {
+    messages,
+    busy,
+    activeSessionId,
+    liveAgents,
+    send,
+    stop,
+    respondToPermission,
+    openSession,
+    newChat
+  } = useChat()
   useZoom()
 
   // Read the launch mode once, then track flips the main side broadcasts.
@@ -106,6 +115,7 @@ const App = () => {
           {agentsOpen ? (
             <AgentsDock
               sessionId={activeSessionId}
+              liveAgents={liveAgents}
               onOpenAgent={(parentToolUseId, agentType) =>
                 setOpenSubagent({ parentToolUseId, agentType })
               }

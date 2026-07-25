@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { SubagentInfo } from '../../../shared/subagent-types'
+import type { AgentRow, LiveAgent, SubagentInfo } from '../../../shared/subagent-types'
+import { mergeAgents } from '../../../shared/subagent-types'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
 
 const WIDTH_KEY = 'agents-dock-width'
@@ -19,18 +20,50 @@ type DockState =
   | { status: 'ok'; agents: SubagentInfo[] }
   | { status: 'unreadable' }
 
+const STATUS_LABEL: Record<'running' | 'done' | 'failed', string> = {
+  running: 'running…',
+  done: 'done',
+  failed: 'failed'
+}
+
+// Labelled "ctx" deliberately: total_tokens is the agent's cumulative context
+// size, not what it spent. Rendered bare it reads as "52k tokens" for an agent
+// that did nothing.
+const contextSize = (n: number): string => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n))
+
+const elapsed = (ms: number): string => {
+  const s = Math.round(ms / 1000)
+  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`
+}
+
+// The live stats line. Every segment is omitted when its field is absent, but a
+// field that is present AND zero still renders — a disk row that never recorded
+// tool uses must not read the same as an agent that genuinely ran zero tools.
+const liveStats = (a: AgentRow): string =>
+  [
+    a.totalTokens === undefined ? '' : `${contextSize(a.totalTokens)} ctx`,
+    a.toolUses === undefined ? '' : `${a.toolUses} ${a.toolUses === 1 ? 'tool' : 'tools'}`,
+    a.durationMs === undefined ? '' : elapsed(a.durationMs),
+    a.lastToolName ?? ''
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
 // Agents dock: an in-flow resizable aside listing every subagent the open
-// session spawned, read from the on-disk meta sidecars. In-flow (not an overlay)
-// so the chat narrows and stays readable while agents are inspected. Disk-fed
-// only — live rows arrive with the task-message work, and this panel is the
-// surface they will merge into. Clicking a row hands the parent Task tool_use id
-// back up, which is the same key the inline Task-card row opens the drawer with.
+// session spawned. In-flow (not an overlay) so the chat narrows and stays
+// readable while agents are inspected. Two sources, ONE list: the on-disk meta
+// sidecars and the live task-message stream, merged on parentToolUseId with the
+// live fields winning, so an agent that ran before and is running again appears
+// once. Clicking a row hands that id back up — the same key the inline Task-card
+// row opens the drawer with.
 const AgentsDock = ({
   sessionId,
+  liveAgents,
   onOpenAgent,
   onClose
 }: {
   sessionId: string | null
+  liveAgents: LiveAgent[]
   onOpenAgent: (parentToolUseId: string, agentType: string) => void
   onClose: () => void
 }) => {
@@ -83,6 +116,11 @@ const AgentsDock = ({
       })
   }, [sessionId])
 
+  // Live rows are shown whatever the disk read did: a first turn has no session
+  // id yet, and an unreadable agent directory must not hide agents we watched
+  // start. The disk-flavoured empty states only speak when there is nothing.
+  const rows = mergeAgents(state.status === 'ok' ? state.agents : [], liveAgents)
+
   return (
     <aside className="agents-dock" aria-label="Agents" style={{ width }}>
       <div
@@ -111,41 +149,51 @@ const AgentsDock = ({
           </svg>
         </button>
       </div>
-      {state.status === 'loading' ? (
+      {rows.length === 0 && state.status === 'loading' ? (
         <div className="agents-dock-empty" role="status">
           Loading…
         </div>
-      ) : state.status === 'unreadable' ? (
+      ) : rows.length === 0 && state.status === 'unreadable' ? (
         <div className="agents-dock-empty" role="status">
           Could not read this session&rsquo;s agents.
         </div>
-      ) : state.agents.length === 0 ? (
+      ) : rows.length === 0 ? (
         <div className="agents-dock-empty" role="status">
           No agents in this session.
         </div>
       ) : (
         <ul className="agent-list">
-          {state.agents.map((a) => {
-            const type = a.agentType || 'Agent'
+          {rows.map((a) => {
             // Absent fields are dropped, never rendered as a zero or a blank —
             // a sidecar that never recorded a model must not read as "no model".
             const meta = [a.model, a.spawnDepth === undefined ? '' : `depth ${a.spawnDepth}`]
               .filter(Boolean)
               .join(' · ')
+            const stats = liveStats(a)
             return (
-              <li key={a.agentId} className="agent-row">
+              <li
+                key={a.parentToolUseId}
+                className={`agent-row${a.status ? ` agent-row--${a.status}` : ''}`}
+              >
                 <button
                   type="button"
                   className="agent-row-btn"
-                  onClick={() => onOpenAgent(a.parentToolUseId, type)}
+                  onClick={() => onOpenAgent(a.parentToolUseId, a.agentType)}
                 >
-                  <span className="agent-row-type">{type}</span>
+                  <span className="agent-row-head">
+                    {a.status ? <span className="agent-row-dot" aria-hidden="true" /> : null}
+                    <span className="agent-row-type">{a.agentType}</span>
+                    {a.status ? (
+                      <span className="agent-row-status">{STATUS_LABEL[a.status]}</span>
+                    ) : null}
+                  </span>
                   {a.description ? (
                     <span className="agent-row-desc" title={a.description}>
                       {a.description}
                     </span>
                   ) : null}
                   {meta ? <span className="agent-row-meta">{meta}</span> : null}
+                  {stats ? <span className="agent-row-stats">{stats}</span> : null}
                 </button>
               </li>
             )

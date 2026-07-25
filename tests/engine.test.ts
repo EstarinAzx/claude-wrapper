@@ -673,6 +673,309 @@ describe('engine subagents', () => {
   })
 })
 
+// The CLI's task lifecycle arrives as `system` messages, which the engine used
+// to drop entirely. Shapes here are copied from the #27 spike's captured JSONL,
+// so they are the real wire format rather than the declared types.
+describe('engine task messages', () => {
+  const AGENT_TU = 'toolu_019ATrNwp7qNkQHr3uq9vUjX'
+  const TASK_ID = 'a3bfd18b5d55e62c8'
+
+  const taskStarted = (over: Record<string, unknown> = {}): SdkMessage => ({
+    type: 'system',
+    subtype: 'task_started',
+    session_id: 'sess-1',
+    task_id: TASK_ID,
+    tool_use_id: AGENT_TU,
+    description: 'Read notes.txt launch code',
+    subagent_type: 'general-purpose',
+    task_type: 'local_agent',
+    ...over
+  })
+
+  const taskProgress = (over: Record<string, unknown> = {}): SdkMessage => ({
+    type: 'system',
+    subtype: 'task_progress',
+    session_id: 'sess-1',
+    task_id: TASK_ID,
+    tool_use_id: AGENT_TU,
+    description: 'Reading notes.txt',
+    subagent_type: 'general-purpose',
+    usage: { total_tokens: 53689, tool_uses: 2, duration_ms: 14636 },
+    last_tool_name: 'Read',
+    ...over
+  })
+
+  const taskNotification = (over: Record<string, unknown> = {}): SdkMessage => ({
+    type: 'system',
+    subtype: 'task_notification',
+    session_id: 'sess-1',
+    task_id: TASK_ID,
+    tool_use_id: AGENT_TU,
+    status: 'completed',
+    summary: 'HALIBUT-42',
+    usage: { total_tokens: 53617, tool_uses: 1, duration_ms: 4911 },
+    ...over
+  })
+
+  const subagentEvents = (events: EngineEvent[]) => events.filter((e) => e.type === 'subagent')
+
+  test('task_started puts the agent on the panel before any output exists', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push(success)
+    expect(subagentEvents(await turn)).toEqual([
+      {
+        type: 'subagent',
+        parentToolUseId: AGENT_TU,
+        status: 'running',
+        taskId: TASK_ID,
+        agentType: 'general-purpose',
+        description: 'Read notes.txt launch code'
+      }
+    ])
+  })
+
+  test('task_progress carries live tokens, tool count, elapsed and last tool name', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push(taskProgress())
+    push(success)
+    expect(subagentEvents(await turn)[1]).toEqual({
+      type: 'subagent',
+      parentToolUseId: AGENT_TU,
+      status: 'running',
+      taskId: TASK_ID,
+      agentType: 'general-purpose',
+      description: 'Reading notes.txt',
+      totalTokens: 53689,
+      toolUses: 2,
+      durationMs: 14636,
+      lastToolName: 'Read'
+    })
+  })
+
+  test('task_notification settles the agent to done with its final usage', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push(taskNotification())
+    push(success)
+    const last = subagentEvents(await turn).at(-1)
+    expect(last).toMatchObject({
+      parentToolUseId: AGENT_TU,
+      status: 'done',
+      totalTokens: 53617,
+      toolUses: 1,
+      durationMs: 4911
+    })
+  })
+
+  test('a failed task_notification settles the agent to failed, not done', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push(taskNotification({ status: 'failed' }))
+    push(success)
+    expect(subagentEvents(await turn).at(-1)?.status).toBe('failed')
+  })
+
+  test("task_updated's terminal patch settles the agent, keyed by task_id alone", async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    // The real message carries no tool_use_id — task_id is the only key.
+    push({
+      type: 'system',
+      subtype: 'task_updated',
+      session_id: 'sess-1',
+      task_id: TASK_ID,
+      patch: { status: 'completed', end_time: 1784961089873 }
+    })
+    push(success)
+    expect(subagentEvents(await turn).at(-1)).toMatchObject({
+      parentToolUseId: AGENT_TU,
+      status: 'done'
+    })
+  })
+
+  test('a non-terminal patch is a progress tick, never a completion', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push({
+      type: 'system',
+      subtype: 'task_updated',
+      session_id: 'sess-1',
+      task_id: TASK_ID,
+      patch: { status: 'running' }
+    })
+    push(success)
+    expect(subagentEvents(await turn).at(-1)?.status).toBe('running')
+  })
+
+  test('a backgrounded Bash task never becomes an agent row', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    // Real local_bash shape: own short task_id, no subagent_type.
+    push(
+      taskStarted({
+        task_id: 'bpbjj2bmr',
+        tool_use_id: 'toolu_bash_1',
+        task_type: 'local_bash',
+        subagent_type: undefined,
+        description: 'npm test'
+      })
+    )
+    push({
+      type: 'system',
+      subtype: 'task_notification',
+      session_id: 'sess-1',
+      task_id: 'bpbjj2bmr',
+      status: 'completed',
+      usage: { total_tokens: 10, tool_uses: 1, duration_ms: 5 }
+    })
+    push(success)
+    expect(subagentEvents(await turn)).toEqual([])
+  })
+
+  test('a task message for an unregistered task id is ignored, not invented into a row', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskProgress({ task_id: 'never-started' }))
+    push(success)
+    expect(subagentEvents(await turn)).toEqual([])
+  })
+
+  test('the system init message is still not mistaken for a task', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(success)
+    expect(subagentEvents(await turn)).toEqual([])
+  })
+
+  test('presence stays single-sourced: forwarded output adds no second running event', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push({
+      type: 'assistant',
+      session_id: 'sess-1',
+      parent_tool_use_id: AGENT_TU,
+      message: { content: [{ type: 'tool_use', id: 'sub-1', name: 'Read', input: {} }] }
+    })
+    push(success)
+    const running = subagentEvents(await turn).filter((e) => e.status === 'running')
+    expect(running).toHaveLength(1)
+  })
+
+  test('an agent still running when the turn aborts is drained to failed', async () => {
+    const base = streamingStub()
+    const fn: QueryFn = (args) =>
+      Object.assign(base.fn(args), { interrupt: async (): Promise<void> => {} })
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    base.push(init)
+    base.push(taskStarted())
+    engine.interrupt()
+    base.push({
+      type: 'result',
+      subtype: 'error_during_execution',
+      session_id: 'sess-1',
+      is_error: true
+    })
+    expect(subagentEvents(await turn).at(-1)).toEqual({
+      type: 'subagent',
+      parentToolUseId: AGENT_TU,
+      status: 'failed'
+    })
+  })
+
+  test('an agent that already finished is not re-failed by the drain', async () => {
+    const base = streamingStub()
+    const fn: QueryFn = (args) =>
+      Object.assign(base.fn(args), { interrupt: async (): Promise<void> => {} })
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    base.push(init)
+    base.push(taskStarted())
+    base.push(taskNotification())
+    engine.interrupt()
+    base.push({
+      type: 'result',
+      subtype: 'error_during_execution',
+      session_id: 'sess-1',
+      is_error: true
+    })
+    expect(subagentEvents(await turn).filter((e) => e.status === 'failed')).toEqual([])
+  })
+
+  test('a closed query drains a still-running agent', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const events: EngineEvent[] = []
+    void engine.runTurn(p('hi'), (e) => events.push(e))
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    await new Promise((r) => setTimeout(r, 10))
+    engine.close()
+    expect(events).toContainEqual({
+      type: 'subagent',
+      parentToolUseId: AGENT_TU,
+      status: 'failed'
+    })
+  })
+
+  test('absent usage stays absent — no key is invented as a zero', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push(success)
+    const started = subagentEvents(await turn)[0]
+    expect('totalTokens' in started).toBe(false)
+    expect('toolUses' in started).toBe(false)
+    expect('durationMs' in started).toBe(false)
+    expect('lastToolName' in started).toBe(false)
+  })
+})
+
 describe('engine canUseTool / permissions', () => {
   test('canUseTool awaits injected permission then returns exact allow result', async () => {
     let resolvePerm!: (d: PermissionDecision) => void

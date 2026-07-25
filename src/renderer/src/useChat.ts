@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { EngineEvent, PermissionDecision } from '../../shared/engine-types'
 import type { TranscriptMessage } from '../../shared/session-types'
+import type { LiveAgent } from '../../shared/subagent-types'
 import { resultSummary } from './toolSummaries'
 
 export type ChatMessage =
@@ -52,6 +53,7 @@ export const useChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [busy, setBusy] = useState(false)
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const [liveAgents, setLiveAgents] = useState<LiveAgent[]>([])
   // Track the live assistant message id without stale closures on event handlers
   const assistantIdRef = useRef<string | null>(null)
 
@@ -133,6 +135,21 @@ export const useChat = () => {
               : m
           )
         )
+        // Upsert into the live-agents list. Only defined event fields are written
+        // — omission means "this tick said nothing", not "clear the prior value".
+        setLiveAgents((prev) => {
+          const idx = prev.findIndex((a) => a.parentToolUseId === e.parentToolUseId)
+          const patch: LiveAgent = { parentToolUseId: e.parentToolUseId, status: e.status }
+          if (e.taskId !== undefined) patch.taskId = e.taskId
+          if (e.agentType !== undefined) patch.agentType = e.agentType
+          if (e.description !== undefined) patch.description = e.description
+          if (e.totalTokens !== undefined) patch.totalTokens = e.totalTokens
+          if (e.toolUses !== undefined) patch.toolUses = e.toolUses
+          if (e.durationMs !== undefined) patch.durationMs = e.durationMs
+          if (e.lastToolName !== undefined) patch.lastToolName = e.lastToolName
+          if (idx === -1) return [...prev, patch]
+          return prev.map((a, i) => (i === idx ? { ...a, ...patch } : a))
+        })
       } else if (e.type === 'turn-end') {
         assistantIdRef.current = null
         setBusy(false)
@@ -193,6 +210,7 @@ export const useChat = () => {
     assistantIdRef.current = null
     setBusy(false)
     setMessages(transcript.map(toChatMessage))
+    setLiveAgents([])
     setActiveSessionId(id)
     window.api.targetSession(id)
   }, [busy])
@@ -203,6 +221,7 @@ export const useChat = () => {
     assistantIdRef.current = null
     setBusy(false)
     setMessages([])
+    setLiveAgents([])
     setActiveSessionId(null)
     window.api.targetSession(null)
   }, [busy])
@@ -223,5 +242,15 @@ export const useChat = () => {
     []
   )
 
-  return { messages, busy, activeSessionId, send, stop, respondToPermission, openSession, newChat }
+  return {
+    messages,
+    busy,
+    activeSessionId,
+    liveAgents,
+    send,
+    stop,
+    respondToPermission,
+    openSession,
+    newChat
+  }
 }

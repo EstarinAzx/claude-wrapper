@@ -1,9 +1,10 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, act, within } from '@testing-library/react'
 import App from '../src/renderer/src/App'
 import { fakeChatApi } from './chat-harness'
 import type { SessionMeta } from '../src/shared/session-types'
 import type { SubagentInfo } from '../src/shared/subagent-types'
+import type { EngineEvent } from '../src/shared/engine-types'
 
 let harness: ReturnType<typeof fakeChatApi>
 
@@ -200,6 +201,173 @@ describe('agents dock — empty states are distinct facts', () => {
     openDock()
 
     expect(await screen.findByText(/Could not read this session/)).toBeTruthy()
+  })
+})
+
+// The live half of the panel. Rows arrive as engine `subagent` events; the dock
+// merges them with whatever the disk read returned.
+describe('agents dock — live rows', () => {
+  const liveEvent = (over: Record<string, unknown> = {}): EngineEvent =>
+    ({
+      type: 'subagent',
+      parentToolUseId: 'toolu-1',
+      status: 'running',
+      agentType: 'general-purpose',
+      description: 'Reading notes.txt',
+      ...over
+    }) as EngineEvent
+
+  test('an agent appears while the turn is still running, before it finishes', async () => {
+    await startSession()
+    openDock()
+    harness.emit(liveEvent())
+
+    expect(await screen.findByText('general-purpose')).toBeTruthy()
+    expect(screen.getByText('Reading notes.txt')).toBeTruthy()
+    expect(screen.getByText('running…')).toBeTruthy()
+  })
+
+  test('a running row shows tokens, tool count, elapsed and the last tool', async () => {
+    await startSession()
+    openDock()
+    harness.emit(
+      liveEvent({ totalTokens: 53689, toolUses: 2, durationMs: 14636, lastToolName: 'Read' })
+    )
+
+    expect(await screen.findByText('53.7k ctx · 2 tools · 15s · Read')).toBeTruthy()
+  })
+
+  test('the numbers update in place as progress ticks arrive', async () => {
+    await startSession()
+    openDock()
+    harness.emit(
+      liveEvent({ totalTokens: 51000, toolUses: 1, durationMs: 3000, lastToolName: 'Glob' })
+    )
+    expect(await screen.findByText('51.0k ctx · 1 tool · 3s · Glob')).toBeTruthy()
+
+    harness.emit(
+      liveEvent({ totalTokens: 54700, toolUses: 5, durationMs: 50000, lastToolName: 'Edit' })
+    )
+
+    expect(await screen.findByText('54.7k ctx · 5 tools · 50s · Edit')).toBeTruthy()
+    expect(screen.queryByText(/51\.0k/)).toBeNull()
+    expect(within(dock()).getAllByRole('listitem')).toHaveLength(1)
+  })
+
+  test('a tick that omits the last tool name does not blank the one already shown', async () => {
+    await startSession()
+    openDock()
+    harness.emit(liveEvent({ toolUses: 1, lastToolName: 'Read' }))
+    expect(await screen.findByText('1 tool · Read')).toBeTruthy()
+
+    harness.emit(liveEvent({ toolUses: 2 }))
+
+    expect(await screen.findByText('2 tools · Read')).toBeTruthy()
+  })
+
+  test('status settles to done when the agent finishes', async () => {
+    await startSession()
+    openDock()
+    harness.emit(liveEvent())
+    expect(await screen.findByText('running…')).toBeTruthy()
+
+    harness.emit(liveEvent({ status: 'done', toolUses: 3 }))
+
+    expect(await screen.findByText('done')).toBeTruthy()
+    expect(screen.queryByText('running…')).toBeNull()
+  })
+
+  test('a genuine zero tool count is shown, not swallowed as missing data', async () => {
+    await startSession()
+    openDock()
+    harness.emit(liveEvent({ toolUses: 0 }))
+
+    expect(await screen.findByText('0 tools')).toBeTruthy()
+  })
+
+  test('rows stay after the turn ends so the fan-out can be reviewed', async () => {
+    await startSession()
+    openDock()
+    harness.emit(liveEvent({ status: 'done' }))
+    expect(await screen.findByText('general-purpose')).toBeTruthy()
+
+    harness.emit({ type: 'turn-end' })
+
+    expect(await screen.findByText('general-purpose')).toBeTruthy()
+  })
+
+  test('an agent that started while the dock was closed is there when it opens', async () => {
+    await startSession()
+    harness.emit(liveEvent())
+    openDock()
+
+    expect(await screen.findByText('general-purpose')).toBeTruthy()
+  })
+
+  test('an agent on disk that runs again is one row, with the live fields winning', async () => {
+    harness.api.listSubagents.mockResolvedValue([
+      agent({ description: 'from disk', model: 'claude-sonnet-5', spawnDepth: 1 })
+    ])
+    await startSession([sess('sess-1', 'past work')])
+    fireEvent.click(await screen.findByText('past work'))
+    openDock()
+    expect(await screen.findByText('from disk')).toBeTruthy()
+
+    // Same correlation key as the sidecar — this is the same agent, running again.
+    harness.emit(
+      liveEvent({ parentToolUseId: 'task-1', description: 'running again', totalTokens: 52000 })
+    )
+
+    // Scoped to the dock — the sessions rail renders list items of its own.
+    expect(within(dock()).getAllByRole('listitem')).toHaveLength(1)
+    expect(await screen.findByText('running again')).toBeTruthy()
+    expect(screen.queryByText('from disk')).toBeNull()
+    // The disk-only fields survive the merge rather than being dropped.
+    expect(screen.getByText('claude-sonnet-5 · depth 1')).toBeTruthy()
+  })
+
+  test('a disk-only row shows no status and no usage numbers beside a live one', async () => {
+    harness.api.listSubagents.mockResolvedValue([
+      agent({ agentId: 'd1', parentToolUseId: 'disk-only', description: 'never ran again' })
+    ])
+    await startSession([sess('sess-1', 'past work')])
+    fireEvent.click(await screen.findByText('past work'))
+    openDock()
+    expect(await screen.findByText('never ran again')).toBeTruthy()
+
+    harness.emit(liveEvent({ toolUses: 4 }))
+
+    expect(await screen.findByText('4 tools')).toBeTruthy()
+    // One status label and one stats line in the whole list — the live row's.
+    expect(screen.getAllByText('running…')).toHaveLength(1)
+    expect(document.querySelectorAll('.agent-row-stats')).toHaveLength(1)
+    expect(screen.queryByText(/0 tools/)).toBeNull()
+  })
+
+  test('live rows still show when the agent directory cannot be read', async () => {
+    harness.api.listSubagents.mockResolvedValue(null)
+    await startSession([sess('sess-1', 'past work')])
+    fireEvent.click(await screen.findByText('past work'))
+    openDock()
+    expect(await screen.findByText(/Could not read this session/)).toBeTruthy()
+
+    harness.emit(liveEvent())
+
+    expect(await screen.findByText('general-purpose')).toBeTruthy()
+    expect(screen.queryByText(/Could not read this session/)).toBeNull()
+  })
+
+  test('clicking a live row opens that agent in the drawer', async () => {
+    harness.api.subagentTranscript.mockResolvedValue([
+      { role: 'assistant', text: 'found the config' }
+    ])
+    await startSession()
+    openDock()
+    harness.emit(liveEvent())
+
+    fireEvent.click(await screen.findByText('general-purpose'))
+
+    expect(screen.getByRole('dialog', { name: 'Subagent general-purpose' })).toBeTruthy()
   })
 })
 

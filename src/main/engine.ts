@@ -156,6 +156,49 @@ const toUserMessage = ({ text, attachments }: SendPayload): SDKUserMessage => {
   }
 }
 
+type SubagentEvent = Extract<EngineEvent, { type: 'subagent' }>
+
+const str = (v: unknown): string | undefined =>
+  typeof v === 'string' && v.length > 0 ? v : undefined
+const num = (v: unknown): number | undefined =>
+  typeof v === 'number' && Number.isFinite(v) ? v : undefined
+
+const assignDefined = (
+  target: Record<string, unknown>,
+  fields: Record<string, unknown>
+): void => {
+  for (const [k, v] of Object.entries(fields)) if (v !== undefined) target[k] = v
+}
+
+// Build the widened subagent event from whichever task message we are holding.
+// Only fields the message actually carried are attached: an absent usage number
+// has to reach the panel ABSENT, because "no data" and "zero tokens" are
+// different facts there. total_tokens is cumulative context, not spend.
+const subagentEvent = (
+  parentToolUseId: string,
+  status: SubagentEvent['status'],
+  src: Record<string, unknown>
+): SubagentEvent => {
+  const usage = (src.usage ?? {}) as Record<string, unknown>
+  const event: SubagentEvent = { type: 'subagent', parentToolUseId, status }
+  assignDefined(event as unknown as Record<string, unknown>, {
+    taskId: str(src.task_id),
+    agentType: str(src.subagent_type),
+    description: str(src.description),
+    lastToolName: str(src.last_tool_name),
+    totalTokens: num(usage.total_tokens),
+    toolUses: num(usage.tool_uses),
+    durationMs: num(usage.duration_ms)
+  })
+  return event
+}
+
+// task_updated carries its status inside `patch`; task_notification carries it
+// at the top level. Anything that is not a known terminal word is treated as
+// another progress tick — task_updated was only ever observed terminal, but a
+// future running/pending patch must not read as "finished".
+const NON_TERMINAL = new Set(['running', 'pending', 'in_progress', 'queued'])
+
 const mapStreamError = (raw: string): string => {
   if (/ENOENT/i.test(raw)) {
     return `Claude CLI not found. Install Claude Code, then pick the folder again. (${raw})`
@@ -198,10 +241,17 @@ export const createEngine = (
   let terminalError: string | null = null
   let interrupting = false
   let currentSessionId: string | null = null
-  // Task tool_use ids that have produced forwarded subagent output this engine.
-  // A `running` subagent event fires once per id (on the first tagged block);
-  // the id is cleared when the Task's own tool_result marks it done/failed.
+  // Agent tool_use ids with an open subagent this engine. A `running` event
+  // fires once per id; the id is cleared when the agent reaches a terminal
+  // state — via its task message, or via the Agent tool's own tool_result.
   const subagentParents = new Set<string>()
+  // task_id -> the spawning Agent tool_use id. Populated ONLY by a task_started
+  // whose task_type is local_agent, which is also what keeps backgrounded Bash
+  // calls out of the panel: they ride the same stream with their own task ids,
+  // and later task messages are ignored unless their task_id is in here.
+  // Needed at all because task_progress/task_updated for a nested agent carry
+  // task_id and nothing else — the two ids are separate keys, so we keep both.
+  const taskToParent = new Map<string, string>()
 
   const emit = (e: EngineEvent): void => {
     activeOnEvent?.(e)
@@ -224,6 +274,48 @@ export const createEngine = (
       emit({ type: 'subagent', parentToolUseId: id, status: 'failed' })
     }
     subagentParents.clear()
+    taskToParent.clear()
+  }
+
+  // The CLI's task lifecycle, which arrives as `system` messages the engine used
+  // to drop wholesale. This is the rich presence source: it names the agent
+  // before any output exists and carries live usage. The parent_tool_use_id path
+  // below stays as the floor — both upsert the same key, so whichever lands
+  // first creates the row and neither duplicates it.
+  const handleTaskMessage = (src: Record<string, unknown>): void => {
+    const subtype = str(src.subtype)
+    const taskId = str(src.task_id)
+
+    if (subtype === 'task_started') {
+      // local_bash tasks share this stream; only real agents become rows.
+      if (str(src.task_type) !== 'local_agent') return
+      const parent = str(src.tool_use_id)
+      if (parent === undefined || taskId === undefined) return
+      taskToParent.set(taskId, parent)
+      subagentParents.add(parent)
+      emit(subagentEvent(parent, 'running', src))
+      return
+    }
+
+    if (taskId === undefined) return
+    // An unregistered task_id is a task we never accepted (bash, or one that
+    // started before this engine attached) — ignore it rather than invent a row.
+    const parent = taskToParent.get(taskId)
+    if (parent === undefined) return
+
+    if (subtype === 'task_progress') {
+      emit(subagentEvent(parent, 'running', src))
+    } else if (subtype === 'task_notification' || subtype === 'task_updated') {
+      const patch = src.patch as Record<string, unknown> | undefined
+      const status = str(src.status) ?? str(patch?.status)
+      if (status === undefined || NON_TERMINAL.has(status)) {
+        emit(subagentEvent(parent, 'running', src))
+        return
+      }
+      subagentParents.delete(parent)
+      taskToParent.delete(taskId)
+      emit(subagentEvent(parent, status === 'completed' ? 'done' : 'failed', src))
+    }
   }
 
   const handleMessage = (msg: SdkMessage): void => {
@@ -247,7 +339,9 @@ export const createEngine = (
       return
     }
 
-    if (msg.type === 'stream_event') {
+    if (msg.type === 'system') {
+      handleTaskMessage(msg as unknown as Record<string, unknown>)
+    } else if (msg.type === 'stream_event') {
       const event = msg.event as {
         type?: string
         delta?: { type?: string; text?: string }
