@@ -10,6 +10,7 @@ tags: [context, decisions]
 Settled questions. One file per decision in `decisions/`. Newest first.
 
 <!-- one line per entry, newest at top -->
+- [[2026-07-25-task-messages-confirmed-live-shape]] — spike #27 confirms the CLI emits all three task messages (#30 keeps full scope); plus the runtime shape that constrains it — `task_notification` is the real completion signal, `task_updated` is terminal-only, `local_bash` tasks share the stream, and nested agents are invisible to `parent_tool_use_id`
 - [[2026-07-25-attachments-embed-images-paths-for-files]] — spec #26: images embed as base64 blocks, non-images go by absolute path for the agent to Read; text-only sends stay a plain string (pinned); caps in one pure policy module; replay shows chips because one persisted screenshot measured 263 KB of base64
 - [[2026-07-25-agents-surface-task-messages-not-text-forwarding]] — spec #25: Agents panel feeds on SDK `task_started`/`task_progress`/`task_updated` (spike #27 gates it) instead of `forwardSubagentText`; one panel with list ⇄ map, disk+live merge, nesting via on-disk `parentAgentId`, deterministic SVG map
 - [[2026-07-24-wisp-alias-routes-by-name]] — model pill sends the Wisp alias/family **name** as `options.model`, never the resolved model id (a resolved id hangs the turn); reverses #23's untested "route by resolved id" guess, fixed in `f94f1a2`

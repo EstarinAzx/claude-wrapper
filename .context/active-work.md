@@ -7,97 +7,111 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-25, interactive wrap-up (`/preset init` funnel — two specs, nine tickets)_
-_At commit: 1ac81bc on main (+ this wrap-up's `.context/` commit)_
+_Last updated: 2026-07-25, relay leg 1 (`.claude/relay-leg.md`, N=1) — ticket #27_
+_At commit: `02b0cd5` on main (+ this leg's `.context/` commit)_
 
 ## Current focus
 
-**Nine tracer tickets queued and unblocked-in-order; a `/relay` chain drains
-them unattended.** No production code changed this session — it was a full
-`/preset init` funnel: grill → `/hp` → `to-spec` ×2 → `to-tickets`.
+**A `/relay` chain is draining nine tracer tickets, one per leg, unattended.**
+Two disjoint specs are open: **#25 Agents surface** and **#26 Attachments**.
+Prior specs #9, #16, #20 stay closed; #1 (MVP umbrella, unlabelled) is out of
+scope.
 
-The owner picked three deferred threads (#24 subagent follow-ons, spatial
-agents-view, paste/attach) and they were split into **two disjoint specs**:
+Leg 1 delivered **#27** — the spike gating the whole live-metrics half of #25.
+No production code changed (by design: the spike's deliverable is a finding).
 
-- **#25 — Agents surface** (threads 1+2 merged: same data model, same panel)
-- **#26 — Attachments** (input composition, independent)
-
-Both `ready-for-agent`. Prior specs #9, #16, #20 stay closed; #1 (MVP umbrella,
-unlabelled) remains out of scope.
-
-## Ticket graph (native GitHub dependencies, verified)
+## Ticket graph (native GitHub dependencies)
 
 ```
-#27 spike ──┐
-            ├──> #30 live rows
-#28 dock ───┴──> #31 nesting ──> #33 map
+#27 spike ✅──┐
+              ├──> #30 live rows
+#28 dock ─────┴──> #31 nesting ──> #33 map
 
 #29 prefactor ──> #32 paste ──┬──> #34 paperclip
                               └──> #35 replay chips
 ```
 
-Unblocked right now: **#27, #28, #29**. No cross-spec edges — a stall on one
-spec never blocks the other.
+Unblocked right now: **#28, #29**. #30 and #31 still wait on #28. No cross-spec
+edges — a stall on one spec never blocks the other.
 
-| # | Ticket | Spec |
-|---|---|---|
-| 27 | Spike: confirm the CLI emits `task_started`/`task_progress`/`task_updated` | #25 |
-| 28 | Agents dock, hydrated from disk | #25 |
-| 29 | Prefactor: widen the send payload to text + attachments | #26 |
-| 30 | Live agent rows from task messages | #25 |
-| 31 | Nested agents as a tree | #25 |
-| 32 | Paste an image and send it | #26 |
-| 33 | Map mode for the Agents panel | #25 |
-| 34 | Paperclip: file picker and by-path attachments | #26 |
-| 35 | Attachments survive replay | #26 |
+| # | Ticket | Spec | State |
+|---|---|---|---|
+| 27 | Spike: confirm the CLI emits the task messages | #25 | **closed** — confirmed |
+| 28 | Agents dock, hydrated from disk | #25 | open, unblocked ← **next** |
+| 29 | Prefactor: widen the send payload to text + attachments | #26 | open, unblocked |
+| 30 | Live agent rows from task messages | #25 | blocked by #28 |
+| 31 | Nested agents as a tree | #25 | blocked by #28 |
+| 32 | Paste an image and send it | #26 | blocked by #29 |
+| 33 | Map mode for the Agents panel | #25 | blocked by #31 |
+| 34 | Paperclip: file picker and by-path attachments | #26 | blocked by #32 |
+| 35 | Attachments survive replay | #26 | blocked by #32 |
 
-## Done this session
+## Done this leg (#27)
 
-- **Grilled** the three threads to settled decisions (12 questions), grounded in
-  fact-finding rather than guesswork: read `sdk.d.ts` for the task-message
-  types, inspected the local transcript store for sidecar shape and image-block
-  size, confirmed the paperclip is decorative and the transcript parser is
-  text-only.
-- **`/hp`** — three new MVD sections in [[happy-path]] (watch agents live,
-  review a past session's agents, send a screenshot and a file).
-- **`to-spec` ×2** — #25 (40 user stories), #26 (30 user stories), each with
-  seams agreed before writing.
-- **`to-tickets`** — nine vertical slices, published in dependency order with
-  native GitHub `blocked_by` edges (verified 0,0,0,2,1,1,1,2,2).
-- **Two decisions** recorded:
-  [[2026-07-25-agents-surface-task-messages-not-text-forwarding]] ·
-  [[2026-07-25-attachments-embed-images-paths-for-files]].
-- **Fixed `.claude/relay-leg.md`** — its slot section still named the retired
-  `~/.claude/slot/lease-<family>.json` files; rewritten to the live
-  `wisp snapshot` / `wisp snapshot revert` mechanic (wisp-router 2.0.36 local).
+Two instrumented turns against the installed CLI (2.1.217, SDK 0.3.217) using a
+throwaway harness that mirrors `engine.ts`'s query options and dumps every
+message to JSONL. **Verdict: all three task messages are real; #30 keeps full
+scope.** Finding recorded as a comment on #25
+(`issues/25#issuecomment-5077330745`) and folded into
+[[2026-07-25-task-messages-confirmed-live-shape]]. Gate green, tree clean, no
+commits on the ticket branch.
 
-## Facts established this session (don't re-derive)
+## Facts established by the spike (don't re-derive)
 
-- **SDK task messages exist in the types** at `@anthropic-ai/claude-agent-sdk@^0.3.217`:
-  `task_started` (task id, tool-use id, description, subagent type, prompt),
-  `task_progress` (`usage.{total_tokens, tool_uses, duration_ms}`,
-  `last_tool_name`, optional `summary` behind `agentProgressSummaries`),
-  `task_updated` (status patch), `tool_progress` (`parent_tool_use_id`,
-  elapsed, retry info). **Whether the installed CLI emits them is #27's job.**
+- **All four task messages arrive** — `task_started`, `task_progress`,
+  `task_updated`, and an undocumented **`task_notification`**, which is the real
+  completion signal (final `usage`, result `summary`, `output_file` path).
+- **`task_updated` is terminal-only** — one `completed` patch per agent, no
+  `running`/`pending`, and none at all for bash tasks.
+- **`local_bash` tasks ride the same stream** → the panel must filter
+  `task_type === 'local_agent'`. `skip_transcript` was `false` on all of them,
+  so it is not a usable filter.
+- **Nested agents are invisible to `parent_tool_use_id`** — a nested subagent's
+  traffic is never forwarded; it surfaces only via its own task messages. #31's
+  tree comes from task messages + the `Agent` tool_use block, never from
+  forwarded traffic. No depth field exists on any message.
+- **One correlation key:** `task_started.tool_use_id` === `Agent` tool_use block
+  id === `parent_tool_use_id` === sidecar `toolUseId`. `task_id` is separate and
+  is the only key on `task_progress`/`task_updated` — keep both.
+- **Ordering at spawn is stable:** `Agent` tool_use block → `task_started` →
+  forwarded traffic. A row can exist before any output does.
+- **Progress is event-driven**, ~one tick per tool transition (2.5–3s apart),
+  not on a timer. `duration_ms` is agent-elapsed and monotonic.
+- **`total_tokens` is cumulative context**, ~52k floor for a trivial subagent —
+  not spend.
+- **`description` live-updates for free**; `summary` needs
+  `agentProgressSummaries` and landed on 1 tick in 7. Leave the flag off.
+- The spawning tool is named **`Agent`**, not `Task`. Nothing in `src/` keys off
+  that string today. `tool_progress` and `background_tasks_changed` never fired.
+- **`handleMessage` has no `type: 'system'` branch** — every one of these is
+  received and dropped today.
+
+## Facts from the spec session (still current)
+
 - **Sidecars carry more than the parser keeps.** `agent-<id>.meta.json` has
-  `agentType`, `description`, `toolUseId`, `spawnDepth`, `model`, and
-  `parentAgentId` on nested agents. `parseMeta` currently keeps two of six.
-- **Nesting is rare:** 184 depth-1 vs 1 depth-2 agents across the whole local
-  store. Design for a flat fan; make nesting correct, not central.
+  `agentType`, `description`, `toolUseId`, `spawnDepth`, `model`,
+  `parentAgentId`; `parseMeta` keeps two of six.
+- **Nesting is rare:** 184 depth-1 vs 1 depth-2 agents across the local store.
+  Design for a flat fan; make nesting correct, not central.
 - **Persisted images are big:** one screenshot = 263 KB of base64 in the session
-  jsonl. This is why replay shows chips, not thumbnails.
+  jsonl. Hence chips on replay, not thumbnails.
 - **`SDKUserMessage.message` is an Anthropic `MessageParam`** → image and
   document blocks are legal; the string-only path is the wrapper's choice.
 
 ## Known issues / not-our-bug
 
-- **Subagents refusing upstream (RESOLVED — not a wrapper bug).** Diagnosed as
-  the Wisp bridge / CLI harness. Grok subagents run fine via a `/slot` rebind.
+- **Native backend is unobservable on this host** — the CLI answers `Not logged
+  in · Please run /login` with the wisp vars stripped. All spike findings are
+  from the wisped backend. Not a wrapper bug; it does mean native-mode
+  behaviour is assumed, not measured.
+- **Subagents refusing upstream (RESOLVED)** — was the Wisp bridge / CLI
+  harness, not the wrapper. Grok subagents run fine via a `/slot` rebind.
 
 ## Pick up here
 
-The relay chain owns the queue. If it stalls, the frontier query is: oldest open
-`ready-for-agent` issue with `issue_dependencies_summary.blocked_by == 0`.
+The relay chain owns the queue; see [[pick-up]]. If it stalls, the frontier
+query is: oldest open `ready-for-agent` issue with
+`issue_dependencies_summary.blocked_by == 0` — currently **#28**.
 
 ## Deferred (still no spec)
 
@@ -114,7 +128,7 @@ map pan/zoom, token totals for historical agents.
   resolved id hangs the turn. See [[2026-07-24-wisp-alias-routes-by-name]].
 - **Never run bare `wisp snapshot`** — with no family argument it snapshots
   *every* row, and a held `haiku` snapshot blocks the next `/slot` rebind. Clear
-  with `wisp snapshot revert <family>` per row. (Hit live this session.)
+  with `wisp snapshot revert <family>` per row.
 - **New `window.api` channel → add to ALL FOUR mock sites** or App-render tests
   throw: `tests/chat-harness.ts` + inline mocks in `tests/sidebar.test.tsx`,
   `tests/session.test.tsx`, `tests/shell.test.tsx`. Guard every IPC with
@@ -133,7 +147,8 @@ map pan/zoom, token totals for historical agents.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-25-agents-surface-task-messages-not-text-forwarding]] ·
+- [[2026-07-25-task-messages-confirmed-live-shape]] ·
+  [[2026-07-25-agents-surface-task-messages-not-text-forwarding]] ·
   [[2026-07-25-attachments-embed-images-paths-for-files]]
 - [[2026-07-24-wisp-alias-routes-by-name]] ·
   [[2026-07-24-ui-polish-model-picker-subagent-viewer]]
