@@ -137,8 +137,19 @@ options, wisped. Full record in the capture comment on #37.
 
 ## Known issues / not-our-bug
 
-- **Native backend is unobservable on this host** — CLI answers `Not logged
-  in · Please run /login` with wisp vars stripped. Real turns must run **wisped**.
+- **Fable-5 safeguards refuse turns whose cwd looks sensitive** (diagnosed
+  2026-07-27, probe matrix in `%LOCALAPPDATA%/Temp/spike-refusal/probe.mjs`).
+  Wrapper sessions in `Downloads\.opera` refused plain "hi": fable flags →
+  CLI falls back to opus-4-8[1m] → sometimes also refuses → visible
+  "Usage Policy" API Error. Reproduced outside Electron with engine-shaped SDK
+  options. Tested: fresh `Temp/refusal-probe-*` cwd clean 4/4; `Downloads/.opera`,
+  `Temp/.opera`, `Downloads/probe-plain` refuse 3/3 on fable; same cwd with
+  `model: 'opus'` (opus-5) clean; no-bypass still refuses → **path is the
+  trigger, not permission mode**. CLI default model moved opus-5 → fable-5
+  ~2026-07-27 21:12 local, which is why it "used to work". Wrapper renders it
+  all faithfully — not our bug. Workarounds: pick opus/sonnet in the model
+  picker for such folders, or keep workspaces out of Downloads/dot-dirs. GUI
+  passes: keep using repo/`Temp/spike37`-style cwds.
 - **Sidebar session titles render raw `<local-command-caveat>…` markup** for
   sessions whose first message was a slash command — observed live during
   #37's GUI pass. #38-adjacent: check whether the title path shares
