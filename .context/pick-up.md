@@ -9,101 +9,64 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**#37 (`ab7835f`), #38 (`c077904`) and #39 (`0cb6e31`) are delivered** and
-closed with breadcrumbs. Spec #36 has ONE ticket left: **#40 (frontier,
-unblocked — #39 closed)**. When #40 lands, close spec #36. A
-`/relay 10m N=8 /preset ticket-loop` chain is running — state in
-`.claude/relay/ticket-loop.md`; check it before starting manual work.
+**Queue empty.** Spec #36 (slash commands) is fully delivered and closed —
+#37 `ab7835f` · #38 `c077904` · #39 `0cb6e31` · #40 `c63e170`, all
+squash-merged to main, 441 tests green. The `/relay 10m N=8 /preset
+ticket-loop` chain stopped itself on queue-dry (leg 1, 3 firings, state file
+`stop: true`). New work needs a spec first: `/preset init` for a fresh idea,
+or seed from the deferred list in [[active-work]].
 
-## Next task — #40, "Composer slash-command autocomplete"
+## Open loose ends (no spec, just candidates)
 
-`gh issue view 40 --comments` for the full ticket. Typing `/` in the composer
-opens a filtered popover of commands; picking one fills the input. Binding
-decisions ([[2026-07-27-slash-commands-are-a-dumb-pipe]]): the wrapper still
-never validates a command — autocomplete is typing help, not a gate.
-
-## Landmines for #40 specifically
-
-- **Enter interception is THE mutation-verified pin, both directions.**
-  Autocomplete intercepts Enter *only* while its popover is open with a row
-  highlighted; every other state falls through to submit. Backwards breaks
-  sending entirely — worse than shipping no autocomplete. Pin both ways.
-- **Reuse `window.api.listCommands()`** — the guarded channel from #39, mocked
-  at all four sites already. No new IPC.
-- InputBar already carries the `{text, nonce}` pending-insert effect (#39) —
-  autocomplete insertion should compose with it, not fight it. The composer's
-  `onKeyDown` currently submits on every Enter (`InputBar.tsx`).
-- Composer test prior art: `tests/attachments-composer.test.tsx`
-  (`createEvent.paste` + `Object.defineProperty`, `await act(async () => {})`);
-  `tests/commands-dock.test.tsx` for the list-channel mock pattern.
-- The dock and the popover are separate surfaces sharing one channel — the
-  popover must not open the dock or care whether it is open.
+- **Host issue, check before any GUI work:** Electron→CLI spawns began
+  failing at ~20:31 on 2026-07-27 (`native binary … exists but failed to
+  launch` from inside Electron; fine from a shell). #40's GUI eyeball is
+  pending — `%LOCALAPPDATA%/Temp/spike37/gui-40.mjs` runs it (type `/co`,
+  expect the popover). Likely cures itself on reboot/AV settle.
+- **Caveat-blob follow-up** (from #38): `<local-command-caveat>` persists as
+  its own standalone user message; it replays verbatim and is what sidebar
+  titles show for command-first sessions. Candidate: drop caveat-only
+  messages in the parser as CLI noise — fixes replay and titles in one move.
+- `main` is **8 commits ahead of origin** — push is deliberate opt-in
+  (`/preset ship`).
 
 ## Landmines — carried, still live
 
-- Binding decisions: [[2026-07-27-slash-commands-are-a-dumb-pipe]] (amended
-  with the #37 capture). Golden paths: [[happy-path]].
-- **#40's Enter interception is the mutation-verified pin** — popover open
-  accepts, closed sends. Backwards breaks sending entirely.
-- **#36's peer-review automation sacrifices `fable`** — restore must survive a
-  failed review. **Never run bare `wisp snapshot`**; recover with
-  `wisp snapshot revert <family>`.
-- **Wisp `options.model` = alias/family NAME, never a resolved id** (hangs) —
-  [[2026-07-24-wisp-alias-routes-by-name]].
-- **Native backend is dead on this host** — real turns must run wisped.
-- **Never "fix" the plain-string pin** (`a text-only send keeps plain-string
-  content` in `tests/engine.test.ts`) by updating its expectation.
-- **Replay must never carry the payload**; **a cancel-shaped no-op returns
-  before the fold**; **`role="group"` not `role="img"`**; **alpha in the
-  colour, not static `opacity`**; **absent stays absent** (engine/merge/render);
-  **`taskToParent` is the `local_bash` filter**; **`listSubagents` returns
-  `[] | null`** with live rows on `null`; **sessions rail renders `<li>`** —
-  scope dock asserts with `within(dock())`, replay chips to `.msg-user`.
-- jsdom: no images, no CSP, no hit testing — new sources need their own CSP
-  grant and fail silently.
-- Don't re-derive: #27 task-message facts, sidecar `model` = family word,
-  native store `encodeCwd`, resume ceiling, `sessionId()` accessor, Tailwind
-  `@theme` (accent `--color-mint`), engine error copy char-pinned.
-- Fresh `npm install` may skip Electron postinstall → `node
-  node_modules/electron/install.js`. Pins: `vite ^7`, `@vitejs/plugin-react
-  ^5`, `typescript 7.0.2`.
+- Full ledger in [[active-work]]. Headlines: the plain-string engine pin and
+  the array-of-only-text parser pin are mutation-verified — never "fix" their
+  expectations; replay never carries the payload; absent stays absent;
+  `taskToParent` is the `local_bash` filter; wisp `options.model` = family
+  NAME ([[2026-07-24-wisp-alias-routes-by-name]]); never bare `wisp
+  snapshot`; native backend is dead on this host — real turns run wisped;
+  new `window.api` channel → ALL FOUR mock sites; jsdom: no images, no CSP,
+  no hit testing.
+- **New #40-era pins:** autocomplete's Enter interception (open intercepts /
+  closed submits) and the per-keystroke `listCommands` refetch are both
+  regression-pinned in `tests/autocomplete.test.tsx` — the refetch exists
+  because a single `[]` fetch mid-warm-up wedges the popover (live-observed,
+  jsdom-invisible).
+- Binding decisions for the whole slash-command surface:
+  [[2026-07-27-slash-commands-are-a-dumb-pipe]] (amended with #37's capture).
 
 ## Test helpers worth reusing
 
-- `tests/transcript.test.ts` — direct parser tests, no DOM. **#38's whole
-  seam.** Marker cases + the array-of-only-text pin live here.
-- `tests/engine.test.ts` — `capturingStub()` / `sendOne(payload)`;
-  `taskStarted()` etc. for task messages; #37's local-command describe block
-  shows the current system-branch fixtures.
-- `tests/chat-harness.ts` — `fakeChatApi` + `harness.emit()`. **#39/#40's
-  render seam.** Mock a new list channel the way `listModels` is.
-- `tests/attachments-composer.test.tsx` — composer prior art (**#40**):
-  `createEvent.paste` + `Object.defineProperty`, `await act(async () => {})`.
-- `tests/resume.test.tsx` — the replay seam (**#38's render half**):
-  `harness.api.loadTranscript.mockResolvedValue([...])`, click row, assert.
-- `tests/agents-dock.test.tsx` — **#39's structural twin.**
-- `tests/live-agents.test.tsx` — `renderHook` for `useChat` without `App`.
+- `tests/engine.test.ts` — `streamingStub()` / `capturingStub()`; #37's
+  system-branch fixtures; #39's warm-up inertness pins.
+- `tests/chat-harness.ts` — `fakeChatApi` + `harness.emit()`; mock list
+  channels the way `listCommands`/`listModels` are.
+- `tests/transcript.test.ts` — parser seam, marker + invocation-unwrap cases.
+- `tests/autocomplete.test.tsx` · `tests/commands-dock.test.tsx` — composer
+  popover + dock prior art.
+- `tests/resume.test.tsx` — replay seam. `tests/agents-dock.test.tsx` — dock
+  structure twin.
 
 ## GUI check
 
-`node .claude/skills/run-desktop/driver.mjs [--cycle]` (needs `npm run build`
-+ playwright-core, both present). Driver recipe (write in a temp dir outside
-the repo): `createRequire(pathToFileURL(REPO + '/package.json'))` then
-`require('playwright-core')` (plain `import()` yields no `_electron`); forward
-slashes everywhere except the dialog-stub path (real Windows form —
-`encodeCwd` runs on it); launch `node_modules/electron/dist/electron.exe`
-with `['--no-sandbox','--disable-gpu','.']`, `cwd` = repo, `env: process.env`;
-stub `dialog.showOpenDialog` in MAIN, click `.pick-folder-btn`.
-
-**New from #37's GUI pass:** Playwright's actionability "stable" wait hangs on
-the app's CSS animations — `page.click`/`locator.scrollIntoViewIfNeeded` stall;
-dispatch via `page.evaluate(() => document.querySelector(sel).click())` and DOM
-`scrollIntoView` instead. `app.close()` can hang — add a hard
-`setTimeout(process.exit)` timer. Measure in the DOM, never off screenshots;
-shrink window (`unmaximize(); setSize(1100, 780)`) for eyeball shots. Real
-attachment data: session `49c1495a`, row 49 of 62, click by index.
-
-**Instrumenting a real turn without the GUI** (#27/#37 pattern): SDK `query()`
-from a script outside the repo, `sdk.mjs` by absolute file URL, engine's exact
-options, async-generator prompt, dump JSONL, **wisped**. #37's scripts:
-`%LOCALAPPDATA%/Temp/spike37/` (capture.mjs, gui-check.mjs).
+`node .claude/skills/run-desktop/driver.mjs [--cycle]` (build + playwright-core
+present). Driver recipe + #37's SDK-capture recipe: see the GUI section of the
+previous baton, preserved in git history of this file, or the ready scripts in
+`%LOCALAPPDATA%/Temp/spike37/` (capture.mjs, gui-check.mjs, gui-39.mjs,
+gui-40.mjs). Key gotchas: `createRequire` for playwright-core; forward slashes
+except the dialog-stub path; DOM-dispatched clicks (Playwright stability wait
+hangs on the app's animations); hard `setTimeout(process.exit)`; measure in
+the DOM, never off screenshots.

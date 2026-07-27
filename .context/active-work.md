@@ -7,28 +7,28 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-27 — #37 + #38 + #39 delivered (ticket-loop leg 1)_
-_At commit: `0cb6e31` on main (#39 squash) + this firing's `.context/` commit_
+_Last updated: 2026-07-27 — spec #36 fully delivered, queue EMPTY_
+_At commit: `c63e170` on main (#40 squash) + this firing's `.context/` commit_
 
 ## Current focus
 
-**Spec #36 (slash commands) is three tickets in.** #37 at `ab7835f`, #38 at
-`c077904`, #39 at `0cb6e31` (427 tests + live GUI pass: 118 commands listed
-pre-send, click filled the composer). A `/relay 10m N=8 /preset ticket-loop`
-chain is running — state in `.claude/relay/ticket-loop.md`. Remaining queue:
-**#40 (frontier, last ticket)** — then the spec closes.
+**No queue.** Spec #36 (slash commands) is fully delivered and closed — all
+four tickets landed on main, gate-green, 441 tests: #37 `ab7835f`, #38
+`c077904`, #39 `0cb6e31`, #40 `c63e170`. The ticket-loop relay chain stopped
+itself on queue-dry (state `.claude/relay/ticket-loop.md`, `stop: true`). New
+work needs a spec first (`/preset init` or `/hp` → to-spec → to-tickets).
 
-## Ticket graph
+## Host issue observed at the end of leg 1 — not a code bug
 
-```
-#37 render live output   ✅ ab7835f
-#38 blob fix (parser)    ✅ c077904
-#39 commands dock        ✅ 0cb6e31 ──> #40 autocomplete   (frontier, unblocked)
-```
-
-| # | Ticket | Blocked by | Delivers |
-|---|---|---|---|
-| 40 | Composer slash-command autocomplete | #39 ✅ closed | `/` opens a filtered popover |
+From ~20:31 on 2026-07-27 the host began refusing **Electron→CLI spawns**: the
+SDK reports `Claude Code native binary … exists but failed to launch` on every
+`query()` built inside Electron, while the same `claude.exe --version` runs
+fine from a shell, and #39's GUI pass had worked minutes earlier. Reproducible
+across runs, not fixed by stripping session env vars. Consequence: #40's GUI
+eyeball never completed (driver ready at
+`%LOCALAPPDATA%/Temp/spike37/gui-40.mjs` — run it once the host recovers).
+Silver lining: warm-up inertness was observed live under a real spawn failure
+(clean reset, honest `[]`, no dead composer).
 
 ## Decisions binding these tickets
 
@@ -160,10 +160,23 @@ options, wisped. Full record in the capture comment on #37.
 - The commands dock has no resize handle (agents dock does) — deliberate; add
   only if asked.
 
+## Facts established by #40 (don't re-derive)
+
+- `SlashCommandInfo` carries optional `aliases` (absent-not-empty); the engine
+  passes non-empty alias arrays through. Autocomplete matches prefix on names
+  AND aliases.
+- Popover trigger window: value starts with `/` and has no space. The Enter
+  pin (open intercepts / closed submits) is mutation-verified both directions
+  in `tests/autocomplete.test.tsx`.
+- **The popover re-fetches `listCommands` on every keystroke in the window** —
+  a single fetch landing `[]` mid-warm-up wedges it shut otherwise. Observed
+  live, invisible to jsdom, pinned by a regression test.
+- Composer stays single-line (multiline still deferred, decisions orthogonal).
+
 ## Pick up here
 
-**#40 — Composer slash-command autocomplete.** Last ticket of #36; the spec
-closes when it lands. See [[pick-up]].
+**Nothing queued.** Spec #36 done. Next session: new spec, or the deferred
+list below is the seed material.
 
 ## Deferred (still no spec)
 
