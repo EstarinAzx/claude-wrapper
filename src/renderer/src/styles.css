@@ -619,6 +619,74 @@ body {
   display: flex;
 }
 
+/* ── commands dock (#39) — shares .agents-dock layout; rows mirror agent rows ── */
+
+.command-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+}
+
+.command-row {
+  display: flex;
+}
+
+.command-row-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.command-row-btn:hover {
+  background: oklch(0.92 0.01 210 / 0.05);
+}
+
+.command-row-btn:focus-visible {
+  outline: none;
+  background: oklch(0.92 0.01 210 / 0.08);
+  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
+}
+
+.command-row-name {
+  font-size: var(--fs-ui);
+  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.command-row-hint {
+  font-size: var(--fs-micro);
+  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.command-row-desc {
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* A nested row gets a hairline in its parent's column — at this row density
    indentation alone reads as an accident. Only nested rows carry it, so a
    session that spawned nothing nested stays a clean flat list. */

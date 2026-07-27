@@ -132,7 +132,19 @@ ipcMain.handle('session:pick-folder', async (event) => {
   setSessionCwd(filePaths[0])
   engine = makeEngine()
   pendingResume = null
+  // Eager warm-up (#39): the command list exists before the first send. Inert
+  // on failure by the engine's contract — a user who never opens the dock
+  // cannot tell this ran.
+  engine.warmUp()
   return filePaths[0]
+})
+
+// Live read of the CLI's command list for the Commands dock. No cache anywhere
+// — the SDK's supportedCommands() tracks the CLI's own commands_changed pushes.
+// [] with no engine or no live query: the dock's honest empty state.
+ipcMain.handle('commands:list', async (event) => {
+  if (!isTrustedIpc(event)) return []
+  return engine?.listCommands() ?? []
 })
 
 ipcMain.handle('session:list', async (event) => {

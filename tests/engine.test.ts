@@ -1491,3 +1491,133 @@ describe('engine local command output (#37)', () => {
     expect(events.filter((e) => e.type === 'command-output')).toEqual([])
   })
 })
+
+// #39 — eager warm-up at folder-pick + the live command list. Warm-up is inert
+// by contract: any failure leaves the engine exactly as found, so the first
+// real send rebuilds and fails at the normal time with the normal text.
+describe('engine warm-up + command list (#39)', () => {
+  test('warmUp builds the query; the first send reuses it (no second spawn)', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    expect(calls.length).toBe(1)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(delta('Hello'))
+    push(success)
+    const events = await turn
+    expect(calls.length).toBe(1)
+    expect(events).toEqual([{ type: 'text-delta', text: 'Hello' }, { type: 'turn-end' }])
+  })
+
+  test('listCommands maps the SDK list and re-fetches on every call (no cache)', async () => {
+    const supported = { calls: 0 }
+    const base = streamingStub()
+    const fn: QueryFn = (args) => {
+      const stream = base.fn(args) as AsyncIterable<SdkMessage> & {
+        supportedCommands?: () => Promise<unknown>
+      }
+      stream.supportedCommands = async () => {
+        supported.calls += 1
+        return [
+          { name: 'context', description: 'Show context usage', argumentHint: '', aliases: [] },
+          { name: 'model', description: 'Pick a model', argumentHint: '<model>' }
+        ]
+      }
+      return stream
+    }
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    const list = await engine.listCommands()
+    expect(list).toEqual([
+      { name: 'context', description: 'Show context usage', argumentHint: '' },
+      { name: 'model', description: 'Pick a model', argumentHint: '<model>' }
+    ])
+    await engine.listCommands()
+    expect(supported.calls).toBe(2)
+  })
+
+  test('listCommands is empty with no live query', async () => {
+    const { fn } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    expect(await engine.listCommands()).toEqual([])
+  })
+
+  test('listCommands is empty when the SDK call rejects', async () => {
+    const base = streamingStub()
+    const fn: QueryFn = (args) => {
+      const stream = base.fn(args) as AsyncIterable<SdkMessage> & {
+        supportedCommands?: () => Promise<unknown>
+      }
+      stream.supportedCommands = async () => {
+        throw new Error('boom')
+      }
+      return stream
+    }
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    expect(await engine.listCommands()).toEqual([])
+  })
+
+  test('a warm-up whose construction throws is inert: the next send rebuilds and works', async () => {
+    let call = 0
+    const base = streamingStub()
+    const fn: QueryFn = (args) => {
+      call += 1
+      if (call === 1) throw new Error('spawn claude ENOENT')
+      return base.fn(args)
+    }
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    base.push(delta('ok'))
+    base.push(success)
+    const events = await turn
+    expect(events).toEqual([{ type: 'text-delta', text: 'ok' }, { type: 'turn-end' }])
+    expect(call).toBe(2)
+  })
+
+  test('a warm-up whose stream dies before any turn is inert: the next send rebuilds and works', async () => {
+    let call = 0
+    const base = streamingStub()
+    const fn: QueryFn = (args) => {
+      call += 1
+      if (call === 1) {
+        // ponytail: generators require function*; no arrow form
+        return (async function* (): AsyncGenerator<SdkMessage> {
+          throw new Error('Invalid API key · Please run /login')
+        })()
+      }
+      return base.fn(args)
+    }
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    // Let the dying stream finish failing before the real send arrives.
+    await new Promise((r) => setTimeout(r, 0))
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    base.push(delta('ok'))
+    base.push(success)
+    const events = await turn
+    expect(events).toEqual([{ type: 'text-delta', text: 'ok' }, { type: 'turn-end' }])
+    expect(call).toBe(2)
+  })
+
+  test('warm-up failure then a genuinely broken backend: the send fails with the normal text', async () => {
+    const fn: QueryFn = () => {
+      throw new Error('spawn claude ENOENT')
+    }
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    const events = await collect(engine, 'hi')
+    expect(events).toEqual([{ type: 'error', message: 'spawn claude ENOENT' }])
+  })
+
+  test('warmUp without a folder is a no-op', () => {
+    const { fn, calls } = streamingStub()
+    const engine = createEngine(() => null, autoAllow(), fn)
+    engine.warmUp()
+    expect(calls.length).toBe(0)
+  })
+})

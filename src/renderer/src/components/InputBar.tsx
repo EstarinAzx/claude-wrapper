@@ -10,6 +10,11 @@ import type { ModelOption } from '../../../shared/model-types'
 interface InputBarProps {
   busy: boolean
   model: string | null
+  // Commands-dock insert (#39). REPLACES the composer text — a slash command
+  // only expands as the first token, so inserting at the cursor is
+  // meaningless; the click is deliberate. The nonce re-triggers the effect
+  // when the same command is clicked twice.
+  pendingInsert?: { text: string; nonce: number } | null
   onSend: (text: string, attachments: Attachment[]) => void
   onStop: () => void
   onPickModel: (model: string | null) => void
@@ -104,7 +109,7 @@ const readAsBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file)
   })
 
-const InputBar = ({ busy, model, onSend, onStop, onPickModel }: InputBarProps) => {
+const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: InputBarProps) => {
   const [value, setValue] = useState('')
   // Tray and rejections move together: one paste both admits and refuses items,
   // and the count cap is read off the tray, so a single atomic update avoids
@@ -118,6 +123,15 @@ const InputBar = ({ busy, model, onSend, onStop, onPickModel }: InputBarProps) =
   useEffect(() => {
     if (!busy) inputRef.current?.focus()
   }, [busy])
+
+  // Keyed on the nonce, not the object, so the same command clicked twice
+  // fires twice while an unrelated re-render never re-inserts.
+  useEffect(() => {
+    if (!pendingInsert) return
+    setValue(pendingInsert.text)
+    inputRef.current?.focus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingInsert?.nonce])
 
   // Only file data is intercepted; a text paste falls through to the input
   // untouched, which is the overwhelmingly common case. Every file — image or

@@ -5,6 +5,7 @@ import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { SendPayload } from '../shared/attachment-types'
 import type { Candidate } from '../shared/attachment-policy'
+import type { SlashCommandInfo } from '../shared/command-types'
 
 export interface WrapperApi {
   minimize: () => void
@@ -27,6 +28,7 @@ export interface WrapperApi {
   permissionMode: () => Promise<PermissionMode>
   setPermissionMode: (mode: PermissionMode) => void
   onPermissionChanged: (cb: (mode: PermissionMode) => void) => () => void
+  listCommands: () => Promise<SlashCommandInfo[]>
   listModels: () => Promise<ModelInfo>
   setModel: (model: string | null) => void
   onModelChanged: (cb: (model: string | null) => void) => () => void

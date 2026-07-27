@@ -6,6 +6,7 @@ import type {
   PermissionDecision
 } from '../shared/engine-types'
 import type { SendPayload } from '../shared/attachment-types'
+import type { SlashCommandInfo } from '../shared/command-types'
 
 export type SdkMessage =
   | { type: 'system'; subtype: string; session_id: string }
@@ -71,6 +72,7 @@ export type RequestPermissionFn = (req: {
 type QueryHandle = AsyncIterable<SdkMessage> & {
   close?: () => void
   interrupt?: () => Promise<void>
+  supportedCommands?: () => Promise<unknown>
 }
 
 // Pushable async queue of user messages for streaming-input mode.
@@ -243,6 +245,11 @@ export const createEngine = (
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
   let consumeStarted = false
+  // False until the first runTurn pushes a message. While false, a dying
+  // stream is a failed WARM-UP, which must be inert: reset to idle instead of
+  // setting terminalError, so the first real send rebuilds and fails at the
+  // normal time with the normal text.
+  let turnEverRun = false
   let activeOnEvent: ((e: EngineEvent) => void) | null = null
   let turnResolve: (() => void) | null = null
   let terminalError: string | null = null
@@ -553,6 +560,10 @@ export const createEngine = (
           for await (const msg of stream) {
             handleMessage(msg)
           }
+          if (!turnEverRun) {
+            resetToIdle()
+            return
+          }
           terminalError ??=
             'Claude session ended unexpectedly. Pick the folder again to restart.'
           if (turnResolve) {
@@ -561,6 +572,10 @@ export const createEngine = (
             finishTurn()
           }
         } catch (err) {
+          if (!turnEverRun) {
+            resetToIdle()
+            return
+          }
           const raw = err instanceof Error ? err.message : String(err)
           terminalError = mapStreamError(raw)
           drainSubagents()
@@ -572,6 +587,53 @@ export const createEngine = (
         }
       })()
     }
+  }
+
+  // Undo an unused query wholesale — the warm-up inertness contract. Only ever
+  // called before the first turn, so nothing is waiting on the stream.
+  const resetToIdle = (): void => {
+    queue?.end()
+    queue = null
+    consumeStarted = false
+    currentQuery = null
+  }
+
+  const warmUp = (resume?: string): void => {
+    const cwd = getCwd()
+    if (cwd === null || queue !== null || terminalError !== null) return
+    try {
+      ensureQuery(cwd, resume)
+    } catch {
+      // Swallowed by contract — see resetToIdle.
+      resetToIdle()
+    }
+  }
+
+  // Live read, no cache: supportedCommands() tracks the CLI's own
+  // commands_changed pushes, so a re-fetch is always fresh. [] on every
+  // failure path — no query yet, an SDK without the call, or a rejection.
+  const listCommands = async (): Promise<SlashCommandInfo[]> => {
+    const call = currentQuery?.supportedCommands
+    if (!call) return []
+    let raw: unknown
+    try {
+      raw = await call.call(currentQuery)
+    } catch {
+      return []
+    }
+    if (!Array.isArray(raw)) return []
+    return raw.flatMap((c): SlashCommandInfo[] => {
+      if (!c || typeof c !== 'object') return []
+      const cmd = c as Record<string, unknown>
+      if (typeof cmd.name !== 'string' || cmd.name.length === 0) return []
+      return [
+        {
+          name: cmd.name,
+          description: typeof cmd.description === 'string' ? cmd.description : '',
+          argumentHint: typeof cmd.argumentHint === 'string' ? cmd.argumentHint : ''
+        }
+      ]
+    })
   }
 
   const runTurn = async (
@@ -607,6 +669,7 @@ export const createEngine = (
 
     return new Promise<void>((resolve) => {
       turnResolve = resolve
+      turnEverRun = true
       queue!.push(toUserMessage(payload))
     })
   }
@@ -633,5 +696,5 @@ export const createEngine = (
 
   const sessionId = (): string | null => currentSessionId
 
-  return { runTurn, interrupt, close, sessionId }
+  return { runTurn, interrupt, close, sessionId, warmUp, listCommands }
 }

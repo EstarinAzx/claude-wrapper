@@ -6,6 +6,7 @@ import type { BackendInfo } from '../src/shared/backend-types'
 import type { ModelInfo, ModelOption } from '../src/shared/model-types'
 import type { SendPayload } from '../src/shared/attachment-types'
 import type { Candidate } from '../src/shared/attachment-policy'
+import type { SlashCommandInfo } from '../src/shared/command-types'
 
 const FAMILY_MODELS: ModelOption[] = [
   { id: 'opus', label: 'Opus', group: 'family' },
@@ -65,6 +66,9 @@ export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
       permListeners.add(cb)
       return () => permListeners.delete(cb)
     },
+    listCommands: vi
+      .fn<() => Promise<SlashCommandInfo[]>>()
+      .mockResolvedValue([]),
     listModels: vi
       .fn<() => Promise<ModelInfo>>()
       .mockResolvedValue({ models: FAMILY_MODELS, current: null }),

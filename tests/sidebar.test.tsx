@@ -29,6 +29,7 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
     permissionMode: vi.fn().mockResolvedValue('bypassPermissions'),
     setPermissionMode: vi.fn(),
     onPermissionChanged: vi.fn().mockReturnValue(() => {}),
+    listCommands: vi.fn().mockResolvedValue([]),
     listModels: vi.fn().mockResolvedValue({ models: [], current: null }),
     setModel: vi.fn(),
     onModelChanged: vi.fn().mockReturnValue(() => {}),

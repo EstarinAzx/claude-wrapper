@@ -78,6 +78,23 @@ const BackendPill = ({
   )
 }
 
+// Toggles the right-hand Commands dock — same right-slot family as the agents
+// toggle; App keeps the two docks mutually exclusive.
+const CommandsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => (
+  <button
+    type="button"
+    className={`agents-toggle${open ? ' agents-toggle--on' : ''}`}
+    aria-label="Commands panel"
+    aria-pressed={open}
+    title={open ? 'Commands panel — click to hide' : 'Commands panel — click to show'}
+    onClick={onToggle}
+  >
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <line x1="8.8" y1="3" x2="5.2" y2="11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  </button>
+)
+
 // Toggles the right-hand Agents dock. Sits with the window controls rather than
 // the left-hand state pills because it governs what the right side of the
 // workspace shows, not what the next turn runs against — a hairline separates it
@@ -107,20 +124,24 @@ const Titlebar = ({
   permission,
   busy = false,
   agentsOpen = false,
+  commandsOpen = false,
   onFlip,
   onCyclePermission,
-  onToggleAgents
+  onToggleAgents,
+  onToggleCommands
 }: {
   cwd: string | null
   backend: BackendInfo | null
   permission?: PermissionMode | null
   busy?: boolean
   agentsOpen?: boolean
+  commandsOpen?: boolean
   onFlip?: (target: BackendMode) => void
   onCyclePermission?: (next: PermissionMode) => void
   // Absent until a project folder is open — there is no workspace to dock to
-  // before that, so the control simply is not rendered.
+  // before that, so the controls simply are not rendered.
   onToggleAgents?: () => void
+  onToggleCommands?: () => void
 }) => (
   <header className="titlebar">
     <div className="titlebar-left">
@@ -141,11 +162,12 @@ const Titlebar = ({
       )}
     </div>
     <div className="titlebar-right">
-      {onToggleAgents ? (
-        <>
-          <AgentsToggle open={agentsOpen} onToggle={onToggleAgents} />
-          <span className="titlebar-sep" aria-hidden="true" />
-        </>
+      {onToggleCommands ? (
+        <CommandsToggle open={commandsOpen} onToggle={onToggleCommands} />
+      ) : null}
+      {onToggleAgents ? <AgentsToggle open={agentsOpen} onToggle={onToggleAgents} /> : null}
+      {onToggleAgents || onToggleCommands ? (
+        <span className="titlebar-sep" aria-hidden="true" />
       ) : null}
       <button
         type="button"

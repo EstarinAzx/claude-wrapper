@@ -3,6 +3,7 @@ import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { ModelInfo } from '../shared/model-types'
+import type { SlashCommandInfo } from '../shared/command-types'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { SendPayload } from '../shared/attachment-types'
 import type { Candidate } from '../shared/attachment-policy'
@@ -44,6 +45,7 @@ const api = {
       ipcRenderer.removeListener('permission:changed', listener)
     }
   },
+  listCommands: (): Promise<SlashCommandInfo[]> => ipcRenderer.invoke('commands:list'),
   listModels: (): Promise<ModelInfo> => ipcRenderer.invoke('model:list'),
   setModel: (model: string | null): void => ipcRenderer.send('model:set', model),
   onModelChanged: (cb: (model: string | null) => void): (() => void) => {

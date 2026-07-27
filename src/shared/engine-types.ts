@@ -1,4 +1,5 @@
 import type { SendPayload } from './attachment-types'
+import type { SlashCommandInfo } from './command-types'
 
 export type PermissionDecision = 'allow' | 'deny'
 
@@ -69,4 +70,15 @@ export interface Engine {
   ): Promise<void>
   interrupt(): void
   sessionId(): string | null
+  // Build the query eagerly (folder-pick) so the command list exists before the
+  // first send. INERT BY CONTRACT: any failure — sync or a stream that dies
+  // before a turn ever ran — is swallowed and the engine is left exactly as
+  // found, so the first real send rebuilds and fails at the normal time with
+  // the normal message. A user who never opens the dock cannot tell warm-up
+  // exists.
+  warmUp(resume?: string): void
+  // Live read of the CLI's command list — never cached; the SDK's
+  // supportedCommands() tracks commands_changed pushes internally. [] when
+  // there is no live query (fresh launch / failed warm-up) or on any error.
+  listCommands(): Promise<SlashCommandInfo[]>
 }

@@ -8,6 +8,7 @@ import InputBar from './components/InputBar'
 import Welcome from './components/Welcome'
 import SubagentDrawer from './components/SubagentDrawer'
 import AgentsDock from './components/AgentsDock'
+import CommandsDock from './components/CommandsDock'
 import { useChat } from './useChat'
 import { useZoom } from './useZoom'
 
@@ -20,7 +21,17 @@ const App = () => {
     parentToolUseId: string
     agentType: string
   } | null>(null)
-  const [agentsOpen, setAgentsOpen] = useState(false)
+  // ONE right-dock slot: agents or commands, never both. Stacking the two
+  // squeezes the chat column past usability, so opening one closes the other.
+  const [openDock, setOpenDock] = useState<'agents' | 'commands' | null>(null)
+  // Pending composer insert from the commands dock. The nonce is load-bearing:
+  // clicking the same row twice must fire twice, and an unchanged prop would
+  // not re-trigger. A prop (not lifted composer state) so the message list is
+  // not re-rendered per keystroke.
+  const [pendingInsert, setPendingInsert] = useState<{
+    text: string
+    nonce: number
+  } | null>(null)
   const {
     messages,
     busy,
@@ -87,10 +98,14 @@ const App = () => {
         backend={backend}
         permission={permission}
         busy={busy}
-        agentsOpen={agentsOpen}
+        agentsOpen={openDock === 'agents'}
+        commandsOpen={openDock === 'commands'}
         onFlip={flipBackend}
         onCyclePermission={cyclePermission}
-        onToggleAgents={cwd ? () => setAgentsOpen((v) => !v) : undefined}
+        onToggleAgents={cwd ? () => setOpenDock((d) => (d === 'agents' ? null : 'agents')) : undefined}
+        onToggleCommands={
+          cwd ? () => setOpenDock((d) => (d === 'commands' ? null : 'commands')) : undefined
+        }
       />
       {cwd ? (
         <div className="workspace">
@@ -107,19 +122,28 @@ const App = () => {
             <InputBar
               busy={busy}
               model={model}
+              pendingInsert={pendingInsert}
               onSend={send}
               onStop={stop}
               onPickModel={pickModel}
             />
           </div>
-          {agentsOpen ? (
+          {openDock === 'agents' ? (
             <AgentsDock
               sessionId={activeSessionId}
               liveAgents={liveAgents}
               onOpenAgent={(parentToolUseId, agentType) =>
                 setOpenSubagent({ parentToolUseId, agentType })
               }
-              onClose={() => setAgentsOpen(false)}
+              onClose={() => setOpenDock(null)}
+            />
+          ) : null}
+          {openDock === 'commands' ? (
+            <CommandsDock
+              onInsert={(name) =>
+                setPendingInsert((p) => ({ text: `/${name} `, nonce: (p?.nonce ?? 0) + 1 }))
+              }
+              onClose={() => setOpenDock(null)}
             />
           ) : null}
           {openSubagent ? (
