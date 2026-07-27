@@ -1,7 +1,7 @@
 ---
 type: decisions-index
 project: claude-wrapper
-updated: 2026-07-25
+updated: 2026-07-27
 tags: [context, decisions]
 ---
 
@@ -10,6 +10,7 @@ tags: [context, decisions]
 Settled questions. One file per decision in `decisions/`. Newest first.
 
 <!-- one line per entry, newest at top -->
+- [[2026-07-27-slash-commands-are-a-dumb-pipe]] — PRD C (#36) gives the wrapper no notion of "slash command": typed text goes out unparsed and the CLI resolves it, so a real transcript's `"Unknown command: /mdoel. Did you mean /model?"` is the error path for free; command output gets a `command` role with **no avatar** (the CLI wrote it, not Claude) while informational banners reuse `notice`; the list is re-fetched per open and never cached because `supportedCommands()` already tracks the CLI's pushes; the query warms up at folder-pick and **must be inert on failure** or `terminalError` hands the user a dead composer; and the persisted subtype (`local_command`, ×29 across 80 transcripts) is **not** the streamed one, which is still unobserved — #37 opens with a capture because jsdom greens a branch keyed on a subtype that never arrives
 - [[2026-07-25-replay-shows-markers-not-bytes]] — #35 emits an `AttachmentMarker` per non-text block and renders chips, never the payload (measured: 2.17 MB of base64 in one real session replays as a 114 KB DOM); the 1375 array-of-only-text user messages are CLI noise and keep parsing to nothing — a deliberate, mutation-verified pin, not the same bug; `tool_result` short-circuits the branch because across 17295 occurrences it never once co-occurs with text or image; and live bytes vs replay markers stay two renderer fields rather than one union
 - [[2026-07-25-picker-returns-candidates-not-paths]] — #34's `attachments:pick` resolves policy `Candidate`s, not bare paths, because an image cannot embed without its bytes and reading them in main costs one channel instead of a renderer `readFile` plus a CSP widening; the read is `stat`-gated so an oversized, unreadable or non-image file all arrive path-only and take the fall-through the policy module already had; and the picker needs **no** new CSP grant — a picked image renders from the same `data:` URL a paste does, correcting #32's prediction of a `file:` grant
 - [[2026-07-25-map-geometry-is-a-pure-slot-layout]] — #33's map places `buildAgentTree`'s output in fixed slots with parents centred over their children (no graph lib, no solver, deterministic), in abstract viewBox units so nothing knows the panel width; shape encodes kind and colour only reinforces status, so a failed agent survives greyscale and a 4px node; plus three traps the suite could not see — `role="img"` hides every node button from assistive tech, `opacity` on the halo is overridden by the pulse keyframe, and hit-target sizing measured across depth bands collapses every click target to zero

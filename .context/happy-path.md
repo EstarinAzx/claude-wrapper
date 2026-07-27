@@ -1,7 +1,7 @@
 ---
 type: happy-path
 project: claude-wrapper
-updated: 2026-07-25
+updated: 2026-07-27
 tags: [happy-path, mvd]
 ---
 # Happy Paths (MVD)
@@ -66,3 +66,57 @@ flowchart LR
 ```
 
 Assumption noted, not drawn: on replay the same bubble shows `📎 image/png` chips, not thumbnails — the parser drops `source.data`.
+
+## Run a slash command (PRD C, ticket A)
+- **Idea:** type `/context`, see its answer — the CLI already runs it, the wrapper just has to render what comes back.  **Mode:** ux+beat  **Actor:** the developer at the input bar  **Goal:** read the output of a local command without leaving the chat
+- **Updated:** 2026-07-27
+
+```mermaid
+flowchart LR
+  input([Input focused]) -->|type /context, Enter · sendPrompt as ordinary text| sent[User bubble shows /context]
+  sent -->|CLI resolves + runs it locally| stream[system · local_command_output]
+  stream -->|new EngineEvent → renderer| card[Command message: markdown, no avatar]
+  card -->|result · success arrives| ready([Turn ends, input re-armed])
+```
+
+Assumptions noted, not drawn: the wrapper never parses the leading `/` — resolution, aliases and unknown-command text all stay the CLI's job; `informational` banners ride the existing notice role; the live stream shape is confirmed by a spike before any branch is written.
+
+## Reopen a session that used one (PRD C, blob fix)
+- **Idea:** a past `/relay` invocation reads as a command, not as raw XML.  **Mode:** ux+beat  **Actor:** the developer, no turn running  **Goal:** reopen a session and recognise what was typed
+- **Updated:** 2026-07-27
+
+```mermaid
+flowchart LR
+  pick([Click a session in the sidebar]) -->|transcript replays| parse[Parser meets command-name blob]
+  parse -->|unwrap name + args| bubble([User bubble reads /relay 1m say hello])
+```
+
+Assumption noted, not drawn: the command's *output* stays live-only this ticket — persisted `local_command` stdout is frequently empty, so replaying it is deferred until A shows which commands carry substance.
+
+## Discover what's available (PRD C, ticket B)
+- **Idea:** a right dock listing every command this session knows, straight from the CLI.  **Mode:** ux+beat  **Actor:** the developer, fresh app, nothing sent yet  **Goal:** find out a command exists and get it into the composer
+- **Updated:** 2026-07-27
+
+```mermaid
+flowchart LR
+  folder([Folder picked]) -->|query built early · warm-up| warm[Command list available pre-first-turn]
+  warm -->|click Commands · titlebar toggle| dock[Right dock opens]
+  dock -->|commands:list · supportedCommands| rows[Rows: name · description · argument hint]
+  rows -->|click a row · pendingInsert| composer([Composer reads /usage, focused])
+```
+
+Assumptions noted, not drawn: opening this dock closes the Agents dock; the list is fetched fresh per open and never cached, because `supportedCommands()` tracks the CLI's own pushes.
+
+## Complete a command as you type (PRD C, ticket C)
+- **Idea:** `/` opens a filtered popover above the composer; Enter accepts the highlighted name.  **Mode:** ux+beat  **Actor:** the developer who half-remembers the name  **Goal:** get to `/usage ` in three keystrokes
+- **Updated:** 2026-07-27
+
+```mermaid
+flowchart LR
+  input([Input empty, focused]) -->|type / · value starts with slash, no space| pop[Popover opens above composer]
+  pop -->|type us · prefix match on name + aliases| filtered[Rows narrow to /usage]
+  filtered -->|Down then Enter · intercepted before submit| filled[Composer reads /usage, popover closed]
+  filled -->|Enter · normal submit| sent([Command sent])
+```
+
+Assumptions noted, not drawn: accepting inserts text and never sends — the send stays the user's own keystroke; the composer stays single-line, with multiline still deferred.
