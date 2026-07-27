@@ -51,6 +51,12 @@ export type EngineEvent =
       name: string
       input: Record<string, unknown>
     }
+  // Output of a local slash command (/context, /usage). CLI-produced text —
+  // rendered as markdown under its own role, never attributed to Claude.
+  | { type: 'command-output'; text: string }
+  // Informational banner from the CLI (e.g. "Unknown command: … Did you
+  // mean …?"). The renderer shows it through the existing notice styling.
+  | { type: 'notice'; text: string }
   | { type: 'turn-end' }
   | { type: 'turn-aborted' }
   | { type: 'error'; message: string }

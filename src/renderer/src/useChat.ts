@@ -21,6 +21,9 @@ export type ChatMessage =
   | { id: string; role: 'assistant'; text: string }
   | { id: string; role: 'error'; text: string }
   | { id: string; role: 'notice'; text: string }
+  // Local slash-command output — CLI-produced markdown, rendered without an
+  // avatar so it is never attributed to Claude.
+  | { id: string; role: 'command'; text: string }
   | {
       id: string
       role: 'tool'
@@ -174,6 +177,13 @@ export const useChat = () => {
           if (idx === -1) return [...prev, patch]
           return prev.map((a, i) => (i === idx ? { ...a, ...patch } : a))
         })
+      } else if (e.type === 'command-output') {
+        // A later delta must start a fresh assistant bubble, never append here.
+        assistantIdRef.current = null
+        setMessages((prev) => [...prev, { id: uid(), role: 'command', text: e.text }])
+      } else if (e.type === 'notice') {
+        assistantIdRef.current = null
+        setMessages((prev) => [...prev, { id: uid(), role: 'notice', text: e.text }])
       } else if (e.type === 'turn-end') {
         assistantIdRef.current = null
         setBusy(false)

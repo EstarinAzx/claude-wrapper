@@ -27,6 +27,9 @@ export type SdkMessage =
       // it is the id of the Task tool_use that spawned the subagent.
       parent_tool_use_id?: string | null
       message: {
+        // "<synthetic>" marks CLI-produced text (local command output, unknown-
+        // command suggestions) — it never streams as deltas. See handleMessage.
+        model?: string
         content: Array<{
           type: string
           id?: string
@@ -344,7 +347,24 @@ export const createEngine = (
     }
 
     if (msg.type === 'system') {
-      handleTaskMessage(msg as unknown as Record<string, unknown>)
+      const src = msg as unknown as Record<string, unknown>
+      const subtype = str(src.subtype)
+      if (subtype === 'local_command_output') {
+        // Declared streaming shape (sdk.d.ts): content is the command's output,
+        // already plain text. Empty output emits nothing — an empty command
+        // message is worse than none.
+        const content = str(src.content)
+        if (content !== undefined) emit({ type: 'command-output', text: content })
+      } else if (subtype === 'informational') {
+        // 'info' is documented transcript-mode-only; this app has no transcript
+        // mode, so that level is dropped rather than rendered.
+        const content = str(src.content)
+        if (content !== undefined && str(src.level) !== 'info') {
+          emit({ type: 'notice', text: content })
+        }
+      } else {
+        handleTaskMessage(src)
+      }
     } else if (msg.type === 'stream_event') {
       const event = msg.event as {
         type?: string
@@ -358,6 +378,28 @@ export const createEngine = (
         emit({ type: 'text-delta', text: event.delta.text })
       }
     } else if (msg.type === 'assistant') {
+      // Local command output does NOT stream as the declared system subtype on
+      // this CLI — it arrives as a synthetic assistant message (captured live,
+      // see the #37 ticket comment): model "<synthetic>", text blocks only, no
+      // stream_event deltas at all. Route it to the command role and keep it
+      // out of the ordinary assistant path, which would attribute it to Claude.
+      const synthetic =
+        (msg as { message?: { model?: unknown } }).message?.model === '<synthetic>'
+      if (synthetic) {
+        const blocks = (msg as { message?: { content?: unknown } }).message?.content
+        const text = (Array.isArray(blocks) ? blocks : [])
+          .filter(
+            (b): b is { type: string; text: string } =>
+              !!b &&
+              typeof b === 'object' &&
+              (b as { type?: unknown }).type === 'text' &&
+              typeof (b as { text?: unknown }).text === 'string'
+          )
+          .map((b) => b.text)
+          .join('\n')
+        if (text) emit({ type: 'command-output', text })
+        return
+      }
       const content = (msg as { message?: { content?: unknown } }).message?.content
       if (Array.isArray(content)) {
         for (const block of content) {

@@ -1348,6 +1348,12 @@ body {
   line-height: 1.4;
 }
 
+/* Local command output: assistant-style markdown, avatar-width indent but no
+   avatar — the CLI wrote it, not Claude. */
+.msg-command {
+  margin-left: 40px;
+}
+
 /* ── tool card ── */
 
 .tool-card {

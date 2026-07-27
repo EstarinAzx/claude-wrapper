@@ -123,6 +123,21 @@ const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
               </div>
             )
           }
+          if (m.role === 'command') {
+            // No avatar: the CLI produced this text, not Claude.
+            return (
+              <div key={m.id} className="msg msg-command">
+                <div className="assistant-body">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeHighlight]}
+                  >
+                    {m.text}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            )
+          }
           return (
             <div key={m.id} className="msg msg-assistant">
               <Avatar />

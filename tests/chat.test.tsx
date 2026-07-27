@@ -131,3 +131,55 @@ describe('first chat turn', () => {
     expect(harness.prompts).toEqual([{ text: 'via button', attachments: [] }])
   })
 })
+
+// #37 — a typed /command's output comes back as a command-output event and
+// must reach the screen; the CLI's informational text rides the notice role.
+describe('local command output (#37)', () => {
+  test('command-output renders markdown in a command message with no avatar', async () => {
+    await startSession()
+    send('/context')
+    harness.emit({
+      type: 'command-output',
+      text: '## Context Usage\n\n**Model:** fable'
+    })
+    harness.emit({ type: 'turn-end' })
+    const cmd = document.body.querySelector('.msg-command')
+    expect(cmd).toBeTruthy()
+    // No avatar: the CLI produced this text, not Claude.
+    expect(cmd!.querySelector('.avatar')).toBeNull()
+    // Markdown actually rendered, not raw source.
+    expect(cmd!.querySelector('h2')?.textContent).toBe('Context Usage')
+    expect(cmd!.querySelector('strong')?.textContent).toBe('Model:')
+    // The turn ended and the composer re-armed.
+    expect(input().disabled).toBe(false)
+  })
+
+  test('notice event renders through the existing notice styling', async () => {
+    await startSession()
+    send('/mdoel')
+    harness.emit({
+      type: 'notice',
+      text: 'Unknown command: /mdoel. Did you mean /model?'
+    })
+    harness.emit({ type: 'turn-end' })
+    const notice = screen.getByText('Unknown command: /mdoel. Did you mean /model?')
+    expect(notice.classList.contains('msg-notice')).toBe(true)
+    expect(input().disabled).toBe(false)
+  })
+
+  test('command output does not merge into a later streaming assistant message', async () => {
+    await startSession()
+    send('/context')
+    harness.emit({ type: 'command-output', text: 'command answer' })
+    harness.emit({ type: 'turn-end' })
+    send('now a real prompt')
+    harness.emit({ type: 'text-delta', text: 'model answer' })
+    // Two separate messages: the command block and a fresh assistant bubble.
+    expect(document.body.querySelector('.msg-command')?.textContent).toContain(
+      'command answer'
+    )
+    const assistant = document.body.querySelector('.msg-assistant .assistant-body')
+    expect(assistant?.textContent).toContain('model answer')
+    expect(assistant?.textContent).not.toContain('command answer')
+  })
+})

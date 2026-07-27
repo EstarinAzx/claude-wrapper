@@ -1359,3 +1359,135 @@ describe('engine backend env', () => {
     expect(calls[0].options.env).not.toHaveProperty('ANTHROPIC_BASE_URL')
   })
 })
+
+// #37 — live shapes captured 2026-07-27 (see the capture comment on the
+// ticket). The declared system subtypes never arrived for /context or a typo;
+// both came as synthetic assistant messages (model "<synthetic>"). All three
+// branches are covered: the two declared shapes and the observed one.
+describe('engine local command output (#37)', () => {
+  const syntheticAssistant = (text: string): SdkMessage =>
+    ({
+      type: 'assistant',
+      parent_tool_use_id: null,
+      session_id: 'sess-1',
+      message: {
+        model: '<synthetic>',
+        role: 'assistant',
+        stop_reason: 'stop_sequence',
+        stop_sequence: '',
+        content: [{ type: 'text', text }]
+      }
+    }) as SdkMessage
+
+  test('system/local_command_output emits a command-output event with its content', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    const turn = collect(engine, '/context')
+    await Promise.resolve()
+    push({
+      type: 'system',
+      subtype: 'local_command_output',
+      content: '## Context Usage\n\nstuff',
+      session_id: 'sess-1'
+    } as SdkMessage)
+    push(success)
+    const events = await turn
+    expect(events).toContainEqual({
+      type: 'command-output',
+      text: '## Context Usage\n\nstuff'
+    })
+  })
+
+  test('empty local_command_output content emits nothing', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    const turn = collect(engine, '/context')
+    await Promise.resolve()
+    push({
+      type: 'system',
+      subtype: 'local_command_output',
+      content: '',
+      session_id: 'sess-1'
+    } as SdkMessage)
+    push(success)
+    const events = await turn
+    expect(events.filter((e) => e.type === 'command-output')).toEqual([])
+  })
+
+  test('system/informational at warning level emits a notice event', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    const turn = collect(engine, '/mdoel')
+    await Promise.resolve()
+    push({
+      type: 'system',
+      subtype: 'informational',
+      content: 'Unknown command: /mdoel. Did you mean /model?',
+      level: 'warning',
+      session_id: 'sess-1'
+    } as SdkMessage)
+    push(success)
+    const events = await turn
+    expect(events).toContainEqual({
+      type: 'notice',
+      text: 'Unknown command: /mdoel. Did you mean /model?'
+    })
+  })
+
+  test('system/informational at the transcript-only info level emits nothing', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push({
+      type: 'system',
+      subtype: 'informational',
+      content: 'transcript-only chatter',
+      level: 'info',
+      session_id: 'sess-1'
+    } as SdkMessage)
+    push(success)
+    const events = await turn
+    expect(events.filter((e) => e.type === 'notice')).toEqual([])
+    expect(events.filter((e) => e.type === 'command-output')).toEqual([])
+  })
+
+  test('a synthetic assistant message routes its text to command-output, not the assistant path', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    const turn = collect(engine, '/context')
+    await Promise.resolve()
+    push(syntheticAssistant('## Context Usage\n\n**Model:** fable'))
+    push(success)
+    const events = await turn
+    expect(events).toContainEqual({
+      type: 'command-output',
+      text: '## Context Usage\n\n**Model:** fable'
+    })
+    // No delta ever streams for a synthetic message, and nothing may reach the
+    // ordinary assistant/tool paths.
+    expect(events.filter((e) => e.type === 'text-delta')).toEqual([])
+    expect(events.filter((e) => e.type === 'tool-use')).toEqual([])
+    // The turn still ends normally and the composer re-arms.
+    expect(events[events.length - 1]).toEqual({ type: 'turn-end' })
+  })
+
+  test('a real assistant message (non-synthetic model) emits no command-output', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push({
+      type: 'assistant',
+      parent_tool_use_id: null,
+      session_id: 'sess-1',
+      message: {
+        model: 'claude-fable-5',
+        content: [{ type: 'text', text: 'ordinary reply' }]
+      }
+    } as SdkMessage)
+    push(success)
+    const events = await turn
+    expect(events.filter((e) => e.type === 'command-output')).toEqual([])
+  })
+})
