@@ -147,9 +147,14 @@ options, wisped. Full record in the capture comment on #37.
   `model: 'opus'` (opus-5) clean; no-bypass still refuses → **path is the
   trigger, not permission mode**. CLI default model moved opus-5 → fable-5
   ~2026-07-27 21:12 local, which is why it "used to work". Wrapper renders it
-  all faithfully — not our bug. Workarounds: pick opus/sonnet in the model
-  picker for such folders, or keep workspaces out of Downloads/dot-dirs. GUI
-  passes: keep using repo/`Temp/spike37`-style cwds.
+  all faithfully — not our bug. **Correction (23:11 local): model switch is NOT
+  a reliable fix — a user turn on explicit `claude-opus-5[1m]` was refused in
+  the same folder (session 28384f5a) while two opus-5 probes passed. The
+  classifier is probabilistic: fable ~always refuses there, opus-5/opus-4-8
+  sometimes; anonymous Temp cwds 4/4 clean on fable. Only robust workaround:
+  don't run Anthropic-model sessions in that folder (or Downloads generally —
+  `Downloads/probe-plain` also refused).** GUI passes: keep using
+  repo/`Temp/spike37`-style cwds.
 - **Sidebar session titles render raw `<local-command-caveat>…` markup** for
   sessions whose first message was a slash command — observed live during
   #37's GUI pass. #38-adjacent: check whether the title path shares
