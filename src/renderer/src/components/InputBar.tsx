@@ -6,6 +6,7 @@ import {
 } from '../../../shared/attachment-policy'
 import type { Attachment } from '../../../shared/attachment-types'
 import type { ModelOption } from '../../../shared/model-types'
+import type { SlashCommandInfo } from '../../../shared/command-types'
 
 interface InputBarProps {
   busy: boolean
@@ -111,6 +112,13 @@ const readAsBase64 = (file: File): Promise<string> =>
 
 const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: InputBarProps) => {
   const [value, setValue] = useState('')
+  // Autocomplete (#40). Trigger window: the value starts with '/' and has no
+  // space yet — exactly while a command NAME is being typed. A slash
+  // mid-sentence never triggers; the first space means arguments, so the
+  // popover gets out of the way. null list = not fetched (popover closed).
+  const [cmdList, setCmdList] = useState<SlashCommandInfo[] | null>(null)
+  const [highlight, setHighlight] = useState(0)
+  const [dismissed, setDismissed] = useState(false)
   // Tray and rejections move together: one paste both admits and refuses items,
   // and the count cap is read off the tray, so a single atomic update avoids
   // judging a batch against a stale count.
@@ -132,6 +140,46 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
     inputRef.current?.focus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingInsert?.nonce])
+
+  const triggering = value.startsWith('/') && !value.includes(' ')
+
+  // Re-fetched on every keystroke inside the trigger window (the no-cache
+  // contract taken literally), forgotten the moment the window closes. Per
+  // keystroke and not per open on purpose: a fetch that lands [] (engine not
+  // warm yet) must not wedge the popover shut for the rest of the window —
+  // observed live, invisible to jsdom. A user who never types a slash never
+  // causes a fetch.
+  useEffect(() => {
+    if (!triggering) {
+      setCmdList(null)
+      return
+    }
+    let live = true
+    void window.api.listCommands().then((list) => {
+      if (live) setCmdList(list)
+    })
+    return () => {
+      live = false
+    }
+  }, [triggering, value])
+
+  const prefix = value.slice(1).toLowerCase()
+  const matches =
+    triggering && !dismissed && cmdList !== null
+      ? cmdList.filter(
+          (c) =>
+            c.name.toLowerCase().startsWith(prefix) ||
+            (c.aliases ?? []).some((a) => a.toLowerCase().startsWith(prefix))
+        )
+      : []
+  const popoverOpen = matches.length > 0
+  const hi = Math.min(highlight, matches.length - 1)
+
+  const accept = (c: SlashCommandInfo): void => {
+    // Insert, never send — the trailing space also closes the trigger window.
+    setValue(`/${c.name} `)
+    inputRef.current?.focus()
+  }
 
   // Only file data is intercepted; a text paste falls through to the input
   // untouched, which is the overwhelmingly common case. Every file — image or
@@ -192,7 +240,32 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
     setTray({ items: [], rejections: [] })
   }
 
+  // THE #40 pin, both directions: Enter is intercepted ONLY while the popover
+  // is open with a highlighted row; in every other state it falls through to
+  // submit, unchanged. Backwards breaks sending entirely.
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+    if (popoverOpen) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setHighlight((hi + 1) % matches.length)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setHighlight((hi - 1 + matches.length) % matches.length)
+        return
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        accept(matches[hi])
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setDismissed(true)
+        return
+      }
+    }
     if (e.key === 'Enter') {
       e.preventDefault()
       submit()
@@ -277,10 +350,39 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
           placeholder="Message Claude…"
           value={value}
           disabled={busy}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value)
+            // Typing re-arms a dismissed popover and re-anchors the highlight.
+            setDismissed(false)
+            setHighlight(0)
+          }}
           onKeyDown={onKeyDown}
           onPaste={onPaste}
         />
+        {popoverOpen ? (
+          <div className="command-popover" role="listbox" aria-label="Command suggestions">
+            {matches.map((c, i) => (
+              <button
+                key={c.name}
+                type="button"
+                role="option"
+                aria-selected={i === hi}
+                className={`command-option${i === hi ? ' command-option--active' : ''}`}
+                // preventDefault keeps focus in the input through a mouse pick.
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => accept(c)}
+              >
+                <span className="command-row-name">/{c.name}</span>
+                {c.argumentHint ? (
+                  <span className="command-row-hint">{c.argumentHint}</span>
+                ) : null}
+                {c.description ? (
+                  <span className="command-option-desc">{c.description}</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <button
           type="button"
           className="send-btn"

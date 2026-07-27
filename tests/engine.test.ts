@@ -1621,3 +1621,33 @@ describe('engine warm-up + command list (#39)', () => {
     expect(calls.length).toBe(0)
   })
 })
+
+// #40 — aliases ride the command list (absent-not-empty) so autocomplete can
+// match /cost against /usage.
+describe('engine command aliases (#40)', () => {
+  test('non-empty aliases pass through; empty/absent stay absent', async () => {
+    const base = streamingStub()
+    const fn: QueryFn = (args) => {
+      const stream = base.fn(args) as AsyncIterable<SdkMessage> & {
+        supportedCommands?: () => Promise<unknown>
+      }
+      stream.supportedCommands = async () => [
+        { name: 'usage', description: 'Show usage', argumentHint: '', aliases: ['cost', 'stats'] },
+        { name: 'context', description: '', argumentHint: '', aliases: [] },
+        { name: 'model', description: '', argumentHint: '' }
+      ]
+      return stream
+    }
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    const list = await engine.listCommands()
+    expect(list[0]).toEqual({
+      name: 'usage',
+      description: 'Show usage',
+      argumentHint: '',
+      aliases: ['cost', 'stats']
+    })
+    expect(list[1]).not.toHaveProperty('aliases')
+    expect(list[2]).not.toHaveProperty('aliases')
+  })
+})

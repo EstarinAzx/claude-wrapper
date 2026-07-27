@@ -626,13 +626,16 @@ export const createEngine = (
       if (!c || typeof c !== 'object') return []
       const cmd = c as Record<string, unknown>
       if (typeof cmd.name !== 'string' || cmd.name.length === 0) return []
-      return [
-        {
-          name: cmd.name,
-          description: typeof cmd.description === 'string' ? cmd.description : '',
-          argumentHint: typeof cmd.argumentHint === 'string' ? cmd.argumentHint : ''
-        }
-      ]
+      const info: SlashCommandInfo = {
+        name: cmd.name,
+        description: typeof cmd.description === 'string' ? cmd.description : '',
+        argumentHint: typeof cmd.argumentHint === 'string' ? cmd.argumentHint : ''
+      }
+      const aliases = Array.isArray(cmd.aliases)
+        ? cmd.aliases.filter((a): a is string => typeof a === 'string' && a.length > 0)
+        : []
+      if (aliases.length > 0) info.aliases = aliases
+      return [info]
     })
   }
 
