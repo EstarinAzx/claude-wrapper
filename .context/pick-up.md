@@ -18,11 +18,16 @@ or seed from the deferred list in [[active-work]].
 
 ## Open loose ends (no spec, just candidates)
 
-- **Host issue, check before any GUI work:** Electron→CLI spawns began
-  failing at ~20:31 on 2026-07-27 (`native binary … exists but failed to
-  launch` from inside Electron; fine from a shell). #40's GUI eyeball is
-  pending — `%LOCALAPPDATA%/Temp/spike37/gui-40.mjs` runs it (type `/co`,
-  expect the popover). Likely cures itself on reboot/AV settle.
+- ~~Host issue~~ **RESOLVED 2026-07-27 (later session): never a host issue.**
+  Every gui-40 driver variant had an unescaped JS path (`'C:\Users\…'` single
+  backslashes → `C:UsersS.D…`), so the dialog stub picked a nonexistent
+  folder and the CLI spawned with a bad cwd — the SDK misreports that as
+  "native binary exists but failed to launch". Fixed the escape, ran
+  `gui-40.mjs`: **#40 GUI eyeball complete** (popover, alias match via
+  `/usage`, Enter-insert-no-submit all confirmed live; breadcrumb on #40).
+  Lesson: that SDK error can mean *bad spawn cwd*, not a broken binary.
+- **Popover name column truncates aggressively** when descriptions are long
+  (`/c…` for `/context-sync`) — cosmetic, observed in gui-40.png, unticketed.
 - **Caveat-blob follow-up** (from #38): `<local-command-caveat>` persists as
   its own standalone user message; it replays verbatim and is what sidebar
   titles show for command-first sessions. Candidate: drop caveat-only

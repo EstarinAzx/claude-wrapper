@@ -18,17 +18,21 @@ four tickets landed on main, gate-green, 441 tests: #37 `ab7835f`, #38
 itself on queue-dry (state `.claude/relay/ticket-loop.md`, `stop: true`). New
 work needs a spec first (`/preset init` or `/hp` → to-spec → to-tickets).
 
-## Host issue observed at the end of leg 1 — not a code bug
+## "Host issue" — RESOLVED, was a driver typo (2026-07-27, later session)
 
-From ~20:31 on 2026-07-27 the host began refusing **Electron→CLI spawns**: the
-SDK reports `Claude Code native binary … exists but failed to launch` on every
-`query()` built inside Electron, while the same `claude.exe --version` runs
-fine from a shell, and #39's GUI pass had worked minutes earlier. Reproducible
-across runs, not fixed by stripping session env vars. Consequence: #40's GUI
-eyeball never completed (driver ready at
-`%LOCALAPPDATA%/Temp/spike37/gui-40.mjs` — run it once the host recovers).
-Silver lining: warm-up inertness was observed live under a real spawn failure
-(clean reset, honest `[]`, no dead composer).
+The end-of-leg-1 Electron→CLI spawn failures were **not host-level**: every
+gui-40 driver variant declared `PICK_DIR` with single backslashes in a JS
+string (`'C:\Users\…'` → `C:UsersS.D…`), so the stubbed folder pick handed the
+engine a nonexistent cwd; a Windows spawn with a bad cwd surfaces from the SDK
+as `native binary … exists but failed to launch`. gui-39.mjs used `\\` and
+worked — the typo was copy-pasted into all five retry variants, faking
+reproducibility. **Diagnostic pin: that SDK error can mean bad spawn cwd, not
+a broken binary.** After fixing the escape, `gui-40.mjs` passed clean on built
+main: popover on `/co` (17 matches), alias matching live (`/usage`),
+ArrowDown+Enter inserted `/context-init ` with no submit. **#40 GUI eyeball
+complete** — breadcrumb comment on #40. Still-true silver lining: warm-up
+inertness was observed live under a real spawn failure (clean reset, honest
+`[]`, no dead composer).
 
 ## Decisions binding these tickets
 
