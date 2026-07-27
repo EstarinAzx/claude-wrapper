@@ -7,29 +7,28 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-27 — #37 + #38 delivered (ticket-loop leg 1)_
-_At commit: `c077904` on main (#38 squash) + this firing's `.context/` commit_
+_Last updated: 2026-07-27 — #37 + #38 + #39 delivered (ticket-loop leg 1)_
+_At commit: `0cb6e31` on main (#39 squash) + this firing's `.context/` commit_
 
 ## Current focus
 
-**Spec #36 (slash commands) is two tickets in.** #37 landed at `ab7835f`
-(405 tests + live GUI pass), #38 at `c077904` (412 tests). A
-`/relay 10m N=8 /preset ticket-loop` chain is running — state in
-`.claude/relay/ticket-loop.md`. Remaining queue: **#39 (frontier), then #40
-(blocked by #39)**.
+**Spec #36 (slash commands) is three tickets in.** #37 at `ab7835f`, #38 at
+`c077904`, #39 at `0cb6e31` (427 tests + live GUI pass: 118 commands listed
+pre-send, click filled the composer). A `/relay 10m N=8 /preset ticket-loop`
+chain is running — state in `.claude/relay/ticket-loop.md`. Remaining queue:
+**#40 (frontier, last ticket)** — then the spec closes.
 
 ## Ticket graph
 
 ```
 #37 render live output   ✅ ab7835f
 #38 blob fix (parser)    ✅ c077904
-#39 commands dock ──────────> #40 autocomplete   (frontier: #39)
+#39 commands dock        ✅ 0cb6e31 ──> #40 autocomplete   (frontier, unblocked)
 ```
 
 | # | Ticket | Blocked by | Delivers |
 |---|---|---|---|
-| 39 | Commands dock | none | right dock lists commands; click fills composer |
-| 40 | Composer slash-command autocomplete | **#39** | `/` opens a filtered popover |
+| 40 | Composer slash-command autocomplete | #39 ✅ closed | `/` opens a filtered popover |
 
 ## Decisions binding these tickets
 
@@ -147,11 +146,24 @@ options, wisped. Full record in the capture comment on #37.
   same problem, use DOM `scrollIntoView`; `app.close()` can hang — add a hard
   `setTimeout(process.exit)` timer to any driver script.
 
+## Facts established by #39 (don't re-derive)
+
+- Engine `warmUp(resume?)` + `listCommands()` exist; `turnEverRun` gates the
+  consume loop's inertness (a stream dying before any turn resets to idle, no
+  `terminalError`). Mutation-relevant warm-up pins live in `tests/engine.test.ts`.
+- `window.api.listCommands()` (guarded `commands:list`) is live at all four
+  mock sites — **#40 reuses it, no new channel needed.**
+- App holds `openDock: 'agents' | 'commands' | null` (mutual exclusion) and a
+  `{text, nonce}` pending-insert; InputBar's insert effect keys on the nonce.
+- Live-verified over the bridge: `supportedCommands()` answered 118 commands
+  before any send.
+- The commands dock has no resize handle (agents dock does) — deliberate; add
+  only if asked.
+
 ## Pick up here
 
-**#39 — Commands dock.** See [[pick-up]]. New `window.api` channel (→ all four
-mock sites), `supportedCommands()` pull-only, eager query build at folder-pick
-with the inert-on-failure warm-up landmine.
+**#40 — Composer slash-command autocomplete.** Last ticket of #36; the spec
+closes when it lands. See [[pick-up]].
 
 ## Deferred (still no spec)
 

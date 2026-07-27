@@ -9,42 +9,35 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-**#37 (`ab7835f`) and #38 (`c077904`) are delivered** and closed with
-breadcrumbs. Spec #36 has two tickets left: **#39 (frontier), then #40
-(blocked by #39)**. A `/relay 10m N=8 /preset ticket-loop` chain is running —
-state in `.claude/relay/ticket-loop.md`; check it before starting manual work.
+**#37 (`ab7835f`), #38 (`c077904`) and #39 (`0cb6e31`) are delivered** and
+closed with breadcrumbs. Spec #36 has ONE ticket left: **#40 (frontier,
+unblocked — #39 closed)**. When #40 lands, close spec #36. A
+`/relay 10m N=8 /preset ticket-loop` chain is running — state in
+`.claude/relay/ticket-loop.md`; check it before starting manual work.
 
-## Next task — #39, "Commands dock"
+## Next task — #40, "Composer slash-command autocomplete"
 
-`gh issue view 39 --comments` for the full ticket. Right dock lists the CLI's
-commands via `supportedCommands()`; clicking a row fills the composer. The
-binding decisions ([[2026-07-27-slash-commands-are-a-dumb-pipe]]): **no cache,
-no push channel** (`supportedCommands()` tracks `commands_changed` internally,
-`sdk.d.ts:2904` — fetch on open, forget on close, like the model pill);
-**query built eagerly at folder-pick** so the list exists before the first
-send; **insertion crosses into the composer by prop, not lifted state** — a
-`{text, nonce}` pending-insert, nonce load-bearing (same row clicked twice
-must fire twice).
+`gh issue view 40 --comments` for the full ticket. Typing `/` in the composer
+opens a filtered popover of commands; picking one fills the input. Binding
+decisions ([[2026-07-27-slash-commands-are-a-dumb-pipe]]): the wrapper still
+never validates a command — autocomplete is typing help, not a gate.
 
-## Landmines for #39 specifically
+## Landmines for #40 specifically
 
-- **Warm-up must be inert on failure.** `close()` sets `terminalError` and
-  `runTurn` then fails every send (search `engine.ts` for `terminalError` —
-  #37 shifted line numbers). A tripped warm-up hands the user a dead composer
-  having typed nothing.
-- **New `window.api` channel → add to ALL FOUR mock sites**
-  (`tests/chat-harness.ts` + inline mocks in `sidebar`/`session`/`shell`
-  tests) or App-render tests throw. Guard the IPC with `isTrustedIpc`. Mock
-  the list channel the way `listModels` already is in `chat-harness.ts`.
-- **`ensureQuery` is called only from `runTurn`** — `currentQuery` is `null`
-  until the first send today; that is exactly what the eager build changes.
-  `chat:target` destroys the engine wholesale and rebuilds lazily, so an
-  early-built query is discarded safely on a session switch.
-- Background fact from #37's capture: the per-turn `system`/`init` message
-  carries `slash_commands: string[]` (118 bare names, no `/`) — do NOT use it;
-  the decision is `supportedCommands()` pull-only.
-- `tests/agents-dock.test.tsx` is the structural twin (`showAgents(agents)` +
-  `listRows()` helpers).
+- **Enter interception is THE mutation-verified pin, both directions.**
+  Autocomplete intercepts Enter *only* while its popover is open with a row
+  highlighted; every other state falls through to submit. Backwards breaks
+  sending entirely — worse than shipping no autocomplete. Pin both ways.
+- **Reuse `window.api.listCommands()`** — the guarded channel from #39, mocked
+  at all four sites already. No new IPC.
+- InputBar already carries the `{text, nonce}` pending-insert effect (#39) —
+  autocomplete insertion should compose with it, not fight it. The composer's
+  `onKeyDown` currently submits on every Enter (`InputBar.tsx`).
+- Composer test prior art: `tests/attachments-composer.test.tsx`
+  (`createEvent.paste` + `Object.defineProperty`, `await act(async () => {})`);
+  `tests/commands-dock.test.tsx` for the list-channel mock pattern.
+- The dock and the popover are separate surfaces sharing one channel — the
+  popover must not open the dock or care whether it is open.
 
 ## Landmines — carried, still live
 
