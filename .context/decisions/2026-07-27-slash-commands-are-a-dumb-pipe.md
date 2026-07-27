@@ -62,11 +62,19 @@ Two facts corrected assumptions held at the start of the grill:
   engine's options, which the SDK documents as loading *all* sources (CLI
   default). Command resolution needed no change; only rendering did.
 - **The persisted subtype is not the streamed subtype.** On disk the records are
-  `system`/`local_command`; the SDK's streaming type is `local_command_output`.
-  The live handler keys on one name, the parser on the other. Neither may be
-  assumed to be the other, and the live shape is still **unobserved** — #37 opens
-  with a capture before any branch is written, because jsdom reports green
-  against a branch keyed on a subtype that never arrives.
+  `system`/`local_command`; the SDK's declared streaming type is
+  `local_command_output`. The live handler keys on one name, the parser on the
+  other. Neither may be assumed to be the other.
+
+**Amended 2026-07-27 after #37's capture:** the live shape turned out to be a
+third thing. Neither declared streaming subtype arrives for `/context` or a
+typo — both stream as **synthetic `assistant` messages**
+(`message.model === "<synthetic>"`, text already unwrapped, no `stream_event`
+deltas). The engine therefore carries three branches: the two declared shapes
+(implemented, unobserved live) and the synthetic-assistant path (the one that
+actually fires). Full record in the capture comment on #37. The capture-first
+mandate paid for itself — a branch keyed only on the declared subtype would
+never have fired, and jsdom would have greened it anyway.
 
 One landmine was chased and cleared: `terminal_reason` is an optional field on
 `SDKResultSuccess` (`sdk.d.ts:4277`), not a separate message. A local command
