@@ -7,31 +7,29 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-27 — #37 delivered_
-_At commit: `ab7835f` on main (#37 squash) + this leg's `.context/` commit_
+_Last updated: 2026-07-27 — #37 + #38 delivered (ticket-loop leg 1)_
+_At commit: `c077904` on main (#38 squash) + this firing's `.context/` commit_
 
 ## Current focus
 
-**Spec #36 (slash commands) is one ticket in.** #37 (render local command
-output live) is closed and merged at `ab7835f`, gate green (405 tests,
-typecheck, build, live GUI pass in the built app, wisped). Remaining queue:
-**#38 (frontier), #39, then #40 (blocked by #39)** — all `ready-for-agent`.
+**Spec #36 (slash commands) is two tickets in.** #37 landed at `ab7835f`
+(405 tests + live GUI pass), #38 at `c077904` (412 tests). A
+`/relay 10m N=8 /preset ticket-loop` chain is running — state in
+`.claude/relay/ticket-loop.md`. Remaining queue: **#39 (frontier), then #40
+(blocked by #39)**.
 
 ## Ticket graph
 
 ```
 #37 render live output   ✅ ab7835f
-#38 blob fix (parser)  ──┐   (frontier)
-#39 commands dock ───────┴──> #40 autocomplete
+#38 blob fix (parser)    ✅ c077904
+#39 commands dock ──────────> #40 autocomplete   (frontier: #39)
 ```
 
 | # | Ticket | Blocked by | Delivers |
 |---|---|---|---|
-| 38 | Unwrap command invocations on replay | none | reopened session shows `/relay <args>`, not raw markup |
 | 39 | Commands dock | none | right dock lists commands; click fills composer |
 | 40 | Composer slash-command autocomplete | **#39** | `/` opens a filtered popover |
-
-Work in ID order — intended delivery sequence.
 
 ## Decisions binding these tickets
 
@@ -69,8 +67,25 @@ options, wisped. Full record in the capture comment on #37.
   text to Claude). `notice` events append through the existing notice role.
 - **The persisted subtype is still `local_command`** with the two content
   shapes (`<local-command-stdout>` wrapper, often empty, or the
-  `<command-name>` triple). #38 keys on the persisted form; nothing #37 shipped
-  touches the parser.
+  `<command-name>` triple).
+
+## Facts established by #38 (don't re-derive)
+
+- Real persisted invocation order is `<command-message>` **first**, then
+  `<command-name>`, then optional `<command-args>`, newline-joined — the
+  ticket's paraphrase had message/name reversed; the store was sampled before
+  keying the unwrap.
+- `parseTranscript`'s unwrap triggers **only when the plain string starts with
+  `<command-message>`** — ordinary prose mentioning the markup stays verbatim;
+  a malformed record (empty name) falls back verbatim rather than emitting an
+  empty bubble.
+- **`<local-command-caveat>` persists as its own standalone user message** and
+  still replays verbatim — it is also what sidebar titles show for
+  command-first sessions (title path = first user message). Candidate
+  follow-up recorded on #38's close comment: drop caveat-only messages as CLI
+  noise, fixing replay and titles in one move.
+- Persisted `<local-command-stdout>` output carries raw ANSI escape codes —
+  reinforces the spec-level deferral of replaying command output.
 
 ## Facts from #35 / #34 / #33 / #31 / #30 (still current)
 
@@ -134,9 +149,9 @@ options, wisped. Full record in the capture comment on #37.
 
 ## Pick up here
 
-**#38 — Unwrap command invocations on replay.** See [[pick-up]]. The seam is
-`tests/transcript.test.ts` + `src/main/transcript.ts` (plain strings taken
-verbatim at `transcript.ts:77`).
+**#39 — Commands dock.** See [[pick-up]]. New `window.api` channel (→ all four
+mock sites), `supportedCommands()` pull-only, eager query build at folder-pick
+with the inert-on-failure warm-up landmine.
 
 ## Deferred (still no spec)
 
