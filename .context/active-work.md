@@ -153,8 +153,15 @@ options, wisped. Full record in the capture comment on #37.
   classifier is probabilistic: fable ~always refuses there, opus-5/opus-4-8
   sometimes; anonymous Temp cwds 4/4 clean on fable. Only robust workaround:
   don't run Anthropic-model sessions in that folder (or Downloads generally —
-  `Downloads/probe-plain` also refused).** GUI passes: keep using
-  repo/`Temp/spike37`-style cwds.
+  `Downloads/probe-plain` also refused).** Extended matrix (23:20 local):
+  fable in `D:/wrapper-test` clean; in the user's real `Downloads/anim/game`
+  project fable refused (fallback survived) and **sonnet was clean**; a fresh
+  wrapper session there double-refused on "hello there". Downloads is the
+  poison, model modulates the odds. Also: third live confirmation that the
+  SDK's "native binary exists but failed to launch" = **nonexistent spawn
+  cwd** (probe pointed at `Downloads/anim-game`; real path is
+  `Downloads/anim/game` — store-dir encoding is ambiguous between `-` and
+  `\`).
 - **Sidebar session titles render raw `<local-command-caveat>…` markup** for
   sessions whose first message was a slash command — observed live during
   #37's GUI pass. #38-adjacent: check whether the title path shares
