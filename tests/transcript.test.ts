@@ -193,3 +193,76 @@ describe('parseTranscript', () => {
     ])
   })
 })
+
+// #38 — a slash-command invocation persists as a plain-string user message in
+// CLI markup (real shape sampled from the native store: <command-message>
+// first, then <command-name>, then optional <command-args>, newline-joined).
+// It unwraps to what the user actually typed. <command-message> is metadata
+// and is never rendered.
+describe('parseTranscript command invocations (#38)', () => {
+  const userLine = (content: string): string =>
+    JSON.stringify({ type: 'user', message: { role: 'user', content } })
+
+  test('an invocation with args unwraps to name plus args', () => {
+    const raw = userLine(
+      '<command-message>loop</command-message>\n<command-name>/loop</command-name>\n<command-args>/preset ticket-loop</command-args>'
+    )
+    expect(parseTranscript(raw)).toEqual([
+      { role: 'user', text: '/loop /preset ticket-loop' }
+    ])
+  })
+
+  test('an invocation without a command-args element unwraps to the bare name', () => {
+    const raw = userLine(
+      '<command-message>caveman:caveman-help</command-message>\n<command-name>/caveman:caveman-help</command-name>'
+    )
+    expect(parseTranscript(raw)).toEqual([
+      { role: 'user', text: '/caveman:caveman-help' }
+    ])
+  })
+
+  test('an invocation with an empty command-args element unwraps with no trailing whitespace', () => {
+    const raw = userLine(
+      '<command-message>context</command-message>\n<command-name>/context</command-name>\n<command-args></command-args>'
+    )
+    expect(parseTranscript(raw)).toEqual([{ role: 'user', text: '/context' }])
+  })
+
+  test('the command-message text never reaches the output', () => {
+    const raw = userLine(
+      '<command-message>relay</command-message>\n<command-name>/relay</command-name>\n<command-args>1m say hello</command-args>'
+    )
+    const [msg] = parseTranscript(raw)
+    expect(msg).toEqual({ role: 'user', text: '/relay 1m say hello' })
+    expect((msg as { text: string }).text).not.toContain('relay</command-message>')
+  })
+
+  test('ordinary prose that merely mentions the markup stays verbatim', () => {
+    const raw = userLine('tell me what a <command-name> tag does')
+    expect(parseTranscript(raw)).toEqual([
+      { role: 'user', text: 'tell me what a <command-name> tag does' }
+    ])
+  })
+
+  test('a session mixing an invocation with ordinary messages replays both, in order', () => {
+    const raw = [
+      userLine(
+        '<command-message>model</command-message>\n<command-name>/model</command-name>'
+      ),
+      '{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Model set"}]}}',
+      userLine('thanks, now explain the change')
+    ].join('\n')
+    expect(parseTranscript(raw)).toEqual([
+      { role: 'user', text: '/model' },
+      { role: 'assistant', text: 'Model set' },
+      { role: 'user', text: 'thanks, now explain the change' }
+    ])
+  })
+
+  test('a malformed invocation (empty command-name) falls back to verbatim', () => {
+    const content =
+      '<command-message>x</command-message>\n<command-name></command-name>'
+    const raw = userLine(content)
+    expect(parseTranscript(raw)).toEqual([{ role: 'user', text: content }])
+  })
+})

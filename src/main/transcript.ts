@@ -43,6 +43,21 @@ const toAttachmentMarker = (block: Record<string, unknown>): AttachmentMarker =>
   return marker
 }
 
+// A slash-command invocation persists as a plain-string user message shaped
+// `<command-message>…</command-message>\n<command-name>/x</command-name>` with
+// an optional `<command-args>…</command-args>` (real store shape, sampled for
+// #38). Unwrap to what the user actually typed: the name, plus the args when
+// present. <command-message> is CLI metadata, never rendered. Returns null for
+// anything that is not this shape — including ordinary prose that merely
+// mentions the markup, which must stay verbatim.
+const unwrapCommandInvocation = (text: string): string | null => {
+  if (!text.startsWith('<command-message>')) return null
+  const name = /<command-name>([^<]*)<\/command-name>/.exec(text)?.[1].trim()
+  if (!name) return null
+  const args = /<command-args>([\s\S]*?)<\/command-args>/.exec(text)?.[1].trim()
+  return args ? `${name} ${args}` : name
+}
+
 // Parse a native JSONL transcript to the replay message list. Main-session
 // transcripts tag subagent lines with `isSidechain: true` and those are dropped
 // by default (they belong to the subagent, not the main thread). A subagent's
@@ -76,7 +91,10 @@ export const parseTranscript = (
     if (type === 'user') {
       if (typeof content === 'string') {
         if (content.trim()) {
-          messages.push({ role: 'user', text: content })
+          messages.push({
+            role: 'user',
+            text: unwrapCommandInvocation(content) ?? content
+          })
         }
       } else if (Array.isArray(content)) {
         // tool_result never co-occurs with text/image in real transcripts; pure
