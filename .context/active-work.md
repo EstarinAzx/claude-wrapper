@@ -7,35 +7,43 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 by Opus 5 — landed #50 (replay sanitizer); queue empty again_
-_At commit: `c92cb48`_
-_Baseline: typecheck clean, build clean, **575 tests green across 45 files**_
+_Last updated: 2026-07-28 by Opus 5 — landed #50 and #51; queue empty_
+_At commit: `08d78a2`_
+_Baseline: typecheck clean, build clean, **581 tests green across 46 files**_
 
 ## Current focus
 
 **None — the `ready-for-agent` queue is empty.** Spec #41 "Resume anything" was
 delivered and closed on 2026-07-28 (#43 `ea7baaf` · #44 `d44c2a2` · #45 `63f12d5`
 · #46 `1bdadae` · #47 `8c9cbb7` · #48 `08974d5` · #49 `f71efbf`; #42 `5b66dd9`
-standalone). **#50 `c92cb48`** then cleared the last item its close-out named:
-transcript replay no longer renders the CLI's own markup as literal XML.
+standalone). Two follow-ups then landed off the back of it: **#50 `c92cb48`**
+cleared the last item its close-out named, and **#51 `08d78a2`** came from an
+owner bug report during the same session.
 
 ## State
 
 - **In flight:** nothing.
-- **Done this session:** #50 — `sanitizeUserText` replaces
-  `unwrapCommandInvocation` in `src/main/transcript.ts`. One classifier over
-  eight tags, dispatching on the **leading tag of the trimmed message**,
-  returning display text or `null` to drop. Nine mutations run, each killed.
-  Real-store sweep after the change: **7 of 2972** user messages still contain
-  the markup, all of them prose quoting it, **0** leading with a tag, **0** with
-  ANSI — down from 1258 raw messages.
+- **Done this session:**
+  - **#50** — `sanitizeUserText` replaces `unwrapCommandInvocation` in
+    `src/main/transcript.ts`. One classifier over eight tags, dispatching on the
+    **leading tag of the trimmed message**, returning display text or `null` to
+    drop. Nine mutations, each killed. Real-store sweep after: **7 of 2972**
+    user messages still contain the markup, all prose quoting it, **0** leading
+    with a tag, **0** with ANSI — down from 1258 raw.
+  - **#51** — four component-scoped `::-webkit-scrollbar` blocks in `styles.css`
+    replaced by **one global rule**. The reported model-menu bar was four
+    scrollables; the four existing copies had already drifted apart. Pinned on
+    the mechanism (no scoped selector may exist), four mutations each killed,
+    measured live at **10px** gutter versus a ~15-17px Windows default.
+    `DESIGN.md` corrected — it described this as "the chat scrollbar", which is
+    what licensed the per-component implementation.
 - **Blocked:** nothing.
 
 ## Pick up here
 
 **No active work — pick a new task.** The only open tracker item is the
-unlabelled umbrella spec #1. The candidate that had a live sighting is now
-**closed** (#50), so the next effort is a genuine choice from *Deferred* below
+unlabelled umbrella spec #1. Both candidates that had live sightings are now
+closed (#50, #51), so the next effort is a genuine choice from *Deferred* below
 rather than a queued leftover.
 
 Before starting anything: read [[pick-up]] for the operational landmines, and
@@ -109,6 +117,13 @@ None blocking.
   `startsWith` into an `includes` eats them and is killed by exactly one test.
   **Do not strip ANSI from typed text** either: a real recorded argument is
   `fable[1m]`, whose brackets are literal. Output streams only.
+- **#51: never scope a scrollbar rule to a component**, and never add
+  `scrollbar-width` / `scrollbar-color` — the standard properties suppress the
+  `::-webkit-` pseudo-elements and would silently discard the global rule. A
+  shared class is not an improvement: it still has to be remembered at each new
+  container, which is exactly how four scrollables shipped the default bar.
+  `::-webkit-scrollbar-button { display: none }` and a transparent `-corner` are
+  load-bearing, not tidiness.
 - **Never write a literal ESC byte or a `\u` escape into source.** `CSI` uses
   `String.fromCharCode(27)`; the raw character is invisible in an editor and the
   escape was repeatedly normalized into the raw byte in transit. Both
@@ -178,7 +193,8 @@ control / map pan-zoom, and the smaller leftovers from #31–#36.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]] ·
+- [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] ·
+  [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]] ·
   [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]] ·
   [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] ·
   [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] ·

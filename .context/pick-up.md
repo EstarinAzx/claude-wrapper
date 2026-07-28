@@ -11,10 +11,43 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## This leg landed
 
-**#50 — Sanitize CLI markup in transcript replay**, on main as `c92cb48`, closed.
+Two tickets. **#51 came from an owner bug report mid-session**, not from a queue.
+
+### #51 — One global scrollbar rule (`08d78a2`, closed)
+
+The model picker dropdown showed Chromium's raw Windows bar. It was **four**
+scrollables (`.model-menu`, `.command-list`, `.command-popover`, and the composer
+textarea past #42's 8-line cap), and the four *styled* containers had already
+drifted apart (`.chat` 10px/3px, the three rails 8px/2px). Four component-scoped
+`::-webkit-scrollbar` blocks are now **one global rule** after the reset.
+
+- **Never scope a scrollbar rule to a component, and a shared class is not an
+  improvement** — it still has to be remembered at each new container, which is
+  precisely how four of them shipped the default. The pin is on the mechanism:
+  no scoped `::-webkit-scrollbar` selector may exist, so a fifth copy fails the
+  suite instead of silently restoring the drift.
+- **`::-webkit-scrollbar-button { display: none }` and a transparent `-corner`
+  are load-bearing.** Chromium draws stepper arrows even on an otherwise-styled
+  bar (those are what the report showed), and a both-axes container paints an
+  opaque square where the bars meet.
+- **Never add `scrollbar-width` / `scrollbar-color`** — the standard properties
+  suppress the `::-webkit-` pseudo-elements and would discard the rule silently.
+
+`DESIGN.md` is corrected: it described this as "the chat scrollbar", and writing
+a surface-wide property as one component's detail is what licensed the drift.
+Decision: [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]].
+
+Four mutations, each killed. Measured live in the DOM via `gui-51.mjs`: **10px**
+gutter on a probe element, **10.18px** on the reported menu (a 1px hairline
+computes to 0.909px under Windows display scaling), versus a ~15-17px Windows
+default.
+
+### #50 — Sanitize CLI markup in transcript replay (`c92cb48`, closed)
 Replay rendered the CLI's own markup as literal XML in the user bubble;
 `unwrapCommandInvocation` is now `sanitizeUserText` in `src/main/transcript.ts` —
 one classifier over eight tags returning the display text or `null` to drop.
+(The same *shape* of bug as #51, found independently: a rule written per case
+instead of once.)
 
 | Leading tag | Replay shows |
 |---|---|
@@ -64,8 +97,9 @@ umbrella spec **#1**, which is not an agent ticket. Nothing sits in
 ## Next, if you are starting fresh
 
 Spec #41's close-out named exactly one candidate with a live sighting — the
-replay sanitizer — and **#50 was it**. There is no queued leftover; the next
-effort is a genuine choice.
+replay sanitizer — and **#50 was it**; **#51** then came from an owner bug
+report. Both are closed. There is no queued leftover; the next effort is a
+genuine choice.
 
 Options are the *Deferred* list in [[active-work]]: context-pressure meter (note
 the trap — `Query.getContextUsage()` exists but a naïve percentage lies, it must
@@ -91,6 +125,8 @@ The full ledger is in [[active-work]]. The ones most likely to bite next:
   count — not a symptom with more than one cause.
 - **Never match CLI markup mid-string, and never strip ANSI from typed text.**
   #50's anchor, above.
+- **Never scope a scrollbar rule to a component** (and never add
+  `scrollbar-width` / `scrollbar-color` beside it). #51, above.
 - **Never enrich a row that has not rendered, and never derive a label during
   filtering.** `groupSessions`' `labels` option matches what is already cached
   and derives nothing; a keystroke that scans the store is #43's deleted
@@ -119,9 +155,11 @@ The full ledger is in [[active-work]]. The ones most likely to bite next:
 
 ## Baseline
 
-`npm run typecheck` clean, `npm run build` clean, **575 tests green across 45
-files**, verified 2026-07-28 immediately before this handoff. `main` is one
-commit ahead of `origin/main` — **#50 is not pushed**.
+`npm run typecheck` clean, `npm run build` clean, **581 tests green across 46
+files**, verified 2026-07-28 immediately before this handoff. `main` is **four
+commits ahead of `origin/main`** — #50, #51 and the two context commits are all
+**unpushed**. The owner was offered a push twice and did not take it; ask before
+pushing rather than assuming it was an oversight.
 
 ## GUI check
 
@@ -134,12 +172,22 @@ dialog/call-counted-stub template, `gui-47.mjs` the workspace switch, `gui-45.mj
 the sessions rail, `gui-42.mjs` the composer. All need `npm run build` +
 `playwright-core`.
 
+**`gui-51.mjs` is the newest, and the template for any VISUAL claim**: CSS
+pseudo-elements are unreachable from `getComputedStyle` and jsdom cannot render a
+scrollbar at all, so it measures the consequence instead — the gutter, as
+`offsetWidth - clientWidth`, in the real built app. Two traps it cost to learn,
+both instrument bugs that first read as app defects: that expression **includes
+horizontal borders** (subtract them, or a 1px-hairline element reads 2px high),
+and **exact pixel equality fails under Windows display scaling** (a 1px border
+computes to ~0.909px, so compare with tolerance). It also probes a synthetic
+element on purpose — when the claim is "this rule is global", an arbitrary
+element inheriting it *is* the claim, not a proxy.
+
 **#50 was verified without a GUI driver** — it is a pure function over a parsed
 transcript, so the honest check was sweeping the real store through the real
 parser (a throwaway `tests/real-store.test.ts`, deliberately not committed since
-it depends on this machine's `~/.claude/projects`). Reach for that shape again
-when the risk is "what does this do to real data" rather than "what does the UI
-do".
+it depends on this machine's `~/.claude/projects`). Reach for that shape when the
+risk is "what does this do to real data" rather than "what does the UI do".
 
 Gotchas: stub `dialog.showOpenDialog` in main **before** any click that opens one
 or the run blocks forever; `createRequire` for playwright-core if the driver lives
@@ -153,7 +201,8 @@ rather than letting silence read as a pass.
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]] ·
+- [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] ·
+  [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]] ·
   [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]] ·
   [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] ·
   [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] ·

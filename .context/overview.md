@@ -21,7 +21,7 @@ tags: [context, overview]
   markup is turned into readable text — anchored on the message's leading tag,
   never matched mid-string.
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
-- `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS).
+- `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS, plus the app-wide scrollbar rule right after the reset — global on purpose, never scoped to a component).
   `App.tsx` owns the workspace switch: the `ok` branch is where every
   workspace-scoped App state must be cleared, and `<InputBar key={cwd}>` covers
   everything living inside the composer. Both entry points — a foreign session
@@ -47,7 +47,8 @@ tags: [context, overview]
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **queue
   empty**, no `ready-for-agent` ticket open)
-- Tracker: **#50 (replay markup sanitizer) closed**; spec #41 (Resume anything)
+- Tracker: **#50 (replay markup sanitizer) and #51 (global scrollbar rule)
+  closed**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
