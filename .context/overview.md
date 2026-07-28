@@ -16,6 +16,9 @@ tags: [context, overview]
   directory by enumeration. Nothing may derive a store path from `cwd`.
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
 - `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS)
+- `src/shared/` — types + pure modules both processes import. `session-groups.ts`
+  owns the sessions rail's filter/group/cap order; `cwd-key.ts` is the one
+  directory fold (comparison only, never a path).
 - `tests/` — vitest + testing-library shell tests (jsdom, `vitest.config.ts`)
 - `DESIGN.md` / `PRODUCT.md` — Frost Mono design system + product context (impeccable reads these)
 - `docs/design/frost-mono-reference.png` — canonical visual reference
@@ -30,8 +33,8 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **spec #41,
-  Resume anything** — #45 next, #46 also unblocked, #47–#49 behind them)
-- Tracker: open spec #41 (Resume anything, tickets #45–#49 open, #43 + #44
+  Resume anything** — #46 next, #49 also unblocked, #47 + #48 behind them)
+- Tracker: open spec #41 (Resume anything, tickets #46–#49 open, #43 + #44 + #45
   closed); #42 (multiline
   composer) closed standalone; specs #25 (Agents surface), #26 (Attachments)
   and #36 (slash commands) delivered and closed with tickets #27–#40; closed

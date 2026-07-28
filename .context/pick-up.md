@@ -11,48 +11,48 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## This leg landed
 
-**#44 — Resolve session storage directories by index, not by encoding cwd**, on
-main as `d44c2a2`, closed. New `src/main/session-index.ts` maps session id →
-physical project directory by enumerating `~/.claude/projects` with directory and
-file **names only**; `readTranscript`, `listSubagents` and
-`readSubagentTranscript` resolve through it, and **`encodeCwd` is deleted**.
-Lookups return `{status:'ok',dir} | {status:'not-found'}`, rebuild once and retry
-once on a miss, and `resolveResumeTarget` adds the typed `{status:'missing-cwd'}`
-rejection. Suite **457 → 474 across 39 files**, typecheck and build clean.
+**#45 — Global cross-project session list + filter**, on main as `63f12d5`,
+closed. `listSessions()` takes no arguments and passes **no `dir`**, so the SDK
+returns the whole store; `SessionMeta` gained `cwd?: string` (absent, not `''`).
+Grouping, filtering and the cap are a pure shared module,
+`src/shared/session-groups.ts`, in a fixed order: filter the complete loaded
+metadata → sort and group → render the newest **100 matches globally**. Rows
+outside the open workspace render but are `disabled`. `cwdKey`'s fold moved to
+`src/shared/cwd-key.ts` so main and renderer group by one rule. Suite **474 →
+504 across 40 files**, typecheck and build clean.
 
-Verified live against the real store, not only mocks: 61 store directories, index
-built in **12ms**, **494 of 494** sessions resolved with 0 misses, `encodeCwd`
-would have missed **45**, 6 sessions carry no cwd, 0 duplicate ids. Five
-mutations run, each killing exactly its target test. Decision on record:
-[[2026-07-28-storage-location-is-an-index-not-an-encoding]].
+Verified live against the real store, not only mocks: 495 sessions, 61 store
+directories, 9 groups in the first page, cap engaged at exactly **100**, 64 rows
+enabled / 36 inert, clicking a foreign row leaves the pane untouched, full-path
+filter → 1 group with 0 foreign rows, `Show more` → 200 rows. Five mutations
+run, each killing exactly its target test. Decision on record:
+[[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]].
 
-## Next ticket: #45 — Global cross-project session list + filter
+## Next ticket: #46 — Main-process `switchWorkspace` transaction (dormant)
 
-Unblocked. #46 unblocked at the same time (both were waiting only on #44), but
-the queue order is #45 first — #47 needs both anyway.
+Unblocked. #49 unblocked at the same time (it waited only on #45), but the queue
+order is #46 first and #47 needs it.
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #45 | Global cross-project session list + filter | 0 — **next** |
-| #46 | Main-process `switchWorkspace` transaction (dormant) | 0 — also open |
-| #47 | Wire the renderer to `switchWorkspace` | 2 |
+| #46 | Main-process `switchWorkspace` transaction (dormant) | 0 — **next** |
+| #47 | Wire the renderer to `switchWorkspace` | 1 |
 | #48 | Folder picker reachable after first pick | 1 |
-| #49 | Lazy title enrichment for slash-command-first sessions | 1 |
+| #49 | Lazy title enrichment for slash-command-first sessions | 0 — also open |
 
-Order: `#45 → #46 → #47 → #48 → #49`. Blocked-ness is authoritative from
+Order: `#46 → #47 → #48 → #49`. Blocked-ness is authoritative from
 `gh api repos/<owner>/<repo>/issues/<n> --jq '.issue_dependencies_summary.blocked_by'`
 — `gh issue list --json` does **not** expose that field.
 
-**#45 context from this leg:** the pieces #45 needs are already built and tested.
-`listSessions({ dir })` drops `dir` to go global (SDK top-level, 421ms for the
-whole store per spec #41). Grouping is `cwdKey()` from `session-index.ts` —
-resolved, separators folded, lower-cased — which exists precisely so two
-spellings of the same directory group together. The **6 sessions with no `cwd`**
-are the "Unknown project" group, and `resolveResumeTarget` already returns
-`missing-cwd` for them, so #45 renders a state that is typed rather than
-inferred. Two open calls #45 must make explicitly: `includeWorktrees` still
-defaults to **`true`** (flagged by #43, still unexamined), and `SessionMeta`
-carries no `cwd` field yet — adding one is #45's call, not a leftover.
+**#46 context from this leg:** the front door is already built and typed.
+`resolveResumeTarget(id, cwd)` returns `{status:'ok',dir} | {status:'not-found'}
+| {status:'missing-cwd'}`, and #45 now renders all three cases distinctly, so
+#46 has a caller that already distinguishes them. #46's required coverage is the
+**ordered-call assertion** — the transaction's steps must be pinned in order,
+because a green suite passes while the order is wrong. Note #46 merges
+**dormant**: it lands unused and safe, and #47 wires it. Do not let #46 reach
+the renderer, and do not make #45's foreign rows selectable as part of it — that
+pairing is #47's whole job and doing it early is the bug the spec split to avoid.
 
 ## Run it
 
@@ -66,16 +66,27 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
 ## Landmines — carried, still live
 
 - **Pins are mutation-verified. Never "fix" a red pin by editing its
-  expectation.** #42 spent the queue's only authorized retirement.
+  expectation.** The one legitimate retirement is when the *ticket* reverses the
+  contract the pin describes and says so by name (#42's single-line composer,
+  #45's two cwd-scoped list tests). A pin that goes red because your change
+  broke it still means your change is wrong.
+- **Do not wire cross-project selection until #46 and #47 are both in.** #45
+  renders those rows inert on purpose; selecting one early produces project B's
+  sidebar beside project A's conversation.
+- **A session fixture with no `cwd` is a foreign row and is inert.** Any new UI
+  test that clicks a session row must set `cwd: FOLDER` (exported from
+  `tests/chat-harness.ts`). This bit `resume`, `switching` and `agents-dock`.
 - **Never re-derive a store path from `cwd`** — no `encodeCwd`, no
-  case-insensitive variant, no decoding a directory name back into a cwd. That
-  compare-case-insensitively "fix" was #44's named sharpest failure mode: it
-  patches the drive-letter cases and leaves every other lossy collision live.
-  `cwdKey()` is for comparison and grouping only — never join it into a path.
+  case-insensitive variant, no decoding a directory name back into a cwd.
+  `cwdKey()` (now folded in `src/shared/cwd-key.ts`) is for comparison and
+  grouping only — never join it into a path.
 - **Do not rebuild the storage index inside `listSessions`.** #43's
   no-JSONL-read pin asserts no directory scan happens on the list path;
   freshness is `resetSessionIndex()` at the `session:list` handler plus a lazy
   rebuild on the next lookup.
+- **`listSessions` must keep passing no `dir`.** A scoped call returns an
+  identically-shaped list silently missing 36 of 37 projects, so the pin is on
+  the call (`not.toHaveProperty('dir')`), not the result.
 - **Never re-add `customTitle ?? summary`** to the session title. Real data can
   never catch it (0 of 325 custom titles diverge); the synthetic divergent
   fixture in `tests/session-store.test.ts` is the only guard.
@@ -83,9 +94,10 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
   re-read. Restoring it restores the per-file parse #43 deleted.
 - **A green test can be green for the wrong reason.** #42's whitespace test
   asserted only "no popover" — which the *reverted* code also produces. Assert
-  the mechanism (a fetch count, a read that must not happen), not a symptom with
-  more than one cause. #43's no-JSONL-read test and #44's names-only-build test
-  are the worked examples; both were mutation-verified.
+  the mechanism (a fetch count, a read that must not happen, an option that must
+  be absent), not a symptom with more than one cause. #43's no-JSONL-read,
+  #44's names-only-build and #45's no-`dir` tests are the worked examples; all
+  three are mutation-verified.
 - **Required test coverage in the remaining tickets is not optional** — the
   ordered-call assertion (#46) and the call-count assertion (#49).
 - **Vitest + `node:fs/promises`:** a module mock must also export `default`, or
@@ -99,8 +111,8 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
   (`field-sizing: content`), deliberately not React state.
 - **`gh issue close --comment` silently drops the comment if the issue is
   already closed** — a pushed `Closes #N` auto-closes it first, so the
-  breadcrumb vanishes with only a `!` warning. Use `gh issue comment` and verify.
-  (Hit again this leg; the comment-then-verify path worked.)
+  breadcrumb vanishes with only a `!` warning. Keep `Closes #N` OUT of the
+  commit, then `gh issue comment` → `gh issue close` → verify. Worked this leg.
 - Full ledger in [[active-work]]. Headlines unchanged: plain-string engine pin
   and array-of-only-text parser pin are mutation-verified; replay never carries
   the payload; absent stays absent; `taskToParent` is the `local_bash` filter;
@@ -115,30 +127,38 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
 
 ## Baseline
 
-`npm run typecheck` clean, `npm run build` clean, **474 tests green across 39
+`npm run typecheck` clean, `npm run build` clean, **504 tests green across 40
 files**, verified 2026-07-28 immediately before this handoff.
 
 ## GUI check
 
 `node .claude/skills/run-desktop/driver.mjs [--cycle]` for the titlebar pills;
-`node .claude/skills/run-desktop/gui-42.mjs` for the composer (**committed** —
-use it as the template rather than writing a new variant). Needs `npm run build`
-+ `playwright-core`. Gotchas: `createRequire` for playwright-core; **pass the
-dialog-stub path as an argument to `app.evaluate`, never inside a string
-literal** (a single backslash silently yields a nonexistent cwd, which the SDK
-misreports as "native binary exists but failed to launch"); DOM-dispatched
-clicks (Playwright's stability wait hangs on the app's animations); hard
-`setTimeout(process.exit)`; measure in the DOM, never off screenshots; and never
+`node .claude/skills/run-desktop/gui-45.mjs` for the sessions rail (**committed**
+— it is the newest template; it picks this repo as the workspace so the current
+group is real, and it arms its hard exit *before* awaiting `app.close()`, which
+is why it prints `DONE` instead of `TIMEOUT` over a passing verdict).
+`gui-42.mjs` is still the composer template. All need `npm run build` +
+`playwright-core`. Gotchas: `createRequire` for playwright-core **if the driver
+lives outside the project dir**; **pass the dialog-stub path as an argument to
+`app.evaluate`, never inside a string literal** (a single backslash silently
+yields a nonexistent cwd, which the SDK misreports as "native binary exists but
+failed to launch"); DOM-dispatched clicks (Playwright's stability wait hangs on
+the app's animations); measure in the DOM, never off screenshots; and never
 re-read an element after an action that may not have happened — inject a probe
 node instead.
 
-**No GUI drive was run this leg.** #44 is a main-process path-resolution change
-with no rendering surface; it was verified directly against the real store (494
-sessions resolved, 0 misses) rather than through a driver screenshot. **#45 is a
-rendering ticket and needs one.**
+**GUI drive was run this leg and passed** (see the measurements above). A driver
+expectation of mine was wrong once and worth remembering: filtering by a partial
+project name legitimately keeps every project it is a substring of — six real
+directories on this machine contain `playground`. Only a full path can assert
+"exactly one group".
+
+**#46 is a main-process ticket with no rendering surface** and should not need a
+GUI drive; #47 and #48 will.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-storage-location-is-an-index-not-an-encoding]] ·
+- [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] ·
+  [[2026-07-28-storage-location-is-an-index-not-an-encoding]] ·
   [[2026-07-28-session-metadata-is-the-sdks-job]]

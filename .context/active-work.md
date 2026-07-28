@@ -7,29 +7,29 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 — relay leg 3 landed #44; 5 tickets left in the queue_
-_Baseline: typecheck clean, build clean, **474 tests green across 39 files**_
+_Last updated: 2026-07-28 by Opus 5 (relay leg 4, auto) — landed #45; 4 tickets left_
+_Baseline: typecheck clean, build clean, **504 tests green across 40 files**_
 
 ## Current focus
 
-**#44 — storage index: landed** on main as `d44c2a2`. `encodeCwd` is **deleted**;
-`src/main/session-index.ts` resolves a session id to its real directory by
-enumerating `~/.claude/projects` (names only). Suite went 457 → 474.
+**#45 — global session list: landed** on main as `63f12d5`. `listSessions()`
+drops `dir`, so the rail lists the **whole store**; the renderer groups by
+project, filters client-side and caps at 100 globally. Suite went 474 → 504.
 
-**Next: #45 — Global cross-project session list + filter.** #46 also unblocked
-now, but the queue order is #45 first.
+**Next: #46 — Main-process `switchWorkspace` transaction (merges dormant).**
+#49 is unblocked too (it waited only on #45), but #46 is next in order and #47
+needs it.
 
-Spec **#41 — Resume anything** is the remaining work, five tickets:
+Spec **#41 — Resume anything** is the remaining work, four tickets:
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #45 | Global cross-project session list + filter | 0 — **next** |
-| #46 | Main-process `switchWorkspace` transaction (dormant) | 0 — also open |
-| #47 | Wire the renderer to `switchWorkspace` | 2 |
+| #46 | Main-process `switchWorkspace` transaction (dormant) | 0 — **next** |
+| #47 | Wire the renderer to `switchWorkspace` | 1 |
 | #48 | Folder picker reachable after first pick | 1 |
-| #49 | Lazy title enrichment for slash-command-first sessions | 1 |
+| #49 | Lazy title enrichment for slash-command-first sessions | 0 — also open |
 
-Order: `#45 → #46 → #47 → #48 → #49`. Blocked-ness is authoritative
+Order: `#46 → #47 → #48 → #49`. Blocked-ness is authoritative
 from `gh api repos/<owner>/<repo>/issues/<n> --jq
 '.issue_dependencies_summary.blocked_by'` — `gh issue list --json` does **not**
 expose that field.
@@ -64,6 +64,38 @@ the SDK path kills the raw-markup title defect; 0 of 325 `customTitle` values
 diverge from `summary`, making a coalesce redundant; 490 sessions across 37
 cwds, 5 with no cwd at all; `encodeCwd` **misses 6 of 37 real store
 directories** from drive-letter case drift.
+
+## Facts established by #45 (don't re-derive)
+
+- **`listSessions()` takes no arguments and passes no `dir`.** That omission is
+  what makes the SDK global. `includeWorktrees` is **settled by construction** —
+  the SDK applies it only when `dir` is given, so #43's open flag is dissolved,
+  not answered. See
+  [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]].
+- **`SessionMeta.cwd?: string`** — absent, not `''`, when the store records none.
+- **Filter / group / cap is one pure module**, `src/shared/session-groups.ts`,
+  and the ORDER is a contract: filter the complete loaded metadata → sort and
+  group the matches → cap at the newest **100 matches globally**. Capping first
+  makes a truncated list read as empty; capping per group is 3700 rows at 37
+  projects. Both inversions are mutation-covered.
+- **Groups need no second sort.** First-appearance order over a newest-first
+  page already *is* "most recent group first".
+- **`cwdKey`'s fold now lives in `src/shared/cwd-key.ts`**; main-side `cwdKey`
+  still `resolve()`s then folds. Still comparison-only — never join it to a path.
+- **A foreign row is rendered and inert** (`disabled`), and the pin clicks it and
+  asserts `loadTranscript` never fired. Disabled-looking is not the requirement.
+- **Measured live at the change**: 495 sessions, 61 store directories, 9 groups
+  in the first page, cap engaged at exactly 100, 64 rows enabled / 36 inert,
+  full-path filter → 1 group with 0 foreign rows, `Show more` → 200 rows.
+- **`gui-45.mjs` is committed** and arms its hard exit *before* awaiting
+  `app.close()` — the older drivers print `TIMEOUT` over an already-printed PASS
+  when close hangs.
+- **Two session-store tests were replaced, not weakened.** They encoded the
+  cwd-scoped contract #45 reverses by name. That is the *only* legitimate reason
+  to retire a pin: the ticket changes the contract the pin describes.
+- **Session fixtures now need `cwd: FOLDER`** (exported from `chat-harness.ts`)
+  or their rows are foreign and inert. This bit `resume`, `switching` and
+  `agents-dock`.
 
 ## Facts established by #44 (don't re-derive)
 
@@ -162,6 +194,9 @@ there was no canonical one to start from.
 
 ## Decisions binding this work
 
+- [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] — #45's
+  global list, the fixed filter/group/cap order, and the inert foreign row #47
+  is the one allowed to wire up.
 - [[2026-07-28-storage-location-is-an-index-not-an-encoding]] — #44's index, the
   demotion of `cwd` to a display value, and the typed `missing-cwd` rejection
   #45/#46 consume.
@@ -269,8 +304,10 @@ there was no canonical one to start from.
 
 ## Pick up here
 
-**#45 — Global cross-project session list + filter.** Unblocked (#46 is too, but
-#45 is next in order). See [[pick-up]] for the queue and landmines.
+**#46 — Main-process `switchWorkspace` transaction (merges dormant).** Unblocked
+(#49 is too, but #46 is next in order and #47 needs it). Its front door is
+`resolveResumeTarget`, already built and typed. See [[pick-up]] for the queue and
+landmines.
 
 ## Deferred (still no spec)
 
@@ -310,8 +347,13 @@ reasons worth keeping:
 - **Required test coverage in the remaining tickets is not optional** — the
   ordered-call assertion (#46) and the call-count assertion (#49) exist
   precisely because a green suite passes while the requirement is unmet. #43's
-  no-JSONL-read assertion is now landed and mutation-verified; it is the working
-  example of the pattern.
+  no-JSONL-read assertion and #45's no-`dir` assertion are landed and
+  mutation-verified; they are the working examples of the pattern.
+- **Do not wire cross-project selection** until #46 *and* #47 are both in. #45
+  deliberately renders those rows inert; making them live early is the exact
+  bug the spec split them to avoid.
+- **A session fixture with no `cwd` is a foreign row** and is inert. New UI
+  tests that click a session row must set `cwd: FOLDER`.
 - **Never add a resize effect to `InputBar`** —
   [[2026-07-28-composer-height-is-css-not-state]].
 - **Wisp `options.model` = the alias/family NAME, never a resolved model id** —
