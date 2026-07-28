@@ -11,97 +11,87 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## This leg landed
 
-Two tickets. **#51 came from an owner bug report mid-session**, not from a queue.
+Two tickets, both from an owner bug report mid-session — the same door #51 came
+through. One sentence covers both: **the app was stating the model instead of
+asking the CLI for it.**
 
-### #51 — One global scrollbar rule (`08d78a2`, closed)
+### #53 — the picker list comes from the CLI (`cde78c4`)
 
-The model picker dropdown showed Chromium's raw Windows bar. It was **four**
-scrollables (`.model-menu`, `.command-list`, `.command-popover`, and the composer
-textarea past #42's 8-line cap), and the four *styled* containers had already
-drifted apart (`.chat` 10px/3px, the three rails 8px/2px). Four component-scoped
-`::-webkit-scrollbar` blocks are now **one global rule** after the reset.
+The dropdown was `FAMILIES = ['opus','sonnet','haiku','fable']` plus a
+`wisp routing --json` shell-out. The CLI's own `supportedModels()` advertises
+**fourteen rows**. The app showed four, one of which (`fable`) the CLI never
+advertised at all.
 
-- **Never scope a scrollbar rule to a component, and a shared class is not an
-  improvement** — it still has to be remembered at each new container, which is
-  precisely how four of them shipped the default. The pin is on the mechanism:
-  no scoped `::-webkit-scrollbar` selector may exist, so a fifth copy fails the
-  suite instead of silently restoring the drift.
-- **`::-webkit-scrollbar-button { display: none }` and a transparent `-corner`
-  are load-bearing.** Chromium draws stepper arrows even on an otherwise-styled
-  bar (those are what the report showed), and a both-axes container paints an
-  opaque square where the bars meet.
-- **Never add `scrollbar-width` / `scrollbar-color`** — the standard properties
-  suppress the `::-webkit-` pseudo-elements and would discard the rule silently.
+- **Never hardcode a model name.** A hand-maintained mirror cannot notice the
+  original moving, and this one didn't. Two tests pin the **absence** of a
+  list-building surface in `model-mode.ts`, because a re-added constant would
+  fail no behavioural test — it would just be quietly wrong again.
+- Deleted with it: `parseAliases`, the shell-out (**the app's only
+  `child_process` use**), and `ModelOption.group` — the family/alias split only
+  existed because the app built the list.
+- `id` is the row's `value`, **never** its `resolvedModel`. One engine test
+  kills that substitution specifically.
+- Accepted: with no live query the menu is empty rather than four families —
+  the contract `listCommands()` already had.
 
-`DESIGN.md` is corrected: it described this as "the chat scrollbar", and writing
-a surface-wide property as one component's detail is what licensed the drift.
-Decision: [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]].
+### #52 — the pill follows the CLI (`144646c`, + `c2a3ec3`)
 
-Four mutations, each killed. Measured live in the DOM via `gui-51.mjs`: **10px**
-gutter on a probe element, **10.18px** on the reported menu (a 1px hairline
-computes to 0.909px under Windows display scaling), versus a ~15-17px Windows
-default.
+`/model` is typed into the composer and never touches the pill; the SDK has no
+model-changed message (the whole `SDKMessage` union was checked). The pill now
+reads `init.model` and each assistant message's `message.model`.
 
-### #50 — Sanitize CLI markup in transcript replay (`c92cb48`, closed)
-Replay rendered the CLI's own markup as literal XML in the user bubble;
-`unwrapCommandInvocation` is now `sanitizeUserText` in `src/main/transcript.ts` —
-one classifier over eight tags returning the display text or `null` to drop.
-(The same *shape* of bug as #51, found independently: a rule written per case
-instead of once.)
+Three things are load-bearing:
 
-| Leading tag | Replay shows |
-|---|---|
-| `<command-message>` / `<command-name>` | `/name args` — both persisted orders |
-| `<bash-input>` | `! command` |
-| `<local-command-stdout>` | body, ANSI stripped |
-| `<bash-stdout>` | stdout + stderr, empty half omitted |
-| `<local-command-caveat>` · `<task-notification>` · `<system-reminder>` | dropped |
+- **`picked` and `reported` are separate fields.** A pick is the row's value
+  (`opus[1m]`); a report is a resolved id (`claude-opus-5`). Only `picked`
+  reaches `options.model` — a resolved id there is the #23 hang, and it surfaces
+  on the *next engine rebuild*, far from the assignment. Merging them kills one
+  test and nothing else.
+- **Delivery is an injected callback, not an `EngineEvent`.** `emit()` only
+  reaches `activeOnEvent`, null outside a turn, and `init` arrives during
+  `warmUp()`. As an event it would be dropped in exactly the case it exists for.
+- **Timing, measured not assumed:** the pill does **not** move on the `/model`
+  command itself — that returns synthetic output, deliberately not a model
+  report — but on the next real turn. Don't re-file that as a bug.
 
-Three things are load-bearing and easy to undo by accident:
+`c2a3ec3` then added `modelLabel()`, because the two commits above made the pill
+print `claude-haiku-4-5-20251001` instead of "Haiku". Match order is exact id →
+exact `resolvedModel` → suffix-stripped `resolvedModel`; the suffix must be
+tolerated (one session is announced `claude-opus-5[1m]` on init and
+`claude-opus-5` on the assistant message) but is tried **last** because it is
+ambiguous. An unknown model shows its raw id, never "Default" — that would be a
+lie about what is running.
 
-- **Dispatch is on the LEADING tag of the trimmed message, never mid-string.**
-  That anchor is the safety argument, not a shortcut: every markup kind occupies
-  a whole message in real data (nothing follows a `<command-name>` block in
-  **442 of 442**; a caveat is alone in **419 of 419**), while pasted terminal
-  logs and quoted diagnoses that merely *mention* the markup are genuine user
-  content — 7 such messages exist in the store today. `startsWith` → `includes`
-  is killed by exactly one test, the pasted-log pin.
-- **ANSI is stripped from OUTPUT STREAMS ONLY.** A real recorded argument is
-  `fable[1m]`, whose brackets are literal text, not an escape. Typed text —
-  command args, `<bash-input>` — keeps its bytes.
-- **`CSI` is built with `String.fromCharCode(27)`.** Neither a raw ESC byte nor a
-  `\u` escape survives tooling intact; the raw character is invisible in an
-  editor and the escape kept being normalized *into* the raw byte while this was
-  written. Both `transcript.ts` and `transcript.test.ts` contain **zero** raw ESC
-  bytes — one grep checks it.
+### The `opus` = 4.8 half needed no app change
 
-Scope was **eight tags, not the three the old note named**: `<command-name>`-first
-(442) is *more* common than the one shape the parser already handled (312), and
-`<task-notification>` (100) / `<system-reminder>` (28) / `<bash-*>` (12) are the
-same defect in the same table. Before: **1258 of 3359 messages, 37%**, raw.
+The app runs the CLI **bundled in the npm package**, not the host `claude`.
+Bumping `@anthropic-ai/claude-agent-sdk` 0.3.217 → 0.3.220 (`241f1ec`) moved the
+bundled CLI 2.1.217 → 2.1.220, and with it exactly two of fourteen rows:
+
+| value | 2.1.217 | 2.1.220 |
+|---|---|---|
+| `default` | `claude-opus-4-8[1m]` | `claude-opus-5[1m]` |
+| `opus[1m]` | `claude-opus-4-8[1m]` | `claude-opus-5[1m]` |
+
 Decision on record:
-[[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]].
+[[2026-07-28-the-model-is-the-clis-fact-not-the-pills]].
 
-Suite **560 → 575 across 45 files**, typecheck and build clean. Nine mutations
-run, each killing exactly its target. Real-store sweep through the **real
-parser** (924 files): of **2972** user messages reaching replay, **7** still
-contain the markup — all prose quoting it, **0** leading with a tag, **0**
-carrying ANSI (was 186).
+## Queue
 
-## Queue empty
+**#54 is open, unstarted, and pre-existing** — not caused by this leg. Picking a
+model (or permission) *before the first turn* resumes a session that only ever
+warmed up and errors it. Warm-up alone emits messages carrying a `session_id`,
+so `engine?.sessionId()` is non-null for a session that never ran. Ruled out:
+the picked value — `options.model: 'default'` probed directly against the SDK
+succeeds. `permission:set` shares the shape, untested.
 
-No `ready-for-agent` ticket is open. The only open tracker item is the unlabelled
-umbrella spec **#1**, which is not an agent ticket. Nothing sits in
-`ready-for-human`, nothing is blocked.
+Otherwise the `ready-for-agent` queue is empty; the only other open item is the
+unlabelled umbrella spec **#1**, which is not an agent ticket.
 
 ## Next, if you are starting fresh
 
-Spec #41's close-out named exactly one candidate with a live sighting — the
-replay sanitizer — and **#50 was it**; **#51** then came from an owner bug
-report. Both are closed. There is no queued leftover; the next effort is a
-genuine choice.
-
-Options are the *Deferred* list in [[active-work]]: context-pressure meter (note
+#54 is the one concrete, evidenced ticket sitting there. Beyond it, the
+*Deferred* list in [[active-work]] is unchanged: context-pressure meter (note
 the trap — `Query.getContextUsage()` exists but a naïve percentage lies, it must
 separate the raw window from the auto-compaction threshold), typed failed-turn
 recovery (`rewindFiles()` needs `enableFileCheckpointing`, which our options do
@@ -111,97 +101,101 @@ engines, fork-on-resume, folding `Welcome`'s last `pickFolder` caller onto the
 chooser, and the smaller leftovers from #31–#36.
 
 Route a new effort through `/preset init` (idea) or `/wayfinder` (needs a map),
-then `to-spec` → `to-tickets`, and a relay body will pick it up unchanged.
+then `to-spec` → `to-tickets`.
 
 ## Landmines — carried, still live
 
-The full ledger is in [[active-work]]. The ones most likely to bite next:
+Full ledger in [[active-work]]. Most likely to bite next:
 
 - **Pins are mutation-verified. Never "fix" a red pin by editing its
   expectation.** The only legitimate retirement is a ticket that reverses the
   contract by name, and that allowance is spent.
-- **A green test can be green for the wrong reason.** Assert the mechanism — a
-  read that must not happen, a call ORDER, an option that must be absent, a
-  count — not a symptom with more than one cause.
+- **A green test can be green for the wrong reason** — and this leg produced a
+  worked example worth remembering. A `parent_tool_use_id` guard was written at
+  the model-reporting site; deleting it killed **no** test, because
+  `handleMessage` already returns early on `parent_tool_use_id`. The guard was
+  dead code and is gone; the test stays and now pins that early return. **If a
+  mutation kills nothing, the code you mutated may not be what makes the test
+  pass.**
+- **Never hardcode a model name**, and **never merge `picked` with `reported`**
+  in `model-mode.ts`. #52/#53, above.
+- **The CLI shadows the Claude FAMILIES; Wisp resolves the ALIASES.** Corrects
+  the note carried since #23. A stale CLI alias table cannot be fixed by
+  rebinding a Wisp family — only by upgrading the CLI.
+- **The app's CLI is the bundled one** (`manifest.json` in the SDK package), not
+  the host `claude`. The host being current tells you nothing.
 - **Never match CLI markup mid-string, and never strip ANSI from typed text.**
-  #50's anchor, above.
+  #50's anchor.
 - **Never scope a scrollbar rule to a component** (and never add
-  `scrollbar-width` / `scrollbar-color` beside it). #51, above.
+  `scrollbar-width` / `scrollbar-color`). #51.
 - **Never enrich a row that has not rendered, and never derive a label during
-  filtering.** `groupSessions`' `labels` option matches what is already cached
-  and derives nothing; a keystroke that scans the store is #43's deleted
-  whole-store read arriving by another door.
-- **Never call `pickFolder` outside `Welcome`**; the chooser is `chooseFolder`
-  and the transition is `switchWorkspace`.
+  filtering.**
+- **Never call `pickFolder` outside `Welcome`**; the chooser is `chooseFolder`,
+  the transition is `switchWorkspace`.
 - **Never clear the pane with `newChat()` on a switch path** — use
-  `adoptSession`, with `null` meaning "no session, no engine call".
+  `adoptSession`, `null` meaning "no session, no engine call".
 - **Never un-key the composer** (`<InputBar key={cwd}>`), and clear
   `pendingInsert` in the same commit as the cwd change.
 - **Never re-derive a store path from `cwd`**; `cwdKey()` is comparison only.
 - **Do not rebuild the storage index inside `listSessions`**, do not restore
-  `messageCount`, and never re-add `customTitle ?? summary`.
-- **New `window.api` channel → ALL FOUR mock sites**, and guard every IPC with
+  `messageCount`, never re-add `customTitle ?? summary`.
+- **New `window.api` channel → ALL FOUR mock sites**, guard every IPC with
   `isTrustedIpc`. **A module-level cache needs a test reset.**
 - **`gh issue close --comment` drops the comment if the issue is already closed**
   — keep `Closes #N` out of the commit, then comment → close → verify.
-- **The Bash tool is not PowerShell** (heredoc, not a here-string), and source
-  files are **CRLF** — a `perl -0pi` pattern spanning a newline needs `\r?\n`,
-  and one containing `/` breaks the `s///` delimiter outright. **A mutation
-  harness must assert its anchor matched exactly once**: #50's first run reported
-  four survivors that were really `\n`-vs-CRLF anchor misses, and a bad anchor
-  reads identically to an uncaught mutation.
+- **The Bash tool is not PowerShell** (heredoc, not a here-string), source files
+  are **CRLF**, and **a mutation harness must assert its anchor matched exactly
+  once** — a bad anchor reads identically to an uncaught mutation.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Not our
   bug; don't run wrapper sessions or GUI drivers there.
 
 ## Baseline
 
-`npm run typecheck` clean, `npm run build` clean, **581 tests green across 46
-files**, verified 2026-07-28 immediately before this handoff. `main` is **four
-commits ahead of `origin/main`** — #50, #51 and the two context commits are all
-**unpushed**. The owner was offered a push twice and did not take it; ask before
-pushing rather than assuming it was an oversight.
+`npm run typecheck` clean, `npm run build` clean, **600 tests green across 47
+files**, verified immediately before this handoff. `main` is **four commits
+ahead of `origin/main`** — all four are this leg and all are **unpushed**.
+
+Note the previous baton said "four commits ahead" too, but that was stale:
+`origin/main` already carried #50 and #51. Trust `git log origin/main..main`
+over the note.
 
 ## GUI check
 
 `node .claude/skills/run-desktop/driver.mjs [--cycle]` for the titlebar pills.
-**`gui-49.mjs` is the newest template**: it instruments the **main process** by
-wrapping the registered invoke handler, so it counts what the renderer actually
-asked for rather than what the script hoped — the technique to reuse whenever a
-ticket's real risk is "how many times did that happen". `gui-48.mjs` is the
-dialog/call-counted-stub template, `gui-47.mjs` the workspace switch, `gui-45.mjs`
-the sessions rail, `gui-42.mjs` the composer. All need `npm run build` +
-`playwright-core`.
 
-**`gui-51.mjs` is the newest, and the template for any VISUAL claim**: CSS
-pseudo-elements are unreachable from `getComputedStyle` and jsdom cannot render a
-scrollbar at all, so it measures the consequence instead — the gutter, as
-`offsetWidth - clientWidth`, in the real built app. Two traps it cost to learn,
-both instrument bugs that first read as app defects: that expression **includes
-horizontal borders** (subtract them, or a 1px-hairline element reads 2px high),
-and **exact pixel equality fails under Windows display scaling** (a 1px border
-computes to ~0.909px, so compare with tolerance). It also probes a synthetic
-element on purpose — when the claim is "this rule is global", an arbitrary
-element inheriting it *is* the claim, not a proxy.
+**`gui-52.mjs` is the newest, and the template whenever a claim is "the UI
+followed something the user never clicked".** It earned its keep twice: it
+caught the raw-id label regression, and it caught *itself* passing vacuously.
+Two techniques worth reusing:
 
-**#50 was verified without a GUI driver** — it is a pure function over a parsed
-transcript, so the honest check was sweeping the real store through the real
-parser (a throwaway `tests/real-store.test.ts`, deliberately not committed since
-it depends on this machine's `~/.claude/projects`). Reach for that shape when the
-risk is "what does this do to real data" rather than "what does the UI do".
+- **Prove the input happened, not just that the output looks settled.** "Pill is
+  no longer disabled" is equally true of a turn that never started, so every
+  turn is paired with a transcript-growth check. The first version of this
+  driver reported a clean-looking failure that was really a confound.
+- **Instrument the side that produces the effect.** Wrapping `webContents.send`
+  in MAIN distinguishes "main never broadcast" from "the renderer ignored it"
+  from "the submit never happened" — three findings needing three different
+  fixes, indistinguishable from the DOM alone. Wrap **after** `firstWindow()`.
 
-Gotchas: stub `dialog.showOpenDialog` in main **before** any click that opens one
-or the run blocks forever; `createRequire` for playwright-core if the driver lives
-outside the project dir; **pass any path as an argument to `app.evaluate`, never
-inside a string literal**; DOM-dispatched clicks; measure in the DOM, never off
-screenshots; never re-read an element after an action that may not have happened;
-**count the side effect you actually care about**; clean up a temp cwd after
-`app.close()` and never fatally; and **log what the driver could not drive**
-rather than letting silence read as a pass.
+`gui-49.mjs` is the main-process-counter template, `gui-51.mjs` the visual/CSS
+one (pseudo-elements are unreachable from `getComputedStyle`; measure the
+consequence, and mind Windows display scaling), `gui-48.mjs` dialog/call-counted
+stubs, `gui-47.mjs` workspace switch, `gui-45.mjs` the sessions rail, `gui-42.mjs`
+the composer. All need `npm run build` + `playwright-core`.
+
+Carried gotchas: stub `dialog.showOpenDialog` in main **before** any click that
+opens one; `createRequire` for playwright-core if the driver lives outside the
+project; **pass any path as an argument to `app.evaluate`, never inside a string
+literal**; DOM-dispatched clicks; measure in the DOM, never off screenshots;
+never re-read an element after an action that may not have happened; clean up a
+temp cwd after `app.close()`; and **log what the driver could not drive** rather
+than letting silence read as a pass.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] ·
+- [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]] ·
+  [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] ·
   [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]] ·
   [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]] ·
   [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] ·

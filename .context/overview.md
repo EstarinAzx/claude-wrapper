@@ -19,7 +19,10 @@ tags: [context, overview]
   only the binding to the real engine, broker and cwd. `transcript.ts` parses the
   native JSONL to the replay list and owns `sanitizeUserText`, the one place CLI
   markup is turned into readable text — anchored on the message's leading tag,
-  never matched mid-string.
+  never matched mid-string. `model-mode.ts` holds ONLY the pick state: the model
+  list comes from the CLI (`engine.listModels()` → `supportedModels()`), and
+  `picked` (which becomes `options.model`) is kept apart from `reported` (what
+  the CLI says it is running, display only).
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
 - `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS, plus the app-wide scrollbar rule right after the reset — global on purpose, never scoped to a component).
   `App.tsx` owns the workspace switch: the `ok` branch is where every
@@ -45,15 +48,15 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **queue
-  empty**, no `ready-for-agent` ticket open)
-- Tracker: **#50 (replay markup sanitizer) and #51 (global scrollbar rule)
+- `.context/pick-up.md` — current frontier + landmines (currently: **no
+  `ready-for-agent` ticket open**; **#54** is filed and unstarted)
+- Tracker: **#52 (model pill follows the CLI) and #53 (CLI-sourced model list)
+  closed; #54 open (pre-existing pick-before-first-turn resume error); #50 and #51
   closed**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. The unlabelled umbrella #1 is the only issue
-  still open
+  #20 hold the earlier history. Open: **#54** and the unlabelled umbrella **#1**
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first

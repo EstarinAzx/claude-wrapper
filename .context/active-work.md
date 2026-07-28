@@ -7,23 +7,44 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 by Opus 5 — landed #50 and #51; queue empty_
-_At commit: `08d78a2`_
-_Baseline: typecheck clean, build clean, **581 tests green across 46 files**_
+_Last updated: 2026-07-28 by Opus 5 — landed #52 and #53; queue empty_
+_At commit: `c2a3ec3`_
+_Baseline: typecheck clean, build clean, **600 tests green across 47 files**_
 
 ## Current focus
 
 **None — the `ready-for-agent` queue is empty.** Spec #41 "Resume anything" was
 delivered and closed on 2026-07-28 (#43 `ea7baaf` · #44 `d44c2a2` · #45 `63f12d5`
 · #46 `1bdadae` · #47 `8c9cbb7` · #48 `08974d5` · #49 `f71efbf`; #42 `5b66dd9`
-standalone). Two follow-ups then landed off the back of it: **#50 `c92cb48`**
-cleared the last item its close-out named, and **#51 `08d78a2`** came from an
-owner bug report during the same session.
+standalone). Four follow-ups then landed off the back of it: **#50 `c92cb48`**
+cleared the last item its close-out named, and **#51 `08d78a2`**, **#52
+`144646c`** and **#53 `cde78c4`** all came from owner bug reports.
+
+**#54 is open and unstarted** — a pre-existing bug found while verifying #52,
+filed rather than fixed. See *Known issues*.
 
 ## State
 
 - **In flight:** nothing.
-- **Done this session:**
+- **Done this session (#52 / #53):**
+  - **SDK bumped 0.3.217 → 0.3.220** (`241f1ec`). The app runs the CLI **bundled
+    in the npm package**, not the host `claude` — it was 2.1.217. Two of the
+    CLI's fourteen model rows moved and twelve were byte-identical: `default`
+    and `opus[1m]` both went `claude-opus-4-8[1m]` → `claude-opus-5[1m]`. That
+    was the entire cause of "opus gives the old opus"; no app change was
+    involved.
+  - **#53** — the picker list is now `supportedModels()`, read live
+    (`cde78c4`). Deleted `FAMILIES`, `parseAliases`, the `wisp routing --json`
+    shell-out (**the app's only `child_process` use**) and `ModelOption.group`.
+  - **#52** — the pill follows the model the CLI reports, from `init` and each
+    assistant message (`144646c`). `picked` and `reported` are separate fields;
+    only `picked` becomes `options.model`.
+  - **Label follow-up** (`c2a3ec3`) — `modelLabel()` maps a reported resolved id
+    back to its row, so the pill says "Haiku" and not
+    `claude-haiku-4-5-20251001`. Caught by the GUI check, caused by the two
+    commits before it.
+  - Decision: [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]].
+- **Done earlier this session:**
   - **#50** — `sanitizeUserText` replaces `unwrapCommandInvocation` in
     `src/main/transcript.ts`. One classifier over eight tags, dispatching on the
     **leading tag of the trimmed message**, returning display text or `null` to
@@ -143,8 +164,32 @@ None blocking.
   `stat` now.
 - **Never add a resize effect to `InputBar`** — height is CSS
   (`field-sizing: content`), deliberately not React state.
-- **Wisp `options.model` = the alias/family NAME**, never a resolved model id.
-  Never run bare `wisp snapshot` — always name the family.
+- **Never hardcode a model name anywhere.** The list is `supportedModels()`,
+  live, uncached. A hand-maintained mirror cannot notice the CLI's list moving,
+  and it didn't: four invented family tokens (one of which, `fable`, the CLI
+  never advertised) stood while the CLI offered fourteen rows. Two tests in
+  `tests/model-mode.test.ts` pin the **absence** of a list-building surface,
+  because a re-added constant fails no behavioural test — it is just quietly
+  wrong again.
+- **Never merge `picked` and `reported` in `model-mode.ts`.** A pick is the
+  row's value (`opus[1m]`); a report is a resolved id (`claude-opus-5`). Only
+  `picked` may reach `options.model` — a resolved id there is the #23 hang, and
+  it surfaces on the *next engine rebuild*, far from the assignment.
+  `resolvedModel` on a row is for labelling only.
+- **A model report is delivered by injected callback, not an `EngineEvent`.**
+  `emit()` only reaches `activeOnEvent`, which is null outside a turn, and the
+  `init` carrying the first model arrives during `warmUp()`. As an event it
+  would be dropped in exactly the case it exists for.
+- **Wisp `options.model`: the CLI shadows the FAMILIES, the bridge resolves the
+  ALIASES.** This corrects the note carried since #23. The CLI expands `opus`
+  locally *before* the request leaves, so Wisp never sees the token — its
+  `opus → claude-opus-5` mapping is not consulted. An id the CLI does not know
+  (`claude-wisp-grok`) passes through and the bridge does resolve it. **A stale
+  CLI alias table cannot be fixed by rebinding a Wisp family — only by upgrading
+  the CLI.** Never run bare `wisp snapshot` — always name the family.
+- **The app's CLI is the one bundled in the npm package, not the host
+  `claude`.** `node_modules/@anthropic-ai/claude-agent-sdk/manifest.json` names
+  its version. Host `claude` being current tells you nothing about the app's.
 - **`gh issue close --comment` silently drops the comment if the issue is already
   closed** — a pushed `Closes #N` auto-closes it first. Keep `Closes #N` out of
   the commit, then `gh issue comment` → `gh issue close` → verify.
@@ -165,6 +210,14 @@ None blocking.
   (`c92cb48`) — see [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]].
   The 7 messages that still contain the markup are prose quoting it and are
   correct as-is.
+- **#54 — picking a model/permission before the first turn errors that turn.**
+  Open, unstarted, **pre-existing** (the resume-on-pick line is untouched since
+  #23). Warm-up alone produces messages carrying a `session_id`, so
+  `engine?.sessionId()` is non-null for a session that never ran a turn; the
+  rebuilt engine resumes into it and gets `error_during_execution`. Ruled out:
+  the picked value — `options.model: 'default'` probed directly against the SDK
+  succeeds. `permission:set` shares the shape, untested. `gui-52.mjs` works
+  around it by running its pick step last.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Path is the
   trigger, model only modulates the odds. Not our bug — don't run wrapper sessions
   there, and don't point a GUI driver's temp cwd there either.
