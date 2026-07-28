@@ -11,50 +11,42 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## This leg landed
 
-**No code — a design leg.** Owner reported that a session driven in a terminal,
-viewed simultaneously in the wrapper, does not progress: the pane is a snapshot
-from open time, and seeing new turns means re-opening. One sitting took it
-brainstorm → approach choice → **spec #55** → **tickets #56/#57**, all on the
-tracker, all `ready-for-agent`. Working tree untouched; `main` still `d78eee3`,
-level with `origin/main`.
+**#56 closed — gui-55 exists and has failed for the right reason.** Relay
+ticket-loop leg 1 built `.claude/skills/run-desktop/gui-55.mjs`, ran it against
+the current build, and recorded the red run in #56's closing comment. `main` is
+at `24b6e1d` (squash-merge, gate green: typecheck clean, 614/614 tests, branch
+deleted). Not pushed — push is opt-in `/preset ship`.
 
-The decision is on record as
-[[2026-07-29-live-tail-is-a-signal-not-a-stream]]. The short form:
+The red run, short form: seeded terminal-shaped session adopted (2 messages
+rendered) → external append grew the file 870→1342 bytes → pane stayed at 2
+messages for 10s with **zero main-side IPC after the append** → manual reopen
+rendered the appended line. So the line is valid, the load path renders it, and
+the only missing piece is exactly the watcher/signal #57 adds.
 
-- **Watch the file, signal the renderer, re-run the existing load path.** Main
-  owns one directory-level watcher (single watched session, ~200ms trailing
-  debounce — file-level `fs.watch` is unreliable on Windows). Only a signal
-  crosses IPC in either direction; the transcript keeps travelling over
+## Next task: #57 — live-tail core
+
+**The frontier is #57**, now unblocked (its only blocker #56 is closed).
+`gh issue view 57 --comments`, plus #56's closing comment for the driver
+evidence. Implementation decisions are FIXED in spec #55 and
+[[2026-07-29-live-tail-is-a-signal-not-a-stream]] — do not re-decide:
+
+- Main owns one directory-level watcher (single watched session, ~200ms
+  trailing debounce — file-level `fs.watch` is unreliable on Windows). Only a
+  signal crosses IPC either way; the transcript keeps travelling over
   `session:transcript`, its read/parse/sanitize pipeline reused untouched.
-- **Tail what you watch, never what you drive.** Adopt = tail-eligible;
-  send/new-chat clears; busy blocks reload. Half the reason is clobbering your
-  own live stream; the other half is that a post-send reload swaps live
-  attachment thumbnails for replay chips (bytes never cross IPC on reopen).
-- **Paths closed:** incremental byte tailing is the upgrade path ONLY (do not
-  start there); polling rejected outright; an empty reload with a non-empty
-  pane is skipped, because the lenient read answers `[]` to transient failure.
+- Tail what you watch, never what you drive: adopt = tail-eligible; send /
+  new-chat clears; busy blocks reload.
+- Acceptance criteria pin the three gates as tests: signal-while-busy,
+  signal-after-send, empty-result-kept (lenient read answers `[]` to transient
+  failure — never clear a non-empty pane on an empty reload).
+- Paths closed: incremental byte tailing is the upgrade path ONLY; polling
+  rejected outright.
 
-## Next task: #56, then #57
+**Acceptance eyeball:** when #57 lands,
+`node .claude/skills/run-desktop/gui-55.mjs` must flip to PASS **unchanged**.
+Its red run is on record, so its green means something.
 
-**The frontier is #56** — the gui-55 driver. `gh issue view 56 --comments`.
-Build a driver that opens a session in the real app, appends a valid transcript
-line to that session's JSONL from outside, and asserts the new message appears
-with no interaction. It must also prove the append happened (file grew), or a
-static pane and a failed append are indistinguishable — gui-52's confound
-lesson.
-
-**Run it against the current build and watch it fail for the right reason**
-(pane rendered once, no update). That red run is the deliverable — record it in
-the ticket comment. The ordering is the point: the driver exists and has failed
-before the fix exists, so its later green means something (gui-54's lesson,
-promoted into ticket sequencing).
-
-**Then #57** — live-tail core (blocked by #56, native edge set). Implementation
-decisions are fixed in spec #55; don't re-decide them. Acceptance criteria pin
-the three gates (signal-while-busy, signal-after-send, empty-result-kept) as
-tests.
-
-## Landmines specific to #56/#57
+## Landmines specific to #57
 
 - **New `window.api` members (`watchSession`, `onSessionChanged`) → every mock
   site** (`tests/chat-harness.ts` + inline mocks in `sidebar` / `session` /
@@ -85,30 +77,31 @@ keep driver temp cwds away from there.
 
 ## Baseline
 
-Unchanged from 2026-07-28 verification: `npm run typecheck` clean,
-`npm run build` clean, **614 tests green across 48 files**. `main` =
-`origin/main` = `d78eee3` + this leg's `.context` commit. Trust
-`git log origin/main..main` over any note.
+`main` = `24b6e1d` + this leg's `.context` commit; ahead of `origin/main`
+(push = opt-in `/preset ship`). Verified at the #56 merge gate:
+`npm run typecheck` clean, `npm run build` clean, **614 tests green across 48
+files**. Trust `git log origin/main..main` over any note.
 
 ## GUI check
 
 `node .claude/skills/run-desktop/driver.mjs [--cycle]` for the titlebar pills.
 
-**gui-55 does not exist yet — it IS ticket #56.** Templates, nearest first:
-`gui-52.mjs` for "the UI followed something the user never clicked" (pair every
-assertion with proof the input happened — transcript growth; instrument
-`webContents.send` in MAIN, wrapped after `firstWindow()`, to tell "never
-broadcast" from "renderer ignored it"); `gui-54.mjs` for the red-first
-discipline; `gui-49.mjs` main-process counters; `gui-48.mjs` dialog stubs.
-All need `npm run build` + `playwright-core`.
+**gui-55 exists now** — `node .claude/skills/run-desktop/gui-55.mjs`, currently
+FAIL by design (see #56's closing comment); it is #57's acceptance harness. It
+also demonstrates the seeding trick: a terminal-shaped session written straight
+into the native store (`entrypoint: "cli"`, cwd = temp workspace) lists via the
+SDK and adopts via the sidebar row — no CLI turn, no tokens. Other templates:
+`gui-52.mjs` (proof-of-input + main-side `webContents.send` instrumentation),
+`gui-54.mjs` (red-first discipline), `gui-49.mjs` (main-process counters),
+`gui-48.mjs` (dialog stubs). All need `npm run build` + `playwright-core`.
 
 Carried gotchas: stub `dialog.showOpenDialog` before any click that opens one;
 `createRequire` for playwright-core outside the project; **pass paths as
 arguments to `app.evaluate`, never inside string literals**; DOM-dispatched
 clicks; measure in the DOM, never off screenshots; never re-read an element
-after an action that may not have happened; clean up temp cwd after
-`app.close()`; **log what the driver could not drive** — silence reads as a
-pass.
+after an action that may not have happened; clean up temp cwd (and any seeded
+store dir) after `app.close()`; **log what the driver could not drive** —
+silence reads as a pass.
 
 ## Related
 

@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-07-28
+updated: 2026-07-29
 tags: [context, overview]
 ---
 
@@ -51,11 +51,11 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **queue empty**,
-  no `ready-for-agent` ticket open)
+- `.context/pick-up.md` — current frontier + landmines (currently: **#57**,
+  live-tail core — spec #55, driver #56 closed red-verified)
 - Tracker: **#52 (model pill follows the CLI), #53 (CLI-sourced model list),
-  #54 (no resume before the first turn), #50 and #51 all closed**;
-  spec #41 (Resume anything)
+  #54 (no resume before the first turn), #50, #51 and #56 (gui-55 driver) all
+  closed**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /

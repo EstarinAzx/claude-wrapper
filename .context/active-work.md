@@ -7,40 +7,39 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-29 by Fable 5 — spec #55 + tickets #56/#57 published; no code this session_
-_At commit: `d78eee3` (unchanged — tracker-only session)_
-_Baseline: typecheck clean, build clean, **614 tests green across 48 files** (as verified 2026-07-28; nothing has touched code since)_
+_Last updated: 2026-07-29 by Fable 5 (relay ticket-loop leg 1) — #56 delivered and closed_
+_At commit: `24b6e1d` (gui-55 driver on main; 2 commits ahead of origin before this `.context` commit)_
+_Baseline: typecheck clean, build clean, **614 tests green across 48 files** (re-verified at the #56 merge gate — the driver adds no compiled code)_
 
 ## Current focus
 
-**Live-tail external sessions — spec #55, in the queue as #56 → #57.**
+**Live-tail external sessions — spec #55. #56 is done; #57 is the frontier.**
 
-Owner report: a terminal-driven session viewed simultaneously in the wrapper
-does not progress; the pane is a snapshot from open time. The design session ran
-brainstorm → approach choice → spec → tickets in one sitting. Decision on
-record: [[2026-07-29-live-tail-is-a-signal-not-a-stream]] — watch the file,
-signal the renderer, re-run the existing load path; tail only what you watch,
-never what you drive.
+#56 landed `.claude/skills/run-desktop/gui-55.mjs` and was closed with its red
+run as the breadcrumb: against the current build the pane stays static while
+the session file grows, with **zero main-side IPC after the append** — the
+defect is recorded, so gui-55 flipping green is #57's acceptance evidence.
+Design decisions remain fixed in
+[[2026-07-29-live-tail-is-a-signal-not-a-stream]] — watch the file, signal the
+renderer, re-run the existing load path; tail only what you watch, never what
+you drive.
 
 ## State
 
-- **In flight:** nothing — no code written this session.
+- **In flight:** nothing — #56's branch is squash-merged and deleted.
 - **Queue (`ready-for-agent`):**
-  - **#56** — gui-55 driver proving the pane does not follow the file. No
-    blockers, **the frontier**. Must be seen red against the current build
-    before #57 lands (gui-54's lesson, now an ordering).
-  - **#57** — live-tail core. Blocked by #56 (native dependency edge set).
-    Implementation decisions fixed in #55; acceptance criteria pin the three
-    gates (busy, post-send, empty-result) and the mock-site/trusted-IPC/test-
-    reset landmines.
-- **Blocked:** #57, by design, until #56 is red-verified and closed.
+  - **#57** — live-tail core. Its only blocker (#56) is closed → **unblocked,
+    the frontier.** Implementation decisions fixed in #55; acceptance criteria
+    pin the three gates (signal-while-busy, signal-after-send,
+    empty-result-kept) as tests.
+- **Blocked:** nothing.
 
 ## Pick up here
 
-**Work the frontier: #56.** `gh issue view 56 --comments`, then build the
-driver per the house conventions (see GUI-driver traps below and in
-[[pick-up]]). After it fails for the right reason, close it with the failure
-output as the breadcrumb and move to #57.
+**Work the frontier: #57.** `gh issue view 57 --comments`, plus the closing
+comment on #56 for the driver's red-run evidence. Build per spec #55 — do not
+re-decide. When it lands, `node .claude/skills/run-desktop/gui-55.mjs` must
+flip to PASS unchanged; that run is the acceptance eyeball.
 
 Before starting: read [[pick-up]] for operational landmines, and
 `docs/agents/issue-tracker.md` + `docs/agents/triage-labels.md` for tracker
@@ -48,13 +47,15 @@ conventions.
 
 ## Recent context
 
-- **This session (2026-07-29) produced tracker artifacts only:** spec #55,
-  tickets #56/#57, this decision entry. Working tree untouched; `main` still at
-  `d78eee3`, level with `origin/main`.
-- Previous session (2026-07-28) landed #52/#53/#54 + the host-CLI switch
-  (`d814c03`) — the app now runs the host `claude` when PATH has one, bundled
-  CLI otherwise. Byte-identical today; that no-op equivalence will not survive
-  the next host update.
+- **This leg (2026-07-29, relay ticket-loop leg 1):** built gui-55, watched it
+  fail for the right reason, merged `24b6e1d`, closed #56. The driver seeds a
+  terminal-shaped session (`entrypoint: "cli"`, cwd = temp workspace) straight
+  into the native store — verified listable via the SDK's
+  `listSessions({includeProgrammatic: false})` — then adopts it via the sidebar
+  row. No CLI turn, no tokens; fully deterministic.
+- Earlier on 2026-07-29: spec #55 + tickets #56/#57 published (tracker-only
+  session).
+- 2026-07-28 landed #52/#53/#54 + the host-CLI switch (`d814c03`).
 - The store had grown to **499 sessions** at last count.
 
 ## Open questions
@@ -202,6 +203,9 @@ there, and do not re-litigate polling.
   produce identical DOM; pass any path as an **argument** to `app.evaluate`, never
   inside a string literal; and stub `dialog.showOpenDialog` in main before any
   click that opens one, or the run blocks forever on a real native dialog.
+- **New driver trick (gui-55):** a terminal-shaped session can be seeded straight
+  into the native store and the SDK lists it — no CLI turn needed to put a real
+  adoptable row in the rail. Clean up the seeded store dir on every exit path.
 
 ## Deferred (still no spec)
 
@@ -213,8 +217,7 @@ full-text transcript search, session delete/archive lifecycle, drag-and-drop,
 replay thumbnails, N-concurrent engines, fork-on-resume, busy-switch detach
 (decided against — block is the behaviour), folding `Welcome`'s last
 `pickFolder` caller onto the chooser, agent archive / control / map pan-zoom,
-and the smaller leftovers from #31–#36. ~~Live-tail external sessions~~ left
-this list on 2026-07-29 — it is now spec #55 / tickets #56–#57.
+and the smaller leftovers from #31–#36.
 
 ## Related
 
