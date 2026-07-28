@@ -1,14 +1,13 @@
-// Metadata for one recorded Claude Code session, derived from its `*.jsonl`
-// transcript in the native store (~/.claude/projects/<enc-cwd>/).
+// Metadata for one recorded Claude Code session, as the SDK's `listSessions`
+// reports it from the native store (~/.claude/projects/<enc-cwd>/).
 export interface SessionMeta {
-  // Filename stem (also the SDK session id), e.g. "b453af6f-…".
+  // The SDK session id, e.g. "b453af6f-…".
   id: string
-  // First user message text, trimmed and truncated; '' when none is found.
+  // The SDK's `summary`: custom title, else auto-summary, else first prompt.
+  // '' when the session has none. Not truncated here — the row ellipsises in CSS.
   title: string
-  // Newest line timestamp as epoch ms; 0 when no timestamp parses.
+  // The session file's last-modified time as epoch ms.
   lastUpdated: number
-  // Count of user + assistant message lines in the transcript.
-  messageCount: number
 }
 
 // A non-text block from a persisted user message, recorded so a reopened

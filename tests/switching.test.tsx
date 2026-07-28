@@ -29,7 +29,7 @@ const rowButton = (label: string): HTMLButtonElement =>
 describe('busy-switch polish (#14)', () => {
   test('session rows and New chat are disabled while a turn is streaming', async () => {
     harness.api.listSessions.mockResolvedValue([
-      { id: 'sess-1', title: 'My chat', lastUpdated: 1000, messageCount: 2 }
+      { id: 'sess-1', title: 'My chat', lastUpdated: 1000 }
     ])
     await startSession()
     await screen.findByText('My chat')
@@ -52,7 +52,7 @@ describe('busy-switch polish (#14)', () => {
 
   test('switching is blocked mid-stream — no targetSession call, no pane leak', async () => {
     harness.api.listSessions.mockResolvedValue([
-      { id: 'sess-1', title: 'My chat', lastUpdated: 1000, messageCount: 2 }
+      { id: 'sess-1', title: 'My chat', lastUpdated: 1000 }
     ])
     await startSession()
     await screen.findByText('My chat')
@@ -69,8 +69,8 @@ describe('busy-switch polish (#14)', () => {
 
   test('the live-row highlight survives a manual refresh', async () => {
     harness.api.listSessions.mockResolvedValue([
-      { id: 'sess-1', title: 'First chat', lastUpdated: 1000, messageCount: 2 },
-      { id: 'sess-2', title: 'Second chat', lastUpdated: 900, messageCount: 2 }
+      { id: 'sess-1', title: 'First chat', lastUpdated: 1000 },
+      { id: 'sess-2', title: 'Second chat', lastUpdated: 900 }
     ])
     await startSession()
 

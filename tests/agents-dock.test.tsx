@@ -22,8 +22,7 @@ afterEach(() => {
 const sess = (id: string, title: string): SessionMeta => ({
   id,
   title,
-  lastUpdated: 3000,
-  messageCount: 2
+  lastUpdated: 3000
 })
 
 // The session list is read when the rail mounts, so it has to be scripted before

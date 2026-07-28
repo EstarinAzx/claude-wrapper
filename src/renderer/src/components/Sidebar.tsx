@@ -174,9 +174,7 @@ const Sidebar = ({
         <ul className="session-list">
           {sessions.map((s) => {
             const label = s.title || 'Untitled session'
-            const meta = [relTime(s.lastUpdated), s.messageCount ? `${s.messageCount} msg` : '']
-              .filter(Boolean)
-              .join(' · ')
+            const meta = relTime(s.lastUpdated)
             const active = s.id === activeId
             return (
               <li key={s.id} className="session-row">

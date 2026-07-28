@@ -60,25 +60,26 @@ describe('session sidebar', () => {
     expect(screen.getByRole('complementary', { name: 'Sessions' })).toBeTruthy()
   })
 
-  test('renders rows in the order given (newest-first) with message count', async () => {
+  test('renders rows in the order given (newest-first) with a relative time', async () => {
     setup([
-      { id: 'a', title: 'Newest chat', lastUpdated: 3000, messageCount: 4 },
-      { id: 'b', title: 'Older chat', lastUpdated: 1000, messageCount: 2 }
+      { id: 'a', title: 'Newest chat', lastUpdated: Date.now() - 60_000 },
+      { id: 'b', title: 'Older chat', lastUpdated: Date.now() - 3_600_000 }
     ])
     await startSession()
     const rows = await screen.findAllByText(/chat$/)
     expect(rows.map((r) => r.textContent)).toEqual(['Newest chat', 'Older chat'])
-    expect(screen.getByText(/4 msg/)).toBeTruthy()
+    expect(screen.getByText('1m')).toBeTruthy()
+    expect(screen.getByText('1h')).toBeTruthy()
   })
 
   test('a titleless session falls back to a placeholder', async () => {
-    setup([{ id: 'x', title: '', lastUpdated: 0, messageCount: 0 }])
+    setup([{ id: 'x', title: '', lastUpdated: 0 }])
     await startSession()
     expect(await screen.findByText('Untitled session')).toBeTruthy()
   })
 
   test('collapsing hides the list and swaps the toggle', async () => {
-    setup([{ id: 'a', title: 'Keep me', lastUpdated: 1000, messageCount: 1 }])
+    setup([{ id: 'a', title: 'Keep me', lastUpdated: 1000 }])
     await startSession()
     await screen.findByText('Keep me')
     fireEvent.click(screen.getByRole('button', { name: 'Collapse sessions' }))
@@ -88,7 +89,7 @@ describe('session sidebar', () => {
 
   test('clicking a row loads and replays its transcript into the chat pane', async () => {
     setup(
-      [{ id: 'sess-1', title: 'My chat', lastUpdated: 2000, messageCount: 2 }],
+      [{ id: 'sess-1', title: 'My chat', lastUpdated: 2000 }],
       [
         { role: 'user', text: 'replayed question' },
         { role: 'assistant', text: 'replayed answer' },
@@ -115,7 +116,7 @@ describe('session sidebar', () => {
   test('refreshes the session list on window focus', async () => {
     setup([])
     listSessions.mockResolvedValueOnce([]).mockResolvedValue([
-      { id: 'ext-1', title: 'External chat', lastUpdated: 3000, messageCount: 1 }
+      { id: 'ext-1', title: 'External chat', lastUpdated: 3000 }
     ])
     await startSession()
     expect(await screen.findByText('No sessions yet')).toBeTruthy()
@@ -128,7 +129,7 @@ describe('session sidebar', () => {
   test('the manual Refresh control refetches the session list', async () => {
     setup([])
     listSessions.mockResolvedValueOnce([]).mockResolvedValue([
-      { id: 'ext-2', title: 'Reloaded chat', lastUpdated: 3000, messageCount: 1 }
+      { id: 'ext-2', title: 'Reloaded chat', lastUpdated: 3000 }
     ])
     await startSession()
     expect(await screen.findByText('No sessions yet')).toBeTruthy()
@@ -180,7 +181,7 @@ describe('sidebar resize', () => {
   })
 
   test('exposes no resize handle while collapsed (resize is inert)', async () => {
-    setup([{ id: 'a', title: 'Keep me', lastUpdated: 1000, messageCount: 1 }])
+    setup([{ id: 'a', title: 'Keep me', lastUpdated: 1000 }])
     await startSession()
     await screen.findByText('Keep me')
     fireEvent.click(screen.getByRole('button', { name: 'Collapse sessions' }))

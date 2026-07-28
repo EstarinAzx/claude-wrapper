@@ -30,8 +30,7 @@ const rowButton = (label: string): HTMLButtonElement =>
 const meta = (id: string, title: string): SessionMeta => ({
   id,
   title,
-  lastUpdated: 1000,
-  messageCount: 2
+  lastUpdated: 1000
 })
 
 describe('resume — continue a reopened session (#13)', () => {
