@@ -70,6 +70,10 @@ export interface Engine {
   ): Promise<void>
   interrupt(): void
   sessionId(): string | null
+  // True exactly while a turn is in flight. The workspace transaction's busy
+  // check reads this instead of tracking a flag of its own — one source of
+  // truth, so "busy" can never disagree with the engine that is actually busy.
+  isBusy(): boolean
   // Build the query eagerly (folder-pick) so the command list exists before the
   // first send. INERT BY CONTRACT: any failure — sync or a stream that dies
   // before a turn ever ran — is swallowed and the engine is left exactly as

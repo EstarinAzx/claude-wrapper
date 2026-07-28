@@ -1651,3 +1651,36 @@ describe('engine command aliases (#40)', () => {
     expect(list[2]).not.toHaveProperty('aliases')
   })
 })
+
+// #46: the workspace transaction's busy check reads the engine's OWN in-flight
+// state. Anything else is a second flag that can disagree with reality.
+describe('engine busy state', () => {
+  test('is idle before any turn', () => {
+    const { fn } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    expect(engine.isBusy()).toBe(false)
+  })
+
+  test('is busy while a turn is in flight and idle once it ends', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    expect(engine.isBusy()).toBe(true)
+    push(success)
+    await turn
+    expect(engine.isBusy()).toBe(false)
+  })
+
+  test('is idle again after close ends a live turn', async () => {
+    const { fn } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    expect(engine.isBusy()).toBe(true)
+    engine.close()
+    await turn
+    expect(engine.isBusy()).toBe(false)
+  })
+})

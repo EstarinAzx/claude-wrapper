@@ -23,7 +23,12 @@ import {
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
-import { resetSessionIndex } from './session-index'
+import { resetSessionIndex, resolveResumeTarget } from './session-index'
+import {
+  switchWorkspace as runSwitchWorkspace,
+  type SwitchRequest,
+  type SwitchResult
+} from './switch-workspace'
 import { listSessions, readTranscript } from './session-store'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
 import type { PermissionDecision } from '../shared/engine-types'
@@ -46,6 +51,36 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
     () => getSpawnEnv(process.env),
     () => toPermissionOptions(getPermissionMode()),
     () => toModelOptions(getModelMode())
+  )
+
+// The atomic workspace transition (#46), bound to this process's real engine,
+// permission broker and cwd. DORMANT ON PURPOSE: no IPC channel reaches it yet
+// — #47 wires the renderer. Landing it unused is what makes the cross-process
+// change reviewable in two halves instead of one rewrite.
+export const switchWorkspace = (req: SwitchRequest): Promise<SwitchResult> =>
+  runSwitchWorkspace(
+    {
+      // Authoritative busy check. Until now the safety policy existed only as
+      // disabled renderer buttons, while every other transition tore the engine
+      // down unconditionally.
+      isBusy: () => engine?.isBusy() ?? false,
+      closeEngine: () => {
+        engine?.close()
+      },
+      cancelPermissions: () => permissionBroker.cancelAll(),
+      setCwd: setSessionCwd,
+      rebuildEngine: () => {
+        engine = makeEngine()
+      },
+      setResume: (id) => {
+        pendingResume = id
+      },
+      warmUp: () => {
+        engine?.warmUp()
+      },
+      resolveTarget: (id, cwd) => resolveResumeTarget(id, cwd)
+    },
+    req
   )
 
 const isTrustedIpc = (

@@ -699,5 +699,10 @@ export const createEngine = (
 
   const sessionId = (): string | null => currentSessionId
 
-  return { runTurn, interrupt, close, sessionId, warmUp, listCommands }
+  // A turn is in flight exactly while its promise is unresolved — the same
+  // state runTurn already rejects a second turn on. The workspace transaction
+  // (#46) reads this rather than keeping a flag of its own, which could drift.
+  const isBusy = (): boolean => turnResolve !== null
+
+  return { runTurn, interrupt, close, sessionId, warmUp, listCommands, isBusy }
 }
