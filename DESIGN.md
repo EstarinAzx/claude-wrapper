@@ -58,7 +58,7 @@ One family (Segoe UI Variable, native Win11). Body 15/1.6. UI labels 13. Divider
 - User bubble: right-aligned, max-width 60%, `--bubble`, radius `--r-bubble`, padding 12px 16px.
 - Assistant message: no bubble. 28px mint circle avatar left, text beside it; list items use mint en-dash markers.
 - Typing indicator: avatar + three 6px mint dots, staggered opacity pulse.
-- Chat scrollbar: thin neutral thumb (10px gutter, 3px transparent inset), transparent track; never Chromium's default bar.
+- Scrollbars: one global rule for the whole window, never scoped to a component. Thin neutral thumb (10px gutter on both axes, 3px transparent inset, so the bar reads 4px and the drag target stays 10px), transparent track and corner, stepper arrows suppressed; never Chromium's default bar, which is opaque Windows chrome and breaks the acrylic. Writing this per component is what let four near-copies drift apart while four later scrollables shipped the default (#51); adding a scrollable must not require remembering a class.
 - Input bar: pill, `--surface`, hairline `--border`, paperclip icon left (muted), placeholder "Message Claude…" in `--text-faint`, 36px mint circular send button right with ↑ in `--mint-ink`.
 - Footer: centered `--fs-micro` `--text-faint` line under the input: "Claude can make mistakes. Verify important information."
 

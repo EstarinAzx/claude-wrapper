@@ -90,6 +90,47 @@ body {
   min-height: 0;
 }
 
+/* ── scrollbars ──────────────────────────────────────────────────────────
+   One rule for the whole window. Chromium's default bar is opaque Windows
+   chrome with stepper arrows: it breaks the acrylic and was the last piece
+   of un-designed OS surface in the app.
+
+   Global, not per component, because a scrollbar belongs to the SURFACE and
+   not to whichever element happens to overflow. Scoping it per component is
+   what caused the defect this replaces: four near-copies had accumulated
+   (the three rails at 8px/2px, the chat at 10px/3px) while the model menu,
+   the commands list, the composer autocomplete and the composer textarea
+   each shipped Chromium's default. A fifth copy would have fixed one of
+   those four. Adding a scrollable must not require remembering a class. */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Fill the padding box inside a transparent border: the bar reads as 4px
+   while the drag target stays the full 10px. */
+::-webkit-scrollbar-thumb {
+  background: oklch(0.92 0.01 210 / 0.12);
+  border-radius: var(--r-pill);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.92 0.01 210 / 0.2);
+}
+
+/* Chromium still draws stepper arrows on an otherwise-styled bar. */
+::-webkit-scrollbar-button {
+  display: none;
+}
+
 /* ── titlebar ── */
 
 .titlebar {
@@ -470,25 +511,6 @@ body {
   padding: 6px;
 }
 
-.session-groups::-webkit-scrollbar {
-  width: 8px;
-}
-
-.session-groups::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.session-groups::-webkit-scrollbar-thumb {
-  background: oklch(0.92 0.01 210 / 0.12);
-  border-radius: var(--r-pill);
-  background-clip: padding-box;
-  border: 2px solid transparent;
-}
-
-.session-groups::-webkit-scrollbar-thumb:hover {
-  background-color: oklch(0.92 0.01 210 / 0.2);
-}
-
 /* A project directory is long and its meaningful end is the tail, so overflow
    is clipped at the START: `direction: rtl` moves the ellipsis to the left
    while `unicode-bidi: plaintext` keeps the LTR path rendering LTR. Deliberately
@@ -695,25 +717,6 @@ body {
   flex-direction: column;
   gap: 2px;
   padding: 6px;
-}
-
-.agent-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.agent-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.agent-list::-webkit-scrollbar-thumb {
-  background: oklch(0.92 0.01 210 / 0.12);
-  border-radius: var(--r-pill);
-  background-clip: padding-box;
-  border: 2px solid transparent;
-}
-
-.agent-list::-webkit-scrollbar-thumb:hover {
-  background-color: oklch(0.92 0.01 210 / 0.2);
 }
 
 .agent-row {
@@ -943,25 +946,6 @@ body {
   padding: 12px 12px 18px;
 }
 
-.agent-map::-webkit-scrollbar {
-  width: 8px;
-}
-
-.agent-map::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.agent-map::-webkit-scrollbar-thumb {
-  background: oklch(0.92 0.01 210 / 0.12);
-  border-radius: var(--r-pill);
-  background-clip: padding-box;
-  border: 2px solid transparent;
-}
-
-.agent-map::-webkit-scrollbar-thumb:hover {
-  background-color: oklch(0.92 0.01 210 / 0.2);
-}
-
 .agent-map-svg {
   width: 100%;
   height: auto;
@@ -1059,26 +1043,6 @@ body {
   min-height: 0;
   overflow-y: auto;
   padding: 0 24px;
-}
-
-/* thin neutral scrollbar; Chromium's default bar breaks the acrylic surface */
-.chat::-webkit-scrollbar {
-  width: 10px;
-}
-
-.chat::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chat::-webkit-scrollbar-thumb {
-  background: oklch(0.92 0.01 210 / 0.12);
-  border-radius: var(--r-pill);
-  background-clip: padding-box;
-  border: 3px solid transparent;
-}
-
-.chat::-webkit-scrollbar-thumb:hover {
-  background-color: oklch(0.92 0.01 210 / 0.2);
 }
 
 .chat-column {
