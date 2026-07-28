@@ -51,15 +51,15 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **no
-  `ready-for-agent` ticket open**; **#54** is filed and unstarted)
-- Tracker: **#52 (model pill follows the CLI) and #53 (CLI-sourced model list)
-  closed; #54 open (pre-existing pick-before-first-turn resume error); #50 and #51
-  closed**; spec #41 (Resume anything)
+- `.context/pick-up.md` — current frontier + landmines (currently: **queue empty**,
+  no `ready-for-agent` ticket open)
+- Tracker: **#52 (model pill follows the CLI), #53 (CLI-sourced model list),
+  #54 (no resume before the first turn), #50 and #51 all closed**;
+  spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. Open: **#54** and the unlabelled umbrella **#1**
+  #20 hold the earlier history. **#54** closed; open: the unlabelled umbrella **#1**
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first

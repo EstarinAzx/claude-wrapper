@@ -7,9 +7,9 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 by Opus 5 — landed #52 and #53; queue empty_
-_At commit: `d814c03`_
-_Baseline: typecheck clean, build clean, **612 tests green across 48 files**_
+_Last updated: 2026-07-28 by Opus 5 — landed #52, #53 and #54; queue empty_
+_At commit: `d78eee3`_
+_Baseline: typecheck clean, build clean, **614 tests green across 48 files**_
 
 ## Current focus
 
@@ -20,8 +20,8 @@ standalone). Four follow-ups then landed off the back of it: **#50 `c92cb48`**
 cleared the last item its close-out named, and **#51 `08d78a2`**, **#52
 `144646c`** and **#53 `cde78c4`** all came from owner bug reports.
 
-**#54 is open and unstarted** — a pre-existing bug found while verifying #52,
-filed rather than fixed. See *Known issues*.
+**#54 is closed** — found while verifying #52, filed, then fixed in the same
+session (`d78eee3`).
 
 ## State
 
@@ -48,6 +48,11 @@ filed rather than fixed. See *Known issues*.
     Code the user talks to; no host install falls back to the bundled binary.
     Owner's call, accepting that a host CLI update can now break the app with
     no code change. Byte-identical to the bundled one today (same sha256).
+  - **#54** (`d78eee3`) — `sessionId()` no longer reports an id before a turn
+    has run. Warm-up's `hook_started` carries one for a session the CLI has not
+    created; resuming into it errored the turn, which is what broke picking a
+    model or permission mode before the first send. Both call sites fixed by
+    the one gate; `gui-54.mjs` covers each and was proven to fail without it.
   - Decision: [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]].
 - **Done earlier this session:**
   - **#50** — `sanitizeUserText` replaces `unwrapCommandInvocation` in
@@ -108,6 +113,10 @@ None blocking.
   names-only-build, #45's no-`dir`, #46's ordered-call, #47's never-`targetSession`,
   #48's never-`pickFolder` and #49's read-count are the worked examples, all
   mutation-verified.
+- **A session id is only resumable once a turn has run** (#54). `sessionId()`
+  stays null through warm-up on purpose: `hook_started` carries an id for a
+  session the CLI has not created, and resuming into it fails the turn. Every
+  caller reads non-null as "resume this", so never widen that gate back out.
 - **Never re-derive a store path from `cwd`.** No `encodeCwd`, no
   case-insensitive variant, no decoding a directory name back into a cwd.
   Location is `resolveSessionDir`; `cwdKey()` is comparison and grouping only.
@@ -215,14 +224,9 @@ None blocking.
   (`c92cb48`) — see [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]].
   The 7 messages that still contain the markup are prose quoting it and are
   correct as-is.
-- **#54 — picking a model/permission before the first turn errors that turn.**
-  Open, unstarted, **pre-existing** (the resume-on-pick line is untouched since
-  #23). Warm-up alone produces messages carrying a `session_id`, so
-  `engine?.sessionId()` is non-null for a session that never ran a turn; the
-  rebuilt engine resumes into it and gets `error_during_execution`. Ruled out:
-  the picked value — `options.model: 'default'` probed directly against the SDK
-  succeeds. `permission:set` shares the shape, untested. `gui-52.mjs` works
-  around it by running its pick step last.
+- ~~Picking a model/permission before the first turn errors that turn.~~
+  **Fixed by #54** (`d78eee3`). Note `gui-52.mjs` still runs its pick step last,
+  which was the workaround — harmless, and no longer required.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Path is the
   trigger, model only modulates the odds. Not our bug — don't run wrapper sessions
   there, and don't point a GUI driver's temp cwd there either.

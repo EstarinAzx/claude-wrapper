@@ -103,21 +103,35 @@ are byte-identical (same sha256, both 2.1.220) after `241f1ec`. That makes it a
 policy change verifiable as a no-op today, and it is why gui-52 passing proves
 the wiring rather than the version.
 
+### #54 — no session id before a turn has run (`d78eee3`)
+
+Found while GUI-verifying #52, filed, then fixed. Picking a model or permission
+mode *before the first send* broke that send with `error_during_execution`.
+
+`handleMessage` captured `session_id` from ANY message, and warm-up alone
+carries one — `hook_started` fires with an id before a user message exists, for
+a session the CLI has not created. Both `model:set` and `permission:set` read a
+non-null `sessionId()` as "resume this", so they rebuilt the engine onto a
+session that could never be resumed.
+
+- **Confirmed against the real CLI, not inferred:** captured the warm-up id,
+  resumed a fresh query into it → `error_during_execution`; same query with no
+  resume → success; id absent from the store.
+- Fix is one gate: report an id only once `turnEverRun`. `?? pendingResume`
+  already covers the excluded case (an engine warmed WITH a resume target).
+- **Gated on `turnEverRun`, not on having seen `init`** — the init version
+  would have forced an edit to an existing pin (a test pushing a bare `result`
+  with no init), and editing a pin to accommodate a fix is the move the
+  landmine list warns against.
+
 ## Queue
 
-**#54 is open, unstarted, and pre-existing** — not caused by this leg. Picking a
-model (or permission) *before the first turn* resumes a session that only ever
-warmed up and errors it. Warm-up alone emits messages carrying a `session_id`,
-so `engine?.sessionId()` is non-null for a session that never ran. Ruled out:
-the picked value — `options.model: 'default'` probed directly against the SDK
-succeeds. `permission:set` shares the shape, untested.
-
-Otherwise the `ready-for-agent` queue is empty; the only other open item is the
-unlabelled umbrella spec **#1**, which is not an agent ticket.
+**Empty.** The only open tracker item is the unlabelled umbrella spec **#1**,
+which is not an agent ticket.
 
 ## Next, if you are starting fresh
 
-#54 is the one concrete, evidenced ticket sitting there. Beyond it, the
+No queued leftover — the next effort is a genuine choice. The
 *Deferred* list in [[active-work]] is unchanged: context-pressure meter (note
 the trap — `Query.getContextUsage()` exists but a naïve percentage lies, it must
 separate the raw window from the auto-compaction threshold), typed failed-turn
@@ -181,9 +195,8 @@ Full ledger in [[active-work]]. Most likely to bite next:
 
 ## Baseline
 
-`npm run typecheck` clean, `npm run build` clean, **612 tests green across 48
-files**, verified immediately before this handoff. `main` is **six commits
-ahead of `origin/main`** — all six are this leg and all are **unpushed**.
+`npm run typecheck` clean, `npm run build` clean, **614 tests green across 48
+files**, verified immediately before this handoff. `main` is level with `origin/main` — this leg's work is pushed.
 
 Note the previous baton said "four commits ahead" too, but that was stale:
 `origin/main` already carried #50 and #51. Trust `git log origin/main..main`
@@ -193,8 +206,13 @@ over the note.
 
 `node .claude/skills/run-desktop/driver.mjs [--cycle]` for the titlebar pills.
 
-**`gui-52.mjs` is the newest, and the template whenever a claim is "the UI
-followed something the user never clicked".** It earned its keep twice: it
+**`gui-54.mjs` is the newest.** Its lesson is narrow and reusable: it was run
+against a build with the fix REMOVED before being trusted against one with it.
+A driver for a fixed bug that has never been seen to fail proves nothing. It
+takes `model` (default) or `permission` — same defect, two call sites.
+
+**`gui-52.mjs` is the template whenever a claim is "the UI followed something
+the user never clicked".** It earned its keep twice: it
 caught the raw-id label regression, and it caught *itself* passing vacuously.
 Two techniques worth reusing:
 
