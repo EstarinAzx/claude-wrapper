@@ -28,8 +28,9 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **spec #41,
-  Resume anything** — #43 next, #44–#49 behind it)
-- Tracker: open spec #41 (Resume anything, tickets #43–#49); #42 (multiline
+  Resume anything** — #44 next, #45–#49 behind it)
+- Tracker: open spec #41 (Resume anything, tickets #44–#49 open, #43 closed);
+  #42 (multiline
   composer) closed standalone; specs #25 (Agents surface), #26 (Attachments)
   and #36 (slash commands) delivered and closed with tickets #27–#40; closed
   specs #9 / #16 / #20 and the unlabelled umbrella #1 hold the history

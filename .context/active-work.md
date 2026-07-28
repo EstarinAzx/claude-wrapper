@@ -7,31 +7,30 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 — relay leg 1 landed #42; 7 tickets left in the queue_
-_Baseline: typecheck clean, build clean, **455 tests green across 38 files**_
+_Last updated: 2026-07-28 — relay leg 2 landed #43; 6 tickets left in the queue_
+_Baseline: typecheck clean, build clean, **457 tests green across 38 files**_
 
 ## Current focus
 
-**#42 — Multiline prompt composition: landed** on main as `5b66dd9`. The
-composer is a textarea; Enter sends, Shift+Enter breaks the line. Suite went
-441 → 455 across 37 → 38 files.
+**#43 — SDK `listSessions`: landed** on main as `ea7baaf`. The sidebar list is
+now one SDK filesystem pass instead of a per-file JSONL parse re-run on every
+window focus; `messageCount` is gone from the product. Suite went 455 → 457.
 
-**Next: #43 — Replace the session metadata scan with SDK `listSessions`.** The
+**Next: #44 — Resolve session storage dirs by index, not by encoding cwd.** The
 only unblocked ticket in the queue.
 
-Spec **#41 — Resume anything** is the remaining work, seven tickets:
+Spec **#41 — Resume anything** is the remaining work, six tickets:
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #43 | Replace metadata scan with SDK `listSessions` | 0 — **next** |
-| #44 | Resolve storage dirs by index, not by encoding cwd | 1 |
+| #44 | Resolve storage dirs by index, not by encoding cwd | 0 — **next** |
 | #45 | Global cross-project session list + filter | 1 |
 | #46 | Main-process `switchWorkspace` transaction (dormant) | 1 |
 | #47 | Wire the renderer to `switchWorkspace` | 2 |
 | #48 | Folder picker reachable after first pick | 1 |
 | #49 | Lazy title enrichment for slash-command-first sessions | 1 |
 
-Order: `#43 → #44 → #45 → #46 → #47 → #48 → #49`. Blocked-ness is authoritative
+Order: `#44 → #45 → #46 → #47 → #48 → #49`. Blocked-ness is authoritative
 from `gh api repos/<owner>/<repo>/issues/<n> --jq
 '.issue_dependencies_summary.blocked_by'` — `gh issue list --json` does **not**
 expose that field.
@@ -66,6 +65,31 @@ the SDK path kills the raw-markup title defect; 0 of 325 `customTitle` values
 diverge from `summary`, making a coalesce redundant; 490 sessions across 37
 cwds, 5 with no cwd at all; `encodeCwd` **misses 6 of 37 real store
 directories** from drive-letter case drift.
+
+## Facts established by #43 (don't re-derive)
+
+- **`SessionMeta` is now the SDK's row, renamed** — `sessionId → id`,
+  `summary → title`, `lastModified → lastUpdated`, and nothing else. The
+  line-parsing `summary()` / `extractText` reader is **deleted**;
+  `session-store.ts` is 20 lines of mapping plus the untouched `readTranscript`.
+- **`messageCount` no longer exists** anywhere in `src/` or `tests/` (was 21
+  references). It is not coming back: `SDKSessionInfo` has no such field and
+  deriving it means restoring the per-file parse. The sidebar row meta is the
+  relative time alone.
+- **Never re-add `customTitle ?? summary`.** The SDK already coalesces custom
+  title → auto-summary → first prompt into `summary`. See
+  [[2026-07-28-session-metadata-is-the-sdks-job]].
+- **Measured live after the change** (not from the spec): 64 sessions for this
+  project in **199ms**, 0 rows with an undefined `sessionId`/`summary`/
+  `lastModified`, **0 titles carrying `<local-command-caveat>` /
+  `<command-name>` markup**. The raw-markup sidebar-title defect is dead on this
+  path; replay is a separate path and still parses transcripts.
+- **`includeWorktrees` defaults to `true`** in `ListSessionsOptions` — left at
+  the default, so a project inside a git repo now also lists sessions from its
+  worktree paths. Small, real widening of "cwd-scoped"; flagged for #45.
+- **Mocking `node:fs/promises` in vitest needs a `default` export too** —
+  `vi.mock('node:fs/promises', () => ({ ...fs, default: fs }))`. Without it the
+  whole suite file fails to import with `No "default" export is defined`.
 
 ## Facts established by #42 (don't re-derive)
 
@@ -112,6 +136,8 @@ there was no canonical one to start from.
 
 ## Decisions binding this work
 
+- [[2026-07-28-session-metadata-is-the-sdks-job]] — #43's list source, the
+  deleted `messageCount`, and the coalesce that must not come back.
 - [[2026-07-28-composer-height-is-css-not-state]] — #42's height model.
 - [[2026-07-27-slash-commands-are-a-dumb-pipe]] — the wrapper never learns what
   a slash command is; typed text goes out unparsed.
@@ -197,9 +223,10 @@ there was no canonical one to start from.
   and in the user's real `Downloads/anim/game` project **sonnet was clean while
   fable refused**. Only robust workaround: **don't run wrapper sessions under
   `Downloads`.** Wrapper renders it faithfully — not our bug.
-- **Sidebar session titles render raw `<local-command-caveat>…` markup** for
-  sessions whose first message was a slash command. #49 addresses the title
-  path.
+- ~~Sidebar session titles render raw `<local-command-caveat>…` markup~~ —
+  **fixed by #43** as a side effect of moving titles to the SDK's `summary`
+  (0 of 490 store-wide, 0 of 64 for this project). #49 is now only about
+  *enriching* bare slash-command titles, not de-markup-ing them.
 - GUI driver traps: `--disable-gpu` flattens acrylic; screenshots mis-frame wide
   windows — **measure in the DOM**. Playwright's actionability "stable" wait
   hangs on `.msg`/intro animations — dispatch clicks via
@@ -213,7 +240,7 @@ there was no canonical one to start from.
 
 ## Pick up here
 
-**#43 — Replace the session metadata scan with SDK `listSessions`.** Unblocked;
+**#44 — Resolve session storage dirs by index, not by encoding cwd.** Unblocked;
 the only one. See [[pick-up]] for the queue and landmines.
 
 ## Deferred (still no spec)
@@ -249,9 +276,10 @@ reasons worth keeping:
   expectation.** #42 spent the only authorized retirement in this queue. Any
   other red pin means the change is wrong.
 - **Required test coverage in the remaining tickets is not optional** — the
-  no-JSONL-read assertion (#43), the ordered-call assertion (#46) and the
-  call-count assertion (#49) exist precisely because a green suite passes while
-  the requirement is unmet.
+  ordered-call assertion (#46) and the call-count assertion (#49) exist
+  precisely because a green suite passes while the requirement is unmet. #43's
+  no-JSONL-read assertion is now landed and mutation-verified; it is the working
+  example of the pattern.
 - **Never add a resize effect to `InputBar`** —
   [[2026-07-28-composer-height-is-css-not-state]].
 - **Wisp `options.model` = the alias/family NAME, never a resolved model id** —
@@ -273,7 +301,8 @@ reasons worth keeping:
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-composer-height-is-css-not-state]] ·
+- [[2026-07-28-session-metadata-is-the-sdks-job]] ·
+  [[2026-07-28-composer-height-is-css-not-state]] ·
   [[2026-07-27-slash-commands-are-a-dumb-pipe]]
 - [[2026-07-25-replay-shows-markers-not-bytes]] ·
   [[2026-07-25-picker-returns-candidates-not-paths]] ·
