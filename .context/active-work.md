@@ -7,40 +7,36 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 by Opus 5 (relay leg 8, auto) — landed #49, closed spec #41, queue empty_
-_At commit: `f71efbf`_
-_Baseline: typecheck clean, build clean, **560 tests green across 45 files**_
+_Last updated: 2026-07-28 by Opus 5 — landed #50 (replay sanitizer); queue empty again_
+_At commit: `c92cb48`_
+_Baseline: typecheck clean, build clean, **575 tests green across 45 files**_
 
 ## Current focus
 
-**None — spec #41 "Resume anything" is delivered and the `ready-for-agent` queue
-is empty.** Open the wrapper, find a recent session from any project in one
-global rail, click it, land in that workspace with its transcript replayed: no
-directory chosen first, no restart. An empty project, which session discovery can
-never reach, is reachable through the rail's "Open project" affordance running
-the same transaction with `resumeId: null`.
-
-Seven tickets, one per relay leg, each gate-green: #43 `ea7baaf` · #44 `d44c2a2`
-· #45 `63f12d5` · #46 `1bdadae` · #47 `8c9cbb7` · #48 `08974d5` · #49 `f71efbf`.
-#42 (multiline composer, `5b66dd9`) landed standalone alongside them.
+**None — the `ready-for-agent` queue is empty.** Spec #41 "Resume anything" was
+delivered and closed on 2026-07-28 (#43 `ea7baaf` · #44 `d44c2a2` · #45 `63f12d5`
+· #46 `1bdadae` · #47 `8c9cbb7` · #48 `08974d5` · #49 `f71efbf`; #42 `5b66dd9`
+standalone). **#50 `c92cb48`** then cleared the last item its close-out named:
+transcript replay no longer renders the CLI's own markup as literal XML.
 
 ## State
 
 - **In flight:** nothing.
-- **Done this session (leg 8):** #49 — lazy title enrichment. New channel
-  `session:title-hint`; `SessionRow` extracted so mounting is the trigger;
-  promise cache in `src/renderer/src/enriched-titles.ts`; measured "substantive"
-  rule in `src/shared/session-titles.ts`; `labels` option on `groupSessions`.
-  Nine mutations run, each killed. `gui-49.mjs` committed.
+- **Done this session:** #50 — `sanitizeUserText` replaces
+  `unwrapCommandInvocation` in `src/main/transcript.ts`. One classifier over
+  eight tags, dispatching on the **leading tag of the trimmed message**,
+  returning display text or `null` to drop. Nine mutations run, each killed.
+  Real-store sweep after the change: **7 of 2972** user messages still contain
+  the markup, all of them prose quoting it, **0** leading with a tag, **0** with
+  ANSI — down from 1258 raw messages.
 - **Blocked:** nothing.
 
 ## Pick up here
 
 **No active work — pick a new task.** The only open tracker item is the
-unlabelled umbrella spec #1. Candidates already scoped below in *Deferred*; the
-sharpest one with a live sighting is **transcript replay still rendering raw
-`<local-command-caveat>` / `<command-name>` / `<local-command-stdout>` markup
-with ANSI escapes** — no ticket yet, and deliberately kept out of #49.
+unlabelled umbrella spec #1. The candidate that had a live sighting is now
+**closed** (#50), so the next effort is a genuine choice from *Deferred* below
+rather than a queued leftover.
 
 Before starting anything: read [[pick-up]] for the operational landmines, and
 `docs/agents/issue-tracker.md` + `docs/agents/triage-labels.md` for tracker
@@ -106,6 +102,18 @@ None blocking.
 - **#49 specifics:** never enrich a row that has not rendered, never derive a
   label during filtering, and never fold enrichment back onto
   `session:transcript` — see [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]].
+- **#50: never match CLI markup mid-string.** `sanitizeUserText` dispatches on
+  the **leading tag of the trimmed message** and that anchor is the whole safety
+  argument — pasted terminal logs and quoted diagnoses that mention the markup
+  are real user content, and 7 such messages exist in the store today. Turning a
+  `startsWith` into an `includes` eats them and is killed by exactly one test.
+  **Do not strip ANSI from typed text** either: a real recorded argument is
+  `fable[1m]`, whose brackets are literal. Output streams only.
+- **Never write a literal ESC byte or a `\u` escape into source.** `CSI` uses
+  `String.fromCharCode(27)`; the raw character is invisible in an editor and the
+  escape was repeatedly normalized into the raw byte in transit. Both
+  `transcript.ts` and `transcript.test.ts` contain zero raw ESC bytes — keep it
+  that way and it stays checkable with a single grep.
 - **A session fixture with no `cwd` is a foreign row.** Selectable since #47
   (answered `missing-cwd`), but not in the current group — a UI test wanting an
   in-project row must set `cwd: FOLDER` (exported from `tests/chat-harness.ts`).
@@ -129,15 +137,19 @@ None blocking.
   a PowerShell here-string. **Source files are CRLF:** a `perl -0pi` mutation
   spanning a line break needs `\r?\n`, and a pattern containing `/` breaks the
   `s///` delimiter outright — `diff` against a backup before trusting a survivor.
+- **A mutation harness must assert its anchor matched exactly once.** #50's run
+  first reported four survivors; the cause was `\n` anchors against CRLF source
+  matching nothing. A bad anchor and an uncaught mutation look identical in the
+  output, so "no test caught it" is not believable until the anchor is proven.
 - Native-store facts, the resume ceiling, `sessionId()` accessor, Tailwind
   `@theme` tokens and the engine's legible-error pins are unchanged — [[pick-up]].
 
 ## Known issues / not-our-bug
 
-- **Transcript REPLAY renders raw `<local-command-caveat>` / `<command-name>` /
-  `<local-command-stdout>` markup with ANSI escapes.** Seen live during #47's
-  drive. #43 fixed this on the *title* path only and #49 is titles only; replay is
-  the deferred "strip at the parsing boundary" item and still has no ticket.
+- ~~Transcript REPLAY renders raw CLI markup with ANSI escapes.~~ **Fixed by #50**
+  (`c92cb48`) — see [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]].
+  The 7 messages that still contain the markup are prose quoting it and are
+  correct as-is.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Path is the
   trigger, model only modulates the odds. Not our bug — don't run wrapper sessions
   there, and don't point a GUI driver's temp cwd there either.
@@ -153,7 +165,7 @@ None blocking.
 
 ## Deferred (still no spec)
 
-Command-output replay (the sanitizer above), context-pressure meter
+Context-pressure meter
 (`Query.getContextUsage()` exists but a naïve percentage lies — it must separate
 the raw window from the auto-compaction threshold), typed failed-turn recovery
 (`rewindFiles()` needs `enableFileCheckpointing`, which our options do not set),
@@ -166,7 +178,8 @@ control / map pan-zoom, and the smaller leftovers from #31–#36.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]] ·
+- [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]] ·
+  [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]] ·
   [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] ·
   [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] ·
   [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] ·

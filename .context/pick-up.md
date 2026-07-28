@@ -11,70 +11,77 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## This leg landed
 
-**#49 — Lazy title enrichment for slash-command-first sessions**, on main as
-`f71efbf`, closed. A row whose recorded title is a bare slash command derives a
-label from the first substantive prompt in its own transcript — display only,
-the store is untouched and no `customTitle` is ever set.
+**#50 — Sanitize CLI markup in transcript replay**, on main as `c92cb48`, closed.
+Replay rendered the CLI's own markup as literal XML in the user bubble;
+`unwrapCommandInvocation` is now `sanitizeUserText` in `src/main/transcript.ts` —
+one classifier over eight tags returning the display text or `null` to drop.
+
+| Leading tag | Replay shows |
+|---|---|
+| `<command-message>` / `<command-name>` | `/name args` — both persisted orders |
+| `<bash-input>` | `! command` |
+| `<local-command-stdout>` | body, ANSI stripped |
+| `<bash-stdout>` | stdout + stderr, empty half omitted |
+| `<local-command-caveat>` · `<task-notification>` · `<system-reminder>` | dropped |
 
 Three things are load-bearing and easy to undo by accident:
 
-- **The trigger is a row MOUNTING**, which is why `SessionRow` is now a
-  component. Off-page rows and a collapsed rail cost nothing *without any
-  explicit check* — laziness is structural. Folding the effect back up into
-  `Sidebar` re-reads rows nobody is looking at, and every test still passes.
-- **The cache holds promises, not values** (`src/renderer/src/enriched-titles.ts`,
-  reset with `resetEnrichedTitles()`). Caching the resolved value still lets a row
-  that remounts mid-read start a second one. A resolved `null` is a cached
-  ANSWER — "no substantive prompt" and "load failed" are terminal, never retried.
-- **`session:title-hint` is its own channel on purpose.** Reusing
-  `session:transcript` leaves the mandated call count with two possible causes
-  and ships a whole parsed transcript to derive one line.
+- **Dispatch is on the LEADING tag of the trimmed message, never mid-string.**
+  That anchor is the safety argument, not a shortcut: every markup kind occupies
+  a whole message in real data (nothing follows a `<command-name>` block in
+  **442 of 442**; a caveat is alone in **419 of 419**), while pasted terminal
+  logs and quoted diagnoses that merely *mention* the markup are genuine user
+  content — 7 such messages exist in the store today. `startsWith` → `includes`
+  is killed by exactly one test, the pasted-log pin.
+- **ANSI is stripped from OUTPUT STREAMS ONLY.** A real recorded argument is
+  `fable[1m]`, whose brackets are literal text, not an escape. Typed text —
+  command args, `<bash-input>` — keeps its bytes.
+- **`CSI` is built with `String.fromCharCode(27)`.** Neither a raw ESC byte nor a
+  `\u` escape survives tooling intact; the raw character is invisible in an
+  editor and the escape kept being normalized *into* the raw byte while this was
+  written. Both `transcript.ts` and `transcript.test.ts` contain **zero** raw ESC
+  bytes — one grep checks it.
 
-"Substantive" is measured, not read literally: the literal definition relabels
-**59 of 65** rows with raw XML, because a slash invocation persists in two shapes
-and `parseTranscript`'s unwrapper only knows `<command-message>`-first. Skill-body
-injection is excluded too — it was **12 of 15** derivable labels behind one
-identical 40-character prefix. Decision on record:
-[[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]].
+Scope was **eight tags, not the three the old note named**: `<command-name>`-first
+(442) is *more* common than the one shape the parser already handled (312), and
+`<task-notification>` (100) / `<system-reminder>` (28) / `<bash-*>` (12) are the
+same defect in the same table. Before: **1258 of 3359 messages, 37%**, raw.
+Decision on record:
+[[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]].
 
-Suite **545 → 560 across 45 files**, typecheck and build clean. Nine mutations
-run, each killing exactly its target. Live GUI drive `gui-49.mjs` (committed)
-counts the channel **in the main process**: 499 sessions in the store, 100 rows
-rendered, 8 qualify → exactly 8 calls, 8 unique ids, **491 sessions untouched**,
-the derived label visible in the DOM, `titleHint` present on the real preload
-bridge.
+Suite **560 → 575 across 45 files**, typecheck and build clean. Nine mutations
+run, each killing exactly its target. Real-store sweep through the **real
+parser** (924 files): of **2972** user messages reaching replay, **7** still
+contain the markup — all prose quoting it, **0** leading with a tag, **0**
+carrying ANSI (was 186).
 
-## Queue empty — spec #41 closed
+## Queue empty
 
-No `ready-for-agent` ticket is open. Spec **#41 "Resume anything"** is delivered
-and closed: #43 `ea7baaf` · #44 `d44c2a2` · #45 `63f12d5` · #46 `1bdadae` ·
-#47 `8c9cbb7` · #48 `08974d5` · #49 `f71efbf`.
-
-**Leftovers:** none stuck. Nothing is sitting in `ready-for-human`, and nothing
-is blocked. The only open tracker item is the unlabelled umbrella spec **#1**,
-which is not an agent ticket.
-
-The relay chain stops here rather than spawning a ninth leg.
+No `ready-for-agent` ticket is open. The only open tracker item is the unlabelled
+umbrella spec **#1**, which is not an agent ticket. Nothing sits in
+`ready-for-human`, nothing is blocked.
 
 ## Next, if you are starting fresh
 
-There is no queue to drain — the next session picks a direction. The sharpest
-candidate with a live sighting:
+Spec #41's close-out named exactly one candidate with a live sighting — the
+replay sanitizer — and **#50 was it**. There is no queued leftover; the next
+effort is a genuine choice.
 
-- **Transcript replay still renders raw `<local-command-caveat>` /
-  `<command-name>` / `<local-command-stdout>` markup with ANSI escapes.**
-  Confirmed live during #47's drive. #43 fixed this on the *title* path and #49
-  was titles only; replay is a different code path with no ticket. The shape is
-  known: strip at the parsing boundary with a small local sanitizer.
+Options are the *Deferred* list in [[active-work]]: context-pressure meter (note
+the trap — `Query.getContextUsage()` exists but a naïve percentage lies, it must
+separate the raw window from the auto-compaction threshold), typed failed-turn
+recovery (`rewindFiles()` needs `enableFileCheckpointing`, which our options do
+not set), full-text transcript search, session delete/archive lifecycle,
+drag-and-drop, replay thumbnails, live-tail external sessions, N-concurrent
+engines, fork-on-resume, folding `Welcome`'s last `pickFolder` caller onto the
+chooser, and the smaller leftovers from #31–#36.
 
-Other scoped-but-unticketed work is listed under *Deferred* in [[active-work]].
 Route a new effort through `/preset init` (idea) or `/wayfinder` (needs a map),
-then `to-spec` → `to-tickets`, and the relay body will pick it up unchanged.
+then `to-spec` → `to-tickets`, and a relay body will pick it up unchanged.
 
 ## Landmines — carried, still live
 
-The full ledger is in [[active-work]]. The ones most likely to bite whoever
-touches the sessions rail next:
+The full ledger is in [[active-work]]. The ones most likely to bite next:
 
 - **Pins are mutation-verified. Never "fix" a red pin by editing its
   expectation.** The only legitimate retirement is a ticket that reverses the
@@ -82,6 +89,8 @@ touches the sessions rail next:
 - **A green test can be green for the wrong reason.** Assert the mechanism — a
   read that must not happen, a call ORDER, an option that must be absent, a
   count — not a symptom with more than one cause.
+- **Never match CLI markup mid-string, and never strip ANSI from typed text.**
+  #50's anchor, above.
 - **Never enrich a row that has not rendered, and never derive a label during
   filtering.** `groupSessions`' `labels` option matches what is already cached
   and derives nothing; a keystroke that scans the store is #43's deleted
@@ -101,16 +110,18 @@ touches the sessions rail next:
   — keep `Closes #N` out of the commit, then comment → close → verify.
 - **The Bash tool is not PowerShell** (heredoc, not a here-string), and source
   files are **CRLF** — a `perl -0pi` pattern spanning a newline needs `\r?\n`,
-  and one containing `/` breaks the `s///` delimiter outright. `diff` against a
-  backup before believing a survivor.
+  and one containing `/` breaks the `s///` delimiter outright. **A mutation
+  harness must assert its anchor matched exactly once**: #50's first run reported
+  four survivors that were really `\n`-vs-CRLF anchor misses, and a bad anchor
+  reads identically to an uncaught mutation.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Not our
   bug; don't run wrapper sessions or GUI drivers there.
 
 ## Baseline
 
-`npm run typecheck` clean, `npm run build` clean, **560 tests green across 45
-files**, verified 2026-07-28 immediately before this handoff. `main` and
-`origin/main` are in sync.
+`npm run typecheck` clean, `npm run build` clean, **575 tests green across 45
+files**, verified 2026-07-28 immediately before this handoff. `main` is one
+commit ahead of `origin/main` — **#50 is not pushed**.
 
 ## GUI check
 
@@ -122,6 +133,13 @@ ticket's real risk is "how many times did that happen". `gui-48.mjs` is the
 dialog/call-counted-stub template, `gui-47.mjs` the workspace switch, `gui-45.mjs`
 the sessions rail, `gui-42.mjs` the composer. All need `npm run build` +
 `playwright-core`.
+
+**#50 was verified without a GUI driver** — it is a pure function over a parsed
+transcript, so the honest check was sweeping the real store through the real
+parser (a throwaway `tests/real-store.test.ts`, deliberately not committed since
+it depends on this machine's `~/.claude/projects`). Reach for that shape again
+when the risk is "what does this do to real data" rather than "what does the UI
+do".
 
 Gotchas: stub `dialog.showOpenDialog` in main **before** any click that opens one
 or the run blocks forever; `createRequire` for playwright-core if the driver lives
@@ -135,7 +153,8 @@ rather than letting silence read as a pass.
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]] ·
+- [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]] ·
+  [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]] ·
   [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] ·
   [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] ·
   [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] ·
