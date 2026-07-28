@@ -700,15 +700,19 @@ export const createEngine = (
       if (!m || typeof m !== 'object') return []
       const row = m as Record<string, unknown>
       if (typeof row.value !== 'string' || row.value.length === 0) return []
-      return [
-        {
-          id: row.value,
-          label:
-            typeof row.displayName === 'string' && row.displayName.length > 0
-              ? row.displayName
-              : row.value
-        }
-      ]
+      const option: ModelOption = {
+        id: row.value,
+        label:
+          typeof row.displayName === 'string' && row.displayName.length > 0
+            ? row.displayName
+            : row.value
+      }
+      // Carried through for label matching only — what the CLI reports back is
+      // a resolved id, not the row's value.
+      if (typeof row.resolvedModel === 'string' && row.resolvedModel.length > 0) {
+        option.resolvedModel = row.resolvedModel
+      }
+      return [option]
     })
   }
 

@@ -1708,9 +1708,15 @@ describe('engine warm-up + command list (#39)', () => {
     engine.warmUp()
     const list = await engine.listModels()
     // id is `value`, NOT `resolvedModel` — sending a resolved id back as
-    // options.model is the hang documented in model-mode.ts.
+    // options.model is the hang documented in model-mode.ts. resolvedModel
+    // rides ALONGSIDE it, carried only so a CLI-reported id can be matched to
+    // a row for labelling; a row without one simply omits it.
     expect(list).toEqual([
-      { id: 'opus[1m]', label: 'Opus (1M context)' },
+      {
+        id: 'opus[1m]',
+        label: 'Opus (1M context)',
+        resolvedModel: 'claude-opus-5[1m]'
+      },
       { id: 'claude-wisp-terra', label: 'terra — gpt-5.6-terra' }
     ])
     await engine.listModels()

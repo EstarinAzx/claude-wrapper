@@ -5,7 +5,7 @@ import {
   type Rejection
 } from '../../../shared/attachment-policy'
 import type { Attachment } from '../../../shared/attachment-types'
-import type { ModelOption } from '../../../shared/model-types'
+import { modelLabel, type ModelOption } from '../../../shared/model-types'
 import type { SlashCommandInfo } from '../../../shared/command-types'
 
 interface InputBarProps {
@@ -37,7 +37,7 @@ const ModelPill = ({
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<ModelOption[]>([])
 
-  const label = options.find((o) => o.id === model)?.label ?? model ?? 'Default'
+  const label = modelLabel(options, model)
 
   const toggle = (): void => {
     if (busy) return
