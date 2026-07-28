@@ -26,7 +26,9 @@ tags: [context, overview]
   nullable `resumeId`.
 - `src/shared/` — types + pure modules both processes import. `session-groups.ts`
   owns the sessions rail's filter/group/cap order; `cwd-key.ts` is the one
-  directory fold (comparison only, never a path).
+  directory fold (comparison only, never a path); `session-titles.ts` holds the
+  enrichment predicate and the measured "substantive prompt" rule, with the
+  renderer's promise cache beside it in `src/renderer/src/enriched-titles.ts`.
 - `tests/` — vitest + testing-library shell tests (jsdom, `vitest.config.ts`)
 - `DESIGN.md` / `PRODUCT.md` — Frost Mono design system + product context (impeccable reads these)
 - `docs/design/frost-mono-reference.png` — canonical visual reference
@@ -40,13 +42,13 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **spec #41,
-  Resume anything** — #49 is the last open ticket)
-- Tracker: open spec #41 (Resume anything, ticket #49 open, #43 + #44 + #45 +
-  #46 + #47 + #48 closed); #42 (multiline
-  composer) closed standalone; specs #25 (Agents surface), #26 (Attachments)
-  and #36 (slash commands) delivered and closed with tickets #27–#40; closed
-  specs #9 / #16 / #20 and the unlabelled umbrella #1 hold the history
+- `.context/pick-up.md` — current frontier + landmines (currently: **queue
+  empty**, no `ready-for-agent` ticket open)
+- Tracker: spec #41 (Resume anything) **delivered and closed** with tickets
+  #43–#49; #42 (multiline composer) closed standalone; specs #25 (Agents
+  surface), #26 (Attachments) and #36 (slash commands) delivered and closed with
+  tickets #27–#40; closed specs #9 / #16 / #20 hold the earlier history. The
+  unlabelled umbrella #1 is the only issue still open
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
