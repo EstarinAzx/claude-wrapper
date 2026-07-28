@@ -46,6 +46,10 @@ export const fakeChatApi = (folder = FOLDER) => {
     pickFiles: vi.fn<() => Promise<Candidate[]>>().mockResolvedValue([]),
     listSessions: vi.fn().mockResolvedValue([]),
     loadTranscript: vi.fn().mockResolvedValue([]),
+    // Only rows with a bare slash-command title ever reach this (#49); the
+    // default answer is "nothing better to show", so a fixture keeps its title.
+    titleHint: vi.fn<(id: string, cwd: string | null) => Promise<string | null>>()
+      .mockResolvedValue(null),
     listSubagents: vi.fn().mockResolvedValue([]),
     subagentTranscript: vi.fn().mockResolvedValue([]),
     switchWorkspace: vi

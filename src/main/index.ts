@@ -30,7 +30,7 @@ import {
   type SwitchResult
 } from './switch-workspace'
 import type { FolderChoice } from '../shared/session-types'
-import { listSessions, readTranscript } from './session-store'
+import { listSessions, readTranscript, titleHint } from './session-store'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
 import type { PermissionDecision } from '../shared/engine-types'
 
@@ -227,6 +227,16 @@ ipcMain.handle('session:switch-workspace', async (event, req: unknown): Promise<
 ipcMain.handle('session:transcript', async (event, id: string) => {
   if (!isTrustedIpc(event)) return []
   return readTranscript(getSessionCwd(), String(id))
+})
+
+// One row's enriched label (#49). The row supplies its OWN project rather than
+// inheriting the open workspace: the rail is global, so the session being asked
+// about usually lives somewhere else, and that cwd is the duplicate-id tie-break
+// hint — never a path to build. Absent cwd is fine; the index still resolves the
+// id by enumeration.
+ipcMain.handle('session:title-hint', async (event, id: unknown, cwd: unknown) => {
+  if (!isTrustedIpc(event)) return null
+  return titleHint(String(id), typeof cwd === 'string' && cwd ? cwd : null)
 })
 
 // File picker returns policy Candidates rather than bare paths: an embeddable

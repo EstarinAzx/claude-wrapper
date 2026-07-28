@@ -24,6 +24,8 @@ const api = {
   listSessions: (): Promise<SessionMeta[]> => ipcRenderer.invoke('session:list'),
   loadTranscript: (id: string): Promise<TranscriptMessage[]> =>
     ipcRenderer.invoke('session:transcript', id),
+  titleHint: (id: string, cwd: string | null): Promise<string | null> =>
+    ipcRenderer.invoke('session:title-hint', id, cwd),
   listSubagents: (sessionId: string): Promise<SubagentInfo[] | null> =>
     ipcRenderer.invoke('subagents:list', sessionId),
   subagentTranscript: (

@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import { listSessions as sdkListSessions } from '@anthropic-ai/claude-agent-sdk'
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
+import { firstSubstantivePrompt } from '../shared/session-titles'
 import { nodeIo, resolveSessionDir, type StoreIo } from './session-index'
 import { parseTranscript } from './transcript'
 
@@ -62,3 +63,20 @@ export const readTranscript = async (
   }
   return parseTranscript(raw)
 }
+
+// A better label for ONE session whose recorded title is a bare slash command
+// (#49). Reads that session's transcript and nothing else — the caller decides
+// which rows are worth asking about, and asks only for rows it has rendered.
+//
+// This deliberately does not ride `session:transcript`: that channel exists to
+// hand a whole parsed transcript to the chat pane, and sharing it would leave
+// the call count this feature is pinned on with two possible causes. Here the
+// transcript never crosses IPC at all — at most one line of text does.
+//
+// null means "no prompt to show", and an unreadable transcript answers null the
+// same way: both are terminal, and the caller caches them rather than retrying.
+export const titleHint = async (
+  id: string,
+  cwd: string | null = null,
+  io: StoreIo = nodeIo
+): Promise<string | null> => firstSubstantivePrompt(await readTranscript(cwd, id, io))

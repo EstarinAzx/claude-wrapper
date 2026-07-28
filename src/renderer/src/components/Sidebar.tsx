@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { SessionMeta } from '../../../shared/session-types'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
 import { groupSessions } from '../../../shared/session-groups'
+import { needsEnrichment } from '../../../shared/session-titles'
+import { enrichedTitle } from '../enriched-titles'
 
 const WIDTH_KEY = 'sidebar-width'
 
@@ -40,6 +42,77 @@ const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
   </svg>
 )
 
+// One row of the rail. A component rather than inline JSX because MOUNTING is
+// the enrichment trigger (#49): a row past the page cap, or behind a collapsed
+// rail, is never rendered and so never asks for anything. That is the whole
+// mechanism keeping this lazy — 490 sessions, at most a screenful of reads.
+const SessionRow = ({
+  session,
+  groupLabel,
+  foreign,
+  active,
+  busy,
+  enriched,
+  onEnriched,
+  onOpen,
+  onSwitch
+}: {
+  session: SessionMeta
+  groupLabel: string
+  foreign: boolean
+  active: boolean
+  busy?: boolean
+  enriched?: string
+  onEnriched: (id: string, label: string) => void
+  onOpen?: (id: string) => void
+  onSwitch?: (id: string, cwd: string | null) => void
+}) => {
+  // Only rows whose recorded title is a bare slash command ask, and each asks
+  // once ever — the module cache dedupes across remounts and across the
+  // in-flight window. The row passes its OWN project: the rail is global, so
+  // this session usually does not live in the open workspace.
+  useEffect(() => {
+    if (!needsEnrichment(session.title)) return
+    let live = true
+    void enrichedTitle(session.id, session.cwd ?? null).then((text) => {
+      if (live && text) onEnriched(session.id, text)
+    })
+    return () => {
+      live = false
+    }
+    // `enriched` is deliberately not a dependency: receiving the answer must not
+    // re-run the effect that asked the question.
+  }, [session.id, session.title, session.cwd, onEnriched])
+
+  // Display only. The store is untouched and no customTitle is ever set — this
+  // label exists for as long as the app is open and not one moment longer.
+  const label = enriched || session.title || 'Untitled session'
+  const meta = relTime(session.lastUpdated)
+  const classes = ['session-row-btn']
+  if (active) classes.push('session-row-btn-active')
+  if (foreign) classes.push('session-row-btn-foreign')
+
+  return (
+    <li className="session-row">
+      <button
+        type="button"
+        className={classes.join(' ')}
+        aria-current={active ? 'true' : undefined}
+        // Deliberately NOT gated on `busy` when foreign: a switch is a
+        // main-process transaction that asks the engine itself and answers
+        // `busy`. Disabling here would be a second busy source — and would make
+        // the refusal it returns unreachable.
+        disabled={!foreign && busy}
+        title={foreign ? `${label} — ${groupLabel}` : label}
+        onClick={() => (foreign ? onSwitch?.(session.id, session.cwd ?? null) : onOpen?.(session.id))}
+      >
+        <span className="session-row-title">{label}</span>
+        {meta ? <span className="session-row-meta">{meta}</span> : null}
+      </button>
+    </li>
+  )
+}
+
 const Sidebar = ({
   cwd,
   activeId,
@@ -67,15 +140,23 @@ const Sidebar = ({
   const [width, setWidthState] = useState(readStoredWidth)
   const [query, setQuery] = useState('')
   const [limit, setLimit] = useState(PAGE)
+  // Labels derived so far, by session id (#49). Rendered rows fill this in; it
+  // is never populated ahead of time, which is what keeps the reads lazy.
+  const [labels, setLabels] = useState<ReadonlyMap<string, string>>(() => new Map())
   const reqIdRef = useRef(0)
+
+  // Stable, so a row's enrichment effect does not re-run every render.
+  const onEnriched = useCallback((id: string, label: string): void => {
+    setLabels((prev) => (prev.get(id) === label ? prev : new Map(prev).set(id, label)))
+  }, [])
 
   // Filter → sort/group → cap, in that order and all client-side over metadata
   // already in hand. A narrowed query starts at page one again; carrying a
   // "show more" from the previous query would reveal a page the user never
   // asked for.
   const { groups, shown, matched } = useMemo(
-    () => groupSessions(sessions, { query, cwd, limit }),
-    [sessions, query, cwd, limit]
+    () => groupSessions(sessions, { query, cwd, limit, labels }),
+    [sessions, query, cwd, limit, labels]
   )
 
   // Persist UI-layout prefs (this width); engine-intent state stays in-memory.
@@ -239,41 +320,24 @@ const Sidebar = ({
                 {group.label}
               </h3>
               <ul className="session-list">
-                {group.sessions.map((s) => {
-                  const label = s.title || 'Untitled session'
-                  const meta = relTime(s.lastUpdated)
-                  const active = s.id === activeId
-                  // A row outside the open workspace resumes through the
-                  // workspace transition (#47) rather than the in-project
-                  // resume: it has to move the engine's cwd before the
-                  // transcript means anything.
-                  const foreign = !group.current
-                  const classes = ['session-row-btn']
-                  if (active) classes.push('session-row-btn-active')
-                  if (foreign) classes.push('session-row-btn-foreign')
-                  return (
-                    <li key={s.id} className="session-row">
-                      <button
-                        type="button"
-                        className={classes.join(' ')}
-                        aria-current={active ? 'true' : undefined}
-                        // Deliberately NOT gated on `busy` when foreign: a
-                        // switch is a main-process transaction that asks the
-                        // engine itself and answers `busy`. Disabling here
-                        // would be a second busy source — and would make the
-                        // refusal it returns unreachable.
-                        disabled={!foreign && busy}
-                        title={foreign ? `${label} — ${group.label}` : label}
-                        onClick={() =>
-                          foreign ? onSwitch?.(s.id, s.cwd ?? null) : onOpen?.(s.id)
-                        }
-                      >
-                        <span className="session-row-title">{label}</span>
-                        {meta ? <span className="session-row-meta">{meta}</span> : null}
-                      </button>
-                    </li>
-                  )
-                })}
+                {group.sessions.map((s) => (
+                  <SessionRow
+                    key={s.id}
+                    session={s}
+                    groupLabel={group.label}
+                    // A row outside the open workspace resumes through the
+                    // workspace transition (#47) rather than the in-project
+                    // resume: it has to move the engine's cwd before the
+                    // transcript means anything.
+                    foreign={!group.current}
+                    active={s.id === activeId}
+                    busy={busy}
+                    enriched={labels.get(s.id)}
+                    onEnriched={onEnriched}
+                    onOpen={onOpen}
+                    onSwitch={onSwitch}
+                  />
+                ))}
               </ul>
             </div>
           ))}

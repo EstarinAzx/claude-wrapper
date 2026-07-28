@@ -12,6 +12,7 @@ beforeEach(() => {
     pickFiles: vi.fn().mockResolvedValue([]),
     listSessions: vi.fn().mockResolvedValue([]),
     loadTranscript: vi.fn().mockResolvedValue([]),
+    titleHint: vi.fn().mockResolvedValue(null),
     listSubagents: vi.fn().mockResolvedValue([]),
     subagentTranscript: vi.fn().mockResolvedValue([]),
     switchWorkspace: vi.fn().mockResolvedValue({ status: 'ok' }),

@@ -29,6 +29,7 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
     pickFiles: vi.fn().mockResolvedValue([]),
     listSessions,
     loadTranscript,
+    titleHint: vi.fn().mockResolvedValue(null),
     listSubagents: vi.fn().mockResolvedValue([]),
     subagentTranscript: vi.fn().mockResolvedValue([]),
     switchWorkspace,

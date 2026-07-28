@@ -22,6 +22,7 @@ export interface WrapperApi {
   pickFiles: () => Promise<Candidate[]>
   listSessions: () => Promise<SessionMeta[]>
   loadTranscript: (id: string) => Promise<TranscriptMessage[]>
+  titleHint: (id: string, cwd: string | null) => Promise<string | null>
   listSubagents: (sessionId: string) => Promise<SubagentInfo[] | null>
   subagentTranscript: (
     sessionId: string,

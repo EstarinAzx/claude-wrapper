@@ -35,7 +35,18 @@ export interface GroupedSessions {
 // observed scale and per-group caps multiply.
 export const groupSessions = (
   sessions: readonly SessionMeta[],
-  opts: { limit: number; query?: string; cwd?: string | null }
+  opts: {
+    limit: number
+    query?: string
+    cwd?: string | null
+    // Enriched labels already derived for rows that have been rendered (#49),
+    // by session id. Matching is additive over whatever is in here and NOTHING
+    // is derived on demand: filtering must never be what triggers a transcript
+    // read, or typing one character would walk the whole store. The cost is
+    // that an unrendered row matches on its recorded title only — the honest
+    // trade, and the alternative is silently hiding rows instead.
+    labels?: ReadonlyMap<string, string>
+  }
 ): GroupedSessions => {
   const labelOf = (s: SessionMeta): string => s.cwd || UNKNOWN_PROJECT
   const keyOf = (s: SessionMeta): string => (s.cwd ? cwdKey(s.cwd) : '')
@@ -45,7 +56,10 @@ export const groupSessions = (
   // without a separate project picker.
   const matched = q
     ? sessions.filter(
-        (s) => s.title.toLowerCase().includes(q) || labelOf(s).toLowerCase().includes(q)
+        (s) =>
+          s.title.toLowerCase().includes(q) ||
+          labelOf(s).toLowerCase().includes(q) ||
+          (opts.labels?.get(s.id) ?? '').toLowerCase().includes(q)
       )
     : [...sessions]
   matched.sort((a, b) => b.lastUpdated - a.lastUpdated)
