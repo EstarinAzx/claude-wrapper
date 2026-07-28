@@ -239,18 +239,30 @@ export const useChat = () => {
     window.api.stopTurn()
   }, [busy])
 
-  // Open a past session: replay its transcript (read-only history) and point the
-  // engine at it so the next turn continues in place (resume), not a fork.
-  const openSession = useCallback(async (id: string) => {
-    if (busy) return
+  // Replay a session into the pane and make it the active one. NO engine call:
+  // used after a workspace switch (#47), where main has already run the whole
+  // transition and warmed a fresh engine on the target. Calling `targetSession`
+  // here would close that engine and undo the warm-up.
+  const adoptSession = useCallback(async (id: string) => {
     const transcript = await window.api.loadTranscript(id)
     assistantIdRef.current = null
     setBusy(false)
     setMessages(transcript.map(toChatMessage))
     setLiveAgents([])
     setActiveSessionId(id)
-    window.api.targetSession(id)
-  }, [busy])
+  }, [])
+
+  // Open a past session in the CURRENT project: replay its transcript
+  // (read-only history) and point the engine at it so the next turn continues
+  // in place (resume), not a fork.
+  const openSession = useCallback(
+    async (id: string) => {
+      if (busy) return
+      await adoptSession(id)
+      window.api.targetSession(id)
+    },
+    [busy, adoptSession]
+  )
 
   // Start a fresh conversation: clear the pane and drop any resume target.
   const newChat = useCallback(() => {
@@ -288,6 +300,7 @@ export const useChat = () => {
     stop,
     respondToPermission,
     openSession,
+    adoptSession,
     newChat
   }
 }

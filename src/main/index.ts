@@ -54,9 +54,8 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
   )
 
 // The atomic workspace transition (#46), bound to this process's real engine,
-// permission broker and cwd. DORMANT ON PURPOSE: no IPC channel reaches it yet
-// — #47 wires the renderer. Landing it unused is what makes the cross-process
-// change reviewable in two halves instead of one rewrite.
+// permission broker and cwd. Reached from the renderer over
+// `session:switch-workspace` (#47).
 export const switchWorkspace = (req: SwitchRequest): Promise<SwitchResult> =>
   runSwitchWorkspace(
     {
@@ -189,6 +188,21 @@ ipcMain.handle('session:list', async (event) => {
   // drop the storage index here; the next lookup rebuilds it from real names.
   resetSessionIndex()
   return listSessions()
+})
+
+// Guarded write: resume a session that may live in ANOTHER project. The whole
+// transition (busy check → validate → close → rebuild → target → warm up) is
+// the transaction above; this handler is only the trust boundary. A payload
+// that isn't a request shape collapses to `{cwd: null, resumeId: null}`, which
+// the transaction rejects as `missing-cwd` — a rejection mutates nothing, so an
+// untrusted or malformed call is inert by construction.
+ipcMain.handle('session:switch-workspace', async (event, req: unknown): Promise<SwitchResult> => {
+  if (!isTrustedIpc(event)) return { status: 'missing-cwd' }
+  const { cwd, resumeId } = (req ?? {}) as Partial<SwitchRequest>
+  return switchWorkspace({
+    cwd: typeof cwd === 'string' ? cwd : null,
+    resumeId: typeof resumeId === 'string' && resumeId ? resumeId : null
+  })
 })
 
 ipcMain.handle('session:transcript', async (event, id: string) => {

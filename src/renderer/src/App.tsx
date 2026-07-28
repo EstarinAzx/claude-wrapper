@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { BackendInfo, BackendMode } from '../../shared/backend-types'
 import type { PermissionMode } from '../../shared/engine-types'
+import type { SwitchStatus } from '../../shared/session-types'
 import Titlebar from './components/Titlebar'
 import Sidebar from './components/Sidebar'
 import Chat from './components/Chat'
@@ -11,6 +12,14 @@ import AgentsDock from './components/AgentsDock'
 import CommandsDock from './components/CommandsDock'
 import { useChat } from './useChat'
 import { useZoom } from './useZoom'
+
+// Why a workspace switch was refused. The three rejections are the main
+// process's, not the renderer's — it never second-guesses them, it phrases them.
+const SWITCH_REFUSAL: Record<Exclude<SwitchStatus, 'ok'>, string> = {
+  busy: 'Finish or stop the current turn before switching project.',
+  'not-found': 'That session is no longer in the store.',
+  'missing-cwd': 'That session records no project folder, so it cannot be resumed.'
+}
 
 const App = () => {
   const [cwd, setCwd] = useState<string | null>(null)
@@ -32,6 +41,9 @@ const App = () => {
     text: string
     nonce: number
   } | null>(null)
+  // A refused workspace switch, in words. Inline and non-blocking: a rejection
+  // changed nothing, so it must not enter the transcript or steal focus.
+  const [refusal, setRefusal] = useState<string | null>(null)
   const {
     messages,
     busy,
@@ -41,6 +53,7 @@ const App = () => {
     stop,
     respondToPermission,
     openSession,
+    adoptSession,
     newChat
   } = useChat()
   useZoom()
@@ -67,6 +80,29 @@ const App = () => {
   const pickFolder = async (): Promise<void> => {
     const folder = await window.api.pickFolder()
     if (folder) setCwd(folder)
+  }
+
+  // Resume a session that lives in another project. Main owns the decision —
+  // including whether a turn is in flight, which it asks the engine, not us.
+  // On `ok` every piece of workspace-shaped renderer state is dropped together,
+  // because a half-reset pane is exactly the "project B's sidebar beside
+  // project A's conversation" failure this ticket exists to prevent. Backend
+  // mode, permission mode and model are NOT workspace state and stay put.
+  const switchWorkspace = async (id: string, target: string | null): Promise<void> => {
+    setRefusal(null)
+    const { status } = await window.api.switchWorkspace({ cwd: target, resumeId: id })
+    if (status !== 'ok') {
+      setRefusal(SWITCH_REFUSAL[status])
+      return
+    }
+    setCwd(target)
+    setOpenDock(null)
+    // Cleared in the same commit as the cwd change: that change remounts the
+    // composer, and InputBar applies a pending insert ON MOUNT — so a surviving
+    // one would refill the new project's composer with the old project's command.
+    setPendingInsert(null)
+    setOpenSubagent(null)
+    await adoptSession(id)
   }
 
   // Flip the backend: main tears down the engine + clears the resume target and
@@ -109,7 +145,20 @@ const App = () => {
       />
       {cwd ? (
         <div className="workspace">
-          <Sidebar cwd={cwd} activeId={activeSessionId} busy={busy} onOpen={openSession} onNewChat={newChat} />
+          <Sidebar
+            cwd={cwd}
+            activeId={activeSessionId}
+            busy={busy}
+            onOpen={(id) => {
+              setRefusal(null)
+              void openSession(id)
+            }}
+            onSwitch={switchWorkspace}
+            onNewChat={() => {
+              setRefusal(null)
+              newChat()
+            }}
+          />
           <div className="main-col">
             <Chat
               messages={messages}
@@ -119,7 +168,18 @@ const App = () => {
                 setOpenSubagent({ parentToolUseId, agentType })
               }
             />
+            {refusal ? (
+              <p className="switch-refusal" role="status">
+                {refusal}
+              </p>
+            ) : null}
+            {/* Keyed on the workspace: a switch remounts the composer, which is
+                the only reset that also takes the draft, the attachment tray
+                and the autocomplete state. Resetting App state alone leaves all
+                three behind — the criterion most likely to pass a green suite
+                while being unmet. */}
             <InputBar
+              key={cwd}
               busy={busy}
               model={model}
               pendingInsert={pendingInsert}

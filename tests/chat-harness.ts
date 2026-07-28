@@ -7,6 +7,7 @@ import type { ModelInfo, ModelOption } from '../src/shared/model-types'
 import type { SendPayload } from '../src/shared/attachment-types'
 import type { Candidate } from '../src/shared/attachment-policy'
 import type { SlashCommandInfo } from '../src/shared/command-types'
+import type { SwitchRequest, SwitchResult } from '../src/shared/session-types'
 
 const FAMILY_MODELS: ModelOption[] = [
   { id: 'opus', label: 'Opus', group: 'family' },
@@ -42,6 +43,9 @@ export const fakeChatApi = (folder = FOLDER) => {
     loadTranscript: vi.fn().mockResolvedValue([]),
     listSubagents: vi.fn().mockResolvedValue([]),
     subagentTranscript: vi.fn().mockResolvedValue([]),
+    switchWorkspace: vi
+      .fn<(req: SwitchRequest) => Promise<SwitchResult>>()
+      .mockResolvedValue({ status: 'ok' }),
     targetSession: vi.fn(),
     currentSessionId: vi.fn<() => Promise<string | null>>().mockResolvedValue(null),
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),

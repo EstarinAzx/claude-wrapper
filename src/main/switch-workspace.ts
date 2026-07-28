@@ -1,4 +1,5 @@
 import type { ResumeTarget } from './session-index'
+import type { SwitchRequest, SwitchResult } from '../shared/session-types'
 
 // The workspace transition, as ONE atomic transaction over injected ports.
 //
@@ -7,9 +8,11 @@ import type { ResumeTarget } from './session-index'
 // ORDER of the success path and the emptiness of every rejection path are the
 // contract, and both are invisible to a test that can only observe the result.
 //
-// Merges DORMANT (#46) — nothing calls it until #47 wires the renderer.
+// Wired to the renderer by #47 through the `session:switch-workspace` channel.
 
-export type SwitchResult = { status: 'ok' | 'busy' | 'not-found' | 'missing-cwd' }
+// Re-exported so the transaction's own callers keep one import site; the
+// declarations live in shared because the preload and renderer speak them too.
+export type { SwitchRequest, SwitchResult }
 
 export interface SwitchPorts {
   /** A turn is in flight. The engine's own state — never a second flag. */
@@ -21,12 +24,6 @@ export interface SwitchPorts {
   setResume(id: string | null): void
   warmUp(): void
   resolveTarget(sessionId: string, cwd: string): Promise<ResumeTarget>
-}
-
-export interface SwitchRequest {
-  cwd: string | null
-  /** `null` = open this workspace with a NEW chat: no target, no index check. */
-  resumeId: string | null
 }
 
 export const switchWorkspace = async (

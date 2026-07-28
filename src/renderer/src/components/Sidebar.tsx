@@ -45,12 +45,16 @@ const Sidebar = ({
   activeId,
   busy,
   onOpen,
+  onSwitch,
   onNewChat
 }: {
   cwd: string
   activeId?: string | null
   busy?: boolean
   onOpen?: (id: string) => void
+  // A row outside the open workspace. Carries the project it belongs to —
+  // absent for the "Unknown project" group, which main rejects as missing-cwd.
+  onSwitch?: (id: string, cwd: string | null) => void
   onNewChat?: () => void
 }) => {
   const [sessions, setSessions] = useState<SessionMeta[]>([])
@@ -213,10 +217,10 @@ const Sidebar = ({
                   const label = s.title || 'Untitled session'
                   const meta = relTime(s.lastUpdated)
                   const active = s.id === activeId
-                  // Rows outside the open workspace are shown so the history is
-                  // whole, but opening one would leave this project's sidebar
-                  // beside another project's conversation. Inert until the
-                  // workspace transition lands.
+                  // A row outside the open workspace resumes through the
+                  // workspace transition (#47) rather than the in-project
+                  // resume: it has to move the engine's cwd before the
+                  // transcript means anything.
                   const foreign = !group.current
                   const classes = ['session-row-btn']
                   if (active) classes.push('session-row-btn-active')
@@ -227,9 +231,16 @@ const Sidebar = ({
                         type="button"
                         className={classes.join(' ')}
                         aria-current={active ? 'true' : undefined}
-                        disabled={busy || foreign}
-                        title={foreign ? 'Open this project to resume its sessions' : label}
-                        onClick={() => onOpen?.(s.id)}
+                        // Deliberately NOT gated on `busy` when foreign: a
+                        // switch is a main-process transaction that asks the
+                        // engine itself and answers `busy`. Disabling here
+                        // would be a second busy source — and would make the
+                        // refusal it returns unreachable.
+                        disabled={!foreign && busy}
+                        title={foreign ? `${label} — ${group.label}` : label}
+                        onClick={() =>
+                          foreign ? onSwitch?.(s.id, s.cwd ?? null) : onOpen?.(s.id)
+                        }
                       >
                         <span className="session-row-title">{label}</span>
                         {meta ? <span className="session-row-meta">{meta}</span> : null}

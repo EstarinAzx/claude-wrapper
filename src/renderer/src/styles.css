@@ -579,16 +579,11 @@ body {
   pointer-events: none;
 }
 
-/* A session in another project: listed so the history is whole, inert because
-   opening it would pair this project's rail with that project's conversation.
-   Reads as secondary via muted title, not via the busy dimming — ~90 of 100
-   rows can be foreign, and at 0.55 the list would be unreadable.
-   ponytail: during a streaming turn foreign rows sit at 0.72 while local rows
-   dim to 0.55. Both are inert, so the split is invisible in practice. */
-.session-row-btn-foreign:disabled {
-  opacity: 0.72;
-}
-
+/* A session in another project: openable since #47, and it moves the whole
+   workspace, so it reads as secondary rather than inert. Muted title only, no
+   dimming — ~90 of 100 rows can be foreign, and a dimmed list is unreadable.
+   Unlike local rows it stays live during a streaming turn; the transaction
+   refuses with `busy` and the pane says so. */
 .session-row-btn-foreign .session-row-title {
   color: var(--text-muted);
 }
@@ -1267,6 +1262,22 @@ body {
 }
 
 /* ── input bar ── */
+
+/* A refused workspace switch (#47). Sits in the flow above the composer, on the
+   composer's own measure — not a toast and not a chat bubble, because nothing
+   happened: the rejection left the transcript untouched and saying otherwise in
+   the transcript would be a lie. */
+.switch-refusal {
+  flex-shrink: 0;
+  align-self: center;
+  width: 100%;
+  max-width: 760px;
+  margin: 0;
+  padding: 8px 14px 0;
+  font-size: var(--fs-ui);
+  color: var(--text-muted);
+  text-align: center;
+}
 
 .input-bar {
   flex-shrink: 0;

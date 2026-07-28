@@ -1,6 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
-import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
+import type {
+  SessionMeta,
+  SwitchRequest,
+  SwitchResult,
+  TranscriptMessage
+} from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { ModelInfo } from '../shared/model-types'
 import type { SlashCommandInfo } from '../shared/command-types'
@@ -24,6 +29,8 @@ const api = {
     parentToolUseId: string
   ): Promise<TranscriptMessage[]> =>
     ipcRenderer.invoke('subagents:transcript', sessionId, parentToolUseId),
+  switchWorkspace: (req: SwitchRequest): Promise<SwitchResult> =>
+    ipcRenderer.invoke('session:switch-workspace', req),
   targetSession: (id: string | null): void => ipcRenderer.send('chat:target', id),
   currentSessionId: (): Promise<string | null> => ipcRenderer.invoke('chat:session-id'),
   backendMode: (): Promise<BackendInfo> => ipcRenderer.invoke('backend:mode'),

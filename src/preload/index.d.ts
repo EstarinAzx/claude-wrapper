@@ -1,5 +1,10 @@
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
-import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
+import type {
+  SessionMeta,
+  SwitchRequest,
+  SwitchResult,
+  TranscriptMessage
+} from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
@@ -20,6 +25,7 @@ export interface WrapperApi {
     sessionId: string,
     parentToolUseId: string
   ) => Promise<TranscriptMessage[]>
+  switchWorkspace: (req: SwitchRequest) => Promise<SwitchResult>
   targetSession: (id: string | null) => void
   currentSessionId: () => Promise<string | null>
   backendMode: () => Promise<BackendInfo>

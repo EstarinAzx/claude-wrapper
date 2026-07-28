@@ -1,16 +1,25 @@
 import { describe, test, expect, afterEach, vi, type Mock } from 'vitest'
-import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, act, waitFor } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import type { SessionMeta, TranscriptMessage } from '../src/shared/session-types'
+import type {
+  SessionMeta,
+  SwitchRequest,
+  SwitchResult,
+  TranscriptMessage
+} from '../src/shared/session-types'
 
 let listSessions: Mock<() => Promise<SessionMeta[]>>
 let loadTranscript: Mock<(id: string) => Promise<TranscriptMessage[]>>
+let switchWorkspace: Mock<(req: SwitchRequest) => Promise<SwitchResult>>
 
 const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): void => {
   listSessions = vi.fn<() => Promise<SessionMeta[]>>().mockResolvedValue(sessions)
   loadTranscript = vi
     .fn<(id: string) => Promise<TranscriptMessage[]>>()
     .mockResolvedValue(transcript)
+  switchWorkspace = vi
+    .fn<(req: SwitchRequest) => Promise<SwitchResult>>()
+    .mockResolvedValue({ status: 'ok' })
   ;(window as Window & { api: unknown }).api = {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
@@ -21,6 +30,7 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
     loadTranscript,
     listSubagents: vi.fn().mockResolvedValue([]),
     subagentTranscript: vi.fn().mockResolvedValue([]),
+    switchWorkspace,
     targetSession: vi.fn(),
     currentSessionId: vi.fn().mockResolvedValue(null),
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),
@@ -169,20 +179,23 @@ describe('cross-project session list', () => {
     expect(await screen.findByText('Unknown project')).toBeTruthy()
   })
 
-  // The sharpest failure mode of this ticket: the row is right there, and
-  // opening it would put another project's conversation beside this project's
-  // sidebar. Disabled is the visible half; the click doing nothing is the half
-  // that actually matters, so assert the IPC never fires.
-  test('a session in another project is listed but cannot be opened', async () => {
+  // #45 rendered this row inert and pinned that; #47 is the ticket that
+  // reverses the contract by name, so the pin becomes a ROUTING pin instead of
+  // being deleted. What still has to hold: a foreign row goes through the
+  // workspace transaction, never the in-project resume — replaying its
+  // transcript before the engine's cwd moves IS the "project B's conversation
+  // beside project A's sidebar" failure.
+  test('a session in another project switches workspace instead of resuming in place', async () => {
     setup([{ id: 'far', title: 'Far chat', lastUpdated: 2000, cwd: THERE }])
     await startSession()
 
     await screen.findByText('Far chat')
     const row = rowButton('Far chat')
-    expect(row.disabled).toBe(true)
+    expect(row.disabled).toBe(false)
 
     fireEvent.click(row)
-    expect(loadTranscript).not.toHaveBeenCalled()
+    expect(switchWorkspace).toHaveBeenCalledWith({ cwd: THERE, resumeId: 'far' })
+    await waitFor(() => expect(loadTranscript).toHaveBeenCalledWith('far'))
   })
 
   test('a session in the open project stays openable', async () => {

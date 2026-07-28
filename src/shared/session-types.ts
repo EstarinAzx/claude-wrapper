@@ -15,6 +15,23 @@ export interface SessionMeta {
   cwd?: string
 }
 
+// Resuming a session that lives in another project is one main-process
+// transaction (#46). The request and its four outcomes are shared because both
+// ends of the IPC speak them: the renderer sends the row's project + id and
+// renders the result, main runs the transition. The logic stays in
+// `src/main/switch-workspace.ts`.
+export interface SwitchRequest {
+  cwd: string | null
+  /** `null` = open this workspace with a NEW chat: no target, no index check. */
+  resumeId: string | null
+}
+
+export type SwitchStatus = 'ok' | 'busy' | 'not-found' | 'missing-cwd'
+
+export interface SwitchResult {
+  status: SwitchStatus
+}
+
 // A non-text block from a persisted user message, recorded so a reopened
 // session shows WHAT was attached without carrying the payload. The base64
 // data is deliberately not forwarded: one measured screenshot was 263 KB, so
