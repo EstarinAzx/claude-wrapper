@@ -95,6 +95,23 @@ describe('input-box model picker', () => {
     expect(harness.api.setModel).not.toHaveBeenCalled()
   })
 
+  // #52, the reported bug: `/model` is typed into the composer, so nothing ever
+  // clicks the pill. Before this, the label kept showing the last pick.
+  test('a CLI-side model change moves the pill with no pick at all', async () => {
+    await startSession()
+    fireEvent.click(pill())
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'terra — gpt-5.6-terra' }))
+    expect(pill().textContent).toBe('terra — gpt-5.6-terra')
+
+    // user types `/model opus[1m]`; main hears it from the CLI and broadcasts
+    send('/model opus[1m]')
+    harness.emit({ type: 'turn-end' })
+    harness.emitModel('opus[1m]')
+    expect(pill().textContent).toBe('Opus (1M context)')
+    // and the pill was never touched to get there
+    expect(harness.api.setModel).toHaveBeenCalledTimes(1)
+  })
+
   test('the broadcast from main re-renders the pill label', async () => {
     await startSession()
     // open once so the option labels are loaded for id→label mapping

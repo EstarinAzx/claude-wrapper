@@ -242,7 +242,13 @@ export const createEngine = (
   // Extra query options for the active model (options.model, or {} for the CLI
   // default). Injected like getPermissionOptions — the engine stays decoupled
   // from the model-mode store.
-  getModelOptions: () => Record<string, unknown> = () => ({})
+  getModelOptions: () => Record<string, unknown> = () => ({}),
+  // What model the CLI says it is running (#52). Injected like the getters
+  // above, and deliberately NOT an EngineEvent: emit() only reaches
+  // activeOnEvent, which is null outside a turn, and the `init` that carries
+  // the first model arrives during warmUp(). Routed through an EngineEvent this
+  // would be dropped in exactly the case it exists for.
+  onModelReport: (model: string) => void = () => {}
 ): Engine & { close(): void } => {
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
@@ -271,6 +277,19 @@ export const createEngine = (
 
   const emit = (e: EngineEvent): void => {
     activeOnEvent?.(e)
+  }
+
+  // Last model this engine reported, so an unchanged model is not re-announced
+  // once per assistant message. Engine-scoped on purpose: a rebuilt engine
+  // re-reports from its own `init`, which is exactly when the value can have
+  // changed underneath us.
+  let lastReportedModel: string | null = null
+
+  const reportModel = (model: unknown): void => {
+    if (typeof model !== 'string' || model.length === 0) return
+    if (model === lastReportedModel) return
+    lastReportedModel = model
+    onModelReport(model)
   }
 
   const finishTurn = (): void => {
@@ -358,7 +377,12 @@ export const createEngine = (
     if (msg.type === 'system') {
       const src = msg as unknown as Record<string, unknown>
       const subtype = str(src.subtype)
-      if (subtype === 'local_command_output') {
+      if (subtype === 'init') {
+        // The CLI's opening statement of what it is running — the only model
+        // report available before a turn has produced anything, and the one
+        // that carries a --resume'd session's model.
+        reportModel(src.model)
+      } else if (subtype === 'local_command_output') {
         // Declared streaming shape (sdk.d.ts): content is the command's output,
         // already plain text. Empty output emits nothing — an empty command
         // message is worse than none.
@@ -394,6 +418,17 @@ export const createEngine = (
       // out of the ordinary assistant path, which would attribute it to Claude.
       const synthetic =
         (msg as { message?: { model?: unknown } }).message?.model === '<synthetic>'
+      // What the turn ACTUALLY ran on — the only signal that catches a
+      // `/model` typed into the composer, which never touches the pill.
+      //
+      // Only ONE exclusion is needed here: a synthetic message's "model" is the
+      // CLI's own marker string, not a model. Subagent messages are already
+      // gone — handleMessage returns early on parent_tool_use_id above, so a
+      // Task running haiku never reaches this line. A guard here would be dead
+      // code; the test that covers it pins that early return instead.
+      if (!synthetic) {
+        reportModel((msg as { message?: { model?: unknown } }).message?.model)
+      }
       if (synthetic) {
         const blocks = (msg as { message?: { content?: unknown } }).message?.content
         const text = (Array.isArray(blocks) ? blocks : [])

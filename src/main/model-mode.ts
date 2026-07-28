@@ -28,14 +28,49 @@
 // which is what actually moved `opus` from Opus 4.8 to Opus 5.
 
 // --- Process-wide state (mirrors permission-mode). In-memory, no persistence.
+//
+// TWO facts, deliberately not one (#52):
+//
+//   picked   — what the user chose from the pill. The ONLY thing that becomes
+//              options.model.
+//   reported — what the CLI says it is actually running, read off its `init`
+//              and assistant messages. DISPLAY ONLY.
+//
+// They are separate because `/model` exists: the CLI can change model without
+// the pill ever being touched, and before this the app simply never found out.
+//
+// Never assign a reported value into `picked`. Reported values are RESOLVED ids
+// ('claude-opus-5'), and a resolved id handed back as options.model is the hang
+// from #23 — it would not fail here, it would fail on the next engine rebuild,
+// which is a long way from the line that caused it. Collapsing these two fields
+// into one is the single easiest way to reintroduce that bug, which is why
+// toModelOptions is fed by `picked` alone and a test pins exactly that.
 
-let currentModel: string | null = null
+let pickedModel: string | null = null
+let reportedModel: string | null = null
 
-export const getModelMode = (): string | null => currentModel
+/** The user's pick — what options.model is built from. */
+export const getModelMode = (): string | null => pickedModel
 
+/** Record a pick. Clears the reported value so the pill shows the choice at
+ *  once; the CLI's next `init` re-reports and corrects it if they differ. */
 export const setModelMode = (model: string | null): void => {
-  currentModel = model
+  pickedModel = model
+  reportedModel = null
 }
+
+/** Record what the CLI says it is running. Display only — never feeds
+ *  options.model. Returns true when the value actually changed, so callers can
+ *  broadcast on change instead of once per turn. */
+export const setReportedModel = (model: string): boolean => {
+  if (model === reportedModel) return false
+  reportedModel = model
+  return true
+}
+
+/** What the pill shows: the CLI's word where we have it, the pick otherwise
+ *  (before any turn has run there is nothing reported yet). */
+export const getDisplayModel = (): string | null => reportedModel ?? pickedModel
 
 /** Map the current model to SDK query options. null → no options.model (CLI
  *  default); a string → { model }. */

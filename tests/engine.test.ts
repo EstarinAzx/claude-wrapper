@@ -1335,6 +1335,130 @@ describe('engine model options', () => {
   })
 })
 
+// #52 — the pill has to follow the CLI, so the engine has to notice what the
+// CLI says it is running. Delivered as an injected callback rather than an
+// EngineEvent because `init` lands during warmUp(), when there is no turn and
+// therefore no event sink at all.
+describe('engine model reporting (#52)', () => {
+  const reporter = () => {
+    const seen: string[] = []
+    return { seen, onReport: (m: string) => seen.push(m) }
+  }
+
+  const engineWith = (fn: QueryFn, onReport: (m: string) => void) =>
+    createEngine(
+      () => 'D:\\proj',
+      autoAllow(),
+      fn,
+      () => process.env,
+      () => ({}),
+      () => ({}),
+      onReport
+    )
+
+  test('reports the model from `init` — before any turn has run', async () => {
+    const { fn, push } = streamingStub()
+    const { seen, onReport } = reporter()
+    const engine = engineWith(fn, onReport)
+    // warmUp only — no send. An EngineEvent would be dropped here.
+    engine.warmUp()
+    push({ type: 'system', subtype: 'init', session_id: 's1', model: 'claude-opus-5' })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(seen).toEqual(['claude-opus-5'])
+  })
+
+  test('reports the model a turn actually ran on', async () => {
+    const { fn, push } = streamingStub()
+    const { seen, onReport } = reporter()
+    const engine = engineWith(fn, onReport)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push({
+      type: 'assistant',
+      message: { model: 'claude-sonnet-5', content: [{ type: 'text', text: 'yo' }] }
+    })
+    push(success)
+    await turn
+    expect(seen).toEqual(['claude-sonnet-5'])
+  })
+
+  // The `/model` case end to end: init says one thing, then the CLI switches
+  // mid-session and the next assistant message says another.
+  test('follows a mid-session switch the pill never made', async () => {
+    const { fn, push } = streamingStub()
+    const { seen, onReport } = reporter()
+    const engine = engineWith(fn, onReport)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push({ type: 'system', subtype: 'init', session_id: 's1', model: 'claude-opus-5' })
+    push({
+      type: 'assistant',
+      message: { model: 'claude-sonnet-5', content: [{ type: 'text', text: 'yo' }] }
+    })
+    push(success)
+    await turn
+    expect(seen).toEqual(['claude-opus-5', 'claude-sonnet-5'])
+  })
+
+  test('does not re-report an unchanged model', async () => {
+    const { fn, push } = streamingStub()
+    const { seen, onReport } = reporter()
+    const engine = engineWith(fn, onReport)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push({ type: 'system', subtype: 'init', session_id: 's1', model: 'claude-opus-5' })
+    for (const text of ['a', 'b', 'c']) {
+      push({ type: 'assistant', message: { model: 'claude-opus-5', content: [{ type: 'text', text }] } })
+    }
+    push(success)
+    await turn
+    expect(seen).toEqual(['claude-opus-5'])
+  })
+
+  // "<synthetic>" is the CLI's marker for its own local-command output, not a
+  // model. Reporting it would put the literal string in the pill.
+  test('ignores the synthetic marker', async () => {
+    const { fn, push } = streamingStub()
+    const { seen, onReport } = reporter()
+    const engine = engineWith(fn, onReport)
+    const turn = collect(engine, '/context')
+    await Promise.resolve()
+    push({
+      type: 'assistant',
+      message: { model: '<synthetic>', content: [{ type: 'text', text: 'ctx' }] }
+    })
+    push(success)
+    await turn
+    expect(seen).toEqual([])
+  })
+
+  // A Task subagent frequently runs a different model from the session, and its
+  // messages ride the same stream — a haiku subagent must not rewrite the pill
+  // mid-turn.
+  //
+  // The mechanism is NOT a guard at the reporting site; it is handleMessage's
+  // early return on parent_tool_use_id, which drops subagent output before the
+  // assistant branch is reached. Mutation testing is how that was established:
+  // a guard was written here first, and deleting it killed nothing. So what
+  // this test actually pins is that early return — delete it and this goes red.
+  test('ignores a subagent’s model', async () => {
+    const { fn, push } = streamingStub()
+    const { seen, onReport } = reporter()
+    const engine = engineWith(fn, onReport)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push({ type: 'system', subtype: 'init', session_id: 's1', model: 'claude-opus-5' })
+    push({
+      type: 'assistant',
+      parent_tool_use_id: 'toolu_sub',
+      message: { model: 'claude-haiku-4-5', content: [{ type: 'text', text: 'sub' }] }
+    })
+    push(success)
+    await turn
+    expect(seen).toEqual(['claude-opus-5'])
+  })
+})
+
 describe('engine backend env', () => {
   test('passes the resolved env from getEnv straight into query options.env', async () => {
     const wispedEnv = { PATH: '/bin', ANTHROPIC_BASE_URL: 'http://127.0.0.1:41184' }

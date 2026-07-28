@@ -11,7 +11,13 @@ import {
   isWispedAvailable
 } from './backend-mode'
 import { getPermissionMode, setPermissionMode, toPermissionOptions } from './permission-mode'
-import { getModelMode, setModelMode, toModelOptions } from './model-mode'
+import {
+  getModelMode,
+  setModelMode,
+  toModelOptions,
+  setReportedModel,
+  getDisplayModel
+} from './model-mode'
 import { clampZoom } from '../shared/zoom'
 import { normalizeSendPayload } from '../shared/attachment-types'
 import {
@@ -51,7 +57,17 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
     undefined,
     () => getSpawnEnv(process.env),
     () => toPermissionOptions(getPermissionMode()),
-    () => toModelOptions(getModelMode())
+    () => toModelOptions(getModelMode()),
+    // #52: the CLI is the authority on what it is running. `/model` changes it
+    // without the pill being touched, so the pill has to follow the CLI rather
+    // than only its own last click. Display only — this never becomes
+    // options.model (see model-mode.ts).
+    (model) => {
+      if (!setReportedModel(model)) return
+      for (const win of BrowserWindow.getAllWindows()) {
+        win.webContents.send('model:changed', getDisplayModel())
+      }
+    }
   )
 
 // The atomic workspace transition (#46), bound to this process's real engine,
@@ -367,7 +383,7 @@ ipcMain.on('permission:set-mode', (event, mode: unknown) => {
 // knows whether it is wisped, so the list is mode-aware for free.
 ipcMain.handle('model:list', async (event) => {
   if (!isTrustedIpc(event)) return { models: [], current: null }
-  return { models: (await engine?.listModels()) ?? [], current: getModelMode() }
+  return { models: (await engine?.listModels()) ?? [], current: getDisplayModel() }
 })
 
 // Guarded write: pick the model the next turn runs against (a model id, or null
@@ -387,7 +403,7 @@ ipcMain.on('model:set', (event, model: unknown) => {
   engine = null
   pendingResume = resume
   const win = BrowserWindow.fromWebContents(event.sender)
-  win?.webContents.send('model:changed', getModelMode())
+  win?.webContents.send('model:changed', getDisplayModel())
 })
 
 // Guarded write: the renderer owns the zoom-level number (persisted in its own
