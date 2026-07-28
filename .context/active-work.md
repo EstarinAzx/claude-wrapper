@@ -7,31 +7,28 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 by Opus 5 (relay leg 6, auto) — landed #47; 2 tickets left_
-_Baseline: typecheck clean, build clean, **533 tests green across 42 files**_
+_Last updated: 2026-07-28 by Opus 5 (relay leg 7, auto) — landed #48; 1 ticket left_
+_Baseline: typecheck clean, build clean, **545 tests green across 43 files**_
 
 ## Current focus
 
-**#47 — renderer wired to `switchWorkspace`: landed** on main as `8c9cbb7`.
-Cross-project session rows are **live**: selecting one runs #46's transaction
-over `session:switch-workspace` and, only on `ok`, drops the whole workspace —
-cwd, `useChat`, `openDock`, `pendingInsert`, `openSubagent` — with the composer
-**keyed on `cwd`** so it remounts. Suite went 517 → 533. Live GUI drive passed
-against the real store (100 rows, **0 inert**, a real cross-project switch, a
-real `missing-cwd` refusal).
+**#48 — folder picker reachable after the first pick: landed** on main as
+`08974d5`. A new or empty project is now reachable: the sessions-rail header
+carries an **"Open project"** affordance beside "New chat", backed by a
+chooser-only IPC (`session:choose-folder`) that mutates nothing and returns
+`cancelled | selected`. Only `selected` runs #46's transaction, with
+`resumeId: null`. Suite went 533 → 545. Live GUI drive opened the real dialog
+into a real empty `mkdtemp` folder: **0 of 100 rail rows local**, 19 messages →
+0, draft and tray cleared, cancel byte-identical.
 
-**Next: #48 — Folder picker reachable after the first pick.** #49 is unblocked
-too and independent of #48.
-
-Spec **#41 — Resume anything** is the remaining work, two tickets:
+**Next: #49 — Lazy title enrichment for slash-command-first sessions.** The last
+ticket in spec #41; closing it closes the spec.
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #48 | Folder picker reachable after first pick | 0 — **next** |
-| #49 | Lazy title enrichment for slash-command-first sessions | 0 — also open |
+| #49 | Lazy title enrichment for slash-command-first sessions | 0 — **next** |
 
-Order: `#48 → #49`. Blocked-ness is authoritative
-from `gh api repos/<owner>/<repo>/issues/<n> --jq
+Blocked-ness is authoritative from `gh api repos/<owner>/<repo>/issues/<n> --jq
 '.issue_dependencies_summary.blocked_by'` — `gh issue list --json` does **not**
 expose that field.
 
@@ -65,6 +62,52 @@ the SDK path kills the raw-markup title defect; 0 of 325 `customTitle` values
 diverge from `summary`, making a coalesce redundant; 490 sessions across 37
 cwds, 5 with no cwd at all; `encodeCwd` **misses 6 of 37 real store
 directories** from drive-letter case drift.
+
+## Facts established by #48 (don't re-derive)
+
+- **`session:choose-folder` is a chooser and nothing else** — `isTrustedIpc`-
+  guarded, returns `{status:'cancelled'} | {status:'selected', cwd}` (`FolderChoice`
+  in `src/shared/session-types.ts`). It contains **no mutation**, which is what
+  makes a cancel — and an untrusted or window-less call — inert by construction.
+  See [[2026-07-28-choosing-a-folder-is-not-changing-workspace]].
+- **`session:pick-folder` is still alive and still mutating**, used only by
+  `Welcome` for the very first pick. Never call it from anywhere else: it changes
+  main's cwd and rebuilds the engine while touching no renderer state. Folding
+  that last caller onto the chooser would delete it outright — worth its own
+  small ticket, deliberately out of scope here.
+- **No UI assertion distinguishes the chooser path from `pickFolder`** — both end
+  with a new cwd and a re-rendered sidebar. The pin is on the call
+  (`expect(pickFolder).not.toHaveBeenCalled()`), never on the DOM.
+- **`App.switchWorkspace(id: string | null, cwd)` and
+  `useChat.adoptSession(id: string | null)` are WIDENED, not duplicated.**
+  `adoptSession(null)` = empty pane, **no engine call**, no transcript read. Both
+  mirror `SwitchRequest.resumeId`, so the row path and the picker path run one
+  reset; a second reset would drift the moment workspace-scoped App state grows.
+- **`newChat()` must not be used to clear the pane on a switch** — second
+  instance of #47's landmine. It sends `targetSession(null)` (closes and nulls
+  the engine the transaction just warmed) and is gated on the renderer's own
+  `busy`, which would silently skip a reset main already answered `ok` to.
+- **The "Open project" button is NOT busy-gated**, unlike "New chat" beside it.
+  Disabling it would be a second busy source and would make the `busy` refusal
+  unreachable. Header order is `Refresh sessions · Open project · New chat ·
+  Collapse sessions`; the titlebar is untouched (asserted).
+- **Re-choosing the folder already open leaves the draft and tray in place** —
+  the `key={cwd}` remount needs `cwd` to actually change. Deliberate, marked with
+  a `ponytail:` comment: nothing crosses projects in that case.
+- **Eight mutations run**, each killing its target (route through `pickFolder` 9,
+  drop `key={cwd}` 2, `newChat()` instead of `adoptSession(null)` 1, transcript on
+  a null id 2, reset regardless of status 2, switch on cancel 1, disable while
+  busy 1, drop `setPendingInsert(null)` 1).
+- **`gui-48.mjs` is committed.** Its dialog stub is switchable **and
+  call-counted** — a silently inert button is otherwise indistinguishable from a
+  cancel — and it drives both branches in one run. It also asserts
+  `window.api.chooseFolder` exists on the **real preload bridge**, the one thing
+  a jsdom mock answers whether or not main ever registered the handler. Measured
+  live: dialog opened exactly once per click, cancel byte-identical, selection
+  into an empty temp folder gave 0 of 100 local rows and no active row.
+- **Cleanup of a temp cwd must happen after `app.close()` and never be fatal** —
+  the engine holds the folder open, so `rmSync` throws `EBUSY` and would exit
+  non-zero over an already-printed PASS.
 
 ## Facts established by #47 (don't re-derive)
 
@@ -274,6 +317,9 @@ there was no canonical one to start from.
 
 ## Decisions binding this work
 
+- [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] — #48's chooser-only
+  IPC, the ban on reusing `session:pick-folder`, the nullable-id widenings that
+  keep one reset, and the un-busy-gated affordance.
 - [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] — #47's
   `key={cwd}` composer remount, the same-commit `pendingInsert` clear, the
   `adoptSession` / `openSession` split, the deliberately un-busy-gated foreign
@@ -396,12 +442,12 @@ there was no canonical one to start from.
 
 ## Pick up here
 
-**#48 — Folder picker reachable after the first pick.** Unblocked (#49 is too
-and is independent). The atomic renderer reset #48 was sequenced behind now
-exists: reuse `switchWorkspace` with **`resumeId: null`** — the first-class
-"open this workspace with a new chat" case, which skips the index entirely and
-is exactly what an empty folder needs. See [[pick-up]] for the queue and
-landmines.
+**#49 — Lazy title enrichment for slash-command-first sessions.** Unblocked, and
+the last ticket in spec #41. Its required call-count assertion is the final
+outstanding piece of mandated coverage in this queue. Titles only — the raw
+`<local-command-caveat>` markup still visible on the **replay** path is a
+different code path with no ticket, and must not be folded in. See [[pick-up]]
+for the landmines.
 
 ## Deferred (still no spec)
 
@@ -440,8 +486,17 @@ reasons worth keeping:
   Storage location is `resolveSessionDir`; `cwdKey()` is for comparison only.
 - **Required test coverage in the remaining tickets is not optional** — the
   call-count assertion (#49) is the last one outstanding. #43's no-JSONL-read,
-  #45's no-`dir`, #46's ordered-call and #47's never-`targetSession` assertions
-  are landed and mutation-verified; they are the working examples of the pattern.
+  #45's no-`dir`, #46's ordered-call, #47's never-`targetSession` and #48's
+  never-`pickFolder` assertions are landed and mutation-verified; they are the
+  working examples of the pattern.
+- **Never call `window.api.pickFolder` from anywhere but `Welcome`.** It changes
+  main's cwd and rebuilds the engine while touching no renderer state — the
+  stale-pane bug, reachable again the moment something else calls it. The
+  chooser is `chooseFolder`; the transition is `switchWorkspace`.
+- **Never clear the pane with `newChat()` on a switch path** — it sends
+  `targetSession(null)`, closing the engine the transaction just warmed, and its
+  `busy` gate can skip a reset main already approved. Use `adoptSession(id)`,
+  with `null` meaning "no session".
 - **Do not add a second busy flag.** `Engine.isBusy()` is the source of truth
   and `switchWorkspace` already consults it — the renderer must not re-derive
   "busy" from stream state and decide for itself. Corollary from #47: **do not
@@ -476,7 +531,8 @@ reasons worth keeping:
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] ·
+- [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] ·
+  [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] ·
   [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] ·
   [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] ·
   [[2026-07-28-storage-location-is-an-index-not-an-encoding]]

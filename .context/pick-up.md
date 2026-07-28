@@ -11,72 +11,70 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## This leg landed
 
-**#47 — Wire the renderer to `switchWorkspace`**, on main as `8c9cbb7`, closed.
-Cross-project session rows are **live**: selecting one sends
-`{cwd, resumeId}` over the new `session:switch-workspace` channel and, only on
-`ok`, the whole workspace drops together — cwd, `useChat`, `openDock`,
-`pendingInsert`, `openSubagent`.
+**#48 — Folder picker reachable after the first pick**, on main as `08974d5`,
+closed. A new or empty project is reachable at last: the sessions-rail header
+carries an **"Open project"** affordance beside "New chat", backed by
+`session:choose-folder` — a chooser that **mutates nothing** and answers
+`{status:'cancelled'} | {status:'selected', cwd}`. Only `selected` runs #46's
+transaction, with `resumeId: null`.
 
 Three things are load-bearing and easy to undo by accident:
 
-- **`<InputBar key={cwd}>`.** Draft, attachment tray and autocomplete state live
-  only inside the composer, so a remount is the only exhaustive reset. Resetting
-  App state alone leaves all three behind — the criterion most likely to pass a
-  green suite while being unmet.
-- **`useChat.adoptSession(id)`** replays a transcript **without** calling
-  `targetSession`. The transaction already closed → rebuilt → targeted → warmed
-  the engine, and `chat:target` closes and nulls it; the in-project resume path
-  on top would tear the fresh engine straight back down. `openSession` is now
-  `adoptSession` + `targetSession`.
-- **A foreign row is deliberately not `busy`-gated** (a local row still is).
-  `Engine.isBusy()` is the one source, and disabling the row would make the
-  `busy` refusal unreachable from the UI.
+- **`session:pick-folder` is still alive and still mutating.** It is `Welcome`'s
+  first-pick path and nothing else's. It changes main's cwd and rebuilds the
+  engine while touching **no** renderer state — the stale-pane bug the whole
+  transaction exists to prevent, and the ticket's named sharpest failure mode.
+  No UI assertion can catch a regression here (both paths end with a new cwd and
+  a re-rendered sidebar), so the pin is on the call.
+- **`adoptSession(null)`, never `newChat()`.** `newChat` sends
+  `targetSession(null)`, which closes and nulls the engine the transaction just
+  rebuilt and warmed, and it is gated on the renderer's own `busy` — a second
+  opinion that would silently skip a reset main already answered `ok` to. An
+  empty pane looks identical either way. Second instance of #47's landmine.
+- **The affordance is not `busy`-gated** (the "New chat" button beside it is).
+  `Engine.isBusy()` is the one source; disabling it would make the `busy`
+  refusal unreachable from the UI.
 
-Rejections render one inline `role="status"` line (`.switch-refusal`) above the
-composer — never a chat message, because nothing happened. Backend mode,
-permission mode and model are global preferences and survive untouched.
+Suite **533 → 545 across 43 files**, typecheck and build clean. Eight mutations
+run, each killing exactly its target. Live GUI drive `gui-48.mjs` (committed)
+opened the real dialog into a real empty `mkdtemp` folder and passed every
+criterion. Decision on record:
+[[2026-07-28-choosing-a-folder-is-not-changing-workspace]].
 
-Suite **517 → 533 across 42 files**, typecheck and build clean. Ten mutations
-run, each killing exactly its target. Live GUI drive `gui-47.mjs` (committed)
-passed every criterion against the real store. Decision on record:
-[[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]].
+## Next ticket: #49 — Lazy title enrichment for slash-command-first sessions
 
-## Next ticket: #48 — Folder picker reachable after the first pick
-
-Unblocked. #49 is unblocked too and independent of #48; the queue order is #48
-first.
+Unblocked, and the **last ticket in spec #41**. Closing it closes the spec.
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #48 | Folder picker reachable after the first pick | 0 — **next** |
-| #49 | Lazy title enrichment for slash-command-first sessions | 0 — also open |
+| #49 | Lazy title enrichment for slash-command-first sessions | 0 — **next** |
 
-Order: `#48 → #49`. Blocked-ness is authoritative from
+Blocked-ness is authoritative from
 `gh api repos/<owner>/<repo>/issues/<n> --jq '.issue_dependencies_summary.blocked_by'`
 — `gh issue list --json` does **not** expose that field.
 
-**#48 context from this leg.** The reset #48 was sequenced behind now exists and
-is reusable as-is: `switchWorkspace(id, cwd)` in `App.tsx` is the `ok`-branch
-reset, and the composer remount rides the same `cwd` change. What #48 adds is
-the **non-mutating chooser IPC** (`{status:'cancelled'} | {status:'selected',
-cwd}`) plus a sidebar-header affordance next to "New chat".
+**#49 context carried forward.**
 
-- Call the transaction with **`resumeId: null`** — the first-class
-  "open this workspace with a new chat" case. It clears the prior target, skips
-  the index entirely and returns `ok`; an empty folder has no session to resume.
-- The ticket's named sharpest failure mode is reaching for the existing
-  `session:pick-folder`, which chooses **and** tears the engine down while
-  touching no renderer state. That is the stale-pane bug the transaction exists
-  to prevent. It needs a *chooser-only* sibling.
-- `App.switchWorkspace` currently takes `(id, cwd)` with `id: string`. #48 needs
-  the `resumeId: null` shape — widen that signature rather than duplicating the
-  reset, or the two paths will drift.
-- A new `window.api` channel means **all four** mock sites
-  (`tests/chat-harness.ts` plus the inline mocks in `sidebar` / `session` /
-  `shell` tests), and every IPC guarded with `isTrustedIpc`.
-- `gui-47.mjs` is the right template to fork: it already stubs the folder dialog
-  in main (path passed as an **argument**, never interpolated) and reads the
-  whole reset back out of the DOM.
+- **Titles only.** #43 already killed the raw-markup *title* defect by moving
+  titles to the SDK's `summary` (0 of 490 store-wide carry command markup). #49
+  is about *enriching* the 65 bare short commands (`/clear`, `/model`,
+  `/preset pick-up`) — the other 27 of 92 slash-first summaries are already
+  informative prose.
+- **Do NOT fold in transcript replay.** Replay still renders raw
+  `<local-command-caveat>` / `<command-name>` / `<local-command-stdout>` with
+  ANSI escapes — confirmed live during #47's drive. Different code path, no
+  ticket, and it is the deferred "strip at the parsing boundary" item.
+- **The required call-count assertion is the last outstanding piece of mandated
+  coverage in this queue.** Lazy means lazy: the pin exists so a green suite
+  cannot pass while the enrichment eagerly reads every transcript. #44's
+  rebuild-once-retry-once `readdir` count is the worked example.
+- **A summary beginning with `/` is provably not a user-set `/rename` title** —
+  0 of 325 custom titles start with one.
+- **Never re-add `customTitle ?? summary`** while working in this area.
+- **Do not rebuild the storage index inside `listSessions`**, and do not restore
+  `messageCount` as a side effect of reading transcripts for titles.
+- Judge whether #49 needs a GUI drive on its own merits — it is mostly a
+  data/title path, unlike #48 which added a real affordance and a real dialog.
 
 ## Run it
 
@@ -92,20 +90,24 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
 - **Pins are mutation-verified. Never "fix" a red pin by editing its
   expectation.** The one legitimate retirement is when the *ticket* reverses the
   contract the pin describes and says so by name (#42's single-line composer,
-  #45's two cwd-scoped list tests, and this leg's foreign-row pin — which was
-  **rewritten into a routing pin**, not deleted). A pin that goes red because
-  your change broke it still means your change is wrong.
+  #45's two cwd-scoped list tests, #47's foreign-row pin — **rewritten into a
+  routing pin**, not deleted). A pin that goes red because your change broke it
+  still means your change is wrong. #42 spent the only authorized retirement.
+- **Never call `pickFolder` outside `Welcome`.** The chooser is `chooseFolder`;
+  the transition is `switchWorkspace`. Fusing the two back together is the
+  regression, and it passes every test that looks at the screen.
+- **Never clear the pane with `newChat()` on a switch path** — use
+  `adoptSession`, with `null` meaning "no session, no engine call".
 - **Never un-key the composer.** `<InputBar key={cwd}>` is the entire draft /
   tray / autocomplete reset; removing it re-opens the leak silently.
 - **`pendingInsert` must be cleared in the same commit as the cwd change** —
   `InputBar` applies an insert *on mount*, so a survivor refills the new
   project's composer with the old project's command. This is a different bug
   from a stale draft and needs its own assertion.
-- **Never call `targetSession` on a switch path.** Use `adoptSession`. The
-  transaction has already built and warmed the engine.
-- **Do not add a second busy flag,** and do not "fix" the live foreign row by
-  disabling it while busy. `Engine.isBusy()` is the source of truth;
-  `switchWorkspace` already consults it.
+- **Do not add a second busy flag,** and do not disable a foreign row or the
+  "Open project" affordance while busy. `Engine.isBusy()` is the source of truth;
+  `switchWorkspace` already consults it, and disabling makes its refusal
+  unreachable.
 - **Anything workspace-scoped added to App state must join the `ok` branch** of
   `switchWorkspace`. Composer-internal state needs nothing.
 - **A session fixture with no `cwd` is a foreign row.** Since #47 it is
@@ -131,11 +133,12 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
 - **A green test can be green for the wrong reason.** Assert the mechanism (a
   fetch count, a read that must not happen, an option that must be absent, a call
   ORDER), not a symptom with more than one cause. #43's no-JSONL-read, #44's
-  names-only-build, #45's no-`dir`, #46's ordered-call and #47's
-  never-`targetSession` + pending-insert-on-remount tests are the worked
+  names-only-build, #45's no-`dir`, #46's ordered-call, #47's never-`targetSession`
+  + pending-insert-on-remount and #48's never-`pickFolder` tests are the worked
   examples; all are mutation-verified.
-- **Required test coverage in the remaining tickets is not optional** — the
-  call-count assertion (#49) is the last one outstanding.
+- **New `window.api` channel → ALL FOUR mock sites** (`tests/chat-harness.ts` plus
+  the inline mocks in `sidebar` / `session` / `shell` tests), and guard every IPC
+  with `isTrustedIpc`. `chooseFolder` was the most recent one.
 - **Vitest + `node:fs/promises`:** a module mock must also export `default`, or
   the suite file dies at import with `No "default" export is defined`. A mock
   now also needs `stat` — `session-index.ts`'s node io imports it.
@@ -148,58 +151,61 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
 - **`gh issue close --comment` silently drops the comment if the issue is
   already closed** — a pushed `Closes #N` auto-closes it first, so the
   breadcrumb vanishes with only a `!` warning. Keep `Closes #N` OUT of the
-  commit, then `gh issue comment` → `gh issue close` → verify. Worked this leg.
+  commit, then `gh issue comment` → `gh issue close` → verify. Worked two legs
+  running.
 - **The Bash tool is not PowerShell** — use a heredoc (`git commit -F - <<'EOF'`),
   never a PowerShell here-string.
 - **Source files are CRLF.** A `perl -0pi` mutation whose pattern spans a line
   break needs `\r?\n`, not `\n` — otherwise it silently does not apply and the
-  mutation "survives", which reads exactly like a weak test. Cost one full
-  mutation round this leg; `diff -q` against a backup before trusting a survivor.
+  mutation "survives", which reads exactly like a weak test. `diff -q` against a
+  backup before trusting a survivor; the leg-7 mutation script does this and
+  prints `MUTATION DID NOT APPLY` rather than a false survivor.
 - Resume ceiling + `sessionId()` accessor + native-store facts + Tailwind
   `@theme` + engine legible-error pins — unchanged, see [[active-work]].
 - Full ledger in [[active-work]]. Headlines unchanged: plain-string engine pin
   and array-of-only-text parser pin are mutation-verified; replay never carries
   the payload; absent stays absent; `taskToParent` is the `local_bash` filter;
-  wisp `options.model` = family NAME; never bare `wisp snapshot`; new
-  `window.api` channel → ALL FOUR mock sites; jsdom: no images, no CSP, no hit
-  testing.
+  wisp `options.model` = family NAME; never bare `wisp snapshot`; jsdom: no
+  images, no CSP, no hit testing.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Path is
   the trigger, model only modulates the odds. Not our bug — don't run wrapper
-  sessions there.
+  sessions there, and don't point a GUI driver's temp cwd there either.
 - `main` and `origin/main` are **in sync** as of this leg (the relay body pushes
   every leg).
 
 ## Baseline
 
-`npm run typecheck` clean, `npm run build` clean, **533 tests green across 42
+`npm run typecheck` clean, `npm run build` clean, **545 tests green across 43
 files**, verified 2026-07-28 immediately before this handoff.
 
 ## GUI check
 
-`node .claude/skills/run-desktop/driver.mjs [--cycle]` for the titlebar pills;
-**`node .claude/skills/run-desktop/gui-47.mjs`** is the newest template and the
-right one to fork for #48 — it stubs the folder dialog in main, drives a full
-workspace switch, and reads every reset back out of the DOM. `gui-45.mjs` is the
-sessions-rail template; `gui-42.mjs` the composer one. All need `npm run build` +
-`playwright-core`.
+`node .claude/skills/run-desktop/driver.mjs [--cycle]` for the titlebar pills.
+**`gui-48.mjs` is the newest template**: it stubs the folder dialog in main,
+makes the stub *switchable and call-counted*, drives both a cancel and a
+selection in one run, and asserts a channel exists on the **real preload
+bridge** — the one thing a jsdom mock will answer regardless. `gui-47.mjs` is
+the workspace-switch template, `gui-45.mjs` the sessions rail, `gui-42.mjs` the
+composer. All need `npm run build` + `playwright-core`.
 
 Gotchas: `createRequire` for playwright-core **if the driver lives outside the
-project dir**; **pass the dialog-stub path as an argument to `app.evaluate`,
-never inside a string literal** (a single backslash silently yields a nonexistent
-cwd, which the SDK misreports as "native binary exists but failed to launch");
+project dir**; **pass any path as an argument to `app.evaluate`, never inside a
+string literal** (a single backslash silently yields a nonexistent cwd, which
+the SDK misreports as "native binary exists but failed to launch");
 DOM-dispatched clicks (Playwright's stability wait hangs on the app's
 animations); measure in the DOM, never off screenshots; never re-read an element
-after an action that may not have happened — inject a probe node instead; and
-**log what the driver could not drive** rather than letting silence read as a
-pass (`gui-47.mjs` prints a `SKIPPED` line).
-
-**#48 needs a GUI drive** — it adds a real affordance and a real dialog. #49 is
-mostly a data/title path, so judge it on its own merits when you get there.
+after an action that may not have happened — inject a probe node instead;
+**count the side effect you actually care about** (an inert button and a cancel
+produce identical DOM — only a call counter separates them); clean up a temp cwd
+**after** `app.close()` and never fatally (the engine holds it, `rmSync` throws
+`EBUSY` over an already-printed PASS); and **log what the driver could not
+drive** rather than letting silence read as a pass.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] ·
+- [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] ·
+  [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] ·
   [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] ·
   [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] ·
   [[2026-07-28-storage-location-is-an-index-not-an-encoding]] ·

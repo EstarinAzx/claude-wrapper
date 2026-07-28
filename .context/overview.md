@@ -21,7 +21,9 @@ tags: [context, overview]
 - `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS).
   `App.tsx` owns the workspace switch: the `ok` branch is where every
   workspace-scoped App state must be cleared, and `<InputBar key={cwd}>` covers
-  everything living inside the composer.
+  everything living inside the composer. Both entry points — a foreign session
+  row and the sidebar's "Open project" affordance — share that one reset via a
+  nullable `resumeId`.
 - `src/shared/` — types + pure modules both processes import. `session-groups.ts`
   owns the sessions rail's filter/group/cap order; `cwd-key.ts` is the one
   directory fold (comparison only, never a path).
@@ -39,9 +41,9 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **spec #41,
-  Resume anything** — #48 next, #49 also unblocked and independent)
-- Tracker: open spec #41 (Resume anything, tickets #48 + #49 open, #43 + #44 +
-  #45 + #46 + #47 closed); #42 (multiline
+  Resume anything** — #49 is the last open ticket)
+- Tracker: open spec #41 (Resume anything, ticket #49 open, #43 + #44 + #45 +
+  #46 + #47 + #48 closed); #42 (multiline
   composer) closed standalone; specs #25 (Agents surface), #26 (Attachments)
   and #36 (slash commands) delivered and closed with tickets #27–#40; closed
   specs #9 / #16 / #20 and the unlabelled umbrella #1 hold the history
