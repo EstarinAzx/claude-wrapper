@@ -8,8 +8,8 @@ tags: [context, active-work]
 # Active Work
 
 _Last updated: 2026-07-28 by Opus 5 — landed #52 and #53; queue empty_
-_At commit: `c2a3ec3`_
-_Baseline: typecheck clean, build clean, **600 tests green across 47 files**_
+_At commit: `d814c03`_
+_Baseline: typecheck clean, build clean, **612 tests green across 48 files**_
 
 ## Current focus
 
@@ -43,6 +43,11 @@ filed rather than fixed. See *Known issues*.
     back to its row, so the pill says "Haiku" and not
     `claude-haiku-4-5-20251001`. Caught by the GUI check, caused by the two
     commits before it.
+  - **Host CLI** (`d814c03`) — `pathToClaudeCodeExecutable` points at the host
+    `claude` when PATH has one, so the lockfile no longer decides which Claude
+    Code the user talks to; no host install falls back to the bundled binary.
+    Owner's call, accepting that a host CLI update can now break the app with
+    no code change. Byte-identical to the bundled one today (same sha256).
   - Decision: [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]].
 - **Done earlier this session:**
   - **#50** — `sanitizeUserText` replaces `unwrapCommandInvocation` in

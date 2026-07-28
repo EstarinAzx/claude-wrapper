@@ -35,6 +35,9 @@ tags: [context, overview]
   directory fold (comparison only, never a path); `session-titles.ts` holds the
   enrichment predicate and the measured "substantive prompt" rule, with the
   renderer's promise cache beside it in `src/renderer/src/enriched-titles.ts`.
+- `src/main/cli-path.ts` — WHICH Claude Code binary runs. The host `claude` on
+  PATH when there is one, else the SDK's bundled copy. A PATH walk, never a
+  `which` shell-out.
 - `tests/` — vitest + testing-library shell tests (jsdom, `vitest.config.ts`)
 - `DESIGN.md` / `PRODUCT.md` — Frost Mono design system + product context (impeccable reads these)
 - `docs/design/frost-mono-reference.png` — canonical visual reference

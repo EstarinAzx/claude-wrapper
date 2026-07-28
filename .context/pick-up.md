@@ -76,6 +76,33 @@ bundled CLI 2.1.217 → 2.1.220, and with it exactly two of fourteen rows:
 Decision on record:
 [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]].
 
+### Follow-up: the app now runs the HOST Claude Code (`d814c03`)
+
+Owner's call, after the above surfaced the drift. `pathToClaudeCodeExecutable`
+points at the host binary when PATH has one; no host install → option absent →
+the bundled CLI, unchanged. So the lockfile no longer decides which Claude Code
+the user talks to.
+
+- **Accepted trade:** the app tracks a version it has never been tested against,
+  and a host CLI whose control protocol moves can break it with no code change.
+  That is the accepted cost of not repeating #53's silent pin.
+- **No `which` shell-out** — a plain PATH walk. #53 deleted the app's only
+  `child_process` use; do not bring one back for a question `fs.existsSync`
+  answers.
+- **No `.cmd`/`.bat` shims, no extensionless file on Windows.** A shim needs a
+  shell and the SDK spawns the path directly, so resolving one hands back
+  something that cannot start. Finding nothing is the better failure.
+- **Resolved once at boot**, not per spawn — a PATH change mid-session would
+  otherwise swap the binary under a running conversation.
+- `path.join` uses the HOST's separator; both join and delimiter come from the
+  target platform instead. A POSIX PATH walked on Windows otherwise builds
+  `\usr\bin\claude` and matches nothing — the tests caught this.
+
+Currently a **no-op in behaviour**: the host `claude.exe` and the bundled one
+are byte-identical (same sha256, both 2.1.220) after `241f1ec`. That makes it a
+policy change verifiable as a no-op today, and it is why gui-52 passing proves
+the wiring rather than the version.
+
 ## Queue
 
 **#54 is open, unstarted, and pre-existing** — not caused by this leg. Picking a
@@ -122,8 +149,11 @@ Full ledger in [[active-work]]. Most likely to bite next:
 - **The CLI shadows the Claude FAMILIES; Wisp resolves the ALIASES.** Corrects
   the note carried since #23. A stale CLI alias table cannot be fixed by
   rebinding a Wisp family — only by upgrading the CLI.
-- **The app's CLI is the bundled one** (`manifest.json` in the SDK package), not
-  the host `claude`. The host being current tells you nothing.
+- **The app now runs the HOST `claude` when PATH has one** (`cli-path.ts`),
+  falling back to the SDK's bundled binary otherwise. Consequences: the app can
+  be broken by a Claude Code update with no code change here; `manifest.json` in
+  the SDK package now describes only the FALLBACK, not what actually runs; and
+  reproducing a user's bug means matching their CLI version, not ours.
 - **Never match CLI markup mid-string, and never strip ANSI from typed text.**
   #50's anchor.
 - **Never scope a scrollbar rule to a component** (and never add
@@ -151,9 +181,9 @@ Full ledger in [[active-work]]. Most likely to bite next:
 
 ## Baseline
 
-`npm run typecheck` clean, `npm run build` clean, **600 tests green across 47
-files**, verified immediately before this handoff. `main` is **four commits
-ahead of `origin/main`** — all four are this leg and all are **unpushed**.
+`npm run typecheck` clean, `npm run build` clean, **612 tests green across 48
+files**, verified immediately before this handoff. `main` is **six commits
+ahead of `origin/main`** — all six are this leg and all are **unpushed**.
 
 Note the previous baton said "four commits ahead" too, but that was stale:
 `origin/main` already carried #50 and #51. Trust `git log origin/main..main`
