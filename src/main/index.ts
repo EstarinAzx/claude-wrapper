@@ -23,6 +23,7 @@ import {
 import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
+import { resetSessionIndex } from './session-index'
 import { listSessions, readTranscript } from './session-store'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
 import type { PermissionDecision } from '../shared/engine-types'
@@ -149,6 +150,9 @@ ipcMain.handle('commands:list', async (event) => {
 
 ipcMain.handle('session:list', async (event) => {
   if (!isTrustedIpc(event)) return []
+  // A list refresh is the moment the store may have gained or lost sessions, so
+  // drop the storage index here; the next lookup rebuilds it from real names.
+  resetSessionIndex()
   return listSessions(getSessionCwd())
 })
 

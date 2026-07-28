@@ -1,38 +1,44 @@
-import { describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 import { homedir } from 'node:os'
-import {
-  parseMeta,
-  listSubagents,
-  readSubagentTranscript,
-  type SubagentIo
-} from '../src/main/subagent-store'
+import { resetSessionIndex, type StoreIo } from '../src/main/session-index'
+import { parseMeta, listSubagents, readSubagentTranscript } from '../src/main/subagent-store'
 
 const slash = (p: string): string => p.replace(/\\/g, '/')
 
 // Mimic Node's ErrnoException so the store can distinguish missing from denied.
 const enoent = (): Error => Object.assign(new Error('ENOENT'), { code: 'ENOENT' })
 
-// In-memory io keyed by forward-slash paths. Both readdir and readFile normalise
-// their (possibly backslash) argument so the store's win32 path.join output hits.
-const fakeIo = (files: Record<string, string>): SubagentIo => ({
+// In-memory io keyed by forward-slash paths. Every method normalises its
+// (possibly backslash) argument so the store's win32 path.join output hits.
+// readdir answers with immediate children — files AND subdirectory names, which
+// is what the storage index enumerates.
+const fakeIo = (files: Record<string, string>): StoreIo => ({
   readdir: async (dir) => {
     const d = slash(dir)
-    const names = Object.keys(files)
-      .filter((p) => p.startsWith(d + '/'))
-      .map((p) => p.slice(d.length + 1))
-      .filter((rest) => !rest.includes('/'))
-    if (names.length === 0) throw enoent()
-    return names
+    const names = new Set<string>()
+    for (const p of Object.keys(files)) {
+      if (!p.startsWith(d + '/')) continue
+      names.add(p.slice(d.length + 1).split('/')[0])
+    }
+    if (names.size === 0) throw enoent()
+    return [...names]
   },
   readFile: async (file) => {
     const hit = files[slash(file)]
     if (hit === undefined) throw enoent()
     return hit
-  }
+  },
+  stat: async () => ({ mtimeMs: 0 })
 })
 
-// The subagents dir for cwd 'D:\proj' / session 's1' (encodeCwd → 'D--proj').
+// The subagents dir for session 's1', which the fake store keeps under the
+// project directory 'D--proj'. That name is no longer derived from the cwd —
+// the index maps 's1' to whatever directory physically holds it.
 const DIR = `${slash(homedir())}/.claude/projects/D--proj/s1/subagents`
+
+beforeEach(() => {
+  resetSessionIndex()
+})
 
 const meta = (
   toolUseId: string,
@@ -151,9 +157,17 @@ describe('listSubagents', () => {
     expect(await listSubagents('D:\\proj', 's1', fakeIo({}))).toEqual([])
   })
 
-  test('null cwd or empty session → []', async () => {
-    expect(await listSubagents(null, 's1', fakeIo({}))).toEqual([])
+  test('empty session id → []', async () => {
     expect(await listSubagents('D:\\proj', '', fakeIo({}))).toEqual([])
+  })
+
+  // cwd is a display value now, not the storage key: a session discovered
+  // without one still resolves through the index by id alone.
+  test('a null cwd no longer blocks the lookup', async () => {
+    const io = fakeIo({
+      [`${DIR}/agent-a1.meta.json`]: meta('call-parent-1', 'Explore')
+    })
+    expect(await listSubagents(null, 's1', io)).toHaveLength(1)
   })
 
   test('nested sidecar surfaces parentAgentId', async () => {
@@ -173,13 +187,17 @@ describe('listSubagents', () => {
     })
   })
 
+  // The session resolves — it is the subagents directory itself that is
+  // unreadable, which the panel must see as "could not read", not "none".
   test('non-ENOENT readdir error → null', async () => {
-    const io: SubagentIo = {
-      readdir: async () => {
-        throw Object.assign(new Error('EACCES'), { code: 'EACCES' })
-      },
-      readFile: async () => {
-        throw enoent()
+    const base = fakeIo({ [`${DIR}/agent-a1.meta.json`]: meta('call-1', 'Explore') })
+    const io: StoreIo = {
+      ...base,
+      readdir: async (dir) => {
+        if (slash(dir).endsWith('/subagents')) {
+          throw Object.assign(new Error('EACCES'), { code: 'EACCES' })
+        }
+        return base.readdir(dir)
       }
     }
     expect(await listSubagents('D:\\proj', 's1', io)).toBeNull()
@@ -190,8 +208,8 @@ describe('listSubagents', () => {
       [`${DIR}/agent-ok.meta.json`]: meta('call-ok', 'Explore'),
       [`${DIR}/agent-bad.meta.json`]: meta('call-bad', 'Explore')
     })
-    const io: SubagentIo = {
-      readdir: base.readdir,
+    const io: StoreIo = {
+      ...base,
       readFile: async (file) => {
         if (slash(file).endsWith('agent-bad.meta.json')) {
           throw Object.assign(new Error('EACCES'), { code: 'EACCES' })

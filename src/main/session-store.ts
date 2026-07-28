@@ -1,11 +1,8 @@
-import { readFile } from 'node:fs/promises'
-import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { listSessions as sdkListSessions } from '@anthropic-ai/claude-agent-sdk'
 import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
+import { nodeIo, resolveSessionDir, type StoreIo } from './session-index'
 import { parseTranscript } from './transcript'
-
-export const encodeCwd = (cwd: string): string => cwd.replace(/[^a-zA-Z0-9]/g, '-')
 
 // Session metadata comes from the SDK's own store reader: one pass for the whole
 // project (421ms for 490 sessions measured) instead of reading and line-parsing
@@ -35,15 +32,22 @@ export const listSessions = async (cwd: string | null): Promise<SessionMeta[]> =
 
 // Read one session's transcript from the native store and parse it to the
 // replay message list. Unreadable/missing file → [] (lenient, like listSessions).
+//
+// The storage directory comes from the index, never from encoding `cwd` — see
+// session-index.ts. `cwd` is passed only as a duplicate-id tie-break hint, so a
+// session whose cwd is unknown (or whose drive-letter case drifted from the
+// on-disk name) still replays instead of silently reading back empty.
 export const readTranscript = async (
   cwd: string | null,
-  id: string
+  id: string,
+  io: StoreIo = nodeIo
 ): Promise<TranscriptMessage[]> => {
-  if (!cwd || !id) return []
-  const file = join(homedir(), '.claude', 'projects', encodeCwd(cwd), `${id}.jsonl`)
+  if (!id) return []
+  const found = await resolveSessionDir(id, cwd, io)
+  if (found.status !== 'ok') return []
   let raw: string
   try {
-    raw = await readFile(file, 'utf8')
+    raw = await io.readFile(join(found.dir, `${id}.jsonl`))
   } catch {
     return []
   }

@@ -1,9 +1,7 @@
-import { readdir, readFile } from 'node:fs/promises'
-import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { TranscriptMessage } from '../shared/session-types'
 import type { SubagentInfo } from '../shared/subagent-types'
-import { encodeCwd } from './session-store'
+import { nodeIo, resolveSessionDir, type StoreIo } from './session-index'
 import { parseTranscript } from './transcript'
 
 // On-demand disk reader for the subagent viewer. The SDK ships getSubagentMessages /
@@ -11,7 +9,7 @@ import { parseTranscript } from './transcript'
 // `toolUseId` — and that id is the ONLY stable correlation between the live
 // stream (parent_tool_use_id) and the persisted transcript. So this store reads
 // the transcript tree directly:
-//   ~/.claude/projects/<enc-cwd>/<sessionId>/subagents/
+//   <session's project dir>/<sessionId>/subagents/
 //     agent-<agentId>.jsonl        the subagent's own thread (all isSidechain)
 //     agent-<agentId>.meta.json    { agentType, description, toolUseId, spawnDepth }
 // Correlation recorded (ticket #24 build-time check): meta.json `toolUseId` ===
@@ -20,18 +18,20 @@ import { parseTranscript } from './transcript'
 // agentId here. Reusing parseTranscript (with includeSidechain) yields the shared
 // TranscriptMessage shape the drawer renders with, no SessionMessage mapping.
 
-export interface SubagentIo {
-  readdir(dir: string): Promise<string[]>
-  readFile(file: string): Promise<string>
-}
+const subagentsDir = (projectDir: string, sessionId: string): string =>
+  join(projectDir, sessionId, 'subagents')
 
-const nodeIo: SubagentIo = {
-  readdir: (dir) => readdir(dir),
-  readFile: (file) => readFile(file, 'utf8')
+// The project directory holding this session, from the index — never encoded
+// from `cwd`, which is a display value here (see session-index.ts). A session
+// the store does not hold has no subagents to list.
+const resolveSubagentsDir = async (
+  cwd: string | null,
+  sessionId: string,
+  io: StoreIo
+): Promise<string | null> => {
+  const found = await resolveSessionDir(sessionId, cwd, io)
+  return found.status === 'ok' ? subagentsDir(found.dir, sessionId) : null
 }
-
-const subagentsDir = (cwd: string, sessionId: string): string =>
-  join(homedir(), '.claude', 'projects', encodeCwd(cwd), sessionId, 'subagents')
 
 // Detect a missing path without string-matching the message — Node sets .code.
 const isMissing = (e: unknown): boolean =>
@@ -92,10 +92,17 @@ export const parseMeta = (raw: string): ParsedMeta | null => {
 export const listSubagents = async (
   cwd: string | null,
   sessionId: string,
-  io: SubagentIo = nodeIo
+  io: StoreIo = nodeIo
 ): Promise<SubagentInfo[] | null> => {
-  if (!cwd || !sessionId) return []
-  const dir = subagentsDir(cwd, sessionId)
+  if (!sessionId) return []
+  const dir = await resolveSubagentsDir(cwd, sessionId, io)
+  return dir === null ? [] : listSubagentsIn(dir, io)
+}
+
+const listSubagentsIn = async (
+  dir: string,
+  io: StoreIo
+): Promise<SubagentInfo[] | null> => {
   let names: string[]
   try {
     names = await io.readdir(dir)
@@ -130,16 +137,18 @@ export const readSubagentTranscript = async (
   cwd: string | null,
   sessionId: string,
   parentToolUseId: string,
-  io: SubagentIo = nodeIo
+  io: StoreIo = nodeIo
 ): Promise<TranscriptMessage[]> => {
-  if (!cwd || !sessionId || !parentToolUseId) return []
-  const match = ((await listSubagents(cwd, sessionId, io)) ?? []).find(
+  if (!sessionId || !parentToolUseId) return []
+  const dir = await resolveSubagentsDir(cwd, sessionId, io)
+  if (dir === null) return []
+  const match = ((await listSubagentsIn(dir, io)) ?? []).find(
     (i) => i.parentToolUseId === parentToolUseId
   )
   if (!match) return []
   let raw: string
   try {
-    raw = await io.readFile(join(subagentsDir(cwd, sessionId), `agent-${match.agentId}.jsonl`))
+    raw = await io.readFile(join(dir, `agent-${match.agentId}.jsonl`))
   } catch {
     return []
   }
