@@ -1,30 +1,42 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-07-27
+updated: 2026-07-28
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-07-28 — new queue specced and published, 8 tickets, none started_
-_Baseline: typecheck clean, 441 tests green across 37 files (verified 2026-07-28)_
+_Last updated: 2026-07-28 — relay leg 1 landed #42; 7 tickets left in the queue_
+_Baseline: typecheck clean, build clean, **455 tests green across 38 files**_
 
 ## Current focus
 
-**Queue loaded, nothing implemented yet.** Spec #36 (slash commands) closed
-2026-07-27 (#37 `ab7835f`, #38 `c077904`, #39 `0cb6e31`, #40 `c63e170`).
+**#42 — Multiline prompt composition: landed** on main as `5b66dd9`. The
+composer is a textarea; Enter sends, Shift+Enter breaks the line. Suite went
+441 → 455 across 37 → 38 files.
 
-New work specced 2026-07-28:
+**Next: #43 — Replace the session metadata scan with SDK `listSessions`.** The
+only unblocked ticket in the queue.
 
-- **#42 — Multiline prompt composition.** Independent, no blockers, run first.
-- **Spec #41 — Resume anything**, tickets #43–#49 with native blocking edges.
+Spec **#41 — Resume anything** is the remaining work, seven tickets:
 
-Order: `#42 → #43 → #44 → #45 → #46 → #47 → #48 → #49`. Details and the
-blocking table in [[pick-up]]. Run with
-`/relay N=1 read and follow .claude/relay-leg.md` — that body was rewritten
-2026-07-28 for this queue, and the Grok-grunt delegation layer was removed
-(restore procedure documented at the bottom of the file).
+| # | Job | blocked_by (live) |
+|---|---|---|
+| #43 | Replace metadata scan with SDK `listSessions` | 0 — **next** |
+| #44 | Resolve storage dirs by index, not by encoding cwd | 1 |
+| #45 | Global cross-project session list + filter | 1 |
+| #46 | Main-process `switchWorkspace` transaction (dormant) | 1 |
+| #47 | Wire the renderer to `switchWorkspace` | 2 |
+| #48 | Folder picker reachable after first pick | 1 |
+| #49 | Lazy title enrichment for slash-command-first sessions | 1 |
+
+Order: `#43 → #44 → #45 → #46 → #47 → #48 → #49`. Blocked-ness is authoritative
+from `gh api repos/<owner>/<repo>/issues/<n> --jq
+'.issue_dependencies_summary.blocked_by'` — `gh issue list --json` does **not**
+expose that field.
+
+Run with `/relay N=1 read and follow .claude/relay-leg.md`.
 
 ## How this queue was specced (2026-07-28)
 
@@ -37,8 +49,8 @@ rather than trusted. What the grilling changed:
 - Caught that paste-to-attachment **already ships** — it was wrongly listed as a
   gap.
 - Found that the "never break a pin" rule would have deadlocked #42 against
-  `'the composer is still a single-line input'`; that retirement is now
-  authorized by name.
+  `'the composer is still a single-line input'`; that retirement was authorized
+  by name and has now been spent.
 - Split the workspace transition at a **dormant-API seam** (#46 merges unused
   and safe, #47 wires it) instead of shipping one cross-process rewrite.
 - Final red-team caught a structural gap: #48's whole purpose is empty folders,
@@ -55,77 +67,80 @@ diverge from `summary`, making a coalesce redundant; 490 sessions across 37
 cwds, 5 with no cwd at all; `encodeCwd` **misses 6 of 37 real store
 directories** from drive-letter case drift.
 
-## "Host issue" — RESOLVED, was a driver typo (2026-07-27, later session)
+## Facts established by #42 (don't re-derive)
+
+- **The composer is a `<textarea rows={1}>`.** Height is CSS only — see
+  [[2026-07-28-composer-height-is-css-not-state]]. **Never add a resize effect
+  to `InputBar`**; there is deliberately no `scrollHeight` measurement and no
+  inline `style.height`.
+- `field-sizing: content` **is supported in this Electron (43)** — verified
+  live via `getComputedStyle`, not assumed. Cap arithmetic confirmed in the DOM:
+  33px empty, 75px at 3 lines, 180px at 8 (the cap, = 8 × 21 + 12), 180px with
+  `scrollHeight` 432 at 20 lines, 33px again on clear **and** on send.
+- **Shift+Enter is handled ahead of the popover branch**, plain-Enter submit
+  stays after it. That ordering is the whole of criterion 4 and is
+  mutation-verified; demoting it turns a break into a command accept.
+- Newline insertion uses **`el.setRangeText('\n', start, end, 'end')`** then
+  mirrors `el.value` into state — the caret is the DOM's problem, not React's.
+  Appending at the end instead fails two tests.
+- **The command trigger window now closes on `/\s/`, not `' '`.**
+- `.bubble` carries `white-space: pre-wrap` **and** `overflow-wrap: anywhere`;
+  a 400-char unbroken token wraps to 9 lines with no horizontal overflow (live).
+- `.input-pill` is `align-items: flex-end` so the paperclip and send button ride
+  the last line of a grown composer.
+- **A green test can be green for the wrong reason.** The first whitespace-trigger
+  test asserted only "no popover" — and a reverted `.includes(' ')` also renders
+  no popover, because `context\nsecond` matches no command name either way. It
+  passed under mutation. The fix was to assert the **`listCommands` fetch count**,
+  which is what distinguishes *window closed* from *merely unmatched*. Assert the
+  mechanism, not a downstream symptom that has more than one cause.
+
+## "Host issue" — RESOLVED, was a driver typo (2026-07-27)
 
 The end-of-leg-1 Electron→CLI spawn failures were **not host-level**: every
 gui-40 driver variant declared `PICK_DIR` with single backslashes in a JS
 string (`'C:\Users\…'` → `C:UsersS.D…`), so the stubbed folder pick handed the
 engine a nonexistent cwd; a Windows spawn with a bad cwd surfaces from the SDK
-as `native binary … exists but failed to launch`. gui-39.mjs used `\\` and
-worked — the typo was copy-pasted into all five retry variants, faking
-reproducibility. **Diagnostic pin: that SDK error can mean bad spawn cwd, not
-a broken binary.** After fixing the escape, `gui-40.mjs` passed clean on built
-main: popover on `/co` (17 matches), alias matching live (`/usage`),
-ArrowDown+Enter inserted `/context-init ` with no submit. **#40 GUI eyeball
-complete** — breadcrumb comment on #40. Still-true silver lining: warm-up
-inertness was observed live under a real spawn failure (clean reset, honest
-`[]`, no dead composer).
+as `native binary … exists but failed to launch`. **Diagnostic pin: that SDK
+error can mean bad spawn cwd, not a broken binary.**
 
-## Decisions binding these tickets
+**Structurally fixed in `gui-42.mjs` (2026-07-28):** the stub path is passed as
+an **argument** to `app.evaluate`, never interpolated into a string literal, so
+the escaping trap cannot recur. That driver is **committed** rather than thrown
+away — the five-variant copy-paste that faked reproducibility happened because
+there was no canonical one to start from.
 
-Full rationale in [[2026-07-27-slash-commands-are-a-dumb-pipe]] (amended after
-#37's capture). The load-bearing shape: **the wrapper never learns what a slash
-command is** — typed text goes out unparsed, the CLI resolves everything.
+## Decisions binding this work
 
-## Facts established by #37's live capture (don't re-derive)
+- [[2026-07-28-composer-height-is-css-not-state]] — #42's height model.
+- [[2026-07-27-slash-commands-are-a-dumb-pipe]] — the wrapper never learns what
+  a slash command is; typed text goes out unparsed.
 
-Captured 2026-07-27 via SDK `query()` outside the repo, engine's exact
-options, wisped. Full record in the capture comment on #37.
+## Facts established by #37–#40 (don't re-derive)
 
 - **The declared streaming subtypes never arrived.** `/context` output and the
-  `/mdoel` unknown-command suggestion both stream as **synthetic `assistant`
-  messages**: `message.model === "<synthetic>"`, text blocks already unwrapped
-  (no `<local-command-stdout>` markup on the stream), zero usage,
-  `stop_reason: "stop_sequence"`. **No `stream_event` deltas at all** — that is
-  why the old code rendered nothing.
-- The turn still ends normally: `result`/`success` with `num_turns: 0` carrying
-  the same text. Composer re-arms with no special handling.
-- **The invocation echo is not a separate streamed message.**
-- The per-turn `system`/`init` message carries `slash_commands: string[]`
-  (118 bare names, no leading `/`) — background fact for #39, which still uses
-  `supportedCommands()` per the decision (no cache, tracks `commands_changed`).
-- Engine now emits `command-output` and `notice` events. Three branches:
-  declared `system`/`local_command_output` → `command-output`; declared
-  `system`/`informational` → `notice` (transcript-only `info` level dropped);
-  synthetic assistant → `command-output`, returning **before** the ordinary
-  assistant path. The declared branches are implemented but were never observed
-  live — only the synthetic path fires on this CLI version.
-- **Empty `local_command_output` content emits nothing** (pinned — empty ghosts
-  are worse than nothing).
-- Renderer: new `command` role — markdown through the existing `assistant-body`
-  styles, `.msg-command` 40px indent, **no avatar** (avatar would attribute CLI
-  text to Claude). `notice` events append through the existing notice role.
-- **The persisted subtype is still `local_command`** with the two content
-  shapes (`<local-command-stdout>` wrapper, often empty, or the
-  `<command-name>` triple).
-
-## Facts established by #38 (don't re-derive)
-
+  `/mdoel` suggestion stream as **synthetic `assistant` messages**
+  (`message.model === "<synthetic>"`, text already unwrapped, zero usage,
+  `stop_reason: "stop_sequence"`). **No `stream_event` deltas at all.** The turn
+  still ends with `result`/`success`, `num_turns: 0`.
+- The per-turn `system`/`init` message carries `slash_commands: string[]` (118
+  bare names). **Empty `local_command_output` content emits nothing** (pinned).
+- Renderer `command` role: markdown through `assistant-body` styles, 40px
+  indent, **no avatar**. The persisted subtype is still `local_command`.
 - Real persisted invocation order is `<command-message>` **first**, then
-  `<command-name>`, then optional `<command-args>`, newline-joined — the
-  ticket's paraphrase had message/name reversed; the store was sampled before
-  keying the unwrap.
-- `parseTranscript`'s unwrap triggers **only when the plain string starts with
-  `<command-message>`** — ordinary prose mentioning the markup stays verbatim;
-  a malformed record (empty name) falls back verbatim rather than emitting an
-  empty bubble.
-- **`<local-command-caveat>` persists as its own standalone user message** and
-  still replays verbatim — it is also what sidebar titles show for
-  command-first sessions (title path = first user message). Candidate
-  follow-up recorded on #38's close comment: drop caveat-only messages as CLI
-  noise, fixing replay and titles in one move.
-- Persisted `<local-command-stdout>` output carries raw ANSI escape codes —
-  reinforces the spec-level deferral of replaying command output.
+  `<command-name>`, then optional `<command-args>`. `parseTranscript` unwraps
+  **only** when the plain string starts with `<command-message>`.
+- **`<local-command-caveat>` persists as its own standalone user message**, is
+  what sidebar titles show for command-first sessions, and carries raw ANSI in
+  the stdout shape. Candidate follow-up on #38's close comment.
+- Engine `warmUp(resume?)` + `listCommands()` exist; `turnEverRun` gates the
+  consume loop's inertness. **A tripped warm-up = dead composer.**
+- `window.api.listCommands()` is live at all four mock sites.
+- App holds `openDock: 'agents' | 'commands' | null` and a `{text, nonce}`
+  pending-insert; InputBar's insert effect keys on the nonce.
+- `SlashCommandInfo` carries optional `aliases` (absent-not-empty). **The
+  popover re-fetches `listCommands` on every keystroke in the window** — a
+  single fetch landing `[]` mid-warm-up wedges it shut otherwise.
 
 ## Facts from #35 / #34 / #33 / #31 / #30 (still current)
 
@@ -133,8 +148,7 @@ options, wisped. Full record in the capture comment on #37.
   `["tool_result"]` 17295, `["text"]` 1375, `["image","text"]` 139,
   `["document"]` 14. **`tool_result` never co-occurs** with text or image.
 - **The 1375 array-of-only-text messages are CLI noise** and **must keep
-  parsing to nothing**. Pinned and mutation-verified. Looks like the #35 bug;
-  is not. **#38 touches this parser; leave that pin alone.**
+  parsing to nothing**. Pinned and mutation-verified.
 - **Replay must never carry the payload** — 2.17 MB of base64 replays as a
   114 KB DOM. Six tests pin the absence.
 - **No non-text block carries a filename** — 0 of 185. Chips label by media type.
@@ -176,131 +190,91 @@ options, wisped. Full record in the capture comment on #37.
 
 - **Fable-5 safeguards refuse turns whose cwd looks sensitive** (diagnosed
   2026-07-27, probe matrix in `%LOCALAPPDATA%/Temp/spike-refusal/probe.mjs`).
-  Wrapper sessions in `Downloads\.opera` refused plain "hi": fable flags →
-  CLI falls back to opus-4-8[1m] → sometimes also refuses → visible
-  "Usage Policy" API Error. Reproduced outside Electron with engine-shaped SDK
-  options. Tested: fresh `Temp/refusal-probe-*` cwd clean 4/4; `Downloads/.opera`,
-  `Temp/.opera`, `Downloads/probe-plain` refuse 3/3 on fable; same cwd with
-  `model: 'opus'` (opus-5) clean; no-bypass still refuses → **path is the
-  trigger, not permission mode**. CLI default model moved opus-5 → fable-5
-  ~2026-07-27 21:12 local, which is why it "used to work". Wrapper renders it
-  all faithfully — not our bug. **Correction (23:11 local): model switch is NOT
-  a reliable fix — a user turn on explicit `claude-opus-5[1m]` was refused in
-  the same folder (session 28384f5a) while two opus-5 probes passed. The
-  classifier is probabilistic: fable ~always refuses there, opus-5/opus-4-8
-  sometimes; anonymous Temp cwds 4/4 clean on fable. Only robust workaround:
-  don't run Anthropic-model sessions in that folder (or Downloads generally —
-  `Downloads/probe-plain` also refused).** Extended matrix (23:20 local):
-  fable in `D:/wrapper-test` clean; in the user's real `Downloads/anim/game`
-  project fable refused (fallback survived) and **sonnet was clean**; a fresh
-  wrapper session there double-refused on "hello there". Downloads is the
-  poison, model modulates the odds. Also: third live confirmation that the
-  SDK's "native binary exists but failed to launch" = **nonexistent spawn
-  cwd** (probe pointed at `Downloads/anim-game`; real path is
-  `Downloads/anim/game` — store-dir encoding is ambiguous between `-` and
-  `\`).
+  **Path is the trigger; the model only modulates the odds.** Fable ~always
+  refuses in `Downloads/*`; opus-5 and opus-4-8 sometimes do (session
+  `28384f5a` was refused on explicit `claude-opus-5[1m]` in that folder);
+  anonymous `Temp/*` cwds were 4/4 clean on fable, `D:/wrapper-test` clean,
+  and in the user's real `Downloads/anim/game` project **sonnet was clean while
+  fable refused**. Only robust workaround: **don't run wrapper sessions under
+  `Downloads`.** Wrapper renders it faithfully — not our bug.
 - **Sidebar session titles render raw `<local-command-caveat>…` markup** for
-  sessions whose first message was a slash command — observed live during
-  #37's GUI pass. #38-adjacent: check whether the title path shares
-  `parseTranscript` or needs its own unwrap.
-- GUI driver: `--disable-gpu` flattens acrylic; screenshots mis-frame wide
-  windows — measure in the DOM. **New from #37's GUI pass:** Playwright's
-  actionability "stable" wait hangs on `.msg`/intro animations — dispatch
-  clicks via `page.evaluate(() => el.click())`; `locator.scrollIntoViewIfNeeded`
-  same problem, use DOM `scrollIntoView`; `app.close()` can hang — add a hard
-  `setTimeout(process.exit)` timer to any driver script.
-
-## Facts established by #39 (don't re-derive)
-
-- Engine `warmUp(resume?)` + `listCommands()` exist; `turnEverRun` gates the
-  consume loop's inertness (a stream dying before any turn resets to idle, no
-  `terminalError`). Mutation-relevant warm-up pins live in `tests/engine.test.ts`.
-- `window.api.listCommands()` (guarded `commands:list`) is live at all four
-  mock sites — **#40 reuses it, no new channel needed.**
-- App holds `openDock: 'agents' | 'commands' | null` (mutual exclusion) and a
-  `{text, nonce}` pending-insert; InputBar's insert effect keys on the nonce.
-- Live-verified over the bridge: `supportedCommands()` answered 118 commands
-  before any send.
-- The commands dock has no resize handle (agents dock does) — deliberate; add
-  only if asked.
-
-## Facts established by #40 (don't re-derive)
-
-- `SlashCommandInfo` carries optional `aliases` (absent-not-empty); the engine
-  passes non-empty alias arrays through. Autocomplete matches prefix on names
-  AND aliases.
-- Popover trigger window: value starts with `/` and has no space. The Enter
-  pin (open intercepts / closed submits) is mutation-verified both directions
-  in `tests/autocomplete.test.tsx`.
-- **The popover re-fetches `listCommands` on every keystroke in the window** —
-  a single fetch landing `[]` mid-warm-up wedges it shut otherwise. Observed
-  live, invisible to jsdom, pinned by a regression test.
-- Composer stays single-line (multiline still deferred, decisions orthogonal).
+  sessions whose first message was a slash command. #49 addresses the title
+  path.
+- GUI driver traps: `--disable-gpu` flattens acrylic; screenshots mis-frame wide
+  windows — **measure in the DOM**. Playwright's actionability "stable" wait
+  hangs on `.msg`/intro animations — dispatch clicks via
+  `page.evaluate(() => el.click())`; same for `scrollIntoViewIfNeeded`.
+  `app.close()` can hang — add a hard `setTimeout(process.exit)`.
+  **New 2026-07-28:** a probe that re-reads an element *after* an action that
+  may not have happened is a false green — `gui-42.mjs`'s long-token check
+  originally re-measured the **previous** bubble because the second send was
+  swallowed while the engine was busy, and reported a pass. It now injects a
+  cloned node and measures that.
 
 ## Pick up here
 
-**#42 — Multiline prompt composition.** Unblocked, standalone, highest value.
-See [[pick-up]] for the full queue and blocking table.
+**#43 — Replace the session metadata scan with SDK `listSessions`.** Unblocked;
+the only one. See [[pick-up]] for the queue and landmines.
 
 ## Deferred (still no spec)
 
-Now ticketed, removed from this list: multiline composer (#42), global project
-switcher (#41 chain), directory pick (#48).
-
-Still deferred: live-tail external sessions, N-concurrent engines,
-fork-on-resume, busy-switch detach
-([[2026-07-23-busy-switch-block-not-detach]] — #46 implements *block*, the
-decided behavior). From #26: drag-and-drop (explicitly out of scope in #42),
-replay thumbnails. From #25: agent archive, agent control, map pan/zoom,
-historical token totals. From #31: nesting a live agent pre-sidecar. From #32:
-capability gating, `blob:` for large pastes. From #33: map node labels, inset
-past ~40 agents. From #34: dialog filters. From #35: lazy full-image fetch on
-replay. From #36: replaying command *output*, command-list cache/push channel,
-client-side validation, per-level informational styling,
+Live-tail external sessions, N-concurrent engines, fork-on-resume, busy-switch
+detach ([[2026-07-23-busy-switch-block-not-detach]] — #46 implements *block*,
+the decided behavior). From #26: **drag-and-drop** (explicitly out of scope in
+#42 and still unimplemented), replay thumbnails. From #25: agent archive, agent
+control, map pan/zoom, historical token totals. From #31: nesting a live agent
+pre-sidecar. From #32: capability gating, `blob:` for large pastes. From #33:
+map node labels, inset past ~40 agents. From #34: dialog filters. From #35: lazy
+full-image fetch on replay. From #36: replaying command *output*, command-list
+cache/push channel, client-side validation, per-level informational styling,
 `prevent_continuation`.
 
 **Considered and deliberately deferred during the 2026-07-28 grilling**, with
 reasons worth keeping:
 
-- **Context-pressure meter.** The data path is easier than assumed —
-  `Query.getContextUsage()` exists and our `QueryHandle` in `engine.ts` narrows
-  it away — but a naïve percentage lies by omission: it must distinguish the raw
-  window from the auto-compaction threshold, or "92%" reads as danger when it
-  means routine compaction.
-- **Typed failed-turn recovery.** A coding-agent retry is not a chat regenerate
-  button — a failed turn may already have edited files or run commands. The SDK
-  now carries `refused_user_message_uuid` and `rewindFiles()`, but rewind needs
-  `enableFileCheckpointing`, which our query options do not set. Define which
-  failures are retryable before ticketing any Retry button.
-- **Command-output replay.** Persisted `<local-command-stdout>` carries raw ANSI;
-  strip at the parsing boundary with a small local sanitizer, no dependency.
+- **Context-pressure meter.** `Query.getContextUsage()` exists and our
+  `QueryHandle` in `engine.ts` narrows it away — but a naïve percentage lies by
+  omission: it must distinguish the raw window from the auto-compaction
+  threshold, or "92%" reads as danger when it means routine compaction.
+- **Typed failed-turn recovery.** A failed turn may already have edited files or
+  run commands. The SDK carries `refused_user_message_uuid` and `rewindFiles()`,
+  but rewind needs `enableFileCheckpointing`, which our query options do not
+  set. Define which failures are retryable before ticketing any Retry button.
+- **Command-output replay.** Persisted `<local-command-stdout>` carries raw
+  ANSI; strip at the parsing boundary with a small local sanitizer.
 
 ## Landmines (carried forward)
 
-- **Wisp `options.model` = the alias/family NAME, never a resolved model id**
-  — see [[2026-07-24-wisp-alias-routes-by-name]].
+- **Pins are mutation-verified. Never "fix" a red pin by editing its
+  expectation.** #42 spent the only authorized retirement in this queue. Any
+  other red pin means the change is wrong.
+- **Required test coverage in the remaining tickets is not optional** — the
+  no-JSONL-read assertion (#43), the ordered-call assertion (#46) and the
+  call-count assertion (#49) exist precisely because a green suite passes while
+  the requirement is unmet.
+- **Never add a resize effect to `InputBar`** —
+  [[2026-07-28-composer-height-is-css-not-state]].
+- **Wisp `options.model` = the alias/family NAME, never a resolved model id** —
+  [[2026-07-24-wisp-alias-routes-by-name]].
 - **Never run bare `wisp snapshot`** — always name the family; recover with
-  `wisp snapshot revert <family>`. **#36's peer-review automation sacrifices
-  `fable`** — restore must survive a failed review.
+  `wisp snapshot revert <family>`.
 - **New `window.api` channel → add to ALL FOUR mock sites** (`tests/chat-harness.ts`
   + inline mocks in `sidebar`/`session`/`shell` tests). Guard every IPC with
-  `isTrustedIpc`. **#39 adds one.**
-- **#39's warm-up must be inert on failure** — `close()` sets `terminalError`
-  (`engine.ts:579`… now shifted by #37's edits; search, don't trust the line),
-  and `runTurn` then fails every send. A tripped warm-up = dead composer.
-- **#40's Enter interception must be mutation-verified both ways** — popover
-  open accepts, closed sends. Backwards breaks sending.
+  `isTrustedIpc`.
 - **Never let the plain-string pin be "fixed" by updating its expectation** —
   `a text-only send keeps plain-string content` is mutation-verified.
-- **The array-of-only-text drop is deliberate** — #38 touches this parser;
-  leave the pin alone.
+- **The array-of-only-text drop is deliberate.**
+- **`gh issue close --comment` silently drops the comment when the issue is
+  already closed** — a pushed `Closes #N` auto-closes it first, so the
+  breadcrumb vanishes. Use `gh issue comment`, and verify it landed.
 - Resume ceiling + `sessionId()` accessor + native-store facts + Tailwind
   `@theme` + engine legible-error pins — unchanged, see [[pick-up]].
 
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-27-slash-commands-are-a-dumb-pipe]]
+- [[2026-07-28-composer-height-is-css-not-state]] ·
+  [[2026-07-27-slash-commands-are-a-dumb-pipe]]
 - [[2026-07-25-replay-shows-markers-not-bytes]] ·
   [[2026-07-25-picker-returns-candidates-not-paths]] ·
   [[2026-07-25-map-geometry-is-a-pure-slot-layout]] ·

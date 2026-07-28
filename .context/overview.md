@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-07-27
+updated: 2026-07-28
 tags: [context, overview]
 ---
 
@@ -27,12 +27,12 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **spec #36,
-  slash commands** — #37 delivered, #38/#39/#40 open)
-- Tracker: open spec #36 (slash commands, tickets #38–#40 remaining); specs
-  #25 (Agents surface) and #26 (Attachments) delivered and closed, tickets
-  #27–#37 closed; closed specs #9 / #16 / #20 and the unlabelled umbrella #1
-  hold the history
+- `.context/pick-up.md` — current frontier + landmines (currently: **spec #41,
+  Resume anything** — #43 next, #44–#49 behind it)
+- Tracker: open spec #41 (Resume anything, tickets #43–#49); #42 (multiline
+  composer) closed standalone; specs #25 (Agents surface), #26 (Attachments)
+  and #36 (slash commands) delivered and closed with tickets #27–#40; closed
+  specs #9 / #16 / #20 and the unlabelled umbrella #1 hold the history
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
