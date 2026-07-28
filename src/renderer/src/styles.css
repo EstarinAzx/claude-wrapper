@@ -1039,6 +1039,10 @@ body {
   font-size: var(--fs-body);
   line-height: 1.6;
   color: var(--text);
+  /* #42 — a multiline prompt reads back the way it was written. `anywhere` is
+     the other half: pre-wrap alone lets one unbroken token run past the pill. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .msg-assistant {
@@ -1170,7 +1174,9 @@ body {
 .input-pill {
   position: relative; /* anchors the #40 command popover above the input */
   display: flex;
-  align-items: center;
+  /* Bottom-aligned rather than centred (#42): once the composer grows, the
+     paperclip and send button belong on the last line, not floating mid-pill. */
+  align-items: flex-end;
   gap: 8px;
   width: 100%;
   max-width: 760px;
@@ -1264,6 +1270,14 @@ body {
   font-size: var(--fs-body);
   line-height: 1.4;
   padding: 6px 0;
+  /* #42 — one row by default, growing with the content to an 8-line ceiling and
+     scrolling past it. field-sizing measures natively, so the height is never
+     state: clearing the value shrinks it back with nothing to reset. The cap is
+     8 lines of 1.4 line-height plus the 6px padding pair (border-box). */
+  field-sizing: content;
+  max-height: calc(8 * 1.4em + 12px);
+  resize: none;
+  overflow-y: auto;
 }
 
 .message-input::placeholder {

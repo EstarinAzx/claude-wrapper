@@ -126,7 +126,7 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
     items: [],
     rejections: []
   })
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
     if (!busy) inputRef.current?.focus()
@@ -141,7 +141,10 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingInsert?.nonce])
 
-  const triggering = value.startsWith('/') && !value.includes(' ')
+  // Any whitespace ends the window, not just a space (#42): a command name can
+  // contain neither, and with newlines in play a break has to close the popover
+  // exactly the way a space always did.
+  const triggering = value.startsWith('/') && !/\s/.test(value)
 
   // Re-fetched on every keystroke inside the trigger window (the no-cache
   // contract taken literally), forgotten the moment the window closes. Per
@@ -184,7 +187,7 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
   // Only file data is intercepted; a text paste falls through to the input
   // untouched, which is the overwhelmingly common case. Every file — image or
   // not — is routed by the policy module rather than filtered here.
-  const onPaste = (e: ClipboardEvent<HTMLInputElement>): void => {
+  const onPaste = (e: ClipboardEvent<HTMLTextAreaElement>): void => {
     if (busy) return
     const files = Array.from(e.clipboardData?.files ?? [])
     if (files.length === 0) return
@@ -240,10 +243,32 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
     setTray({ items: [], rejections: [] })
   }
 
+  // Shift+Enter is a line break, never a send. setRangeText does the splice and
+  // leaves the caret after the break, so React state only has to mirror what the
+  // DOM already did — no height bookkeeping, no caret restoration.
+  const insertNewline = (): void => {
+    const el = inputRef.current
+    if (!el) return
+    const start = el.selectionStart ?? el.value.length
+    const end = el.selectionEnd ?? start
+    el.setRangeText('\n', start, end, 'end')
+    setValue(el.value)
+  }
+
   // THE #40 pin, both directions: Enter is intercepted ONLY while the popover
   // is open with a highlighted row; in every other state it falls through to
   // submit, unchanged. Backwards breaks sending entirely.
-  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>): void => {
+    // Ahead of the popover branch so an open popover cannot swallow the break
+    // (#42). Safe for the #40 pin, which is about a plain Enter: the submit
+    // fallthrough below still sits AFTER the popover, where it belongs.
+    // Mutation-verified — demoting this below the popover branch turns
+    // Shift+Enter into an accept and fails the escape test.
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault()
+      insertNewline()
+      return
+    }
     if (popoverOpen) {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
@@ -343,10 +368,10 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
           </svg>
         </button>
-        <input
+        <textarea
           ref={inputRef}
           className="message-input"
-          type="text"
+          rows={1}
           placeholder="Message Claude…"
           value={value}
           disabled={busy}

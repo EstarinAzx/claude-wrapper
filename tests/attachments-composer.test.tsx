@@ -34,8 +34,8 @@ const startSession = async (): Promise<void> => {
   await screen.findByText('demo')
 }
 
-const input = (): HTMLInputElement =>
-  screen.getByPlaceholderText('Message Claude…') as HTMLInputElement
+const input = (): HTMLTextAreaElement =>
+  screen.getByPlaceholderText('Message Claude…') as HTMLTextAreaElement
 
 const tray = (): HTMLElement | null => screen.queryByLabelText('Attachments')
 const chips = (): Element[] => Array.from(document.querySelectorAll('.attachment-chip'))
@@ -153,10 +153,16 @@ describe('pasting an image into the composer', () => {
     expect(harness.prompts).toEqual([{ text: 'no pictures', attachments: [] }])
   })
 
-  test('the composer is still a single-line input', async () => {
+  // #42 retired the single-line pin this replaces. What still matters to the
+  // attachment paths is that the control the paste handler hangs off is the
+  // same one the user types into — now a textarea, still one target.
+  test('paste attaches to the multiline composer', async () => {
     await startSession()
-    expect(input().tagName).toBe('INPUT')
-    expect(input().type).toBe('text')
+    expect(input().tagName).toBe('TEXTAREA')
+
+    paste([imageFile('shot.png', 'image/png', PNG)])
+
+    await waitFor(() => expect(chips()).toHaveLength(1))
   })
 })
 
