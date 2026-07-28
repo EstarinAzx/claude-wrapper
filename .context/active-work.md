@@ -7,30 +7,29 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 — relay leg 2 landed #43; 6 tickets left in the queue_
-_Baseline: typecheck clean, build clean, **457 tests green across 38 files**_
+_Last updated: 2026-07-28 — relay leg 3 landed #44; 5 tickets left in the queue_
+_Baseline: typecheck clean, build clean, **474 tests green across 39 files**_
 
 ## Current focus
 
-**#43 — SDK `listSessions`: landed** on main as `ea7baaf`. The sidebar list is
-now one SDK filesystem pass instead of a per-file JSONL parse re-run on every
-window focus; `messageCount` is gone from the product. Suite went 455 → 457.
+**#44 — storage index: landed** on main as `d44c2a2`. `encodeCwd` is **deleted**;
+`src/main/session-index.ts` resolves a session id to its real directory by
+enumerating `~/.claude/projects` (names only). Suite went 457 → 474.
 
-**Next: #44 — Resolve session storage dirs by index, not by encoding cwd.** The
-only unblocked ticket in the queue.
+**Next: #45 — Global cross-project session list + filter.** #46 also unblocked
+now, but the queue order is #45 first.
 
-Spec **#41 — Resume anything** is the remaining work, six tickets:
+Spec **#41 — Resume anything** is the remaining work, five tickets:
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #44 | Resolve storage dirs by index, not by encoding cwd | 0 — **next** |
-| #45 | Global cross-project session list + filter | 1 |
-| #46 | Main-process `switchWorkspace` transaction (dormant) | 1 |
+| #45 | Global cross-project session list + filter | 0 — **next** |
+| #46 | Main-process `switchWorkspace` transaction (dormant) | 0 — also open |
 | #47 | Wire the renderer to `switchWorkspace` | 2 |
 | #48 | Folder picker reachable after first pick | 1 |
 | #49 | Lazy title enrichment for slash-command-first sessions | 1 |
 
-Order: `#44 → #45 → #46 → #47 → #48 → #49`. Blocked-ness is authoritative
+Order: `#45 → #46 → #47 → #48 → #49`. Blocked-ness is authoritative
 from `gh api repos/<owner>/<repo>/issues/<n> --jq
 '.issue_dependencies_summary.blocked_by'` — `gh issue list --json` does **not**
 expose that field.
@@ -65,6 +64,33 @@ the SDK path kills the raw-markup title defect; 0 of 325 `customTitle` values
 diverge from `summary`, making a coalesce redundant; 490 sessions across 37
 cwds, 5 with no cwd at all; `encodeCwd` **misses 6 of 37 real store
 directories** from drive-letter case drift.
+
+## Facts established by #44 (don't re-derive)
+
+- **`encodeCwd` is deleted.** Storage location comes from
+  `resolveSessionDir(sessionId, hintCwd?, io?)` in `src/main/session-index.ts`.
+  `cwd` is a display value plus a duplicate tie-break hint — **never** join it
+  into a store path. See
+  [[2026-07-28-storage-location-is-an-index-not-an-encoding]].
+- **Measured live at the change** (store has grown since spec #41's numbers):
+  61 store directories, 589 index entries, index build **12ms**, 494 sessions,
+  index resolves **494/494**, `encodeCwd` would have missed **45**, sessions
+  with no cwd **6**, duplicate ids **0**.
+- **The index reads names only** — `<id>.jsonl` and bare `<id>/` directories.
+  A test asserts `readFile` is never called during a build; opening transcripts
+  to build the index is the regression that test exists to catch.
+- **`resolveResumeTarget(id, cwd)` is #46's front door** and returns
+  `{status:'missing-cwd'}` when the session records no cwd. #45's "Unknown
+  project" group is backed by that, and `cwdKey()` is the grouping key —
+  comparison only, never a path.
+- **Miss handling is rebuild-once-retry-once**, pinned by a `readdir` call-count
+  test. A loop there is what that count forbids.
+- **Freshness = `resetSessionIndex()` on `session:list`**, lazily rebuilt on the
+  next lookup. Deliberately *not* an eager rebuild inside `listSessions` — that
+  would trip #43's no-JSONL-read pin, which asserts no directory scan happens on
+  the list path.
+- **`readTranscript(null, id)` now works.** Replay is not resume: a session
+  whose cwd is unknown still has a transcript, and the index finds it by id.
 
 ## Facts established by #43 (don't re-derive)
 
@@ -136,6 +162,9 @@ there was no canonical one to start from.
 
 ## Decisions binding this work
 
+- [[2026-07-28-storage-location-is-an-index-not-an-encoding]] — #44's index, the
+  demotion of `cwd` to a display value, and the typed `missing-cwd` rejection
+  #45/#46 consume.
 - [[2026-07-28-session-metadata-is-the-sdks-job]] — #43's list source, the
   deleted `messageCount`, and the coalesce that must not come back.
 - [[2026-07-28-composer-height-is-css-not-state]] — #42's height model.
@@ -240,8 +269,8 @@ there was no canonical one to start from.
 
 ## Pick up here
 
-**#44 — Resolve session storage dirs by index, not by encoding cwd.** Unblocked;
-the only one. See [[pick-up]] for the queue and landmines.
+**#45 — Global cross-project session list + filter.** Unblocked (#46 is too, but
+#45 is next in order). See [[pick-up]] for the queue and landmines.
 
 ## Deferred (still no spec)
 
@@ -275,6 +304,9 @@ reasons worth keeping:
 - **Pins are mutation-verified. Never "fix" a red pin by editing its
   expectation.** #42 spent the only authorized retirement in this queue. Any
   other red pin means the change is wrong.
+- **Never re-derive a store path from `cwd`.** No `encodeCwd`, no
+  case-insensitive variant of it, no decoding a directory name back into a cwd.
+  Storage location is `resolveSessionDir`; `cwdKey()` is for comparison only.
 - **Required test coverage in the remaining tickets is not optional** — the
   ordered-call assertion (#46) and the call-count assertion (#49) exist
   precisely because a green suite passes while the requirement is unmet. #43's

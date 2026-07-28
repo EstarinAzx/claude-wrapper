@@ -11,40 +11,48 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## This leg landed
 
-**#43 — Replace the session metadata scan with SDK `listSessions`**, on main as
-`ea7baaf`, closed. `session-store.ts` now maps one SDK call
-(`listSessions({ dir: cwd, includeProgrammatic: false })`) onto `SessionMeta`;
-the per-file JSONL parser is deleted and **`messageCount` is removed from the
-product** (21 references → 0). Suite **455 → 457 across 38 files**, typecheck and
-build clean.
+**#44 — Resolve session storage directories by index, not by encoding cwd**, on
+main as `d44c2a2`, closed. New `src/main/session-index.ts` maps session id →
+physical project directory by enumerating `~/.claude/projects` with directory and
+file **names only**; `readTranscript`, `listSubagents` and
+`readSubagentTranscript` resolve through it, and **`encodeCwd` is deleted**.
+Lookups return `{status:'ok',dir} | {status:'not-found'}`, rebuild once and retry
+once on a miss, and `resolveResumeTarget` adds the typed `{status:'missing-cwd'}`
+rejection. Suite **457 → 474 across 39 files**, typecheck and build clean.
 
-Verified live rather than only against mocks: 64 sessions for this project in
-**199ms**, no undefined fields, **0 raw-markup titles** — so the sidebar's
-`<local-command-caveat>` title defect is fixed as a side effect. Decision on
-record: [[2026-07-28-session-metadata-is-the-sdks-job]].
+Verified live against the real store, not only mocks: 61 store directories, index
+built in **12ms**, **494 of 494** sessions resolved with 0 misses, `encodeCwd`
+would have missed **45**, 6 sessions carry no cwd, 0 duplicate ids. Five
+mutations run, each killing exactly its target test. Decision on record:
+[[2026-07-28-storage-location-is-an-index-not-an-encoding]].
 
-## Next ticket: #44 — Resolve session storage dirs by index, not by encoding cwd
+## Next ticket: #45 — Global cross-project session list + filter
 
-Unblocked and the only one; #45–#49 open behind it.
+Unblocked. #46 unblocked at the same time (both were waiting only on #44), but
+the queue order is #45 first — #47 needs both anyway.
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #44 | Resolve storage dirs by index, not by encoding cwd | 0 — **next** |
-| #45 | Global cross-project session list + filter | 1 |
-| #46 | Main-process `switchWorkspace` transaction (dormant) | 1 |
+| #45 | Global cross-project session list + filter | 0 — **next** |
+| #46 | Main-process `switchWorkspace` transaction (dormant) | 0 — also open |
 | #47 | Wire the renderer to `switchWorkspace` | 2 |
 | #48 | Folder picker reachable after first pick | 1 |
 | #49 | Lazy title enrichment for slash-command-first sessions | 1 |
 
-Order: `#44 → #45 → #46 → #47 → #48 → #49`. Blocked-ness is authoritative from
+Order: `#45 → #46 → #47 → #48 → #49`. Blocked-ness is authoritative from
 `gh api repos/<owner>/<repo>/issues/<n> --jq '.issue_dependencies_summary.blocked_by'`
 — `gh issue list --json` does **not** expose that field.
 
-**#44 context from this leg:** `encodeCwd` is still live and still wrong — it
-survives in `session-store.ts` (used by `readTranscript`) and in
-`subagent-store.ts`. #43 deliberately left it alone; #44 owns it. Note that the
-*list* path no longer uses it at all, so #44's blast radius is now transcript
-replay + subagent lookup, not the sidebar.
+**#45 context from this leg:** the pieces #45 needs are already built and tested.
+`listSessions({ dir })` drops `dir` to go global (SDK top-level, 421ms for the
+whole store per spec #41). Grouping is `cwdKey()` from `session-index.ts` —
+resolved, separators folded, lower-cased — which exists precisely so two
+spellings of the same directory group together. The **6 sessions with no `cwd`**
+are the "Unknown project" group, and `resolveResumeTarget` already returns
+`missing-cwd` for them, so #45 renders a state that is typed rather than
+inferred. Two open calls #45 must make explicitly: `includeWorktrees` still
+defaults to **`true`** (flagged by #43, still unexamined), and `SessionMeta`
+carries no `cwd` field yet — adding one is #45's call, not a leftover.
 
 ## Run it
 
@@ -52,15 +60,22 @@ replay + subagent lookup, not the sidebar.
 /relay N=1 read and follow .claude/relay-leg.md
 ```
 
-`.claude/relay-leg.md` is current for this queue. The Grok-grunt delegation
-layer was removed 2026-07-28; restore procedure is at the bottom of that file.
+`.claude/relay-leg.md` is current for this queue. The Grok-grunt delegation layer
+was removed 2026-07-28; restore procedure is at the bottom of that file.
 
 ## Landmines — carried, still live
 
 - **Pins are mutation-verified. Never "fix" a red pin by editing its
-  expectation.** #42 spent the queue's only authorized retirement. #43's removal
-  of the `4 msg` sidebar assertion was mandated by its own contract, not a
-  retirement — it does not set a precedent.
+  expectation.** #42 spent the queue's only authorized retirement.
+- **Never re-derive a store path from `cwd`** — no `encodeCwd`, no
+  case-insensitive variant, no decoding a directory name back into a cwd. That
+  compare-case-insensitively "fix" was #44's named sharpest failure mode: it
+  patches the drive-letter cases and leaves every other lossy collision live.
+  `cwdKey()` is for comparison and grouping only — never join it into a path.
+- **Do not rebuild the storage index inside `listSessions`.** #43's
+  no-JSONL-read pin asserts no directory scan happens on the list path;
+  freshness is `resetSessionIndex()` at the `session:list` handler plus a lazy
+  rebuild on the next lookup.
 - **Never re-add `customTitle ?? summary`** to the session title. Real data can
   never catch it (0 of 325 custom titles diverge); the synthetic divergent
   fixture in `tests/session-store.test.ts` is the only guard.
@@ -69,13 +84,17 @@ layer was removed 2026-07-28; restore procedure is at the bottom of that file.
 - **A green test can be green for the wrong reason.** #42's whitespace test
   asserted only "no popover" — which the *reverted* code also produces. Assert
   the mechanism (a fetch count, a read that must not happen), not a symptom with
-  more than one cause. #43's no-JSONL-read test is the worked example; both of
-  its required assertions were mutation-verified by breaking the code and
-  confirming exactly one test went red.
+  more than one cause. #43's no-JSONL-read test and #44's names-only-build test
+  are the worked examples; both were mutation-verified.
 - **Required test coverage in the remaining tickets is not optional** — the
   ordered-call assertion (#46) and the call-count assertion (#49).
 - **Vitest + `node:fs/promises`:** a module mock must also export `default`, or
-  the suite file dies at import with `No "default" export is defined`.
+  the suite file dies at import with `No "default" export is defined`. A mock
+  now also needs `stat` — `session-index.ts`'s node io imports it.
+- **A module-level cache needs a test reset.** `resetSessionIndex()` runs in
+  `beforeEach` of every suite that reaches the index (`session-index`,
+  `session-store`, `subagent-store`); without it one test's store bleeds into
+  the next.
 - **Never add a resize effect to `InputBar`** — height is CSS
   (`field-sizing: content`), deliberately not React state.
 - **`gh issue close --comment` silently drops the comment if the issue is
@@ -96,7 +115,7 @@ layer was removed 2026-07-28; restore procedure is at the bottom of that file.
 
 ## Baseline
 
-`npm run typecheck` clean, `npm run build` clean, **457 tests green across 38
+`npm run typecheck` clean, `npm run build` clean, **474 tests green across 39
 files**, verified 2026-07-28 immediately before this handoff.
 
 ## GUI check
@@ -113,7 +132,13 @@ clicks (Playwright's stability wait hangs on the app's animations); hard
 re-read an element after an action that may not have happened — inject a probe
 node instead.
 
-**No GUI drive was run this leg.** #43's only new integration is a main-process
-SDK call, and it was verified directly against the real store (counts, field
-shape, title markup) rather than through a driver screenshot. A ticket that
-changes rendering still needs the drivers above.
+**No GUI drive was run this leg.** #44 is a main-process path-resolution change
+with no rendering surface; it was verified directly against the real store (494
+sessions resolved, 0 misses) rather than through a driver screenshot. **#45 is a
+rendering ticket and needs one.**
+
+## Related
+
+- [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
+- [[2026-07-28-storage-location-is-an-index-not-an-encoding]] ·
+  [[2026-07-28-session-metadata-is-the-sdks-job]]
