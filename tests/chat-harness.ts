@@ -18,7 +18,12 @@ const FAMILY_MODELS: ModelOption[] = [
 // Test-side stand-in for preload+main plumbing: the scripted engine seam.
 // Tests drive `emit` as the fake engine's event stream; permission responses
 // settle through the real main-process broker.
-export const fakeChatApi = (folder = 'D:\\projects\\demo') => {
+// The project the harness "picks". Session fixtures must carry it as their
+// `cwd` to count as in-project: the rail is global now (#45) and a row from
+// another project is deliberately inert.
+export const FOLDER = 'D:\\projects\\demo'
+
+export const fakeChatApi = (folder = FOLDER) => {
   const prompts: SendPayload[] = []
   const permissionResponses: Array<{ toolUseId: string; decision: PermissionDecision }> =
     []

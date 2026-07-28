@@ -153,7 +153,7 @@ ipcMain.handle('session:list', async (event) => {
   // A list refresh is the moment the store may have gained or lost sessions, so
   // drop the storage index here; the next lookup rebuilds it from real names.
   resetSessionIndex()
-  return listSessions(getSessionCwd())
+  return listSessions()
 })
 
 ipcMain.handle('session:transcript', async (event, id: string) => {

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, act, within } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi } from './chat-harness'
+import { fakeChatApi, FOLDER } from './chat-harness'
 import type { SessionMeta } from '../src/shared/session-types'
 import type { SubagentInfo } from '../src/shared/subagent-types'
 import type { EngineEvent } from '../src/shared/engine-types'
@@ -22,7 +22,8 @@ afterEach(() => {
 const sess = (id: string, title: string): SessionMeta => ({
   id,
   title,
-  lastUpdated: 3000
+  lastUpdated: 3000,
+  cwd: FOLDER
 })
 
 // The session list is read when the rail mounts, so it has to be scripted before

@@ -52,6 +52,16 @@ afterEach(() => {
   window.localStorage.clear()
 })
 
+const HERE = 'D:\\projects\\demo'
+const THERE = 'D:\\projects\\other'
+
+const rows = (): HTMLElement[] => Array.from(document.querySelectorAll('.session-row'))
+
+const rowButton = (label: string): HTMLButtonElement =>
+  screen.getByText(label).closest('button') as HTMLButtonElement
+
+const filter = (): HTMLInputElement => screen.getByRole('searchbox') as HTMLInputElement
+
 describe('session sidebar', () => {
   test('empty folder shows the empty state inside the Sessions landmark', async () => {
     setup([])
@@ -62,24 +72,24 @@ describe('session sidebar', () => {
 
   test('renders rows in the order given (newest-first) with a relative time', async () => {
     setup([
-      { id: 'a', title: 'Newest chat', lastUpdated: Date.now() - 60_000 },
-      { id: 'b', title: 'Older chat', lastUpdated: Date.now() - 3_600_000 }
+      { id: 'a', title: 'Newest chat', lastUpdated: Date.now() - 60_000, cwd: HERE },
+      { id: 'b', title: 'Older chat', lastUpdated: Date.now() - 3_600_000, cwd: HERE }
     ])
     await startSession()
-    const rows = await screen.findAllByText(/chat$/)
-    expect(rows.map((r) => r.textContent)).toEqual(['Newest chat', 'Older chat'])
+    const found = await screen.findAllByText(/chat$/)
+    expect(found.map((r) => r.textContent)).toEqual(['Newest chat', 'Older chat'])
     expect(screen.getByText('1m')).toBeTruthy()
     expect(screen.getByText('1h')).toBeTruthy()
   })
 
   test('a titleless session falls back to a placeholder', async () => {
-    setup([{ id: 'x', title: '', lastUpdated: 0 }])
+    setup([{ id: 'x', title: '', lastUpdated: 0, cwd: HERE }])
     await startSession()
     expect(await screen.findByText('Untitled session')).toBeTruthy()
   })
 
   test('collapsing hides the list and swaps the toggle', async () => {
-    setup([{ id: 'a', title: 'Keep me', lastUpdated: 1000 }])
+    setup([{ id: 'a', title: 'Keep me', lastUpdated: 1000, cwd: HERE }])
     await startSession()
     await screen.findByText('Keep me')
     fireEvent.click(screen.getByRole('button', { name: 'Collapse sessions' }))
@@ -89,7 +99,7 @@ describe('session sidebar', () => {
 
   test('clicking a row loads and replays its transcript into the chat pane', async () => {
     setup(
-      [{ id: 'sess-1', title: 'My chat', lastUpdated: 2000 }],
+      [{ id: 'sess-1', title: 'My chat', lastUpdated: 2000, cwd: HERE }],
       [
         { role: 'user', text: 'replayed question' },
         { role: 'assistant', text: 'replayed answer' },
@@ -116,7 +126,7 @@ describe('session sidebar', () => {
   test('refreshes the session list on window focus', async () => {
     setup([])
     listSessions.mockResolvedValueOnce([]).mockResolvedValue([
-      { id: 'ext-1', title: 'External chat', lastUpdated: 3000 }
+      { id: 'ext-1', title: 'External chat', lastUpdated: 3000, cwd: HERE }
     ])
     await startSession()
     expect(await screen.findByText('No sessions yet')).toBeTruthy()
@@ -129,12 +139,167 @@ describe('session sidebar', () => {
   test('the manual Refresh control refetches the session list', async () => {
     setup([])
     listSessions.mockResolvedValueOnce([]).mockResolvedValue([
-      { id: 'ext-2', title: 'Reloaded chat', lastUpdated: 3000 }
+      { id: 'ext-2', title: 'Reloaded chat', lastUpdated: 3000, cwd: HERE }
     ])
     await startSession()
     expect(await screen.findByText('No sessions yet')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Refresh sessions' }))
     expect(await screen.findByText('Reloaded chat')).toBeTruthy()
+  })
+})
+
+// #45: the list is global. The rail groups by project, filters client-side over
+// the loaded metadata, and caps what it renders.
+describe('cross-project session list', () => {
+  test('heads each project with its directory', async () => {
+    setup([
+      { id: 'a', title: 'Here chat', lastUpdated: 2000, cwd: HERE },
+      { id: 'b', title: 'There chat', lastUpdated: 1000, cwd: THERE }
+    ])
+    await startSession()
+
+    expect(await screen.findByText(HERE)).toBeTruthy()
+    expect(screen.getByText(THERE)).toBeTruthy()
+  })
+
+  test('a session with no recorded project heads under Unknown project', async () => {
+    setup([{ id: 'a', title: 'Homeless chat', lastUpdated: 2000 }])
+    await startSession()
+
+    expect(await screen.findByText('Unknown project')).toBeTruthy()
+  })
+
+  // The sharpest failure mode of this ticket: the row is right there, and
+  // opening it would put another project's conversation beside this project's
+  // sidebar. Disabled is the visible half; the click doing nothing is the half
+  // that actually matters, so assert the IPC never fires.
+  test('a session in another project is listed but cannot be opened', async () => {
+    setup([{ id: 'far', title: 'Far chat', lastUpdated: 2000, cwd: THERE }])
+    await startSession()
+
+    await screen.findByText('Far chat')
+    const row = rowButton('Far chat')
+    expect(row.disabled).toBe(true)
+
+    fireEvent.click(row)
+    expect(loadTranscript).not.toHaveBeenCalled()
+  })
+
+  test('a session in the open project stays openable', async () => {
+    setup([{ id: 'near', title: 'Near chat', lastUpdated: 2000, cwd: HERE }])
+    await startSession()
+
+    fireEvent.click(await screen.findByText('Near chat'))
+    expect(loadTranscript).toHaveBeenCalledWith('near')
+  })
+
+  // The store spells one directory both ways; the open workspace must still
+  // recognise its own sessions.
+  test('a drive-letter case difference still counts as the open project', async () => {
+    setup([{ id: 'near', title: 'Near chat', lastUpdated: 2000, cwd: 'd:\\projects\\demo' }])
+    await startSession()
+
+    fireEvent.click(await screen.findByText('Near chat'))
+    expect(loadTranscript).toHaveBeenCalledWith('near')
+  })
+})
+
+describe('session filter', () => {
+  test('narrows the list to titles matching what was typed', async () => {
+    setup([
+      { id: 'a', title: 'Fix the parser', lastUpdated: 2000, cwd: HERE },
+      { id: 'b', title: 'Ship it', lastUpdated: 1000, cwd: HERE }
+    ])
+    await startSession()
+    await screen.findByText('Fix the parser')
+
+    fireEvent.change(filter(), { target: { value: 'parser' } })
+
+    expect(screen.getByText('Fix the parser')).toBeTruthy()
+    expect(screen.queryByText('Ship it')).toBeNull()
+  })
+
+  test('typing a project name narrows to that project', async () => {
+    setup([
+      { id: 'a', title: 'Alpha work', lastUpdated: 2000, cwd: HERE },
+      { id: 'b', title: 'Beta work', lastUpdated: 1000, cwd: THERE }
+    ])
+    await startSession()
+    await screen.findByText('Alpha work')
+
+    fireEvent.change(filter(), { target: { value: 'other' } })
+
+    expect(screen.getByText('Beta work')).toBeTruthy()
+    expect(screen.queryByText('Alpha work')).toBeNull()
+  })
+
+  test('a filter matching nothing says so instead of looking empty', async () => {
+    setup([{ id: 'a', title: 'Fix the parser', lastUpdated: 2000, cwd: HERE }])
+    await startSession()
+    await screen.findByText('Fix the parser')
+
+    fireEvent.change(filter(), { target: { value: 'zzz' } })
+
+    expect(screen.getByText('No sessions match “zzz”')).toBeTruthy()
+  })
+
+  // Filter runs over the whole loaded list, not over the rendered page — a match
+  // sitting past the cap must still surface, or the filter silently lies.
+  test('finds a match that sits below the render cap', async () => {
+    setup([
+      ...Array.from({ length: 120 }, (_, i) => ({
+        id: `n${i}`,
+        title: 'noise',
+        lastUpdated: 10_000 - i,
+        cwd: HERE
+      })),
+      { id: 'needle', title: 'the needle', lastUpdated: 1, cwd: HERE }
+    ])
+    await startSession()
+    await screen.findAllByText('noise')
+
+    fireEvent.change(filter(), { target: { value: 'needle' } })
+
+    expect(screen.getByText('the needle')).toBeTruthy()
+    expect(rows()).toHaveLength(1)
+  })
+})
+
+describe('session list cap', () => {
+  const many = (n: number): SessionMeta[] =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `s${i}`,
+      title: `chat ${i}`,
+      lastUpdated: n - i,
+      cwd: HERE
+    }))
+
+  test('renders at most 100 sessions and offers the rest', async () => {
+    setup(many(130))
+    await startSession()
+    await screen.findByText('chat 0')
+
+    expect(rows()).toHaveLength(100)
+    expect(screen.getByRole('button', { name: 'Show 30 more' })).toBeTruthy()
+  })
+
+  test('Show more reveals the next page and then retires itself', async () => {
+    setup(many(130))
+    await startSession()
+    await screen.findByText('chat 0')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show 30 more' }))
+
+    expect(rows()).toHaveLength(130)
+    expect(screen.queryByRole('button', { name: /Show \d+ more/ })).toBeNull()
+  })
+
+  test('no cap affordance when everything already fits', async () => {
+    setup(many(3))
+    await startSession()
+    await screen.findByText('chat 0')
+
+    expect(screen.queryByRole('button', { name: /Show \d+ more/ })).toBeNull()
   })
 })
 

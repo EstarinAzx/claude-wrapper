@@ -8,6 +8,11 @@ export interface SessionMeta {
   title: string
   // The session file's last-modified time as epoch ms.
   lastUpdated: number
+  // The project directory the session ran in, as the store records it. ABSENT,
+  // not '', when the session records none — those group under "Unknown project"
+  // and cannot be resumed into a workspace. Display and grouping only: a store
+  // path is never derived from it (see session-index.ts).
+  cwd?: string
 }
 
 // A non-text block from a persisted user message, recorded so a reopened

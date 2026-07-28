@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi } from './chat-harness'
+import { fakeChatApi, FOLDER } from './chat-harness'
 import type { SessionMeta } from '../src/shared/session-types'
 
 let harness: ReturnType<typeof fakeChatApi>
@@ -30,7 +30,8 @@ const rowButton = (label: string): HTMLButtonElement =>
 const meta = (id: string, title: string): SessionMeta => ({
   id,
   title,
-  lastUpdated: 1000
+  lastUpdated: 1000,
+  cwd: FOLDER
 })
 
 describe('resume — continue a reopened session (#13)', () => {

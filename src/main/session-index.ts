@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { cwdKey as foldCwd } from '../shared/cwd-key'
 
 // Where a session's JSONL actually lives, resolved by ENUMERATING the store
 // rather than by encoding a cwd into a directory name.
@@ -36,10 +37,11 @@ export type ResumeTarget = DirLookup | { status: 'missing-cwd' }
 
 const projectsRoot = (): string => join(homedir(), '.claude', 'projects')
 
-// Comparison/grouping key ONLY — resolved, separators normalised, case-folded.
-// Never join() this onto anything: it is deliberately not a real path.
-export const cwdKey = (cwd: string): string =>
-  resolve(cwd).replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+// Comparison/grouping key ONLY — resolved, then folded by the shared rule the
+// renderer groups with. Never join() this onto anything: it is deliberately not
+// a real path. `resolve` is main-side only (the renderer's cwds arrive from the
+// store already absolute), so the fold itself is what lives in shared/.
+export const cwdKey = (cwd: string): string => foldCwd(resolve(cwd))
 
 // sessionId → every project directory holding it. Built from directory and file
 // NAMES only — no JSONL is opened, which is what keeps a rebuild cheap enough to

@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { SessionMeta } from '../../../shared/session-types'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
+import { groupSessions } from '../../../shared/session-groups'
 
 const WIDTH_KEY = 'sidebar-width'
+
+// One page of rows. The store holds ~490 sessions across 37 projects, so the
+// list is capped globally rather than per project and grows a page at a time.
+const PAGE = 100
 
 const readStoredWidth = (): number => {
   const raw = window.localStorage.getItem(WIDTH_KEY)
@@ -51,7 +56,18 @@ const Sidebar = ({
   const [sessions, setSessions] = useState<SessionMeta[]>([])
   const [collapsed, setCollapsed] = useState(false)
   const [width, setWidthState] = useState(readStoredWidth)
+  const [query, setQuery] = useState('')
+  const [limit, setLimit] = useState(PAGE)
   const reqIdRef = useRef(0)
+
+  // Filter → sort/group → cap, in that order and all client-side over metadata
+  // already in hand. A narrowed query starts at page one again; carrying a
+  // "show more" from the previous query would reveal a page the user never
+  // asked for.
+  const { groups, shown, matched } = useMemo(
+    () => groupSessions(sessions, { query, cwd, limit }),
+    [sessions, query, cwd, limit]
+  )
 
   // Persist UI-layout prefs (this width); engine-intent state stays in-memory.
   const setWidth = useCallback((px: number): void => {
@@ -168,32 +184,72 @@ const Sidebar = ({
           </button>
         </div>
       </div>
+      <div className="sidebar-filter">
+        <input
+          type="search"
+          className="sidebar-filter-input"
+          aria-label="Filter sessions"
+          placeholder="Filter sessions…"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            setLimit(PAGE)
+          }}
+        />
+      </div>
       {sessions.length === 0 ? (
         <div className="sidebar-empty">No sessions yet</div>
+      ) : groups.length === 0 ? (
+        <div className="sidebar-empty">No sessions match “{query.trim()}”</div>
       ) : (
-        <ul className="session-list">
-          {sessions.map((s) => {
-            const label = s.title || 'Untitled session'
-            const meta = relTime(s.lastUpdated)
-            const active = s.id === activeId
-            return (
-              <li key={s.id} className="session-row">
-                <button
-                  type="button"
-                  className={active ? 'session-row-btn session-row-btn-active' : 'session-row-btn'}
-                  aria-current={active ? 'true' : undefined}
-                  disabled={busy}
-                  onClick={() => onOpen?.(s.id)}
-                >
-                  <span className="session-row-title" title={label}>
-                    {label}
-                  </span>
-                  {meta ? <span className="session-row-meta">{meta}</span> : null}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+        <div className="session-groups">
+          {groups.map((group) => (
+            <div key={group.key} className="session-group">
+              <h3 className="session-group-head" title={group.label}>
+                {group.label}
+              </h3>
+              <ul className="session-list">
+                {group.sessions.map((s) => {
+                  const label = s.title || 'Untitled session'
+                  const meta = relTime(s.lastUpdated)
+                  const active = s.id === activeId
+                  // Rows outside the open workspace are shown so the history is
+                  // whole, but opening one would leave this project's sidebar
+                  // beside another project's conversation. Inert until the
+                  // workspace transition lands.
+                  const foreign = !group.current
+                  const classes = ['session-row-btn']
+                  if (active) classes.push('session-row-btn-active')
+                  if (foreign) classes.push('session-row-btn-foreign')
+                  return (
+                    <li key={s.id} className="session-row">
+                      <button
+                        type="button"
+                        className={classes.join(' ')}
+                        aria-current={active ? 'true' : undefined}
+                        disabled={busy || foreign}
+                        title={foreign ? 'Open this project to resume its sessions' : label}
+                        onClick={() => onOpen?.(s.id)}
+                      >
+                        <span className="session-row-title">{label}</span>
+                        {meta ? <span className="session-row-meta">{meta}</span> : null}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
+          {matched > shown ? (
+            <button
+              type="button"
+              className="session-more"
+              onClick={() => setLimit((n) => n + PAGE)}
+            >
+              Show {matched - shown} more
+            </button>
+          ) : null}
+        </div>
       )}
       <div
         className="sidebar-resize-handle"

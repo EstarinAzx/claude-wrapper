@@ -53,15 +53,40 @@ describe('listSessions', () => {
       { sessionId: 'newest', summary: 'Newest chat', lastModified: 3000 }
     ])
 
-    expect(await listSessions(CWD)).toEqual([
+    expect(await listSessions()).toEqual([
       { id: 'newest', title: 'Newest chat', lastUpdated: 3000 },
       { id: 'older', title: 'Older chat', lastUpdated: 1000 }
     ])
   })
 
-  test('scopes the list to the cwd and excludes programmatic sessions', async () => {
-    await listSessions(CWD)
-    expect(sdkListSessions).toHaveBeenCalledWith({ dir: CWD, includeProgrammatic: false })
+  // The list is GLOBAL now (#45): omitting `dir` is what makes the SDK return
+  // every project, so the absence of that key is the requirement, not a detail.
+  // A cwd-scoped call returns a perfectly plausible list — same shape, same
+  // fields, just silently missing 36 of 37 projects — so only asserting the
+  // option is gone can tell the two apart. Omitting `dir` also settles the
+  // `includeWorktrees` question #43 flagged: it applies only when `dir` is
+  // given, so a global list can neither widen nor narrow by it.
+  test('asks the SDK for every project — no dir scoping', async () => {
+    await listSessions()
+
+    expect(sdkListSessions).toHaveBeenCalledWith({ includeProgrammatic: false })
+    expect(sdkListSessions.mock.calls[0][0]).not.toHaveProperty('dir')
+  })
+
+  test('carries the project directory through so the list can group by it', async () => {
+    sdkListSessions.mockResolvedValue([
+      { sessionId: 's', summary: 'Chat', lastModified: 1, cwd: CWD }
+    ])
+
+    expect((await listSessions())[0].cwd).toBe(CWD)
+  })
+
+  // Absent, not '' — "Unknown project" is a real state the renderer groups on,
+  // and an empty string would read as a directory whose name is nothing.
+  test('a session the store records no cwd for carries no cwd field', async () => {
+    sdkListSessions.mockResolvedValue([{ sessionId: 's', summary: 'Chat', lastModified: 1 }])
+
+    expect((await listSessions())[0]).not.toHaveProperty('cwd')
   })
 
   // The real store cannot catch this: all 325 sessions carrying a customTitle
@@ -73,7 +98,7 @@ describe('listSessions', () => {
       { sessionId: 's', summary: 'summary', customTitle: 'different', lastModified: 1 }
     ])
 
-    expect((await listSessions(CWD))[0].title).toBe('summary')
+    expect((await listSessions())[0].title).toBe('summary')
   })
 
   // The point of the whole change: an implementation that calls the SDK *and*
@@ -84,20 +109,15 @@ describe('listSessions', () => {
       { sessionId: 's', summary: 'Chat', lastModified: 1 }
     ])
 
-    await listSessions(CWD)
+    await listSessions()
 
     expect(fs.readdir).not.toHaveBeenCalled()
     expect(fs.readFile).not.toHaveBeenCalled()
   })
 
-  test('no cwd yields the empty list without touching the SDK', async () => {
-    expect(await listSessions(null)).toEqual([])
-    expect(sdkListSessions).not.toHaveBeenCalled()
-  })
-
   test('an unreadable store degrades to the empty list instead of throwing', async () => {
     sdkListSessions.mockRejectedValue(new Error('ENOENT'))
-    expect(await listSessions(CWD)).toEqual([])
+    expect(await listSessions()).toEqual([])
   })
 })
 

@@ -422,34 +422,126 @@ body {
   margin-top: 8px;
 }
 
-.session-list {
+/* Filter band under the head: a second toolbar row, same hairline language, no
+   control chrome of its own. The rail already supplies --surface, so the input
+   is bare and the band brightens on focus the way the composer pill does. */
+/* Left padding matches .sidebar-head and the 6px list gutter + 10px row inset,
+   so the placeholder, the group headings and the row titles share one edge. */
+.sidebar-filter {
+  flex-shrink: 0;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sidebar-filter:focus-within {
+  border-bottom-color: oklch(0.92 0.01 210 / 0.16);
+}
+
+.sidebar-filter-input {
+  width: 100%;
+  height: 34px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font: inherit;
+  font-size: var(--fs-ui);
+  color: var(--text);
+  /* Kills Chromium's default search clear glyph — native semantics
+     (role=searchbox), our own chrome. */
+  appearance: none;
+}
+
+.sidebar-filter-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.sidebar-filter-input::placeholder {
+  color: var(--text-faint);
+}
+
+.session-groups {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 10px;
   padding: 6px;
 }
 
-.session-list::-webkit-scrollbar {
+.session-groups::-webkit-scrollbar {
   width: 8px;
 }
 
-.session-list::-webkit-scrollbar-track {
+.session-groups::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.session-list::-webkit-scrollbar-thumb {
+.session-groups::-webkit-scrollbar-thumb {
   background: oklch(0.92 0.01 210 / 0.12);
   border-radius: var(--r-pill);
   background-clip: padding-box;
   border: 2px solid transparent;
 }
 
-.session-list::-webkit-scrollbar-thumb:hover {
+.session-groups::-webkit-scrollbar-thumb:hover {
   background-color: oklch(0.92 0.01 210 / 0.2);
+}
+
+/* A project directory is long and its meaningful end is the tail, so overflow
+   is clipped at the START: `direction: rtl` moves the ellipsis to the left
+   while `unicode-bidi: plaintext` keeps the LTR path rendering LTR. Deliberately
+   NOT sticky — a sticky heading needs an opaque backing, and painting one over
+   the OS acrylic would add the extra glass layer the design system bans. */
+.session-group-head {
+  margin: 0;
+  padding: 4px 10px;
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  color: var(--text-faint);
+  direction: rtl;
+  unicode-bidi: plaintext;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Reveal the next page. A text control, not a button-shaped affordance: it is
+   list machinery, and the rail spends its one accent on the active session. */
+.session-more {
+  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-ui);
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.session-more:hover {
+  background: oklch(0.92 0.01 210 / 0.05);
+  color: var(--text);
+}
+
+.session-more:focus-visible {
+  outline: none;
+  background: oklch(0.92 0.01 210 / 0.08);
+  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
 }
 
 .session-row {
@@ -485,6 +577,20 @@ body {
 .sidebar-toggle:disabled {
   opacity: 0.55;
   pointer-events: none;
+}
+
+/* A session in another project: listed so the history is whole, inert because
+   opening it would pair this project's rail with that project's conversation.
+   Reads as secondary via muted title, not via the busy dimming — ~90 of 100
+   rows can be foreign, and at 0.55 the list would be unreadable.
+   ponytail: during a streaming turn foreign rows sit at 0.72 while local rows
+   dim to 0.55. Both are inert, so the split is invisible in practice. */
+.session-row-btn-foreign:disabled {
+  opacity: 0.72;
+}
+
+.session-row-btn-foreign .session-row-title {
+  color: var(--text-muted);
 }
 
 .session-row-btn:focus-visible {
