@@ -18,6 +18,7 @@ import {
   setReportedModel,
   getDisplayModel
 } from './model-mode'
+import { resolveHostCli, toCliOptions } from './cli-path'
 import { clampZoom } from '../shared/zoom'
 import { normalizeSendPayload } from '../shared/attachment-types'
 import {
@@ -50,6 +51,15 @@ const rendererUrl = pathToFileURL(rendererFile).href
 // was launched (wisp env present → wisped, else native).
 initBackendMode(process.env)
 
+// Which Claude Code binary to run, resolved ONCE at boot. The host install is
+// preferred so the app tracks whatever Claude Code the user has rather than the
+// version frozen in the lockfile — that drift is what made `opus` mean Opus 4.8
+// in #53. null (no host install) → the SDK's bundled CLI, unchanged behaviour.
+//
+// Resolved at boot rather than per spawn on purpose: a PATH that changes
+// mid-session would otherwise swap the binary under a running conversation.
+const hostCli = resolveHostCli(process.env['PATH'], process.platform)
+
 const makeEngine = (): ReturnType<typeof createEngine> =>
   createEngine(
     getSessionCwd,
@@ -67,7 +77,8 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
       for (const win of BrowserWindow.getAllWindows()) {
         win.webContents.send('model:changed', getDisplayModel())
       }
-    }
+    },
+    () => toCliOptions(hostCli)
   )
 
 // The atomic workspace transition (#46), bound to this process's real engine,

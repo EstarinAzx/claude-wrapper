@@ -248,7 +248,11 @@ export const createEngine = (
   // activeOnEvent, which is null outside a turn, and the `init` that carries
   // the first model arrives during warmUp(). Routed through an EngineEvent this
   // would be dropped in exactly the case it exists for.
-  onModelReport: (model: string) => void = () => {}
+  onModelReport: (model: string) => void = () => {},
+  // Which Claude Code binary to spawn (pathToClaudeCodeExecutable, or {} for
+  // the SDK's bundled one). Injected like the getters above so the engine does
+  // not care how the host install is found — see cli-path.ts.
+  getCliOptions: () => Record<string, unknown> = () => ({})
 ): Engine & { close(): void } => {
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
@@ -578,7 +582,9 @@ export const createEngine = (
       // canUseTool stays wired above — the SDK only invokes it when the mode asks.
       ...getPermissionOptions(),
       // options.model for the active model pick (absent → CLI default).
-      ...getModelOptions()
+      ...getModelOptions(),
+      // Which CLI binary to spawn (absent → the SDK's bundled one).
+      ...getCliOptions()
     }
     // ponytail: resume binds at query construction; the streaming query is built
     // once and cached, so resume only takes effect on the query-building turn.

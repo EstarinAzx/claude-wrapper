@@ -1459,6 +1459,41 @@ describe('engine model reporting (#52)', () => {
   })
 })
 
+describe('engine CLI path', () => {
+  test('spreads injected CLI options into query options', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(
+      () => 'D:\\proj',
+      autoAllow(),
+      fn,
+      () => process.env,
+      () => ({}),
+      () => ({}),
+      () => {},
+      () => ({ pathToClaudeCodeExecutable: 'C:\\bin\\claude.exe' })
+    )
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options).toMatchObject({
+      pathToClaudeCodeExecutable: 'C:\\bin\\claude.exe'
+    })
+  })
+
+  // No host install must leave the option ABSENT, not undefined — its absence
+  // is what selects the SDK's bundled CLI.
+  test('no CLI options injected → options carry no executable path', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options).not.toHaveProperty('pathToClaudeCodeExecutable')
+  })
+})
+
 describe('engine backend env', () => {
   test('passes the resolved env from getEnv straight into query options.env', async () => {
     const wispedEnv = { PATH: '/bin', ANTHROPIC_BASE_URL: 'http://127.0.0.1:41184' }
