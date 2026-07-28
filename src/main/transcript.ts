@@ -43,19 +43,73 @@ const toAttachmentMarker = (block: Record<string, unknown>): AttachmentMarker =>
   return marker
 }
 
-// A slash-command invocation persists as a plain-string user message shaped
-// `<command-message>…</command-message>\n<command-name>/x</command-name>` with
-// an optional `<command-args>…</command-args>` (real store shape, sampled for
-// #38). Unwrap to what the user actually typed: the name, plus the args when
-// present. <command-message> is CLI metadata, never rendered. Returns null for
-// anything that is not this shape — including ordinary prose that merely
-// mentions the markup, which must stay verbatim.
-const unwrapCommandInvocation = (text: string): string | null => {
-  if (!text.startsWith('<command-message>')) return null
-  const name = /<command-name>([^<]*)<\/command-name>/.exec(text)?.[1].trim()
-  if (!name) return null
-  const args = /<command-args>([\s\S]*?)<\/command-args>/.exec(text)?.[1].trim()
-  return args ? `${name} ${args}` : name
+// ESC written as a code point, not as a literal byte or a `\u` escape: the raw
+// character is invisible in an editor and a stray copy-paste silently deletes
+// it. General CSI, not just the SGR (`…m`) forms the store happens to contain.
+const CSI = new RegExp(String.fromCharCode(27) + '\\[[0-9;?]*[ -/]*[@-~]', 'g')
+
+const stripAnsi = (text: string): string => text.replace(CSI, '')
+
+const tagBody = (text: string, tag: string): string =>
+  new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`).exec(text)?.[1] ?? ''
+
+// The CLI persists several kinds of markup as plain-string user messages, and
+// replay rendered every one of them as literal XML (#50). Measured against the
+// native store on 2026-07-28 — 923 files, 3359 plain-string user messages —
+// 1258 of them, 37%, arrived here as raw markup.
+//
+// Dispatch is on the LEADING tag of the trimmed text, and that anchor is the
+// whole safety argument: each kind occupies a WHOLE message in real data
+// (nothing follows a <command-name> block in 442 of 442; a caveat is alone in
+// 419 of 419), while a pasted terminal log that merely quotes the markup is
+// ordinary user content and has to survive verbatim. Never match mid-string.
+//
+// Returns the text to display, or null to drop the message entirely.
+const sanitizeUserText = (raw: string): string | null => {
+  const text = raw.trim()
+
+  // A slash invocation persists in BOTH tag orders — <command-message> first
+  // (312 messages) and <command-name> first (442, the common one). Same output:
+  // what the user actually typed. <command-message> is metadata, never shown.
+  // ANSI is deliberately NOT stripped here — args are typed text, and a real
+  // recorded argument is `fable[1m]`, whose brackets are literal.
+  if (text.startsWith('<command-message>') || text.startsWith('<command-name>')) {
+    const name = tagBody(text, 'command-name').trim()
+    if (!name) return raw // malformed → verbatim, as before
+    const args = tagBody(text, 'command-args').trim()
+    return args ? `${name} ${args}` : name
+  }
+
+  // Injected context nobody typed: the CLI's boilerplate caveat (419 identical
+  // copies), agent task notifications, and its own session reminders.
+  if (
+    text.startsWith('<local-command-caveat>') ||
+    text.startsWith('<task-notification>') ||
+    text.startsWith('<system-reminder>')
+  ) {
+    return null
+  }
+
+  // `!`-prefixed bash. Input is typed text, so it keeps its bytes; the output
+  // halves are terminal streams and carry ANSI. stdout is empty while stderr is
+  // full in 2 of the 3 sampled, so an empty half must not leave a blank line.
+  if (text.startsWith('<bash-input>')) {
+    const command = tagBody(text, 'bash-input').trim()
+    return command ? `! ${command}` : null
+  }
+
+  if (text.startsWith('<local-command-stdout>')) {
+    return stripAnsi(tagBody(text, 'local-command-stdout')).trim() || null
+  }
+
+  if (text.startsWith('<bash-stdout>')) {
+    const streams = ['bash-stdout', 'bash-stderr']
+      .map((tag) => stripAnsi(tagBody(text, tag)).trim())
+      .filter(Boolean)
+    return streams.length > 0 ? streams.join('\n') : null
+  }
+
+  return raw
 }
 
 // Parse a native JSONL transcript to the replay message list. Main-session
@@ -91,10 +145,8 @@ export const parseTranscript = (
     if (type === 'user') {
       if (typeof content === 'string') {
         if (content.trim()) {
-          messages.push({
-            role: 'user',
-            text: unwrapCommandInvocation(content) ?? content
-          })
+          const text = sanitizeUserText(content)
+          if (text !== null) messages.push({ role: 'user', text })
         }
       } else if (Array.isArray(content)) {
         // tool_result never co-occurs with text/image in real transcripts; pure
