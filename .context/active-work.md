@@ -7,28 +7,30 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 by Opus 5 (relay leg 5, auto) — landed #46; 3 tickets left_
-_Baseline: typecheck clean, build clean, **517 tests green across 41 files**_
+_Last updated: 2026-07-28 by Opus 5 (relay leg 6, auto) — landed #47; 2 tickets left_
+_Baseline: typecheck clean, build clean, **533 tests green across 42 files**_
 
 ## Current focus
 
-**#46 — `switchWorkspace` transaction: landed** on main as `1bdadae`, **dormant**.
-The transaction lives in `src/main/switch-workspace.ts` over injected ports;
-`src/main/index.ts` exports the binding to the real engine / broker / cwd.
-Nothing calls it. Suite went 504 → 517.
+**#47 — renderer wired to `switchWorkspace`: landed** on main as `8c9cbb7`.
+Cross-project session rows are **live**: selecting one runs #46's transaction
+over `session:switch-workspace` and, only on `ok`, drops the whole workspace —
+cwd, `useChat`, `openDock`, `pendingInsert`, `openSubagent` — with the composer
+**keyed on `cwd`** so it remounts. Suite went 517 → 533. Live GUI drive passed
+against the real store (100 rows, **0 inert**, a real cross-project switch, a
+real `missing-cwd` refusal).
 
-**Next: #47 — Wire the renderer to `switchWorkspace`.** This is the ticket that
-makes #45's inert foreign rows live. #49 is unblocked too and independent.
+**Next: #48 — Folder picker reachable after the first pick.** #49 is unblocked
+too and independent of #48.
 
-Spec **#41 — Resume anything** is the remaining work, three tickets:
+Spec **#41 — Resume anything** is the remaining work, two tickets:
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #47 | Wire the renderer to `switchWorkspace` | 0 — **next** |
-| #48 | Folder picker reachable after first pick | 1 (waits on #47) |
+| #48 | Folder picker reachable after first pick | 0 — **next** |
 | #49 | Lazy title enrichment for slash-command-first sessions | 0 — also open |
 
-Order: `#47 → #48 → #49`. Blocked-ness is authoritative
+Order: `#48 → #49`. Blocked-ness is authoritative
 from `gh api repos/<owner>/<repo>/issues/<n> --jq
 '.issue_dependencies_summary.blocked_by'` — `gh issue list --json` does **not**
 expose that field.
@@ -63,6 +65,59 @@ the SDK path kills the raw-markup title defect; 0 of 325 `customTitle` values
 diverge from `summary`, making a coalesce redundant; 490 sessions across 37
 cwds, 5 with no cwd at all; `encodeCwd` **misses 6 of 37 real store
 directories** from drive-letter case drift.
+
+## Facts established by #47 (don't re-derive)
+
+- **The channel is `session:switch-workspace`** (`invoke`, `isTrustedIpc`-guarded).
+  A malformed or untrusted payload collapses to `{cwd: null, resumeId: null}`,
+  which the transaction rejects as `missing-cwd` — inert by construction, since a
+  rejection mutates nothing. `SwitchRequest` / `SwitchResult` / `SwitchStatus`
+  moved to `src/shared/session-types.ts` (both processes speak them);
+  `switch-workspace.ts` re-exports them so its callers keep one import site.
+- **The composer is `key={cwd}`.** Draft, attachment tray and autocomplete state
+  live only inside `InputBar`; a remount is the only exhaustive reset and makes
+  anything a future ticket adds to the composer workspace-scoped for free. See
+  [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]].
+- **`pendingInsert` must be cleared in the same commit as the cwd change.**
+  `InputBar` applies a pending insert **on mount**, so a survivor refills the new
+  project's composer with the old project's slash command. This is a *different*
+  leak from a stale draft and needs its own assertion.
+- **`useChat.adoptSession(id)` replays a transcript WITHOUT `targetSession`.**
+  `openSession` is now `adoptSession` + `targetSession`. On the switch path the
+  transaction has already closed → rebuilt → targeted → warmed the engine, and
+  `chat:target` closes and nulls it — so the in-project resume path on top undoes
+  the warm-up. Pinned: `targetSession` never fires on a switch.
+- **A foreign row is NOT gated on the renderer's `busy` flag; a local row still
+  is.** `Engine.isBusy()` is the one source, and disabling the row would make the
+  `busy` refusal unreachable from the UI.
+- **A rejection renders one inline `role="status"` line** (`.switch-refusal`)
+  above the composer — never a chat message, because nothing happened. The three
+  refusals are phrased distinctly on purpose; a generic string hides the only one
+  the user can act on.
+- **Backend mode, permission mode and model are not workspace state** and survive
+  a switch — asserted via the pills *and* via their setters never being called.
+- **Ten mutations run**, each killing exactly its target (drop `key={cwd}` 4,
+  reset regardless of status 7, drop `setCwd` 5, re-disable foreign rows 17,
+  route foreign → `onOpen` 15, `adoptSession` → `openSession` 1, drop
+  `setPendingInsert(null)` 2, drop `setOpenDock(null)` / `setOpenSubagent(null)` /
+  `setRefusal(null)` 1 each).
+- **`.session-row-btn-foreign:disabled` is gone** — foreign rows are never
+  disabled now, so that rule was dead. Foreign still reads secondary via the
+  muted title alone (verified live: the computed colours differ).
+- **Measured live at the change**: 9 groups, 100 rows, **0 inert** (36 were inert
+  under #45), a real switch from this repo into `C:\Users\S.D` with the
+  transcript, draft and tray all following, the rail regrouping around the new
+  workspace, and a cwd-less session refused end to end with the pane
+  byte-identical.
+- **`gui-47.mjs` is committed.** It logs a `SKIPPED` line for anything it could
+  not drive (the `busy` refusal needs a real streaming turn) rather than passing
+  silently.
+- **Still open, no ticket: transcript REPLAY renders raw
+  `<local-command-caveat>` / `<command-name>` / `<local-command-stdout>` markup
+  with ANSI escapes.** Confirmed live this leg. #43 killed this on the *title*
+  path only, and #49 merely enriches titles — the replay path is the deferred
+  "strip at the parsing boundary" item and now has a sighting, noted on #47's
+  close comment.
 
 ## Facts established by #46 (don't re-derive)
 
@@ -219,6 +274,10 @@ there was no canonical one to start from.
 
 ## Decisions binding this work
 
+- [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] — #47's
+  `key={cwd}` composer remount, the same-commit `pendingInsert` clear, the
+  `adoptSession` / `openSession` split, the deliberately un-busy-gated foreign
+  row, and the inline refusal line.
 - [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] — #46's
   ported transaction, the fixed precedence, the after-rebuild resume write, and
   `Engine.isBusy()` as the single busy source #47 must call rather than re-derive.
@@ -319,6 +378,11 @@ there was no canonical one to start from.
   **fixed by #43** as a side effect of moving titles to the SDK's `summary`
   (0 of 490 store-wide, 0 of 64 for this project). #49 is now only about
   *enriching* bare slash-command titles, not de-markup-ing them.
+- **Transcript REPLAY still shows that markup** — `<local-command-caveat>`,
+  `<command-name>`, `<local-command-stdout>`, ANSI escapes and all. Seen live
+  during #47's GUI drive. Different code path from the title fix, no ticket yet;
+  it is the deferred "strip at the parsing boundary with a small local sanitizer"
+  item. Do **not** fold it into #49, which is titles only.
 - GUI driver traps: `--disable-gpu` flattens acrylic; screenshots mis-frame wide
   windows — **measure in the DOM**. Playwright's actionability "stable" wait
   hangs on `.msg`/intro animations — dispatch clicks via
@@ -332,11 +396,12 @@ there was no canonical one to start from.
 
 ## Pick up here
 
-**#47 — Wire the renderer to `switchWorkspace`.** Unblocked (#49 is too and is
-independent). The main-process half is landed and dormant: call the exported
-`switchWorkspace(req)` and render its four statuses — #45 already distinguishes
-them. This is the ticket allowed to make #45's inert foreign rows selectable.
-See [[pick-up]] for the queue and landmines.
+**#48 — Folder picker reachable after the first pick.** Unblocked (#49 is too
+and is independent). The atomic renderer reset #48 was sequenced behind now
+exists: reuse `switchWorkspace` with **`resumeId: null`** — the first-class
+"open this workspace with a new chat" case, which skips the index entirely and
+is exactly what an empty folder needs. See [[pick-up]] for the queue and
+landmines.
 
 ## Deferred (still no spec)
 
@@ -374,16 +439,20 @@ reasons worth keeping:
   case-insensitive variant of it, no decoding a directory name back into a cwd.
   Storage location is `resolveSessionDir`; `cwdKey()` is for comparison only.
 - **Required test coverage in the remaining tickets is not optional** — the
-  call-count assertion (#49) exists precisely because a green suite passes while
-  the requirement is unmet. #43's no-JSONL-read, #45's no-`dir` and #46's
-  ordered-call assertions are landed and mutation-verified; they are the working
-  examples of the pattern.
-- **#47 is the ticket that makes cross-project selection live.** #46 is in and
-  dormant; #45 renders those rows inert on purpose. Wiring them is #47's job and
-  belongs to no other ticket.
+  call-count assertion (#49) is the last one outstanding. #43's no-JSONL-read,
+  #45's no-`dir`, #46's ordered-call and #47's never-`targetSession` assertions
+  are landed and mutation-verified; they are the working examples of the pattern.
 - **Do not add a second busy flag.** `Engine.isBusy()` is the source of truth
   and `switchWorkspace` already consults it — the renderer must not re-derive
-  "busy" from stream state and decide for itself.
+  "busy" from stream state and decide for itself. Corollary from #47: **do not
+  "fix" the live foreign row by disabling it while busy.** That re-introduces the
+  second opinion *and* makes the `busy` refusal unreachable.
+- **Never un-key the composer.** `<InputBar key={cwd}>` is the whole of the
+  draft / tray / autocomplete reset; removing it re-opens the leak silently and
+  kills four tests.
+- **Anything workspace-scoped added to App state must join the `ok` branch of
+  `switchWorkspace`** in `App.tsx`. Composer-internal state needs nothing — the
+  remount covers it.
 - **A session fixture with no `cwd` is a foreign row** and is inert. New UI
   tests that click a session row must set `cwd: FOLDER`.
 - **Never add a resize effect to `InputBar`** —
@@ -407,7 +476,8 @@ reasons worth keeping:
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] ·
+- [[2026-07-28-a-workspace-reset-is-a-remount-not-a-state-sweep]] ·
+  [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] ·
   [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] ·
   [[2026-07-28-storage-location-is-an-index-not-an-encoding]]
 - [[2026-07-28-session-metadata-is-the-sdks-job]] ·
