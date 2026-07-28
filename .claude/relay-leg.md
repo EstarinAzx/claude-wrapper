@@ -1,4 +1,4 @@
-# relay-leg — one ticket per leg: Grok grunts, Fable leads, gateless wrap-up
+# relay-leg — one ticket per leg, gateless wrap-up
 
 Loop body for:
 
@@ -10,6 +10,27 @@ Each leg = exactly ONE ticket end to end, then the relay machinery hands off to
 a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
+
+## Current queue (written 2026-07-28)
+
+Two independent lines of work, both `ready-for-agent`, blocking edges wired as
+native GitHub issue dependencies:
+
+- **#42 — Multiline prompt composition.** Standalone, no edges, highest value.
+  Run it first.
+- **Spec #41 — Resume anything**, chain: `#43 → #44 → #45 → #47 → #48`, plus
+  `#44 → #46 → #47` and `#45 → #49`.
+
+Execution order: `#42 → #43 → #44 → #45 → #46 → #47 → #48 → #49`. Only #42 and
+#43 are unblocked at spec time; the rest open as their blockers close, so the
+frontier query in step 1 is the authority — do not hand-pick from this list if
+it disagrees with the tracker.
+
+Every ticket body carries its own contract, out-of-scope list, required test
+coverage and sharpest-failure-mode note. **Read the whole ticket and its parent
+spec before writing code** — the bodies were adversarially reviewed specifically
+to remove the ambiguity that stalls unattended agents, so a step that looks
+under-specified probably means you have not read far enough.
 
 ## Boot (once per leg)
 
@@ -25,65 +46,39 @@ relabel plus a comment.
 
 1. **Pick.** The ticket named by `pick-up.md` if it is still open, still
    `ready-for-agent`, and unblocked. Otherwise: oldest open `ready-for-agent`
-   issue with no open blockers (`issue_dependencies_summary.blocked_by == 0`).
-   None available → **queue done**: rewrite `pick-up.md` to "queue empty"
+   issue with no open blockers. Blocked-ness is authoritative from the API —
+   `gh api repos/<owner>/<repo>/issues/<n> --jq '.issue_dependencies_summary.blocked_by'`
+   must be `0`. (`gh issue list --json` does **not** expose that field; don't
+   try.) None available → **queue done**: rewrite `pick-up.md` to "queue empty"
    (listing any leftovers stuck `ready-for-human` or blocked and why), commit
-   `.context/` on main, signal the relay stop (step 8). No spawn.
+   `.context/` on main, signal the relay stop (step 7). No spawn.
 2. **Idempotency guard.** A branch or PR named `ticket/<id>-*` already exists →
    never restart from scratch: unfinished and yours → resume it; finished and
-   green but unmerged → land it and jump to step 7. Genuine collision or
-   confusion → comment on the ticket, relabel `ready-for-human`, jump to step 7.
-3. **First-commit guard.** `main` has zero commits → commit the existing tree
-   on main first (`chore: repo bootstrap (.context, docs, CLAUDE.md)`) and push,
-   before any branching.
-4. **Branch.** `ticket/<id>-<slug>` off main.
-5. **Work — Fable leads, Grok grunts.**
-   - **You (Fable) own:** reading the ticket + its parent spec (the `## Parent`
-     the ticket names) + relevant
-     `.context/decisions/`, architecture, file layout, interfaces/types, task
-     decomposition, code review, integration, and the gate. Route through
-     skills as the work demands (superpowers TDD for logic; impeccable for the
-     UI/design slices — the Frost Mono reference is
-     `docs/design/frost-mono-reference.png`).
-   - **Grok subagents get the grunt implementation** via the slot skill
-     (wisp-slot:slot), family `haiku`, target `xai/grok-4.5`:
-     a. *Preflight.* Bridge reachable + `wisp routing` prints the map. The
-        recovery record is the **snapshot store**, not a lease file — the old
-        `~/.claude/slot/lease-<family>.json` files are gone. `wisp snapshot
-        haiku` erroring `already snapshotted (<value>)` at leg boot means a
-        previous leg died mid-slot; the chain is serial (N=1), so no live agent
-        can hold it: `wisp snapshot revert haiku`, verify, then snapshot fresh.
-        (Deliberate unattended adaptation of the skill's ask-the-user step.)
-        Never run bare `wisp snapshot` — with no family it snapshots every row.
-     b. *Bind.* `wisp snapshot haiku` FIRST, then `wisp routing set haiku
-        xai/grok-4.5`, then verify the row changed. Any `warning:` line → do NOT
-        spawn; `wisp snapshot revert haiku` and use the fallback below.
-     c. *Spawn.* Agent tool, `model: "haiku"`, `subagent_type:
-        "general-purpose"`, description `grok-4.5: <short task>`. Independent
-        chunks may spawn in parallel — same family, one lease. Each task
-        prompt must be a complete spec: exact files to create/edit, exact
-        interfaces/props/types to conform to, the acceptance tests to satisfy,
-        and repo conventions. Grok writes code + its unit tests and reports
-        what it did.
-     d. *Hold + restore.* Iron Rule: restore `haiku` only after EVERY Grok
-        agent of this leg has finished. Then `wisp snapshot revert haiku` —
-        surface the `revert haiku -> … (was …)` line it prints — and confirm
-        the row is back, before the gate, so a crash later never strands the
-        route.
-     e. *Review.* Read every Grok diff yourself; fix or redo anything below
-        bar. Grok output is draft — you own what lands.
-   - **Fallback.** Bridge down, `wisp` too old, or bind fails → implement it
-     yourself and say so in the ticket comment. Never let slot machinery kill
-     the leg.
-6. **Gate.** Full test suite + typecheck (+ build script if the repo has one)
-   green?
+   green but unmerged → land it and jump to step 6. Genuine collision or
+   confusion → comment on the ticket, relabel `ready-for-human`, jump to step 6.
+3. **Branch.** `ticket/<id>-<slug>` off main.
+4. **Work.** You own the whole ticket: read it plus its parent spec plus any
+   `.context/decisions/` it names, then architecture, implementation, tests and
+   review. Route through skills as the work demands — superpowers TDD for logic,
+   impeccable for UI/design slices (Frost Mono reference:
+   `docs/design/frost-mono-reference.png`).
+   - **Pins.** Behavior pins in this repo are mutation-verified. Never "fix" a
+     failing pin by editing its expectation. The **only** authorized pin
+     retirement in this queue is named explicitly in #42
+     (`tests/attachments-composer.test.tsx`, `'the composer is still a
+     single-line input'`). Any other red pin means your change is wrong.
+   - **Required test coverage is not optional.** Several tickets specify
+     assertions that exist precisely because a green suite would otherwise pass
+     while the requirement is unmet (no-JSONL-read, ordered-call, call-count).
+     Skipping them is a failed ticket even if CI is green.
+5. **Gate.** Full test suite + typecheck + build green?
    - **Green** → merge the ticket branch into main (squash), push main, delete
-     the branch, close the ticket with a breadcrumb comment: what landed,
-     commit sha, anything a cold reader needs to continue.
+     the branch, close the ticket with a breadcrumb comment: what landed, commit
+     sha, anything a cold reader needs to continue.
    - **Not green after honest effort, or ticket ambiguous/destructive** → stop
      coding, push the branch as-is, comment exactly where and why it stuck,
      relabel `ready-for-human`. Ticket stays open; its dependents stay blocked.
-7. **Gateless wrap-up — always on main.**
+6. **Gateless wrap-up — always on main.**
    - `git switch main` (already there if merged).
    - The wrap-up eyeball gate is skipped: auto-go, unattended.
    - Invoke `/context-update` (refreshes `active-work.md`, appends decisions if
@@ -93,9 +88,9 @@ relabel plus a comment.
      landed (ticket #, sha or ready-for-human note), the single next unblocked
      `ready-for-agent` ticket (or "queue empty"), and any landmine.
    - Commit `.context/` (and only wrap-up artifacts) on main:
-     `chore(context): leg handoff after #<id>`. Push. **Never commit .context
-     on a ticket branch.**
-8. **Signal.**
+     `chore(context): leg handoff after #<id>`. **Never commit .context on a
+     ticket branch.**
+7. **Signal.**
    - Queue empty → body done: relay sets `stop: true`, no next leg spawned.
    - Otherwise the firing is complete; `iter == n` (N=1) triggers the relay
      sequence and the next leg spawns fresh.
@@ -106,3 +101,20 @@ relabel plus a comment.
 - No AskUserQuestion, ever — this body runs with no human present.
 - Every landing is gated by green tests + typecheck; nothing merges red.
 - `.context/` commits ride main only.
+- Push is part of the leg (`git push` after the squash merge and after the
+  context commit). Do not leave main ahead of origin at leg end.
+
+## Removed 2026-07-28: the Grok-grunt delegation layer
+
+Earlier versions of this body had Fable lead while `xai/grok-4.5` subagents did
+the grunt implementation through the wisp-slot skill (snapshot `haiku` → rebind
+→ spawn → hold → revert). **Removed deliberately.** It bought cheaper
+implementation tokens at the cost of real unattended failure surface: a leg that
+dies mid-slot strands the routing row, the Iron Rule makes restore ordering
+load-bearing, and `wisp snapshot` has a footgun (bare invocation snapshots every
+row). The last completed chain delivered four tickets clean without it.
+
+**To restore:** the procedure is unchanged and lives in the `wisp-slot:slot`
+skill — snapshot the sacrificial family first, bind, verify no `warning:` line,
+spawn with `model: "<family>"`, hold until every agent on that family finishes,
+then `wisp snapshot revert <family>`. Re-add it as a step 4 sub-procedure.

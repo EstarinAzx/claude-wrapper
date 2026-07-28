@@ -7,16 +7,53 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-27 — spec #36 fully delivered, queue EMPTY_
-_At commit: `c63e170` on main (#40 squash) + this firing's `.context/` commit_
+_Last updated: 2026-07-28 — new queue specced and published, 8 tickets, none started_
+_Baseline: typecheck clean, 441 tests green across 37 files (verified 2026-07-28)_
 
 ## Current focus
 
-**No queue.** Spec #36 (slash commands) is fully delivered and closed — all
-four tickets landed on main, gate-green, 441 tests: #37 `ab7835f`, #38
-`c077904`, #39 `0cb6e31`, #40 `c63e170`. The ticket-loop relay chain stopped
-itself on queue-dry (state `.claude/relay/ticket-loop.md`, `stop: true`). New
-work needs a spec first (`/preset init` or `/hp` → to-spec → to-tickets).
+**Queue loaded, nothing implemented yet.** Spec #36 (slash commands) closed
+2026-07-27 (#37 `ab7835f`, #38 `c077904`, #39 `0cb6e31`, #40 `c63e170`).
+
+New work specced 2026-07-28:
+
+- **#42 — Multiline prompt composition.** Independent, no blockers, run first.
+- **Spec #41 — Resume anything**, tickets #43–#49 with native blocking edges.
+
+Order: `#42 → #43 → #44 → #45 → #46 → #47 → #48 → #49`. Details and the
+blocking table in [[pick-up]]. Run with
+`/relay N=1 read and follow .claude/relay-leg.md` — that body was rewritten
+2026-07-28 for this queue, and the Grok-grunt delegation layer was removed
+(restore procedure documented at the bottom of the file).
+
+## How this queue was specced (2026-07-28)
+
+Design was adversarially grilled against `gpt-5.6-sol` through the wisp-slot
+skill, then every quantitative claim was verified independently at a terminal
+rather than trusted. What the grilling changed:
+
+- Killed a proposed "workspace" spec as an incoherent grab-bag; replaced it with
+  the "Resume anything" framing (session history is the entry point to cwd).
+- Caught that paste-to-attachment **already ships** — it was wrongly listed as a
+  gap.
+- Found that the "never break a pin" rule would have deadlocked #42 against
+  `'the composer is still a single-line input'`; that retirement is now
+  authorized by name.
+- Split the workspace transition at a **dormant-API seam** (#46 merges unused
+  and safe, #47 wires it) instead of shipping one cross-process rewrite.
+- Final red-team caught a structural gap: #48's whole purpose is empty folders,
+  but #46 required a `resumeId` no empty folder has, and #48 forbade the only
+  existing cwd chooser without providing a replacement. Fixed before publish —
+  `resumeId: string | null` plus a non-mutating chooser IPC.
+
+**Measured facts behind spec #41** (do not re-derive; full list in the spec
+body): `listSessions` is a top-level pure-filesystem export needing no CLI,
+421ms for all 490 sessions; `SDKSessionInfo` has **no `messageCount`**; 0 of 490
+sessions carry raw command markup in `summary`/`firstPrompt`/`customTitle`, so
+the SDK path kills the raw-markup title defect; 0 of 325 `customTitle` values
+diverge from `summary`, making a coalesce redundant; 490 sessions across 37
+cwds, 5 with no cwd at all; `encodeCwd` **misses 6 of 37 real store
+directories** from drive-letter case drift.
 
 ## "Host issue" — RESOLVED, was a driver typo (2026-07-27, later session)
 
@@ -202,20 +239,41 @@ options, wisped. Full record in the capture comment on #37.
 
 ## Pick up here
 
-**Nothing queued.** Spec #36 done. Next session: new spec, or the deferred
-list below is the seed material.
+**#42 — Multiline prompt composition.** Unblocked, standalone, highest value.
+See [[pick-up]] for the full queue and blocking table.
 
 ## Deferred (still no spec)
 
-Live-tail external sessions, N-concurrent engines, fork-on-resume, global
-project switcher, busy-switch detach ([[2026-07-23-busy-switch-block-not-detach]]).
-From #26: drag-and-drop, replay thumbnails, multiline composer. From #25:
-agent archive, agent control, map pan/zoom, historical token totals. From #31:
-nesting a live agent pre-sidecar. From #32: capability gating, `blob:` for
-large pastes. From #33: map node labels, inset past ~40 agents. From #34:
-directory pick, dialog filters. From #35: lazy full-image fetch on replay.
-From #36: replaying command *output*, command-list cache/push channel,
-client-side validation, per-level informational styling, `prevent_continuation`.
+Now ticketed, removed from this list: multiline composer (#42), global project
+switcher (#41 chain), directory pick (#48).
+
+Still deferred: live-tail external sessions, N-concurrent engines,
+fork-on-resume, busy-switch detach
+([[2026-07-23-busy-switch-block-not-detach]] — #46 implements *block*, the
+decided behavior). From #26: drag-and-drop (explicitly out of scope in #42),
+replay thumbnails. From #25: agent archive, agent control, map pan/zoom,
+historical token totals. From #31: nesting a live agent pre-sidecar. From #32:
+capability gating, `blob:` for large pastes. From #33: map node labels, inset
+past ~40 agents. From #34: dialog filters. From #35: lazy full-image fetch on
+replay. From #36: replaying command *output*, command-list cache/push channel,
+client-side validation, per-level informational styling,
+`prevent_continuation`.
+
+**Considered and deliberately deferred during the 2026-07-28 grilling**, with
+reasons worth keeping:
+
+- **Context-pressure meter.** The data path is easier than assumed —
+  `Query.getContextUsage()` exists and our `QueryHandle` in `engine.ts` narrows
+  it away — but a naïve percentage lies by omission: it must distinguish the raw
+  window from the auto-compaction threshold, or "92%" reads as danger when it
+  means routine compaction.
+- **Typed failed-turn recovery.** A coding-agent retry is not a chat regenerate
+  button — a failed turn may already have edited files or run commands. The SDK
+  now carries `refused_user_message_uuid` and `rewindFiles()`, but rewind needs
+  `enableFileCheckpointing`, which our query options do not set. Define which
+  failures are retryable before ticketing any Retry button.
+- **Command-output replay.** Persisted `<local-command-stdout>` carries raw ANSI;
+  strip at the parsing boundary with a small local sanitizer, no dependency.
 
 ## Landmines (carried forward)
 
