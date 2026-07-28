@@ -1,5 +1,6 @@
 import type { SendPayload } from './attachment-types'
 import type { SlashCommandInfo } from './command-types'
+import type { ModelOption } from './model-types'
 
 export type PermissionDecision = 'allow' | 'deny'
 
@@ -85,4 +86,9 @@ export interface Engine {
   // supportedCommands() tracks commands_changed pushes internally. [] when
   // there is no live query (fresh launch / failed warm-up) or on any error.
   listCommands(): Promise<SlashCommandInfo[]>
+  // Live read of the CLI's model list, same contract as listCommands. This is
+  // the ONLY source of pickable models: the app used to hardcode four family
+  // tokens, which is how it came to offer a value the CLI did not advertise
+  // while missing ten that it did.
+  listModels(): Promise<ModelOption[]>
 }

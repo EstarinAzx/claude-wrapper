@@ -9,11 +9,19 @@ import type { Candidate } from '../src/shared/attachment-policy'
 import type { SlashCommandInfo } from '../src/shared/command-types'
 import type { FolderChoice, SwitchRequest, SwitchResult } from '../src/shared/session-types'
 
-const FAMILY_MODELS: ModelOption[] = [
-  { id: 'opus', label: 'Opus', group: 'family' },
-  { id: 'sonnet', label: 'Sonnet', group: 'family' },
-  { id: 'haiku', label: 'Haiku', group: 'family' },
-  { id: 'fable', label: 'Fable', group: 'family' }
+// Mirrors what the CLI's supportedModels() actually returns — its own `value`
+// as the id, its own `displayName` as the label. Kept faithful on purpose: the
+// old fixture was four invented family tokens, which is exactly the shape the
+// app no longer produces, and a fixture that disagrees with the CLI is how the
+// hardcoded list survived unnoticed in the first place.
+const CLI_MODELS: ModelOption[] = [
+  { id: 'default', label: 'Default (recommended)' },
+  { id: 'opus[1m]', label: 'Opus (1M context)' },
+  { id: 'claude-fable-5[1m]', label: 'Fable' },
+  { id: 'sonnet', label: 'Sonnet' },
+  { id: 'sonnet[1m]', label: 'Sonnet 5 (1M context)' },
+  { id: 'haiku', label: 'Haiku' },
+  { id: 'claude-wisp-terra', label: 'terra — gpt-5.6-terra' }
 ]
 
 // Test-side stand-in for preload+main plumbing: the scripted engine seam.
@@ -89,7 +97,7 @@ export const fakeChatApi = (folder = FOLDER) => {
       .mockResolvedValue([]),
     listModels: vi
       .fn<() => Promise<ModelInfo>>()
-      .mockResolvedValue({ models: FAMILY_MODELS, current: null }),
+      .mockResolvedValue({ models: CLI_MODELS, current: null }),
     setModel: vi.fn(),
     onModelChanged: (cb: (model: string | null) => void): (() => void) => {
       modelListeners.add(cb)

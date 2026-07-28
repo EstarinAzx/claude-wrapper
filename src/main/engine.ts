@@ -7,6 +7,7 @@ import type {
 } from '../shared/engine-types'
 import type { SendPayload } from '../shared/attachment-types'
 import type { SlashCommandInfo } from '../shared/command-types'
+import type { ModelOption } from '../shared/model-types'
 
 export type SdkMessage =
   | { type: 'system'; subtype: string; session_id: string }
@@ -73,6 +74,7 @@ type QueryHandle = AsyncIterable<SdkMessage> & {
   close?: () => void
   interrupt?: () => Promise<void>
   supportedCommands?: () => Promise<unknown>
+  supportedModels?: () => Promise<unknown>
 }
 
 // Pushable async queue of user messages for streaming-input mode.
@@ -639,6 +641,42 @@ export const createEngine = (
     })
   }
 
+  // Live read, no cache — same contract as listCommands above, and for the same
+  // reason: the CLI owns this list, so a cached copy is a copy that can go
+  // stale. [] on every failure path (no query yet, an SDK without the call, a
+  // rejection). The pill is only reachable after folder-pick, which warms the
+  // engine, so [] in practice means something is actually wrong.
+  //
+  // `value` is copied verbatim into `id` — it is what goes back as
+  // options.model. Do NOT substitute resolvedModel here: that field is the
+  // canonical wire id for display/matching, and sending it as options.model is
+  // the resolved-id hang (see model-mode.ts).
+  const listModels = async (): Promise<ModelOption[]> => {
+    const call = currentQuery?.supportedModels
+    if (!call) return []
+    let raw: unknown
+    try {
+      raw = await call.call(currentQuery)
+    } catch {
+      return []
+    }
+    if (!Array.isArray(raw)) return []
+    return raw.flatMap((m): ModelOption[] => {
+      if (!m || typeof m !== 'object') return []
+      const row = m as Record<string, unknown>
+      if (typeof row.value !== 'string' || row.value.length === 0) return []
+      return [
+        {
+          id: row.value,
+          label:
+            typeof row.displayName === 'string' && row.displayName.length > 0
+              ? row.displayName
+              : row.value
+        }
+      ]
+    })
+  }
+
   const runTurn = async (
     payload: SendPayload,
     onEvent: (e: EngineEvent) => void,
@@ -704,5 +742,14 @@ export const createEngine = (
   // (#46) reads this rather than keeping a flag of its own, which could drift.
   const isBusy = (): boolean => turnResolve !== null
 
-  return { runTurn, interrupt, close, sessionId, warmUp, listCommands, isBusy }
+  return {
+    runTurn,
+    interrupt,
+    close,
+    sessionId,
+    warmUp,
+    listCommands,
+    listModels,
+    isBusy
+  }
 }

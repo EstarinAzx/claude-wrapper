@@ -33,25 +33,42 @@ describe('input-box model picker', () => {
     expect(pill().textContent).toBe('Default')
   })
 
-  test('opening the pill lists the families (fetched on demand)', async () => {
+  // The labels asserted here are the CLI's own displayName values, not names
+  // this app invents — "Opus (1M context)", not "Opus". Rendering the CLI's
+  // string is the contract; a prettified label would be this app deciding what
+  // the model is called again.
+  test('opening the pill lists the CLI’s rows (fetched on demand)', async () => {
     await startSession()
     fireEvent.click(pill())
     expect(harness.api.listModels).toHaveBeenCalled()
-    await screen.findByRole('menuitem', { name: 'Opus' })
-    for (const label of ['Sonnet', 'Haiku', 'Fable']) {
+    await screen.findByRole('menuitem', { name: 'Opus (1M context)' })
+    for (const label of [
+      'Default (recommended)',
+      'Sonnet 5 (1M context)',
+      'Fable',
+      'terra — gpt-5.6-terra'
+    ]) {
       expect(screen.getByRole('menuitem', { name: label })).toBeTruthy()
     }
   })
 
-  test('wisped mode adds the router aliases to the list', async () => {
-    const wisped: ModelOption[] = [
-      { id: 'opus', label: 'Opus', group: 'family' },
-      { id: 'grok-4.5', label: 'grok', group: 'alias' }
-    ]
-    harness.api.listModels.mockResolvedValue({ models: wisped, current: null })
+  // Whatever the CLI advertises is what the menu shows — there is no app-side
+  // list to fall back to, so an empty list must render an empty menu rather
+  // than four resurrected family tokens.
+  test('an empty CLI list yields an empty menu, not a hardcoded fallback', async () => {
+    harness.api.listModels.mockResolvedValue({ models: [], current: null })
     await startSession()
     fireEvent.click(pill())
-    await screen.findByRole('menuitem', { name: 'grok' })
+    await screen.findByRole('menuitem', { name: 'Default' })
+    expect(screen.getAllByRole('menuitem')).toHaveLength(1)
+  })
+
+  test('rows the CLI adds appear without an app change', async () => {
+    const extra: ModelOption[] = [{ id: 'claude-wisp-grok', label: 'grok — grok-4.5' }]
+    harness.api.listModels.mockResolvedValue({ models: extra, current: null })
+    await startSession()
+    fireEvent.click(pill())
+    await screen.findByRole('menuitem', { name: 'grok — grok-4.5' })
   })
 
   test('picking a model asks main to set it and KEEPS the conversation', async () => {
@@ -62,8 +79,9 @@ describe('input-box model picker', () => {
     expect(screen.getByText('keep this going')).toBeTruthy()
 
     fireEvent.click(pill())
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Opus' }))
-    expect(harness.api.setModel).toHaveBeenCalledWith('opus')
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Opus (1M context)' }))
+    // the CLI's own `value` goes back verbatim — bracket suffix and all
+    expect(harness.api.setModel).toHaveBeenCalledWith('opus[1m]')
     // like the permission pill, the pane keeps its history
     expect(screen.getByText('keep this going')).toBeTruthy()
     expect(screen.getByText('still here')).toBeTruthy()
@@ -81,8 +99,8 @@ describe('input-box model picker', () => {
     await startSession()
     // open once so the option labels are loaded for id→label mapping
     fireEvent.click(pill())
-    await screen.findByRole('menuitem', { name: 'Opus' })
-    harness.emitModel('opus')
-    expect(pill().textContent).toBe('Opus')
+    await screen.findByRole('menuitem', { name: 'Opus (1M context)' })
+    harness.emitModel('opus[1m]')
+    expect(pill().textContent).toBe('Opus (1M context)')
   })
 })

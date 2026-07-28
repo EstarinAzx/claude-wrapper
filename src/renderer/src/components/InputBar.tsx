@@ -73,7 +73,7 @@ const ModelPill = ({
           </button>
           {options.map((o) => (
             <button
-              key={`${o.group}:${o.id}`}
+              key={o.id}
               type="button"
               className="model-menu-item"
               role="menuitem"

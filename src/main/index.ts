@@ -11,7 +11,7 @@ import {
   isWispedAvailable
 } from './backend-mode'
 import { getPermissionMode, setPermissionMode, toPermissionOptions } from './permission-mode'
-import { getModelMode, setModelMode, toModelOptions, listModels } from './model-mode'
+import { getModelMode, setModelMode, toModelOptions } from './model-mode'
 import { clampZoom } from '../shared/zoom'
 import { normalizeSendPayload } from '../shared/attachment-types'
 import {
@@ -361,12 +361,13 @@ ipcMain.on('permission:set-mode', (event, mode: unknown) => {
   win?.webContents.send('permission:changed', getPermissionMode())
 })
 
-// Read-only: the input-box model pill asks for the pickable models. The list is
-// mode-aware (Wisped adds the router's custom aliases) and shelled on demand
-// from `wisp routing --json` — never watched. Carries model ids + labels only.
+// Read-only: the input-box model pill asks for the pickable models. Straight
+// from the CLI (supportedModels), like commands:list above — no hardcoded list,
+// no `wisp routing` shell-out, and no backend-mode argument: the CLI already
+// knows whether it is wisped, so the list is mode-aware for free.
 ipcMain.handle('model:list', async (event) => {
   if (!isTrustedIpc(event)) return { models: [], current: null }
-  return listModels(getBackendMode())
+  return { models: (await engine?.listModels()) ?? [], current: getModelMode() }
 })
 
 // Guarded write: pick the model the next turn runs against (a model id, or null

@@ -1559,6 +1559,92 @@ describe('engine warm-up + command list (#39)', () => {
     expect(await engine.listCommands()).toEqual([])
   })
 
+  // #53 — the model list comes from the CLI, never from a constant here.
+  test('listModels maps the SDK rows and re-fetches on every call (no cache)', async () => {
+    const supported = { calls: 0 }
+    const base = streamingStub()
+    const fn: QueryFn = (args) => {
+      const stream = base.fn(args) as AsyncIterable<SdkMessage> & {
+        supportedModels?: () => Promise<unknown>
+      }
+      stream.supportedModels = async () => {
+        supported.calls += 1
+        return [
+          {
+            value: 'opus[1m]',
+            resolvedModel: 'claude-opus-5[1m]',
+            displayName: 'Opus (1M context)'
+          },
+          { value: 'claude-wisp-terra', displayName: 'terra — gpt-5.6-terra' }
+        ]
+      }
+      return stream
+    }
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    const list = await engine.listModels()
+    // id is `value`, NOT `resolvedModel` — sending a resolved id back as
+    // options.model is the hang documented in model-mode.ts.
+    expect(list).toEqual([
+      { id: 'opus[1m]', label: 'Opus (1M context)' },
+      { id: 'claude-wisp-terra', label: 'terra — gpt-5.6-terra' }
+    ])
+    await engine.listModels()
+    expect(supported.calls).toBe(2)
+  })
+
+  test('listModels drops rows with no usable value, and falls back to it for a label', async () => {
+    const base = streamingStub()
+    const fn: QueryFn = (args) => {
+      const stream = base.fn(args) as AsyncIterable<SdkMessage> & {
+        supportedModels?: () => Promise<unknown>
+      }
+      stream.supportedModels = async () => [
+        { value: 'sonnet', displayName: 'Sonnet' },
+        { value: 'haiku' },
+        { value: '', displayName: 'empty' },
+        { displayName: 'no value' },
+        null
+      ]
+      return stream
+    }
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    expect(await engine.listModels()).toEqual([
+      { id: 'sonnet', label: 'Sonnet' },
+      { id: 'haiku', label: 'haiku' }
+    ])
+  })
+
+  test('listModels is empty with no live query', async () => {
+    const { fn } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    expect(await engine.listModels()).toEqual([])
+  })
+
+  test('listModels is empty when the SDK lacks the call', async () => {
+    const { fn } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    expect(await engine.listModels()).toEqual([])
+  })
+
+  test('listModels is empty when the SDK call rejects', async () => {
+    const base = streamingStub()
+    const fn: QueryFn = (args) => {
+      const stream = base.fn(args) as AsyncIterable<SdkMessage> & {
+        supportedModels?: () => Promise<unknown>
+      }
+      stream.supportedModels = async () => {
+        throw new Error('boom')
+      }
+      return stream
+    }
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    engine.warmUp()
+    expect(await engine.listModels()).toEqual([])
+  })
+
   test('a warm-up whose construction throws is inert: the next send rebuilds and works', async () => {
     let call = 0
     const base = streamingStub()
