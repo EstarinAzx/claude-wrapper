@@ -41,6 +41,7 @@ export const fakeChatApi = (folder = FOLDER) => {
   const backendListeners = new Set<(info: BackendInfo) => void>()
   const permListeners = new Set<(mode: PermissionMode) => void>()
   const modelListeners = new Set<(model: string | null) => void>()
+  const sessionChangedListeners = new Set<(id: string) => void>()
   const api = {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
@@ -102,6 +103,13 @@ export const fakeChatApi = (folder = FOLDER) => {
     onModelChanged: (cb: (model: string | null) => void): (() => void) => {
       modelListeners.add(cb)
       return () => modelListeners.delete(cb)
+    },
+    // Live-tail (#57): a signal in, a signal out. Never transcript bytes — the
+    // transcript still travels over loadTranscript.
+    watchSession: vi.fn<(id: string | null) => void>(),
+    onSessionChanged: (cb: (id: string) => void): (() => void) => {
+      sessionChangedListeners.add(cb)
+      return () => sessionChangedListeners.delete(cb)
     }
   }
   const emit = (e: EngineEvent): void => {
@@ -124,6 +132,11 @@ export const fakeChatApi = (folder = FOLDER) => {
       modelListeners.forEach((l) => l(model))
     })
   }
+  const emitSessionChanged = (id: string): void => {
+    act(() => {
+      sessionChangedListeners.forEach((l) => l(id))
+    })
+  }
   const waitForPermission = (toolUseId: string): Promise<PermissionDecision> =>
     broker.request({ toolUseId, signal: new AbortController().signal })
   return {
@@ -134,6 +147,7 @@ export const fakeChatApi = (folder = FOLDER) => {
     emitBackend,
     emitPermission,
     emitModel,
+    emitSessionChanged,
     waitForPermission
   }
 }

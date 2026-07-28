@@ -41,6 +41,8 @@ export interface WrapperApi {
   listModels: () => Promise<ModelInfo>
   setModel: (model: string | null) => void
   onModelChanged: (cb: (model: string | null) => void) => () => void
+  watchSession: (id: string | null) => void
+  onSessionChanged: (cb: (id: string) => void) => () => void
   setZoom: (level: number) => void
   sendPrompt: (payload: SendPayload) => void
   stopTurn: () => void

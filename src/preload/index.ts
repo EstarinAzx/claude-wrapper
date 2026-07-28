@@ -66,6 +66,17 @@ const api = {
       ipcRenderer.removeListener('model:changed', listener)
     }
   },
+  // Live-tail (#57): a signal out, a signal in. `null` stops watching. The
+  // transcript itself keeps travelling over loadTranscript — nothing about the
+  // payload of a session changes shape here.
+  watchSession: (id: string | null): void => ipcRenderer.send('session:watch', id),
+  onSessionChanged: (cb: (id: string) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, id: string): void => cb(id)
+    ipcRenderer.on('session:changed', listener)
+    return () => {
+      ipcRenderer.removeListener('session:changed', listener)
+    }
+  },
   setZoom: (level: number): void => ipcRenderer.send('zoom:set', level),
   sendPrompt: (payload: SendPayload): void => ipcRenderer.send('chat:send', payload),
   stopTurn: (): void => ipcRenderer.send('chat:stop'),

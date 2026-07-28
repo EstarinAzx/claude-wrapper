@@ -83,6 +83,25 @@ export const useChat = () => {
   const [liveAgents, setLiveAgents] = useState<LiveAgent[]>([])
   // Track the live assistant message id without stale closures on event handlers
   const assistantIdRef = useRef<string | null>(null)
+  // Live-tail (#57) eligibility: the session we are WATCHING, which is not the
+  // same thing as the session we have open. Adopting sets it; sending or
+  // starting a new chat clears it, because from then on we are driving and our
+  // own stream keeps the pane current — a reload would clobber it, and would
+  // swap live attachment thumbnails for replay chips.
+  const tailIdRef = useRef<string | null>(null)
+  const busyRef = useRef(false)
+  const messagesRef = useRef<ChatMessage[]>([])
+  // One reload in flight at a time, with a trailing re-run so the last write
+  // before quiet is never missed.
+  const reloadingRef = useRef(false)
+  const pendingReloadRef = useRef(false)
+
+  useEffect(() => {
+    busyRef.current = busy
+  }, [busy])
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
 
   useEffect(() => {
     const unsub = window.api.onChatEvent((e: EngineEvent) => {
@@ -217,6 +236,70 @@ export const useChat = () => {
     return unsub
   }, [])
 
+  // Re-read the watched session's transcript and replace the pane with it. The
+  // read is the SAME channel a reopen uses — no new parsing surface — so a
+  // tailed pane and a reopened one can never diverge.
+  const reload = useCallback(async (id: string) => {
+    if (reloadingRef.current) {
+      pendingReloadRef.current = true
+      return
+    }
+    reloadingRef.current = true
+    // What the pane holds as far as this loop is concerned. `messagesRef` is
+    // written by a passive effect, so between two iterations it still reports
+    // the PRE-reload pane — reading it in the emptiness guard below would let a
+    // transient [] wipe the transcript the previous iteration just applied.
+    let paneLength = messagesRef.current.length
+    try {
+      do {
+        pendingReloadRef.current = false
+        const transcript = await window.api.loadTranscript(id)
+        // Re-checked AFTER the await, not only before it: a send or a session
+        // change during the read makes this result stale, and applying it would
+        // clobber the live turn the user started meanwhile. Eligibility is the
+        // mutation-verified half — the busy half is the spec's third condition
+        // and is currently reachable only if a future path lets a turn start
+        // without clearing eligibility.
+        if (tailIdRef.current !== id || busyRef.current) break
+        // A tailed transcript never legitimately shrinks to nothing, and the
+        // read path answers [] for a transient failure too — so an empty result
+        // against a non-empty pane is a hiccup, not a cleared conversation.
+        if (transcript.length === 0 && paneLength > 0) continue
+        assistantIdRef.current = null
+        paneLength = transcript.length
+        setMessages(transcript.map(toChatMessage))
+      } while (pendingReloadRef.current)
+    } finally {
+      reloadingRef.current = false
+    }
+    // A signal that arrived while this loop was reading a session the user has
+    // since left belongs to the session they are on NOW. Dropping it would hold
+    // the new pane stale until its next write — and if that was the last write
+    // before quiet, forever.
+    if (pendingReloadRef.current) {
+      const current = tailIdRef.current
+      pendingReloadRef.current = false
+      if (current && !busyRef.current) void reload(current)
+    }
+  }, [])
+
+  // A change signal is only ever a signal: the id that changed. Subscribed on
+  // mount, for the lifetime of the pane.
+  useEffect(() => {
+    return window.api.onSessionChanged((id: string) => {
+      if (id !== tailIdRef.current || busyRef.current) return
+      void reload(id)
+    })
+  }, [reload])
+
+  // Stop tailing: eligibility first, then the watch itself. Order matters — a
+  // signal already in flight must find eligibility already gone.
+  const stopTail = useCallback(() => {
+    tailIdRef.current = null
+    pendingReloadRef.current = false
+    window.api.watchSession(null)
+  }, [])
+
   // "look at this" with an image and no words is a message, so attachments alone
   // are enough to send. The composer has already run them through the attachment
   // policy; this is the last stop before the IPC boundary re-checks them.
@@ -224,6 +307,8 @@ export const useChat = () => {
     (raw: string, attachments: Attachment[] = []) => {
       const text = raw.trim()
       if ((!text && attachments.length === 0) || busy) return
+      // From here on we are driving this session, not watching it.
+      stopTail()
       assistantIdRef.current = null
       const message: Extract<ChatMessage, { role: 'user' }> = { id: uid(), role: 'user', text }
       if (attachments.length) message.attachments = attachments
@@ -231,7 +316,7 @@ export const useChat = () => {
       setBusy(true)
       window.api.sendPrompt({ text, attachments })
     },
-    [busy]
+    [busy, stopTail]
   )
 
   const stop = useCallback(() => {
@@ -251,13 +336,26 @@ export const useChat = () => {
   // nulls the engine the transaction has just rebuilt and warmed, and it is
   // gated on the renderer's own `busy` — a second opinion that would silently
   // skip the reset main already said `ok` to.
+  //
+  // Adoption is also what makes a session tail-eligible (#57): we are looking
+  // at it, not driving it, which is exactly the case live-tail is for.
   const adoptSession = useCallback(async (id: string | null) => {
     const transcript = id === null ? [] : await window.api.loadTranscript(id)
     assistantIdRef.current = null
     setBusy(false)
+    busyRef.current = false
     setMessages(transcript.map(toChatMessage))
     setLiveAgents([])
     setActiveSessionId(id)
+    tailIdRef.current = id
+    pendingReloadRef.current = false
+    // ponytail: the watch is installed AFTER the read, so a write landing in
+    // that window is only picked up by the next one. Installing it first would
+    // close the gap but opens a worse race — a reload could resolve before this
+    // adoption's own (older) read and be overwritten by it. Fix by routing the
+    // adoption read through `reload` with an authoritative first pass if a
+    // missed write is ever actually observed.
+    window.api.watchSession(id)
   }, [])
 
   // Open a past session in the CURRENT project: replay its transcript
@@ -275,13 +373,14 @@ export const useChat = () => {
   // Start a fresh conversation: clear the pane and drop any resume target.
   const newChat = useCallback(() => {
     if (busy) return
+    stopTail()
     assistantIdRef.current = null
     setBusy(false)
     setMessages([])
     setLiveAgents([])
     setActiveSessionId(null)
     window.api.targetSession(null)
-  }, [busy])
+  }, [busy, stopTail])
 
   const respondToPermission = useCallback(
     (toolUseId: string, decision: PermissionDecision) => {

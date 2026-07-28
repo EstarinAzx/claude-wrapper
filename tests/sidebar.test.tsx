@@ -45,6 +45,8 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
     listModels: vi.fn().mockResolvedValue({ models: [], current: null }),
     setModel: vi.fn(),
     onModelChanged: vi.fn().mockReturnValue(() => {}),
+    watchSession: vi.fn(),
+    onSessionChanged: vi.fn().mockReturnValue(() => {}),
     setZoom: vi.fn(),
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),

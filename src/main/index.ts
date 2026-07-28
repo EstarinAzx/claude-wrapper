@@ -31,6 +31,7 @@ import { isTrustedRendererUrl } from './navigation'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
 import { resetSessionIndex, resolveResumeTarget } from './session-index'
+import { watchSession } from './session-watcher'
 import {
   switchWorkspace as runSwitchWorkspace,
   type SwitchRequest,
@@ -319,6 +320,20 @@ ipcMain.handle(
     return readSubagentTranscript(getSessionCwd(), String(sessionId), String(parentToolUseId))
   }
 )
+
+// Guarded write: watch one session's transcript for external writes, or `null`
+// to stop (#57). Only a signal crosses in either direction — the transcript
+// keeps travelling over `session:transcript`. The renderer decides whether a
+// signal means anything (eligibility, busy); main just reports the file moved.
+ipcMain.on('session:watch', (event, id: unknown) => {
+  if (!isTrustedIpc(event)) return
+  const sessionId = typeof id === 'string' && id ? id : null
+  const sender = event.sender
+  void watchSession(sessionId, (changed) => {
+    if (sender.isDestroyed()) return
+    sender.send('session:changed', changed)
+  })
+})
 
 ipcMain.on('chat:target', (event, id: unknown) => {
   if (!isTrustedIpc(event)) return
