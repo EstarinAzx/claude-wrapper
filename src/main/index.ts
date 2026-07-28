@@ -29,6 +29,7 @@ import {
   type SwitchRequest,
   type SwitchResult
 } from './switch-workspace'
+import type { FolderChoice } from '../shared/session-types'
 import { listSessions, readTranscript } from './session-store'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
 import type { PermissionDecision } from '../shared/engine-types'
@@ -172,6 +173,24 @@ ipcMain.handle('session:pick-folder', async (event) => {
   // cannot tell this ran.
   engine.warmUp()
   return filePaths[0]
+})
+
+// Choose a project folder and change NOTHING (#48). Deliberately a sibling of
+// `session:pick-folder` rather than a reuse of it: that handler chooses AND
+// performs the engine transition while touching no renderer state, which is
+// exactly the stale-pane bug the switch transaction exists to prevent. Here the
+// renderer decides what a chosen folder means and runs one atomic switch; a
+// cancel — including an untrusted or window-less call — reaches no mutation at
+// all, because there is none in this handler to reach.
+ipcMain.handle('session:choose-folder', async (event): Promise<FolderChoice> => {
+  if (!isTrustedIpc(event)) return { status: 'cancelled' }
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (!win) return { status: 'cancelled' }
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+    properties: ['openDirectory']
+  })
+  if (canceled || filePaths.length === 0) return { status: 'cancelled' }
+  return { status: 'selected', cwd: filePaths[0] }
 })
 
 // Live read of the CLI's command list for the Commands dock. No cache anywhere

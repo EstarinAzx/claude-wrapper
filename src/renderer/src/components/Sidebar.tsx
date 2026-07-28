@@ -46,6 +46,7 @@ const Sidebar = ({
   busy,
   onOpen,
   onSwitch,
+  onChooseFolder,
   onNewChat
 }: {
   cwd: string
@@ -55,6 +56,10 @@ const Sidebar = ({
   // A row outside the open workspace. Carries the project it belongs to —
   // absent for the "Unknown project" group, which main rejects as missing-cwd.
   onSwitch?: (id: string, cwd: string | null) => void
+  // Open a project that has no session to resume into (#48). Lives here, beside
+  // "New chat", because the sessions rail is where workspaces are already
+  // chosen; the titlebar pills are global preferences and stay untouched.
+  onChooseFolder?: () => void
   onNewChat?: () => void
 }) => {
   const [sessions, setSessions] = useState<SessionMeta[]>([])
@@ -156,6 +161,27 @@ const Sidebar = ({
                 stroke="currentColor"
                 strokeWidth="1.4"
                 strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          {/* Deliberately NOT gated on `busy`, unlike "New chat" beside it: a
+              switch is a main-process transaction that asks the engine itself
+              and answers `busy`. Disabling here would be a second busy source —
+              and would make the refusal it returns unreachable. Same reasoning
+              as a foreign session row (#47). */}
+          <button
+            type="button"
+            className="sidebar-toggle"
+            aria-label="Open project"
+            onClick={() => onChooseFolder?.()}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path
+                d="M2 11.3V3.5h3.7l1.2 1.5h5.1v6.3H2z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
                 strokeLinejoin="round"
               />
             </svg>

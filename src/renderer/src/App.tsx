@@ -88,7 +88,12 @@ const App = () => {
   // because a half-reset pane is exactly the "project B's sidebar beside
   // project A's conversation" failure this ticket exists to prevent. Backend
   // mode, permission mode and model are NOT workspace state and stay put.
-  const switchWorkspace = async (id: string, target: string | null): Promise<void> => {
+  //
+  // `id` is nullable (#48): a folder chosen from the picker has no session to
+  // resume into, so it opens the workspace with an empty pane. Widened rather
+  // than duplicated — a second reset would drift from this one the moment
+  // anything workspace-scoped is added to App state.
+  const switchWorkspace = async (id: string | null, target: string | null): Promise<void> => {
     setRefusal(null)
     const { status } = await window.api.switchWorkspace({ cwd: target, resumeId: id })
     if (status !== 'ok') {
@@ -103,6 +108,26 @@ const App = () => {
     setPendingInsert(null)
     setOpenSubagent(null)
     await adoptSession(id)
+  }
+
+  // Reach a project that has no session to resume into — a new or empty folder,
+  // which session discovery alone can never find. The chooser mutates nothing,
+  // so a cancel returns here having changed no engine, no cwd and no pane; only
+  // `selected` runs the transition, and it runs the SAME one a foreign row does.
+  //
+  // Never `window.api.pickFolder()`: that one changes main's cwd and rebuilds
+  // the engine while leaving every piece of renderer state stale — the exact bug
+  // the transaction was built to prevent, and the reason a chooser-only sibling
+  // exists at all.
+  //
+  // ponytail: re-choosing the folder already open leaves the composer's draft
+  // and tray alone (the `key={cwd}` remount needs cwd to actually change). Not
+  // worth a switch counter — nothing crosses projects in that case, which is the
+  // leak the reset is for.
+  const chooseWorkspace = async (): Promise<void> => {
+    const choice = await window.api.chooseFolder()
+    if (choice.status !== 'selected') return
+    await switchWorkspace(null, choice.cwd)
   }
 
   // Flip the backend: main tears down the engine + clears the resume target and
@@ -154,6 +179,7 @@ const App = () => {
               void openSession(id)
             }}
             onSwitch={switchWorkspace}
+            onChooseFolder={chooseWorkspace}
             onNewChat={() => {
               setRefusal(null)
               newChat()

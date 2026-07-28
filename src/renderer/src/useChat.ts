@@ -243,8 +243,16 @@ export const useChat = () => {
   // used after a workspace switch (#47), where main has already run the whole
   // transition and warmed a fresh engine on the target. Calling `targetSession`
   // here would close that engine and undo the warm-up.
-  const adoptSession = useCallback(async (id: string) => {
-    const transcript = await window.api.loadTranscript(id)
+  //
+  // `null` adopts NO session — an empty pane, still without an engine call. That
+  // is the folder-picker case (#48) and mirrors `SwitchRequest.resumeId: null`
+  // exactly, so a switch runs one code path whether or not it resumes anything.
+  // `newChat` is NOT that path: it sends `targetSession(null)`, which closes and
+  // nulls the engine the transaction has just rebuilt and warmed, and it is
+  // gated on the renderer's own `busy` — a second opinion that would silently
+  // skip the reset main already said `ok` to.
+  const adoptSession = useCallback(async (id: string | null) => {
+    const transcript = id === null ? [] : await window.api.loadTranscript(id)
     assistantIdRef.current = null
     setBusy(false)
     setMessages(transcript.map(toChatMessage))

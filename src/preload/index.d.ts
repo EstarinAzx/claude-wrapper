@@ -1,5 +1,6 @@
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
 import type {
+  FolderChoice,
   SessionMeta,
   SwitchRequest,
   SwitchResult,
@@ -17,6 +18,7 @@ export interface WrapperApi {
   toggleMaximize: () => void
   close: () => void
   pickFolder: () => Promise<string | null>
+  chooseFolder: () => Promise<FolderChoice>
   pickFiles: () => Promise<Candidate[]>
   listSessions: () => Promise<SessionMeta[]>
   loadTranscript: (id: string) => Promise<TranscriptMessage[]>

@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
 import type {
+  FolderChoice,
   SessionMeta,
   SwitchRequest,
   SwitchResult,
@@ -18,6 +19,7 @@ const api = {
   toggleMaximize: (): void => ipcRenderer.send('window:toggle-maximize'),
   close: (): void => ipcRenderer.send('window:close'),
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('session:pick-folder'),
+  chooseFolder: (): Promise<FolderChoice> => ipcRenderer.invoke('session:choose-folder'),
   pickFiles: (): Promise<Candidate[]> => ipcRenderer.invoke('attachments:pick'),
   listSessions: (): Promise<SessionMeta[]> => ipcRenderer.invoke('session:list'),
   loadTranscript: (id: string): Promise<TranscriptMessage[]> =>

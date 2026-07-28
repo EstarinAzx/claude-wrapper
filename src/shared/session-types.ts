@@ -32,6 +32,14 @@ export interface SwitchResult {
   status: SwitchStatus
 }
 
+// The folder chooser (#48). A chooser and NOTHING else: it opens the dialog and
+// reports what came back, mutating no engine, no cwd and no renderer state.
+// That is the whole point of its existing beside `session:pick-folder`, which
+// chooses AND tears the engine down — a cancel has to be a true no-op, and a
+// selection has to reach the renderer so the switch transaction (#46) can run
+// the transition as one atomic unit instead of two half-transitions.
+export type FolderChoice = { status: 'cancelled' } | { status: 'selected'; cwd: string }
+
 // A non-text block from a persisted user message, recorded so a reopened
 // session shows WHAT was attached without carrying the payload. The base64
 // data is deliberately not forwarded: one measured screenshot was 263 KB, so

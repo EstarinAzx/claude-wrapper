@@ -25,6 +25,7 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
     toggleMaximize: vi.fn(),
     close: vi.fn(),
     pickFolder: vi.fn().mockResolvedValue('D:\\projects\\demo'),
+    chooseFolder: vi.fn().mockResolvedValue({ status: 'cancelled' }),
     pickFiles: vi.fn().mockResolvedValue([]),
     listSessions,
     loadTranscript,

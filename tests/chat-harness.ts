@@ -7,7 +7,7 @@ import type { ModelInfo, ModelOption } from '../src/shared/model-types'
 import type { SendPayload } from '../src/shared/attachment-types'
 import type { Candidate } from '../src/shared/attachment-policy'
 import type { SlashCommandInfo } from '../src/shared/command-types'
-import type { SwitchRequest, SwitchResult } from '../src/shared/session-types'
+import type { FolderChoice, SwitchRequest, SwitchResult } from '../src/shared/session-types'
 
 const FAMILY_MODELS: ModelOption[] = [
   { id: 'opus', label: 'Opus', group: 'family' },
@@ -38,6 +38,11 @@ export const fakeChatApi = (folder = FOLDER) => {
     toggleMaximize: vi.fn(),
     close: vi.fn(),
     pickFolder: vi.fn<() => Promise<string | null>>().mockResolvedValue(folder),
+    // Defaults to cancelled: a test that means to choose a folder says so, and
+    // one that never touches the picker cannot accidentally move workspace.
+    chooseFolder: vi
+      .fn<() => Promise<FolderChoice>>()
+      .mockResolvedValue({ status: 'cancelled' }),
     pickFiles: vi.fn<() => Promise<Candidate[]>>().mockResolvedValue([]),
     listSessions: vi.fn().mockResolvedValue([]),
     loadTranscript: vi.fn().mockResolvedValue([]),
