@@ -11,48 +11,57 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## This leg landed
 
-**#45 — Global cross-project session list + filter**, on main as `63f12d5`,
-closed. `listSessions()` takes no arguments and passes **no `dir`**, so the SDK
-returns the whole store; `SessionMeta` gained `cwd?: string` (absent, not `''`).
-Grouping, filtering and the cap are a pure shared module,
-`src/shared/session-groups.ts`, in a fixed order: filter the complete loaded
-metadata → sort and group → render the newest **100 matches globally**. Rows
-outside the open workspace render but are `disabled`. `cwdKey`'s fold moved to
-`src/shared/cwd-key.ts` so main and renderer group by one rule. Suite **474 →
-504 across 40 files**, typecheck and build clean.
+**#46 — Main-process `switchWorkspace` transaction**, on main as `1bdadae`,
+closed. It merged **dormant**: no IPC channel, no preload entry, no renderer
+import — `grep -rn switchWorkspace src/ tests/` returns only the definition and
+its unit tests.
 
-Verified live against the real store, not only mocks: 495 sessions, 61 store
-directories, 9 groups in the first page, cap engaged at exactly **100**, 64 rows
-enabled / 36 inert, clicking a foreign row leaves the pane untouched, full-path
-filter → 1 group with 0 foreign rows, `Show more` → 200 rows. Five mutations
-run, each killing exactly its target test. Decision on record:
-[[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]].
+The transaction is `src/main/switch-workspace.ts`, a pure function over an
+injected `SwitchPorts`; `src/main/index.ts` exports the binding wired to the real
+engine, permission broker and cwd. The split is load-bearing: the electron entry
+cannot be imported under vitest, and the two things needing proof — the **order**
+of the success path and the **emptiness** of every rejection — are invisible to a
+test that only sees the returned status.
 
-## Next ticket: #46 — Main-process `switchWorkspace` transaction (dormant)
+- Precedence `busy → missing-cwd → not-found`, every predicate before the first
+  mutation, so a rejection leaves observable state byte-for-byte identical.
+- `resumeId: null` returns `ok`, clears any prior target and **never consults the
+  index** — the new-chat / empty-folder case #48 needs.
+- `ok` sequence: `closeEngine → cancelPermissions → setCwd → rebuildEngine →
+  setResume → warmUp`, resume written **after** the rebuild.
+- Busy comes from the engine itself: **`Engine.isBusy()`** is new
+  (`turnResolve !== null`, added to the shared `Engine` interface).
 
-Unblocked. #49 unblocked at the same time (it waited only on #45), but the queue
-order is #46 first and #47 needs it.
+Suite **504 → 517 across 41 files**, typecheck and build clean. Eight mutations
+run, each killing exactly its target test; inverting the precedence also fails
+typecheck. No GUI drive — this ticket has no rendering surface. Decision on
+record: [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]].
+
+## Next ticket: #47 — Wire the renderer to `switchWorkspace`
+
+Unblocked. #49 is unblocked too and is independent of the #47 → #48 line, but the
+queue order is #47 first.
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #46 | Main-process `switchWorkspace` transaction (dormant) | 0 — **next** |
-| #47 | Wire the renderer to `switchWorkspace` | 1 |
-| #48 | Folder picker reachable after first pick | 1 |
+| #47 | Wire the renderer to `switchWorkspace` | 0 — **next** |
+| #48 | Folder picker reachable after the first pick | 1 (waits on #47) |
 | #49 | Lazy title enrichment for slash-command-first sessions | 0 — also open |
 
-Order: `#46 → #47 → #48 → #49`. Blocked-ness is authoritative from
+Order: `#47 → #48 → #49`. Blocked-ness is authoritative from
 `gh api repos/<owner>/<repo>/issues/<n> --jq '.issue_dependencies_summary.blocked_by'`
 — `gh issue list --json` does **not** expose that field.
 
-**#46 context from this leg:** the front door is already built and typed.
-`resolveResumeTarget(id, cwd)` returns `{status:'ok',dir} | {status:'not-found'}
-| {status:'missing-cwd'}`, and #45 now renders all three cases distinctly, so
-#46 has a caller that already distinguishes them. #46's required coverage is the
-**ordered-call assertion** — the transaction's steps must be pinned in order,
-because a green suite passes while the order is wrong. Note #46 merges
-**dormant**: it lands unused and safe, and #47 wires it. Do not let #46 reach
-the renderer, and do not make #45's foreign rows selectable as part of it — that
-pairing is #47's whole job and doing it early is the bug the spec split to avoid.
+**#47 context from this leg:** the main-process half is done and waiting. Call
+the exported `switchWorkspace(req)`; it returns
+`{ status: 'ok' | 'busy' | 'not-found' | 'missing-cwd' }`, the same four cases
+#45 already renders distinctly. What #47 adds is the IPC channel + preload entry
+and making #45's inert foreign rows selectable — that pairing is #47's whole job.
+Do **not** re-derive "busy" in the renderer: the transaction already asks
+`Engine.isBusy()`, and a second opinion in the UI is the drift the single source
+was chosen to prevent. A new `window.api` channel means **all four** mock sites
+(`tests/chat-harness.ts` plus the inline mocks in `sidebar` / `session` / `shell`
+tests), and every IPC guarded with `isTrustedIpc`.
 
 ## Run it
 
@@ -70,16 +79,22 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
   contract the pin describes and says so by name (#42's single-line composer,
   #45's two cwd-scoped list tests). A pin that goes red because your change
   broke it still means your change is wrong.
-- **Do not wire cross-project selection until #46 and #47 are both in.** #45
-  renders those rows inert on purpose; selecting one early produces project B's
-  sidebar beside project A's conversation.
+- **#47 is the only ticket allowed to make cross-project rows live.** #46 is in
+  and dormant, #45 renders those rows inert on purpose. Selecting one before the
+  renderer reset exists produces project B's sidebar beside project A's
+  conversation.
+- **Do not add a second busy flag.** `Engine.isBusy()` is the source of truth
+  (`turnResolve !== null`) and `switchWorkspace` already consults it.
+- **Keep `switchWorkspace`'s validation ahead of its first mutation.** The
+  "rejection mutates nothing" pins are what stop a half-applied transition, and
+  moving a single teardown call above the checks turns 9 of 10 tests red.
 - **A session fixture with no `cwd` is a foreign row and is inert.** Any new UI
   test that clicks a session row must set `cwd: FOLDER` (exported from
   `tests/chat-harness.ts`). This bit `resume`, `switching` and `agents-dock`.
 - **Never re-derive a store path from `cwd`** — no `encodeCwd`, no
   case-insensitive variant, no decoding a directory name back into a cwd.
-  `cwdKey()` (now folded in `src/shared/cwd-key.ts`) is for comparison and
-  grouping only — never join it into a path.
+  `cwdKey()` (folded in `src/shared/cwd-key.ts`) is for comparison and grouping
+  only — never join it into a path.
 - **Do not rebuild the storage index inside `listSessions`.** #43's
   no-JSONL-read pin asserts no directory scan happens on the list path;
   freshness is `resetSessionIndex()` at the `session:list` handler plus a lazy
@@ -95,11 +110,11 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
 - **A green test can be green for the wrong reason.** #42's whitespace test
   asserted only "no popover" — which the *reverted* code also produces. Assert
   the mechanism (a fetch count, a read that must not happen, an option that must
-  be absent), not a symptom with more than one cause. #43's no-JSONL-read,
-  #44's names-only-build and #45's no-`dir` tests are the worked examples; all
-  three are mutation-verified.
+  be absent, a call ORDER), not a symptom with more than one cause. #43's
+  no-JSONL-read, #44's names-only-build, #45's no-`dir` and #46's ordered-call
+  tests are the worked examples; all four are mutation-verified.
 - **Required test coverage in the remaining tickets is not optional** — the
-  ordered-call assertion (#46) and the call-count assertion (#49).
+  call-count assertion (#49) is the last one outstanding.
 - **Vitest + `node:fs/promises`:** a module mock must also export `default`, or
   the suite file dies at import with `No "default" export is defined`. A mock
   now also needs `stat` — `session-index.ts`'s node io imports it.
@@ -113,6 +128,11 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
   already closed** — a pushed `Closes #N` auto-closes it first, so the
   breadcrumb vanishes with only a `!` warning. Keep `Closes #N` OUT of the
   commit, then `gh issue comment` → `gh issue close` → verify. Worked this leg.
+- **The Bash tool is not PowerShell.** A PowerShell here-string (`@'…'@`) in a
+  `git commit -m` there shatters into pathspec errors; use a heredoc
+  (`git commit -F - <<'EOF'`). Cost one retry this leg.
+- Resume ceiling + `sessionId()` accessor + native-store facts + Tailwind
+  `@theme` + engine legible-error pins — unchanged, see [[active-work]].
 - Full ledger in [[active-work]]. Headlines unchanged: plain-string engine pin
   and array-of-only-text parser pin are mutation-verified; replay never carries
   the payload; absent stays absent; `taskToParent` is the `local_bash` filter;
@@ -127,7 +147,7 @@ was removed 2026-07-28; restore procedure is at the bottom of that file.
 
 ## Baseline
 
-`npm run typecheck` clean, `npm run build` clean, **504 tests green across 40
+`npm run typecheck` clean, `npm run build` clean, **517 tests green across 41
 files**, verified 2026-07-28 immediately before this handoff.
 
 ## GUI check
@@ -147,18 +167,18 @@ the app's animations); measure in the DOM, never off screenshots; and never
 re-read an element after an action that may not have happened — inject a probe
 node instead.
 
-**GUI drive was run this leg and passed** (see the measurements above). A driver
-expectation of mine was wrong once and worth remembering: filtering by a partial
-project name legitimately keeps every project it is a substring of — six real
-directories on this machine contain `playground`. Only a full path can assert
-"exactly one group".
-
-**#46 is a main-process ticket with no rendering surface** and should not need a
-GUI drive; #47 and #48 will.
+**No GUI drive this leg** — #46 has no rendering surface, as the previous handoff
+predicted. **#47 and #48 both need one**, and `gui-45.mjs` is the right template
+to fork for #47: it already picks a workspace and enumerates the sessions rail,
+which is exactly the surface a cross-project switch changes. When asserting a
+switch, remember the prior leg's lesson — a partial project name legitimately
+matches every project it is a substring of (six real directories here contain
+`playground`); only a full path can assert "exactly one group".
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] ·
+- [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] ·
+  [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] ·
   [[2026-07-28-storage-location-is-an-index-not-an-encoding]] ·
   [[2026-07-28-session-metadata-is-the-sdks-job]]

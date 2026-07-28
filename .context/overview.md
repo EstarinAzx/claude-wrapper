@@ -14,6 +14,9 @@ tags: [context, overview]
 - `src/main/` — Electron main process (window creation, acrylic config, IPC handlers).
   `session-index.ts` owns store path resolution: session id → real project
   directory by enumeration. Nothing may derive a store path from `cwd`.
+  `switch-workspace.ts` owns the atomic workspace transition as a function over
+  injected ports (the entry module is untestable under vitest); `index.ts` holds
+  only the binding to the real engine, broker and cwd.
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
 - `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS)
 - `src/shared/` — types + pure modules both processes import. `session-groups.ts`
@@ -33,9 +36,9 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **spec #41,
-  Resume anything** — #46 next, #49 also unblocked, #47 + #48 behind them)
-- Tracker: open spec #41 (Resume anything, tickets #46–#49 open, #43 + #44 + #45
-  closed); #42 (multiline
+  Resume anything** — #47 next, #49 also unblocked, #48 behind #47)
+- Tracker: open spec #41 (Resume anything, tickets #47–#49 open, #43 + #44 + #45
+  + #46 closed); #42 (multiline
   composer) closed standalone; specs #25 (Agents surface), #26 (Attachments)
   and #36 (slash commands) delivered and closed with tickets #27–#40; closed
   specs #9 / #16 / #20 and the unlabelled umbrella #1 hold the history

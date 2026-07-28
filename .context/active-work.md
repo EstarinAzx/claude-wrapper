@@ -7,29 +7,28 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-28 by Opus 5 (relay leg 4, auto) — landed #45; 4 tickets left_
-_Baseline: typecheck clean, build clean, **504 tests green across 40 files**_
+_Last updated: 2026-07-28 by Opus 5 (relay leg 5, auto) — landed #46; 3 tickets left_
+_Baseline: typecheck clean, build clean, **517 tests green across 41 files**_
 
 ## Current focus
 
-**#45 — global session list: landed** on main as `63f12d5`. `listSessions()`
-drops `dir`, so the rail lists the **whole store**; the renderer groups by
-project, filters client-side and caps at 100 globally. Suite went 474 → 504.
+**#46 — `switchWorkspace` transaction: landed** on main as `1bdadae`, **dormant**.
+The transaction lives in `src/main/switch-workspace.ts` over injected ports;
+`src/main/index.ts` exports the binding to the real engine / broker / cwd.
+Nothing calls it. Suite went 504 → 517.
 
-**Next: #46 — Main-process `switchWorkspace` transaction (merges dormant).**
-#49 is unblocked too (it waited only on #45), but #46 is next in order and #47
-needs it.
+**Next: #47 — Wire the renderer to `switchWorkspace`.** This is the ticket that
+makes #45's inert foreign rows live. #49 is unblocked too and independent.
 
-Spec **#41 — Resume anything** is the remaining work, four tickets:
+Spec **#41 — Resume anything** is the remaining work, three tickets:
 
 | # | Job | blocked_by (live) |
 |---|---|---|
-| #46 | Main-process `switchWorkspace` transaction (dormant) | 0 — **next** |
-| #47 | Wire the renderer to `switchWorkspace` | 1 |
-| #48 | Folder picker reachable after first pick | 1 |
+| #47 | Wire the renderer to `switchWorkspace` | 0 — **next** |
+| #48 | Folder picker reachable after first pick | 1 (waits on #47) |
 | #49 | Lazy title enrichment for slash-command-first sessions | 0 — also open |
 
-Order: `#46 → #47 → #48 → #49`. Blocked-ness is authoritative
+Order: `#47 → #48 → #49`. Blocked-ness is authoritative
 from `gh api repos/<owner>/<repo>/issues/<n> --jq
 '.issue_dependencies_summary.blocked_by'` — `gh issue list --json` does **not**
 expose that field.
@@ -64,6 +63,32 @@ the SDK path kills the raw-markup title defect; 0 of 325 `customTitle` values
 diverge from `summary`, making a coalesce redundant; 490 sessions across 37
 cwds, 5 with no cwd at all; `encodeCwd` **misses 6 of 37 real store
 directories** from drive-letter case drift.
+
+## Facts established by #46 (don't re-derive)
+
+- **`switchWorkspace` is exported from `src/main/index.ts`, but its logic is in
+  `src/main/switch-workspace.ts`** as a pure function over an eight-method
+  `SwitchPorts`. The entry module cannot be imported under vitest, and the order
+  of the success path plus the emptiness of each rejection are exactly what needs
+  asserting. See
+  [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]].
+- **Precedence is `busy → missing-cwd → not-found`**, all predicates before the
+  first mutation. Inverting the last two also fails typecheck (`cwd` is still
+  `string | null` at that point) — the type system backs the ordering.
+- **`resumeId: null` returns `ok`, clears the prior target and never touches the
+  index.** It is the new-chat / empty-folder case, not an error.
+- **The `ok` sequence is `closeEngine → cancelPermissions → setCwd →
+  rebuildEngine → setResume → warmUp`**, resume written **after** the rebuild.
+- **`Engine.isBusy()` is new** (`turnResolve !== null`, added to the shared
+  `Engine` interface). Never add a second busy flag — this is the source of
+  truth `runTurn` already rejects a second turn on.
+- **It merged dormant and must stay that way until #47:** no IPC channel, no
+  preload entry, no renderer import. `grep -rn switchWorkspace src/ tests/`
+  returns only the definition and its unit tests.
+- **Eight mutations run, each killing exactly its target** (drop `warmUp`,
+  reorder `setResume`, reorder `setCwd`, drop the busy check, invert precedence,
+  consult the index on null, close before validating, stub `isBusy` false).
+- **No GUI drive** — the ticket has no rendering surface. #47 and #48 do.
 
 ## Facts established by #45 (don't re-derive)
 
@@ -194,6 +219,9 @@ there was no canonical one to start from.
 
 ## Decisions binding this work
 
+- [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] — #46's
+  ported transaction, the fixed precedence, the after-rebuild resume write, and
+  `Engine.isBusy()` as the single busy source #47 must call rather than re-derive.
 - [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] — #45's
   global list, the fixed filter/group/cap order, and the inert foreign row #47
   is the one allowed to wire up.
@@ -304,10 +332,11 @@ there was no canonical one to start from.
 
 ## Pick up here
 
-**#46 — Main-process `switchWorkspace` transaction (merges dormant).** Unblocked
-(#49 is too, but #46 is next in order and #47 needs it). Its front door is
-`resolveResumeTarget`, already built and typed. See [[pick-up]] for the queue and
-landmines.
+**#47 — Wire the renderer to `switchWorkspace`.** Unblocked (#49 is too and is
+independent). The main-process half is landed and dormant: call the exported
+`switchWorkspace(req)` and render its four statuses — #45 already distinguishes
+them. This is the ticket allowed to make #45's inert foreign rows selectable.
+See [[pick-up]] for the queue and landmines.
 
 ## Deferred (still no spec)
 
@@ -345,13 +374,16 @@ reasons worth keeping:
   case-insensitive variant of it, no decoding a directory name back into a cwd.
   Storage location is `resolveSessionDir`; `cwdKey()` is for comparison only.
 - **Required test coverage in the remaining tickets is not optional** — the
-  ordered-call assertion (#46) and the call-count assertion (#49) exist
-  precisely because a green suite passes while the requirement is unmet. #43's
-  no-JSONL-read assertion and #45's no-`dir` assertion are landed and
-  mutation-verified; they are the working examples of the pattern.
-- **Do not wire cross-project selection** until #46 *and* #47 are both in. #45
-  deliberately renders those rows inert; making them live early is the exact
-  bug the spec split them to avoid.
+  call-count assertion (#49) exists precisely because a green suite passes while
+  the requirement is unmet. #43's no-JSONL-read, #45's no-`dir` and #46's
+  ordered-call assertions are landed and mutation-verified; they are the working
+  examples of the pattern.
+- **#47 is the ticket that makes cross-project selection live.** #46 is in and
+  dormant; #45 renders those rows inert on purpose. Wiring them is #47's job and
+  belongs to no other ticket.
+- **Do not add a second busy flag.** `Engine.isBusy()` is the source of truth
+  and `switchWorkspace` already consults it — the renderer must not re-derive
+  "busy" from stream state and decide for itself.
 - **A session fixture with no `cwd` is a foreign row** and is inert. New UI
   tests that click a session row must set `cwd: FOLDER`.
 - **Never add a resize effect to `InputBar`** —
@@ -375,6 +407,9 @@ reasons worth keeping:
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] ·
+  [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] ·
+  [[2026-07-28-storage-location-is-an-index-not-an-encoding]]
 - [[2026-07-28-session-metadata-is-the-sdks-job]] ·
   [[2026-07-28-composer-height-is-css-not-state]] ·
   [[2026-07-27-slash-commands-are-a-dumb-pipe]]
