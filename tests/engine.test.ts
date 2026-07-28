@@ -1261,6 +1261,38 @@ describe('engine session id + resume', () => {
     expect(calls[0].options.resume).toBe('sess-prior')
   })
 
+  // #54. Warm-up emits hook messages that already carry a session_id, but the
+  // CLI has not created that session — resuming into it fails the turn with
+  // error_during_execution. The accessor must stay null so callers, which read
+  // non-null as "resume this", have nothing to resume into.
+  test('sessionId stays null through warm-up, even though warm-up messages carry one', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    engine.warmUp()
+    push({ type: 'system', subtype: 'hook_started', session_id: 'sess-warmup' })
+    push({ type: 'system', subtype: 'hook_response', session_id: 'sess-warmup' })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(engine.sessionId()).toBeNull()
+  })
+
+  // The other half of the contract: once a turn runs, the id IS reported, so
+  // the fix cannot be "never report one".
+  test('the first real turn makes the session id available again', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    engine.warmUp()
+    push({ type: 'system', subtype: 'hook_started', session_id: 'sess-warmup' })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(engine.sessionId()).toBeNull()
+
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init) // session_id 'sess-1'
+    push(success)
+    await turn
+    expect(engine.sessionId()).toBe('sess-1')
+  })
+
   test('a fresh turn passes no resume', async () => {
     const { fn, calls, push } = streamingStub()
     const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)

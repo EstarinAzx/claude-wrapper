@@ -358,8 +358,23 @@ export const createEngine = (
   }
 
   const handleMessage = (msg: SdkMessage): void => {
+    // A session id is only RESUMABLE once a turn has actually run (#54).
+    //
+    // Warm-up alone already produces messages carrying one — `hook_started`
+    // fires with a `session_id` before any user message exists — but the CLI
+    // has not created that session yet. Nothing is written for it, and
+    // resuming into it fails the turn outright with `error_during_execution`
+    // (verified against the real CLI, and the id is absent from the store).
+    //
+    // Reporting it is worse than reporting nothing, because every caller of
+    // sessionId() reads a non-null value as "resume this": picking a model or
+    // a permission mode before the first send rebuilt the engine onto a
+    // session that could never be resumed, and broke the send.
+    //
+    // `?? pendingResume` at those call sites covers the case this excludes —
+    // an engine warmed WITH a resume target still has that id to fall back on.
     const sid = (msg as { session_id?: unknown }).session_id
-    if (typeof sid === 'string') currentSessionId = sid
+    if (turnEverRun && typeof sid === 'string') currentSessionId = sid
 
     // Subagent output (Task tool) arrives tagged with parent_tool_use_id. Bucket
     // it into a per-agent presence event and DROP it from the main transcript —

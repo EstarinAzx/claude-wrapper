@@ -70,6 +70,11 @@ export interface Engine {
     resume?: string
   ): Promise<void>
   interrupt(): void
+  // The session to resume, or null when there is nothing resumable yet.
+  // Deliberately stays null through warm-up (#54): warm-up messages carry a
+  // session_id for a session the CLI has not created, and resuming into it
+  // fails the turn. Callers treat non-null as "resume this", so an id that
+  // cannot be resumed must not be reported.
   sessionId(): string | null
   // True exactly while a turn is in flight. The workspace transaction's busy
   // check reads this instead of tracking a flag of its own — one source of
