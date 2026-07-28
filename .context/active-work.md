@@ -7,82 +7,93 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-29 by Fable 5 (relay ticket-loop leg 1) — #56 delivered and closed_
-_At commit: `24b6e1d` (gui-55 driver on main; 2 commits ahead of origin before this `.context` commit)_
-_Baseline: typecheck clean, build clean, **614 tests green across 48 files** (re-verified at the #56 merge gate — the driver adds no compiled code)_
+_Last updated: 2026-07-29 by Fable 5 (relay ticket-loop leg 2) — #57 delivered, spec #55 closed_
+_At commit: `dc87844` (live-tail core on main; ahead of origin before this `.context` commit)_
+_Baseline: typecheck clean, build clean, **637 tests green across 50 files** (was 614/48)_
 
 ## Current focus
 
-**Live-tail external sessions — spec #55. #56 is done; #57 is the frontier.**
+**None — the `ready-for-agent` queue is empty.**
 
-#56 landed `.claude/skills/run-desktop/gui-55.mjs` and was closed with its red
-run as the breadcrumb: against the current build the pane stays static while
-the session file grows, with **zero main-side IPC after the append** — the
-defect is recorded, so gui-55 flipping green is #57's acceptance evidence.
-Design decisions remain fixed in
-[[2026-07-29-live-tail-is-a-signal-not-a-stream]] — watch the file, signal the
-renderer, re-run the existing load path; tail only what you watch, never what
-you drive.
+Spec #55 (live-tail external sessions) is **delivered and closed**, with both
+its tickets closed: #56 (the gui-55 driver, seen red first) and #57 (the core).
+`node .claude/skills/run-desktop/gui-55.mjs` now prints `PASS` unchanged —
+pane 2 → 3 messages after an external append, `session:changed` observed on the
+main side. The red run is on record in #56, so the green means something.
 
 ## State
 
-- **In flight:** nothing — #56's branch is squash-merged and deleted.
-- **Queue (`ready-for-agent`):**
-  - **#57** — live-tail core. Its only blocker (#56) is closed → **unblocked,
-    the frontier.** Implementation decisions fixed in #55; acceptance criteria
-    pin the three gates (signal-while-busy, signal-after-send,
-    empty-result-kept) as tests.
+- **In flight:** nothing — #57's branch is squash-merged and deleted.
+- **Queue (`ready-for-agent`):** **empty.**
 - **Blocked:** nothing.
+- **Open:** only the unlabelled umbrella **#1**.
 
 ## Pick up here
 
-**Work the frontier: #57.** `gh issue view 57 --comments`, plus the closing
-comment on #56 for the driver's red-run evidence. Build per spec #55 — do not
-re-decide. When it lands, `node .claude/skills/run-desktop/gui-55.mjs` must
-flip to PASS unchanged; that run is the acceptance eyeball.
-
-Before starting: read [[pick-up]] for operational landmines, and
-`docs/agents/issue-tracker.md` + `docs/agents/triage-labels.md` for tracker
-conventions.
+**Nothing is queued.** The next session needs a human to choose the next piece
+of work — the deferred list at the bottom of this file is the menu, and
+`/preset init` or `to-spec` → `to-tickets` is the road from an idea to a queue.
+Nothing is pushed: `git log origin/main..main` is the real ahead-count and
+push is opt-in (`/preset ship`).
 
 ## Recent context
 
-- **This leg (2026-07-29, relay ticket-loop leg 1):** built gui-55, watched it
-  fail for the right reason, merged `24b6e1d`, closed #56. The driver seeds a
-  terminal-shaped session (`entrypoint: "cli"`, cwd = temp workspace) straight
-  into the native store — verified listable via the SDK's
-  `listSessions({includeProgrammatic: false})` — then adopts it via the sidebar
-  row. No CLI turn, no tokens; fully deterministic.
-- Earlier on 2026-07-29: spec #55 + tickets #56/#57 published (tracker-only
-  session).
+- **This leg (2026-07-29, relay ticket-loop leg 2):** built live-tail core,
+  merged `dc87844`, closed #57 and then spec #55. New surfaces:
+  `src/main/session-watcher.ts` (one watcher, injected `WatchIo` seam,
+  `resetSessionWatcher()`), the `session:watch` / `session:changed` channel pair,
+  and the renderer's eligibility + single-flight reload in `useChat`.
+  A review pass caught three real defects before merge, each now pinned by a
+  test that dies without its fix (see Landmines).
+- Earlier on 2026-07-29 (leg 1): #56, the gui-55 driver, seen red against the
+  featureless build.
 - 2026-07-28 landed #52/#53/#54 + the host-CLI switch (`d814c03`).
 - The store had grown to **499 sessions** at last count.
 
 ## Open questions
 
-None blocking. One deliberate deferral inside #55's scope: incremental byte
-tailing is the upgrade path if wholesale reload visibly flickers — do not start
-there, and do not re-litigate polling.
+None blocking.
 
 ## Landmines (carried forward)
 
+- **#57's watcher is epoch-fenced, and the fence is the whole safety argument.**
+  Every request bumps `epoch`; a directory lookup that resolves after a newer
+  request must not install, and an fs event queued before a teardown must not
+  signal after it. Both are pinned. A `handle !== null` check is NOT equivalent
+  and does not catch either case.
+- **`fs.watch` throws SYNCHRONOUSLY** on ENOENT/EPERM, and the directory it is
+  handed comes from a *cached* index — so a directory deleted since the last
+  refresh reaches a live `fs.watch` call. main calls the watcher as a bare
+  `void`, so an escaping rejection kills the main process. The construction is
+  wrapped; never unwrap it.
+- **A reload's staleness re-check must not orphan the queued re-run.** A signal
+  that arrives while the loop is reading a session the user has since left
+  belongs to the session they are on *now*; dropping it holds the new pane
+  stale until its next write, and forever if that was the last write before
+  quiet — which is exactly the bug #57 exists to fix.
+- **Never read `messagesRef` inside the reload loop.** It is written by a
+  passive effect, so between two iterations it still reports the pre-reload
+  pane and a transient `[]` wipes what the previous iteration just applied.
+  Compare against what the loop itself applied (`paneLength`).
+- **Live-tail is for a session you are WATCHING, never one you are DRIVING.**
+  Adopt sets eligibility; send and new-chat clear it. The eligibility clear on
+  send is mutation-verified (removing it kills two tests). The busy condition is
+  the spec's third gate and is currently redundant with eligibility — keep it,
+  but do not mistake it for the mechanism.
 - **Pins are mutation-verified. Never "fix" a red pin by editing its
   expectation.** The one legitimate retirement is when the *ticket* reverses the
   contract the pin describes and says so by name (#42's single-line composer,
-  #45's two cwd-scoped list tests, #47's foreign-row pin — rewritten into a
-  routing pin, not deleted). That allowance is spent; any other red pin means the
-  change is wrong.
+  #45's two cwd-scoped list tests, #47's foreign-row pin). That allowance is
+  spent; any other red pin means the change is wrong.
 - **A green test can be green for the wrong reason.** Assert the mechanism — a
   fetch count, a read that must not happen, an option that must be absent, a call
-  ORDER — not a symptom with more than one cause. #43's no-JSONL-read, #44's
-  names-only-build, #45's no-`dir`, #46's ordered-call, #47's never-`targetSession`,
-  #48's never-`pickFolder` and #49's read-count are the worked examples, all
-  mutation-verified. Corollary from #54's verification: **if a mutation kills
-  nothing, the code you mutated may not be what makes the test pass.**
+  ORDER — not a symptom with more than one cause. Corollary, re-confirmed twice
+  this leg: **if a mutation kills nothing, the code you mutated may not be what
+  makes the test pass.** #57's busy gate is the worked example — its test passes
+  via the eligibility clear, not via the busy check.
 - **A session id is only resumable once a turn has run** (#54). `sessionId()`
   stays null through warm-up on purpose: `hook_started` carries an id for a
-  session the CLI has not created, and resuming into it fails the turn. Every
-  caller reads non-null as "resume this", so never widen that gate back out.
+  session the CLI has not created, and resuming into it fails the turn.
 - **Never re-derive a store path from `cwd`.** No `encodeCwd`, no
   case-insensitive variant, no decoding a directory name back into a cwd.
   Location is `resolveSessionDir`; `cwdKey()` is comparison and grouping only.
@@ -92,7 +103,8 @@ there, and do not re-litigate polling.
 - **Never clear the pane with `newChat()` on a switch path** — it sends
   `targetSession(null)`, closing the engine the transaction just warmed, and its
   `busy` gate can skip a reset main already approved. Use `adoptSession(id)`,
-  with `null` meaning "no session, no engine call".
+  with `null` meaning "no session, no engine call". `adoptSession` is also what
+  arms live-tail, so a path that bypasses it silently stops tailing.
 - **Do not add a second busy flag,** and do not disable a foreign row or the
   "Open project" affordance while busy. `Engine.isBusy()` is the one source;
   disabling makes its refusal unreachable.
@@ -120,74 +132,58 @@ there, and do not re-litigate polling.
   `fable[1m]`, whose brackets are literal. Output streams only.
 - **#51: never scope a scrollbar rule to a component**, and never add
   `scrollbar-width` / `scrollbar-color` — the standard properties suppress the
-  `::-webkit-` pseudo-elements and would silently discard the global rule. A
-  shared class is not an improvement: it still has to be remembered at each new
-  container, which is exactly how four scrollables shipped the default bar.
+  `::-webkit-` pseudo-elements and would silently discard the global rule.
   `::-webkit-scrollbar-button { display: none }` and a transparent `-corner` are
   load-bearing, not tidiness.
 - **Never write a literal ESC byte or a `\u` escape into source.** `CSI` uses
   `String.fromCharCode(27)`; the raw character is invisible in an editor and the
-  escape was repeatedly normalized into the raw byte in transit. Both
-  `transcript.ts` and `transcript.test.ts` contain zero raw ESC bytes — keep it
-  that way and it stays checkable with a single grep.
-- **A session fixture with no `cwd` is a foreign row.** Selectable since #47
-  (answered `missing-cwd`), but not in the current group — a UI test wanting an
+  escape was repeatedly normalized into the raw byte in transit.
+- **A session fixture with no `cwd` is a foreign row.** A UI test wanting an
   in-project row must set `cwd: FOLDER` (exported from `tests/chat-harness.ts`).
 - **New `window.api` channel → ALL FOUR mock sites** (`tests/chat-harness.ts` plus
   inline mocks in `sidebar` / `session` / `shell` tests), and guard every IPC with
-  `isTrustedIpc`. #57 adds two members (`watchSession`, `onSessionChanged`) —
-  `onSessionChanged` is subscribed on mount, so every mock site needs it or the
-  suite dies at render.
-- **A module-level cache needs a test reset.** `resetSessionIndex()` and
-  `resetEnrichedTitles()` both exist for that reason; #57's watcher module state
-  is the next one that will need its own.
+  `isTrustedIpc`. #57's `onSessionChanged` is subscribed on mount, which is why a
+  missing mock member kills a suite at render rather than in its own tests.
+- **A module-level cache needs a test reset.** `resetSessionIndex()`,
+  `resetEnrichedTitles()` and now `resetSessionWatcher()` all exist for that
+  reason — and the watcher's reset must bump the epoch, not only close the handle.
 - **Vitest + `node:fs/promises`:** a module mock must also export `default`, or
   the file dies at import with `No "default" export is defined`. It also needs
   `stat` now.
 - **Never add a resize effect to `InputBar`** — height is CSS
   (`field-sizing: content`), deliberately not React state.
 - **Never hardcode a model name anywhere.** The list is `supportedModels()`,
-  live, uncached. A hand-maintained mirror cannot notice the CLI's list moving,
-  and it didn't: four invented family tokens (one of which, `fable`, the CLI
-  never advertised) stood while the CLI offered fourteen rows. Two tests in
-  `tests/model-mode.test.ts` pin the **absence** of a list-building surface,
-  because a re-added constant fails no behavioural test — it is just quietly
-  wrong again.
+  live, uncached. Two tests in `tests/model-mode.test.ts` pin the **absence** of
+  a list-building surface, because a re-added constant fails no behavioural test.
 - **Never merge `picked` and `reported` in `model-mode.ts`.** A pick is the
   row's value (`opus[1m]`); a report is a resolved id (`claude-opus-5`). Only
   `picked` may reach `options.model` — a resolved id there is the #23 hang, and
   it surfaces on the *next engine rebuild*, far from the assignment.
-  `resolvedModel` on a row is for labelling only.
 - **A model report is delivered by injected callback, not an `EngineEvent`.**
   `emit()` only reaches `activeOnEvent`, which is null outside a turn, and the
-  `init` carrying the first model arrives during `warmUp()`. As an event it
-  would be dropped in exactly the case it exists for.
+  `init` carrying the first model arrives during `warmUp()`.
 - **Wisp `options.model`: the CLI shadows the FAMILIES, the bridge resolves the
-  ALIASES.** This corrects the note carried since #23. The CLI expands `opus`
-  locally *before* the request leaves, so Wisp never sees the token — its
-  `opus → claude-opus-5` mapping is not consulted. An id the CLI does not know
-  (`claude-wisp-grok`) passes through and the bridge does resolve it. **A stale
-  CLI alias table cannot be fixed by rebinding a Wisp family — only by upgrading
-  the CLI.** Never run bare `wisp snapshot` — always name the family.
+  ALIASES.** The CLI expands `opus` locally *before* the request leaves, so Wisp
+  never sees the token. **A stale CLI alias table cannot be fixed by rebinding a
+  Wisp family — only by upgrading the CLI.** Never run bare `wisp snapshot` —
+  always name the family.
 - **The app runs the HOST `claude` when PATH has one** (`cli-path.ts`, resolved
   once at boot, plain PATH walk, no shims, no `child_process`), falling back to
-  the CLI bundled in the npm package. Consequences: a host Claude Code update
-  can break the app with no code change here; the SDK package's `manifest.json`
-  describes only the FALLBACK; reproducing a user's bug means matching their
-  CLI version, not the lockfile's.
+  the CLI bundled in the npm package. A host Claude Code update can therefore
+  break the app with no code change here.
 - **`gh issue close --comment` silently drops the comment if the issue is already
   closed** — a pushed `Closes #N` auto-closes it first. Keep `Closes #N` out of
-  the commit, then `gh issue comment` → `gh issue close` → verify.
+  the commit, then `gh issue comment` → `gh issue close` → verify. **`gh issue
+  list` also lags a close by a few seconds** — re-query before believing a queue
+  is non-empty.
 - **The Bash tool is not PowerShell** — heredoc (`git commit -F - <<'EOF'`), never
   a PowerShell here-string. **Source files are CRLF:** a `perl -0pi` mutation
   spanning a line break needs `\r?\n`, and a pattern containing `/` breaks the
   `s///` delimiter outright — `diff` against a backup before trusting a survivor.
-- **A mutation harness must assert its anchor matched exactly once.** #50's run
-  first reported four survivors; the cause was `\n` anchors against CRLF source
-  matching nothing. A bad anchor and an uncaught mutation look identical in the
-  output, so "no test caught it" is not believable until the anchor is proven.
-- Native-store facts, the resume ceiling, `sessionId()` accessor, Tailwind
-  `@theme` tokens and the engine's legible-error pins are unchanged — [[pick-up]].
+  A `for f in …; do … "$f"; done` loop inside a double-quoted Bash-tool command
+  loses its `$f`; write the edits out separately instead.
+- **A mutation harness must assert its anchor matched exactly once.** A bad
+  anchor and an uncaught mutation look identical in the output.
 
 ## Known issues / not-our-bug
 
@@ -203,21 +199,23 @@ there, and do not re-litigate polling.
   produce identical DOM; pass any path as an **argument** to `app.evaluate`, never
   inside a string literal; and stub `dialog.showOpenDialog` in main before any
   click that opens one, or the run blocks forever on a real native dialog.
-- **New driver trick (gui-55):** a terminal-shaped session can be seeded straight
+- **Driver trick (gui-55):** a terminal-shaped session can be seeded straight
   into the native store and the SDK lists it — no CLI turn needed to put a real
   adoptable row in the rail. Clean up the seeded store dir on every exit path.
 
 ## Deferred (still no spec)
 
-Context-pressure meter
-(`Query.getContextUsage()` exists but a naïve percentage lies — it must separate
-the raw window from the auto-compaction threshold), typed failed-turn recovery
-(`rewindFiles()` needs `enableFileCheckpointing`, which our options do not set),
-full-text transcript search, session delete/archive lifecycle, drag-and-drop,
-replay thumbnails, N-concurrent engines, fork-on-resume, busy-switch detach
-(decided against — block is the behaviour), folding `Welcome`'s last
-`pickFolder` caller onto the chooser, agent archive / control / map pan-zoom,
-and the smaller leftovers from #31–#36.
+Live-tail's **incremental byte tailing** (the documented upgrade path if
+wholesale reload ever visibly flickers) and the **watch-installed-after-the-read
+gap** (a `ponytail:` comment at the call site names the fix). Plus, unchanged:
+context-pressure meter (`Query.getContextUsage()` exists but a naïve percentage
+lies — it must separate the raw window from the auto-compaction threshold),
+typed failed-turn recovery (`rewindFiles()` needs `enableFileCheckpointing`,
+which our options do not set), full-text transcript search, session
+delete/archive lifecycle, drag-and-drop, replay thumbnails, N-concurrent
+engines, fork-on-resume, busy-switch detach (decided against — block is the
+behaviour), folding `Welcome`'s last `pickFolder` caller onto the chooser, agent
+archive / control / map pan-zoom, and the smaller leftovers from #31–#36.
 
 ## Related
 

@@ -55,6 +55,14 @@ Once you send, your own stream keeps you current, so nothing is lost.
 - **Empty reload result with a non-empty pane is skipped**: the lenient read
   path answers `[]` for transient failure too, and a tailed transcript never
   legitimately shrinks to nothing. Do not "fix" this into a blank pane.
+- **Installing the watch BEFORE the adoption read** (closed while landing #57):
+  it would shrink the window in which a write is missed, but it opens a worse
+  race — a signal arriving during adoption starts a reload that can resolve
+  *before* the adoption's own, older read, which then overwrites it and walks
+  the pane backwards. The gap stays, marked `ponytail:` at the call site. The
+  real fix, if a missed write is ever observed, is to route the adoption read
+  through `reload` itself with an authoritative first pass — not to reorder
+  two independent reads.
 
 ## Sequencing
 

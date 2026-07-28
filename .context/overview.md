@@ -35,6 +35,10 @@ tags: [context, overview]
   directory fold (comparison only, never a path); `session-titles.ts` holds the
   enrichment predicate and the measured "substantive prompt" rule, with the
   renderer's promise cache beside it in `src/renderer/src/enriched-titles.ts`.
+  `session-watcher.ts` owns live-tail's main half: ONE directory-level watch at
+  a time, filtered to `<id>.jsonl`, debounced, epoch-fenced, behind an injected
+  `WatchIo`. It emits a signal and nothing else — transcripts never travel
+  through it.
 - `src/main/cli-path.ts` — WHICH Claude Code binary runs. The host `claude` on
   PATH when there is one, else the SDK's bundled copy. A PATH walk, never a
   `which` shell-out.
@@ -51,11 +55,12 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#57**,
-  live-tail core — spec #55, driver #56 closed red-verified)
-- Tracker: **#52 (model pill follows the CLI), #53 (CLI-sourced model list),
-  #54 (no resume before the first turn), #50, #51 and #56 (gui-55 driver) all
-  closed**; spec #41 (Resume anything)
+- `.context/pick-up.md` — current frontier + landmines (currently: **queue
+  empty** — spec #55 delivered and closed with #56/#57)
+- Tracker: **spec #55 (live-tail) delivered and closed with #56 (gui-55 driver,
+  red-verified) and #57 (live-tail core)**; **#52 (model pill follows the CLI),
+  #53 (CLI-sourced model list), #54 (no resume before the first turn), #50 and
+  #51 closed**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
