@@ -1,103 +1,67 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-07-28
+updated: 2026-07-29
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-07-28 by Opus 5 — landed #52, #53 and #54; queue empty_
-_At commit: `d78eee3`_
-_Baseline: typecheck clean, build clean, **614 tests green across 48 files**_
+_Last updated: 2026-07-29 by Fable 5 — spec #55 + tickets #56/#57 published; no code this session_
+_At commit: `d78eee3` (unchanged — tracker-only session)_
+_Baseline: typecheck clean, build clean, **614 tests green across 48 files** (as verified 2026-07-28; nothing has touched code since)_
 
 ## Current focus
 
-**None — the `ready-for-agent` queue is empty.** Spec #41 "Resume anything" was
-delivered and closed on 2026-07-28 (#43 `ea7baaf` · #44 `d44c2a2` · #45 `63f12d5`
-· #46 `1bdadae` · #47 `8c9cbb7` · #48 `08974d5` · #49 `f71efbf`; #42 `5b66dd9`
-standalone). Four follow-ups then landed off the back of it: **#50 `c92cb48`**
-cleared the last item its close-out named, and **#51 `08d78a2`**, **#52
-`144646c`** and **#53 `cde78c4`** all came from owner bug reports.
+**Live-tail external sessions — spec #55, in the queue as #56 → #57.**
 
-**#54 is closed** — found while verifying #52, filed, then fixed in the same
-session (`d78eee3`).
+Owner report: a terminal-driven session viewed simultaneously in the wrapper
+does not progress; the pane is a snapshot from open time. The design session ran
+brainstorm → approach choice → spec → tickets in one sitting. Decision on
+record: [[2026-07-29-live-tail-is-a-signal-not-a-stream]] — watch the file,
+signal the renderer, re-run the existing load path; tail only what you watch,
+never what you drive.
 
 ## State
 
-- **In flight:** nothing.
-- **Done this session (#52 / #53):**
-  - **SDK bumped 0.3.217 → 0.3.220** (`241f1ec`). The app runs the CLI **bundled
-    in the npm package**, not the host `claude` — it was 2.1.217. Two of the
-    CLI's fourteen model rows moved and twelve were byte-identical: `default`
-    and `opus[1m]` both went `claude-opus-4-8[1m]` → `claude-opus-5[1m]`. That
-    was the entire cause of "opus gives the old opus"; no app change was
-    involved.
-  - **#53** — the picker list is now `supportedModels()`, read live
-    (`cde78c4`). Deleted `FAMILIES`, `parseAliases`, the `wisp routing --json`
-    shell-out (**the app's only `child_process` use**) and `ModelOption.group`.
-  - **#52** — the pill follows the model the CLI reports, from `init` and each
-    assistant message (`144646c`). `picked` and `reported` are separate fields;
-    only `picked` becomes `options.model`.
-  - **Label follow-up** (`c2a3ec3`) — `modelLabel()` maps a reported resolved id
-    back to its row, so the pill says "Haiku" and not
-    `claude-haiku-4-5-20251001`. Caught by the GUI check, caused by the two
-    commits before it.
-  - **Host CLI** (`d814c03`) — `pathToClaudeCodeExecutable` points at the host
-    `claude` when PATH has one, so the lockfile no longer decides which Claude
-    Code the user talks to; no host install falls back to the bundled binary.
-    Owner's call, accepting that a host CLI update can now break the app with
-    no code change. Byte-identical to the bundled one today (same sha256).
-  - **#54** (`d78eee3`) — `sessionId()` no longer reports an id before a turn
-    has run. Warm-up's `hook_started` carries one for a session the CLI has not
-    created; resuming into it errored the turn, which is what broke picking a
-    model or permission mode before the first send. Both call sites fixed by
-    the one gate; `gui-54.mjs` covers each and was proven to fail without it.
-  - Decision: [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]].
-- **Done earlier this session:**
-  - **#50** — `sanitizeUserText` replaces `unwrapCommandInvocation` in
-    `src/main/transcript.ts`. One classifier over eight tags, dispatching on the
-    **leading tag of the trimmed message**, returning display text or `null` to
-    drop. Nine mutations, each killed. Real-store sweep after: **7 of 2972**
-    user messages still contain the markup, all prose quoting it, **0** leading
-    with a tag, **0** with ANSI — down from 1258 raw.
-  - **#51** — four component-scoped `::-webkit-scrollbar` blocks in `styles.css`
-    replaced by **one global rule**. The reported model-menu bar was four
-    scrollables; the four existing copies had already drifted apart. Pinned on
-    the mechanism (no scoped selector may exist), four mutations each killed,
-    measured live at **10px** gutter versus a ~15-17px Windows default.
-    `DESIGN.md` corrected — it described this as "the chat scrollbar", which is
-    what licensed the per-component implementation.
-- **Blocked:** nothing.
+- **In flight:** nothing — no code written this session.
+- **Queue (`ready-for-agent`):**
+  - **#56** — gui-55 driver proving the pane does not follow the file. No
+    blockers, **the frontier**. Must be seen red against the current build
+    before #57 lands (gui-54's lesson, now an ordering).
+  - **#57** — live-tail core. Blocked by #56 (native dependency edge set).
+    Implementation decisions fixed in #55; acceptance criteria pin the three
+    gates (busy, post-send, empty-result) and the mock-site/trusted-IPC/test-
+    reset landmines.
+- **Blocked:** #57, by design, until #56 is red-verified and closed.
 
 ## Pick up here
 
-**No active work — pick a new task.** The only open tracker item is the
-unlabelled umbrella spec #1. Both candidates that had live sightings are now
-closed (#50, #51), so the next effort is a genuine choice from *Deferred* below
-rather than a queued leftover.
+**Work the frontier: #56.** `gh issue view 56 --comments`, then build the
+driver per the house conventions (see GUI-driver traps below and in
+[[pick-up]]). After it fails for the right reason, close it with the failure
+output as the breadcrumb and move to #57.
 
-Before starting anything: read [[pick-up]] for the operational landmines, and
+Before starting: read [[pick-up]] for operational landmines, and
 `docs/agents/issue-tracker.md` + `docs/agents/triage-labels.md` for tracker
 conventions.
 
 ## Recent context
 
-- The relay chain (`/relay N=1 read and follow .claude/relay-leg.md`) drained the
-  whole spec unattended, one ticket per leg, zero human touches. The Grok-grunt
-  delegation layer was **removed** from the body on 2026-07-28 — restore
-  procedure is at the bottom of `.claude/relay-leg.md`.
-- **This file was slimmed this session.** The per-ticket "facts established by
-  #NN" narrative it had accumulated is fully captured in the `decisions/` entries
-  and the tickets' close comments; what remains here is current state plus the
-  durable traps. If it grows back into a ledger, the right home for the traps is
-  a folded `gotchas/` category, not this file.
-- The store has grown to **499 sessions**; #49's live drive measured 100 rows
-  rendered, 8 qualifying, 8 reads, 491 sessions untouched.
+- **This session (2026-07-29) produced tracker artifacts only:** spec #55,
+  tickets #56/#57, this decision entry. Working tree untouched; `main` still at
+  `d78eee3`, level with `origin/main`.
+- Previous session (2026-07-28) landed #52/#53/#54 + the host-CLI switch
+  (`d814c03`) — the app now runs the host `claude` when PATH has one, bundled
+  CLI otherwise. Byte-identical today; that no-op equivalence will not survive
+  the next host update.
+- The store had grown to **499 sessions** at last count.
 
 ## Open questions
 
-None blocking.
+None blocking. One deliberate deferral inside #55's scope: incremental byte
+tailing is the upgrade path if wholesale reload visibly flickers — do not start
+there, and do not re-litigate polling.
 
 ## Landmines (carried forward)
 
@@ -112,7 +76,8 @@ None blocking.
   ORDER — not a symptom with more than one cause. #43's no-JSONL-read, #44's
   names-only-build, #45's no-`dir`, #46's ordered-call, #47's never-`targetSession`,
   #48's never-`pickFolder` and #49's read-count are the worked examples, all
-  mutation-verified.
+  mutation-verified. Corollary from #54's verification: **if a mutation kills
+  nothing, the code you mutated may not be what makes the test pass.**
 - **A session id is only resumable once a turn has run** (#54). `sessionId()`
   stays null through warm-up on purpose: `hook_started` carries an id for a
   session the CLI has not created, and resuming into it fails the turn. Every
@@ -169,10 +134,12 @@ None blocking.
   in-project row must set `cwd: FOLDER` (exported from `tests/chat-harness.ts`).
 - **New `window.api` channel → ALL FOUR mock sites** (`tests/chat-harness.ts` plus
   inline mocks in `sidebar` / `session` / `shell` tests), and guard every IPC with
-  `isTrustedIpc`. `titleHint` was the most recent.
+  `isTrustedIpc`. #57 adds two members (`watchSession`, `onSessionChanged`) —
+  `onSessionChanged` is subscribed on mount, so every mock site needs it or the
+  suite dies at render.
 - **A module-level cache needs a test reset.** `resetSessionIndex()` and
-  `resetEnrichedTitles()` both exist for that reason; without them one suite's
-  state decides the next one's.
+  `resetEnrichedTitles()` both exist for that reason; #57's watcher module state
+  is the next one that will need its own.
 - **Vitest + `node:fs/promises`:** a module mock must also export `default`, or
   the file dies at import with `No "default" export is defined`. It also needs
   `stat` now.
@@ -201,9 +168,12 @@ None blocking.
   (`claude-wisp-grok`) passes through and the bridge does resolve it. **A stale
   CLI alias table cannot be fixed by rebinding a Wisp family — only by upgrading
   the CLI.** Never run bare `wisp snapshot` — always name the family.
-- **The app's CLI is the one bundled in the npm package, not the host
-  `claude`.** `node_modules/@anthropic-ai/claude-agent-sdk/manifest.json` names
-  its version. Host `claude` being current tells you nothing about the app's.
+- **The app runs the HOST `claude` when PATH has one** (`cli-path.ts`, resolved
+  once at boot, plain PATH walk, no shims, no `child_process`), falling back to
+  the CLI bundled in the npm package. Consequences: a host Claude Code update
+  can break the app with no code change here; the SDK package's `manifest.json`
+  describes only the FALLBACK; reproducing a user's bug means matching their
+  CLI version, not the lockfile's.
 - **`gh issue close --comment` silently drops the comment if the issue is already
   closed** — a pushed `Closes #N` auto-closes it first. Keep `Closes #N` out of
   the commit, then `gh issue comment` → `gh issue close` → verify.
@@ -220,13 +190,6 @@ None blocking.
 
 ## Known issues / not-our-bug
 
-- ~~Transcript REPLAY renders raw CLI markup with ANSI escapes.~~ **Fixed by #50**
-  (`c92cb48`) — see [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]].
-  The 7 messages that still contain the markup are prose quoting it and are
-  correct as-is.
-- ~~Picking a model/permission before the first turn errors that turn.~~
-  **Fixed by #54** (`d78eee3`). Note `gui-52.mjs` still runs its pick step last,
-  which was the workaround — harmless, and no longer required.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Path is the
   trigger, model only modulates the odds. Not our bug — don't run wrapper sessions
   there, and don't point a GUI driver's temp cwd there either.
@@ -247,15 +210,18 @@ Context-pressure meter
 the raw window from the auto-compaction threshold), typed failed-turn recovery
 (`rewindFiles()` needs `enableFileCheckpointing`, which our options do not set),
 full-text transcript search, session delete/archive lifecycle, drag-and-drop,
-replay thumbnails, live-tail external sessions, N-concurrent engines,
-fork-on-resume, busy-switch detach (decided against — block is the behaviour),
-folding `Welcome`'s last `pickFolder` caller onto the chooser, agent archive /
-control / map pan-zoom, and the smaller leftovers from #31–#36.
+replay thumbnails, N-concurrent engines, fork-on-resume, busy-switch detach
+(decided against — block is the behaviour), folding `Welcome`'s last
+`pickFolder` caller onto the chooser, agent archive / control / map pan-zoom,
+and the smaller leftovers from #31–#36. ~~Live-tail external sessions~~ left
+this list on 2026-07-29 — it is now spec #55 / tickets #56–#57.
 
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] ·
+- [[2026-07-29-live-tail-is-a-signal-not-a-stream]] ·
+  [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]] ·
+  [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] ·
   [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]] ·
   [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]] ·
   [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] ·
