@@ -21,8 +21,11 @@ const api = {
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('session:pick-folder'),
   chooseFolder: (): Promise<FolderChoice> => ipcRenderer.invoke('session:choose-folder'),
   pickFiles: (): Promise<Candidate[]> => ipcRenderer.invoke('attachments:pick'),
-  listSessions: (): Promise<SessionMeta[]> => ipcRenderer.invoke('session:list'),
-  loadTranscript: (id: string): Promise<TranscriptMessage[]> =>
+  // `null` is a FAILED read on both of these (#60), never "nothing there" — the
+  // empty array still means the store honestly holds nothing. A pass-through:
+  // main types the distinction, the renderer renders it.
+  listSessions: (): Promise<SessionMeta[] | null> => ipcRenderer.invoke('session:list'),
+  loadTranscript: (id: string): Promise<TranscriptMessage[] | null> =>
     ipcRenderer.invoke('session:transcript', id),
   titleHint: (id: string, cwd: string | null): Promise<string | null> =>
     ipcRenderer.invoke('session:title-hint', id, cwd),

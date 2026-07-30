@@ -37,6 +37,12 @@ export const switchWorkspace = async (
   if (!cwd || !cwd.trim()) return { status: 'missing-cwd' }
   if (resumeId !== null) {
     const target = await ports.resolveTarget(resumeId, cwd)
+    // An unreadable store (#60) is still "we could not locate that session" from
+    // here: the switch is refused either way, and the refusal the renderer
+    // already phrases is the honest one. The distinction earns its keep on the
+    // read paths, where the alternative was a silently empty pane — a refusal
+    // is already visible.
+    if (target.status === 'unavailable') return { status: 'not-found' }
     if (target.status !== 'ok') return { status: target.status }
   }
 

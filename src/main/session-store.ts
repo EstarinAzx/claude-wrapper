@@ -19,14 +19,20 @@ import { parseTranscript } from './transcript'
 // Scoping is the renderer's job — it groups by `cwd` and keeps rows outside the
 // open workspace inert until the transition ships. `includeWorktrees` needs no
 // answer here: the SDK applies it only when `dir` is given.
-export const listSessions = async (): Promise<SessionMeta[]> => {
+//
+// `null` is a FAILED listing, distinct from `[]` meaning the store holds no
+// sessions (#60). Both used to be `[]`, so a store that blew up rendered as
+// "No sessions yet" — the same words a fresh install gets, with no hint that
+// anything was wrong and nothing to retry. Typed rather than thrown: the IPC
+// handler stays a pass-through.
+export const listSessions = async (): Promise<SessionMeta[] | null> => {
   let infos: Awaited<ReturnType<typeof sdkListSessions>>
   try {
     // `includeProgrammatic: false` is what the SDK documents for IDE session
     // pickers — parity with what terminal `/resume` offers.
     infos = await sdkListSessions({ includeProgrammatic: false })
   } catch {
-    return []
+    return null
   }
   return infos
     .map((info) => ({
@@ -41,7 +47,14 @@ export const listSessions = async (): Promise<SessionMeta[]> => {
 }
 
 // Read one session's transcript from the native store and parse it to the
-// replay message list. Unreadable/missing file → [] (lenient, like listSessions).
+// replay message list.
+//
+// `null` means the transcript could not be READ — the store would not enumerate,
+// or the file itself refused. `[]` stays reserved for the two lenient cases that
+// are not failures: a session the store genuinely no longer holds (deleted
+// between a list and a click), and a session whose file reads fine and holds no
+// messages. Before #60 all four answered `[]`, so a corrupt or permission-
+// blocked session rendered as an empty conversation with no way back.
 //
 // The storage directory comes from the index, never from encoding `cwd` — see
 // session-index.ts. `cwd` is passed only as a duplicate-id tie-break hint, so a
@@ -51,15 +64,16 @@ export const readTranscript = async (
   cwd: string | null,
   id: string,
   io: StoreIo = nodeIo
-): Promise<TranscriptMessage[]> => {
+): Promise<TranscriptMessage[] | null> => {
   if (!id) return []
   const found = await resolveSessionDir(id, cwd, io)
+  if (found.status === 'unavailable') return null
   if (found.status !== 'ok') return []
   let raw: string
   try {
     raw = await io.readFile(join(found.dir, `${id}.jsonl`))
   } catch {
-    return []
+    return null
   }
   return parseTranscript(raw)
 }
@@ -75,8 +89,10 @@ export const readTranscript = async (
 //
 // null means "no prompt to show", and an unreadable transcript answers null the
 // same way: both are terminal, and the caller caches them rather than retrying.
+// This is the ONE caller that still wants #60's lenient collapse — a rail label
+// has no retry affordance to offer, so a failure here can only be silence.
 export const titleHint = async (
   id: string,
   cwd: string | null = null,
   io: StoreIo = nodeIo
-): Promise<string | null> => firstSubstantivePrompt(await readTranscript(cwd, id, io))
+): Promise<string | null> => firstSubstantivePrompt((await readTranscript(cwd, id, io)) ?? [])

@@ -80,6 +80,10 @@ export const useChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [busy, setBusy] = useState(false)
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  // The session whose transcript could not be READ (#60), or null. Held as the
+  // id rather than a boolean so the retry re-reads the session that actually
+  // failed, not whatever happens to be active by the time it is pressed.
+  const [failedTranscript, setFailedTranscript] = useState<string | null>(null)
   const [liveAgents, setLiveAgents] = useState<LiveAgent[]>([])
   // Track the live assistant message id without stale closures on event handlers
   const assistantIdRef = useRef<string | null>(null)
@@ -261,12 +265,22 @@ export const useChat = () => {
         // and is currently reachable only if a future path lets a turn start
         // without clearing eligibility.
         if (tailIdRef.current !== id || busyRef.current) break
-        // A tailed transcript never legitimately shrinks to nothing, and the
-        // read path answers [] for a transient failure too — so an empty result
-        // against a non-empty pane is a hiccup, not a cleared conversation.
+        // A failed read (#60) is skipped, never applied and never announced: a
+        // tail re-reads something already on screen, so the honest response to
+        // "could not read it this time" is to leave the last good pane alone.
+        // `continue`, not `break` — a re-run queued behind this one is a fresh
+        // attempt and must still get its turn.
+        if (transcript === null) continue
+        // A tailed transcript never legitimately shrinks to nothing, so an empty
+        // result against a non-empty pane is a hiccup (a truncated or
+        // mid-rotation file), not a cleared conversation.
         if (transcript.length === 0 && paneLength > 0) continue
         assistantIdRef.current = null
         paneLength = transcript.length
+        // Adoption arms the watch even when its own read failed, so this is the
+        // path a recovered file arrives by. Applying it retires the notice: the
+        // conversation it warns about is now on screen.
+        setFailedTranscript(null)
         setMessages(transcript.map(toChatMessage))
       } while (pendingReloadRef.current)
     } finally {
@@ -310,6 +324,9 @@ export const useChat = () => {
       // From here on we are driving this session, not watching it.
       stopTail()
       assistantIdRef.current = null
+      // Typing into a session whose history would not load starts a real
+      // conversation; the unread history is no longer what the pane is about.
+      setFailedTranscript(null)
       const message: Extract<ChatMessage, { role: 'user' }> = { id: uid(), role: 'user', text }
       if (attachments.length) message.attachments = attachments
       setMessages((prev) => [...prev, message])
@@ -344,7 +361,12 @@ export const useChat = () => {
     assistantIdRef.current = null
     setBusy(false)
     busyRef.current = false
-    setMessages(transcript.map(toChatMessage))
+    // A failed read still clears the pane: leaving the previous conversation up
+    // beside a notice about a different one is the stale-pane bug in miniature.
+    // The notice plus its retry is what replaces it — never an empty pane, which
+    // is the "corrupt session reads as an empty conversation" state itself.
+    setFailedTranscript(transcript === null ? id : null)
+    setMessages((transcript ?? []).map(toChatMessage))
     setLiveAgents([])
     setActiveSessionId(id)
     tailIdRef.current = id
@@ -357,6 +379,13 @@ export const useChat = () => {
     // missed write is ever actually observed.
     window.api.watchSession(id)
   }, [])
+
+  // Try the failed read again. The whole adoption is re-run rather than just the
+  // read: a failure left no watch worth keeping, and re-adopting is the one path
+  // that re-arms live-tail (#57) as well as refilling the pane.
+  const retryTranscript = useCallback(() => {
+    if (failedTranscript) void adoptSession(failedTranscript)
+  }, [failedTranscript, adoptSession])
 
   // Open a past session in the CURRENT project: replay its transcript
   // (read-only history) and point the engine at it so the next turn continues
@@ -376,6 +405,7 @@ export const useChat = () => {
     stopTail()
     assistantIdRef.current = null
     setBusy(false)
+    setFailedTranscript(null)
     setMessages([])
     setLiveAgents([])
     setActiveSessionId(null)
@@ -403,6 +433,8 @@ export const useChat = () => {
     busy,
     activeSessionId,
     liveAgents,
+    transcriptFailed: failedTranscript !== null,
+    retryTranscript,
     send,
     stop,
     respondToPermission,

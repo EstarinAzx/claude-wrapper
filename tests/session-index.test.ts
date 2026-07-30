@@ -103,8 +103,32 @@ describe('resolveSessionDir', () => {
     expect(readdir).not.toHaveBeenCalled()
   })
 
-  test('an unreadable store is not-found, not a throw', async () => {
-    expect(await resolveSessionDir('s1', null, fakeIo({}))).toEqual({ status: 'not-found' })
+  // #60: a store that cannot be enumerated is NOT the same as a store that was
+  // read fine and simply does not hold this id. Collapsing the two is why an
+  // unreadable ~/.claude/projects made every session replay as an empty
+  // conversation — indistinguishable from a session with no messages.
+  test('a store that cannot be enumerated is unavailable, not not-found', async () => {
+    expect(await resolveSessionDir('s1', null, fakeIo({}))).toEqual({ status: 'unavailable' })
+  })
+
+  // The other half of the same distinction, and the guard on criterion 4: a
+  // store that reads fine and does not hold the id is ordinary absence. A
+  // session legitimately deleted between a list and a click must stay lenient.
+  test('a readable store that lacks the id stays not-found, never unavailable', async () => {
+    const io = fakeIo({ [`${ROOT}/proj/s1.jsonl`]: '{}' })
+
+    expect(await resolveSessionDir('gone', null, io)).toEqual({ status: 'not-found' })
+  })
+
+  // A failed enumeration must not be cached as an empty index: the store coming
+  // back would otherwise keep answering `unavailable` until something else
+  // happened to call resetSessionIndex().
+  test('an unavailable store is not cached — the next lookup re-enumerates', async () => {
+    const broken = fakeIo({})
+    expect(await resolveSessionDir('s1', null, broken)).toEqual({ status: 'unavailable' })
+
+    const io = fakeIo({ [`${ROOT}/proj/s1.jsonl`]: '{}' })
+    expect((await resolveSessionDir('s1', null, io)).status).toBe('ok')
   })
 
   test('a duplicate id prefers the candidate whose recorded cwd matches', async () => {
@@ -157,8 +181,16 @@ describe('resolveResumeTarget', () => {
   })
 
   test('a cwd that resolves to nothing is not-found, never missing-cwd', async () => {
-    expect(await resolveResumeTarget('gone', 'D:\\projects\\demo', fakeIo({}))).toEqual({
+    const io = fakeIo({ [`${ROOT}/proj/s1.jsonl`]: '{}' })
+
+    expect(await resolveResumeTarget('gone', 'D:\\projects\\demo', io)).toEqual({
       status: 'not-found'
+    })
+  })
+
+  test('an unreadable store surfaces as unavailable, never missing-cwd', async () => {
+    expect(await resolveResumeTarget('s1', 'D:\\projects\\demo', fakeIo({}))).toEqual({
+      status: 'unavailable'
     })
   })
 })

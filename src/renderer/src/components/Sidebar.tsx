@@ -135,7 +135,10 @@ const Sidebar = ({
   onChooseFolder?: () => void
   onNewChat?: () => void
 }) => {
-  const [sessions, setSessions] = useState<SessionMeta[]>([])
+  // `null` = the last listing FAILED (#60), which is a different thing from the
+  // empty array meaning the store holds nothing. Same nullable shape the channel
+  // speaks, so the rail is not re-deriving a state main already decided.
+  const [sessions, setSessions] = useState<SessionMeta[] | null>([])
   const [collapsed, setCollapsed] = useState(false)
   const [width, setWidthState] = useState(readStoredWidth)
   const [query, setQuery] = useState('')
@@ -155,7 +158,7 @@ const Sidebar = ({
   // "show more" from the previous query would reveal a page the user never
   // asked for.
   const { groups, shown, matched } = useMemo(
-    () => groupSessions(sessions, { query, cwd, limit, labels }),
+    () => groupSessions(sessions ?? [], { query, cwd, limit, labels }),
     [sessions, query, cwd, limit, labels]
   )
 
@@ -308,7 +311,23 @@ const Sidebar = ({
           }}
         />
       </div>
-      {sessions.length === 0 ? (
+      {sessions === null ? (
+        // A failed listing, NOT "No sessions yet" — those words are what a fresh
+        // install sees, and reusing them for a breakage is the dead end this
+        // exists to remove. The retry belongs to this branch alone: an empty
+        // store has nothing a second look could turn up.
+        <div className="sidebar-empty" role="status">
+          <span>Could not load sessions.</span>
+          <button
+            type="button"
+            className="sidebar-empty-retry"
+            aria-label="Retry loading sessions"
+            onClick={refresh}
+          >
+            Retry
+          </button>
+        </div>
+      ) : sessions.length === 0 ? (
         <div className="sidebar-empty">No sessions yet</div>
       ) : groups.length === 0 ? (
         <div className="sidebar-empty">No sessions match “{query.trim()}”</div>

@@ -13,7 +13,7 @@ vi.mock('@anthropic-ai/claude-agent-sdk', () => ({ listSessions: sdkListSessions
 vi.mock('node:fs/promises', () => ({ ...fs, default: fs }))
 
 import { resetSessionIndex } from '../src/main/session-index'
-import { listSessions, readTranscript } from '../src/main/session-store'
+import { listSessions, readTranscript, titleHint } from '../src/main/session-store'
 
 const CWD = 'D:\\projects\\demo'
 
@@ -45,6 +45,15 @@ beforeEach(() => {
   resetSessionIndex()
   sdkListSessions.mockResolvedValue([])
 })
+
+// Narrows the nullable listing for the tests that are about a SUCCESSFUL list.
+// Throws rather than asserting non-null, so an unexpected failure surfaces as
+// itself instead of as a confusing property error three lines later.
+const listed = async () => {
+  const list = await listSessions()
+  if (list === null) throw new Error('expected a successful listing, got the failure value')
+  return list
+}
 
 describe('listSessions', () => {
   test('maps SDK session info onto SessionMeta, newest first', async () => {
@@ -78,7 +87,7 @@ describe('listSessions', () => {
       { sessionId: 's', summary: 'Chat', lastModified: 1, cwd: CWD }
     ])
 
-    expect((await listSessions())[0].cwd).toBe(CWD)
+    expect((await listed())[0].cwd).toBe(CWD)
   })
 
   // Absent, not '' — "Unknown project" is a real state the renderer groups on,
@@ -86,7 +95,7 @@ describe('listSessions', () => {
   test('a session the store records no cwd for carries no cwd field', async () => {
     sdkListSessions.mockResolvedValue([{ sessionId: 's', summary: 'Chat', lastModified: 1 }])
 
-    expect((await listSessions())[0]).not.toHaveProperty('cwd')
+    expect((await listed())[0]).not.toHaveProperty('cwd')
   })
 
   // The real store cannot catch this: all 325 sessions carrying a customTitle
@@ -98,7 +107,7 @@ describe('listSessions', () => {
       { sessionId: 's', summary: 'summary', customTitle: 'different', lastModified: 1 }
     ])
 
-    expect((await listSessions())[0].title).toBe('summary')
+    expect((await listed())[0].title).toBe('summary')
   })
 
   // The point of the whole change: an implementation that calls the SDK *and*
@@ -115,8 +124,17 @@ describe('listSessions', () => {
     expect(fs.readFile).not.toHaveBeenCalled()
   })
 
-  test('an unreadable store degrades to the empty list instead of throwing', async () => {
+  // #60: the failure has to be a different VALUE, not a different log line. []
+  // renders as "No sessions yet" — a listing that blew up is then
+  // indistinguishable from a fresh install, and the rail offers no way back.
+  // Still typed, still no throw: the handler must not have to catch.
+  test('a listing that fails answers null, distinct from the empty list', async () => {
     sdkListSessions.mockRejectedValue(new Error('ENOENT'))
+    expect(await listSessions()).toBeNull()
+  })
+
+  test('a store with no sessions answers [] — absence is not failure', async () => {
+    sdkListSessions.mockResolvedValue([])
     expect(await listSessions()).toEqual([])
   })
 })
@@ -157,5 +175,44 @@ describe('readTranscript', () => {
 
     expect(await readTranscript(CWD, '')).toEqual([])
     expect(fs.readdir).not.toHaveBeenCalled()
+  })
+
+  // #60, failure two of three: the store directory cannot be resolved because
+  // the store itself could not be enumerated. Every session in it reads back
+  // empty today, so a broken ~/.claude/projects looks like 490 empty chats.
+  test('a store that cannot be enumerated answers null, not []', async () => {
+    store({})
+
+    expect(await readTranscript(CWD, 's1')).toBeNull()
+  })
+
+  // #60, failure three of three: the index found the file, the read failed.
+  // A permission-blocked or mid-rotation transcript is not an empty one.
+  test('a transcript that exists but cannot be read answers null, not []', async () => {
+    store({ [`${ROOT}/d--projects-demo/s1.jsonl`]: transcript })
+    fs.readFile.mockRejectedValue(Object.assign(new Error('EACCES'), { code: 'EACCES' }))
+
+    expect(await readTranscript(CWD, 's1')).toBeNull()
+  })
+
+  // Criterion 4, the other direction: a file that reads fine and holds nothing
+  // is a genuinely empty session. This must NOT become an error — it is the
+  // most common state a brand-new session is in.
+  test('a transcript that reads fine but holds no messages stays []', async () => {
+    store({ [`${ROOT}/d--projects-demo/s1.jsonl`]: '' })
+
+    expect(await readTranscript(CWD, 's1')).toEqual([])
+  })
+})
+
+// Enrichment asks about ONE row and caches whatever comes back, so a failure
+// here is terminal either way — there is no retry affordance on a rail label.
+// It therefore keeps the lenient contract while its caller-facing sibling does
+// not, which is the whole reason the two are separate functions.
+describe('titleHint', () => {
+  test('an unreadable transcript answers null rather than propagating the failure', async () => {
+    store({})
+
+    expect(await titleHint('s1', CWD)).toBeNull()
   })
 })

@@ -20,8 +20,9 @@ export interface WrapperApi {
   pickFolder: () => Promise<string | null>
   chooseFolder: () => Promise<FolderChoice>
   pickFiles: () => Promise<Candidate[]>
-  listSessions: () => Promise<SessionMeta[]>
-  loadTranscript: (id: string) => Promise<TranscriptMessage[]>
+  // `null` = the read FAILED (#60). `[]` still means the store holds nothing.
+  listSessions: () => Promise<SessionMeta[] | null>
+  loadTranscript: (id: string) => Promise<TranscriptMessage[] | null>
   titleHint: (id: string, cwd: string | null) => Promise<string | null>
   listSubagents: (sessionId: string) => Promise<SubagentInfo[] | null>
   subagentTranscript: (

@@ -49,6 +49,8 @@ const App = () => {
     busy,
     activeSessionId,
     liveAgents,
+    transcriptFailed,
+    retryTranscript,
     send,
     stop,
     respondToPermission,
@@ -194,6 +196,24 @@ const App = () => {
                 setOpenSubagent({ parentToolUseId, agentType })
               }
             />
+            {/* A transcript that would not READ (#60). Sits under the pane
+                rather than inside it because the pane is now empty by
+                definition — and an empty pane with no explanation is exactly
+                the "corrupt session looks like an empty one" state. Unlike the
+                empty pane it carries a way out. */}
+            {transcriptFailed ? (
+              <p className="switch-refusal" role="status">
+                Could not read this conversation.{' '}
+                <button
+                  type="button"
+                  className="switch-refusal-retry"
+                  aria-label="Retry loading this conversation"
+                  onClick={retryTranscript}
+                >
+                  Retry
+                </button>
+              </p>
+            ) : null}
             {refusal ? (
               <p className="switch-refusal" role="status">
                 {refusal}

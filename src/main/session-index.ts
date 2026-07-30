@@ -32,7 +32,16 @@ export const nodeIo: StoreIo = {
 // An ordinary miss is a value, not an exception: a session can legitimately be
 // gone from the store between a list and a click. `missing-cwd` is reserved for
 // the cross-project resume caller — a session with no recorded cwd at all.
-export type DirLookup = { status: 'ok'; dir: string } | { status: 'not-found' }
+//
+// `unavailable` is the store itself failing to enumerate, which is a different
+// fact from "enumerated fine, no such id" (#60). Folding the two together is why
+// an unreadable ~/.claude/projects made every session resolve to nothing and
+// replay as an empty conversation: the lenient answer absence deserves became
+// the answer a breakage got too.
+export type DirLookup =
+  | { status: 'ok'; dir: string }
+  | { status: 'not-found' }
+  | { status: 'unavailable' }
 export type ResumeTarget = DirLookup | { status: 'missing-cwd' }
 
 const projectsRoot = (): string => join(homedir(), '.claude', 'projects')
@@ -48,14 +57,20 @@ export const cwdKey = (cwd: string): string => foldCwd(resolve(cwd))
 // run on every list refresh.
 let cache: Map<string, string[]> | null = null
 
-const build = async (io: StoreIo): Promise<Map<string, string[]>> => {
+// null when the store root itself could not be read — an empty index would be
+// indistinguishable from a store holding nothing, and it would then be CACHED,
+// so one transient failure would answer for every lookup until the next reset.
+// A per-project directory that fails is still skipped: the rest of the store is
+// real, and reporting the whole index broken over one bad project would trade a
+// silent failure for an over-loud one.
+const build = async (io: StoreIo): Promise<Map<string, string[]> | null> => {
   const root = projectsRoot()
   const map = new Map<string, string[]>()
   let projects: string[]
   try {
     projects = await io.readdir(root)
   } catch {
-    return map
+    return null
   }
   for (const name of projects) {
     const dir = join(root, name)
@@ -160,10 +175,19 @@ export const resolveSessionDir = async (
   io: StoreIo = nodeIo
 ): Promise<DirLookup> => {
   if (!sessionId) return { status: 'not-found' }
-  if (!cache) cache = await build(io)
+  // A failed build is never installed in `cache`, so the next call retries the
+  // store rather than inheriting an empty index — and it short-circuits the
+  // rebuild-once retry below, which cannot help an unreadable root.
+  if (!cache) {
+    const built = await build(io)
+    if (!built) return { status: 'unavailable' }
+    cache = built
+  }
   let dirs = cache.get(sessionId)
   if (!dirs) {
-    cache = await build(io)
+    const rebuilt = await build(io)
+    if (!rebuilt) return { status: 'unavailable' }
+    cache = rebuilt
     dirs = cache.get(sessionId)
   }
   if (!dirs || dirs.length === 0) return { status: 'not-found' }
