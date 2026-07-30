@@ -8,32 +8,28 @@ tags: [context, active-work]
 # Active Work
 
 _Last updated: 2026-07-30 by Opus 5 (1M) (auto) — `styles.css` token/dedupe refactor, no ticket_
-_At commit: `a27ad00` on `main`; the refactor sits on branch **`refactor/styles-token-dedupe`**, unmerged and unpushed_
-_Gate on that branch: typecheck clean, build clean, **725 tests green across 52 files**, 9 GUI drivers green, bundle-equivalence diff clean_
+_At commit: `28be647` on `main`, squash-merged and **pushed**; branch `refactor/styles-token-dedupe` deleted_
+_Gate on main after the squash: typecheck clean, build clean, **725 tests green across 52 files**, 9 GUI drivers green, bundle-equivalence diff clean_
 
 ## Current focus
 
 **Nothing in flight. The `ready-for-agent` queue is still empty.**
 
-One unticketed refactor is finished and **awaiting a merge decision**: `src/renderer/src/styles.css` deduplicated in place — repeated literals promoted to `@theme` tokens, ~20 near-identical rule blocks collapsed into shared selector groups. Declarations **1159 → 968 (−16.5%)**, compiled bundle **40,082 → 35,262 B (−12%)**. No JSX touched, no test touched, no computed value changed. See [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
+One unticketed refactor **landed** this session: `src/renderer/src/styles.css` deduplicated in place — repeated literals promoted to `@theme` tokens, ~20 near-identical rule blocks collapsed into shared selector groups. Declarations **1159 → 968 (−16.5%)**, compiled bundle **40,082 → 35,262 B (−12%)**. No JSX touched, no test touched, no computed value changed. See [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
 
 Spec **#58 — the non-lossy tool inspector — remains delivered and closed** (#59 → #60 → #61 → #62 → #63).
 
 ## State
 
-- **In flight:** nothing. One branch open.
-- **Awaiting merge:** `refactor/styles-token-dedupe` — one commit, `styles.css` only. Land with `git checkout main && git merge --squash refactor/styles-token-dedupe`, or drop the branch; nothing depends on it.
-- **Landed on main this session:** `.context/` only.
+- **In flight:** nothing. No open branches.
+- **Landed this session:** `28be647` — the `styles.css` token/dedupe refactor, squash-merged to main and pushed. Branch deleted.
 - **Queue (`ready-for-agent`):** **empty**.
 - **Blocked:** nothing.
 - **Open:** the unlabelled umbrella **#1**. Nothing else.
 
 ## Pick up here
 
-There is still no queued ticket. Two moves, in either order:
-
-1. **Decide the refactor branch** — merge it or delete it. It is self-contained and reviewable as one CSS diff.
-2. **Start a new effort** — `/preset init` or grill-me → `/hp` → to-spec → to-tickets, or pick from **Deferred** below (ranked by nothing; it needs a real selection pass — the last two specs were chosen by measuring a real corpus first, which is why they held up).
+There is no queued ticket and nothing half-done. The next session starts an effort rather than draining a queue: `/preset init` or grill-me → `/hp` → to-spec → to-tickets, or pick from **Deferred** below — but that list is ranked by nothing and needs a real selection pass, since the last two specs held up precisely because they were measured against a real corpus before being committed to.
 
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 

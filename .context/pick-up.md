@@ -9,21 +9,17 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Two things waiting
+## Queue empty
 
-**1. A finished refactor needs a merge decision.** Branch `refactor/styles-token-dedupe`, one commit, `src/renderer/src/styles.css` only — unmerged, unpushed, nothing depends on it.
+**The `ready-for-agent` queue is empty and nothing is half-done.** No branches open, nothing blocked, nothing stuck `ready-for-human`. The only open issue is the unlabelled umbrella **#1**, which is not a queued ticket.
 
-```
-git checkout main && git merge --squash refactor/styles-token-dedupe
-```
+The next effort is a choice, not a continuation: `/preset init` or grill-me → `/hp` → to-spec → to-tickets, or pick from **Deferred** in [[active-work]] — but that list is ranked by nothing, and the last two specs held up precisely because they were measured against a real corpus before being committed to.
 
-`styles.css` was deduplicated in place: repeated literals promoted to `@theme` tokens (`--ease-snap` absorbed 37 copies of one cubic-bezier, `--color-tint-1…7` absorbed 31 raw tint alphas, plus `--font-mono`, `--color-well`, `--color-danger-*`), and ~20 near-identical rule blocks collapsed into shared selector groups. Declarations **1159 → 968 (−16.5%)**, compiled bundle **40,082 → 35,262 B (−12%)**. Every semantic class name kept, so no JSX and no test changed.
+## What landed this leg
 
-Gate on the branch: typecheck clean, build clean, **725 tests green across 52 files**, 9 GUI drivers green. Rationale and the full equivalence argument: [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
+`28be647` — `src/renderer/src/styles.css` deduplicated in place, squash-merged to main and pushed. Repeated literals promoted to `@theme` tokens (`--ease-snap` absorbed 37 copies of one cubic-bezier, `--color-tint-1…7` absorbed 31 raw tint alphas, plus `--font-mono`, `--color-well`, `--color-danger-*`), and ~20 near-identical rule blocks collapsed into shared selector groups. Declarations **1159 → 968 (−16.5%)**, compiled bundle **40,082 → 35,262 B (−12%)**. Every semantic class name kept, so no JSX and no test changed.
 
-**2. The `ready-for-agent` queue is still empty.** The next effort is a choice, not a continuation: `/preset init` or grill-me → `/hp` → to-spec → to-tickets, or pick from **Deferred** in [[active-work]] — but that list is ranked by nothing, and the last two specs held up precisely because they were measured against a real corpus before being committed to.
-
-The only other open issue is the unlabelled umbrella **#1**, which is not a queued ticket.
+Gate on main after the squash: typecheck clean, build clean, **725 tests green across 52 files**, 9 GUI drivers green. Rationale and the full equivalence argument: [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
 
 ## Why the refactor is not "the CSS migrated to Tailwind"
 
@@ -47,7 +43,7 @@ Full ledger in [[active-work]]. The three CSS ones are new and all three are sil
 
 ## Baseline
 
-`main` = `a27ad00` + this leg's `.context` commit. The refactor is **not** on main; it is on `refactor/styles-token-dedupe`. Trust `git log --oneline --all` over any note.
+`main` = `28be647` + this leg's `.context` commit, **pushed** to `origin/main`. No open branches. Trust `git log origin/main..main` over any note.
 
 ## GUI check
 
