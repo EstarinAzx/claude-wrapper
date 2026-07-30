@@ -42,6 +42,29 @@ describe('parseTranscript', () => {
     ])
   })
 
+  // #59 — the separator regression the test above could never catch, because it
+  // supplies ONE block and every separator agrees on a one-element join. The
+  // live path (engine.ts) joins result text blocks with '\n'; replay joined them
+  // with '' , so the same result collapsed to `boom` live and `boomtrace`
+  // replayed. Two blocks is the minimum that distinguishes the two.
+  test('#59 — a tool_result of TWO text blocks joins with a newline', () => {
+    const raw = [
+      '{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu2b","name":"Bash","input":{}}]}}',
+      '{"type":"user","message":{"role":"user","content":[{"tool_use_id":"tu2b","type":"tool_result","content":[{"type":"text","text":"boom"},{"type":"text","text":"trace"}],"is_error":true}]}}',
+    ].join('\n')
+
+    expect(parseTranscript(raw)).toEqual([
+      {
+        role: 'tool',
+        toolUseId: 'tu2b',
+        name: 'Bash',
+        input: {},
+        result: 'boom\ntrace',
+        isError: true,
+      },
+    ])
+  })
+
   test('is_error true sets isError on the backfilled tool message', () => {
     const raw = [
       '{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu3","name":"Bash","input":{}}]}}',

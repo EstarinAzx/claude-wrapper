@@ -8,6 +8,8 @@ import {
 } from '../src/main/engine'
 import type { EngineEvent, PermissionDecision } from '../src/shared/engine-types'
 import type { SendPayload } from '../src/shared/attachment-types'
+import { parseTranscript } from '../src/main/transcript'
+import { resultSummary } from '../src/renderer/src/toolSummaries'
 
 /** An ordinary text-only send — what the composer produces today. */
 const p = (text: string): SendPayload => ({ text, attachments: [] })
@@ -587,6 +589,59 @@ describe('engine tool events', () => {
       text: 'boom\ntrace',
       isError: true
     })
+  })
+
+  // #59 — parity, asserted rather than assumed. The collapsed card is what the
+  // user actually reads, so the two paths are compared THROUGH resultSummary:
+  // '' vs '\n' is invisible in the raw text of a one-block result and decides
+  // the whole summary of a two-block one. The second assertion pins the value,
+  // so "equal but both wrong" (both collapsing to `boomtrace`) cannot pass.
+  test('#59 — the same two-block result collapses identically live and on replay', async () => {
+    const blocks = [
+      { type: 'text', text: 'boom' },
+      { type: 'text', text: 'trace' }
+    ]
+
+    const resultMsg: SdkMessage = {
+      type: 'user',
+      session_id: 'sess-1',
+      message: {
+        content: [{ type: 'tool_result', tool_use_id: 'tu-parity', content: blocks }]
+      }
+    }
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(resultMsg)
+    push(success)
+    const events = await turn
+    const live = events.find((e) => e.type === 'tool-result') as { text: string }
+
+    // The same result as the CLI persists it to the native JSONL.
+    const raw = [
+      JSON.stringify({
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [{ type: 'tool_use', id: 'tu-parity', name: 'Bash', input: {} }]
+        }
+      }),
+      JSON.stringify({
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [
+            { tool_use_id: 'tu-parity', type: 'tool_result', content: blocks, is_error: false }
+          ]
+        }
+      })
+    ].join('\n')
+    const replayed = parseTranscript(raw)[0] as { result: string }
+
+    expect(resultSummary(replayed.result)).toBe(resultSummary(live.text))
+    expect(resultSummary(live.text)).toBe('boom')
   })
 
   test('user message with plain string content emits nothing', async () => {

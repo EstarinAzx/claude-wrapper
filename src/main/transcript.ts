@@ -2,6 +2,12 @@ import type { AttachmentMarker, TranscriptMessage } from '../shared/session-type
 
 type ToolMessage = Extract<TranscriptMessage, { role: 'tool' }>
 
+// #59 — the separator is '\n' because that is what the LIVE path uses
+// (engine.ts joins a tool_result's text blocks with '\n'). It was '' here, so a
+// multi-block result read as `boom` live and `boomtrace` replayed — the same
+// result saying two different things depending on how you opened it. Blocks are
+// distinct pieces of output, never fragments of one line. Filtering is
+// unchanged: non-text blocks are still dropped.
 const extractText = (content: unknown): string => {
   if (typeof content === 'string') return content
   if (Array.isArray(content)) {
@@ -9,7 +15,7 @@ const extractText = (content: unknown): string => {
       .filter((b): b is { type: string; text?: string } =>
         !!b && typeof b === 'object' && (b as { type?: unknown }).type === 'text')
       .map((b) => (typeof b.text === 'string' ? b.text : ''))
-      .join('')
+      .join('\n')
   }
   return ''
 }
