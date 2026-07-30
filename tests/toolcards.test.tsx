@@ -501,3 +501,224 @@ describe('tool input inspection', () => {
     expect(showInput()).toBeTruthy()
   })
 })
+
+// #63 — the change region. An Edit card showed a filename and the word applied;
+// the strings that say what actually changed were in the message all along.
+// This is the card's THIRD disclosure and it is a third boolean: the diff must
+// be unmounted while collapsed (`a collapsed Edit card mounts no diff` below is
+// the tripwire) and visible outright while pending, where the diff IS the
+// decision.
+//
+// The hunk fixtures change more than one line on purpose: a one-line change
+// cannot tell a coalesced hunk from four interleaved single-line edits, the
+// same fixture trap #59 was caused by.
+const HUNK_INPUT = {
+  file_path: 'src/a.ts',
+  old_string: 'keep me\ndrop one\ndrop two\ntail',
+  new_string: 'keep me\nadd one\nadd two\ntail'
+}
+
+const WRITE_INPUT = {
+  file_path: 'src/new.ts',
+  content: 'first written line\nsecond written line'
+}
+
+const diffRegion = (): Element | null => document.querySelector('.tool-card-diff')
+const contentRegion = (): Element | null => document.querySelector('.tool-card-content')
+const showChange = (name: 'diff' | 'content'): HTMLElement =>
+  screen.getByRole('button', { name: `Show ${name}` })
+const diffText = (type: 'add' | 'del' | 'same'): string =>
+  Array.from(document.querySelectorAll(`.tool-card-diff-line--${type}`))
+    .map((e) => e.textContent ?? '')
+    .join('')
+
+describe('edit diff', () => {
+  test('an Edit card renders the replacement as a diff, added and removed distinguished', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: HUNK_INPUT })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'applied', isError: false })
+
+    fireEvent.click(showChange('diff'))
+
+    expect(diffRegion()).toBeTruthy()
+    // Not merely "both strings appear somewhere" — each line must carry the
+    // side it is on, or the card is a two-block dump wearing a diff's clothes.
+    expect(diffText('del')).toContain('drop one')
+    expect(diffText('del')).toContain('drop two')
+    expect(diffText('del')).not.toContain('add one')
+    expect(diffText('add')).toContain('add one')
+    expect(diffText('add')).toContain('add two')
+    expect(diffText('add')).not.toContain('drop one')
+    expect(diffText('same')).toContain('keep me')
+  })
+
+  // The tripwire. `a collapsed card mounts no inspector at all` above already
+  // fails if the diff leaks, since EDIT_INPUT's old_string is 'alpha' — this
+  // says so by name so a future reader cannot mistake the coupling for luck.
+  test('a collapsed Edit card mounts no diff at all', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: HUNK_INPUT })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'applied', isError: false })
+
+    expect(diffRegion()).toBeNull()
+    expect(document.querySelector('.tool-card')?.textContent).not.toContain('drop one')
+  })
+
+  // The decision-critical content must not sit one click behind the decision.
+  test('a pending Edit shows its diff without being expanded', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: HUNK_INPUT })
+    harness.emit({ type: 'permission-request', id: 'tu-1', name: 'Edit', input: HUNK_INPUT })
+
+    expect(diffRegion()?.textContent).toContain('drop one')
+    expect(diffText('add')).toContain('add one')
+    expect(screen.queryByRole('button', { name: 'Show diff' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Allow' })).toBeTruthy()
+  })
+
+  // The result state is the one that matters in normal use: the app resets to
+  // auto-run on every launch, so most Edits never produce a pending card at all.
+  test('the diff is reachable after the edit ran, with no permission card involved', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: HUNK_INPUT })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'applied', isError: false })
+
+    expect(screen.queryByRole('button', { name: 'Allow' })).toBeNull()
+    fireEvent.click(showChange('diff'))
+    expect(diffRegion()).toBeTruthy()
+  })
+
+  test('an Edit replacing every occurrence says so', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({
+      type: 'tool-use',
+      id: 'tu-1',
+      name: 'Edit',
+      input: { ...HUNK_INPUT, replace_all: true }
+    })
+    harness.emit({ type: 'permission-request', id: 'tu-1', name: 'Edit', input: { ...HUNK_INPUT, replace_all: true } })
+
+    expect(diffRegion()?.textContent).toContain('Replaces every occurrence')
+  })
+
+  test('an Edit replacing a single site claims nothing about occurrences', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: HUNK_INPUT })
+    harness.emit({ type: 'permission-request', id: 'tu-1', name: 'Edit', input: HUNK_INPUT })
+
+    expect(diffRegion()?.textContent).not.toContain('Replaces every occurrence')
+  })
+
+  // Past the guard the card must still render something honest. Without a
+  // branch for the unaligned shape the region would come out empty, which reads
+  // exactly like "no change" — the worst possible answer for a huge edit.
+  test('a hunk past the alignment guard falls back to exact before and after', async () => {
+    await startSession()
+    send('edit it')
+    const oldText = Array.from({ length: 1001 }, (_, i) => 'a' + i).join('\n')
+    const newText = Array.from({ length: 1000 }, (_, i) => 'b' + i).join('\n')
+    harness.emit({
+      type: 'tool-use',
+      id: 'tu-1',
+      name: 'Edit',
+      input: { file_path: 'src/a.ts', old_string: oldText, new_string: newText }
+    })
+    harness.emit({ type: 'permission-request', id: 'tu-1', name: 'Edit', input: { file_path: 'src/a.ts', old_string: oldText, new_string: newText } })
+
+    const blocks = document.querySelectorAll('.tool-card-diff-body')
+    expect(blocks.length).toBe(2)
+    expect(blocks[0].textContent).toBe(oldText)
+    expect(blocks[1].textContent).toBe(newText)
+    expect(document.querySelectorAll('.tool-card-diff-line--add').length).toBe(0)
+  })
+
+  test('the diff control is a real button announcing its expanded state', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: HUNK_INPUT })
+    const collapsed = showChange('diff')
+    expect(collapsed.tagName).toBe('BUTTON')
+    expect(collapsed.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(collapsed)
+
+    expect(screen.getByRole('button', { name: 'Hide diff' }).getAttribute('aria-expanded')).toBe(
+      'true'
+    )
+  })
+
+  test('a tool that proposes no change offers no diff control', async () => {
+    await startSession()
+    send('run it')
+    runTool('ok')
+    expect(screen.queryByRole('button', { name: 'Show diff' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Show content' })).toBeNull()
+  })
+
+  // Three regions, three booleans. A shared flag passes every "is it visible"
+  // assertion above and still ties the regions together.
+  test('the diff discloses independently of input and output', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: HUNK_INPUT })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'applied\nsecond line', isError: false })
+
+    fireEvent.click(showChange('diff'))
+    expect(diffRegion()).toBeTruthy()
+    expect(inspector()).toBeNull()
+    expect(detail()).toBeNull()
+
+    fireEvent.click(showInput())
+    fireEvent.click(screen.getByRole('button', { name: 'Hide diff' }))
+    expect(diffRegion()).toBeNull()
+    expect(inspector()).toBeTruthy()
+  })
+})
+
+// Write supplies a path and the content to write and NO before-state. Rendering
+// that as added lines would look authoritative while concealing whatever was
+// overwritten — confidence manufactured at exactly the moment someone is
+// deciding. Labelled preview only.
+describe('write content preview', () => {
+  test('a Write card previews its proposed content and renders no diff', async () => {
+    await startSession()
+    send('write it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Write', input: WRITE_INPUT })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'written', isError: false })
+
+    fireEvent.click(showChange('content'))
+
+    expect(contentRegion()?.textContent).toContain('first written line')
+    expect(contentRegion()?.textContent).toContain('second written line')
+    expect(contentRegion()?.textContent).toContain('Proposed content')
+    expect(diffRegion()).toBeNull()
+    expect(document.querySelectorAll('.tool-card-diff-line--add').length).toBe(0)
+  })
+
+  test('a pending Write shows the content it would write, unexpanded', async () => {
+    await startSession()
+    send('write it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Write', input: WRITE_INPUT })
+    harness.emit({ type: 'permission-request', id: 'tu-1', name: 'Write', input: WRITE_INPUT })
+
+    expect(contentRegion()?.textContent).toContain('first written line')
+    expect(diffRegion()).toBeNull()
+    expect(screen.getByRole('button', { name: 'Allow' })).toBeTruthy()
+  })
+
+  test('a collapsed Write card mounts no preview', async () => {
+    await startSession()
+    send('write it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Write', input: WRITE_INPUT })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'written', isError: false })
+
+    expect(contentRegion()).toBeNull()
+    expect(document.querySelector('.tool-card')?.textContent).not.toContain('first written line')
+  })
+})

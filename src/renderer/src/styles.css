@@ -1791,6 +1791,75 @@ body {
   user-select: text;
 }
 
+/* Change region (#63). An Edit renders a real replacement hunk — its old string
+   against its new one — and Write renders a labelled content preview and never
+   a diff, because Write carries no before-state and added lines would conceal
+   what was overwritten. Same verbatim-data treatment as the output body and the
+   input inspector: height-capped so a huge hunk scrolls instead of pushing the
+   composer off screen, on the app-wide scrollbar rule, selectable. */
+.tool-card-diff,
+.tool-card-content {
+  margin: 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tool-card-change-label {
+  font-family: var(--font);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.tool-card-diff-body,
+.tool-card-content-body {
+  margin: 0;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: oklch(0.14 0.008 210 / 0.5);
+  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
+  font-size: var(--fs-micro);
+  line-height: 1.55;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+/* The hunk pads its rows, not its box, so an add/delete tint reads as a full
+   band rather than a highlight hugging the glyphs. */
+.tool-card-diff-body {
+  padding: 8px 0;
+}
+
+.tool-card-content-body {
+  padding: 8px 10px;
+}
+
+/* Colour is never the only signal: the leading +/- is part of the line's text,
+   so the side a line is on survives a screenshot, a copy-paste and a reader
+   that announces text without style. */
+.tool-card-diff-line {
+  display: block;
+  padding: 0 10px;
+}
+
+.tool-card-diff-line--add {
+  background: oklch(0.72 0.12 158 / 0.14);
+  color: oklch(0.84 0.09 158);
+}
+
+.tool-card-diff-line--del {
+  background: oklch(0.62 0.15 25 / 0.14);
+  color: oklch(0.79 0.1 25);
+}
+
 .tool-card-actions {
   display: flex;
   align-items: center;
