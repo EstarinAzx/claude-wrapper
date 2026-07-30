@@ -1,0 +1,134 @@
+/* The subagent row under a Task card, and the read-only drawer it opens. */
+
+/* ── subagent row (under a Task card) ── */
+
+.subagent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-mark);
+  background: color-mix(in oklch, var(--mint) 6%, transparent);
+  font-family: inherit;
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: left;
+  -webkit-app-region: no-drag;
+  transition: background 150ms var(--ease);
+}
+
+.subagent-row:hover {
+  background: color-mix(in oklch, var(--mint) 12%, transparent);
+}
+
+.subagent-row:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 1px;
+}
+
+@keyframes subagent-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.subagent-row-type {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.subagent-row-status {
+  color: var(--text-faint);
+}
+
+.subagent-row-open {
+  margin-left: auto;
+  color: var(--mint);
+  font-weight: 600;
+}
+
+/* ── subagent drawer (read-only slide-over) ── */
+
+.subagent-drawer-root {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.subagent-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: oklch(0 0 0 / 0.32);
+  cursor: default;
+}
+
+.subagent-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(560px, 82vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -12px 0 36px oklch(0 0 0 / 0.35);
+  animation: subagent-slide 180ms var(--ease);
+}
+
+@keyframes subagent-slide {
+  from {
+    transform: translateX(24px);
+    opacity: 0.4;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.subagent-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.subagent-drawer-title {
+  font-size: var(--fs-ui);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.subagent-drawer-close {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.subagent-drawer-empty {
+  padding: 24px 16px;
+  color: var(--text-faint);
+  font-size: var(--fs-ui);
+}
+
+/* The reused Chat fills the drawer and scrolls on its own. */
+.subagent-drawer .chat {
+  flex: 1;
+  min-height: 0;
+}

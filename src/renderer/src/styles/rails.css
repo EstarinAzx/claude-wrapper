@@ -1,0 +1,448 @@
+/* The workspace and its two rails — the sessions sidebar and the agents dock
+   are one object mirrored — plus the row shells the three lists share, and the
+   commands dock that borrows the same layout. */
+
+/* ── workspace + the two rails ── */
+
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.main-col {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The sessions rail and the agents dock are the same object mirrored: same
+   width, same surface, same 44px head, same row shell. Only the edge they
+   hang off differs. */
+.sidebar,
+.agents-dock {
+  width: 248px;
+  flex-shrink: 0;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+
+.sidebar {
+  border-right: 1px solid var(--border);
+}
+
+.agents-dock {
+  border-left: 1px solid var(--border);
+}
+
+/* Drag grip on the edge that faces the chat — a thin invisible strip that
+   widens the 1px border into a comfortable col-resize target. Absent on the
+   collapsed rail (that branch never renders it), so resize is inert while
+   collapsed. */
+.sidebar-resize-handle,
+.agents-dock-resize-handle {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 1;
+  touch-action: none;
+}
+
+.sidebar-resize-handle {
+  right: -3px;
+}
+
+.agents-dock-resize-handle {
+  left: -3px;
+}
+
+.sidebar-resize-handle:hover,
+.agents-dock-resize-handle:hover {
+  background: color-mix(in oklch, var(--mint) 50%, transparent);
+}
+
+.sidebar-head,
+.agents-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-title,
+.agents-dock-title {
+  letter-spacing: 0.12em;
+}
+
+.sidebar-empty,
+.agents-dock-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-size: var(--fs-ui);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* Column + gap for the failure state's message-above-button (#60). A lone
+   text child lays out identically either way, so the empty state is
+   untouched and needs no modifier class. */
+.sidebar-empty {
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The three row lists and the three row shells. A session row, an agent row
+   and a command row are the same control with different contents. */
+.session-list,
+.agent-list,
+.command-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agent-list,
+.command-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.session-row,
+.agent-row,
+.command-row {
+  display: flex;
+}
+
+.session-row-btn,
+.agent-row-btn,
+.command-row-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* `.command-row-btn` is NOT in this group: it has never carried `font: inherit`,
+   and adding it would repaint `.command-row-desc` — the one child that sets a
+   size but no family — from the UA button font to --font. That is a visual
+   change, not a refactor, so it stays out and stays flagged. */
+.session-row-btn,
+.agent-row-btn {
+  font: inherit;
+}
+
+/* ── sessions rail ── */
+
+.sidebar-collapsed {
+  width: 44px;
+  align-items: center;
+}
+
+.sidebar-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebar-collapsed .sidebar-toggle {
+  margin-top: 8px;
+}
+
+/* Filter band under the head: a second toolbar row, same hairline language, no
+   control chrome of its own. The rail already supplies --surface, so the input
+   is bare and the band brightens on focus the way the composer pill does. */
+/* Left padding matches .sidebar-head and the 6px list gutter + 10px row inset,
+   so the placeholder, the group headings and the row titles share one edge. */
+.sidebar-filter {
+  flex-shrink: 0;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 150ms var(--ease);
+}
+
+.sidebar-filter:focus-within {
+  border-bottom-color: var(--tint-5);
+}
+
+.sidebar-filter-input {
+  width: 100%;
+  height: 34px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font: inherit;
+  font-size: var(--fs-ui);
+  color: var(--text);
+  /* Kills Chromium's default search clear glyph — native semantics
+     (role=searchbox), our own chrome. */
+  appearance: none;
+}
+
+.sidebar-filter-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.sidebar-filter-input::placeholder {
+  color: var(--text-faint);
+}
+
+.session-groups {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 6px;
+}
+
+/* A project directory is long and its meaningful end is the tail, so overflow
+   is clipped at the START: `direction: rtl` moves the ellipsis to the left
+   while `unicode-bidi: plaintext` keeps the LTR path rendering LTR. Deliberately
+   NOT sticky — a sticky heading needs an opaque backing, and painting one over
+   the OS acrylic would add the extra glass layer the design system bans.
+   (Truncation itself comes from the shared rule above.) */
+.session-group-head {
+  margin: 0;
+  padding: 4px 10px;
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  color: var(--text-faint);
+  direction: rtl;
+  unicode-bidi: plaintext;
+  text-align: left;
+}
+
+/* Reveal the next page. A text control, not a button-shaped affordance: it is
+   list machinery, and the rail spends its one accent on the active session. */
+.session-more {
+  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-ui);
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.session-row-btn {
+  transition: background 150ms var(--ease), opacity 150ms var(--ease);
+}
+
+/* Busy = blocked (#14): a streaming turn disables switching + New chat. Dim to
+   the same measure as .send-btn:disabled and go inert so hover/focus never
+   imply interactivity; the active row's mint bar stays visible, just dimmed. */
+.session-row-btn:disabled,
+.sidebar-toggle:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* A session in another project: openable since #47, and it moves the whole
+   workspace, so it reads as secondary rather than inert. Muted title only, no
+   dimming — ~90 of 100 rows can be foreign, and a dimmed list is unreadable.
+   Unlike local rows it stays live during a streaming turn; the transaction
+   refuses with `busy` and the pane says so. */
+.session-row-btn-foreign .session-row-title {
+  color: var(--text-muted);
+}
+
+.session-row-btn-active,
+.session-row-btn-active:hover {
+  background: oklch(0.87 0.07 180 / 0.1);
+  box-shadow: inset 2px 0 0 0 var(--color-mint);
+}
+
+.session-row-title {
+  font-size: var(--fs-ui);
+  color: var(--text);
+}
+
+.session-row-meta {
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+}
+
+/* Only the FAILED listing has one of these — an empty store has nothing a
+   second look could turn up, so it deliberately offers no button. Shares its
+   shell with the composer-side refusal retry (#47). */
+.sidebar-empty-retry,
+.switch-refusal-retry {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.sidebar-empty-retry {
+  padding: 5px 14px;
+  font-size: var(--fs-ui);
+}
+
+/* ── agents dock (right-hand aside, mirrors the sessions rail) ── */
+
+.agent-row-btn {
+  transition: background 150ms var(--ease);
+}
+
+/* A nested row gets a hairline in its parent's column — at this row density
+   indentation alone reads as an accident. Only nested rows carry it, so a
+   session that spawned nothing nested stays a clean flat list. */
+.agent-row--nested > .agent-row-btn {
+  border-left: 1px solid var(--tint-4);
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+  padding-left: 9px;
+}
+
+.agent-row-type {
+  font-size: var(--fs-ui);
+  color: var(--text);
+}
+
+.agent-row-desc {
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+}
+
+.agent-row-meta {
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+}
+
+.agent-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.agent-row-status {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+}
+
+.agent-row-stats {
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Only live rows carry a dot — a disk row has no status to show. The dock row
+   and the inline subagent row under a Task card share it, so the two surfaces
+   read as one language. */
+.agent-row-dot,
+.subagent-row-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-faint);
+}
+
+.agent-row--running .agent-row-dot,
+.subagent-row--running .subagent-row-dot {
+  background: var(--mint);
+  animation: subagent-pulse 1.4s ease-in-out infinite;
+}
+
+.agent-row--failed .agent-row-dot,
+.subagent-row--failed .subagent-row-dot {
+  background: var(--danger-dot);
+}
+
+.agent-row--selected > .agent-row-btn {
+  background: var(--tint-3);
+}
+
+/* Map mode. Encoding: shape = kind (rounded square = session, circle = agent,
+   diamond = failed), colour = status. Diamonds read smaller than circles at equal
+   radius, so failed nodes stay unmistakable even at 4px and in greyscale. Toggle
+   stays in the head at all times so empty states don't reflow the chrome. */
+.agents-dock-modes {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  margin-right: 4px;
+}
+
+.agents-dock-mode {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 0;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.agents-dock-mode:hover {
+  color: var(--text-muted);
+}
+
+.agents-dock-mode[aria-pressed='true'] {
+  background: var(--tint-3);
+  color: var(--text);
+}
+
+.agents-dock-mode:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
+/* ── commands dock (#39) — shares .agents-dock layout; rows mirror agent rows ── */
+
+.command-row-name {
+  font-size: var(--fs-ui);
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+.command-row-hint {
+  font-size: var(--fs-micro);
+  font-family: var(--mono);
+  color: var(--text-faint);
+}
+
+.command-row-desc {
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+}

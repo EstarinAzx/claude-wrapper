@@ -1,0 +1,99 @@
+/* The app's own reset, the window shell, and the two things that belong to the
+   SURFACE rather than to any component: the global scrollbar rule and the
+   reduced-motion override. Both are deliberately unscoped.
+
+   tests/scrollbar.test.ts reads this file as TEXT. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background: transparent;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--wash);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ── scrollbars ──────────────────────────────────────────────────────────
+   One rule for the whole window. Chromium's default bar is opaque Windows
+   chrome with stepper arrows: it breaks the acrylic and was the last piece
+   of un-designed OS surface in the app.
+
+   Global, not per component, because a scrollbar belongs to the SURFACE and
+   not to whichever element happens to overflow. Scoping it per component is
+   what caused the defect this replaces: four near-copies had accumulated
+   (the three rails at 8px/2px, the chat at 10px/3px) while the model menu,
+   the commands list, the composer autocomplete and the composer textarea
+   each shipped Chromium's default. A fifth copy would have fixed one of
+   those four. Adding a scrollable must not require remembering a class.
+
+   tests/scrollbar.test.ts pins this block by reading the CSS as TEXT: every
+   line carrying a scrollbar pseudo-element must hold that pseudo-element and
+   nothing else. Never group one of these selectors with a class on the same
+   line — and never name one in a comment, which the same scan would pick up. */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Fill the padding box inside a transparent border: the bar reads as 4px
+   while the drag target stays the full 10px. */
+::-webkit-scrollbar-thumb {
+  background: var(--tint-4);
+  border-radius: var(--r-pill);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--tint-7);
+}
+
+/* Chromium still draws stepper arrows on an otherwise-styled bar. */
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* ── reduced motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

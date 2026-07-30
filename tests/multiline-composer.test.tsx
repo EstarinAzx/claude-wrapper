@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import App from '../src/renderer/src/App'
@@ -46,8 +46,17 @@ const bubble = (): Element | null => document.querySelector('.msg-user .bubble')
 
 // jsdom applies no stylesheet, so the two rules that are pure CSS get pinned
 // against the source — the same technique the renderer-CSP test already uses.
+// The stylesheet is split by surface under styles/ (.bubble in chat.css,
+// .message-input in composer.css). Read the whole directory so the pin follows
+// a rule that moves between files. Still a slice from the selector to the next
+// `}`, so both selectors must stay UNGROUPED and no comment inside either block
+// may contain a closing brace.
+const STYLES_DIR = 'src/renderer/src/styles'
 const cssBlock = (selector: string): string => {
-  const css = readFileSync('src/renderer/src/styles.css', 'utf8')
+  const css = readdirSync(STYLES_DIR)
+    .sort()
+    .map((f) => readFileSync(`${STYLES_DIR}/${f}`, 'utf8'))
+    .join('\n')
   const at = css.indexOf(`${selector} {`)
   return at === -1 ? '' : css.slice(at, css.indexOf('}', at))
 }

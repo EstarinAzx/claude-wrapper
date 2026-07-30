@@ -1,0 +1,83 @@
+/* Patterns every list, menu, dock and card repeats — written once, grouped
+   across every selector that uses them.
+
+   MUST be imported before every component file: these are single-class rules,
+   so each component override needs to be at least as specific AND later. */
+
+/* ── shared patterns ─────────────────────────────────────────────────────
+   Five patterns that every list, menu, dock and card in the app repeats.
+   They live together, once, for the same reason the scrollbar rule does:
+   the failure mode is drift. Before this section the truncation triad was
+   written out 14 times and the focus ring 6 times, so a control added later
+   inherited whichever copy its author happened to be looking at.
+
+   These groups are deliberately FIRST: every component override below is at
+   least as specific and comes later, so the cascade resolves to whatever the
+   component already said. */
+
+/* One-line truncation. Every row title, meta line and key that must not wrap. */
+.session-group-head,
+.session-row-title,
+.session-row-meta,
+.agent-row-type,
+.agent-row-desc,
+.agent-row-meta,
+.agent-row-stats,
+.command-row-name,
+.command-row-hint,
+.command-row-desc,
+.command-option-desc,
+.tool-card-key,
+.tool-card-result,
+.chip-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Keyboard focus. Never a bare outline — a wash plus an inset hairline, so the
+   ring reads against a translucent surface where an outline would sit on the
+   glass rather than in it. */
+.session-row-btn:focus-visible,
+.session-more:focus-visible,
+.agent-row-btn:focus-visible,
+.command-row-btn:focus-visible,
+.sidebar-empty-retry:focus-visible,
+.switch-refusal-retry:focus-visible {
+  outline: none;
+  background: var(--tint-3);
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
+/* Hover wash, quiet: a row or menu item is already a block of text, so it
+   brightens its ground and leaves its type alone. */
+.session-row-btn:hover,
+.agent-row-btn:hover,
+.command-row-btn:hover,
+.model-menu-item:hover,
+.command-option:hover {
+  background: var(--tint-1);
+}
+
+/* Hover wash, lifted: the same ground, plus full-strength text — for controls
+   that are a lone muted word rather than a row of them. */
+.session-more:hover,
+.sidebar-empty-retry:hover,
+.switch-refusal-retry:hover,
+.subagent-drawer-close:hover {
+  background: var(--tint-1);
+  color: var(--text);
+}
+
+/* Micro-caps: section labels in the rails and field keys on a card are the same
+   typographic role. Only the tracking differs, so only the tracking is local. */
+.sidebar-title,
+.agents-dock-title,
+.tool-card-toggle,
+.tool-card-change-label,
+.tool-card-arg-key {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}

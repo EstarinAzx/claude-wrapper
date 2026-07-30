@@ -17,9 +17,13 @@ The next effort is a choice, not a continuation: `/preset init` or grill-me → 
 
 ## What landed this leg
 
-`28be647` — `src/renderer/src/styles.css` deduplicated in place, squash-merged to main and pushed. Repeated literals promoted to `@theme` tokens (`--ease-snap` absorbed 37 copies of one cubic-bezier, `--color-tint-1…7` absorbed 31 raw tint alphas, plus `--font-mono`, `--color-well`, `--color-danger-*`), and ~20 near-identical rule blocks collapsed into shared selector groups. Declarations **1159 → 968 (−16.5%)**, compiled bundle **40,082 → 35,262 B (−12%)**. Every semantic class name kept, so no JSX and no test changed.
+Two passes over the renderer stylesheet, both on main and pushed.
 
-Gate on main after the squash: typecheck clean, build clean, **725 tests green across 52 files**, 9 GUI drivers green. Rationale and the full equivalence argument: [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
+**1. Dedupe** (`28be647`) — repeated literals promoted to `@theme` tokens (`--ease-snap` absorbed 37 copies of one cubic-bezier, `--color-tint-1…7` absorbed 31 raw tint alphas, plus `--font-mono`, `--color-well`, `--color-danger-*`), and ~20 near-identical rule blocks collapsed into shared selector groups. Declarations **1159 → 968 (−16.5%)**, compiled bundle **40,082 → 35,262 B (−12%)**. Every semantic class name kept, so no JSX changed.
+
+**2. Split by surface** — `styles.css` is now a **23-line entry file** (Tailwind layer setup + eleven `@import`s); the rules live in `src/renderer/src/styles/`: `tokens` · `base` · `shared` · `titlebar` · `rails` · `agent-map` · `chat` · `composer` · `tool-card` · `markdown` · `subagent`. Largest file **448** lines, median 134. Compiled bundle **byte-identical** at 35,262 B apart from two intended moves.
+
+Gate: typecheck clean, build clean, **725 tests green across 52 files**, GUI drivers green with identical computed values. Rationale: [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]] (why not a utility migration) and [[2026-07-30-the-import-order-is-the-cascade]] (why the split, and what it made load-bearing).
 
 ## Why the refactor is not "the CSS migrated to Tailwind"
 
@@ -27,11 +31,13 @@ The ask was to migrate `styles.css` to Tailwind because the project already has 
 
 ## Landmines most likely to bite next
 
-Full ledger in [[active-work]]. The three CSS ones are new and all three are silent:
+Full ledger in [[active-work]]. The CSS ones are new and all of them are silent:
 
-- **`tests/scrollbar.test.ts` scans every line of `styles.css` containing a scrollbar pseudo-element — comments included.** Writing `::-webkit-scrollbar` in prose makes the scan treat that comment as a selector and the test goes red.
-- **`tests/multiline-composer.test.tsx` slices the raw CSS from `.bubble {` / `.message-input {` to the NEXT `}`.** Those two selectors must stay **ungrouped**, and no comment inside either block may contain a closing brace — the slice ends early and the pinned declarations fall outside it.
-- **`src/` is CRLF, `.context/*.md` is LF.** A whole-file `Write` to `styles.css` emits LF and flips it silently; re-normalise afterwards.
+- **The `@import` order in `styles.css` IS the cascade.** `tokens` → `base` → `shared` must stay first and in that order — the shared groups are single-class rules every component override is at least as specific as. Reordering those eleven lines restyles the app with no error and no failing test.
+- **A new rule goes in the file that owns its surface, never in the entry** (imports only), and never as a scoped scrollbar copy — that is the drift `tests/scrollbar.test.ts` exists to catch, which is why it reads the whole `styles/` directory.
+- **`tests/scrollbar.test.ts` scans every line containing a scrollbar pseudo-element — comments included.** Writing `::-webkit-scrollbar` in prose makes the scan treat that comment as a selector and the test goes red.
+- **`tests/multiline-composer.test.tsx` slices the raw CSS from `.bubble {` / `.message-input {` to the NEXT `}`.** Those two selectors must stay **ungrouped** (`chat.css` and `composer.css` respectively), and no comment inside either block may contain a closing brace.
+- **`src/` is CRLF, `.context/*.md` is LF.** A whole-file `Write` to a stylesheet emits LF and flips it silently; re-normalise afterwards. A file that shows as ` M` in `git status` with an empty `git diff` is this, not a real edit — `git update-index --really-refresh` clears it.
 - **`gui-45.mjs` is STALE and fails on `main`** (`no foreign row was disabled`) — #47 made foreign sessions openable. Verified pre-existing. Do not "fix" the app to satisfy it.
 - **`.command-row-btn` lacks `font: inherit`** and is deliberately excluded from the shared row-button group; adding it repaints `.command-row-desc`. Real fix, needs its own ticket.
 - A mutation that kills nothing may mean the CODE is dead, not that the test is weak.
@@ -43,7 +49,7 @@ Full ledger in [[active-work]]. The three CSS ones are new and all three are sil
 
 ## Baseline
 
-`main` = `28be647` + this leg's `.context` commit, **pushed** to `origin/main`. No open branches. Trust `git log origin/main..main` over any note.
+`main` = the dedupe (`28be647`) + the split + this leg's `.context` commit, **pushed** to `origin/main`. No open branches. Trust `git log origin/main..main` over any note.
 
 ## GUI check
 
@@ -54,7 +60,8 @@ Full ledger in [[active-work]]. The three CSS ones are new and all three are sil
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]] — this leg
+- [[2026-07-30-the-import-order-is-the-cascade]] — this leg, second pass
+- [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]] — this leg, first pass
 - [[2026-07-23-tailwind4-tokens]] — the ADR it sharpens
 - [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] ·
   [[2026-07-30-a-mutation-that-kills-nothing-is-an-answer]] ·

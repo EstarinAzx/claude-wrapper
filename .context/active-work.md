@@ -7,22 +7,27 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — `styles.css` token/dedupe refactor, no ticket_
-_At commit: `28be647` on `main`, squash-merged and **pushed**; branch `refactor/styles-token-dedupe` deleted_
-_Gate on main after the squash: typecheck clean, build clean, **725 tests green across 52 files**, 9 GUI drivers green, bundle-equivalence diff clean_
+_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — `styles.css` dedupe **then** split by surface, no ticket_
+_At commit: `main`, pushed. Gate: typecheck clean, build clean, **725 tests green across 52 files**, GUI drivers green_
+_Verification for both passes: compiled bundle diffed declaration-by-declaration with `var()` resolved — no behavioural change either time_
 
 ## Current focus
 
 **Nothing in flight. The `ready-for-agent` queue is still empty.**
 
-One unticketed refactor **landed** this session: `src/renderer/src/styles.css` deduplicated in place — repeated literals promoted to `@theme` tokens, ~20 near-identical rule blocks collapsed into shared selector groups. Declarations **1159 → 968 (−16.5%)**, compiled bundle **40,082 → 35,262 B (−12%)**. No JSX touched, no test touched, no computed value changed. See [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
+Two unticketed passes over the renderer stylesheet **landed** this session, in order:
+
+1. **Dedupe** — repeated literals promoted to `@theme` tokens, ~20 near-identical rule blocks collapsed into shared selector groups. Declarations **1159 → 968 (−16.5%)**, compiled bundle **40,082 → 35,262 B (−12%)**. See [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
+2. **Split by surface** — `styles.css` is now a **23-line entry file** of Tailwind layer setup plus eleven `@import`s; the rules live in `src/renderer/src/styles/`, largest file **448** lines, median 134. Compiled bundle **byte-identical** (35,262 B) apart from two intended moves. See [[2026-07-30-the-import-order-is-the-cascade]].
+
+No JSX touched by either. No computed value changed by either. The only test edit was re-pointing the two CSS-text pins at the `styles/` directory — assertions unchanged, no pin retired.
 
 Spec **#58 — the non-lossy tool inspector — remains delivered and closed** (#59 → #60 → #61 → #62 → #63).
 
 ## State
 
 - **In flight:** nothing. No open branches.
-- **Landed this session:** `28be647` — the `styles.css` token/dedupe refactor, squash-merged to main and pushed. Branch deleted.
+- **Landed this session:** the dedupe (`28be647`, squash-merged from a branch since deleted) and the split, both on main and pushed.
 - **Queue (`ready-for-agent`):** **empty**.
 - **Blocked:** nothing.
 - **Open:** the unlabelled umbrella **#1**. Nothing else.
@@ -48,8 +53,11 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Landmines (carried forward)
 
-- **NEW — `tests/scrollbar.test.ts` scans EVERY LINE of `styles.css` containing a scrollbar pseudo-element, comments included.** Naming `::-webkit-scrollbar` in a comment makes the scan treat that prose as a selector and the test goes red. Never group one of those selectors with a class on one line, and never write the token in a comment.
-- **NEW — `tests/multiline-composer.test.tsx` slices the raw CSS from `.bubble {` / `.message-input {` to the NEXT `}`.** So those two selectors must stay **ungrouped**, and no comment inside either block may contain a closing brace — one does, and the slice ends early with the pinned declarations outside it. Both failures read as "the CSS is wrong" when the CSS is fine.
+- **NEW — the `@import` order in `styles.css` IS the cascade, and breaking it is silent.** `tokens` → `base` → `shared` must stay first and in that order: the shared groups are single-class rules that every component override is at least as specific as, so they only work while they come earlier. Reordering those eleven lines restyles the app with no error and no failing test.
+- **NEW — a new rule goes in the file that owns its surface, never in the entry.** The entry holds imports only. A scoped scrollbar copy dropped into any component file is the exact drift `tests/scrollbar.test.ts` exists to catch — which is why that test reads the whole `styles/` **directory**, not just `base.css`.
+- **NEW — `tests/scrollbar.test.ts` scans EVERY LINE of the stylesheet containing a scrollbar pseudo-element, comments included.** Naming `::-webkit-scrollbar` in a comment makes the scan treat that prose as a selector and the test goes red. Never group one of those selectors with a class on one line, and never write the token in a comment.
+- **NEW — `tests/multiline-composer.test.tsx` slices the raw CSS from `.bubble {` / `.message-input {` to the NEXT `}`.** So those two selectors must stay **ungrouped** (`.bubble` in `chat.css`, `.message-input` in `composer.css`), and no comment inside either block may contain a closing brace — one did, and the slice ended early with the pinned declarations outside it. Both failures read as "the CSS is wrong" when the CSS is fine.
+- **NEW — split a file by LINE RANGE, never by retyping it.** Both stylesheet passes were verified by comparing rule sequences and compiled bundles; that only means anything because the rule bodies were carried across mechanically and could not have drifted in transcription.
 - **NEW — `styles.css` is CRLF like the rest of `src/`, while `.context/*.md` is LF.** A whole-file `Write` emits LF and silently flips the file; re-normalise after writing.
 - **NEW — `.command-row-btn` is the one row button without `font: inherit`**, and it is deliberately excluded from the shared row-button group. Adding it repaints `.command-row-desc` (the only child that sets a size but no family) from the UA button font to `--font`. That is a real fix, but it is a visual change and needs its own ticket.
 - **NEW — tint steps 1 and 2 differ by 0.01 alpha** (`.05` for rows and menu items, `.06` for icon buttons) for no recorded reason. Preserved as-is because a refactor may not repaint the app; collapsing them is a deliberate design call, not a cleanup.
@@ -129,7 +137,8 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]] — this session; sharpens [[2026-07-23-tailwind4-tokens]]
+- [[2026-07-30-the-import-order-is-the-cascade]] — this session, second pass
+- [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]] — this session, first pass; sharpens [[2026-07-23-tailwind4-tokens]]
 - [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] — the global rule the refactor routed around
 - [[2026-07-30-a-mutation-that-kills-nothing-is-an-answer]] — #63's dead coalescing pass, and the reflex it closes
 - [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] — #63's spine

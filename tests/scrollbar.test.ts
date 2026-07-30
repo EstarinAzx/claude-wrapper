@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 
 // The scrollbar is a property of the SURFACE, not of whichever element happens
@@ -9,7 +9,16 @@ import { describe, expect, test } from 'vitest'
 // are on the MECHANISM — one global rule, no component-scoped copies — because
 // the failure mode is drift, and a screenshot of any single container passing
 // says nothing about the next scrollable someone adds.
-const css = readFileSync('src/renderer/src/styles.css', 'utf8')
+// The stylesheet is split by surface under styles/ — the scrollbar rule lives
+// in base.css. Read the whole directory rather than one file, so this pin keeps
+// asserting on the app's ENTIRE stylesheet: a scoped copy added to any of the
+// component files is exactly the drift these tests exist to catch, and pinning
+// base.css alone would make it invisible.
+const STYLES_DIR = 'src/renderer/src/styles'
+const css = readdirSync(STYLES_DIR)
+  .sort()
+  .map((f) => readFileSync(`${STYLES_DIR}/${f}`, 'utf8'))
+  .join('\n')
 
 const scrollbarSelectors = css
   .split(/\r?\n/)

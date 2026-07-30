@@ -1,0 +1,210 @@
+/* Titlebar: drag region, pills, window controls, dock toggle. */
+
+/* ── titlebar ── */
+
+.titlebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  flex-shrink: 0;
+  padding: 0 0 0 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.logo-mark {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-mark);
+  background: var(--mint);
+  flex-shrink: 0;
+}
+
+.app-name {
+  font-size: var(--fs-ui);
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* titlebar toggles: backend indicator (native vs wisped) + permission mode.
+   Both share the pill shell; each carries its own accent variant. */
+.backend-pill,
+.perm-pill,
+.model-pill {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: default;
+  -webkit-app-region: no-drag;
+}
+
+.backend-pill:not(:disabled),
+.perm-pill:not(:disabled),
+.model-pill:not(:disabled) {
+  cursor: pointer;
+}
+
+.backend-pill:not(:disabled):hover,
+.perm-pill:not(:disabled):hover,
+.model-pill:not(:disabled):hover {
+  filter: brightness(1.12);
+}
+
+/* input-box footer: mistake disclaimer on the left, model pill bottom-right. */
+.input-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* the pill anchors its pop-up menu, which opens UPWARD (it sits at the bottom). */
+.model-pill-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.model-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.backend-pill--wisped {
+  border-color: transparent;
+  background: var(--mint);
+  color: var(--mint-ink);
+}
+
+/* Bypass = auto-run every tool, no prompt. Danger tint (error hue) so the
+   live-fire mode is never ambiguous; Accept Edits / Ask stay neutral. The
+   border runs heavier than the shared --danger-line, on purpose. */
+.perm-pill--bypass {
+  border-color: oklch(0.55 0.12 25 / 0.45);
+  background: var(--danger-fill);
+  color: oklch(0.82 0.09 25);
+}
+
+.titlebar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.session-title {
+  font-size: var(--fs-ui);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.titlebar-right {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+/* The two 28px rounded-square icon buttons: the Agents-dock toggle in the
+   titlebar and the rail's own collapse/new-chat controls. Deliberately NOT
+   shaped like a window control — a centred 28px square behind a hairline, so
+   the 40px-tall min/max/close run stays visually its own group and the dock
+   toggle is not a mis-click away from Close. */
+.agents-toggle,
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.agents-toggle {
+  align-self: center;
+  margin-left: 4px;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.sidebar-toggle {
+  flex-shrink: 0;
+  transition: background 150ms var(--ease), color 150ms var(--ease),
+    opacity 150ms var(--ease);
+}
+
+.agents-toggle:hover,
+.sidebar-toggle:hover {
+  background: var(--tint-2);
+  color: var(--text);
+}
+
+/* Active state borrows the mint tint the active session row already uses. */
+.agents-toggle--on {
+  background: color-mix(in oklch, var(--mint) 14%, transparent);
+  color: var(--mint);
+}
+
+.agents-toggle--on:hover {
+  background: color-mix(in oklch, var(--mint) 20%, transparent);
+  color: var(--mint);
+}
+
+.titlebar-sep {
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  margin: 0 6px 0 8px;
+  background: var(--border);
+}
+
+.win-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.win-btn:hover {
+  background: var(--tint-3);
+  color: var(--text);
+}
+
+.win-btn-close:hover {
+  background: oklch(0.55 0.16 25 / 0.9);
+  color: oklch(0.94 0.008 190);
+}

@@ -29,16 +29,23 @@ tags: [context, overview]
   `picked` (which becomes `options.model`) is kept apart from `reported` (what
   the CLI says it is running, display only).
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
-- `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS, plus the app-wide scrollbar rule right after the reset — global on purpose, never scoped to a component).
-  `styles.css` then carries a **shared patterns** section immediately after the
-  scrollbar rule: the truncation triad, the focus ring, the two hover washes and
-  the micro-caps label, each written once and grouped across every selector that
-  uses it. Those groups come FIRST so every component override below is at least
-  as specific and later. Tailwind's role here is the `@theme` token store and
-  nothing else — **no utility class is used anywhere in the app** — and two of
-  the tests read this file as raw TEXT, so `.bubble` and `.message-input` must
-  stay ungrouped and no comment may name a scrollbar pseudo-element or contain a
-  closing brace. See [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
+- `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar).
+  `styles.css` is a **23-line entry file**: Tailwind layer setup plus eleven
+  `@import`s. The rules live in `src/renderer/src/styles/` — `tokens` · `base`
+  (reset + the app-wide scrollbar rule + reduced-motion, global on purpose and
+  never scoped to a component) · `shared` · `titlebar` · `rails` · `agent-map` ·
+  `chat` · `composer` · `tool-card` · `markdown` · `subagent`.
+  **The import order IS the cascade**: `tokens` → `base` → `shared` must stay
+  first, because the shared groups (truncation triad, focus ring, the two hover
+  washes, micro-caps label) are single-class rules that every component override
+  is at least as specific as. Reordering those lines silently restyles the app.
+  Tailwind's role is the `@theme` token store and nothing else — **no utility
+  class is used anywhere in the app**. Two tests read the stylesheet as raw
+  TEXT (over the whole `styles/` directory), so `.bubble` and `.message-input`
+  must stay ungrouped and no comment may name a scrollbar pseudo-element or
+  contain a closing brace. See
+  [[2026-07-30-the-import-order-is-the-cascade]] and
+  [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
   `useChat.ts` stores a tool result **complete** on both write paths
   (`toChatMessage` for replay, the `tool-result` handler for live) — #61 moved
   summarising to render time in `ToolCard`, so re-adding `resultSummary` at

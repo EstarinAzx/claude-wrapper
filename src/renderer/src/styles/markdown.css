@@ -1,0 +1,116 @@
+/* Markdown rendered by react-markdown and tokens coloured by highlight.js.
+   Both own their own markup, so these can only ever be descendant rules. */
+
+/* ── markdown ── */
+
+.assistant-body pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  margin: 8px 0 12px;
+}
+
+.assistant-body code {
+  font-family: var(--mono);
+  font-size: var(--fs-ui);
+}
+
+.assistant-body :not(pre) > code {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.assistant-body ul,
+.assistant-body ol {
+  margin: 6px 0 10px;
+  padding-left: 1.4em;
+}
+
+.assistant-body ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.assistant-body ul > li {
+  position: relative;
+  padding-left: 1.4em;
+}
+
+.assistant-body ul > li::before {
+  content: "\2013";
+  position: absolute;
+  left: 0.2em;
+  color: var(--mint);
+}
+
+.assistant-body ol > li::marker {
+  color: var(--mint);
+}
+
+.assistant-body li {
+  margin: 2px 0;
+}
+
+.assistant-body h1,
+.assistant-body h2,
+.assistant-body h3 {
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 12px 0 6px;
+  color: var(--text);
+}
+
+.assistant-body h1 {
+  font-size: 1.25em;
+}
+
+.assistant-body h2 {
+  font-size: 1.1em;
+}
+
+.assistant-body h3 {
+  font-size: 1em;
+}
+
+.assistant-body strong {
+  font-weight: 600;
+}
+
+/* hljs tokens — muted frost-mint palette */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in {
+  color: var(--mint);
+}
+
+.hljs-string,
+.hljs-attr,
+.hljs-template-variable {
+  color: oklch(0.78 0.06 160);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.hljs-number,
+.hljs-literal {
+  color: oklch(0.78 0.07 85);
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-name {
+  color: oklch(0.82 0.05 200);
+}
+
+.hljs-variable,
+.hljs-params {
+  color: var(--text);
+}

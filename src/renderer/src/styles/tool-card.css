@@ -1,0 +1,257 @@
+/* Tool cards and their three disclosure regions (#61 output, #62 input,
+   #63 change), plus the verbatim-data wells all three share. */
+
+/* ── tool card ── */
+
+.tool-card {
+  margin-left: 40px;
+  max-width: 75%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: var(--fs-ui);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tool-card + .tool-card {
+  margin-top: -16px;
+}
+
+.tool-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tool-card-name {
+  color: var(--text);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.tool-card-key {
+  font-family: var(--mono);
+  color: var(--text-muted);
+  min-width: 0;
+}
+
+.tool-card-result {
+  color: var(--text-muted);
+}
+
+.tool-card-pending {
+  color: var(--text-faint);
+}
+
+.tool-card-error .tool-card-result {
+  color: oklch(0.55 0.16 25);
+}
+
+/* Disclosure (#61). Quiet by default — the card must read exactly as it did
+   before when nobody is looking at it — and the caret is the only always-on
+   hint that there is more. (Micro-caps type comes from the shared rule above.) */
+.tool-card-toggle {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: color 150ms var(--ease);
+  -webkit-app-region: no-drag;
+}
+
+.tool-card-toggle:hover {
+  color: var(--text-muted);
+}
+
+.tool-card-toggle:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.tool-card-caret {
+  display: inline-block;
+  transition: transform 150ms var(--ease);
+}
+
+.tool-card-toggle[aria-expanded="true"] .tool-card-caret {
+  transform: rotate(90deg);
+}
+
+/* ── the verbatim-data wells ────────────────────────────────────────────
+   The tool output (#61), the input inspector's values (#62) and the change
+   region (#63) are all the same thing: bytes shown exactly as they are.
+   Preformatted, wrapped rather than clipped, selectable, height-capped so one
+   enormous argument scrolls instead of pushing the composer off screen, and on
+   the app-wide scrollbar rule — never a component-scoped one. */
+
+.tool-card-output,
+.tool-card-diff-body,
+.tool-card-content-body,
+.tool-card-arg-value {
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  line-height: 1.55;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.tool-card-output,
+.tool-card-diff-body,
+.tool-card-content-body {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--well);
+}
+
+.tool-card-output {
+  margin: 2px 0 0;
+  padding: 8px 10px;
+}
+
+.tool-card-error .tool-card-output {
+  border-color: oklch(0.55 0.16 25 / 0.35);
+}
+
+/* Structured input inspector (#62). Each argument stacks its label above its
+   value, because a two-column grid would have to choose between truncating a
+   path and starving a multi-line JSON. */
+.tool-card-input {
+  margin: 2px 0 0;
+  padding: 8px 10px;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--well);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tool-card-arg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tool-card-arg-key {
+  font-family: var(--font);
+  letter-spacing: 0.06em;
+}
+
+.tool-card-arg-value {
+  margin: 0;
+}
+
+/* Change region (#63). An Edit renders a real replacement hunk — its old string
+   against its new one — and Write renders a labelled content preview and never
+   a diff, because Write carries no before-state and added lines would conceal
+   what was overwritten. */
+.tool-card-diff,
+.tool-card-content {
+  margin: 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tool-card-change-label {
+  font-family: var(--font);
+  letter-spacing: 0.06em;
+}
+
+.tool-card-diff-body,
+.tool-card-content-body {
+  margin: 0;
+}
+
+/* The hunk pads its rows, not its box, so an add/delete tint reads as a full
+   band rather than a highlight hugging the glyphs. */
+.tool-card-diff-body {
+  padding: 8px 0;
+}
+
+.tool-card-content-body {
+  padding: 8px 10px;
+}
+
+/* Colour is never the only signal: the leading +/- is part of the line's text,
+   so the side a line is on survives a screenshot, a copy-paste and a reader
+   that announces text without style. */
+.tool-card-diff-line {
+  display: block;
+  padding: 0 10px;
+}
+
+.tool-card-diff-line--add {
+  background: oklch(0.72 0.12 158 / 0.14);
+  color: oklch(0.84 0.09 158);
+}
+
+.tool-card-diff-line--del {
+  background: oklch(0.62 0.15 25 / 0.14);
+  color: oklch(0.79 0.1 25);
+}
+
+.tool-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.tool-perm-btn {
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font-family: var(--font);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  padding: 4px 12px;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background 150ms var(--ease), border-color 150ms var(--ease);
+  -webkit-app-region: no-drag;
+}
+
+.tool-perm-btn:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.tool-perm-allow {
+  background: var(--mint);
+  border-color: transparent;
+  color: var(--mint-ink);
+}
+
+.tool-perm-allow:hover {
+  background: var(--mint-press);
+}
+
+.tool-perm-deny {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.tool-perm-deny:hover {
+  background: var(--tint-2);
+  color: var(--text);
+}

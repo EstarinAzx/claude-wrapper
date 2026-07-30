@@ -1,0 +1,98 @@
+/* Design tokens. The Tailwind 4 @theme store plus the short :root aliases the
+   component CSS reads. Nothing here paints anything — every value is named
+   once and referenced everywhere else. */
+
+@theme {
+  /* neutrals, tinted toward the accent hue (h≈210) — deep near-black, matches
+     docs/design/frost-mono-reference.png */
+  --color-wash: oklch(0.12 0.008 210 / 0.64);      /* app wash over OS acrylic */
+  --color-surface: oklch(0.19 0.008 210 / 0.58);   /* titlebar, input pill */
+  --color-bubble: oklch(0.27 0.007 220 / 0.9);     /* user prompt bubble */
+  --color-border: oklch(0.92 0.01 210 / 0.08);     /* hairlines */
+  --color-text: oklch(0.94 0.008 190);
+  --color-text-muted: oklch(0.68 0.01 200);
+  --color-text-faint: oklch(0.53 0.01 210);
+
+  /* The neutral highlight ladder: ONE colour — the same near-white the hairline
+     is cut from — at seven strengths. Every hover wash, focus ring, pressed
+     state and scrollbar thumb in the app is a step on it. These seven alphas
+     were previously written out as literals 31 times, and they had already
+     drifted: steps 1 and 2 differ by 0.01 for no recorded reason (rows took one,
+     icon buttons the other). Preserved as-is rather than collapsed, because a
+     refactor may not repaint the app — but the drift is now visible in one
+     place instead of hidden across 31. Step 3 is --color-border's twin. */
+  --color-tint-1: oklch(0.92 0.01 210 / 0.05);     /* row + menu-item hover */
+  --color-tint-2: oklch(0.92 0.01 210 / 0.06);     /* icon-button hover */
+  --color-tint-3: oklch(0.92 0.01 210 / 0.08);     /* focus wash, pressed */
+  --color-tint-4: oklch(0.92 0.01 210 / 0.12);     /* scrollbar thumb, nesting rule */
+  --color-tint-5: oklch(0.92 0.01 210 / 0.16);     /* map edge, filter-band focus */
+  --color-tint-6: oklch(0.92 0.01 210 / 0.18);     /* focus ring, pill focus */
+  --color-tint-7: oklch(0.92 0.01 210 / 0.2);      /* scrollbar thumb hover */
+
+  /* the one accent: frost mint */
+  --color-mint: oklch(0.87 0.07 180);
+  --color-mint-press: oklch(0.8 0.08 182);
+  --color-mint-ink: oklch(0.25 0.02 200);          /* glyphs on mint fills */
+
+  /* Error hue (h≈25), tokenised only where it actually repeats. The one-off
+     shades — the close button's red, the diff's deletion band, the failed tool
+     result, the bypass pill's heavier border — stay literal at their single
+     call site; a token with one caller is indirection, not a system. */
+  --color-danger-line: oklch(0.55 0.12 25 / 0.35); /* error + reject hairline */
+  --color-danger-fill: oklch(0.35 0.06 25 / 0.35); /* error + bypass ground */
+  --color-danger-text: oklch(0.78 0.08 25);        /* error + reject prose */
+  --color-danger-dot: oklch(0.6 0.16 25);          /* failed status glyph */
+
+  /* The well verbatim data sits in: tool output, input inspector, diff, content. */
+  --color-well: oklch(0.14 0.008 210 / 0.5);
+
+  /* shape */
+  --radius-bubble: 16px;
+  --radius-pill: 999px;
+  --radius-mark: 7px;                              /* logo rounded square */
+
+  /* type */
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
+  --text-body: 15px;
+  --text-ui: 13px;
+  --text-micro: 11px;
+
+  /* Motion: one curve for the whole app. Was written out 37 times. */
+  --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  /* legacy aliases: existing component CSS keeps these short names, zero churn */
+  --wash: var(--color-wash);
+  --surface: var(--color-surface);
+  --bubble: var(--color-bubble);
+  --border: var(--color-border);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --text-faint: var(--color-text-faint);
+  --tint-1: var(--color-tint-1);
+  --tint-2: var(--color-tint-2);
+  --tint-3: var(--color-tint-3);
+  --tint-4: var(--color-tint-4);
+  --tint-5: var(--color-tint-5);
+  --tint-6: var(--color-tint-6);
+  --tint-7: var(--color-tint-7);
+  --mint: var(--color-mint);
+  --mint-press: var(--color-mint-press);
+  --mint-ink: var(--color-mint-ink);
+  --danger-line: var(--color-danger-line);
+  --danger-fill: var(--color-danger-fill);
+  --danger-text: var(--color-danger-text);
+  --danger-dot: var(--color-danger-dot);
+  --well: var(--color-well);
+  --r-bubble: var(--radius-bubble);
+  --r-pill: var(--radius-pill);
+  --r-mark: var(--radius-mark);
+  --font: var(--font-sans);
+  --mono: var(--font-mono);
+  --fs-body: var(--text-body);
+  --fs-ui: var(--text-ui);
+  --fs-micro: var(--text-micro);
+  --ease: var(--ease-snap);
+}
