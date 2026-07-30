@@ -5,7 +5,7 @@
 // (NaN from bad localStorage / IPC) falls back to the default — this is the
 // trust-boundary guard the main-side handler reuses.
 
-export const DEFAULT_ZOOM = 1.1
+export const DEFAULT_ZOOM = 1.25
 export const MIN_ZOOM = 0.7
 export const MAX_ZOOM = 2.0
 export const ZOOM_STEP = 0.1

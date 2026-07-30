@@ -208,6 +208,18 @@ describe('the composer height (#42)', () => {
     expect(block).toMatch(/overflow-y:\s*auto/)
   })
 
+  // The growth above is what makes the pill's radius load-bearing. A 999px
+  // --r-pill is clamped to half the shorter side, so it renders as 24px at the
+  // resting height and is indistinguishable from this value until the composer
+  // grows — at which point it sweeps to ~96px and the pill reads as a lozenge
+  // with the buttons inside the curve. Nothing about the one-line composer can
+  // catch that, so the pin is on the source: a fixed radius, not the token.
+  test('the pill radius is fixed, so growing it cannot round into a lozenge', () => {
+    const block = cssBlock('.input-pill')
+    expect(block).toMatch(/border-radius:\s*24px/)
+    expect(block).not.toMatch(/border-radius:\s*var\(--r-pill\)/)
+  })
+
   // Criterion 6 is structural rather than behavioural: the height is never
   // React state, so there is nothing that can stay stuck after a send or an
   // external insert. An inline height written by JS is exactly the bug this

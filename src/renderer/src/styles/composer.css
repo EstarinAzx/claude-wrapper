@@ -47,7 +47,15 @@
   max-width: 760px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-pill);
+  /* NOT --r-pill. A 999px radius is clamped by the browser to half the box's
+     shorter side, so at the 48px resting height it renders as exactly 24px —
+     but once #42's growth takes the pill to its 8-line ceiling the same token
+     resolves to a ~96px sweep and the composer reads as a giant lozenge, with
+     the paperclip and send button sitting inside the curve. Pinning the resting
+     value keeps the one-line composer pixel-identical and lets the grown one
+     settle into a rounded rectangle, which is what a multi-line field should be.
+     Tied to the resting height: 36px send button + the 6px padding pair. */
+  border-radius: 24px;
   padding: 6px 8px 6px 14px;
   transition: border-color 150ms var(--ease);
 }

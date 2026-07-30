@@ -1,7 +1,12 @@
 import { useEffect } from 'react'
 import { clampZoom, nextZoom, DEFAULT_ZOOM, type ZoomAction } from '../../shared/zoom'
 
-const STORAGE_KEY = 'zoom-level'
+// Versioned: the previous key holds every existing install's copy of the OLD
+// default, and a stored level always wins over the default. Without the bump,
+// raising DEFAULT_ZOOM would be a no-op for anyone who had already run the app.
+// Bump again on the next default change; a hand-set level survives within a
+// version, which is the whole point of persisting it.
+const STORAGE_KEY = 'zoom-level-v2'
 
 const readStored = (): number => {
   const raw = window.localStorage.getItem(STORAGE_KEY)

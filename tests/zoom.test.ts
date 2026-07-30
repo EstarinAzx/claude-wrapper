@@ -30,9 +30,12 @@ describe('nextZoom', () => {
     expect(nextZoom(0.7, 'reset')).toBe(DEFAULT_ZOOM)
   })
 
+  // Literal in, literal out: what this pins is the stepping arithmetic, and
+  // 1.1 is the float-drift case that motivated the rounding. Expressing it as
+  // DEFAULT_ZOOM only coupled it to a product decision it has no stake in.
   test('in/out step by ZOOM_STEP without float drift', () => {
-    expect(nextZoom(DEFAULT_ZOOM, 'in')).toBe(1.2)
-    expect(nextZoom(DEFAULT_ZOOM, 'out')).toBe(1.0)
+    expect(nextZoom(1.1, 'in')).toBe(1.2)
+    expect(nextZoom(1.1, 'out')).toBe(1.0)
   })
 
   test('stepping is clamped at both ends', () => {
