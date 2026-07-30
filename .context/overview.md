@@ -30,6 +30,15 @@ tags: [context, overview]
   the CLI says it is running, display only).
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
 - `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS, plus the app-wide scrollbar rule right after the reset — global on purpose, never scoped to a component).
+  `styles.css` then carries a **shared patterns** section immediately after the
+  scrollbar rule: the truncation triad, the focus ring, the two hover washes and
+  the micro-caps label, each written once and grouped across every selector that
+  uses it. Those groups come FIRST so every component override below is at least
+  as specific and later. Tailwind's role here is the `@theme` token store and
+  nothing else — **no utility class is used anywhere in the app** — and two of
+  the tests read this file as raw TEXT, so `.bubble` and `.message-input` must
+  stay ungrouped and no comment may name a scrollbar pseudo-element or contain a
+  closing brace. See [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
   `useChat.ts` stores a tool result **complete** on both write paths
   (`toChatMessage` for replay, the `tool-result` handler for live) — #61 moved
   summarising to render time in `ToolCard`, so re-adding `resultSummary` at
