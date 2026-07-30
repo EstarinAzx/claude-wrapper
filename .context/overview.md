@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-07-29
+updated: 2026-07-30
 tags: [context, overview]
 ---
 
@@ -55,10 +55,13 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **queue
-  empty** — spec #55 delivered and closed with #56/#57)
-- Tracker: **spec #55 (live-tail) delivered and closed with #56 (gui-55 driver,
-  red-verified) and #57 (live-tail core)**; **#52 (model pill follows the CLI),
+- `.context/pick-up.md` — current frontier + landmines (currently: **five
+  queued tickets #59–#63 from spec #58; frontier is #59 and #60**)
+- Tracker: **spec #58 (non-lossy tool inspector) open with tickets #59–#63 —
+  #59 replay text-block joining, #60 the store's three silent failures, then
+  #61 output disclosure → #62 input inspector → #63 Edit hunk diff, chained by
+  native GitHub dependencies**; **spec #55 (live-tail) delivered and closed with
+  #56 (gui-55 driver, red-verified) and #57 (live-tail core)**; **#52 (model pill follows the CLI),
   #53 (CLI-sourced model list), #54 (no resume before the first turn), #50 and
   #51 closed**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed

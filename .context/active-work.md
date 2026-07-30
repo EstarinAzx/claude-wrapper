@@ -1,61 +1,60 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-07-29
+updated: 2026-07-30
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-07-29 by Fable 5 (relay ticket-loop leg 2) — #57 delivered, spec #55 closed_
-_At commit: `dc87844` (live-tail core on main; ahead of origin before this `.context` commit)_
-_Baseline: typecheck clean, build clean, **637 tests green across 50 files** (was 614/48)_
+_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — spec #58 + five tickets published, queue refilled_
+_At commit: `31d70f0` (no code changed this session; `main` was in sync with `origin/main` before this `.context` commit)_
+_Baseline unchanged from #57's gate: typecheck clean, build clean, **637 tests green across 50 files**_
 
 ## Current focus
 
-**None — the `ready-for-agent` queue is empty.**
-
-Spec #55 (live-tail external sessions) is **delivered and closed**, with both
-its tickets closed: #56 (the gui-55 driver, seen red first) and #57 (the core).
-`node .claude/skills/run-desktop/gui-55.mjs` now prints `PASS` unchanged —
-pane 2 → 3 messages after an external append, `session:changed` observed on the
-main side. The red run is on record in #56, so the green means something.
+**Spec #58 — the non-lossy tool inspector.** Tool cards currently destroy their own evidence: every result is cut to its first non-empty line at 120 chars, and the cut happens *on the way into state* at two separate points while the raw text is already in hand. Measured over the local store, **59.7% of 6,416 results have more than one non-empty line** and 28.7% have a first line past the cap — so most cards are hiding content right now. Five tickets are queued; nothing is started.
 
 ## State
 
-- **In flight:** nothing — #57's branch is squash-merged and deleted.
-- **Queue (`ready-for-agent`):** **empty.**
-- **Blocked:** nothing.
-- **Open:** only the unlabelled umbrella **#1**.
+- **In flight:** nothing — no code was written this session. The output is tracker state.
+- **Queue (`ready-for-agent`):** **five tickets, #59–#63.** Frontier is **#59 and #60** (both zero open blockers).
+- **Blocked:** #61 by #59; #62 by #61; #63 by #62 — wired as **native GitHub dependencies**, verified via `issue_dependencies_summary`.
+- **Open:** spec **#58** (`ready-for-agent`), the unlabelled umbrella **#1**.
 
 ## Pick up here
 
-**Nothing is queued.** The next session needs a human to choose the next piece
-of work — the deferred list at the bottom of this file is the menu, and
-`/preset init` or `to-spec` → `to-tickets` is the road from an idea to a queue.
-Nothing is pushed: `git log origin/main..main` is the real ahead-count and
-push is opt-in (`/preset ship`).
+Work the frontier. Two independent roots:
 
-## Recent context
+- **#59 — reconcile replay text-block joining with live.** Live joins multi-block tool results with `\n`, replay joins with `''`, so the same result summarises as `boom` live and `boomtrace` replayed. A live bug today, not a future one. Prerequisite for #61's parity acceptance. Pure-parser seam; the existing replay test only ever supplies **one** block, which is how this survived.
+- **#60 — distinguish the store's three silent failures.** A throwing list, an unresolvable session dir, and an unreadable transcript all collapse to `[]`, so a listing failure reads as "No sessions yet" and a corrupt session reads as an empty conversation. Independent of #58 entirely. Injected-`StoreIo` seam.
 
-- **This leg (2026-07-29, relay ticket-loop leg 2):** built live-tail core,
-  merged `dc87844`, closed #57 and then spec #55. New surfaces:
-  `src/main/session-watcher.ts` (one watcher, injected `WatchIo` seam,
-  `resetSessionWatcher()`), the `session:watch` / `session:changed` channel pair,
-  and the renderer's eligibility + single-flight reload in `useChat`.
-  A review pass caught three real defects before merge, each now pinned by a
-  test that dies without its fix (see Landmines).
-- Earlier on 2026-07-29 (leg 1): #56, the gui-55 driver, seen red against the
-  featureless build.
-- 2026-07-28 landed #52/#53/#54 + the host-CLI switch (`d814c03`).
-- The store had grown to **499 sessions** at last count.
+Then the chain: **#61** (full output disclosure) → **#62** (structured input inspector) → **#63** (Edit hunk diff).
+
+One ticket per branch `ticket/<id>-<slug>`, gate green before merge.
+
+## Skills for next session
+
+- superpowers:test-driven-development — every ticket names a mutation that must kill a test; red-first is the whole discipline here
+- superpowers:verification-before-completion — #61's acceptance turns on an *existing* test staying green untouched
 
 ## Open questions
 
-None blocking.
+None blocking. One deferred owner decision is recorded in #58's Out of Scope: whether an honest Write diff is required at permission time only, or also after an auto-run and in replay. It gates nothing in #59–#63.
+
+## Recent context
+
+- Two independent brainstorms (different models, no shared context) ranked the tool inspector **first** out of nine and ten candidates. Convergence chose it; **measurement** justified it — the corpus figures were gathered before committing, precisely because two models agreeing can mean two models sharing a blind spot.
+- The design was adversarially reviewed and the reviewer **reversed itself twice**: it dropped a `diff` dependency it had recommended once its own scoping removed the justification, and withdrew a claimed test-pin retirement once the conditional-mount mechanism made the retirement unnecessary. Both reversals are in the spec.
+- The safety framing was **downgraded deliberately**. Informed Edit approval was the original headline; `bypassPermissions` resetting every launch made it opt-in, so the spec now leads on inspection. See [[2026-07-30-inspection-is-universal-approval-safety-is-opt-in]].
+- Corpus percentages came from an ephemeral read-only script over the native JSONL, with the active session excluded so the analysis could not inflate its own evidence. Reproducible, **not checked in**. Every claim about code is grounded in source.
+- No `/hp` MVD was drawn — `hp` is for greenfield, `.context/happy-path.md` already covers the app's golden path, and a disclosure triangle does not earn a diagram.
 
 ## Landmines (carried forward)
 
+- **NEW — the collapsed tool-card test is a mechanism check, not a pin to retire.** It feeds a two-line result and asserts line two is absent. #61 must keep it green **untouched** by *conditionally mounting* detail — a CSS-hidden body or a closed `<details>` leaves the text in `textContent` and turns it red correctly. If it goes red, the implementation is wrong.
+- **NEW — never render a Write "diff".** Write supplies only path + content, no before-state. Green added lines conceal what was overwritten and manufacture confidence at the deciding moment. Labelled content preview only.
+- **NEW — `gh` infers the repo from the working directory.** `cd`-ing out of the clone (e.g. to a temp dir holding a body file) makes every `gh issue create` fail with `no git remotes found`. Stay in the repo and pass absolute `--body-file` paths, or pass `-R <owner>/<repo>`.
 - **#57's watcher is epoch-fenced, and the fence is the whole safety argument.**
   Every request bumps `epoch`; a directory lookup that resolves after a newer
   request must not install, and an fs event queued before a teardown must not
@@ -87,10 +86,10 @@ None blocking.
   spent; any other red pin means the change is wrong.
 - **A green test can be green for the wrong reason.** Assert the mechanism — a
   fetch count, a read that must not happen, an option that must be absent, a call
-  ORDER — not a symptom with more than one cause. Corollary, re-confirmed twice
-  this leg: **if a mutation kills nothing, the code you mutated may not be what
-  makes the test pass.** #57's busy gate is the worked example — its test passes
-  via the eligibility clear, not via the busy check.
+  ORDER — not a symptom with more than one cause. Corollary: **if a mutation
+  kills nothing, the code you mutated may not be what makes the test pass.**
+  #57's busy gate is the worked example — its test passes via the eligibility
+  clear, not via the busy check.
 - **A session id is only resumable once a turn has run** (#54). `sessionId()`
   stays null through warm-up on purpose: `hook_started` carries an id for a
   session the CLI has not created, and resuming into it fails the turn.
@@ -134,7 +133,8 @@ None blocking.
   `scrollbar-width` / `scrollbar-color` — the standard properties suppress the
   `::-webkit-` pseudo-elements and would silently discard the global rule.
   `::-webkit-scrollbar-button { display: none }` and a transparent `-corner` are
-  load-bearing, not tidiness.
+  load-bearing, not tidiness. **#61/#62's expanded regions inherit the global
+  rule — do not give the inspector its own.**
 - **Never write a literal ESC byte or a `\u` escape into source.** `CSI` uses
   `String.fromCharCode(27)`; the raw character is invisible in an editor and the
   escape was repeatedly normalized into the raw byte in transit.
@@ -144,8 +144,9 @@ None blocking.
   inline mocks in `sidebar` / `session` / `shell` tests), and guard every IPC with
   `isTrustedIpc`. #57's `onSessionChanged` is subscribed on mount, which is why a
   missing mock member kills a suite at render rather than in its own tests.
+  **#59–#63 add no channel, so this does not fire for them.**
 - **A module-level cache needs a test reset.** `resetSessionIndex()`,
-  `resetEnrichedTitles()` and now `resetSessionWatcher()` all exist for that
+  `resetEnrichedTitles()` and `resetSessionWatcher()` all exist for that
   reason — and the watcher's reset must bump the epoch, not only close the handle.
 - **Vitest + `node:fs/promises`:** a module mock must also export `default`, or
   the file dies at import with `No "default" export is defined`. It also needs
@@ -205,21 +206,47 @@ None blocking.
 
 ## Deferred (still no spec)
 
-Live-tail's **incremental byte tailing** (the documented upgrade path if
-wholesale reload ever visibly flickers) and the **watch-installed-after-the-read
-gap** (a `ponytail:` comment at the call site names the fix). Plus, unchanged:
-context-pressure meter (`Query.getContextUsage()` exists but a naïve percentage
-lies — it must separate the raw window from the auto-compaction threshold),
-typed failed-turn recovery (`rewindFiles()` needs `enableFileCheckpointing`,
-which our options do not set), full-text transcript search, session
-delete/archive lifecycle, drag-and-drop, replay thumbnails, N-concurrent
-engines, fork-on-resume, busy-switch detach (decided against — block is the
-behaviour), folding `Welcome`'s last `pickFolder` caller onto the chooser, agent
-archive / control / map pan-zoom, and the smaller leftovers from #31–#36.
+**Newly deferred by #58, with reasons on record:** honest whole-file **Write
+diff** in every form (needs a pre-write baseline the event contract lacks;
+checkpoint records point at backup files, not before-content); **per-tool rich
+card bodies** (TodoWrite checklist, Grep hit list, Read slice — each couples to
+one tool's schema); **permission-mode default or persistence** (would make
+approval reachable by default, but reverses a recorded owner choice); **adopting
+the SDK's richer permission metadata** (`title`, `displayName`, `description`,
+`blockedPath`, `decisionReason`, `suggestions` — all currently dropped by the
+engine, and a real reason permission cards read as generic); a **wrapper-owned
+truncation cap**; a **diff dependency**.
+
+**Found by the brainstorm pair, unspec'd:** stream **extended thinking** as a
+collapsed strip (`thinking_delta` is dropped; only `text_delta` is forwarded, so
+a reasoning phase reads as a hang); **native turn-end notifications + taskbar
+flash** (zero `Notification`/`flashFrame` in `src/`); **type-while-busy composer**
+then queued send (the textarea is `disabled={busy}` for the whole turn);
+**one-click restart on `terminalError`**; **turn pulse** from the dropped
+`tool_progress` / `status` / rate-limit telemetry; **MCP + settings-parse health**
+surfacing.
+
+**Carried, unchanged:** live-tail's **incremental byte tailing** and the
+**watch-installed-after-the-read gap** (both demand-driven — a `ponytail:`
+comment names the fix; do not start on principle). Plus context-pressure meter
+(`Query.getContextUsage()` exists but a naïve percentage lies — it must separate
+the raw window from the auto-compaction threshold), typed failed-turn recovery
+(`rewindFiles()` needs `enableFileCheckpointing`, which our options do not set),
+full-text transcript search, **session rename / delete / archive** (the SDK
+exports `renameSession`, `deleteSession` and `forkSession`, so this is cheaper
+than earlier notes assumed), drag-and-drop, replay thumbnails, N-concurrent
+engines, **fork-on-resume** (`forkSession` exists), busy-switch detach (decided
+against — block is the behaviour), folding `Welcome`'s last `pickFolder` caller
+onto the chooser, agent archive / control / map pan-zoom, and the smaller
+leftovers from #31–#36.
 
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-30-disclosure-is-retention-plus-conditional-mount]] ·
+  [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] ·
+  [[2026-07-30-inspection-is-universal-approval-safety-is-opt-in]]
+- [[2026-07-23-transcript-parser-pure-renderer-summarises]] — the seam #61 preserves
 - [[2026-07-29-live-tail-is-a-signal-not-a-stream]] ·
   [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]] ·
   [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] ·
@@ -234,4 +261,5 @@ archive / control / map pan-zoom, and the smaller leftovers from #31–#36.
 - [[2026-07-28-composer-height-is-css-not-state]] ·
   [[2026-07-27-slash-commands-are-a-dumb-pipe]] ·
   [[2026-07-24-wisp-alias-routes-by-name]] ·
+  [[2026-07-24-in-app-permission-mode-toggle]] ·
   [[2026-07-23-busy-switch-block-not-detach]]
