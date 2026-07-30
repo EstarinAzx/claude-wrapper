@@ -15,10 +15,38 @@
   --color-text-muted: oklch(0.68 0.01 200);
   --color-text-faint: oklch(0.53 0.01 210);
 
+  /* The neutral highlight ladder: ONE colour — the same near-white the hairline
+     is cut from — at seven strengths. Every hover wash, focus ring, pressed
+     state and scrollbar thumb in the app is a step on it. These seven alphas
+     were previously written out as literals 31 times, and they had already
+     drifted: steps 1 and 2 differ by 0.01 for no recorded reason (rows took one,
+     icon buttons the other). Preserved as-is rather than collapsed, because a
+     refactor may not repaint the app — but the drift is now visible in one
+     place instead of hidden across 31. Step 3 is --color-border's twin. */
+  --color-tint-1: oklch(0.92 0.01 210 / 0.05);     /* row + menu-item hover */
+  --color-tint-2: oklch(0.92 0.01 210 / 0.06);     /* icon-button hover */
+  --color-tint-3: oklch(0.92 0.01 210 / 0.08);     /* focus wash, pressed */
+  --color-tint-4: oklch(0.92 0.01 210 / 0.12);     /* scrollbar thumb, nesting rule */
+  --color-tint-5: oklch(0.92 0.01 210 / 0.16);     /* map edge, filter-band focus */
+  --color-tint-6: oklch(0.92 0.01 210 / 0.18);     /* focus ring, pill focus */
+  --color-tint-7: oklch(0.92 0.01 210 / 0.2);      /* scrollbar thumb hover */
+
   /* the one accent: frost mint */
   --color-mint: oklch(0.87 0.07 180);
   --color-mint-press: oklch(0.8 0.08 182);
   --color-mint-ink: oklch(0.25 0.02 200);          /* glyphs on mint fills */
+
+  /* Error hue (h≈25), tokenised only where it actually repeats. The one-off
+     shades — the close button's red, the diff's deletion band, the failed tool
+     result, the bypass pill's heavier border — stay literal at their single
+     call site; a token with one caller is indirection, not a system. */
+  --color-danger-line: oklch(0.55 0.12 25 / 0.35); /* error + reject hairline */
+  --color-danger-fill: oklch(0.35 0.06 25 / 0.35); /* error + bypass ground */
+  --color-danger-text: oklch(0.78 0.08 25);        /* error + reject prose */
+  --color-danger-dot: oklch(0.6 0.16 25);          /* failed status glyph */
+
+  /* The well verbatim data sits in: tool output, input inspector, diff, content. */
+  --color-well: oklch(0.14 0.008 210 / 0.5);
 
   /* shape */
   --radius-bubble: 16px;
@@ -27,9 +55,13 @@
 
   /* type */
   --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
   --text-body: 15px;
   --text-ui: 13px;
   --text-micro: 11px;
+
+  /* Motion: one curve for the whole app. Was written out 37 times. */
+  --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
@@ -41,16 +73,30 @@
   --text: var(--color-text);
   --text-muted: var(--color-text-muted);
   --text-faint: var(--color-text-faint);
+  --tint-1: var(--color-tint-1);
+  --tint-2: var(--color-tint-2);
+  --tint-3: var(--color-tint-3);
+  --tint-4: var(--color-tint-4);
+  --tint-5: var(--color-tint-5);
+  --tint-6: var(--color-tint-6);
+  --tint-7: var(--color-tint-7);
   --mint: var(--color-mint);
   --mint-press: var(--color-mint-press);
   --mint-ink: var(--color-mint-ink);
+  --danger-line: var(--color-danger-line);
+  --danger-fill: var(--color-danger-fill);
+  --danger-text: var(--color-danger-text);
+  --danger-dot: var(--color-danger-dot);
+  --well: var(--color-well);
   --r-bubble: var(--radius-bubble);
   --r-pill: var(--radius-pill);
   --r-mark: var(--radius-mark);
   --font: var(--font-sans);
+  --mono: var(--font-mono);
   --fs-body: var(--text-body);
   --fs-ui: var(--text-ui);
   --fs-micro: var(--text-micro);
+  --ease: var(--ease-snap);
 }
 
 *,
@@ -101,7 +147,12 @@ body {
    (the three rails at 8px/2px, the chat at 10px/3px) while the model menu,
    the commands list, the composer autocomplete and the composer textarea
    each shipped Chromium's default. A fifth copy would have fixed one of
-   those four. Adding a scrollable must not require remembering a class. */
+   those four. Adding a scrollable must not require remembering a class.
+
+   tests/scrollbar.test.ts pins this block by reading the CSS as TEXT: every
+   line carrying a scrollbar pseudo-element must hold that pseudo-element and
+   nothing else. Never group one of these selectors with a class on the same
+   line — and never name one in a comment, which the same scan would pick up. */
 
 ::-webkit-scrollbar {
   width: 10px;
@@ -116,19 +167,97 @@ body {
 /* Fill the padding box inside a transparent border: the bar reads as 4px
    while the drag target stays the full 10px. */
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.92 0.01 210 / 0.12);
+  background: var(--tint-4);
   border-radius: var(--r-pill);
   background-clip: padding-box;
   border: 3px solid transparent;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: oklch(0.92 0.01 210 / 0.2);
+  background-color: var(--tint-7);
 }
 
 /* Chromium still draws stepper arrows on an otherwise-styled bar. */
 ::-webkit-scrollbar-button {
   display: none;
+}
+
+/* ── shared patterns ─────────────────────────────────────────────────────
+   Five patterns that every list, menu, dock and card in the app repeats.
+   They live together, once, for the same reason the scrollbar rule does:
+   the failure mode is drift. Before this section the truncation triad was
+   written out 14 times and the focus ring 6 times, so a control added later
+   inherited whichever copy its author happened to be looking at.
+
+   These groups are deliberately FIRST: every component override below is at
+   least as specific and comes later, so the cascade resolves to whatever the
+   component already said. */
+
+/* One-line truncation. Every row title, meta line and key that must not wrap. */
+.session-group-head,
+.session-row-title,
+.session-row-meta,
+.agent-row-type,
+.agent-row-desc,
+.agent-row-meta,
+.agent-row-stats,
+.command-row-name,
+.command-row-hint,
+.command-row-desc,
+.command-option-desc,
+.tool-card-key,
+.tool-card-result,
+.chip-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Keyboard focus. Never a bare outline — a wash plus an inset hairline, so the
+   ring reads against a translucent surface where an outline would sit on the
+   glass rather than in it. */
+.session-row-btn:focus-visible,
+.session-more:focus-visible,
+.agent-row-btn:focus-visible,
+.command-row-btn:focus-visible,
+.sidebar-empty-retry:focus-visible,
+.switch-refusal-retry:focus-visible {
+  outline: none;
+  background: var(--tint-3);
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
+/* Hover wash, quiet: a row or menu item is already a block of text, so it
+   brightens its ground and leaves its type alone. */
+.session-row-btn:hover,
+.agent-row-btn:hover,
+.command-row-btn:hover,
+.model-menu-item:hover,
+.command-option:hover {
+  background: var(--tint-1);
+}
+
+/* Hover wash, lifted: the same ground, plus full-strength text — for controls
+   that are a lone muted word rather than a row of them. */
+.session-more:hover,
+.sidebar-empty-retry:hover,
+.switch-refusal-retry:hover,
+.subagent-drawer-close:hover {
+  background: var(--tint-1);
+  color: var(--text);
+}
+
+/* Micro-caps: section labels in the rails and field keys on a card are the same
+   typographic role. Only the tracking differs, so only the tracking is local. */
+.sidebar-title,
+.agents-dock-title,
+.tool-card-toggle,
+.tool-card-change-label,
+.tool-card-arg-key {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 /* ── titlebar ── */
@@ -226,40 +355,6 @@ body {
   cursor: default;
 }
 
-.model-menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 6px);
-  z-index: 11;
-  display: flex;
-  flex-direction: column;
-  min-width: 148px;
-  max-height: 280px;
-  overflow-y: auto;
-  padding: 4px;
-  border-radius: var(--r-mark);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: 0 8px 28px oklch(0 0 0 / 0.35);
-}
-
-.model-menu-item {
-  padding: 6px 10px;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  font-family: inherit;
-  font-size: var(--fs-micro);
-  font-weight: 500;
-  text-align: left;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.model-menu-item:hover {
-  background: oklch(0.92 0.01 210 / 0.05);
-}
-
 .backend-pill--wisped {
   border-color: transparent;
   background: var(--mint);
@@ -267,10 +362,11 @@ body {
 }
 
 /* Bypass = auto-run every tool, no prompt. Danger tint (error hue) so the
-   live-fire mode is never ambiguous; Accept Edits / Ask stay neutral. */
+   live-fire mode is never ambiguous; Accept Edits / Ask stay neutral. The
+   border runs heavier than the shared --danger-line, on purpose. */
 .perm-pill--bypass {
   border-color: oklch(0.55 0.12 25 / 0.45);
-  background: oklch(0.35 0.06 25 / 0.35);
+  background: var(--danger-fill);
   color: oklch(0.82 0.09 25);
 }
 
@@ -294,33 +390,44 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* Agents-dock toggle. Deliberately NOT shaped like a window control — a centred
-   28px rounded square (the .sidebar-toggle shell) behind a hairline, so the
-   40px-tall min/max/close run stays visually its own group and the dock toggle
-   is not a mis-click away from Close. Active state borrows the mint tint the
-   active session row already uses. */
-.agents-toggle {
-  align-self: center;
+/* The two 28px rounded-square icon buttons: the Agents-dock toggle in the
+   titlebar and the rail's own collapse/new-chat controls. Deliberately NOT
+   shaped like a window control — a centred 28px square behind a hairline, so
+   the 40px-tall min/max/close run stays visually its own group and the dock
+   toggle is not a mis-click away from Close. */
+.agents-toggle,
+.sidebar-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
-  margin-left: 4px;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.agents-toggle:hover {
-  background: oklch(0.92 0.01 210 / 0.06);
+.agents-toggle {
+  align-self: center;
+  margin-left: 4px;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.sidebar-toggle {
+  flex-shrink: 0;
+  transition: background 150ms var(--ease), color 150ms var(--ease),
+    opacity 150ms var(--ease);
+}
+
+.agents-toggle:hover,
+.sidebar-toggle:hover {
+  background: var(--tint-2);
   color: var(--text);
 }
 
+/* Active state borrows the mint tint the active session row already uses. */
 .agents-toggle--on {
   background: color-mix(in oklch, var(--mint) 14%, transparent);
   color: var(--mint);
@@ -349,12 +456,11 @@ body {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 
 .win-btn:hover {
-  background: oklch(0.92 0.01 210 / 0.08);
+  background: var(--tint-3);
   color: var(--text);
 }
 
@@ -363,7 +469,7 @@ body {
   color: oklch(0.94 0.008 190);
 }
 
-/* ── workspace + sidebar ── */
+/* ── workspace + the two rails ── */
 
 .workspace {
   flex: 1;
@@ -379,7 +485,11 @@ body {
   flex-direction: column;
 }
 
-.sidebar {
+/* The sessions rail and the agents dock are the same object mirrored: same
+   width, same surface, same 44px head, same row shell. Only the edge they
+   hang off differs. */
+.sidebar,
+.agents-dock {
   width: 248px;
   flex-shrink: 0;
   min-height: 0;
@@ -387,16 +497,24 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--surface);
+}
+
+.sidebar {
   border-right: 1px solid var(--border);
 }
 
-/* Drag grip on the rail's right edge — a thin invisible strip that widens the
-   1px border into a comfortable col-resize target. Absent on the collapsed
-   rail (that branch never renders it), so resize is inert while collapsed. */
-.sidebar-resize-handle {
+.agents-dock {
+  border-left: 1px solid var(--border);
+}
+
+/* Drag grip on the edge that faces the chat — a thin invisible strip that
+   widens the 1px border into a comfortable col-resize target. Absent on the
+   collapsed rail (that branch never renders it), so resize is inert while
+   collapsed. */
+.sidebar-resize-handle,
+.agents-dock-resize-handle {
   position: absolute;
   top: 0;
-  right: -3px;
   width: 6px;
   height: 100%;
   cursor: col-resize;
@@ -404,16 +522,21 @@ body {
   touch-action: none;
 }
 
-.sidebar-resize-handle:hover {
+.sidebar-resize-handle {
+  right: -3px;
+}
+
+.agents-dock-resize-handle {
+  left: -3px;
+}
+
+.sidebar-resize-handle:hover,
+.agents-dock-resize-handle:hover {
   background: color-mix(in oklch, var(--mint) 50%, transparent);
 }
 
-.sidebar-collapsed {
-  width: 44px;
-  align-items: center;
-}
-
-.sidebar-head {
+.sidebar-head,
+.agents-dock-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -423,40 +546,93 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.sidebar-title,
+.agents-dock-title {
+  letter-spacing: 0.12em;
+}
+
+.sidebar-empty,
+.agents-dock-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-size: var(--fs-ui);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* Column + gap for the failure state's message-above-button (#60). A lone
+   text child lays out identically either way, so the empty state is
+   untouched and needs no modifier class. */
+.sidebar-empty {
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The three row lists and the three row shells. A session row, an agent row
+   and a command row are the same control with different contents. */
+.session-list,
+.agent-list,
+.command-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agent-list,
+.command-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.session-row,
+.agent-row,
+.command-row {
+  display: flex;
+}
+
+.session-row-btn,
+.agent-row-btn,
+.command-row-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* `.command-row-btn` is NOT in this group: it has never carried `font: inherit`,
+   and adding it would repaint `.command-row-desc` — the one child that sets a
+   size but no family — from the UA button font to --font. That is a visual
+   change, not a refactor, so it stays out and stays flagged. */
+.session-row-btn,
+.agent-row-btn {
+  font: inherit;
+}
+
+/* ── sessions rail ── */
+
+.sidebar-collapsed {
+  width: 44px;
+  align-items: center;
+}
+
 .sidebar-head-actions {
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.sidebar-title {
-  font-size: var(--fs-micro);
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.sidebar-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.sidebar-toggle:hover {
-  background: oklch(0.92 0.01 210 / 0.06);
-  color: var(--text);
 }
 
 .sidebar-collapsed .sidebar-toggle {
@@ -472,11 +648,11 @@ body {
   flex-shrink: 0;
   padding: 0 8px 0 16px;
   border-bottom: 1px solid var(--border);
-  transition: border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: border-color 150ms var(--ease);
 }
 
 .sidebar-filter:focus-within {
-  border-bottom-color: oklch(0.92 0.01 210 / 0.16);
+  border-bottom-color: var(--tint-5);
 }
 
 .sidebar-filter-input {
@@ -515,7 +691,8 @@ body {
    is clipped at the START: `direction: rtl` moves the ellipsis to the left
    while `unicode-bidi: plaintext` keeps the LTR path rendering LTR. Deliberately
    NOT sticky — a sticky heading needs an opaque backing, and painting one over
-   the OS acrylic would add the extra glass layer the design system bans. */
+   the OS acrylic would add the extra glass layer the design system bans.
+   (Truncation itself comes from the shared rule above.) */
 .session-group-head {
   margin: 0;
   padding: 4px 10px;
@@ -525,16 +702,6 @@ body {
   direction: rtl;
   unicode-bidi: plaintext;
   text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.session-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
 /* Reveal the next page. A text control, not a button-shaped affordance: it is
@@ -551,45 +718,11 @@ body {
   font-size: var(--fs-ui);
   text-align: left;
   cursor: pointer;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.session-more:hover {
-  background: oklch(0.92 0.01 210 / 0.05);
-  color: var(--text);
-}
-
-.session-more:focus-visible {
-  outline: none;
-  background: oklch(0.92 0.01 210 / 0.08);
-  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
-}
-
-.session-row {
-  display: flex;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 
 .session-row-btn {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  padding: 8px 10px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.session-row-btn:hover {
-  background: oklch(0.92 0.01 210 / 0.05);
+  transition: background 150ms var(--ease), opacity 150ms var(--ease);
 }
 
 /* Busy = blocked (#14): a streaming turn disables switching + New chat. Dim to
@@ -610,12 +743,6 @@ body {
   color: var(--text-muted);
 }
 
-.session-row-btn:focus-visible {
-  outline: none;
-  background: oklch(0.92 0.01 210 / 0.08);
-  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
-}
-
 .session-row-btn-active,
 .session-row-btn-active:hover {
   background: oklch(0.87 0.07 180 / 0.1);
@@ -625,262 +752,61 @@ body {
 .session-row-title {
   font-size: var(--fs-ui);
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .session-row-meta {
   font-size: var(--fs-micro);
   color: var(--text-faint);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar-empty {
-  flex: 1;
-  display: flex;
-  /* Column + gap for the failure state's message-above-button (#60). A lone
-     text child lays out identically either way, so the empty state is
-     untouched and needs no modifier class. */
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 24px;
-  font-size: var(--fs-ui);
-  color: var(--text-faint);
-  text-align: center;
 }
 
 /* Only the FAILED listing has one of these — an empty store has nothing a
-   second look could turn up, so it deliberately offers no button. */
-.sidebar-empty-retry {
-  padding: 5px 14px;
+   second look could turn up, so it deliberately offers no button. Shares its
+   shell with the composer-side refusal retry (#47). */
+.sidebar-empty-retry,
+.switch-refusal-retry {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: var(--fs-ui);
   cursor: pointer;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 
-.sidebar-empty-retry:hover {
-  background: oklch(0.92 0.01 210 / 0.05);
-  color: var(--text);
-}
-
-.sidebar-empty-retry:focus-visible {
-  outline: none;
-  background: oklch(0.92 0.01 210 / 0.08);
-  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
+.sidebar-empty-retry {
+  padding: 5px 14px;
+  font-size: var(--fs-ui);
 }
 
 /* ── agents dock (right-hand aside, mirrors the sessions rail) ── */
 
-.agents-dock {
-  width: 248px;
-  flex-shrink: 0;
-  min-height: 0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  border-left: 1px solid var(--border);
-}
-
-/* Grip on the dock's LEFT edge — the mirror of .sidebar-resize-handle, so the
-   two rails are grabbed on the sides that face the chat. */
-.agents-dock-resize-handle {
-  position: absolute;
-  top: 0;
-  left: -3px;
-  width: 6px;
-  height: 100%;
-  cursor: col-resize;
-  z-index: 1;
-  touch-action: none;
-}
-
-.agents-dock-resize-handle:hover {
-  background: color-mix(in oklch, var(--mint) 50%, transparent);
-}
-
-.agents-dock-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 44px;
-  flex-shrink: 0;
-  padding: 0 8px 0 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.agents-dock-title {
-  font-size: var(--fs-micro);
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.agents-dock-empty {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  font-size: var(--fs-ui);
-  color: var(--text-faint);
-  text-align: center;
-}
-
-.agent-list {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px;
-}
-
-.agent-row {
-  display: flex;
-}
-
-/* ── commands dock (#39) — shares .agents-dock layout; rows mirror agent rows ── */
-
-.command-list {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px;
-}
-
-.command-row {
-  display: flex;
-}
-
-.command-row-btn {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  padding: 8px 10px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.command-row-btn:hover {
-  background: oklch(0.92 0.01 210 / 0.05);
-}
-
-.command-row-btn:focus-visible {
-  outline: none;
-  background: oklch(0.92 0.01 210 / 0.08);
-  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
-}
-
-.command-row-name {
-  font-size: var(--fs-ui);
-  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.command-row-hint {
-  font-size: var(--fs-micro);
-  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
-  color: var(--text-faint);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.command-row-desc {
-  font-size: var(--fs-micro);
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.agent-row-btn {
+  transition: background 150ms var(--ease);
 }
 
 /* A nested row gets a hairline in its parent's column — at this row density
    indentation alone reads as an accident. Only nested rows carry it, so a
    session that spawned nothing nested stays a clean flat list. */
 .agent-row--nested > .agent-row-btn {
-  border-left: 1px solid oklch(0.92 0.01 210 / 0.12);
+  border-left: 1px solid var(--tint-4);
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
   padding-left: 9px;
 }
 
-.agent-row-btn {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  padding: 8px 10px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.agent-row-btn:hover {
-  background: oklch(0.92 0.01 210 / 0.05);
-}
-
-.agent-row-btn:focus-visible {
-  outline: none;
-  background: oklch(0.92 0.01 210 / 0.08);
-  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
-}
-
 .agent-row-type {
   font-size: var(--fs-ui);
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .agent-row-desc {
   font-size: var(--fs-micro);
   color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .agent-row-meta {
   font-size: var(--fs-micro);
   color: var(--text-faint);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .agent-row-head {
@@ -888,25 +814,6 @@ body {
   align-items: center;
   gap: 6px;
   min-width: 0;
-}
-
-/* Only live rows carry a dot — a disk row has no status to show. Reuses the
-   inline subagent row's pulse so the two surfaces read as one language. */
-.agent-row-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--text-faint);
-}
-
-.agent-row--running .agent-row-dot {
-  background: var(--mint);
-  animation: subagent-pulse 1.4s ease-in-out infinite;
-}
-
-.agent-row--failed .agent-row-dot {
-  background: oklch(0.6 0.16 25);
 }
 
 .agent-row-status {
@@ -920,9 +827,33 @@ body {
   font-size: var(--fs-micro);
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* Only live rows carry a dot — a disk row has no status to show. The dock row
+   and the inline subagent row under a Task card share it, so the two surfaces
+   read as one language. */
+.agent-row-dot,
+.subagent-row-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-faint);
+}
+
+.agent-row--running .agent-row-dot,
+.subagent-row--running .subagent-row-dot {
+  background: var(--mint);
+  animation: subagent-pulse 1.4s ease-in-out infinite;
+}
+
+.agent-row--failed .agent-row-dot,
+.subagent-row--failed .subagent-row-dot {
+  background: var(--danger-dot);
+}
+
+.agent-row--selected > .agent-row-btn {
+  background: var(--tint-3);
 }
 
 /* Map mode. Encoding: shape = kind (rounded square = session, circle = agent,
@@ -947,9 +878,7 @@ body {
   color: var(--text-faint);
   cursor: pointer;
   padding: 0;
-  transition:
-    background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 
 .agents-dock-mode:hover {
@@ -957,17 +886,13 @@ body {
 }
 
 .agents-dock-mode[aria-pressed='true'] {
-  background: oklch(0.92 0.01 210 / 0.08);
+  background: var(--tint-3);
   color: var(--text);
 }
 
 .agents-dock-mode:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
-}
-
-.agent-row--selected > .agent-row-btn {
-  background: oklch(0.92 0.01 210 / 0.08);
+  box-shadow: inset 0 0 0 1px var(--tint-6);
 }
 
 .agent-map {
@@ -985,7 +910,7 @@ body {
 
 .agent-map-edge {
   fill: none;
-  stroke: oklch(0.92 0.01 210 / 0.16);
+  stroke: var(--tint-5);
   stroke-width: 1;
 }
 
@@ -1001,9 +926,7 @@ body {
 }
 
 .agent-map-glyph {
-  transition:
-    fill 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    stroke 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: fill 150ms var(--ease), stroke 150ms var(--ease);
 }
 
 .agent-map-node--running .agent-map-glyph {
@@ -1018,7 +941,7 @@ body {
 }
 
 .agent-map-node--failed .agent-map-glyph {
-  fill: oklch(0.6 0.16 25);
+  fill: var(--danger-dot);
   stroke: none;
 }
 
@@ -1039,15 +962,15 @@ body {
 
 .agent-map-hover {
   fill: transparent;
-  transition: fill 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: fill 150ms var(--ease);
 }
 
 .agent-map-node:hover .agent-map-hover {
-  fill: oklch(0.92 0.01 210 / 0.08);
+  fill: var(--tint-3);
 }
 
 .agent-map-node:focus-visible .agent-map-hover {
-  fill: oklch(0.92 0.01 210 / 0.08);
+  fill: var(--tint-3);
 }
 
 /* Keyboard focus must stay unmistakable on every status — mint stroke on the
@@ -1065,6 +988,25 @@ body {
 
 .agent-map-hit {
   fill: transparent;
+}
+
+/* ── commands dock (#39) — shares .agents-dock layout; rows mirror agent rows ── */
+
+.command-row-name {
+  font-size: var(--fs-ui);
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+.command-row-hint {
+  font-size: var(--fs-micro);
+  font-family: var(--mono);
+  color: var(--text-faint);
+}
+
+.command-row-desc {
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
 }
 
 /* ── chat ── */
@@ -1109,7 +1051,7 @@ body {
 
 .msg,
 .tool-card {
-  animation: msg-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: msg-in 200ms var(--ease);
 }
 
 @keyframes msg-in {
@@ -1136,7 +1078,11 @@ body {
   line-height: 1.6;
   color: var(--text);
   /* #42 — a multiline prompt reads back the way it was written. `anywhere` is
-     the other half: pre-wrap alone lets one unbroken token run past the pill. */
+     the other half: pre-wrap alone lets one unbroken token run past the pill.
+     tests/multiline-composer.test.tsx pins these two by slicing the CSS text
+     from this selector to the end of this block, so it must stay ungrouped —
+     and no comment inside it may contain a closing brace, which would cut the
+     slice short. */
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -1248,7 +1194,7 @@ body {
   font-weight: 600;
   padding: 10px 20px;
   cursor: pointer;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 150ms var(--ease);
   -webkit-app-region: no-drag;
 }
 
@@ -1278,25 +1224,6 @@ body {
    line of prose under the pane, not in an empty column. */
 .switch-refusal-retry {
   padding: 2px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-muted);
-  font: inherit;
-  cursor: pointer;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.switch-refusal-retry:hover {
-  background: oklch(0.92 0.01 210 / 0.05);
-  color: var(--text);
-}
-
-.switch-refusal-retry:focus-visible {
-  outline: none;
-  background: oklch(0.92 0.01 210 / 0.08);
-  box-shadow: inset 0 0 0 1px oklch(0.92 0.01 210 / 0.18);
 }
 
 .input-bar {
@@ -1321,20 +1248,24 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   padding: 6px 8px 6px 14px;
-  transition: border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: border-color 150ms var(--ease);
 }
 
-/* ── composer autocomplete (#40) — anchored above the pill, model-menu family ── */
+.input-pill:focus-within {
+  border-color: var(--tint-6);
+}
 
+/* ── pop-up menus: the model picker and the composer autocomplete (#40) ──
+   Both hang above their trigger, both are a padded card of quiet rows. Only
+   their anchoring and their ceiling differ. */
+
+.model-menu,
 .command-popover {
   position: absolute;
-  left: 0;
-  right: 0;
   bottom: calc(100% + 6px);
   z-index: 11;
   display: flex;
   flex-direction: column;
-  max-height: 260px;
   overflow-y: auto;
   padding: 4px;
   border-radius: var(--r-mark);
@@ -1343,10 +1274,20 @@ body {
   box-shadow: 0 8px 28px oklch(0 0 0 / 0.35);
 }
 
+.model-menu {
+  right: 0;
+  min-width: 148px;
+  max-height: 280px;
+}
+
+.command-popover {
+  left: 0;
+  right: 0;
+  max-height: 260px;
+}
+
+.model-menu-item,
 .command-option {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
   padding: 6px 10px;
   border: 0;
   border-radius: 5px;
@@ -1358,23 +1299,22 @@ body {
   cursor: pointer;
 }
 
-.command-option:hover {
-  background: oklch(0.92 0.01 210 / 0.05);
+.model-menu-item {
+  font-weight: 500;
+}
+
+.command-option {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .command-option--active {
-  background: oklch(0.92 0.01 210 / 0.08);
+  background: var(--tint-3);
 }
 
 .command-option-desc {
   color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.input-pill:focus-within {
-  border-color: oklch(0.92 0.01 210 / 0.18);
 }
 
 .attach-btn {
@@ -1388,7 +1328,7 @@ body {
   color: var(--text-faint);
   cursor: pointer;
   flex-shrink: 0;
-  transition: color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color 150ms var(--ease);
   -webkit-app-region: no-drag;
 }
 
@@ -1410,7 +1350,11 @@ body {
   /* #42 — one row by default, growing with the content to an 8-line ceiling and
      scrolling past it. field-sizing measures natively, so the height is never
      state: clearing the value shrinks it back with nothing to reset. The cap is
-     8 lines of 1.4 line-height plus the 6px padding pair (border-box). */
+     8 lines of 1.4 line-height plus the 6px padding pair (border-box).
+     tests/multiline-composer.test.tsx pins these three by slicing the CSS text
+     from this selector to the end of this block, so it must stay ungrouped —
+     and no comment inside it may contain a closing brace, which would cut the
+     slice short. */
   field-sizing: content;
   max-height: calc(8 * 1.4em + 12px);
   resize: none;
@@ -1433,8 +1377,7 @@ body {
   color: var(--mint-ink);
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 150ms var(--ease), transform 150ms var(--ease);
   -webkit-app-region: no-drag;
 }
 
@@ -1483,7 +1426,7 @@ body {
   border-radius: 12px;
   font-size: var(--fs-ui);
   line-height: 1.4;
-  animation: msg-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: msg-in 200ms var(--ease);
 }
 
 .attachment-chip {
@@ -1506,12 +1449,6 @@ body {
   background: var(--border);
 }
 
-.chip-name {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 .chip-remove {
   display: flex;
   align-items: center;
@@ -1524,13 +1461,12 @@ body {
   background: transparent;
   color: var(--text-faint);
   cursor: pointer;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 150ms var(--ease), color 150ms var(--ease);
   -webkit-app-region: no-drag;
 }
 
 .chip-remove:hover {
-  background: oklch(0.92 0.01 210 / 0.08);
+  background: var(--tint-3);
   color: var(--text);
 }
 
@@ -1540,12 +1476,13 @@ body {
 }
 
 /* The error bubble's hue at chip weight: a refusal explains itself where the
-   item would have been, not at send time. */
+   item would have been, not at send time. The ground runs slightly lighter
+   than the shared --danger-fill, on purpose. */
 .attachment-reject {
   padding: 4px 12px;
-  border: 1px solid oklch(0.55 0.12 25 / 0.35);
+  border: 1px solid var(--danger-line);
   background: oklch(0.35 0.06 25 / 0.28);
-  color: oklch(0.78 0.08 25);
+  color: var(--danger-text);
 }
 
 .reject-name {
@@ -1554,11 +1491,19 @@ body {
 
 /* ── attachment thumbnails in the transcript ── */
 
-.bubble-thumbs {
+/* Thumbnails carry image data; replay markers are the same flex shell with
+   none to show. */
+.bubble-thumbs,
+.bubble-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 8px;
+}
+
+.bubble-thumbs:last-child,
+.bubble-chips:last-child {
+  margin-bottom: 0;
 }
 
 /* Fixed height reserves the row before the image decodes, so the transcript
@@ -1573,18 +1518,6 @@ body {
   border: 1px solid var(--border);
 }
 
-.bubble-thumbs:last-child {
-  margin-bottom: 0;
-}
-
-/* Replay markers: same flex shell as thumbs, no image data to show. */
-.bubble-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
 /* The composer chip is 38px tall because it wraps a 28px thumb and a remove
    button. A replay chip is a bare label with neither, so it collapses to the
    text — at which point the inherited 12px radius is already a pill. */
@@ -1593,19 +1526,15 @@ body {
   padding: 3px 10px;
 }
 
-.bubble-chips:last-child {
-  margin-bottom: 0;
-}
-
 /* ── error ── */
 
 .msg-error {
   align-self: stretch;
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid oklch(0.55 0.12 25 / 0.35);
-  background: oklch(0.35 0.06 25 / 0.35);
-  color: oklch(0.78 0.08 25);
+  border: 1px solid var(--danger-line);
+  background: var(--danger-fill);
+  color: var(--danger-text);
   font-size: var(--fs-ui);
   line-height: 1.5;
 }
@@ -1656,19 +1585,13 @@ body {
 }
 
 .tool-card-key {
-  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
+  font-family: var(--mono);
   color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   min-width: 0;
 }
 
 .tool-card-result {
   color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .tool-card-pending {
@@ -1681,7 +1604,7 @@ body {
 
 /* Disclosure (#61). Quiet by default — the card must read exactly as it did
    before when nobody is looking at it — and the caret is the only always-on
-   hint that there is more. */
+   hint that there is more. (Micro-caps type comes from the shared rule above.) */
 .tool-card-toggle {
   align-self: flex-start;
   display: flex;
@@ -1692,13 +1615,9 @@ body {
   border: 0;
   background: transparent;
   font-family: var(--font);
-  font-size: var(--fs-micro);
-  font-weight: 600;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-faint);
   cursor: pointer;
-  transition: color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color 150ms var(--ease);
   -webkit-app-region: no-drag;
 }
 
@@ -1714,25 +1633,25 @@ body {
 
 .tool-card-caret {
   display: inline-block;
-  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 150ms var(--ease);
 }
 
 .tool-card-toggle[aria-expanded="true"] .tool-card-caret {
   transform: rotate(90deg);
 }
 
-/* Expanded output is verbatim data: preformatted, wrapped rather than clipped,
-   selectable. It scrolls instead of pushing the composer off screen, and it
-   inherits the app-wide scrollbar rule — never a component-scoped one. */
-.tool-card-output {
-  margin: 2px 0 0;
-  padding: 8px 10px;
-  max-height: 320px;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: oklch(0.14 0.008 210 / 0.5);
-  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
+/* ── the verbatim-data wells ────────────────────────────────────────────
+   The tool output (#61), the input inspector's values (#62) and the change
+   region (#63) are all the same thing: bytes shown exactly as they are.
+   Preformatted, wrapped rather than clipped, selectable, height-capped so one
+   enormous argument scrolls instead of pushing the composer off screen, and on
+   the app-wide scrollbar rule — never a component-scoped one. */
+
+.tool-card-output,
+.tool-card-diff-body,
+.tool-card-content-body,
+.tool-card-arg-value {
+  font-family: var(--mono);
   font-size: var(--fs-micro);
   line-height: 1.55;
   color: var(--text-muted);
@@ -1741,16 +1660,28 @@ body {
   user-select: text;
 }
 
+.tool-card-output,
+.tool-card-diff-body,
+.tool-card-content-body {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--well);
+}
+
+.tool-card-output {
+  margin: 2px 0 0;
+  padding: 8px 10px;
+}
+
 .tool-card-error .tool-card-output {
   border-color: oklch(0.55 0.16 25 / 0.35);
 }
 
-/* Structured input inspector (#62). Same verbatim-data treatment as the output
-   body: preformatted, wrapped rather than clipped, selectable, and height-capped
-   so a single enormous argument scrolls instead of pushing the composer off
-   screen. It inherits the app-wide scrollbar rule — never a scoped one. Each
-   argument stacks its label above its value, because a two-column grid would
-   have to choose between truncating a path and starving a multi-line JSON. */
+/* Structured input inspector (#62). Each argument stacks its label above its
+   value, because a two-column grid would have to choose between truncating a
+   path and starving a multi-line JSON. */
 .tool-card-input {
   margin: 2px 0 0;
   padding: 8px 10px;
@@ -1758,7 +1689,7 @@ body {
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: oklch(0.14 0.008 210 / 0.5);
+  background: var(--well);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1773,30 +1704,17 @@ body {
 
 .tool-card-arg-key {
   font-family: var(--font);
-  font-size: var(--fs-micro);
-  font-weight: 600;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-faint);
 }
 
 .tool-card-arg-value {
   margin: 0;
-  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
-  font-size: var(--fs-micro);
-  line-height: 1.55;
-  color: var(--text-muted);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  user-select: text;
 }
 
 /* Change region (#63). An Edit renders a real replacement hunk — its old string
    against its new one — and Write renders a labelled content preview and never
    a diff, because Write carries no before-state and added lines would conceal
-   what was overwritten. Same verbatim-data treatment as the output body and the
-   input inspector: height-capped so a huge hunk scrolls instead of pushing the
-   composer off screen, on the app-wide scrollbar rule, selectable. */
+   what was overwritten. */
 .tool-card-diff,
 .tool-card-content {
   margin: 2px 0 0;
@@ -1808,28 +1726,12 @@ body {
 
 .tool-card-change-label {
   font-family: var(--font);
-  font-size: var(--fs-micro);
-  font-weight: 600;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-faint);
 }
 
 .tool-card-diff-body,
 .tool-card-content-body {
   margin: 0;
-  max-height: 320px;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: oklch(0.14 0.008 210 / 0.5);
-  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
-  font-size: var(--fs-micro);
-  line-height: 1.55;
-  color: var(--text-muted);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  user-select: text;
 }
 
 /* The hunk pads its rows, not its box, so an add/delete tint reads as a full
@@ -1876,8 +1778,7 @@ body {
   padding: 4px 12px;
   cursor: pointer;
   line-height: 1.4;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 150ms var(--ease), border-color 150ms var(--ease);
   -webkit-app-region: no-drag;
 }
 
@@ -1902,7 +1803,7 @@ body {
 }
 
 .tool-perm-deny:hover {
-  background: oklch(0.92 0.01 210 / 0.06);
+  background: var(--tint-2);
   color: var(--text);
 }
 
@@ -1918,7 +1819,7 @@ body {
 }
 
 .assistant-body code {
-  font-family: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
+  font-family: var(--mono);
   font-size: var(--fs-ui);
 }
 
@@ -2037,7 +1938,7 @@ body {
   cursor: pointer;
   text-align: left;
   -webkit-app-region: no-drag;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 150ms var(--ease);
 }
 
 .subagent-row:hover {
@@ -2047,23 +1948,6 @@ body {
 .subagent-row:focus-visible {
   outline: 2px solid var(--mint);
   outline-offset: 1px;
-}
-
-.subagent-row-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--text-faint);
-}
-
-.subagent-row--running .subagent-row-dot {
-  background: var(--mint);
-  animation: subagent-pulse 1.4s ease-in-out infinite;
-}
-
-.subagent-row--failed .subagent-row-dot {
-  background: oklch(0.6 0.16 25);
 }
 
 @keyframes subagent-pulse {
@@ -2118,7 +2002,7 @@ body {
   background: var(--surface);
   border-left: 1px solid var(--border);
   box-shadow: -12px 0 36px oklch(0 0 0 / 0.35);
-  animation: subagent-slide 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: subagent-slide 180ms var(--ease);
 }
 
 @keyframes subagent-slide {
@@ -2156,11 +2040,6 @@ body {
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 5px;
-}
-
-.subagent-drawer-close:hover {
-  background: oklch(0.92 0.01 210 / 0.05);
-  color: var(--text);
 }
 
 .subagent-drawer-empty {
