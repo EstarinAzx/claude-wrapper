@@ -21,6 +21,11 @@ let harness: ReturnType<typeof fakeChatApi>
 beforeEach(() => {
   harness = fakeChatApi()
   ;(window as Window & { api: unknown }).api = harness.api
+  // The rail opens scoped to the open workspace, and every test in this file is
+  // about reaching a session OUTSIDE it. Seeding the pref the scope toggle
+  // writes keeps each test asserting the transition it is named for rather than
+  // re-testing the rail's default; the toggle itself is covered in sidebar.test.
+  window.localStorage.setItem('sidebar-scope', 'all')
   harness.api.listSessions.mockResolvedValue([
     { id: 'here', title: 'Here chat', lastUpdated: 2000, cwd: FOLDER },
     { id: 'far', title: 'Far chat', lastUpdated: 1000, cwd: THERE },

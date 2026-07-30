@@ -210,6 +210,49 @@
   color: var(--text-faint);
 }
 
+/* Which projects the rail is listing. Deliberately carries NO hairline of its
+   own: the head and the filter band already stack two in the first 78px, and a
+   third would be chrome competing with the rows. Sitting flush above the list
+   reads correctly anyway, because these chips describe what the list contains.
+   Chips rather than a boxed segmented track for the same reason — the rail
+   spends no border on a control the list itself can explain. Left padding 8px
+   plus the chip's own 8px puts the label on the 16px edge the head, the filter
+   placeholder, the group headings and the row titles all share. */
+.session-scope {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  padding: 8px 8px 2px;
+}
+
+/* Pressed treatment is the agents-dock mode switch's, so the two rails keep one
+   vocabulary for "this control chooses what you are looking at". */
+.session-scope-btn {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.session-scope-btn:hover {
+  color: var(--text-muted);
+}
+
+.session-scope-btn[aria-pressed='true'] {
+  background: var(--tint-3);
+  color: var(--text);
+}
+
+.session-scope-btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
 .session-groups {
   flex: 1;
   min-height: 0;

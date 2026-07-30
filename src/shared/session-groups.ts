@@ -7,6 +7,13 @@ import type { SessionMeta } from './session-types'
 // a directory invented by decoding the store's lossy folder name.
 export const UNKNOWN_PROJECT = 'Unknown project'
 
+// Which projects the rail is showing. 'project' is the resting state: the store
+// holds ~490 sessions across 37 projects, so an unscoped rail is ~90% rows the
+// user did not open the app to look at. 'all' is the pre-scope behaviour, kept
+// because switching workspace from a foreign row (#47) is the only way to reach
+// a project with no window open.
+export type SessionScope = 'project' | 'all'
+
 export interface SessionGroup {
   // Folded cwd; '' for the Unknown project group.
   key: string
@@ -39,6 +46,13 @@ export const groupSessions = (
     limit: number
     query?: string
     cwd?: string | null
+    // Defaults to 'all', so a caller that never mentions scope sees exactly the
+    // pre-scope list. Applied alongside the query filter and therefore BEFORE
+    // the cap, for the same reason the query is: scoping a capped page would let
+    // foreign sessions eat the 100 slots and truncate the local rows the user
+    // actually asked for. With no cwd there is no workspace to scope to, so
+    // 'project' degrades to 'all' rather than emptying the rail.
+    scope?: SessionScope
     // Enriched labels already derived for rows that have been rendered (#49),
     // by session id. Matching is additive over whatever is in here and NOTHING
     // is derived on demand: filtering must never be what triggers a transcript
@@ -51,21 +65,27 @@ export const groupSessions = (
   const labelOf = (s: SessionMeta): string => s.cwd || UNKNOWN_PROJECT
   const keyOf = (s: SessionMeta): string => (s.cwd ? cwdKey(s.cwd) : '')
 
+  const here = opts.cwd ? cwdKey(opts.cwd) : null
+
+  const scoped =
+    opts.scope === 'project' && here !== null
+      ? sessions.filter((s) => keyOf(s) === here)
+      : sessions
+
   const q = (opts.query ?? '').trim().toLowerCase()
   // The project label is matchable too, so typing a project name narrows to it
   // without a separate project picker.
   const matched = q
-    ? sessions.filter(
+    ? scoped.filter(
         (s) =>
           s.title.toLowerCase().includes(q) ||
           labelOf(s).toLowerCase().includes(q) ||
           (opts.labels?.get(s.id) ?? '').toLowerCase().includes(q)
       )
-    : [...sessions]
+    : [...scoped]
   matched.sort((a, b) => b.lastUpdated - a.lastUpdated)
 
   const page = matched.slice(0, opts.limit)
-  const here = opts.cwd ? cwdKey(opts.cwd) : null
 
   // Groups are emitted in first-appearance order over a newest-first page, which
   // IS "by most recent session, newest group first" — no second sort needed.

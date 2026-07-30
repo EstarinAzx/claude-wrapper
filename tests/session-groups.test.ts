@@ -132,6 +132,56 @@ describe('groupSessions — filter', () => {
   })
 })
 
+// The rail lists every project, but opens on the one the user is in. The filter
+// is the function's; the DEFAULT is the component's, which is why omitting the
+// option here still yields the whole store.
+describe('groupSessions — scope', () => {
+  const MIXED = [s(300, 'here new', CWD), s(200, 'far', 'D:\\projects\\other'), s(100, 'homeless')]
+
+  test('no scope keeps every project, so an existing caller is unchanged', () => {
+    expect(groupSessions(MIXED, { limit: 100, cwd: CWD }).groups).toHaveLength(3)
+  })
+
+  test("'project' keeps only the open workspace", () => {
+    const g = groupSessions(MIXED, { limit: 100, cwd: CWD, scope: 'project' })
+    expect(titles(g)).toEqual([['here new']])
+    expect(g.matched).toBe(1)
+  })
+
+  test("'project' drops the cwd-less sessions too — they name no workspace", () => {
+    const g = groupSessions([s(100, 'homeless')], { limit: 100, cwd: CWD, scope: 'project' })
+    expect(g.groups).toEqual([])
+  })
+
+  test('a spelling difference in the open cwd still counts as this project', () => {
+    const g = groupSessions(MIXED, { limit: 100, cwd: 'd:\\projects\\DEMO', scope: 'project' })
+    expect(titles(g)).toEqual([['here new']])
+  })
+
+  test("with no cwd there is nothing to scope to, so 'project' degrades to all", () => {
+    const g = groupSessions(MIXED, { limit: 100, cwd: null, scope: 'project' })
+    expect(g.groups).toHaveLength(3)
+  })
+
+  // Same contract as the query filter: scoping a capped page would let foreign
+  // rows eat the slots and truncate the local ones the user asked for.
+  test('scopes before the cap, not after it', () => {
+    const far = Array.from({ length: 120 }, (_, i) => s(1000 - i, `far ${i}`, 'D:\\projects\\other'))
+    const g = groupSessions([...far, s(1, 'near', CWD)], {
+      limit: 100,
+      cwd: CWD,
+      scope: 'project'
+    })
+    expect(titles(g)).toEqual([['near']])
+    expect(g.matched).toBe(1)
+  })
+
+  test('the query narrows within the scope, never back out of it', () => {
+    const g = groupSessions(MIXED, { limit: 100, cwd: CWD, scope: 'project', query: 'far' })
+    expect(g.groups).toEqual([])
+  })
+})
+
 describe('groupSessions — cap', () => {
   // Contract order is filter → sort/group → cap. Capping first would drop this
   // match before the filter ever saw it, and the list would look simply empty.

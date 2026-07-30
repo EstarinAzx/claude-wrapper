@@ -1,20 +1,36 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { SessionMeta } from '../../../shared/session-types'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
-import { groupSessions } from '../../../shared/session-groups'
+import { groupSessions, type SessionScope } from '../../../shared/session-groups'
 import { needsEnrichment } from '../../../shared/session-titles'
 import { enrichedTitle } from '../enriched-titles'
 
 const WIDTH_KEY = 'sidebar-width'
+const SCOPE_KEY = 'sidebar-scope'
 
 // One page of rows. The store holds ~490 sessions across 37 projects, so the
 // list is capped globally rather than per project and grows a page at a time.
 const PAGE = 100
 
+// Text, not icons: "which projects am I looking at" has no established glyph,
+// and an ambiguous icon here would be an invented affordance for a standard
+// task. Persistent rather than a menu, because a scoped rail hides ~90% of the
+// store and the user must be able to see that at a glance, not remember it.
+const SCOPES: ReadonlyArray<readonly [SessionScope, string]> = [
+  ['project', 'This project'],
+  ['all', 'All projects']
+]
+
 const readStoredWidth = (): number => {
   const raw = window.localStorage.getItem(WIDTH_KEY)
   return clampSidebarWidth(raw === null ? DEFAULT_SIDEBAR_WIDTH : Number(raw))
 }
+
+// Scoped by default: the rail opens showing the workspace the user is actually
+// in. Anything that is not the one stored string is the default, so a corrupt
+// or hand-edited value degrades to the safe view rather than a broken one.
+const readStoredScope = (): SessionScope =>
+  window.localStorage.getItem(SCOPE_KEY) === 'all' ? 'all' : 'project'
 
 const relTime = (ms: number): string => {
   if (!ms) return ''
@@ -142,6 +158,7 @@ const Sidebar = ({
   const [collapsed, setCollapsed] = useState(false)
   const [width, setWidthState] = useState(readStoredWidth)
   const [query, setQuery] = useState('')
+  const [scope, setScopeState] = useState<SessionScope>(readStoredScope)
   const [limit, setLimit] = useState(PAGE)
   // Labels derived so far, by session id (#49). Rendered rows fill this in; it
   // is never populated ahead of time, which is what keeps the reads lazy.
@@ -158,9 +175,18 @@ const Sidebar = ({
   // "show more" from the previous query would reveal a page the user never
   // asked for.
   const { groups, shown, matched } = useMemo(
-    () => groupSessions(sessions ?? [], { query, cwd, limit, labels }),
-    [sessions, query, cwd, limit, labels]
+    () => groupSessions(sessions ?? [], { query, cwd, scope, limit, labels }),
+    [sessions, query, cwd, scope, limit, labels]
   )
+
+  // Same class of preference as the width, so it persists the same way. Changing
+  // scope starts at page one again for the same reason a narrowed query does:
+  // carrying a "show more" across would reveal a page the user never asked for.
+  const setScope = useCallback((next: SessionScope): void => {
+    setScopeState(next)
+    setLimit(PAGE)
+    window.localStorage.setItem(SCOPE_KEY, next)
+  }, [])
 
   // Persist UI-layout prefs (this width); engine-intent state stays in-memory.
   const setWidth = useCallback((px: number): void => {
@@ -311,6 +337,19 @@ const Sidebar = ({
           }}
         />
       </div>
+      <div className="session-scope" role="group" aria-label="Session scope">
+        {SCOPES.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className="session-scope-btn"
+            aria-pressed={scope === value}
+            onClick={() => setScope(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       {sessions === null ? (
         // A failed listing, NOT "No sessions yet" — those words are what a fresh
         // install sees, and reusing them for a breakage is the dead end this
@@ -330,7 +369,27 @@ const Sidebar = ({
       ) : sessions.length === 0 ? (
         <div className="sidebar-empty">No sessions yet</div>
       ) : groups.length === 0 ? (
-        <div className="sidebar-empty">No sessions match “{query.trim()}”</div>
+        // Two different nothings. A query that matches nothing is the user's own
+        // narrowing and says so. Everything else here is the scope: the store has
+        // sessions, none of them in this workspace — unreachable while showing all
+        // projects, so it needs no scope guard, and it offers the one control that
+        // resolves it rather than making the rail look broken.
+        <div className="sidebar-empty">
+          {query.trim() ? (
+            <span>No sessions match “{query.trim()}”</span>
+          ) : (
+            <>
+              <span>No sessions in this project yet</span>
+              <button
+                type="button"
+                className="sidebar-empty-retry"
+                onClick={() => setScope('all')}
+              >
+                Show all projects
+              </button>
+            </>
+          )}
+        </div>
       ) : (
         <div className="session-groups">
           {groups.map((group) => (

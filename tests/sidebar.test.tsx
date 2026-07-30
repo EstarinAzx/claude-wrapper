@@ -76,6 +76,15 @@ const rowButton = (label: string): HTMLButtonElement =>
 
 const filter = (): HTMLInputElement => screen.getByRole('searchbox') as HTMLInputElement
 
+const scopeButton = (name: 'This project' | 'All projects'): HTMLButtonElement =>
+  screen.getByRole('button', { name }) as HTMLButtonElement
+
+// The rail opens scoped to the open workspace. A test whose SUBJECT is the rest
+// of the store seeds the pref the toggle writes instead of clicking through it,
+// so it keeps asserting the one thing it is named for. The click that sets the
+// pref has its own coverage in the `session scope` describe below.
+const showAllProjects = (): void => window.localStorage.setItem('sidebar-scope', 'all')
+
 describe('session sidebar', () => {
   test('empty folder shows the empty state inside the Sessions landmark', async () => {
     setup([])
@@ -170,6 +179,7 @@ describe('cross-project session list', () => {
       { id: 'a', title: 'Here chat', lastUpdated: 2000, cwd: HERE },
       { id: 'b', title: 'There chat', lastUpdated: 1000, cwd: THERE }
     ])
+    showAllProjects()
     await startSession()
 
     expect(await screen.findByText(HERE)).toBeTruthy()
@@ -178,6 +188,7 @@ describe('cross-project session list', () => {
 
   test('a session with no recorded project heads under Unknown project', async () => {
     setup([{ id: 'a', title: 'Homeless chat', lastUpdated: 2000 }])
+    showAllProjects()
     await startSession()
 
     expect(await screen.findByText('Unknown project')).toBeTruthy()
@@ -191,6 +202,7 @@ describe('cross-project session list', () => {
   // beside project A's sidebar" failure.
   test('a session in another project switches workspace instead of resuming in place', async () => {
     setup([{ id: 'far', title: 'Far chat', lastUpdated: 2000, cwd: THERE }])
+    showAllProjects()
     await startSession()
 
     await screen.findByText('Far chat')
@@ -221,6 +233,93 @@ describe('cross-project session list', () => {
   })
 })
 
+// The rail is global (#45), but ~90% of a real store is other projects. It opens
+// on the workspace the user is in and widens on request.
+describe('session scope', () => {
+  const MIXED: SessionMeta[] = [
+    { id: 'a', title: 'Here chat', lastUpdated: 3000, cwd: HERE },
+    { id: 'b', title: 'There chat', lastUpdated: 2000, cwd: THERE },
+    { id: 'c', title: 'Homeless chat', lastUpdated: 1000 }
+  ]
+
+  test('opens on the workspace, hiding other projects and the cwd-less ones', async () => {
+    setup(MIXED)
+    await startSession()
+
+    expect(await screen.findByText('Here chat')).toBeTruthy()
+    expect(screen.queryByText('There chat')).toBeNull()
+    expect(screen.queryByText('Homeless chat')).toBeNull()
+    expect(scopeButton('This project').getAttribute('aria-pressed')).toBe('true')
+  })
+
+  test('All projects reveals the rest of the store and persists the choice', async () => {
+    setup(MIXED)
+    await startSession()
+    await screen.findByText('Here chat')
+
+    fireEvent.click(scopeButton('All projects'))
+
+    expect(await screen.findByText('There chat')).toBeTruthy()
+    expect(screen.getByText('Homeless chat')).toBeTruthy()
+    expect(window.localStorage.getItem('sidebar-scope')).toBe('all')
+  })
+
+  test('restores the persisted scope on mount', async () => {
+    setup(MIXED)
+    showAllProjects()
+    await startSession()
+
+    expect(await screen.findByText('There chat')).toBeTruthy()
+    expect(scopeButton('All projects').getAttribute('aria-pressed')).toBe('true')
+  })
+
+  test('narrowing back to the workspace hides them again', async () => {
+    setup(MIXED)
+    showAllProjects()
+    await startSession()
+    await screen.findByText('There chat')
+
+    fireEvent.click(scopeButton('This project'))
+
+    await waitFor(() => expect(screen.queryByText('There chat')).toBeNull())
+    expect(screen.getByText('Here chat')).toBeTruthy()
+    expect(window.localStorage.getItem('sidebar-scope')).toBe('project')
+  })
+
+  // "No sessions yet" is what a fresh install sees. A store with sessions in it,
+  // none of them here, is a different thing and must not borrow those words —
+  // the same distinction the failed-listing state draws (#60).
+  test('a workspace with no sessions says so and offers the way out', async () => {
+    setup([{ id: 'b', title: 'There chat', lastUpdated: 2000, cwd: THERE }])
+    await startSession()
+
+    expect(await screen.findByText('No sessions in this project yet')).toBeTruthy()
+    expect(screen.queryByText('No sessions yet')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show all projects' }))
+    expect(await screen.findByText('There chat')).toBeTruthy()
+  })
+
+  // The cap is global and applied AFTER the scope filter, so a scoped rail must
+  // not spend its 100 slots on rows it is not showing.
+  test('the page cap counts only the sessions in scope', async () => {
+    setup([
+      ...Array.from({ length: 120 }, (_, i) => ({
+        id: `far${i}`,
+        title: `far ${i}`,
+        lastUpdated: 10_000 - i,
+        cwd: THERE
+      })),
+      { id: 'near', title: 'Near chat', lastUpdated: 1, cwd: HERE }
+    ])
+    await startSession()
+
+    expect(await screen.findByText('Near chat')).toBeTruthy()
+    expect(rows()).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: /Show \d+ more/ })).toBeNull()
+  })
+})
+
 describe('session filter', () => {
   test('narrows the list to titles matching what was typed', async () => {
     setup([
@@ -241,6 +340,7 @@ describe('session filter', () => {
       { id: 'a', title: 'Alpha work', lastUpdated: 2000, cwd: HERE },
       { id: 'b', title: 'Beta work', lastUpdated: 1000, cwd: THERE }
     ])
+    showAllProjects()
     await startSession()
     await screen.findByText('Alpha work')
 
@@ -364,6 +464,7 @@ describe('sidebar resize', () => {
 
   test('exposes no resize handle while collapsed (resize is inert)', async () => {
     setup([{ id: 'a', title: 'Keep me', lastUpdated: 1000 }])
+    showAllProjects()
     await startSession()
     await screen.findByText('Keep me')
     fireEvent.click(screen.getByRole('button', { name: 'Collapse sessions' }))
