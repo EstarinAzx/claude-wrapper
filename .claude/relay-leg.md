@@ -11,20 +11,33 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (written 2026-07-28)
+## Current queue (rewritten 2026-07-30)
 
-Two independent lines of work, both `ready-for-agent`, blocking edges wired as
-native GitHub issue dependencies:
+Five tickets, all `ready-for-agent`, blocking edges wired as native GitHub issue
+dependencies. Two independent roots:
 
-- **#42 — Multiline prompt composition.** Standalone, no edges, highest value.
-  Run it first.
-- **Spec #41 — Resume anything**, chain: `#43 → #44 → #45 → #47 → #48`, plus
-  `#44 → #46 → #47` and `#45 → #49`.
+- **#60 — the session store's three silent failures.** Standalone, no edges, not
+  part of any spec. A throwing list, an unresolvable session dir and an
+  unreadable transcript all collapse to `[]`, so a listing failure reads as
+  "No sessions yet" and a corrupt session reads as an empty conversation.
+- **Spec #58 — non-lossy tool inspector**, chain: `#59 → #61 → #62 → #63`.
+  #59 (replay text-block joining) is a standalone correctness bug that gates
+  #61's live/replay parity acceptance.
 
-Execution order: `#42 → #43 → #44 → #45 → #46 → #47 → #48 → #49`. Only #42 and
-#43 are unblocked at spec time; the rest open as their blockers close, so the
-frontier query in step 1 is the authority — do not hand-pick from this list if
-it disagrees with the tracker.
+Execution order: `#59 → #60 → #61 → #62 → #63` (the first two are
+interchangeable — both start unblocked). Only #59 and #60 are unblocked at spec
+time; the rest open as their blockers close, so the frontier query in step 1 is
+the authority — do not hand-pick from this list if it disagrees with the tracker.
+
+**Read spec #58 before touching #61/#62/#63,** and read the three decisions it
+rests on — they are in `.context/decisions/` dated 2026-07-30 and each closes a
+path you would otherwise walk down:
+`disclosure-is-retention-plus-conditional-mount`,
+`a-diff-without-a-baseline-is-worse-than-none`,
+`inspection-is-universal-approval-safety-is-opt-in`.
+
+No ticket in this queue adds a `window.api` member, so the four-mock-sites rule
+does not fire. If you find yourself adding one, re-read the ticket.
 
 Every ticket body carries its own contract, out-of-scope list, required test
 coverage and sharpest-failure-mode note. **Read the whole ticket and its parent
@@ -63,10 +76,16 @@ under-specified probably means you have not read far enough.
    impeccable for UI/design slices (Frost Mono reference:
    `docs/design/frost-mono-reference.png`).
    - **Pins.** Behavior pins in this repo are mutation-verified. Never "fix" a
-     failing pin by editing its expectation. The **only** authorized pin
-     retirement in this queue is named explicitly in #42
-     (`tests/attachments-composer.test.tsx`, `'the composer is still a
-     single-line input'`). Any other red pin means your change is wrong.
+     failing pin by editing its expectation. **This queue authorizes NO pin
+     retirement at all** — the earlier allowance (#42's single-line composer)
+     is spent. Any red pin means your change is wrong.
+   - **#61 specifically:** `tests/toolcards.test.tsx`'s collapsed one-line card
+     test must stay green **untouched**. It feeds a two-line result and asserts
+     line two is absent. Satisfy it by *conditionally mounting* detail content —
+     a CSS-hidden body or a closed `<details>` leaves the text in `textContent`
+     and turns it red correctly. That test is a mechanism check, not a stale
+     pin. A design review claimed this retirement and then withdrew it; do not
+     re-derive the wrong conclusion.
    - **Required test coverage is not optional.** Several tickets specify
      assertions that exist precisely because a green suite would otherwise pass
      while the requirement is unmet (no-JSONL-read, ordered-call, call-count).
@@ -104,17 +123,25 @@ under-specified probably means you have not read far enough.
 - Push is part of the leg (`git push` after the squash merge and after the
   context commit). Do not leave main ahead of origin at leg end.
 
-## Removed 2026-07-28: the Grok-grunt delegation layer
+## Grunt delegation — optional, and no longer needs the slot skill
 
 Earlier versions of this body had Fable lead while `xai/grok-4.5` subagents did
 the grunt implementation through the wisp-slot skill (snapshot `haiku` → rebind
-→ spawn → hold → revert). **Removed deliberately.** It bought cheaper
-implementation tokens at the cost of real unattended failure surface: a leg that
-dies mid-slot strands the routing row, the Iron Rule makes restore ordering
-load-bearing, and `wisp snapshot` has a footgun (bare invocation snapshots every
-row). The last completed chain delivered four tickets clean without it.
+→ spawn → hold → revert). That was removed 2026-07-28 because of real unattended
+failure surface: a leg dying mid-slot stranded the routing row, the Iron Rule
+made restore ordering load-bearing, and bare `wisp snapshot` snapshots every row.
 
-**To restore:** the procedure is unchanged and lives in the `wisp-slot:slot`
-skill — snapshot the sacrificial family first, bind, verify no `warning:` line,
-spawn with `model: "<family>"`, hold until every agent on that family finishes,
-then `wisp snapshot revert <family>`. Re-add it as a step 4 sub-procedure.
+**Updated 2026-07-30 — that failure surface is gone.** The `haiku` family now
+routes to `xai/grok-4.5` *standingly* in the Wisp routing map, so delegating
+grunt work needs **no snapshot, no rebind, no revert, and no Iron Rule** — spawn
+a subagent with `model: "haiku"` and it lands on Grok directly. Nothing to
+strand, because nothing is temporarily rebound. Confirm the route still holds
+with `wisp routing` before relying on it; if `haiku` has been repointed, treat
+delegation as unavailable rather than reaching for the slot skill mid-leg.
+
+**Still optional, and still not the default.** Delegation buys cheaper
+implementation tokens and costs coordination surface inside an unattended leg.
+Use it for genuinely mechanical work — a mechanical rename, a repetitive fixture
+build-out, a test-file scaffold — while the leg's own model keeps architecture,
+the required-coverage assertions, review and the gate. Never delegate the gate,
+and never delegate a pin.
