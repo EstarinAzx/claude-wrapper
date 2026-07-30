@@ -30,6 +30,13 @@ tags: [context, overview]
   the CLI says it is running, display only).
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
 - `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar, `styles.css` holds the OKLCH tokens in a Tailwind 4 `@theme` block + the custom component CSS, plus the app-wide scrollbar rule right after the reset — global on purpose, never scoped to a component).
+  `useChat.ts` stores a tool result **complete** on both write paths
+  (`toChatMessage` for replay, the `tool-result` handler for live) — #61 moved
+  summarising to render time in `ToolCard`, so re-adding `resultSummary` at
+  either write point restores the lossy-card bug and no rendering test can see
+  it. `toolSummaries.ts` owns the render-time derivation: `resultSummary` scans
+  forward with `firstLineBounds` (never `split('\n')` — it runs on the full
+  result every render) and `hasHiddenOutput` gates the disclosure affordance.
   `App.tsx` owns the workspace switch: the `ok` branch is where every
   workspace-scoped App state must be cleared, and `<InputBar key={cwd}>` covers
   everything living inside the composer. Both entry points — a foreign session
@@ -60,12 +67,12 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **three
-  queued tickets #61–#63 from spec #58; frontier is #61 alone**)
+- `.context/pick-up.md` — current frontier + landmines (currently: **two
+  queued tickets #62–#63 from spec #58; frontier is #62 alone**)
 - Tracker: **spec #58 (non-lossy tool inspector) open — #59 (replay text-block
-  joining) and #60 (the store's three silent failures) closed; remaining
-  #61 output disclosure → #62 input inspector → #63 Edit hunk diff, chained by
-  native GitHub dependencies**; **spec #55 (live-tail) delivered and closed with
+  joining), #60 (the store's three silent failures) and #61 (full output
+  disclosure) closed; remaining #62 input inspector → #63 Edit hunk diff, chained
+  by native GitHub dependencies**; **spec #55 (live-tail) delivered and closed with
   #56 (gui-55 driver, red-verified) and #57 (live-tail core)**; **#52 (model pill follows the CLI),
   #53 (CLI-sourced model list), #54 (no resume before the first turn), #50 and
   #51 closed**; spec #41 (Resume anything)

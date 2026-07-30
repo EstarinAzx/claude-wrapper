@@ -7,38 +7,39 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — relay leg 2: #60 landed_
-_At commit: `4447326` + this `.context` commit; `main` is **pushed** and in sync with `origin/main`_
-_Gate at #60: typecheck clean, build clean, **657 tests green across 51 files** (639 + 18 new)_
+_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — relay leg 3: #61 landed_
+_At commit: `1868bbb` + this `.context` commit; `main` is **pushed** and in sync with `origin/main`_
+_Gate at #61: typecheck clean, build clean, **680 tests green across 51 files** (657 + 23 new), `gui-61.mjs` verified red-then-green_
 
 ## Current focus
 
-**Spec #58 — the non-lossy tool inspector**, being drained one ticket per relay leg. Tool cards currently destroy their own evidence: every result is cut to its first non-empty line at 120 chars, and the cut happens *on the way into state* at two separate points while the raw text is already in hand. Measured over the local store, **59.7% of 6,416 results have more than one non-empty line** and 28.7% have a first line past the cap — so most cards are hiding content right now.
+**Spec #58 — the non-lossy tool inspector**, being drained one ticket per relay leg. #59, #60 and #61 are landed: the live/replay parity prerequisite, the standalone store bug found alongside the spec, and now **output disclosure itself**. Tool cards no longer destroy their own evidence — the complete result is retained in state and the collapsed one-line summary is derived at render.
 
-**#59 and #60 are landed.** The parity prerequisite is out of the way and the standalone store bug found alongside the spec is fixed. Three tickets remain, all of them #58's, and they are now a **strict chain** — one frontier ticket at a time from here.
+**Two tickets remain**, both #58's, still a strict chain: **#62** (structured input inspector) → **#63** (Edit hunk diff). The spec closes with #63.
 
 ## State
 
 - **In flight:** nothing. The branch is merged and deleted; `main` is pushed.
-- **Landed this leg:** **#60** (`4447326`) — the session store's three silent failures are now typed values. `listSessions()` → `SessionMeta[] | null`, `readTranscript()` → `TranscriptMessage[] | null`, and `resolveSessionDir()` gained `unavailable` for a store root that will not enumerate. Rail and pane each render the failure with a Retry; both empty states stay quiet. New suite `tests/store-failures.test.tsx` (10 tests) plus 8 in the two store suites. **Eight mutations verified, all killed.**
-- **Queue (`ready-for-agent`):** **three tickets, #61–#63.** Frontier is **#61 alone** (zero open blockers, re-verified after the close).
-- **Blocked:** #62 by #61; #63 by #62 — **native GitHub dependencies**, live via `issue_dependencies_summary.blocked_by`.
-- **Open:** spec **#58** (`ready-for-agent`, closes when its last ticket lands), the unlabelled umbrella **#1**.
+- **Landed this leg:** **#61** (`1868bbb`) — `useChat` stopped summarising on the way into state at both write points (`toChatMessage` for replay, the `tool-result` handler for live); `ToolCard` derives the collapsed line with `resultSummary` at render and mounts a `<pre className="tool-card-output">` only while expanded. `resultSummary` no longer `split('\n')`s the whole result — a new internal `firstLineBounds` scans forward and trims in place — and a new `hasHiddenOutput` gates the affordance so a one-line result advertises nothing. 23 new tests; **both named mutations verified** (retention revert killed 10 including both state-level targets; `hidden={!expanded}` reddened the original collapsed-card test).
+- **Queue (`ready-for-agent`):** **two tickets, #62 and #63.** Frontier is **#62 alone** (`blocked_by: 0`, verified after the close).
+- **Blocked:** #63 by #62 — **native GitHub dependency**, live via `issue_dependencies_summary.blocked_by`.
+- **Open:** spec **#58** (`ready-for-agent`, closes when #63 lands), the unlabelled umbrella **#1**.
 
 ## Pick up here
 
-One root now, no choice to make:
+One root, no choice to make:
 
-- **#61 — full output disclosure on tool cards.** Unblocked by #59, so its parity acceptance can be met for real rather than asserted. Read the three 2026-07-30 tool-card decisions before touching cards; **conditional mount**, never CSS-hidden markup. `tests/engine.test.ts` already holds the parity fixture (`#59 — the same two-block result collapses identically live and on replay`) — do not rebuild one.
+- **#62 — structured input inspector on tool cards.** Read spec #58 and [[2026-07-30-disclosure-is-retention-plus-conditional-mount]] first. The card now owns one boolean `expanded`; if input and output need independent disclosure that is a **second piece of state, not a second card** — #58's one-card-per-tool-invocation decision still holds.
+- `tests/toolcards.test.tsx` now has a `TOGGLE` regex (`/^(Show|Hide) (output|error)$/`) behind `queryToggle()`. A new input control needs a name **outside** that pattern, or the "advertises no expansion" guards go vacuous without failing.
 
-Then the chain: **#62** (structured input inspector) → **#63** (Edit hunk diff).
+Then **#63** (Edit hunk diff), and the leg that lands it closes spec #58.
 
 One ticket per branch `ticket/<id>-<slug>`, gate green before merge.
 
 ## Skills for next session
 
 - superpowers:test-driven-development — every ticket names a mutation that must kill a test; red-first is the whole discipline here
-- superpowers:verification-before-completion — #61's acceptance turns on an *existing* test staying green untouched
+- superpowers:verification-before-completion — #62 inherits #61's constraint that an *existing* test must stay green untouched
 
 ## Open questions
 
@@ -46,6 +47,10 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
 
 ## Recent context
 
+- **#61's collapsed/expanded pair is now the mechanism check.** The original `tool-result fills the card with a one-line summary` test passed **unchanged and untouched** — the diff on `tests/toolcards.test.tsx` is additions only — and its new companion expands the same card and finds the omitted line. The pair only holds because detail is conditionally **mounted**; mutating that to `hidden={!expanded}` turned the original red, as designed. Nothing was retired.
+- **Retention had to be asserted at STATE level, not through the DOM.** A collapsed card can only ever show what it chose to show, so a summarise-on-write regression is invisible to a rendering test until someone expands. `a live tool-result keeps every line` (via `renderHook(useChat)`) and `a replayed tool result keeps every line` (via the pure `toChatMessage`) are the two the named mutation must kill — and it killed both.
+- **`resultSummary` became bounded because retention made it hot.** It now runs against the *complete* result on every render of every card, so `text.split('\n')` would allocate one array entry per line of a result that can reach 92 KB. `firstLineBounds` scans with `indexOf` and trims by moving indices, materialising at most one line. Leading whitespace is skipped *before* the cap is measured — an indented 200-char line must still cap at 120 plus the ellipsis, which is what `an indented long line is capped at the same budget` pins.
+- **jsdom computes no styles, so the whole visual half of this ticket was unverifiable in vitest.** `gui-61.mjs` seeds a 42-line, 1,623-byte failed Bash result into the native store and measures the real window: toggle 87×15, expanded box 464×320 with `scrollHeight 731 > clientHeight 318` (bounded and scrolling, not grown to fit), `white-space: pre-wrap`, composer bottom 652 < viewport 709. Run first against a featureless build it failed naming the reason — that red is what makes the green worth anything.
 - **#60's line sits at the MECHANISM, not the outcome.** Its two requirements pull against each other — "a session directory that cannot be resolved" is a failure, but "a genuinely deleted session still takes the lenient path", and a deleted session *is* an unresolvable directory. They reconcile exactly one way: the store failing to **enumerate** is the error; the store enumerating fine and not holding the id is absence. That is why the new status went into `build()` and not into how `readTranscript` treats `not-found`, and it is why the existing `a session the store does not hold yields []` test stayed green untouched.
 - **#60 changed three test expectations, and the reasoning matters more than the change.** `an unreadable store degrades to the empty list`, `an unreadable store is not-found, not a throw` and `a cwd that resolves to nothing is not-found` all encoded the behaviour the ticket exists to change. None is a *commented* behaviour pin — they are plain lenient-degradation tests, and the contract each **names** ("degrades instead of throwing", "not a throw") still holds, since nothing throws and the failure is merely typed now. The commented pins in both files are untouched. The rejected alternative was a vestigial test-only `listSessions` alias to keep the old assertion green — that leaves a pin green for a function nothing calls, which is a worse violation of the same rule than updating the assertion.
 - **#60 improved the Agents dock for free.** `subagent-store` already checks `status === 'ok'`, so `unavailable` flows into its existing `Could not read this session's agents.` state with no change.
@@ -64,7 +69,10 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
 - **NEW — live-tail's failed-read guard is `continue`, never `break`, and never an unguarded throw.** A re-run queued behind a failed read is a fresh attempt and must still get its turn; an exception (e.g. `null.length`) unwinds past the trailing re-run and loses the queued write — which is the staleness live-tail exists to fix. **The "keeps the pane" assertion cannot catch this**, because a throw also leaves the pane alone. The test that can is `a failed read does not swallow the re-run queued behind it`.
 - **NEW — a failure notice must retire when the thing it warns about arrives.** Adoption arms the watch even when its own read failed, so a recovered file reaches the pane by itself. The reload's apply branch clears the notice; without that line the warning stands over the conversation it is warning about. Found in diff review, not by the ticket.
 - **NEW — the mutation harness must normalise CRLF.** Source files are CRLF; anchors written with `\n` match **zero** times, and a zero-match anchor reads exactly like a surviving mutation. Match against an LF copy, assert the anchor hit exactly once, and restore the byte-exact original.
-- **NEW — the collapsed tool-card test is a mechanism check, not a pin to retire.** It feeds a two-line result and asserts line two is absent. #61 must keep it green **untouched** by *conditionally mounting* detail — a CSS-hidden body or a closed `<details>` leaves the text in `textContent` and turns it red correctly. If it goes red, the implementation is wrong.
+- **NEW — never summarise a tool result on the way into state again.** `toChatMessage` and the `tool-result` handler both store `result` **complete**; `ToolCard` calls `resultSummary` at render. Re-introducing the call at either write point is the exact bug #61 removed, and it is invisible to every rendering test — which is why `a live tool-result keeps every line` and `a replayed tool result keeps every line` assert at state level. Same shape as the `?? []` trap above: the DOM cannot tell you.
+- **NEW — the collapsed tool-card test is a mechanism check, and it is now half of a pair.** It feeds a two-line result and asserts line two is absent; its companion expands the same card and finds it. Detail must stay **conditionally mounted** — a CSS-hidden body or a closed `<details>` leaves the text in `textContent` and turns the collapsed half red, correctly. Verified by mutation in #61. If it goes red, the implementation is wrong.
+- **NEW — `resultSummary` runs on the COMPLETE result now, on every render.** Never reach for `text.split('\n')` in it (or in anything else scanning a result): results reach 92 KB and the split allocates per line. `firstLineBounds` scans with `indexOf` and trims by moving indices. Skip leading whitespace **before** measuring the 120-char cap, or an indented long line silently loses its ellipsis.
+- **NEW — never `git checkout <file>` to undo a mutation on uncommitted work.** It restores from HEAD and takes your unstaged changes with it; it cost this leg a re-do of the retention edit mid-mutation-test. **Commit the ticket work first, then mutate,** and reverse the mutation with the same anchored replace that applied it.
 - **NEW — never render a Write "diff".** Write supplies only path + content, no before-state. Green added lines conceal what was overwritten and manufacture confidence at the deciding moment. Labelled content preview only.
 - **NEW — `gh` infers the repo from the working directory.** `cd`-ing out of the clone (e.g. to a temp dir holding a body file) makes every `gh issue create` fail with `no git remotes found`. Stay in the repo and pass absolute `--body-file` paths, or pass `-R <owner>/<repo>`.
 - **#57's watcher is epoch-fenced, and the fence is the whole safety argument.**
@@ -148,8 +156,8 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
   `scrollbar-width` / `scrollbar-color` — the standard properties suppress the
   `::-webkit-` pseudo-elements and would silently discard the global rule.
   `::-webkit-scrollbar-button { display: none }` and a transparent `-corner` are
-  load-bearing, not tidiness. **#61/#62's expanded regions inherit the global
-  rule — do not give the inspector its own.**
+  load-bearing, not tidiness. **#61's `.tool-card-output` inherits the global
+  rule and #62/#63's regions must too — do not give the inspector its own.**
 - **Never write a literal ESC byte or a `\u` escape into source.** `CSI` uses
   `String.fromCharCode(27)`; the raw character is invisible in an editor and the
   escape was repeatedly normalized into the raw byte in transit.
@@ -188,8 +196,11 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
   the CLI bundled in the npm package. A host Claude Code update can therefore
   break the app with no code change here.
 - **`gh issue close --comment` silently drops the comment if the issue is already
-  closed** — a pushed `Closes #N` auto-closes it first. Keep `Closes #N` out of
-  the commit, then `gh issue comment` → `gh issue close` → verify. **`gh issue
+  closed** — a pushed `Closes #N` auto-closes it first. A **standalone `gh issue
+  comment` still lands on a closed issue**, though (confirmed in #61: `Closes #61`
+  auto-closed on push, the separate comment posted fine, and `gh issue close`
+  then reported "already closed" harmlessly). So either keep `Closes #N` out of
+  the commit, or keep it and never fold the comment into the close. **`gh issue
   list` also lags a close by a few seconds** — re-query before believing a queue
   is non-empty.
 - **The Bash tool is not PowerShell** — heredoc (`git commit -F - <<'EOF'`), never
@@ -218,6 +229,17 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
 - **Driver trick (gui-55):** a terminal-shaped session can be seeded straight
   into the native store and the SDK lists it — no CLI turn needed to put a real
   adoptable row in the rail. Clean up the seeded store dir on every exit path.
+- **Driver trick (gui-61):** the same seed carries a **tool call** — an
+  `assistant` line with a `tool_use` block plus a `user` line with a matching
+  `tool_result` — so a card of any shape can be put on screen with no engine.
+  Screenshot **at the moment under test**, not only in `finish()`: gui-61 ends
+  re-collapsed, so the final shot would never show the state the ticket added.
+- **jsdom is blind to CSS, so a visual ticket needs a driver.** Nothing in
+  vitest can see whether a control is visible, whether a region is height-capped
+  and scrolling, or whether the composer got pushed off screen. Measure those in
+  the real window (`getBoundingClientRect`, `scrollHeight` vs `clientHeight`,
+  `getComputedStyle`) — and run the driver against a build **without** the
+  feature first, or its green proves nothing.
 
 ## Deferred (still no spec)
 
