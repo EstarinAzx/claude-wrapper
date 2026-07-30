@@ -11,29 +11,25 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (rewritten 2026-07-30)
+## Current queue (updated 2026-07-30, after #62)
 
-Five tickets, all `ready-for-agent`, blocking edges wired as native GitHub issue
-dependencies. Two independent roots:
+The batch was five tickets — `#59 → #60 → #61 → #62 → #63`, blocking edges wired
+as native GitHub issue dependencies. **Four are closed.** What remains:
 
-- **#60 — the session store's three silent failures.** Standalone, no edges, not
-  part of any spec. A throwing list, an unresolvable session dir and an
-  unreadable transcript all collapse to `[]`, so a listing failure reads as
-  "No sessions yet" and a corrupt session reads as an empty conversation.
-- **Spec #58 — non-lossy tool inspector**, chain: `#59 → #61 → #62 → #63`.
-  #59 (replay text-block joining) is a standalone correctness bug that gates
-  #61's live/replay parity acceptance.
+- **#63 — Edit hunk diff.** Unblocked, last of spec #58. The leg that lands it
+  **closes the spec too**, and then the `ready-for-agent` queue is empty — the
+  next firing takes the queue-done path in step 1 rather than picking a ticket.
 
-Execution order: `#59 → #60 → #61 → #62 → #63` (the first two are
-interchangeable — both start unblocked). Only #59 and #60 are unblocked at spec
-time; the rest open as their blockers close, so the frontier query in step 1 is
-the authority — do not hand-pick from this list if it disagrees with the tracker.
+The frontier query in step 1 is the authority; do not hand-pick from this list
+if it disagrees with the tracker.
 
-**Read spec #58 before touching #61/#62/#63,** and read the three decisions it
-rests on — they are in `.context/decisions/` dated 2026-07-30 and each closes a
-path you would otherwise walk down:
+**Read spec #58 before touching #63,** and read the four decisions it rests on —
+they are in `.context/decisions/` dated 2026-07-30 and each closes a path you
+would otherwise walk down:
+`a-diff-without-a-baseline-is-worse-than-none` (the one #63 is built on),
+`two-disclosures-two-booleans` (the card #63 renders into, and the
+control-naming trap),
 `disclosure-is-retention-plus-conditional-mount`,
-`a-diff-without-a-baseline-is-worse-than-none`,
 `inspection-is-universal-approval-safety-is-opt-in`.
 
 No ticket in this queue adds a `window.api` member, so the four-mock-sites rule
@@ -79,13 +75,17 @@ under-specified probably means you have not read far enough.
      failing pin by editing its expectation. **This queue authorizes NO pin
      retirement at all** — the earlier allowance (#42's single-line composer)
      is spent. Any red pin means your change is wrong.
-   - **#61 specifically:** `tests/toolcards.test.tsx`'s collapsed one-line card
-     test must stay green **untouched**. It feeds a two-line result and asserts
-     line two is absent. Satisfy it by *conditionally mounting* detail content —
-     a CSS-hidden body or a closed `<details>` leaves the text in `textContent`
-     and turns it red correctly. That test is a mechanism check, not a stale
-     pin. A design review claimed this retirement and then withdrew it; do not
-     re-derive the wrong conclusion.
+   - **The tool card specifically:** `tests/toolcards.test.tsx`'s collapsed
+     one-line card test must stay green **untouched**. It feeds a two-line
+     result and asserts line two is absent. Satisfy it by *conditionally
+     mounting* detail content — a CSS-hidden body or a closed `<details>` leaves
+     the text in `textContent` and turns it red correctly. That test is a
+     mechanism check, not a stale pin. A design review claimed this retirement
+     and then withdrew it; do not re-derive the wrong conclusion. **Any new
+     control on that card needs a `.tool-card-toggle--<what>` modifier class**
+     (the GUI drivers select by class, and a bare `.tool-card-toggle` now
+     matches whichever button renders first) **and an accessible name outside
+     the file's `TOGGLE` regex** — both failures are silent and green.
    - **Required test coverage is not optional.** Several tickets specify
      assertions that exist precisely because a green suite would otherwise pass
      while the requirement is unmet (no-JSONL-read, ordered-call, call-count).
