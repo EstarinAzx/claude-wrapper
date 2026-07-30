@@ -36,7 +36,12 @@ tags: [context, overview]
   either write point restores the lossy-card bug and no rendering test can see
   it. `toolSummaries.ts` owns the render-time derivation: `resultSummary` scans
   forward with `firstLineBounds` (never `split('\n')` — it runs on the full
-  result every render) and `hasHiddenOutput` gates the disclosure affordance.
+  result every render), `hasHiddenOutput` gates the output affordance, and
+  `inputEntries` (#62) builds the key-sorted argument list — sorted because live
+  and replayed objects need not share insertion order, and called only from the
+  mounted branch so a collapsed card pays no stringify. `ToolCard` owns **two**
+  disclosure booleans, one per region; a pending permission card renders the
+  input inspector with no toggle at all.
   `App.tsx` owns the workspace switch: the `ok` branch is where every
   workspace-scoped App state must be cleared, and `<InputBar key={cwd}>` covers
   everything living inside the composer. Both entry points — a foreign session
@@ -67,12 +72,12 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **two
-  queued tickets #62–#63 from spec #58; frontier is #62 alone**)
+- `.context/pick-up.md` — current frontier + landmines (currently: **one queued
+  ticket, #63, the last of spec #58**)
 - Tracker: **spec #58 (non-lossy tool inspector) open — #59 (replay text-block
-  joining), #60 (the store's three silent failures) and #61 (full output
-  disclosure) closed; remaining #62 input inspector → #63 Edit hunk diff, chained
-  by native GitHub dependencies**; **spec #55 (live-tail) delivered and closed with
+  joining), #60 (the store's three silent failures), #61 (full output
+  disclosure) and #62 (structured input inspector) closed; only #63 (Edit hunk
+  diff) remains, and the leg that lands it closes the spec**; **spec #55 (live-tail) delivered and closed with
   #56 (gui-55 driver, red-verified) and #57 (live-tail core)**; **#52 (model pill follows the CLI),
   #53 (CLI-sourced model list), #54 (no resume before the first turn), #50 and
   #51 closed**; spec #41 (Resume anything)

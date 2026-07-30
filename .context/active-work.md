@@ -7,39 +7,40 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — relay leg 3: #61 landed_
-_At commit: `1868bbb` + this `.context` commit; `main` is **pushed** and in sync with `origin/main`_
-_Gate at #61: typecheck clean, build clean, **680 tests green across 51 files** (657 + 23 new), `gui-61.mjs` verified red-then-green_
+_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — relay leg 4: #62 landed_
+_At commit: `f39ee22` + this `.context` commit; `main` is **pushed** and in sync with `origin/main`_
+_Gate at #62: typecheck clean, build clean, **698 tests green across 51 files** (680 + 18 new), `gui-62.mjs` verified red-then-green, `gui-61.mjs` re-run green_
 
 ## Current focus
 
-**Spec #58 — the non-lossy tool inspector**, being drained one ticket per relay leg. #59, #60 and #61 are landed: the live/replay parity prerequisite, the standalone store bug found alongside the spec, and now **output disclosure itself**. Tool cards no longer destroy their own evidence — the complete result is retained in state and the collapsed one-line summary is derived at render.
+**Spec #58 — the non-lossy tool inspector**, being drained one ticket per relay leg. #59, #60, #61 and #62 are landed: the live/replay parity prerequisite, the standalone store bug found alongside the spec, output disclosure, and now **input disclosure**. A tool card no longer destroys its own evidence in either direction — the complete result is retained in state, and every argument the call was made with is reachable.
 
-**Two tickets remain**, both #58's, still a strict chain: **#62** (structured input inspector) → **#63** (Edit hunk diff). The spec closes with #63.
+**One ticket remains**, #58's last: **#63** (Edit hunk diff). The leg that lands it closes the spec.
 
 ## State
 
 - **In flight:** nothing. The branch is merged and deleted; `main` is pushed.
-- **Landed this leg:** **#61** (`1868bbb`) — `useChat` stopped summarising on the way into state at both write points (`toChatMessage` for replay, the `tool-result` handler for live); `ToolCard` derives the collapsed line with `resultSummary` at render and mounts a `<pre className="tool-card-output">` only while expanded. `resultSummary` no longer `split('\n')`s the whole result — a new internal `firstLineBounds` scans forward and trims in place — and a new `hasHiddenOutput` gates the affordance so a one-line result advertises nothing. 23 new tests; **both named mutations verified** (retention revert killed 10 including both state-level targets; `hidden={!expanded}` reddened the original collapsed-card test).
-- **Queue (`ready-for-agent`):** **two tickets, #62 and #63.** Frontier is **#62 alone** (`blocked_by: 0`, verified after the close).
-- **Blocked:** #63 by #62 — **native GitHub dependency**, live via `issue_dependencies_summary.blocked_by`.
+- **Landed this leg:** **#62** (`f39ee22`) — `inputEntries` in `toolSummaries.ts` derives the readable argument list at render (key-sorted; non-string values via `JSON.stringify(v, null, 2)` with a `String(v)` fallback). `ToolCard` gained a **second** disclosure boolean and an `InputInspector`, conditionally mounted on both paths; a **pending** permission card renders it outright with no toggle. `.tool-card-input` is height-capped and scrolls, inheriting the global scrollbar rule. 18 new tests; **both named mutations verified** (single-key rendering killed 5 including its named target, dropping `.sort()` killed the ordering test), plus `gui-62.mjs` red-first against an inspector-disabled build.
+- **Landed last leg:** **#61** (`1868bbb`) — `useChat` stopped summarising on the way into state at both write points (`toChatMessage` for replay, the `tool-result` handler for live); `ToolCard` derives the collapsed line with `resultSummary` at render and mounts a `<pre className="tool-card-output">` only while expanded. `resultSummary` no longer `split('\n')`s the whole result — a new internal `firstLineBounds` scans forward and trims in place — and a new `hasHiddenOutput` gates the affordance so a one-line result advertises nothing. 23 new tests; **both named mutations verified** (retention revert killed 10 including both state-level targets; `hidden={!expanded}` reddened the original collapsed-card test).
+- **Queue (`ready-for-agent`):** **one ticket, #63.** `blocked_by: 0`, verified after the close settled (it read `1` for several seconds first — the API lags a close).
+- **Blocked:** nothing.
 - **Open:** spec **#58** (`ready-for-agent`, closes when #63 lands), the unlabelled umbrella **#1**.
 
 ## Pick up here
 
-One root, no choice to make:
+One ticket, no choice to make:
 
-- **#62 — structured input inspector on tool cards.** Read spec #58 and [[2026-07-30-disclosure-is-retention-plus-conditional-mount]] first. The card now owns one boolean `expanded`; if input and output need independent disclosure that is a **second piece of state, not a second card** — #58's one-card-per-tool-invocation decision still holds.
-- `tests/toolcards.test.tsx` now has a `TOGGLE` regex (`/^(Show|Hide) (output|error)$/`) behind `queryToggle()`. A new input control needs a name **outside** that pattern, or the "advertises no expansion" guards go vacuous without failing.
+- **#63 — Edit hunk diff.** Read spec #58, [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] and [[2026-07-30-two-disclosures-two-booleans]] first. A local guarded line diff at ~45 lines, guard `oldLines * newLines <= 1_000_000`, **no `diff` dependency**, and **never a Write diff** — Write supplies no before-state, so a labelled content preview only.
+- The diff renders into the card #62 just finished. It is a **third** region on that card: if it needs its own disclosure that is a third boolean, and any new control needs a modifier class (`.tool-card-toggle--*`) plus an accessible name **outside** `tests/toolcards.test.tsx`'s `TOGGLE` regex.
 
-Then **#63** (Edit hunk diff), and the leg that lands it closes spec #58.
+That leg closes spec #58.
 
 One ticket per branch `ticket/<id>-<slug>`, gate green before merge.
 
 ## Skills for next session
 
-- superpowers:test-driven-development — every ticket names a mutation that must kill a test; red-first is the whole discipline here
-- superpowers:verification-before-completion — #62 inherits #61's constraint that an *existing* test must stay green untouched
+- superpowers:test-driven-development — the ticket names a mutation that must kill a test (removing the guard); red-first is the whole discipline here
+- superpowers:verification-before-completion — #63 inherits the constraint that existing tests stay green untouched, and the diff utility is a pure module with its own unit test
 
 ## Open questions
 
@@ -47,6 +48,9 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
 
 ## Recent context
 
+- **#62's real cost was a selector shadow, not the feature.** Adding a second control to the card broke nothing in vitest — the suite queries by role and accessible name — but `gui-61.mjs` selected the bare `.tool-card-toggle`, which now matches the **input** button first. It would have driven input disclosure while asserting about output, and its pass or fail would have meant nothing either way. Both drivers now name their control (`.tool-card-toggle--input` / `--output`). A vitest suite being immune to this is exactly why the drivers needed checking by hand.
+- **The output guard needed a guard of its own.** `a genuinely one-line result advertises no expansion` keeps working only because `queryToggle()`'s regex is output/error-specific and the new control is named `Show input`. That is fragile by construction, so `a one-line result still offers input inspection` now asserts both halves together — the output toggle absent *and* the input toggle present — and would fail if a future control were ever named into the pattern.
+- **The inspector is computed lazily on purpose.** `inputEntries` runs inside the mounted branch, never at the top of `ToolCard`, so a collapsed card pays no `JSON.stringify` — the same reasoning that made `resultSummary` scan instead of split in #61. `Object.keys(input).length > 0` is the only thing the collapsed path evaluates.
 - **#61's collapsed/expanded pair is now the mechanism check.** The original `tool-result fills the card with a one-line summary` test passed **unchanged and untouched** — the diff on `tests/toolcards.test.tsx` is additions only — and its new companion expands the same card and finds the omitted line. The pair only holds because detail is conditionally **mounted**; mutating that to `hidden={!expanded}` turned the original red, as designed. Nothing was retired.
 - **Retention had to be asserted at STATE level, not through the DOM.** A collapsed card can only ever show what it chose to show, so a summarise-on-write regression is invisible to a rendering test until someone expands. `a live tool-result keeps every line` (via `renderHook(useChat)`) and `a replayed tool result keeps every line` (via the pure `toChatMessage`) are the two the named mutation must kill — and it killed both.
 - **`resultSummary` became bounded because retention made it hot.** It now runs against the *complete* result on every render of every card, so `text.split('\n')` would allocate one array entry per line of a result that can reach 92 KB. `firstLineBounds` scans with `indexOf` and trims by moving indices, materialising at most one line. Leading whitespace is skipped *before* the cap is measured — an indented 200-char line must still cap at 120 plus the ellipsis, which is what `an indented long line is capped at the same budget` pins.
@@ -69,6 +73,9 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
 - **NEW — live-tail's failed-read guard is `continue`, never `break`, and never an unguarded throw.** A re-run queued behind a failed read is a fresh attempt and must still get its turn; an exception (e.g. `null.length`) unwinds past the trailing re-run and loses the queued write — which is the staleness live-tail exists to fix. **The "keeps the pane" assertion cannot catch this**, because a throw also leaves the pane alone. The test that can is `a failed read does not swallow the re-run queued behind it`.
 - **NEW — a failure notice must retire when the thing it warns about arrives.** Adoption arms the watch even when its own read failed, so a recovered file reaches the pane by itself. The reload's apply branch clears the notice; without that line the warning stands over the conversation it is warning about. Found in diff review, not by the ticket.
 - **NEW — the mutation harness must normalise CRLF.** Source files are CRLF; anchors written with `\n` match **zero** times, and a zero-match anchor reads exactly like a surviving mutation. Match against an LF copy, assert the anchor hit exactly once, and restore the byte-exact original.
+- **NEW — a new control on the tool card must be named twice over.** It needs a `.tool-card-toggle--<what>` modifier class, because the GUI drivers select by class and a bare `.tool-card-toggle` now matches whichever button renders first; and its accessible name must stay **outside** `tests/toolcards.test.tsx`'s `TOGGLE` regex (`/^(Show|Hide) (output|error)$/`), or every "advertises no expansion" guard goes vacuous while staying green. Both traps are silent — the suite passes either way.
+- **NEW — the card's disclosures are one boolean each, never a shared flag.** Output is gated on `hasHiddenOutput`, input on the call having arguments, and a pending card shows its arguments with no toggle at all. Merging them re-arms a control on cards that hide nothing, which is the whole basis of the affordance being trustworthy. Pinned by `input and output disclose independently`.
+- **NEW — `inputEntries` sorts, and the sort is load-bearing.** The same call reaches the card as a live event object and as a replayed `JSON.parse`; only a derived order is guaranteed to agree, so insertion order would make live/replay parity depend on how the object was built. Dropping `.sort()` is killed by exactly one test.
 - **NEW — never summarise a tool result on the way into state again.** `toChatMessage` and the `tool-result` handler both store `result` **complete**; `ToolCard` calls `resultSummary` at render. Re-introducing the call at either write point is the exact bug #61 removed, and it is invisible to every rendering test — which is why `a live tool-result keeps every line` and `a replayed tool result keeps every line` assert at state level. Same shape as the `?? []` trap above: the DOM cannot tell you.
 - **NEW — the collapsed tool-card test is a mechanism check, and it is now half of a pair.** It feeds a two-line result and asserts line two is absent; its companion expands the same card and finds it. Detail must stay **conditionally mounted** — a CSS-hidden body or a closed `<details>` leaves the text in `textContent` and turns the collapsed half red, correctly. Verified by mutation in #61. If it goes red, the implementation is wrong.
 - **NEW — `resultSummary` runs on the COMPLETE result now, on every render.** Never reach for `text.split('\n')` in it (or in anything else scanning a result): results reach 92 KB and the split allocates per line. `firstLineBounds` scans with `indexOf` and trims by moving indices. Skip leading whitespace **before** measuring the 120-char cap, or an indented long line silently loses its ellipsis.
@@ -229,6 +236,7 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
 - **Driver trick (gui-55):** a terminal-shaped session can be seeded straight
   into the native store and the SDK lists it — no CLI turn needed to put a real
   adoptable row in the rail. Clean up the seeded store dir on every exit path.
+- **Driver trick (gui-62):** a seeded `tool_use` alone is enough to put a card with a rich **input** on screen — the `tool_result` line only decides how the card's result half reads. Assert the argument count the driver *expected* against the labels actually rendered (`.tool-card-arg-key`), or "some arguments shown" reads as "every argument shown".
 - **Driver trick (gui-61):** the same seed carries a **tool call** — an
   `assistant` line with a `tool_use` block plus a `user` line with a matching
   `tool_result` — so a card of any shape can be put on screen with no engine.
@@ -281,6 +289,8 @@ leftovers from #31–#36.
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
 - [[2026-07-30-a-failure-is-a-value-absence-stays-lenient]] — #60's line between failure and absence
+- [[2026-07-30-two-disclosures-two-booleans]] — #62's second card boolean, the
+  sorted argument list, and the selector shadow it exposed
 - [[2026-07-30-disclosure-is-retention-plus-conditional-mount]] ·
   [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] ·
   [[2026-07-30-inspection-is-universal-approval-safety-is-opt-in]]
