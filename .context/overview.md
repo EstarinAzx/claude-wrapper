@@ -13,7 +13,12 @@ tags: [context, overview]
 ## Layout
 - `src/main/` — Electron main process (window creation, acrylic config, IPC handlers).
   `session-index.ts` owns store path resolution: session id → real project
-  directory by enumeration. Nothing may derive a store path from `cwd`.
+  directory by enumeration. Nothing may derive a store path from `cwd`. It also
+  owns the failure/absence line (#60): `unavailable` when the store will not
+  enumerate, `not-found` when it enumerates fine and lacks the id — and a failed
+  build is never cached. `session-store.ts` carries that outward as `null` vs
+  `[]` on both `listSessions` and `readTranscript`; `?? []` at a new call site
+  restores the silent-empty-state bug.
   `switch-workspace.ts` owns the atomic workspace transition as a function over
   injected ports (the entry module is untestable under vitest); `index.ts` holds
   only the binding to the real engine, broker and cwd. `transcript.ts` parses the
@@ -55,10 +60,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **four
-  queued tickets #60–#63 from spec #58; frontier is #60 and #61**)
+- `.context/pick-up.md` — current frontier + landmines (currently: **three
+  queued tickets #61–#63 from spec #58; frontier is #61 alone**)
 - Tracker: **spec #58 (non-lossy tool inspector) open — #59 (replay text-block
-  joining) closed; remaining #60 the store's three silent failures, then
+  joining) and #60 (the store's three silent failures) closed; remaining
   #61 output disclosure → #62 input inspector → #63 Edit hunk diff, chained by
   native GitHub dependencies**; **spec #55 (live-tail) delivered and closed with
   #56 (gui-55 driver, red-verified) and #57 (live-tail core)**; **#52 (model pill follows the CLI),

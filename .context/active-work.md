@@ -7,30 +7,29 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — relay leg 1: #59 landed_
-_At commit: `9da599a` + this `.context` commit; `main` is **pushed** and in sync with `origin/main`_
-_Gate at #59: typecheck clean, build clean, **639 tests green across 50 files** (637 + 2 new)_
+_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — relay leg 2: #60 landed_
+_At commit: `4447326` + this `.context` commit; `main` is **pushed** and in sync with `origin/main`_
+_Gate at #60: typecheck clean, build clean, **657 tests green across 51 files** (639 + 18 new)_
 
 ## Current focus
 
 **Spec #58 — the non-lossy tool inspector**, being drained one ticket per relay leg. Tool cards currently destroy their own evidence: every result is cut to its first non-empty line at 120 chars, and the cut happens *on the way into state* at two separate points while the raw text is already in hand. Measured over the local store, **59.7% of 6,416 results have more than one non-empty line** and 28.7% have a first line past the cap — so most cards are hiding content right now.
 
-**#59 is landed.** The parity prerequisite is out of the way: live and replay now agree on what a multi-block tool result says. Four tickets remain.
+**#59 and #60 are landed.** The parity prerequisite is out of the way and the standalone store bug found alongside the spec is fixed. Three tickets remain, all of them #58's, and they are now a **strict chain** — one frontier ticket at a time from here.
 
 ## State
 
 - **In flight:** nothing. The branch is merged and deleted; `main` is pushed.
-- **Landed this leg:** **#59** (`9da599a`) — the replay parser joins tool-result text blocks with `\n`, matching live. One production line in `extractText`, plus two regressions: a two-block parser test and a live-vs-replay parity test that compares **through `resultSummary`**. Mutation-verified — reverting the separator kills exactly those two.
-- **Queue (`ready-for-agent`):** **four tickets, #60–#63.** Frontier is **#60 and #61** (both zero open blockers, re-verified after the close).
+- **Landed this leg:** **#60** (`4447326`) — the session store's three silent failures are now typed values. `listSessions()` → `SessionMeta[] | null`, `readTranscript()` → `TranscriptMessage[] | null`, and `resolveSessionDir()` gained `unavailable` for a store root that will not enumerate. Rail and pane each render the failure with a Retry; both empty states stay quiet. New suite `tests/store-failures.test.tsx` (10 tests) plus 8 in the two store suites. **Eight mutations verified, all killed.**
+- **Queue (`ready-for-agent`):** **three tickets, #61–#63.** Frontier is **#61 alone** (zero open blockers, re-verified after the close).
 - **Blocked:** #62 by #61; #63 by #62 — **native GitHub dependencies**, live via `issue_dependencies_summary.blocked_by`.
 - **Open:** spec **#58** (`ready-for-agent`, closes when its last ticket lands), the unlabelled umbrella **#1**.
 
 ## Pick up here
 
-Work the frontier. Two independent roots:
+One root now, no choice to make:
 
-- **#60 — distinguish the store's three silent failures.** A throwing list, an unresolvable session dir, and an unreadable transcript all collapse to `[]`, so a listing failure reads as "No sessions yet" and a corrupt session reads as an empty conversation. Independent of #58 entirely. Injected-`StoreIo` seam.
-- **#61 — full output disclosure on tool cards.** Now unblocked by #59, so its parity acceptance can be met for real rather than asserted. Read the three 2026-07-30 decisions before touching tool cards; **conditional mount**, never CSS-hidden markup.
+- **#61 — full output disclosure on tool cards.** Unblocked by #59, so its parity acceptance can be met for real rather than asserted. Read the three 2026-07-30 tool-card decisions before touching cards; **conditional mount**, never CSS-hidden markup. `tests/engine.test.ts` already holds the parity fixture (`#59 — the same two-block result collapses identically live and on replay`) — do not rebuild one.
 
 Then the chain: **#62** (structured input inspector) → **#63** (Edit hunk diff).
 
@@ -47,6 +46,9 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
 
 ## Recent context
 
+- **#60's line sits at the MECHANISM, not the outcome.** Its two requirements pull against each other — "a session directory that cannot be resolved" is a failure, but "a genuinely deleted session still takes the lenient path", and a deleted session *is* an unresolvable directory. They reconcile exactly one way: the store failing to **enumerate** is the error; the store enumerating fine and not holding the id is absence. That is why the new status went into `build()` and not into how `readTranscript` treats `not-found`, and it is why the existing `a session the store does not hold yields []` test stayed green untouched.
+- **#60 changed three test expectations, and the reasoning matters more than the change.** `an unreadable store degrades to the empty list`, `an unreadable store is not-found, not a throw` and `a cwd that resolves to nothing is not-found` all encoded the behaviour the ticket exists to change. None is a *commented* behaviour pin — they are plain lenient-degradation tests, and the contract each **names** ("degrades instead of throwing", "not a throw") still holds, since nothing throws and the failure is merely typed now. The commented pins in both files are untouched. The rejected alternative was a vestigial test-only `listSessions` alias to keep the old assertion green — that leaves a pin green for a function nothing calls, which is a worse violation of the same rule than updating the assertion.
+- **#60 improved the Agents dock for free.** `subagent-store` already checks `status === 'ok'`, so `unavailable` flows into its existing `Could not read this session's agents.` state with no change.
 - **#59's real lesson is about the fixture, not the separator.** The parser had a test named `tool_result content as array of text blocks is joined` — and it supplied **one** block. Every separator agrees on a one-element join, so the test was structurally incapable of failing. The fix was one character; the coverage hole was the bug.
 - **#59 changed `extractText` globally, not just the tool-result call site.** The helper is shared with the user-attachment path (an array of image/document markers plus text). Joining multiple prose blocks with `''` runs words together there too, so the single change is a strict improvement and no existing test moved. Don't "scope it properly" in a later pass — that path was considered and rejected as churn.
 - Two independent brainstorms (different models, no shared context) ranked the tool inspector **first** out of nine and ten candidates. Convergence chose it; **measurement** justified it — the corpus figures were gathered before committing, precisely because two models agreeing can mean two models sharing a blind spot.
@@ -57,6 +59,11 @@ None blocking. One deferred owner decision is recorded in #58's Out of Scope: wh
 
 ## Landmines (carried forward)
 
+- **NEW — `[]` and `null` now mean different things on both store channels.** `listSessions` and `loadTranscript` answer `null` for a FAILED read and `[]` for an honest nothing. Any new caller must branch on both; `?? []` at a call site silently restores the exact bug #60 removed. The one deliberate `?? []` is in `titleHint`, and it is commented as such.
+- **NEW — never cache a failed index build.** `build()` returns `null` on an unreadable root and `resolveSessionDir` must not install it. An empty index is indistinguishable from an empty store, so caching one lets a single transient failure answer every later lookup until the next `resetSessionIndex()`.
+- **NEW — live-tail's failed-read guard is `continue`, never `break`, and never an unguarded throw.** A re-run queued behind a failed read is a fresh attempt and must still get its turn; an exception (e.g. `null.length`) unwinds past the trailing re-run and loses the queued write — which is the staleness live-tail exists to fix. **The "keeps the pane" assertion cannot catch this**, because a throw also leaves the pane alone. The test that can is `a failed read does not swallow the re-run queued behind it`.
+- **NEW — a failure notice must retire when the thing it warns about arrives.** Adoption arms the watch even when its own read failed, so a recovered file reaches the pane by itself. The reload's apply branch clears the notice; without that line the warning stands over the conversation it is warning about. Found in diff review, not by the ticket.
+- **NEW — the mutation harness must normalise CRLF.** Source files are CRLF; anchors written with `\n` match **zero** times, and a zero-match anchor reads exactly like a surviving mutation. Match against an LF copy, assert the anchor hit exactly once, and restore the byte-exact original.
 - **NEW — the collapsed tool-card test is a mechanism check, not a pin to retire.** It feeds a two-line result and asserts line two is absent. #61 must keep it green **untouched** by *conditionally mounting* detail — a CSS-hidden body or a closed `<details>` leaves the text in `textContent` and turns it red correctly. If it goes red, the implementation is wrong.
 - **NEW — never render a Write "diff".** Write supplies only path + content, no before-state. Green added lines conceal what was overwritten and manufacture confidence at the deciding moment. Labelled content preview only.
 - **NEW — `gh` infers the repo from the working directory.** `cd`-ing out of the clone (e.g. to a temp dir holding a body file) makes every `gh issue create` fail with `no git remotes found`. Stay in the repo and pass absolute `--body-file` paths, or pass `-R <owner>/<repo>`.
@@ -251,6 +258,7 @@ leftovers from #31–#36.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-30-a-failure-is-a-value-absence-stays-lenient]] — #60's line between failure and absence
 - [[2026-07-30-disclosure-is-retention-plus-conditional-mount]] ·
   [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] ·
   [[2026-07-30-inspection-is-universal-approval-safety-is-opt-in]]
