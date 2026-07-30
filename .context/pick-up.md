@@ -9,38 +9,38 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## The queue is full again — five tickets, #59–#63
+## Last leg landed #59
 
-Spec **#58** (non-lossy tool inspector) is published and sliced. Work the
-**frontier**: any `ready-for-agent` ticket with zero open blockers.
+**#59 — replay text-block joining — is closed, `9da599a`, pushed.** `extractText`
+in `src/main/transcript.ts` now joins a tool result's text blocks with `\n`,
+matching the live path in `engine.ts`. One production line. Two regressions came
+with it: a **two-block** parser test, and a live-vs-replay parity test that
+compares the two paths **through `resultSummary`** and pins the expected value,
+so "equal but both wrong" cannot pass. Mutation-verified.
 
-**Frontier right now: #59 and #60.** Both independent, either can go first.
+Gate at that commit: typecheck clean, build clean, **639 tests green across 50
+files**.
+
+## Next: the frontier is #60 and #61
+
+Four tickets left. Work any `ready-for-agent` ticket with zero open blockers.
 
 | # | Ticket | Blocked by |
 |---|---|---|
-| **#59** | Reconcile replay text-block joining with the live path | — |
 | **#60** | Distinguish the session store's three silent failures from emptiness | — |
-| #61 | Full output disclosure on tool cards | #59 |
+| **#61** | Full output disclosure on tool cards | — (was #59, now closed) |
 | #62 | Structured input inspector on tool cards | #61 |
 | #63 | Edit hunk diff — guarded local LCS, no dependency | #62 |
 
-Edges are **native GitHub dependencies**, so `gh issue view <n>` shows them and
-`issue_dependencies_summary.blocked_by` is the live gate. Do not start a ticket
-with an open blocker.
+Edges are **native GitHub dependencies**. `gh issue view <n>` shows them and
+`gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq
+'.issue_dependencies_summary.blocked_by'` is the live gate — `gh issue list
+--json` does **not** expose that field. Do not start a ticket with an open
+blocker.
 
-## What this session did
+Spec **#58** stays open until its last ticket lands.
 
-Nothing in `src/`. It ran the idea→spec→tickets funnel: two independent
-brainstorms converged on the tool inspector, the corpus was **measured** before
-committing, an adversarial design pass reversed itself twice, and the result is
-#58 plus #59–#63. Three decisions were recorded — read them before touching
-tool cards, they will save you a wrong turn:
-
-- [[2026-07-30-disclosure-is-retention-plus-conditional-mount]]
-- [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]]
-- [[2026-07-30-inspection-is-universal-approval-safety-is-opt-in]]
-
-## The three traps specific to this queue
+## The traps specific to what is left
 
 1. **#61 must keep the existing collapsed tool-card test green, untouched.** It
    feeds a two-line result and asserts line two is absent. Achieve that by
@@ -48,16 +48,20 @@ tool cards, they will save you a wrong turn:
    `<details>` still puts the text in `textContent` and turns it red *correctly*.
    That test is a mechanism check, **not** a pin to retire. Red = your
    implementation is wrong.
-2. **#63 must never render a Write diff.** Write supplies only path + content,
-   no before-state. Green added lines conceal what was overwritten. Labelled
-   content preview only, and no `diff` dependency — a local guarded line diff at
-   ~45 lines, guard `oldLines * newLines <= 1_000_000`.
-3. **#59 gates #61's parity acceptance.** #61 *can* be built against a
-   single-string fixture, but that only proves the convenient shape. The replay
-   parser's existing test supplies **one** text block, which is exactly how the
-   separator divergence survived — the new regression needs **two**.
+2. **#61's parity acceptance is now real.** #59 removed the live/replay
+   divergence, so a two-block result reads the same on both paths. Don't rebuild
+   a parity fixture from scratch — `tests/engine.test.ts` already has one
+   (`#59 — the same two-block result collapses identically live and on replay`).
+3. **#63 must never render a Write diff.** Write supplies only path + content, no
+   before-state. Green added lines conceal what was overwritten. Labelled content
+   preview only, and no `diff` dependency — a local guarded line diff at ~45
+   lines, guard `oldLines * newLines <= 1_000_000`.
+4. **A one-element fixture cannot distinguish a separator** — #59's whole cause.
+   When a test is about how N things combine, N must be ≥ 2. Applies directly to
+   the disclosure work: a single-line result fixture proves nothing about
+   truncation.
 
-No new `window.api` member is needed anywhere in #59–#63, so the four-mock-sites
+No new `window.api` member is needed anywhere in #60–#63, so the four-mock-sites
 rule does not fire for this queue.
 
 ## Landmines — carried, still live
@@ -77,17 +81,20 @@ Full ledger in [[active-work]]. Most likely to bite here:
 - **`gh` infers the repo from cwd.** `cd`-ing out of the clone makes
   `gh issue create` fail with `no git remotes found`. Stay in the repo, pass
   absolute `--body-file` paths, or use `-R <owner>/<repo>`.
-- The Bash tool is not PowerShell, and source files are CRLF.
+- **The Bash tool is not PowerShell, and source files are CRLF.** A `sed`/`perl`
+  mutation anchored on `$` silently matches nothing because of the `\r` — it
+  reports success and changes NOTHING, which reads exactly like a passing
+  mutation test. Bit this leg; use the Edit tool for mutations, or `diff`
+  against a backup before believing a survivor.
+- A long `gh issue comment --body` full of backticks and quotes dies in the
+  shell. Write the body to a file and use `--body-file`.
 - Fable-5 refuses turns in sensitive-looking cwds (`Downloads/*`) — keep driver
   temp cwds away from there.
 
 ## Baseline
 
-`main` = `31d70f0` + this leg's `.context` commit. It was **in sync** with
-`origin/main` before that commit (push is opt-in, `/preset ship`). No code
-changed, so #57's gate still stands: `npm run typecheck` clean, `npm run build`
-clean, **637 tests green across 50 files**. Trust `git log origin/main..main`
-over any note.
+`main` = `9da599a` + this leg's `.context` commit, **pushed** to `origin/main`.
+Trust `git log origin/main..main` over any note.
 
 ## GUI check
 
