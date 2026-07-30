@@ -3,7 +3,6 @@ import type { Attachment } from '../../shared/attachment-types'
 import type { EngineEvent, PermissionDecision } from '../../shared/engine-types'
 import type { AttachmentMarker, TranscriptMessage } from '../../shared/session-types'
 import type { LiveAgent } from '../../shared/subagent-types'
-import { resultSummary } from './toolSummaries'
 
 export type ChatMessage =
   // `attachments` holds live image bytes and renders thumbnails;
@@ -44,9 +43,11 @@ const uid = (): string => {
   return String(nextId)
 }
 
-// Map a parsed transcript message to the renderer's ChatMessage. Tool results
-// are summarised the same way the live tool-result event is, so a replayed
-// tool card reads identically to a live one; historical permission is null.
+// Map a parsed transcript message to the renderer's ChatMessage. The tool
+// result is carried across COMPLETE, exactly as the live tool-result event is
+// (#61): summarising is a rendering concern, and doing it here would discard
+// the text the card's disclosure exists to show. `null` still means "no result
+// yet", which is not the same as an empty one. Historical permission is null.
 // Exported so the subagent drawer renders a loaded transcript identically.
 export const toChatMessage = (m: TranscriptMessage): ChatMessage => {
   if (m.role === 'tool') {
@@ -56,7 +57,7 @@ export const toChatMessage = (m: TranscriptMessage): ChatMessage => {
       toolUseId: m.toolUseId,
       name: m.name,
       input: m.input,
-      result: m.result === null ? null : resultSummary(m.result),
+      result: m.result,
       isError: m.isError,
       permission: null
     }
@@ -166,8 +167,10 @@ export const useChat = () => {
               ? m.permission === 'denied'
                 ? m
                 : {
+                    // Stored complete (#61); the card derives its one line at
+                    // render time and mounts the rest only when expanded.
                     ...m,
-                    result: resultSummary(e.text),
+                    result: e.text,
                     isError: e.isError,
                     permission: null
                   }

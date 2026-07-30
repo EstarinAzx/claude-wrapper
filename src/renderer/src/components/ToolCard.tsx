@@ -1,4 +1,5 @@
-import { keyInput } from '../toolSummaries'
+import { useState } from 'react'
+import { keyInput, resultSummary, hasHiddenOutput } from '../toolSummaries'
 import type { ChatMessage } from '../useChat'
 import type { PermissionDecision } from '../../../shared/engine-types'
 
@@ -20,6 +21,12 @@ const ToolCard = ({ message, onPermission, onOpenSubagent }: ToolCardProps) => {
   const { name, input, result, isError, permission, toolUseId, subagent } = message
   const key = keyInput(input)
   const pending = permission === 'pending'
+  // Per-card, so expanding one card cannot touch another.
+  const [expanded, setExpanded] = useState(false)
+  // Advertised only when expanding would actually show something — a card that
+  // offers an empty expansion makes the affordance worthless everywhere else.
+  const disclosable = !pending && result !== null && hasHiddenOutput(result)
+  const noun = isError ? 'error' : 'output'
   const agentType =
     typeof input.subagent_type === 'string' && input.subagent_type
       ? input.subagent_type
@@ -69,9 +76,30 @@ const ToolCard = ({ message, onPermission, onOpenSubagent }: ToolCardProps) => {
       ) : (
         <div className="tool-card-result" role="status">
           {isError ? 'Failed: ' : ''}
-          {result}
+          {resultSummary(result)}
         </div>
       )}
+      {disclosable ? (
+        <button
+          type="button"
+          className="tool-card-toggle"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          <span className="tool-card-caret" aria-hidden="true">
+            ›
+          </span>
+          {expanded ? 'Hide' : 'Show'} {noun}
+        </button>
+      ) : null}
+      {/* Conditionally MOUNTED, never hidden: a CSS-hidden body or a closed
+          <details> would leave the detail text in the card's rendered output,
+          and the collapsed card's one-line guarantee is asserted on exactly
+          that. Rendered as preformatted text — tool output is data, not
+          trusted markdown. */}
+      {disclosable && expanded ? (
+        <pre className="tool-card-output">{result}</pre>
+      ) : null}
     </div>
   )
 }

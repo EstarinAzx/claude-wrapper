@@ -1,7 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, renderHook } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi } from './chat-harness'
+import { useChat, toChatMessage } from '../src/renderer/src/useChat'
+import { fakeChatApi, FOLDER } from './chat-harness'
 
 let harness: ReturnType<typeof fakeChatApi>
 
@@ -109,5 +110,229 @@ describe('tool cards', () => {
     harness.emit({ type: 'turn-end' })
     expect(input().disabled).toBe(false)
     expect(screen.queryByLabelText('Typing')).toBeNull()
+  })
+})
+
+// #61 — the complete result is RETAINED and the summary is derived at render.
+// Asserted at state level, not through the DOM: the DOM can only ever show what
+// the collapsed card chose to show, so a summarise-on-write regression would
+// stay invisible to a rendering test until someone expands a card. These two
+// are the named mutation target — putting `resultSummary` back on either write
+// path must kill one of them.
+describe('complete tool output survives in state', () => {
+  test('a live tool-result keeps every line', () => {
+    const { result } = renderHook(() => useChat())
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Bash', input: { command: 'npm test' } })
+    harness.emit({
+      type: 'tool-result',
+      id: 'tu-1',
+      text: '27 passed\nDuration 1.2s',
+      isError: false
+    })
+    const tool = result.current.messages.find((m) => m.role === 'tool')
+    expect(tool).toMatchObject({ result: '27 passed\nDuration 1.2s' })
+  })
+
+  test('a replayed tool result keeps every line', () => {
+    const msg = toChatMessage({
+      role: 'tool',
+      toolUseId: 'tu-1',
+      name: 'Bash',
+      input: { command: 'npm test' },
+      result: '27 passed\nDuration 1.2s',
+      isError: false
+    })
+    expect(msg).toMatchObject({ result: '27 passed\nDuration 1.2s' })
+  })
+
+  test('a still-running replayed tool stays null, not an empty string', () => {
+    const msg = toChatMessage({
+      role: 'tool',
+      toolUseId: 'tu-1',
+      name: 'Bash',
+      input: {},
+      result: null,
+      isError: false
+    })
+    expect(msg).toMatchObject({ result: null })
+  })
+})
+
+// #61 — disclosure. The companion half of `tool-result fills the card with a
+// one-line summary` above: that test pins what a collapsed card must NOT show,
+// these pin that the same content is reachable on request. The pair only holds
+// because detail is conditionally MOUNTED — a CSS-hidden body or a closed
+// <details> would leave the second line in textContent and turn the collapsed
+// test red, correctly.
+const runTool = (text: string, isError = false, id = 'tu-1'): void => {
+  harness.emit({ type: 'tool-use', id, name: 'Bash', input: { command: 'npm test' } })
+  harness.emit({ type: 'tool-result', id, text, isError })
+}
+
+const TOGGLE = /^(Show|Hide) (output|error)$/
+const queryToggle = (): HTMLElement | null => screen.queryByRole('button', { name: TOGGLE })
+const detail = (): Element | null => document.querySelector('.tool-card-output')
+
+describe('tool output disclosure', () => {
+  test('expanding the card reveals the line the collapsed card omits', async () => {
+    await startSession()
+    send('run it')
+    runTool('27 passed\nDuration 1.2s')
+    expect(document.querySelector('.tool-card')?.textContent).not.toContain('Duration 1.2s')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show output' }))
+
+    expect(document.querySelector('.tool-card')?.textContent).toContain('Duration 1.2s')
+  })
+
+  test('detail is mounted only while expanded, never left in the markup', async () => {
+    await startSession()
+    send('run it')
+    runTool('27 passed\nDuration 1.2s')
+    expect(detail()).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show output' }))
+    expect(detail()).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide output' }))
+    expect(detail()).toBeNull()
+  })
+
+  test('the expanded region carries the complete result, not a summary', async () => {
+    await startSession()
+    send('run it')
+    const text = 'first\n  second\n\nthird'
+    runTool(text)
+    fireEvent.click(screen.getByRole('button', { name: 'Show output' }))
+    expect(detail()?.textContent).toBe(text)
+  })
+
+  test('a genuinely one-line result advertises no expansion', async () => {
+    await startSession()
+    send('run it')
+    runTool('ok')
+    expect(queryToggle()).toBeNull()
+  })
+
+  test('a first line past the cap advertises expansion even without a second line', async () => {
+    await startSession()
+    send('run it')
+    runTool('x'.repeat(300))
+    expect(queryToggle()).toBeTruthy()
+  })
+
+  test('a still-running card says so and offers no expansion', async () => {
+    await startSession()
+    send('run it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Bash', input: { command: 'npm test' } })
+    expect(screen.getByRole('status').textContent).toContain('running')
+    expect(queryToggle()).toBeNull()
+  })
+
+  test('a failed tool expands to its whole error and stays marked failed', async () => {
+    await startSession()
+    send('break')
+    const stack = 'exit 1\n  at one\n  at two'
+    runTool(stack, true)
+    fireEvent.click(screen.getByRole('button', { name: 'Show error' }))
+    expect(detail()?.textContent).toBe(stack)
+    expect(document.querySelector('.tool-card-error')).toBeTruthy()
+  })
+
+  test('expanding one card leaves the others collapsed', async () => {
+    await startSession()
+    send('do two things')
+    runTool('first tool\nhidden one', false, 'tu-1')
+    runTool('second tool\nhidden two', false, 'tu-2')
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Show output' })[0])
+
+    const opened = document.querySelectorAll('.tool-card-output')
+    expect(opened.length).toBe(1)
+    expect(opened[0].textContent).toContain('hidden one')
+    expect(document.querySelectorAll('.tool-card')[1].textContent).not.toContain('hidden two')
+  })
+
+  test('the control is a real button announcing its expanded state', async () => {
+    await startSession()
+    send('run it')
+    runTool('27 passed\nDuration 1.2s')
+    const collapsed = screen.getByRole('button', { name: 'Show output' })
+    expect(collapsed.tagName).toBe('BUTTON')
+    expect(collapsed.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(collapsed)
+
+    expect(
+      screen.getByRole('button', { name: 'Hide output' }).getAttribute('aria-expanded')
+    ).toBe('true')
+  })
+
+  test('a denied card stays denied when a result arrives afterwards', async () => {
+    await startSession()
+    send('rm things')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Bash', input: { command: 'rm -rf /' } })
+    harness.emit({
+      type: 'permission-request',
+      id: 'tu-1',
+      name: 'Bash',
+      input: { command: 'rm -rf /' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Deny' }))
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'denied by user\ndetail', isError: true })
+
+    expect(screen.getByRole('status').textContent).toContain('Denied')
+    expect(queryToggle()).toBeNull()
+  })
+
+  test('a Task card keeps its subagent row while expanded', async () => {
+    await startSession()
+    send('delegate')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Task', input: { subagent_type: 'Explore' } })
+    harness.emit({ type: 'subagent', parentToolUseId: 'tu-1', status: 'done', agentType: 'Explore' })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'found it\nin three files', isError: false })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show output' }))
+
+    expect(document.querySelector('.subagent-row')).toBeTruthy()
+    expect(detail()?.textContent).toContain('in three files')
+  })
+
+  // Parity is asserted by COMPARING the two paths and then pinning the value,
+  // so "identical but both wrong" cannot pass — the same discipline as #59's
+  // parser-level parity test, one layer up at the card.
+  test('the same result reads identically live and replayed', async () => {
+    const text = 'boom\ntrace\nand more'
+    await startSession()
+    send('run it')
+    runTool(text)
+    const liveCollapsed = document.querySelector('.tool-card-result')?.textContent
+    fireEvent.click(screen.getByRole('button', { name: 'Show output' }))
+    const liveExpanded = detail()?.textContent
+    cleanup()
+
+    harness = fakeChatApi()
+    ;(window as Window & { api: unknown }).api = harness.api
+    harness.api.listSessions.mockResolvedValue([
+      { id: 'sess-1', title: 'Past chat', lastUpdated: 1000, cwd: FOLDER }
+    ])
+    harness.api.loadTranscript.mockResolvedValue([
+      {
+        role: 'tool',
+        toolUseId: 'tu-1',
+        name: 'Bash',
+        input: { command: 'npm test' },
+        result: text,
+        isError: false
+      }
+    ])
+    await startSession()
+    fireEvent.click(await screen.findByText('Past chat'))
+    await screen.findByRole('button', { name: 'Show output' })
+
+    expect(document.querySelector('.tool-card-result')?.textContent).toBe(liveCollapsed)
+    fireEvent.click(screen.getByRole('button', { name: 'Show output' }))
+    expect(detail()?.textContent).toBe(liveExpanded)
+    expect(liveExpanded).toBe(text)
   })
 })
