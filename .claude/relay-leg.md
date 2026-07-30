@@ -11,29 +11,28 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-30, after #62)
+## Current queue (updated 2026-07-30, after #63)
 
-The batch was five tickets — `#59 → #60 → #61 → #62 → #63`, blocking edges wired
-as native GitHub issue dependencies. **Four are closed.** What remains:
+**Empty. There is no batch in flight.** Spec #58 was drained across five legs —
+`#59 → #60 → #61 → #62 → #63`, blocking edges wired as native GitHub issue
+dependencies — and the spec closed with its last ticket. Every leg was
+gate-green; nothing was left `ready-for-human` or blocked.
 
-- **#63 — Edit hunk diff.** Unblocked, last of spec #58. The leg that lands it
-  **closes the spec too**, and then the `ready-for-agent` queue is empty — the
-  next firing takes the queue-done path in step 1 rather than picking a ticket.
+A `/relay N=1 read and follow .claude/relay-leg.md` started against this state
+will take the **queue-done path in Firing step 1 on its first firing** and stop
+without doing any work. That is correct behaviour, not a failure: this body
+drains a queue, it does not invent one. Fill the tracker first (to-spec →
+to-tickets, labelling the batch `ready-for-agent` with native blocking edges),
+then start the chain.
 
-The frontier query in step 1 is the authority; do not hand-pick from this list
-if it disagrees with the tracker.
+The frontier query in step 1 is always the authority; never hand-pick from this
+section if it disagrees with the tracker.
 
-**Read spec #58 before touching #63,** and read the four decisions it rests on —
-they are in `.context/decisions/` dated 2026-07-30 and each closes a path you
-would otherwise walk down:
-`a-diff-without-a-baseline-is-worse-than-none` (the one #63 is built on),
-`two-disclosures-two-booleans` (the card #63 renders into, and the
-control-naming trap),
-`disclosure-is-retention-plus-conditional-mount`,
-`inspection-is-universal-approval-safety-is-opt-in`.
-
-No ticket in this queue adds a `window.api` member, so the four-mock-sites rule
-does not fire. If you find yourself adding one, re-read the ticket.
+**When a new batch exists, read its parent spec and every
+`.context/decisions/` entry the tickets name before writing code.** The bodies
+in this project are adversarially reviewed to remove the ambiguity that stalls
+unattended agents, so a step that looks under-specified usually means you have
+not read far enough.
 
 Every ticket body carries its own contract, out-of-scope list, required test
 coverage and sharpest-failure-mode note. **Read the whole ticket and its parent
