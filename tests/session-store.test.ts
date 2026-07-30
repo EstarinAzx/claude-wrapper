@@ -78,7 +78,6 @@ describe('listSessions', () => {
   test('asks the SDK for every project — no dir scoping', async () => {
     await listSessions()
 
-    expect(sdkListSessions).toHaveBeenCalledWith({ includeProgrammatic: false })
     expect(sdkListSessions.mock.calls[0][0]).not.toHaveProperty('dir')
   })
 

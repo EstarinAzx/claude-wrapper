@@ -6,9 +6,9 @@ import { nodeIo, resolveSessionDir, type StoreIo } from './session-index'
 import { parseTranscript } from './transcript'
 
 // Session metadata comes from the SDK's own store reader: one pass for the whole
-// store (421ms for 490 sessions measured) instead of reading and line-parsing
-// every JSONL on mount, on cwd change, on active-session change and on every
-// window focus. `summary` is already the SDK's coalesce of custom title →
+// store (495ms for 672 sessions, re-measured 2026-07-30) instead of reading and
+// line-parsing every JSONL on mount, on cwd change, on active-session change and
+// on every window focus. `summary` is already the SDK's coalesce of custom title →
 // auto-summary → first prompt, so it is the title verbatim — do NOT re-add a
 // `customTitle ?? summary` fallback, it is redundant and re-introduces the raw
 // command markup this path exists to avoid.
@@ -28,9 +28,20 @@ import { parseTranscript } from './transcript'
 export const listSessions = async (): Promise<SessionMeta[] | null> => {
   let infos: Awaited<ReturnType<typeof sdkListSessions>>
   try {
-    // `includeProgrammatic: false` is what the SDK documents for IDE session
-    // pickers — parity with what terminal `/resume` offers.
-    infos = await sdkListSessions({ includeProgrammatic: false })
+    // MUST be true: the SDK reads "programmatic" off the transcript's
+    // `entrypoint` field against {sdk-cli, sdk-ts, sdk-py}, and THIS APP WRITES
+    // `sdk-ts`. `false` therefore hid every conversation the wrapper itself
+    // authored — 560 rows vs 672 here, the whole 112-row delta being sdk-ts +
+    // sdk-cli. It was chosen for "parity with terminal /resume", but that
+    // reasoning inverts for a client listing sessions it wrote: parity for the
+    // terminal means showing the terminal's own work.
+    //
+    // `true` is also the SDK's default. The key stays explicit so a future
+    // default flip cannot take this with it silently — deleting it is a no-op
+    // today, which is why no test pins the argument. The behaviour is pinned
+    // instead, against a real store, in tests/session-store-live.test.ts.
+    // Rationale: .context/decisions/2026-07-30-the-app-must-be-able-to-list-its-own-sessions.md
+    infos = await sdkListSessions({ includeProgrammatic: true })
   } catch {
     return null
   }

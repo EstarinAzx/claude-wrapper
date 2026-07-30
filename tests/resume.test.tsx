@@ -67,6 +67,30 @@ describe('resume — continue a reopened session (#13)', () => {
     expect(rowButton('First chat').getAttribute('aria-current')).toBeNull()
   })
 
+  // Newly reachable: until the listing stopped excluding this app's own sessions
+  // (#includeProgrammatic), the conversation you were IN could never appear as a
+  // row, so clicking it was impossible. Now it renders — and re-adopting it would
+  // replace the live pane with a disk read of a transcript still being written.
+  test('clicking the row you are already in is inert, not a re-adopt', async () => {
+    harness.api.listSessions.mockResolvedValue([
+      meta('sess-1', 'First chat'),
+      meta('sess-2', 'Second chat')
+    ])
+    await startSession()
+
+    fireEvent.click(await screen.findByText('Second chat'))
+    await screen.findByText('Second chat')
+    expect(rowButton('Second chat').getAttribute('aria-current')).toBe('true')
+
+    harness.api.targetSession.mockClear()
+    harness.api.loadTranscript.mockClear()
+
+    fireEvent.click(screen.getByText('Second chat'))
+
+    expect(harness.api.targetSession).not.toHaveBeenCalled()
+    expect(harness.api.loadTranscript).not.toHaveBeenCalled()
+  })
+
   test('sending after opening a session continues in place (send still fires)', async () => {
     harness.api.listSessions.mockResolvedValue([meta('sess-1', 'My chat')])
     await startSession()

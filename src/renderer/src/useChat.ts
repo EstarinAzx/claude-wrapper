@@ -396,10 +396,15 @@ export const useChat = () => {
   const openSession = useCallback(
     async (id: string) => {
       if (busy) return
+      // The conversation you are already in is a row now: until the listing
+      // stopped hiding this app's own sessions it could never appear, so this
+      // click was unreachable. Re-adopting it would stomp the live pane with a
+      // disk read of a transcript that is still being written.
+      if (id === activeSessionId) return
       await adoptSession(id)
       window.api.targetSession(id)
     },
-    [busy, adoptSession]
+    [busy, activeSessionId, adoptSession]
   )
 
   // Start a fresh conversation: clear the pane and drop any resume target.
