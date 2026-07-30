@@ -1,33 +1,33 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-07-30
+updated: 2026-07-31
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — `styles.css` dedupe **then** split by surface, no ticket_
-_At commit: `main`, pushed. Gate: typecheck clean, build clean, **725 tests green across 52 files**, GUI drivers green_
-_Verification for both passes: compiled bundle diffed declaration-by-declaration with `var()` resolved — no behavioural change either time_
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — three owner-asked UI changes, then the listing bug the first one exposed. No ticket_
+_At commit: `main`. Gate: typecheck clean, build clean, **743 tests green across 53 files**, GUI driver green_
+_Every behavioural claim below was mutation-verified, and the rail/composer changes were confirmed in the running window, not only in jsdom_
 
 ## Current focus
 
 **Nothing in flight. The `ready-for-agent` queue is still empty.**
 
-Two unticketed passes over the renderer stylesheet **landed** this session, in order:
+Four unticketed changes **landed**, the first three owner-asked and the fourth found by the first:
 
-1. **Dedupe** — repeated literals promoted to `@theme` tokens, ~20 near-identical rule blocks collapsed into shared selector groups. Declarations **1159 → 968 (−16.5%)**, compiled bundle **40,082 → 35,262 B (−12%)**. See [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
-2. **Split by surface** — `styles.css` is now a **23-line entry file** of Tailwind layer setup plus eleven `@import`s; the rules live in `src/renderer/src/styles/`, largest file **448** lines, median 134. Compiled bundle **byte-identical** (35,262 B) apart from two intended moves. See [[2026-07-30-the-import-order-is-the-cascade]].
-
-No JSX touched by either. No computed value changed by either. The only test edit was re-pointing the two CSS-text pins at the `styles/` directory — assertions unchanged, no pin retired.
+1. **Sessions rail scopes to the open project.** `groupSessions` gained an opt-in `scope`; `Sidebar` defaults it to `'project'`, persisted under `sidebar-scope`, with `This project` / `All projects` chips under the filter and a scoped-empty state that offers the way out. The filter runs **before** the 100-row cap, same contract as the query.
+2. **Default zoom 1.1 → 1.25.** The bump alone was a no-op for anyone who had run the app (a stored level always beats a default), so the key is versioned to `zoom-level-v2`. Pinned by a test.
+3. **The composer no longer sweeps into a lozenge.** `.input-pill` was `--r-pill` (999px), which browsers clamp to half the shorter side: 24px at the 48px resting height, but **97px** at the 8-line ceiling. Pinned to 24px — pixel-identical at rest, a rounded rectangle when grown.
+4. **The app can list its own sessions.** `includeProgrammatic: false` hid every conversation the wrapper authored. See [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]].
 
 Spec **#58 — the non-lossy tool inspector — remains delivered and closed** (#59 → #60 → #61 → #62 → #63).
 
 ## State
 
 - **In flight:** nothing. No open branches.
-- **Landed this session:** the dedupe (`28be647`, squash-merged from a branch since deleted) and the split, both on main and pushed.
+- **Landed this session:** all four changes above, on main, in one commit with the ADR.
 - **Queue (`ready-for-agent`):** **empty**.
 - **Blocked:** nothing.
 - **Open:** the unlabelled umbrella **#1**. Nothing else.
@@ -36,23 +36,35 @@ Spec **#58 — the non-lossy tool inspector — remains delivered and closed** (
 
 There is no queued ticket and nothing half-done. The next session starts an effort rather than draining a queue: `/preset init` or grill-me → `/hp` → to-spec → to-tickets, or pick from **Deferred** below — but that list is ranked by nothing and needs a real selection pass, since the last two specs held up precisely because they were measured against a real corpus before being committed to.
 
+The sharpest **new** candidate is the `sdk-cli` noise this session knowingly accepted (see Open questions).
+
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
 ## Open questions
 
-- **Should Tailwind stay at all?** Now the sharp one. Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. The refactor is neutral to both: the tokens it added are real `@theme` entries, so `ease-snap` / `font-mono` / `bg-well` / `bg-tint-3` generate today.
+- **NEW — should the rail filter out `sdk-cli` sessions?** The listing fix admits **112** rows to surface the **37** this app wrote; the other 75 are headless automation, ~20 of them this repo's own GUI drivers titled "say OK" / "reply with exactly: PONG". Accepted deliberately, but it is worst exactly where the owner looks first. The blocker is that `SDKSessionInfo` exposes no `entrypoint` / `origin` / `sessionKind` — the deciding field is read from disk and discarded — so filtering means either re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or `tagSession` on every session this app creates, which is prospective only and would not reach the 37 already written.
+- **Should Tailwind stay at all?** Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`.
 - One deferred owner decision from #58's Out of Scope: whether an honest Write diff is wanted at permission time only, or also after an auto-run and in replay. Gated nothing in #59–#63; still open.
 
 ## Recent context
 
-- **The stated reason for a task can be a factual claim worth checking.** "Migrate the CSS to Tailwind, we already have it" rested on a premise that measurement killed: Tailwind was installed but **entirely unused**, so its presence argued for nothing. Checking the premise changed the shape of the work rather than its goal — the maintainability the request was actually after came from deduplication, which the literal ask would not have delivered.
-- **jsdom loads no CSS, so this whole diff was invisible to 725 tests.** Their green was not evidence. Equivalence was proven by parsing both compiled bundles with every `var()` resolved and diffing effective declarations per selector: **304 before, 304 after, none added or removed**; the only 14 differences are minifier serialization, because `var()` is opaque to the optimizer and it can no longer reorder the `animation` shorthand, unquote font names, or fold `background-clip`.
-- **The two bugs this refactor caused were both caused by its own comments**, and both were caught by the CSS-text tests — the one place vitest is *not* blind. Documented as landmines below.
-- **A failing driver is not automatically your fault.** `gui-45` went red; rebuilding against the original file reproduced it exactly, so it is a stale driver asserting pre-#47 behaviour. Cheap to prove, and the alternative was "fixing" something that was never broken.
+- **A feature can be a diagnostic.** Scoping the rail to the open project did not cause the "No sessions in this project yet" report the owner hit — it *revealed* a two-day-old listing bug that an unscoped rail had been hiding behind 37 other projects' worth of terminal sessions. The first instinct (and the first two hypotheses written down) were that the new filter had dropped a cwd-less or not-yet-written session; both were wrong, and both would have been "fixed" by weakening the new filter. **Probing the actual data source is what separated them** — one call to the SDK with the flag flipped both ways, on the exact session id from the screenshot.
+- **A default is only a default until something has been stored.** Raising `DEFAULT_ZOOM` would have shipped as a visible no-op for the only user, because `useZoom` persists on first mount. Versioning the key is the whole change; the constant is the decoration.
+- **A clamped value hides a bug until the box grows.** `border-radius: 999px` and `24px` are byte-for-byte indistinguishable on a 48px pill and nothing in jsdom or a screenshot at rest can tell them apart. It only separates at the 8-line ceiling, which is why the pin is on the CSS source rather than on any rendered output.
+- **The scope filter's own tests are the model for how the 20 foreign-row tests were kept.** They seed the persisted pref rather than having their expectations edited, so each still asserts the transition it is named for; the toggle itself got its own describe. No pin was retired to make the change pass.
 - Everything from #58's five legs is carried in the landmine list below; the notable one is that **a mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
 
+- **NEW — `includeProgrammatic` must stay `true`, and nothing pins the argument.** `true` is the SDK's own default, so a pin on the call would fire on a behaviourally identical `sdkListSessions()`. The behaviour is pinned instead by `tests/session-store-live.test.ts`, which mocks **nothing** and builds a real store under `CLAUDE_CONFIG_DIR`. Dropping the key is a deliberate surviving mutant; setting it to `false` reddens exactly that one file.
+- **NEW — a test that mocks the SDK module cannot pin what the SDK does.** `tests/session-store.test.ts` mocks both `@anthropic-ai/claude-agent-sdk` and `node:fs/promises`, so the strongest thing expressible there is the *argument*. Any future contract about which sessions are listed belongs in the live-store file, and that file must keep saving/restoring `CLAUDE_CONFIG_DIR` — a leak points every later suite in the worker at a deleted temp dir.
+- **NEW — the store's session listing and the store's session *resolution* have different filters.** `resolveSessionDir` enumerates real directory names with no SDK filter, so `readTranscript` / `titleHint` / the watcher / `resolveResumeTarget` all work on sessions the listing cannot see. A session being resumable is therefore **not** evidence that it is listable, and vice versa.
+- **NEW — the conversation you are in is a clickable row now.** `useChat.openSession` carries a same-id guard; removing it lets a click re-adopt the live session and stomp the pane with a disk read of a transcript still being written. Before the listing fix this path was unreachable, so nothing older guards it.
+- **NEW — `scope: 'project'` drops cwd-less sessions too** (their key is `''`, which never equals a real one), and it runs **before** the cap, deliberately: scoping a capped page would let foreign rows eat the 100 slots. With no open cwd it degrades to `'all'` rather than emptying the rail.
+- **NEW — `--r-pill` on a growable box is a bug waiting for the box to grow.** 999px is clamped to half the shorter side, so it is invisible until the element gets tall. `.input-pill` is pinned to a literal `24px` (the resting height's half) by `tests/multiline-composer.test.tsx`; re-tokenising it silently restores the lozenge.
+- **NEW — a persisted preference silently outranks the default it was seeded from.** Raising `DEFAULT_ZOOM` does nothing for an install that already stored a level. The key carries a version (`zoom-level-v2`) for exactly this; bump it again on the next default change.
+- **NEW — `sed -i` rewrites a whole file to LF.** Mutation-testing `src/` with `sed` silently flips CRLF on the file it touches. Use the `Edit` tool for mutations, or re-normalise afterwards.
+- **NEW — a script importing a project dependency must live under the project tree.** ESM resolves a bare specifier by walking up to `node_modules`; a probe in `$TEMP` fails with `ERR_MODULE_NOT_FOUND`. Same trap the GUI drivers document.
 - **NEW — the `@import` order in `styles.css` IS the cascade, and breaking it is silent.** `tokens` → `base` → `shared` must stay first and in that order: the shared groups are single-class rules that every component override is at least as specific as, so they only work while they come earlier. Reordering those eleven lines restyles the app with no error and no failing test.
 - **NEW — a new rule goes in the file that owns its surface, never in the entry.** The entry holds imports only. A scoped scrollbar copy dropped into any component file is the exact drift `tests/scrollbar.test.ts` exists to catch — which is why that test reads the whole `styles/` **directory**, not just `base.css`.
 - **NEW — `tests/scrollbar.test.ts` scans EVERY LINE of the stylesheet containing a scrollbar pseudo-element, comments included.** Naming `::-webkit-scrollbar` in a comment makes the scan treat that prose as a selector and the test goes red. Never group one of those selectors with a class on one line, and never write the token in a comment.
@@ -118,6 +130,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **`gui-45.mjs` is STALE and fails on `main`** with `no foreign row was disabled` — it asserts the pre-#47 rule, and #47 made foreign sessions openable. Verified pre-existing by rebuilding against the original `styles.css`. Either retire the assertion or retire the driver; do not "fix" the app to satisfy it.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
 - **GUI driver traps:** `--disable-gpu` flattens acrylic; measure in the DOM, never off screenshots; dispatch clicks via `page.evaluate(() => el.click())`; arm a hard `setTimeout(process.exit)` before awaiting `app.close()`; never re-read an element after an action that may not have happened; **count the side effect you care about**; pass any path as an **argument** to `app.evaluate`; stub `dialog.showOpenDialog` in main before any click that opens one; and **select controls by their modifier class**, since the card carries three.
+- **Driver trick (gui-scope-zoom-pill):** clearing `sidebar-scope` / `zoom-level-v2` from `localStorage` **after mount but before the folder click** makes the driver show shipped defaults rather than whatever the dev machine has stored. Reading the pref back in the same probe then reports `0`, which is the probe's own ordering, not the applied zoom.
 - **Driver trick (gui-63):** two seeded tool calls in one transcript give two cards in one run, so an Edit and a Write can be compared side by side — and the Write assertion is one of **absence**.
 - **Driver trick (gui-62):** a seeded `tool_use` alone puts a card with a rich **input** on screen.
 - **Driver trick (gui-61):** the same seed carries a **tool call**. Screenshot **at the moment under test**, not only in `finish()`.
@@ -126,7 +139,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Deferred (still no spec)
 
-**New, from this session:** give `.command-row-btn` its `font: inherit` (a real one-line fix with a visual consequence); decide whether tint steps 1 and 2 should collapse to one; decide Tailwind's fate (adopt utilities deliberately, or remove the two devDependencies and inline `@theme`).
+**New, from this session:** filter or de-noise the `sdk-cli` rows the listing fix admits (see Open questions — needs a signal `SDKSessionInfo` does not carry); revisit the scope-chip control for contrast and whether two `aria-pressed` buttons in a `role="group"` is the right pattern; give `.command-row-btn` its `font: inherit` (a real one-line fix with a visual consequence); decide whether tint steps 1 and 2 should collapse to one; decide Tailwind's fate (adopt utilities deliberately, or remove the two devDependencies and inline `@theme`).
 
 **Deferred by #58, with reasons on record:** honest whole-file **Write diff** in every form (needs a pre-write baseline the event contract lacks); **per-tool rich card bodies** (TodoWrite checklist, Grep hit list, Read slice — each couples to one tool's schema); **permission-mode default or persistence** (reverses a recorded owner choice); **adopting the SDK's richer permission metadata** (`title`, `displayName`, `description`, `blockedPath`, `decisionReason`, `suggestions` — all currently dropped by the engine); a **wrapper-owned truncation cap**; a **diff dependency**; **syntax highlighting inside diffs**.
 
