@@ -336,3 +336,168 @@ describe('tool output disclosure', () => {
     expect(liveExpanded).toBe(text)
   })
 })
+
+// #62 — the structured input inspector. The header shows ONE input value picked
+// by priority, so an Edit reads as a filename and says nothing about the change.
+// The complete input is already in the message; these pin that it is reachable.
+//
+// The named mutation: reducing the inspector back to rendering only `keyInput`
+// must turn `expanding the card reveals every argument…` red.
+const EDIT_INPUT = {
+  file_path: 'src/a.ts',
+  old_string: 'alpha',
+  new_string: 'beta',
+  replace_all: true
+}
+
+const inspector = (): Element | null => document.querySelector('.tool-card-input')
+const showInput = (): HTMLElement => screen.getByRole('button', { name: 'Show input' })
+
+describe('tool input inspection', () => {
+  test('expanding the card reveals every argument, not the one the header picks', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: EDIT_INPUT })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'applied', isError: false })
+
+    fireEvent.click(showInput())
+
+    const shown = inspector()?.textContent ?? ''
+    for (const part of ['old_string', 'alpha', 'new_string', 'beta', 'replace_all', 'true']) {
+      expect(shown).toContain(part)
+    }
+  })
+
+  test('a nested argument is readable after expansion', async () => {
+    await startSession()
+    send('delegate')
+    harness.emit({
+      type: 'tool-use',
+      id: 'tu-1',
+      name: 'Task',
+      input: { prompt: 'go', options: { model: 'haiku', tools: ['Read', 'Grep'] } }
+    })
+
+    fireEvent.click(showInput())
+
+    const shown = inspector()?.textContent ?? ''
+    expect(shown).toContain('haiku')
+    expect(shown).toContain('Grep')
+  })
+
+  test('a collapsed card mounts no inspector at all', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: EDIT_INPUT })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'applied', isError: false })
+
+    expect(inspector()).toBeNull()
+    expect(document.querySelector('.tool-card')?.textContent).not.toContain('alpha')
+  })
+
+  // The decision-critical content must not sit one click behind the decision.
+  test('a pending permission card previews its input without being expanded', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: EDIT_INPUT })
+    harness.emit({ type: 'permission-request', id: 'tu-1', name: 'Edit', input: EDIT_INPUT })
+
+    expect(inspector()?.textContent).toContain('alpha')
+    expect(screen.getByRole('button', { name: 'Allow' })).toBeTruthy()
+  })
+
+  test('the pending preview survives the permission arriving before the tool use', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'permission-request', id: 'tu-1', name: 'Edit', input: EDIT_INPUT })
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: EDIT_INPUT })
+
+    expect(document.querySelectorAll('.tool-card').length).toBe(1)
+    expect(document.querySelectorAll('.tool-card-input').length).toBe(1)
+    expect(inspector()?.textContent).toContain('beta')
+  })
+
+  // One card owns the invocation for its whole life. Node identity is the
+  // assertion because a remount would silently reset the disclosure state a
+  // reader had already opened.
+  test('one card owns the invocation from pending through failed', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: EDIT_INPUT })
+    harness.emit({ type: 'permission-request', id: 'tu-1', name: 'Edit', input: EDIT_INPUT })
+    const pendingCard = document.querySelector('.tool-card')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Allow' }))
+    expect(document.querySelector('.tool-card')).toBe(pendingCard)
+
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: 'no match\nline two', isError: true })
+    expect(document.querySelectorAll('.tool-card').length).toBe(1)
+    expect(document.querySelector('.tool-card')).toBe(pendingCard)
+    expect(document.querySelector('.tool-card-error')).toBe(pendingCard)
+  })
+
+  test('a Task card keeps its subagent row while its input is expanded', async () => {
+    await startSession()
+    send('delegate')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Task', input: { subagent_type: 'Explore' } })
+    harness.emit({ type: 'subagent', parentToolUseId: 'tu-1', status: 'done', agentType: 'Explore' })
+
+    fireEvent.click(showInput())
+
+    expect(document.querySelector('.subagent-row')).toBeTruthy()
+    expect(inspector()?.textContent).toContain('subagent_type')
+  })
+
+  test('the input control is a real button announcing its expanded state', async () => {
+    await startSession()
+    send('edit it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Edit', input: EDIT_INPUT })
+    const collapsed = showInput()
+    expect(collapsed.tagName).toBe('BUTTON')
+    expect(collapsed.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.click(collapsed)
+
+    expect(
+      screen.getByRole('button', { name: 'Hide input' }).getAttribute('aria-expanded')
+    ).toBe('true')
+  })
+
+  test('a tool called with no arguments advertises no inspection', async () => {
+    await startSession()
+    send('do nothing')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Noop', input: {} })
+    expect(screen.queryByRole('button', { name: 'Show input' })).toBeNull()
+  })
+
+  // Two disclosures, two pieces of state. A single shared boolean would pass
+  // every test above and still tie the two regions together — and it would make
+  // the output guards vacuous, since a one-line result would suddenly carry a
+  // toggle again.
+  test('input and output disclose independently', async () => {
+    await startSession()
+    send('run it')
+    harness.emit({ type: 'tool-use', id: 'tu-1', name: 'Bash', input: { command: 'npm test' } })
+    harness.emit({ type: 'tool-result', id: 'tu-1', text: '27 passed\nDuration 1.2s', isError: false })
+
+    fireEvent.click(showInput())
+    expect(inspector()).toBeTruthy()
+    expect(detail()).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show output' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Hide input' }))
+    expect(inspector()).toBeNull()
+    expect(detail()).toBeTruthy()
+  })
+
+  // The output affordance stays gated on hidden OUTPUT. This is the guard on
+  // the guard: `a genuinely one-line result advertises no expansion` above must
+  // keep meaning something once a second control exists on the same card.
+  test('a one-line result still offers input inspection', async () => {
+    await startSession()
+    send('run it')
+    runTool('ok')
+    expect(queryToggle()).toBeNull()
+    expect(showInput()).toBeTruthy()
+  })
+})

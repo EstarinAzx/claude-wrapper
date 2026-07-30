@@ -1,5 +1,10 @@
 import { describe, test, expect } from 'vitest'
-import { keyInput, resultSummary, hasHiddenOutput } from '../src/renderer/src/toolSummaries'
+import {
+  keyInput,
+  resultSummary,
+  hasHiddenOutput,
+  inputEntries
+} from '../src/renderer/src/toolSummaries'
 
 describe('keyInput', () => {
   test('picks command first', () => {
@@ -79,5 +84,59 @@ describe('hasHiddenOutput', () => {
 
   test('empty text hides nothing', () => {
     expect(hasHiddenOutput('')).toBe(false)
+  })
+})
+
+// #62 — the inspector renders EVERY argument, not the single string `keyInput`
+// picks. Two properties carry the whole contract: a deterministic order that
+// does not depend on how the object was built (a live event object and a
+// replayed JSON.parse can disagree on insertion order for the same call), and
+// materialisation of values `keyInput` is structurally blind to — objects,
+// arrays, booleans, numbers.
+describe('inputEntries', () => {
+  test('orders keys deterministically, not by insertion', () => {
+    const scrambled = { old_string: 'a', file_path: 'src/a.ts', new_string: 'b' }
+    expect(inputEntries(scrambled).map(([k]) => k)).toEqual([
+      'file_path',
+      'new_string',
+      'old_string'
+    ])
+  })
+
+  test('a nested object value is materialised', () => {
+    expect(inputEntries({ opts: { deep: { n: 1 } } })).toEqual([
+      ['opts', JSON.stringify({ deep: { n: 1 } }, null, 2)]
+    ])
+  })
+
+  test('an array value is materialised', () => {
+    expect(inputEntries({ todos: ['one', 'two'] })).toEqual([
+      ['todos', JSON.stringify(['one', 'two'], null, 2)]
+    ])
+  })
+
+  test('booleans and numbers are readable', () => {
+    expect(inputEntries({ limit: 5, replace_all: true })).toEqual([
+      ['limit', '5'],
+      ['replace_all', 'true']
+    ])
+  })
+
+  // Strings are the common case and quoting them would add noise to every
+  // path, command and pattern in the inspector.
+  test('a string value passes through unquoted', () => {
+    expect(inputEntries({ file_path: 'src/a.ts' })).toEqual([['file_path', 'src/a.ts']])
+  })
+
+  // JSON.stringify answers undefined for undefined and for functions, and a
+  // React child of `undefined` renders nothing at all — the argument would be
+  // present in the call and invisible in the inspector, which is the exact bug
+  // this ticket exists to remove.
+  test('a value JSON cannot represent still shows something', () => {
+    expect(inputEntries({ nothing: undefined })).toEqual([['nothing', 'undefined']])
+  })
+
+  test('no arguments means no entries', () => {
+    expect(inputEntries({})).toEqual([])
   })
 })

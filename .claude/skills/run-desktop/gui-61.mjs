@@ -24,6 +24,11 @@
 //     is only meaningful against a proven-absent baseline;
 //   * every failure says what could not be driven — silence reads as a pass.
 //
+// Selectors are `.tool-card-toggle--output`, not the bare `.tool-card-toggle`:
+// #62 put a second control (input inspection) on the same card, ABOVE this one,
+// so the bare class now matches the wrong button first and this driver would
+// silently drive input disclosure while asserting about output.
+//
 //   node .claude/skills/run-desktop/gui-61.mjs
 //
 // Needs `npm run build` first, plus `npm i --no-save playwright-core`.
@@ -228,7 +233,7 @@ if (!carded) {
 const collapsed = await page.evaluate(
   ({ tail, first }) => {
     const card = document.querySelector('.tool-card')
-    const toggle = card?.querySelector('.tool-card-toggle')
+    const toggle = card?.querySelector('.tool-card-toggle--output')
     const r = toggle?.getBoundingClientRect()
     return {
       cardText: card?.textContent ?? '',
@@ -277,14 +282,14 @@ if (!collapsed.toggleBox || collapsed.toggleBox.w === 0 || collapsed.toggleBox.h
 
 // ---- expand -----------------------------------------------------------------
 
-await page.evaluate(() => document.querySelector('.tool-card .tool-card-toggle')?.click())
+await page.evaluate(() => document.querySelector('.tool-card .tool-card-toggle--output')?.click())
 await page.waitForTimeout(400)
 
 const expanded = await page.evaluate(
   ({ tail }) => {
     const card = document.querySelector('.tool-card')
     const out = card?.querySelector('.tool-card-output')
-    const toggle = card?.querySelector('.tool-card-toggle')
+    const toggle = card?.querySelector('.tool-card-toggle--output')
     const composer = document.querySelector('.message-input')
     const cr = composer?.getBoundingClientRect()
     const or = out?.getBoundingClientRect()
@@ -347,7 +352,7 @@ if (expanded.composerBottom !== null && expanded.composerBottom > expanded.viewp
 
 // ---- collapse again ---------------------------------------------------------
 
-await page.evaluate(() => document.querySelector('.tool-card .tool-card-toggle')?.click())
+await page.evaluate(() => document.querySelector('.tool-card .tool-card-toggle--output')?.click())
 await page.waitForTimeout(400)
 const recollapsed = await page.evaluate(
   ({ tail }) => {

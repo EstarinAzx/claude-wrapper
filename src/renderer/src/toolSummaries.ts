@@ -42,6 +42,28 @@ export const resultSummary = (text: string): string => {
   return text.slice(start, stop)
 }
 
+// One argument rendered for reading. Strings pass through — quoting every
+// path and command would add noise to the common case — and everything else is
+// materialised, because `keyInput` only ever looks for strings and an object,
+// array, boolean or number argument is otherwise invisible in the card.
+// `JSON.stringify` answers `undefined` for undefined and for functions, and an
+// `undefined` React child renders nothing, so that case falls back to `String`.
+const readableValue = (v: unknown): string => {
+  if (typeof v === 'string') return v
+  const json = JSON.stringify(v, null, 2)
+  return json === undefined ? String(v) : json
+}
+
+// Every argument the tool was called with, key-sorted. Sorted rather than left
+// in insertion order because the same call reaches the card two ways — a live
+// event object and a replayed `JSON.parse` — and only a derived order is
+// guaranteed to agree. Called lazily, from the mounted branch only: the
+// stringify cost must not be paid by a collapsed card that shows none of this.
+export const inputEntries = (input: Record<string, unknown>): [string, string][] =>
+  Object.keys(input)
+    .sort()
+    .map((k) => [k, readableValue(input[k])])
+
 // Whether the collapsed summary omits anything — the first line clipped by the
 // cap, or any non-whitespace after it. Drives the disclosure affordance, which
 // is only trustworthy if its absence means there is genuinely nothing more.
