@@ -7,297 +7,144 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — relay leg 4: #62 landed_
-_At commit: `f39ee22` + this `.context` commit; `main` is **pushed** and in sync with `origin/main`_
-_Gate at #62: typecheck clean, build clean, **698 tests green across 51 files** (680 + 18 new), `gui-62.mjs` verified red-then-green, `gui-61.mjs` re-run green_
+_Last updated: 2026-07-30 by Opus 5 (1M) (auto) — relay leg 5: #63 landed, spec #58 closed_
+_At commit: `e2e848c` + this `.context` commit; `main` is **pushed** and in sync with `origin/main`_
+_Gate at #63: typecheck clean, build clean, **725 tests green across 52 files** (698 + 27 new), `gui-63.mjs` verified red-then-green_
 
 ## Current focus
 
-**Spec #58 — the non-lossy tool inspector**, being drained one ticket per relay leg. #59, #60, #61 and #62 are landed: the live/replay parity prerequisite, the standalone store bug found alongside the spec, output disclosure, and now **input disclosure**. A tool card no longer destroys its own evidence in either direction — the complete result is retained in state, and every argument the call was made with is reachable.
+**Nothing in flight. The `ready-for-agent` queue is empty.**
 
-**One ticket remains**, #58's last: **#63** (Edit hunk diff). The leg that lands it closes the spec.
+Spec **#58 — the non-lossy tool inspector — is delivered and closed**, drained one ticket per relay leg: #59 (replay text-block joining), #60 (the store's three silent failures), #61 (output disclosure), #62 (input inspector), #63 (Edit hunk diff). A tool card no longer destroys its own evidence in any direction — the complete result is retained in state, every argument the call was made with is reachable, and an Edit shows what it actually changed.
+
+The next session picks new work rather than continuing a queue. **Deferred** below is the standing menu.
 
 ## State
 
-- **In flight:** nothing. The branch is merged and deleted; `main` is pushed.
-- **Landed this leg:** **#62** (`f39ee22`) — `inputEntries` in `toolSummaries.ts` derives the readable argument list at render (key-sorted; non-string values via `JSON.stringify(v, null, 2)` with a `String(v)` fallback). `ToolCard` gained a **second** disclosure boolean and an `InputInspector`, conditionally mounted on both paths; a **pending** permission card renders it outright with no toggle. `.tool-card-input` is height-capped and scrolls, inheriting the global scrollbar rule. 18 new tests; **both named mutations verified** (single-key rendering killed 5 including its named target, dropping `.sort()` killed the ordering test), plus `gui-62.mjs` red-first against an inspector-disabled build.
-- **Landed last leg:** **#61** (`1868bbb`) — `useChat` stopped summarising on the way into state at both write points (`toChatMessage` for replay, the `tool-result` handler for live); `ToolCard` derives the collapsed line with `resultSummary` at render and mounts a `<pre className="tool-card-output">` only while expanded. `resultSummary` no longer `split('\n')`s the whole result — a new internal `firstLineBounds` scans forward and trims in place — and a new `hasHiddenOutput` gates the affordance so a one-line result advertises nothing. 23 new tests; **both named mutations verified** (retention revert killed 10 including both state-level targets; `hidden={!expanded}` reddened the original collapsed-card test).
-- **Queue (`ready-for-agent`):** **one ticket, #63.** `blocked_by: 0`, verified after the close settled (it read `1` for several seconds first — the API lags a close).
+- **In flight:** nothing. Branch merged and deleted; `main` pushed.
+- **Landed this leg:** **#63** (`e2e848c`) — new pure module `src/renderer/src/lineDiff.ts` (suffix-LCS matrix in a `Uint32Array`, forward walk, hard guard at `DIFF_CELL_GUARD = 1_000_000` cells falling back to `{ kind: 'unaligned', before, after }`), plus the card's **third** disclosure region and third boolean (`changeOpen`). Pending renders the diff outright; the result state hides it behind `.tool-card-toggle--change` ("Show diff" / "Show content"). Write gets a **labelled content preview and never a diff**. 27 new tests; the named mutation (remove the guard) kills 2, dropping the conditional mount kills 4 including #62's existing collapsed-inspector pin, and flipping the walk's `>=` tie-break kills 3.
+- **Also this leg:** the coalescing pass the spec sketched was **deleted** — mutating it killed nothing, and it turned out to be provably unreachable. See [[2026-07-30-a-mutation-that-kills-nothing-is-an-answer]].
+- **Queue (`ready-for-agent`):** **empty**, verified after both closes settled.
 - **Blocked:** nothing.
-- **Open:** spec **#58** (`ready-for-agent`, closes when #63 lands), the unlabelled umbrella **#1**.
+- **Open:** the unlabelled umbrella **#1**. Nothing else.
 
 ## Pick up here
 
-One ticket, no choice to make:
+There is no queued ticket. Start a new effort:
 
-- **#63 — Edit hunk diff.** Read spec #58, [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] and [[2026-07-30-two-disclosures-two-booleans]] first. A local guarded line diff at ~45 lines, guard `oldLines * newLines <= 1_000_000`, **no `diff` dependency**, and **never a Write diff** — Write supplies no before-state, so a labelled content preview only.
-- The diff renders into the card #62 just finished. It is a **third** region on that card: if it needs its own disclosure that is a third boolean, and any new control needs a modifier class (`.tool-card-toggle--*`) plus an accessible name **outside** `tests/toolcards.test.tsx`'s `TOGGLE` regex.
+- `/preset init` or grill-me → `/hp` → to-spec → to-tickets for a fresh idea, or
+- pick from **Deferred** below — it is ranked by nothing, so it needs a real selection pass (the last two specs were chosen by measuring a real corpus first, which is why they held up).
 
-That leg closes spec #58.
-
-One ticket per branch `ticket/<id>-<slug>`, gate green before merge.
+Whatever is chosen, the conventions are unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
 ## Skills for next session
 
-- superpowers:test-driven-development — the ticket names a mutation that must kill a test (removing the guard); red-first is the whole discipline here
-- superpowers:verification-before-completion — #63 inherits the constraint that existing tests stay green untouched, and the diff utility is a pure module with its own unit test
+- superpowers:brainstorming — the queue is empty, so the next move is a choice, not an implementation
+- `/preset init` / grill-me — the last two specs earned their scope by being grilled and measured before any code
 
 ## Open questions
 
-None blocking. One deferred owner decision is recorded in #58's Out of Scope: whether an honest Write diff is required at permission time only, or also after an auto-run and in replay. It gates nothing in #59–#63.
+None blocking. One deferred owner decision is recorded in #58's Out of Scope: whether an honest Write diff is wanted at permission time only, or also after an auto-run and in replay. It gated nothing in #59–#63 and is still open.
 
 ## Recent context
 
-- **#62's real cost was a selector shadow, not the feature.** Adding a second control to the card broke nothing in vitest — the suite queries by role and accessible name — but `gui-61.mjs` selected the bare `.tool-card-toggle`, which now matches the **input** button first. It would have driven input disclosure while asserting about output, and its pass or fail would have meant nothing either way. Both drivers now name their control (`.tool-card-toggle--input` / `--output`). A vitest suite being immune to this is exactly why the drivers needed checking by hand.
-- **The output guard needed a guard of its own.** `a genuinely one-line result advertises no expansion` keeps working only because `queryToggle()`'s regex is output/error-specific and the new control is named `Show input`. That is fragile by construction, so `a one-line result still offers input inspection` now asserts both halves together — the output toggle absent *and* the input toggle present — and would fail if a future control were ever named into the pattern.
-- **The inspector is computed lazily on purpose.** `inputEntries` runs inside the mounted branch, never at the top of `ToolCard`, so a collapsed card pays no `JSON.stringify` — the same reasoning that made `resultSummary` scan instead of split in #61. `Object.keys(input).length > 0` is the only thing the collapsed path evaluates.
-- **#61's collapsed/expanded pair is now the mechanism check.** The original `tool-result fills the card with a one-line summary` test passed **unchanged and untouched** — the diff on `tests/toolcards.test.tsx` is additions only — and its new companion expands the same card and finds the omitted line. The pair only holds because detail is conditionally **mounted**; mutating that to `hidden={!expanded}` turned the original red, as designed. Nothing was retired.
-- **Retention had to be asserted at STATE level, not through the DOM.** A collapsed card can only ever show what it chose to show, so a summarise-on-write regression is invisible to a rendering test until someone expands. `a live tool-result keeps every line` (via `renderHook(useChat)`) and `a replayed tool result keeps every line` (via the pure `toChatMessage`) are the two the named mutation must kill — and it killed both.
-- **`resultSummary` became bounded because retention made it hot.** It now runs against the *complete* result on every render of every card, so `text.split('\n')` would allocate one array entry per line of a result that can reach 92 KB. `firstLineBounds` scans with `indexOf` and trims by moving indices, materialising at most one line. Leading whitespace is skipped *before* the cap is measured — an indented 200-char line must still cap at 120 plus the ellipsis, which is what `an indented long line is capped at the same budget` pins.
-- **jsdom computes no styles, so the whole visual half of this ticket was unverifiable in vitest.** `gui-61.mjs` seeds a 42-line, 1,623-byte failed Bash result into the native store and measures the real window: toggle 87×15, expanded box 464×320 with `scrollHeight 731 > clientHeight 318` (bounded and scrolling, not grown to fit), `white-space: pre-wrap`, composer bottom 652 < viewport 709. Run first against a featureless build it failed naming the reason — that red is what makes the green worth anything.
-- **#60's line sits at the MECHANISM, not the outcome.** Its two requirements pull against each other — "a session directory that cannot be resolved" is a failure, but "a genuinely deleted session still takes the lenient path", and a deleted session *is* an unresolvable directory. They reconcile exactly one way: the store failing to **enumerate** is the error; the store enumerating fine and not holding the id is absence. That is why the new status went into `build()` and not into how `readTranscript` treats `not-found`, and it is why the existing `a session the store does not hold yields []` test stayed green untouched.
-- **#60 changed three test expectations, and the reasoning matters more than the change.** `an unreadable store degrades to the empty list`, `an unreadable store is not-found, not a throw` and `a cwd that resolves to nothing is not-found` all encoded the behaviour the ticket exists to change. None is a *commented* behaviour pin — they are plain lenient-degradation tests, and the contract each **names** ("degrades instead of throwing", "not a throw") still holds, since nothing throws and the failure is merely typed now. The commented pins in both files are untouched. The rejected alternative was a vestigial test-only `listSessions` alias to keep the old assertion green — that leaves a pin green for a function nothing calls, which is a worse violation of the same rule than updating the assertion.
-- **#60 improved the Agents dock for free.** `subagent-store` already checks `status === 'ok'`, so `unavailable` flows into its existing `Could not read this session's agents.` state with no change.
-- **#59's real lesson is about the fixture, not the separator.** The parser had a test named `tool_result content as array of text blocks is joined` — and it supplied **one** block. Every separator agrees on a one-element join, so the test was structurally incapable of failing. The fix was one character; the coverage hole was the bug.
-- **#59 changed `extractText` globally, not just the tool-result call site.** The helper is shared with the user-attachment path (an array of image/document markers plus text). Joining multiple prose blocks with `''` runs words together there too, so the single change is a strict improvement and no existing test moved. Don't "scope it properly" in a later pass — that path was considered and rejected as churn.
+- **#63's real find was a dead code path, not a feature.** The spec and the ticket both described "coalescing of adjacent runs" as part of the ~45-line utility. It was implemented, and mutating it away killed **zero** tests. The rule says a mutation that kills nothing means the mutated code may not be what makes the tests pass — and applied honestly that cuts both ways. Here the code was decoration: the walk provably cannot interleave, and an exhaustive 212,162-pair search agreed. The wrong response would have been to add a test covering the surviving mutant; that test passes under both implementations and would have frozen ~12 dead lines in place forever.
+- **The diff renders lines as blocks inside a `<pre>`, and the sigil is part of the text.** `+`/`-` live in the line's own text content rather than in a `::before`, so the side a line is on survives a screenshot, a copy-paste, and a reader that announces text without style. Colour is the second signal, never the only one — `gui-63.mjs` asserts add, delete and context resolve to three *different* computed colours, which is the one thing jsdom cannot answer at all.
+- **The Write card's danger is that its failure looks correct.** A fabricated Write diff renders as clean green added lines and reads as authoritative; nothing about it looks wrong in a screenshot. So the driver asserts the Write card mounts **zero** diff-line elements, and the vitest suite asserts the same — the honest answer here is provable absence, not a plausible-looking presence.
+- **Detection is by argument shape, not by tool name.** `old_string` + `new_string` → a diff; `content` → a preview. The two strings *are* what makes an honest diff possible, so the shape is the real contract and a tool rename cannot silently disable the feature.
+- **#62's real cost was a selector shadow, not the feature.** Adding a second control broke nothing in vitest — the suite queries by role and accessible name — but `gui-61.mjs` selected the bare `.tool-card-toggle`, which then matched the input button first. #63's control was named twice over from the start (`--change` modifier class plus an accessible name outside the `TOGGLE` regex) precisely because of that.
+- **#61's collapsed/expanded pair is the mechanism check for all three regions now.** The original `tool-result fills the card with a one-line summary` test has passed unchanged through #61, #62 and #63 — every diff on `tests/toolcards.test.tsx` across the three is additions only. Nothing was ever retired.
+- **Retention had to be asserted at STATE level, not through the DOM.** A collapsed card can only ever show what it chose to show, so a summarise-on-write regression is invisible to a rendering test until someone expands.
+- **jsdom is blind to CSS, so every visual ticket in this spec needed a driver**, and each was run red-first against a build without its feature. A green driver that has never been seen red proves nothing.
 - Two independent brainstorms (different models, no shared context) ranked the tool inspector **first** out of nine and ten candidates. Convergence chose it; **measurement** justified it — the corpus figures were gathered before committing, precisely because two models agreeing can mean two models sharing a blind spot.
-- The design was adversarially reviewed and the reviewer **reversed itself twice**: it dropped a `diff` dependency it had recommended once its own scoping removed the justification, and withdrew a claimed test-pin retirement once the conditional-mount mechanism made the retirement unnecessary. Both reversals are in the spec.
-- The safety framing was **downgraded deliberately**. Informed Edit approval was the original headline; `bypassPermissions` resetting every launch made it opt-in, so the spec now leads on inspection. See [[2026-07-30-inspection-is-universal-approval-safety-is-opt-in]].
-- Corpus percentages came from an ephemeral read-only script over the native JSONL, with the active session excluded so the analysis could not inflate its own evidence. Reproducible, **not checked in**. Every claim about code is grounded in source.
-- No `/hp` MVD was drawn — `hp` is for greenfield, `.context/happy-path.md` already covers the app's golden path, and a disclosure triangle does not earn a diagram.
+- The design was adversarially reviewed and the reviewer **reversed itself twice**: it dropped a `diff` dependency it had recommended once its own scoping removed the justification, and withdrew a claimed test-pin retirement once the conditional-mount mechanism made the retirement unnecessary.
+- The safety framing was **downgraded deliberately**. See [[2026-07-30-inspection-is-universal-approval-safety-is-opt-in]].
 
 ## Landmines (carried forward)
 
-- **NEW — `[]` and `null` now mean different things on both store channels.** `listSessions` and `loadTranscript` answer `null` for a FAILED read and `[]` for an honest nothing. Any new caller must branch on both; `?? []` at a call site silently restores the exact bug #60 removed. The one deliberate `?? []` is in `titleHint`, and it is commented as such.
-- **NEW — never cache a failed index build.** `build()` returns `null` on an unreadable root and `resolveSessionDir` must not install it. An empty index is indistinguishable from an empty store, so caching one lets a single transient failure answer every later lookup until the next `resetSessionIndex()`.
-- **NEW — live-tail's failed-read guard is `continue`, never `break`, and never an unguarded throw.** A re-run queued behind a failed read is a fresh attempt and must still get its turn; an exception (e.g. `null.length`) unwinds past the trailing re-run and loses the queued write — which is the staleness live-tail exists to fix. **The "keeps the pane" assertion cannot catch this**, because a throw also leaves the pane alone. The test that can is `a failed read does not swallow the re-run queued behind it`.
-- **NEW — a failure notice must retire when the thing it warns about arrives.** Adoption arms the watch even when its own read failed, so a recovered file reaches the pane by itself. The reload's apply branch clears the notice; without that line the warning stands over the conversation it is warning about. Found in diff review, not by the ticket.
-- **NEW — the mutation harness must normalise CRLF.** Source files are CRLF; anchors written with `\n` match **zero** times, and a zero-match anchor reads exactly like a surviving mutation. Match against an LF copy, assert the anchor hit exactly once, and restore the byte-exact original.
-- **NEW — a new control on the tool card must be named twice over.** It needs a `.tool-card-toggle--<what>` modifier class, because the GUI drivers select by class and a bare `.tool-card-toggle` now matches whichever button renders first; and its accessible name must stay **outside** `tests/toolcards.test.tsx`'s `TOGGLE` regex (`/^(Show|Hide) (output|error)$/`), or every "advertises no expansion" guard goes vacuous while staying green. Both traps are silent — the suite passes either way.
-- **NEW — the card's disclosures are one boolean each, never a shared flag.** Output is gated on `hasHiddenOutput`, input on the call having arguments, and a pending card shows its arguments with no toggle at all. Merging them re-arms a control on cards that hide nothing, which is the whole basis of the affordance being trustworthy. Pinned by `input and output disclose independently`.
-- **NEW — `inputEntries` sorts, and the sort is load-bearing.** The same call reaches the card as a live event object and as a replayed `JSON.parse`; only a derived order is guaranteed to agree, so insertion order would make live/replay parity depend on how the object was built. Dropping `.sort()` is killed by exactly one test.
-- **NEW — never summarise a tool result on the way into state again.** `toChatMessage` and the `tool-result` handler both store `result` **complete**; `ToolCard` calls `resultSummary` at render. Re-introducing the call at either write point is the exact bug #61 removed, and it is invisible to every rendering test — which is why `a live tool-result keeps every line` and `a replayed tool result keeps every line` assert at state level. Same shape as the `?? []` trap above: the DOM cannot tell you.
-- **NEW — the collapsed tool-card test is a mechanism check, and it is now half of a pair.** It feeds a two-line result and asserts line two is absent; its companion expands the same card and finds it. Detail must stay **conditionally mounted** — a CSS-hidden body or a closed `<details>` leaves the text in `textContent` and turns the collapsed half red, correctly. Verified by mutation in #61. If it goes red, the implementation is wrong.
-- **NEW — `resultSummary` runs on the COMPLETE result now, on every render.** Never reach for `text.split('\n')` in it (or in anything else scanning a result): results reach 92 KB and the split allocates per line. `firstLineBounds` scans with `indexOf` and trims by moving indices. Skip leading whitespace **before** measuring the 120-char cap, or an indented long line silently loses its ellipsis.
-- **NEW — never `git checkout <file>` to undo a mutation on uncommitted work.** It restores from HEAD and takes your unstaged changes with it; it cost this leg a re-do of the retention edit mid-mutation-test. **Commit the ticket work first, then mutate,** and reverse the mutation with the same anchored replace that applied it.
-- **NEW — never render a Write "diff".** Write supplies only path + content, no before-state. Green added lines conceal what was overwritten and manufacture confidence at the deciding moment. Labelled content preview only.
-- **NEW — `gh` infers the repo from the working directory.** `cd`-ing out of the clone (e.g. to a temp dir holding a body file) makes every `gh issue create` fail with `no git remotes found`. Stay in the repo and pass absolute `--body-file` paths, or pass `-R <owner>/<repo>`.
-- **#57's watcher is epoch-fenced, and the fence is the whole safety argument.**
-  Every request bumps `epoch`; a directory lookup that resolves after a newer
-  request must not install, and an fs event queued before a teardown must not
-  signal after it. Both are pinned. A `handle !== null` check is NOT equivalent
-  and does not catch either case.
-- **`fs.watch` throws SYNCHRONOUSLY** on ENOENT/EPERM, and the directory it is
-  handed comes from a *cached* index — so a directory deleted since the last
-  refresh reaches a live `fs.watch` call. main calls the watcher as a bare
-  `void`, so an escaping rejection kills the main process. The construction is
-  wrapped; never unwrap it.
-- **A reload's staleness re-check must not orphan the queued re-run.** A signal
-  that arrives while the loop is reading a session the user has since left
-  belongs to the session they are on *now*; dropping it holds the new pane
-  stale until its next write, and forever if that was the last write before
-  quiet — which is exactly the bug #57 exists to fix.
-- **Never read `messagesRef` inside the reload loop.** It is written by a
-  passive effect, so between two iterations it still reports the pre-reload
-  pane and a transient `[]` wipes what the previous iteration just applied.
-  Compare against what the loop itself applied (`paneLength`).
-- **Live-tail is for a session you are WATCHING, never one you are DRIVING.**
-  Adopt sets eligibility; send and new-chat clear it. The eligibility clear on
-  send is mutation-verified (removing it kills two tests). The busy condition is
-  the spec's third gate and is currently redundant with eligibility — keep it,
-  but do not mistake it for the mechanism.
-- **Pins are mutation-verified. Never "fix" a red pin by editing its
-  expectation.** The one legitimate retirement is when the *ticket* reverses the
-  contract the pin describes and says so by name (#42's single-line composer,
-  #45's two cwd-scoped list tests, #47's foreign-row pin). That allowance is
-  spent; any other red pin means the change is wrong.
-- **A green test can be green for the wrong reason.** Assert the mechanism — a
-  fetch count, a read that must not happen, an option that must be absent, a call
-  ORDER — not a symptom with more than one cause. Corollary: **if a mutation
-  kills nothing, the code you mutated may not be what makes the test pass.**
-  #57's busy gate is the worked example — its test passes via the eligibility
-  clear, not via the busy check. **#59 adds the sibling trap: a one-element
-  fixture cannot distinguish a separator.** A test named "…text blocks is
-  joined" that supplies ONE block passes under every possible join, so it
-  pinned nothing. When a test is about how N things combine, N must be ≥ 2.
-- **A session id is only resumable once a turn has run** (#54). `sessionId()`
-  stays null through warm-up on purpose: `hook_started` carries an id for a
-  session the CLI has not created, and resuming into it fails the turn.
-- **Never re-derive a store path from `cwd`.** No `encodeCwd`, no
-  case-insensitive variant, no decoding a directory name back into a cwd.
-  Location is `resolveSessionDir`; `cwdKey()` is comparison and grouping only.
-- **Never call `window.api.pickFolder` outside `Welcome`.** It changes main's cwd
-  and rebuilds the engine while touching **no** renderer state — the stale-pane
-  bug. The chooser is `chooseFolder`; the transition is `switchWorkspace`.
-- **Never clear the pane with `newChat()` on a switch path** — it sends
-  `targetSession(null)`, closing the engine the transaction just warmed, and its
-  `busy` gate can skip a reset main already approved. Use `adoptSession(id)`,
-  with `null` meaning "no session, no engine call". `adoptSession` is also what
-  arms live-tail, so a path that bypasses it silently stops tailing.
-- **Do not add a second busy flag,** and do not disable a foreign row or the
-  "Open project" affordance while busy. `Engine.isBusy()` is the one source;
-  disabling makes its refusal unreachable.
-- **Never un-key the composer.** `<InputBar key={cwd}>` is the entire draft /
-  tray / autocomplete reset; removing it re-opens the leak silently.
-- **`pendingInsert` must be cleared in the same commit as the cwd change** —
-  `InputBar` applies an insert *on mount*, so a survivor refills the new
-  project's composer with the old project's command. Its own assertion.
-- **Anything workspace-scoped added to App state must join the `ok` branch** of
-  `switchWorkspace`. Composer-internal state needs nothing.
-- **Do not rebuild the storage index inside `listSessions`,** and do not restore
-  `messageCount` by any route. Freshness is `resetSessionIndex()` at the
-  `session:list` handler plus a lazy rebuild on the next lookup.
-- **Never re-add `customTitle ?? summary`.** Real data can never catch it (0 of
-  325 diverge); a synthetic fixture in `tests/session-store.test.ts` is the guard.
-- **#49 specifics:** never enrich a row that has not rendered, never derive a
-  label during filtering, and never fold enrichment back onto
-  `session:transcript` — see [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]].
-- **#50: never match CLI markup mid-string.** `sanitizeUserText` dispatches on
-  the **leading tag of the trimmed message** and that anchor is the whole safety
-  argument — pasted terminal logs and quoted diagnoses that mention the markup
-  are real user content, and 7 such messages exist in the store today. Turning a
-  `startsWith` into an `includes` eats them and is killed by exactly one test.
-  **Do not strip ANSI from typed text** either: a real recorded argument is
-  `fable[1m]`, whose brackets are literal. Output streams only.
-- **#51: never scope a scrollbar rule to a component**, and never add
-  `scrollbar-width` / `scrollbar-color` — the standard properties suppress the
-  `::-webkit-` pseudo-elements and would silently discard the global rule.
-  `::-webkit-scrollbar-button { display: none }` and a transparent `-corner` are
-  load-bearing, not tidiness. **#61's `.tool-card-output` inherits the global
-  rule and #62/#63's regions must too — do not give the inspector its own.**
-- **Never write a literal ESC byte or a `\u` escape into source.** `CSI` uses
-  `String.fromCharCode(27)`; the raw character is invisible in an editor and the
-  escape was repeatedly normalized into the raw byte in transit.
-- **A session fixture with no `cwd` is a foreign row.** A UI test wanting an
-  in-project row must set `cwd: FOLDER` (exported from `tests/chat-harness.ts`).
-- **New `window.api` channel → ALL FOUR mock sites** (`tests/chat-harness.ts` plus
-  inline mocks in `sidebar` / `session` / `shell` tests), and guard every IPC with
-  `isTrustedIpc`. #57's `onSessionChanged` is subscribed on mount, which is why a
-  missing mock member kills a suite at render rather than in its own tests.
-  **#59–#63 add no channel, so this does not fire for them.**
-- **A module-level cache needs a test reset.** `resetSessionIndex()`,
-  `resetEnrichedTitles()` and `resetSessionWatcher()` all exist for that
-  reason — and the watcher's reset must bump the epoch, not only close the handle.
-- **Vitest + `node:fs/promises`:** a module mock must also export `default`, or
-  the file dies at import with `No "default" export is defined`. It also needs
-  `stat` now.
-- **Never add a resize effect to `InputBar`** — height is CSS
-  (`field-sizing: content`), deliberately not React state.
-- **Never hardcode a model name anywhere.** The list is `supportedModels()`,
-  live, uncached. Two tests in `tests/model-mode.test.ts` pin the **absence** of
-  a list-building surface, because a re-added constant fails no behavioural test.
-- **Never merge `picked` and `reported` in `model-mode.ts`.** A pick is the
-  row's value (`opus[1m]`); a report is a resolved id (`claude-opus-5`). Only
-  `picked` may reach `options.model` — a resolved id there is the #23 hang, and
-  it surfaces on the *next engine rebuild*, far from the assignment.
+- **NEW — a mutation that kills nothing may be telling you the CODE is dead**, not that the test is weak. Ask why before writing an assertion to cover it: an assertion that passes under both implementations freezes dead code in place and makes it permanently mutation-immune. #63's coalescing pass is the worked example.
+- **NEW — never render a Write diff.** Write supplies only path + content, no before-state. Green added lines conceal what was overwritten and manufacture confidence at the deciding moment. Labelled content preview only, and the guard is an assertion of **absence** (zero diff-line elements), because the fabricated version looks entirely correct.
+- **NEW — the card now carries THREE disclosure booleans**, one per region: `expanded` (output, gated on `hasHiddenOutput`), `inputOpen` (input, gated on having arguments), `changeOpen` (diff/preview, gated on the call carrying the strings). A pending card renders input and change outright with no toggle. Merging any two re-arms a control on cards that hide nothing, which is the whole basis of the affordances being trustworthy.
+- **NEW — a fourth control on the tool card must be named twice over.** A `.tool-card-toggle--<what>` modifier class, because the GUI drivers select by class and the bare `.tool-card-toggle` matches whichever button renders first; **and** an accessible name outside `tests/toolcards.test.tsx`'s `TOGGLE` regex (`/^(Show|Hide) (output|error)$/`) and distinct from `Show input` / `Show diff` / `Show content`. Both failures are silent — the suite passes either way.
+- **NEW — `lineDiff`'s `>=` tie-break is load-bearing.** It is what keeps removals ahead of additions in a run; flipping it to `>` reorders every evenly-matched hunk and reddens three tests. There is no coalescing pass to fall back on, by design.
+- **NEW — never `split('\n')` in the diff path either.** `splitLines` treats empty text as zero lines and a trailing newline as a terminator; plain `split` invents a line on both counts, and on the empty side it invents an *edit*.
+- **`[]` and `null` mean different things on both store channels.** `listSessions` and `loadTranscript` answer `null` for a FAILED read and `[]` for an honest nothing. `?? []` at a new call site silently restores the exact bug #60 removed. The one deliberate `?? []` is in `titleHint`, commented as such.
+- **Never cache a failed index build.** `build()` returns `null` on an unreadable root and `resolveSessionDir` must not install it — an empty index is indistinguishable from an empty store.
+- **Live-tail's failed-read guard is `continue`, never `break`, and never an unguarded throw.** The test that can catch this is `a failed read does not swallow the re-run queued behind it`; the "keeps the pane" assertion cannot.
+- **A failure notice must retire when the thing it warns about arrives.** The reload's apply branch clears it.
+- **The mutation harness must normalise CRLF.** Source files are CRLF; anchors written with `\n` match **zero** times, and a zero-match anchor reads exactly like a surviving mutation. Anchored `Edit` calls sidestep the whole class and are what the last three legs used.
+- **Never summarise a tool result on the way into state.** `toChatMessage` and the `tool-result` handler both store `result` **complete**; `ToolCard` calls `resultSummary` at render. Re-introducing the call at either write point is invisible to every rendering test.
+- **The collapsed tool-card test is a mechanism check and is now half of a pair.** Detail must stay **conditionally mounted** — a CSS-hidden body or a closed `<details>` leaves the text in `textContent` and turns the collapsed half red, correctly.
+- **`resultSummary` runs on the COMPLETE result, on every render.** Never `text.split('\n')` in it: results reach 92 KB. Skip leading whitespace **before** measuring the 120-char cap.
+- **`inputEntries` sorts, and the sort is load-bearing** — live and replayed objects need not share insertion order.
+- **Never `git checkout <file>` to undo a mutation on uncommitted work.** It restores from HEAD and takes your unstaged edits with it. Commit the ticket work first, then mutate, and reverse the mutation with the same anchored replace that applied it.
+- **`gh` infers the repo from the working directory.** `cd`-ing out of the clone makes `gh issue create` fail with `no git remotes found`.
+- **#57's watcher is epoch-fenced, and the fence is the whole safety argument.** A `handle !== null` check is NOT equivalent.
+- **`fs.watch` throws SYNCHRONOUSLY** on ENOENT/EPERM, and the directory comes from a *cached* index. main calls the watcher as a bare `void`, so an escaping rejection kills the main process. The construction is wrapped; never unwrap it.
+- **A reload's staleness re-check must not orphan the queued re-run.**
+- **Never read `messagesRef` inside the reload loop.** Compare against what the loop itself applied (`paneLength`).
+- **Live-tail is for a session you are WATCHING, never one you are DRIVING.** Adopt sets eligibility; send and new-chat clear it.
+- **Pins are mutation-verified. Never "fix" a red pin by editing its expectation.** The legitimate-retirement allowance (#42, #45, #47) is **spent**; any other red pin means the change is wrong.
+- **A green test can be green for the wrong reason.** Assert the mechanism — a fetch count, a read that must not happen, a call ORDER — not a symptom with more than one cause. **A one-element fixture cannot distinguish a separator** (#59); when a test is about how N things combine, N must be ≥ 2. For a diff that means a hunk with more than one changed line.
+- **A session id is only resumable once a turn has run** (#54).
+- **Never re-derive a store path from `cwd`.** Location is `resolveSessionDir`; `cwdKey()` is comparison and grouping only.
+- **Never call `window.api.pickFolder` outside `Welcome`.** The chooser is `chooseFolder`; the transition is `switchWorkspace`.
+- **Never clear the pane with `newChat()` on a switch path.** Use `adoptSession(id)` — it is also what arms live-tail.
+- **Do not add a second busy flag,** and do not disable a foreign row or "Open project" while busy.
+- **Never un-key the composer.** `<InputBar key={cwd}>` is the entire draft / tray / autocomplete reset.
+- **`pendingInsert` must be cleared in the same commit as the cwd change.**
+- **Anything workspace-scoped added to App state must join the `ok` branch** of `switchWorkspace`.
+- **Do not rebuild the storage index inside `listSessions`,** and do not restore `messageCount`.
+- **Never re-add `customTitle ?? summary`.**
+- **#49 specifics:** never enrich a row that has not rendered, never derive a label during filtering, never fold enrichment onto `session:transcript`.
+- **#50: never match CLI markup mid-string.** `sanitizeUserText` dispatches on the **leading tag of the trimmed message**. Do not strip ANSI from typed text — a real recorded argument is `fable[1m]`.
+- **#51: never scope a scrollbar rule to a component**, and never add `scrollbar-width` / `scrollbar-color`. `.tool-card-output`, `.tool-card-input`, `.tool-card-diff-body` and `.tool-card-content-body` all inherit the global rule — do not give any of them their own.
+- **Never write a literal ESC byte or a `\u` escape into source.** `CSI` uses `String.fromCharCode(27)`.
+- **A session fixture with no `cwd` is a foreign row.** An in-project row must set `cwd: FOLDER`.
+- **New `window.api` channel → ALL FOUR mock sites**, and guard every IPC with `isTrustedIpc`. **#59–#63 added none.**
+- **A module-level cache needs a test reset.** The watcher's reset must bump the epoch, not only close the handle.
+- **Vitest + `node:fs/promises`:** a module mock must also export `default`, and it needs `stat` now.
+- **Never add a resize effect to `InputBar`** — height is CSS (`field-sizing: content`).
+- **Never hardcode a model name anywhere.** Two tests pin the **absence** of a list-building surface.
+- **Never merge `picked` and `reported` in `model-mode.ts`.** A resolved id in `options.model` is the #23 hang, surfacing on the *next* engine rebuild.
 - **A model report is delivered by injected callback, not an `EngineEvent`.**
-  `emit()` only reaches `activeOnEvent`, which is null outside a turn, and the
-  `init` carrying the first model arrives during `warmUp()`.
-- **Wisp `options.model`: the CLI shadows the FAMILIES, the bridge resolves the
-  ALIASES.** The CLI expands `opus` locally *before* the request leaves, so Wisp
-  never sees the token. **A stale CLI alias table cannot be fixed by rebinding a
-  Wisp family — only by upgrading the CLI.** Never run bare `wisp snapshot` —
-  always name the family.
-- **The app runs the HOST `claude` when PATH has one** (`cli-path.ts`, resolved
-  once at boot, plain PATH walk, no shims, no `child_process`), falling back to
-  the CLI bundled in the npm package. A host Claude Code update can therefore
-  break the app with no code change here.
-- **`gh issue close --comment` silently drops the comment if the issue is already
-  closed** — a pushed `Closes #N` auto-closes it first. A **standalone `gh issue
-  comment` still lands on a closed issue**, though (confirmed in #61: `Closes #61`
-  auto-closed on push, the separate comment posted fine, and `gh issue close`
-  then reported "already closed" harmlessly). So either keep `Closes #N` out of
-  the commit, or keep it and never fold the comment into the close. **`gh issue
-  list` also lags a close by a few seconds** — re-query before believing a queue
-  is non-empty.
-- **The Bash tool is not PowerShell** — heredoc (`git commit -F - <<'EOF'`), never
-  a PowerShell here-string. **Source files are CRLF:** a `perl -0pi` mutation
-  spanning a line break needs `\r?\n`, and a pattern containing `/` breaks the
-  `s///` delimiter outright — `diff` against a backup before trusting a survivor.
-  A `for f in …; do … "$f"; done` loop inside a double-quoted Bash-tool command
-  loses its `$f`; write the edits out separately instead.
-- **A mutation harness must assert its anchor matched exactly once.** A bad
-  anchor and an uncaught mutation look identical in the output.
+- **Wisp `options.model`: the CLI shadows the FAMILIES, the bridge resolves the ALIASES.** Never run bare `wisp snapshot` — always name the family.
+- **The app runs the HOST `claude` when PATH has one** (`cli-path.ts`), falling back to the bundled copy. A host Claude Code update can break the app with no code change here.
+- **`gh issue close --comment` silently drops the comment if the issue is already closed** — a pushed `Closes #N` auto-closes it first. A standalone `gh issue comment` still lands on a closed issue. **`gh issue list` lags a close by seconds**, and so does `issue_dependencies_summary` — re-query before believing either.
+- **The Bash tool is not PowerShell** — heredoc, never a PowerShell here-string. **Source files are CRLF** while `.context/*.md` are LF.
+- **A mutation harness must assert its anchor matched exactly once.** A bad anchor and an uncaught mutation look identical.
 
 ## Known issues / not-our-bug
 
-- **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Path is the
-  trigger, model only modulates the odds. Not our bug — don't run wrapper sessions
-  there, and don't point a GUI driver's temp cwd there either.
-- **GUI driver traps:** `--disable-gpu` flattens acrylic; measure in the DOM, never
-  off screenshots; dispatch clicks via `page.evaluate(() => el.click())` because
-  Playwright's stability wait hangs on the app's animations; arm a hard
-  `setTimeout(process.exit)` before awaiting `app.close()`; never re-read an
-  element after an action that may not have happened — inject a probe node;
-  **count the side effect you care about**, since an inert button and a cancel
-  produce identical DOM; pass any path as an **argument** to `app.evaluate`, never
-  inside a string literal; and stub `dialog.showOpenDialog` in main before any
-  click that opens one, or the run blocks forever on a real native dialog.
-- **Driver trick (gui-55):** a terminal-shaped session can be seeded straight
-  into the native store and the SDK lists it — no CLI turn needed to put a real
-  adoptable row in the rail. Clean up the seeded store dir on every exit path.
-- **Driver trick (gui-62):** a seeded `tool_use` alone is enough to put a card with a rich **input** on screen — the `tool_result` line only decides how the card's result half reads. Assert the argument count the driver *expected* against the labels actually rendered (`.tool-card-arg-key`), or "some arguments shown" reads as "every argument shown".
-- **Driver trick (gui-61):** the same seed carries a **tool call** — an
-  `assistant` line with a `tool_use` block plus a `user` line with a matching
-  `tool_result` — so a card of any shape can be put on screen with no engine.
-  Screenshot **at the moment under test**, not only in `finish()`: gui-61 ends
-  re-collapsed, so the final shot would never show the state the ticket added.
-- **jsdom is blind to CSS, so a visual ticket needs a driver.** Nothing in
-  vitest can see whether a control is visible, whether a region is height-capped
-  and scrolling, or whether the composer got pushed off screen. Measure those in
-  the real window (`getBoundingClientRect`, `scrollHeight` vs `clientHeight`,
-  `getComputedStyle`) — and run the driver against a build **without** the
-  feature first, or its green proves nothing.
+- **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Not our bug — don't point a GUI driver's temp cwd there.
+- **GUI driver traps:** `--disable-gpu` flattens acrylic; measure in the DOM, never off screenshots; dispatch clicks via `page.evaluate(() => el.click())`; arm a hard `setTimeout(process.exit)` before awaiting `app.close()`; never re-read an element after an action that may not have happened; **count the side effect you care about**; pass any path as an **argument** to `app.evaluate`; stub `dialog.showOpenDialog` in main before any click that opens one; and **select controls by their modifier class**, since the card now carries three.
+- **Driver trick (gui-63):** two seeded tool calls in one transcript give two cards in one run, so an Edit and a Write can be compared side by side — and the Write assertion is one of **absence** (zero diff-line elements), because the failure it guards against looks correct.
+- **Driver trick (gui-62):** a seeded `tool_use` alone is enough to put a card with a rich **input** on screen. Assert the argument count the driver *expected* against the labels actually rendered.
+- **Driver trick (gui-61):** the same seed carries a **tool call** — an `assistant` line with a `tool_use` block plus a `user` line with a matching `tool_result`. Screenshot **at the moment under test**, not only in `finish()`.
+- **Driver trick (gui-55):** a terminal-shaped session can be seeded straight into the native store and the SDK lists it. Clean up the seeded store dir on every exit path.
+- **jsdom is blind to CSS, so a visual ticket needs a driver.** Nothing in vitest can see whether a control is visible, whether a region is height-capped and scrolling, or whether two class names resolve to different colours. Run the driver against a build **without** the feature first, or its green proves nothing.
 
 ## Deferred (still no spec)
 
-**Newly deferred by #58, with reasons on record:** honest whole-file **Write
-diff** in every form (needs a pre-write baseline the event contract lacks;
-checkpoint records point at backup files, not before-content); **per-tool rich
-card bodies** (TodoWrite checklist, Grep hit list, Read slice — each couples to
-one tool's schema); **permission-mode default or persistence** (would make
-approval reachable by default, but reverses a recorded owner choice); **adopting
-the SDK's richer permission metadata** (`title`, `displayName`, `description`,
-`blockedPath`, `decisionReason`, `suggestions` — all currently dropped by the
-engine, and a real reason permission cards read as generic); a **wrapper-owned
-truncation cap**; a **diff dependency**.
+**Deferred by #58, with reasons on record:** honest whole-file **Write diff** in every form (needs a pre-write baseline the event contract lacks; checkpoint records point at backup files, not before-content); **per-tool rich card bodies** (TodoWrite checklist, Grep hit list, Read slice — each couples to one tool's schema); **permission-mode default or persistence** (would make approval reachable by default, but reverses a recorded owner choice); **adopting the SDK's richer permission metadata** (`title`, `displayName`, `description`, `blockedPath`, `decisionReason`, `suggestions` — all currently dropped by the engine, and a real reason permission cards read as generic); a **wrapper-owned truncation cap**; a **diff dependency**; **syntax highlighting inside diffs**.
 
-**Found by the brainstorm pair, unspec'd:** stream **extended thinking** as a
-collapsed strip (`thinking_delta` is dropped; only `text_delta` is forwarded, so
-a reasoning phase reads as a hang); **native turn-end notifications + taskbar
-flash** (zero `Notification`/`flashFrame` in `src/`); **type-while-busy composer**
-then queued send (the textarea is `disabled={busy}` for the whole turn);
-**one-click restart on `terminalError`**; **turn pulse** from the dropped
-`tool_progress` / `status` / rate-limit telemetry; **MCP + settings-parse health**
-surfacing.
+**Found by the brainstorm pair, unspec'd:** stream **extended thinking** as a collapsed strip (`thinking_delta` is dropped; only `text_delta` is forwarded, so a reasoning phase reads as a hang); **native turn-end notifications + taskbar flash** (zero `Notification`/`flashFrame` in `src/`); **type-while-busy composer** then queued send (the textarea is `disabled={busy}` for the whole turn); **one-click restart on `terminalError`**; **turn pulse** from the dropped `tool_progress` / `status` / rate-limit telemetry; **MCP + settings-parse health** surfacing.
 
-**Carried, unchanged:** live-tail's **incremental byte tailing** and the
-**watch-installed-after-the-read gap** (both demand-driven — a `ponytail:`
-comment names the fix; do not start on principle). Plus context-pressure meter
-(`Query.getContextUsage()` exists but a naïve percentage lies — it must separate
-the raw window from the auto-compaction threshold), typed failed-turn recovery
-(`rewindFiles()` needs `enableFileCheckpointing`, which our options do not set),
-full-text transcript search, **session rename / delete / archive** (the SDK
-exports `renameSession`, `deleteSession` and `forkSession`, so this is cheaper
-than earlier notes assumed), drag-and-drop, replay thumbnails, N-concurrent
-engines, **fork-on-resume** (`forkSession` exists), busy-switch detach (decided
-against — block is the behaviour), folding `Welcome`'s last `pickFolder` caller
-onto the chooser, agent archive / control / map pan-zoom, and the smaller
-leftovers from #31–#36.
+**Carried, unchanged:** live-tail's **incremental byte tailing** and the **watch-installed-after-the-read gap** (both demand-driven — a `ponytail:` comment names the fix; do not start on principle). Plus context-pressure meter (`Query.getContextUsage()` exists but a naïve percentage lies — it must separate the raw window from the auto-compaction threshold), typed failed-turn recovery (`rewindFiles()` needs `enableFileCheckpointing`, which our options do not set), full-text transcript search, **session rename / delete / archive** (the SDK exports `renameSession`, `deleteSession` and `forkSession`), drag-and-drop, replay thumbnails, N-concurrent engines, **fork-on-resume**, busy-switch detach (decided against — block is the behaviour), folding `Welcome`'s last `pickFolder` caller onto the chooser, agent archive / control / map pan-zoom, and the smaller leftovers from #31–#36.
 
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-30-a-failure-is-a-value-absence-stays-lenient]] — #60's line between failure and absence
-- [[2026-07-30-two-disclosures-two-booleans]] — #62's second card boolean, the
-  sorted argument list, and the selector shadow it exposed
+- [[2026-07-30-a-mutation-that-kills-nothing-is-an-answer]] — #63's dead coalescing pass, and the reflex it closes
+- [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] — #63's spine
+- [[2026-07-30-two-disclosures-two-booleans]] — #62's second card boolean, extended to a third by #63
 - [[2026-07-30-disclosure-is-retention-plus-conditional-mount]] ·
-  [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] ·
-  [[2026-07-30-inspection-is-universal-approval-safety-is-opt-in]]
-- [[2026-07-23-transcript-parser-pure-renderer-summarises]] — the seam #61 preserves
-- [[2026-07-29-live-tail-is-a-signal-not-a-stream]] ·
-  [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]] ·
+  [[2026-07-30-inspection-is-universal-approval-safety-is-opt-in]] ·
+  [[2026-07-30-a-failure-is-a-value-absence-stays-lenient]] ·
+  [[2026-07-23-transcript-parser-pure-renderer-summarises]] ·
   [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] ·
+  [[2026-07-29-live-tail-is-a-signal-not-a-stream]] ·
+  [[2026-07-28-the-model-is-the-clis-fact-not-the-pills]] ·
   [[2026-07-28-sanitizing-replay-markup-is-an-anchor-not-a-strip]] ·
   [[2026-07-28-lazy-enrichment-is-a-mount-not-a-scan]] ·
   [[2026-07-28-choosing-a-folder-is-not-changing-workspace]] ·
@@ -305,8 +152,8 @@ leftovers from #31–#36.
   [[2026-07-28-the-workspace-switch-is-one-transaction-over-ports]] ·
   [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] ·
   [[2026-07-28-storage-location-is-an-index-not-an-encoding]] ·
-  [[2026-07-28-session-metadata-is-the-sdks-job]]
-- [[2026-07-28-composer-height-is-css-not-state]] ·
+  [[2026-07-28-session-metadata-is-the-sdks-job]] ·
+  [[2026-07-28-composer-height-is-css-not-state]] ·
   [[2026-07-27-slash-commands-are-a-dumb-pipe]] ·
   [[2026-07-24-wisp-alias-routes-by-name]] ·
   [[2026-07-24-in-app-permission-mode-toggle]] ·
