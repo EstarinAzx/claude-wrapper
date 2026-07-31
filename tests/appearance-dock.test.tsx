@@ -12,6 +12,9 @@ let harness: ReturnType<typeof fakeChatApi>
 
 beforeEach(() => {
   window.localStorage.clear()
+  // The theme's effect lands on documentElement, which outlives `cleanup()` —
+  // without this a palette set by one test is still applied in the next.
+  document.documentElement.removeAttribute('data-theme')
   harness = fakeChatApi()
   ;(window as Window & { api: unknown }).api = harness.api
 })
@@ -43,6 +46,18 @@ const openDock = async () => {
 const press = (key: string): void => {
   fireEvent.keyDown(document.body, { key, ctrlKey: true })
 }
+
+const THEME_KEY = 'theme'
+// Theme is a listbox, not a second radiogroup — the pin below reading every
+// radio in this panel as a backdrop is exactly why.
+const options = (): HTMLButtonElement[] =>
+  within(dock()).getAllByRole('option') as HTMLButtonElement[]
+const option = (name: 'Frost' | 'Ember' | 'Moss' | 'Slate'): HTMLButtonElement =>
+  within(dock()).getByRole('option', { name }) as HTMLButtonElement
+const selected = (): string | null =>
+  options().find((o) => o.getAttribute('aria-selected') === 'true')?.dataset['optionTheme'] ?? null
+// What actually crossed the boundary. Everything above is what the PANEL says.
+const applied = (): string | null => document.documentElement.getAttribute('data-theme')
 
 const radios = (): HTMLButtonElement[] =>
   within(dock()).getAllByRole('radio') as HTMLButtonElement[]
@@ -308,6 +323,151 @@ describe('the backdrop copy states the trade and never claims persistence (#69)'
         name === 'Acrylic' ? 'Blurs what' : 'A steady tint'
       )
     }
+  })
+})
+
+// #70 — Theme. jsdom loads no stylesheet, so what a palette LOOKS like is not
+// testable here and is not claimed to be: themes.css is pinned structurally in
+// theme.test.ts, and whether Ember actually looks good is eyeballed in a real
+// window. What is testable is the value's journey — what is offered, what is
+// stored, and what reaches the document element.
+describe('theme control (#70)', () => {
+  test('offers exactly four palettes, in the order the spec names them', async () => {
+    await startSession()
+    await openDock()
+    expect(options().map((o) => o.dataset['optionTheme'])).toEqual([
+      'frost',
+      'ember',
+      'moss',
+      'slate'
+    ])
+    expect(options().map((o) => o.textContent)).toEqual(['Frost', 'Ember', 'Moss', 'Slate'])
+  })
+
+  test('frost is what a fresh install opens with', async () => {
+    await startSession()
+    await openDock()
+    expect(selected()).toBe('frost')
+    expect(applied()).toBe('frost')
+  })
+
+  // The panel is not where the palette is applied — the window wears it whether
+  // or not anyone opens Appearance. Pinned by never opening the dock.
+  //
+  // This is the one that catches the sharpest failure mode in the ticket: a
+  // preference with both a REPORT and an EFFECT can self-heal in the report and
+  // stay broken in the effect. Set the initial state from an effect instead of
+  // `useState`'s lazy initialiser and every panel assertion above still passes
+  // while the window opens on the wrong palette.
+  test('the stored palette reaches the document element on launch, panel unopened', async () => {
+    window.localStorage.setItem(THEME_KEY, 'ember')
+    await startSession()
+    expect(screen.queryByRole('complementary', { name: 'Appearance' })).toBeNull()
+    expect(applied()).toBe('ember')
+  })
+
+  // And the assertion above is NOT enough on its own, which is the whole trap:
+  // the attribute is reactive, so an effect-set initial state still settles on
+  // the stored palette a render later and every check above goes green while
+  // the window opened in the wrong colour. What separates the two is the FIRST
+  // value written, so that is what this watches. It is the one pin here that
+  // dies under the mutation the ticket names.
+  test('the default is never applied first on the way to a stored palette', async () => {
+    window.localStorage.setItem(THEME_KEY, 'ember')
+    // Recorded as OLD values, one per write. Reading the attribute inside the
+    // callback instead would report whatever it had settled on by the time the
+    // microtask ran — several writes coalesce into one callback, so a Frost
+    // frame followed by Ember reads as a single Ember and this pin would green
+    // under the very mutation it exists to catch.
+    const before: (string | null)[] = []
+    const observer = new MutationObserver((records) => {
+      for (const r of records) before.push(r.oldValue)
+    })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+      attributeOldValue: true
+    })
+    await startSession()
+    observer.disconnect()
+    // Every value the attribute has held: each write's predecessor except the
+    // leading unset, then whatever stands now. Deduplicated, in order, because
+    // StrictMode remounts and this is not an assertion about how many times an
+    // idempotent write ran.
+    const held = [...before.slice(1), applied()]
+    expect([...new Set(held)]).toEqual(['ember'])
+  })
+
+  test('a stored palette, not the default, is what the panel opens selected', async () => {
+    window.localStorage.setItem(THEME_KEY, 'slate')
+    await startSession()
+    await openDock()
+    expect(selected()).toBe('slate')
+  })
+
+  // Commit on change: no Save, so the click IS the apply and the persist.
+  test('picking a palette applies it, stores it and moves the selection', async () => {
+    await startSession()
+    await openDock()
+
+    fireEvent.click(option('Moss'))
+    expect(applied()).toBe('moss')
+    expect(window.localStorage.getItem(THEME_KEY)).toBe('moss')
+    expect(selected()).toBe('moss')
+
+    // Back to the default: nothing may be left behind in the previous accent,
+    // which for a data attribute means the value is REPLACED, never added to.
+    fireEvent.click(option('Frost'))
+    expect(applied()).toBe('frost')
+    expect(window.localStorage.getItem(THEME_KEY)).toBe('frost')
+    expect(selected()).toBe('frost')
+  })
+
+  // A hand-edited or corrupted value must not set an attribute matching no
+  // block in themes.css, which renders the defaults while the panel shows
+  // nothing selected — broken, and silent.
+  test('an unrecognised stored palette falls back to frost, on screen and on the attribute', async () => {
+    window.localStorage.setItem(THEME_KEY, 'midnight')
+    await startSession()
+    await openDock()
+    expect(selected()).toBe('frost')
+    expect(applied()).toBe('frost')
+  })
+
+  // Roving tabindex: one tab stop for the group, arrows move within it, and the
+  // ring wraps at both ends.
+  test('arrow keys move the selection and carry focus with it', async () => {
+    await startSession()
+    await openDock()
+    expect(option('Frost').tabIndex).toBe(0)
+    expect(option('Ember').tabIndex).toBe(-1)
+
+    fireEvent.keyDown(option('Frost'), { key: 'ArrowDown' })
+    expect(selected()).toBe('ember')
+    expect(applied()).toBe('ember')
+    expect(document.activeElement).toBe(option('Ember'))
+    expect(option('Ember').tabIndex).toBe(0)
+
+    fireEvent.keyDown(option('Ember'), { key: 'ArrowUp' })
+    expect(selected()).toBe('frost')
+    expect(document.activeElement).toBe(option('Frost'))
+
+    // Wrapping backwards off the first option reaches the last.
+    fireEvent.keyDown(option('Frost'), { key: 'ArrowUp' })
+    expect(selected()).toBe('slate')
+  })
+
+  // The swatches paint themselves by wearing the same attribute the document
+  // element wears, so themes.css reaches them and no palette colour is
+  // duplicated in appearance.css. Losing that attribute is silent: the swatch
+  // keeps rendering, in whatever the CURRENT palette's accent is, so all four
+  // read identical and the picker stops previewing anything.
+  test('each row carries a swatch bound to its own palette', async () => {
+    await startSession()
+    await openDock()
+    expect(
+      options().map((o) => o.querySelector('.appearance-swatch')?.getAttribute('data-theme'))
+    ).toEqual(['frost', 'ember', 'moss', 'slate'])
   })
 })
 

@@ -1,8 +1,9 @@
 /* Frost Mono — the renderer's stylesheet.
 
    Split by surface. Nothing here but the Tailwind layer setup and the import
-   order, because THE IMPORT ORDER IS THE CASCADE: tokens, then base, then the
-   shared patterns, then components. The shared groups are single-class rules
+   order, because THE IMPORT ORDER IS THE CASCADE: tokens, then the theme
+   overrides of those tokens, then base, then the shared patterns, then
+   components. The shared groups are single-class rules
    that every component override is at least as specific as, so they only work
    while they come first. Reordering these lines silently restyles the app. */
 
@@ -11,6 +12,7 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 
 @import "./styles/tokens.css";
+@import "./styles/themes.css";
 @import "./styles/base.css";
 @import "./styles/shared.css";
 @import "./styles/titlebar.css";

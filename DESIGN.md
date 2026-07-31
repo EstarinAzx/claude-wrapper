@@ -6,6 +6,8 @@ Theme: dark, forced by the scene (owner running coding sessions at night on a Wi
 
 Color strategy: Restrained. Mint accent ≤10% of surface, spent only on: logo mark, assistant avatar, send button, list markers, typing dots.
 
+Themeable since #70, within limits that keep this document true of every palette. **Frost** (mint, below) is the default and the identity; **Ember**, **Moss** and **Slate** re-hue it. A theme moves the accent's hue, the accent fills' chroma within `0.05`–`0.09`, and the neutrals' hue angle. It moves **no lightness and no alpha anywhere**, and no neutral's chroma — so every contrast ratio, the seven-step tint ladder, the ≤10% budget and the match to the reference hold in all four. All four are dark; there is no light theme. The blocks live in `styles/themes.css` and `tests/theme.test.ts` enforces those limits structurally.
+
 ## Tokens (Tailwind 4 `@theme`, OKLCH)
 
 Tokens live in Tailwind 4's `@theme` block in `styles.css` (namespaced so
@@ -26,10 +28,11 @@ markdown list markers and button styling).
   --color-text-muted: oklch(0.68 0.01 200);
   --color-text-faint: oklch(0.53 0.01 210);
 
-  /* the one accent: frost mint */
+  /* the accent: frost mint — one at a time, four to choose from (#70) */
   --color-mint: oklch(0.87 0.07 180);
   --color-mint-press: oklch(0.8 0.08 182);
   --color-mint-ink: oklch(0.25 0.02 200);          /* glyphs on mint fills */
+  --color-mint-wash: oklch(0.87 0.07 180 / 0.1);   /* active row ground (#67) */
 
   /* shape */
   --radius-bubble: 16px;

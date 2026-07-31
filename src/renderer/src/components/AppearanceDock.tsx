@@ -1,6 +1,80 @@
 import type { KeyboardEvent } from 'react'
 import { MAX_ZOOM, MIN_ZOOM, type ZoomAction } from '../../../shared/zoom'
 import { BACKDROPS, type Backdrop } from '../../../shared/backdrop'
+import { THEMES, type Theme } from '../../../shared/theme'
+
+// Arrow-key movement, shared by the panel's two pick-one controls: forward on
+// Right/Down, back on Left/Up, wrapping at both ends. Returns null for every
+// other key so the caller can leave the event alone.
+const nextInRing = <T,>(ring: readonly T[], current: T, key: string): T | null => {
+  const forward = key === 'ArrowRight' || key === 'ArrowDown'
+  const back = key === 'ArrowLeft' || key === 'ArrowUp'
+  if (!forward && !back) return null
+  const i = ring.indexOf(current)
+  return ring[(i + (forward ? 1 : ring.length - 1)) % ring.length] as T
+}
+
+// The name each palette shows (#70). Keyed by Theme and rendered by mapping over
+// THEMES, the shape BACKDROP_COPY established: "exactly four options" is then a
+// type constraint rather than a counted assertion — a fifth palette without a
+// name is a compile error, and a name for a palette that is not offered renders
+// nowhere. No descriptions: a theme states its case by being applied, which is
+// instant, whereas a backdrop's trade is invisible until you click away.
+const THEME_NAMES: Record<Theme, string> = {
+  frost: 'Frost',
+  ember: 'Ember',
+  moss: 'Moss',
+  slate: 'Slate'
+}
+
+// A listbox rather than a radiogroup, unlike its sibling below. Not a style
+// choice: a dock-wide pin reads every radio in this panel as a backdrop, and a
+// second radiogroup here would break it. Single-select is what both roles mean,
+// so the pin keeps its meaning and this control keeps correct semantics.
+//
+// Each swatch carries `data-theme`, which is the same attribute the document
+// element wears — so the block in themes.css applies to the swatch too and it
+// paints itself in its own palette's accent. That is why no theme colour is
+// duplicated here or in appearance.css. It must read `var(--color-mint)` and
+// not the short `--mint` alias: the alias resolved once, up at :root.
+const ThemeChoices = ({
+  value,
+  onPick
+}: {
+  value: Theme
+  onPick: (next: Theme) => void
+}) => {
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>): void => {
+    const next = nextInRing(THEMES, value, e.key)
+    if (!next) return
+    e.preventDefault()
+    onPick(next)
+    e.currentTarget.parentElement
+      ?.querySelector<HTMLElement>(`[data-option-theme="${next}"]`)
+      ?.focus()
+  }
+
+  return (
+    <div className="appearance-choices" role="listbox" aria-labelledby="appearance-theme-label">
+      {THEMES.map((name) => (
+        <button
+          key={name}
+          type="button"
+          role="option"
+          data-option-theme={name}
+          className="appearance-choice appearance-choice--theme"
+          aria-selected={value === name}
+          tabIndex={value === name ? 0 : -1}
+          onClick={() => onPick(name)}
+          onKeyDown={onKeyDown}
+        >
+          <span className="appearance-choice-name">{THEME_NAMES[name]}</span>
+          <span className="appearance-swatch" data-theme={name} aria-hidden="true" />
+        </button>
+      ))}
+    </div>
+  )
+}
 
 // The copy the panel shows for each material (#69). Keyed by Backdrop and
 // rendered by mapping over BACKDROPS, so the offered set and the whitelist
@@ -49,12 +123,9 @@ const BackdropChoices = ({
   onPick: (next: Backdrop) => void
 }) => {
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>): void => {
-    const forward = e.key === 'ArrowRight' || e.key === 'ArrowDown'
-    const back = e.key === 'ArrowLeft' || e.key === 'ArrowUp'
-    if (!forward && !back) return
+    const next = nextInRing(BACKDROPS, value, e.key)
+    if (!next) return
     e.preventDefault()
-    const i = BACKDROPS.indexOf(value)
-    const next = BACKDROPS[(i + (forward ? 1 : BACKDROPS.length - 1)) % BACKDROPS.length]
     onPick(next)
     e.currentTarget.parentElement
       ?.querySelector<HTMLElement>(`[data-backdrop="${next}"]`)
@@ -97,12 +168,16 @@ const BackdropChoices = ({
 
 // Theme (#70) lands above Backdrop, in the order the spec lists them.
 const AppearanceDock = ({
+  theme,
+  onPickTheme,
   backdrop,
   onPickBackdrop,
   level,
   onStep,
   onClose
 }: {
+  theme: Theme
+  onPickTheme: (next: Theme) => void
   backdrop: Backdrop
   onPickBackdrop: (next: Backdrop) => void
   level: number
@@ -130,6 +205,15 @@ const AppearanceDock = ({
       </button>
     </div>
     <div className="appearance-body">
+      {/* Stacked for the same reason as Backdrop below — four named rows do not
+          sit beside a label in a fixed-width panel. Each row shows the palette
+          it selects, so the choice is legible before it is made. */}
+      <div className="appearance-field appearance-field--stacked">
+        <span className="appearance-label" id="appearance-theme-label">
+          Theme
+        </span>
+        <ThemeChoices value={theme} onPick={onPickTheme} />
+      </div>
       {/* Stacked rather than label-left/control-right: each option carries a
           sentence of trade, and the panel is fixed-width. */}
       <div className="appearance-field appearance-field--stacked">

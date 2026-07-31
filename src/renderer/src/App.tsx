@@ -14,6 +14,7 @@ import AppearanceDock from './components/AppearanceDock'
 import { useChat } from './useChat'
 import { useZoom } from './useZoom'
 import { useBackdrop } from './useBackdrop'
+import { useTheme } from './useTheme'
 
 // Why a workspace switch was refused. The three rejections are the main
 // process's, not the renderer's — it never second-guesses them, it phrases them.
@@ -73,6 +74,10 @@ const App = () => {
   // window whether or not the panel is open, and the mount push has to happen
   // on launch rather than the first time someone opens Appearance.
   const backdrop = useBackdrop()
+  // Mounted at App level for the same reason as the backdrop: the palette is on
+  // the document element whether or not the panel is open, so it has to be
+  // applied on launch rather than the first time someone opens Appearance.
+  const theme = useTheme()
 
   // Read the launch mode once, then track flips the main side broadcasts.
   useEffect(() => {
@@ -298,6 +303,8 @@ const App = () => {
           ) : null}
           {openDock === 'appearance' ? (
             <AppearanceDock
+              theme={theme.theme}
+              onPickTheme={theme.set}
               backdrop={backdrop.backdrop}
               onPickBackdrop={backdrop.set}
               level={zoom.level}

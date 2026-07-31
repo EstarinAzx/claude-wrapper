@@ -85,8 +85,11 @@
 }
 
 /* The selected option is the only mint in the panel, so the state reads at a
-   glance without a tick glyph competing with the label. */
-.appearance-choice[aria-checked='true'] {
+   glance without a tick glyph competing with the label. Two attributes because
+   the panel holds two pick-one controls with different roles: Backdrop is a
+   radiogroup, Theme a listbox — see the comment on ThemeChoices for why. */
+.appearance-choice[aria-checked='true'],
+.appearance-choice[aria-selected='true'] {
   border-color: var(--mint);
   background: var(--mint-wash);
 }
@@ -96,8 +99,31 @@
   color: var(--text);
 }
 
-.appearance-choice[aria-checked='true'] .appearance-choice-name {
+.appearance-choice[aria-checked='true'] .appearance-choice-name,
+.appearance-choice[aria-selected='true'] .appearance-choice-name {
   color: var(--mint);
+}
+
+/* Theme (#70): name left, swatch right, on one line — a palette needs no
+   sentence of explanation because picking it IS the explanation. */
+.appearance-choice--theme {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Painted by the palette it selects. The swatch wears `data-theme`, the same
+   attribute the document element wears, so its own block in themes.css applies
+   here — which is why not one theme colour is repeated in this file. It reads
+   `--color-mint` rather than the `--mint` alias deliberately: the alias was
+   resolved up at :root and does not re-resolve on the way down. */
+.appearance-swatch {
+  width: 22px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: var(--color-mint);
+  border: 1px solid var(--color-mint-press);
 }
 
 /* The trade, not a tagline: it is the reason to pick the other one. */

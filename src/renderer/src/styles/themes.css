@@ -1,0 +1,153 @@
+/* The four palettes (#70). Imported immediately after tokens.css and before
+   base.css, because THE IMPORT ORDER IS THE CASCADE — a theme block landing
+   before the tokens it overrides is the silent restyle that rule exists to
+   prevent.
+
+   MECHANISM. tokens.css's @theme block compiles into `@layer theme`; these
+   blocks are unlayered, and an unlayered declaration beats a layered one
+   outright, so no specificity gymnastics are needed. The short `:root` aliases
+   (`--mint: var(--color-mint)`) are unlayered too, but they resolve their
+   var() against :root's own cascaded value — so when the attribute is on
+   documentElement every alias inherits the override for free and NOT ONE of
+   them needs touching.
+
+   The selector is deliberately `[data-theme=…]` rather than `:root[data-theme=…]`.
+   Selection sets the attribute on documentElement, which matches either way;
+   the bare form additionally lets a NESTED element opt a subtree into a palette,
+   which is how the Appearance panel's four swatches paint themselves in their
+   own accent without a second copy of these values living in appearance.css.
+   A nested opt-in must read `var(--color-mint)` directly — the short alias was
+   already resolved up at :root and does not re-resolve on the way down.
+
+   WHAT A THEME MAY CHANGE. It re-hues; it does not re-design.
+   · Lightness and alpha are FIXED on every key in every block. Fixed lightness
+     keeps every contrast ratio; fixed alpha keeps the seven-step tint ladder.
+     Together they mean a theme cannot break the match to
+     docs/design/frost-mono-reference.png — only re-tint it.
+   · Chroma moves ONLY on --color-mint and --color-mint-press, within 0.05–0.09.
+     It is the one axis carrying "different colour" without touching contrast or
+     the ladder: mint sits at a deliberately quiet 0.07, a hue that reads louder
+     at the same chroma needs less to stay quiet, and one that reads duller needs
+     more to register as an accent at all.
+   · The neutrals move by HUE ANGLE ONLY — their chroma is an order of magnitude
+     below the accent's, and pushing them into its band yields a strongly
+     coloured near-black rather than a tinted one. That is the identity gone.
+   · --color-mint-ink keeps BOTH its lightness and its chroma. It is a glyph
+     colour on a fill, not an accent.
+   · Press is DERIVED from mint per theme, never authored independently: one
+     lightness step down, +0.01 chroma, +2° hue. The relationship is what
+     carries across — author the two separately and a theme ends up with a press
+     state that reads as a different colour rather than a pressed one.
+   · The neutral hue angles hold Frost's offsets from the accent (+10 text,
+     +20 muted, +30 the rest, +40 bubble), so the whole window turns together
+     rather than an accent being stickered onto a mint app.
+   · Dark only. A light theme is not a token swap — it re-derives every
+     translucency and contrast assumption in the app.
+
+   The first two rules are STRUCTURAL, not remembered: tests/theme.test.ts reads
+   this file as text and rejects a block that declares a different key set, a
+   different lightness or alpha, or a moved neutral chroma. Comments are
+   stripped before it parses, so prose in here is safe.
+
+   Nothing else is themed. The danger shades stay red in every palette, the
+   shadows are pure black and theme-neutral by definition, and the markdown
+   syntax colours are semantic rather than brand. The six existing
+   `color-mix(in oklch, var(--mint) N%, transparent)` sites re-hue for free —
+   they read the token these blocks override and resolve at substitution time. */
+
+/* FROST — mint, h180, chroma 0.07. The default, the identity, and the values
+   tokens.css already ships; restated here so every other block has something to
+   be structurally equal TO. */
+[data-theme='frost'] {
+  --color-wash: oklch(0.12 0.008 210 / 0.64);
+  --color-surface: oklch(0.19 0.008 210 / 0.58);
+  --color-bubble: oklch(0.27 0.007 220 / 0.9);
+  --color-border: oklch(0.92 0.01 210 / 0.08);
+  --color-text: oklch(0.94 0.008 190);
+  --color-text-muted: oklch(0.68 0.01 200);
+  --color-text-faint: oklch(0.53 0.01 210);
+  --color-tint-1: oklch(0.92 0.01 210 / 0.05);
+  --color-tint-2: oklch(0.92 0.01 210 / 0.06);
+  --color-tint-3: oklch(0.92 0.01 210 / 0.08);
+  --color-tint-4: oklch(0.92 0.01 210 / 0.12);
+  --color-tint-5: oklch(0.92 0.01 210 / 0.16);
+  --color-tint-6: oklch(0.92 0.01 210 / 0.18);
+  --color-tint-7: oklch(0.92 0.01 210 / 0.2);
+  --color-mint: oklch(0.87 0.07 180);
+  --color-mint-press: oklch(0.8 0.08 182);
+  --color-mint-ink: oklch(0.25 0.02 200);
+  --color-mint-wash: oklch(0.87 0.07 180 / 0.1);
+}
+
+/* EMBER — warm amber, h70, chroma 0.06. Held clear of the orange-red the danger
+   tokens own at h25, and pulled BELOW mint's chroma because a warm hue reads
+   louder at equal chroma; 0.07 here would be a highlighter rather than a quiet
+   accent. */
+[data-theme='ember'] {
+  --color-wash: oklch(0.12 0.008 100 / 0.64);
+  --color-surface: oklch(0.19 0.008 100 / 0.58);
+  --color-bubble: oklch(0.27 0.007 110 / 0.9);
+  --color-border: oklch(0.92 0.01 100 / 0.08);
+  --color-text: oklch(0.94 0.008 80);
+  --color-text-muted: oklch(0.68 0.01 90);
+  --color-text-faint: oklch(0.53 0.01 100);
+  --color-tint-1: oklch(0.92 0.01 100 / 0.05);
+  --color-tint-2: oklch(0.92 0.01 100 / 0.06);
+  --color-tint-3: oklch(0.92 0.01 100 / 0.08);
+  --color-tint-4: oklch(0.92 0.01 100 / 0.12);
+  --color-tint-5: oklch(0.92 0.01 100 / 0.16);
+  --color-tint-6: oklch(0.92 0.01 100 / 0.18);
+  --color-tint-7: oklch(0.92 0.01 100 / 0.2);
+  --color-mint: oklch(0.87 0.06 70);
+  --color-mint-press: oklch(0.8 0.07 72);
+  --color-mint-ink: oklch(0.25 0.02 90);
+  --color-mint-wash: oklch(0.87 0.06 70 / 0.1);
+}
+
+/* MOSS — muted green-gold, h130, chroma 0.065. Between Frost's cool mint and
+   Ember's warmth in both hue and loudness, which is what keeps it from reading
+   as either one slightly adjusted. */
+[data-theme='moss'] {
+  --color-wash: oklch(0.12 0.008 160 / 0.64);
+  --color-surface: oklch(0.19 0.008 160 / 0.58);
+  --color-bubble: oklch(0.27 0.007 170 / 0.9);
+  --color-border: oklch(0.92 0.01 160 / 0.08);
+  --color-text: oklch(0.94 0.008 140);
+  --color-text-muted: oklch(0.68 0.01 150);
+  --color-text-faint: oklch(0.53 0.01 160);
+  --color-tint-1: oklch(0.92 0.01 160 / 0.05);
+  --color-tint-2: oklch(0.92 0.01 160 / 0.06);
+  --color-tint-3: oklch(0.92 0.01 160 / 0.08);
+  --color-tint-4: oklch(0.92 0.01 160 / 0.12);
+  --color-tint-5: oklch(0.92 0.01 160 / 0.16);
+  --color-tint-6: oklch(0.92 0.01 160 / 0.18);
+  --color-tint-7: oklch(0.92 0.01 160 / 0.2);
+  --color-mint: oklch(0.87 0.065 130);
+  --color-mint-press: oklch(0.8 0.075 132);
+  --color-mint-ink: oklch(0.25 0.02 150);
+  --color-mint-wash: oklch(0.87 0.065 130 / 0.1);
+}
+
+/* SLATE — cool blue-grey, h240, chroma 0.05. The quietest of the four and the
+   floor of the band, deliberately: this is the "close to no accent at all"
+   option, an app that is almost entirely its neutrals. */
+[data-theme='slate'] {
+  --color-wash: oklch(0.12 0.008 270 / 0.64);
+  --color-surface: oklch(0.19 0.008 270 / 0.58);
+  --color-bubble: oklch(0.27 0.007 280 / 0.9);
+  --color-border: oklch(0.92 0.01 270 / 0.08);
+  --color-text: oklch(0.94 0.008 250);
+  --color-text-muted: oklch(0.68 0.01 260);
+  --color-text-faint: oklch(0.53 0.01 270);
+  --color-tint-1: oklch(0.92 0.01 270 / 0.05);
+  --color-tint-2: oklch(0.92 0.01 270 / 0.06);
+  --color-tint-3: oklch(0.92 0.01 270 / 0.08);
+  --color-tint-4: oklch(0.92 0.01 270 / 0.12);
+  --color-tint-5: oklch(0.92 0.01 270 / 0.16);
+  --color-tint-6: oklch(0.92 0.01 270 / 0.18);
+  --color-tint-7: oklch(0.92 0.01 270 / 0.2);
+  --color-mint: oklch(0.87 0.05 240);
+  --color-mint-press: oklch(0.8 0.06 242);
+  --color-mint-ink: oklch(0.25 0.02 260);
+  --color-mint-wash: oklch(0.87 0.05 240 / 0.1);
+}
