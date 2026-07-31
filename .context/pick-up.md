@@ -7,69 +7,68 @@ tags: [context, pick-up]
 
 # Pick up
 
-Start: read `.context/overview.md` + `active-work.md`.
+Start: read `.context/overview.md` + `active-work.md`. Then read the five ADRs listed below **before touching any ticket** — the spec summarises, the ADRs argue.
 
-## Queue empty
+## The queue is no longer empty
 
-**The `ready-for-agent` queue is empty and nothing is half-done.** No branches open, nothing blocked, nothing stuck `ready-for-human`. The only open issue is the unlabelled umbrella **#1**, which is not a queued ticket.
+**Spec #64 is published and sliced into six tickets. Four are unblocked.** No code was written this leg — the whole leg was the `/preset init` funnel: grill → ADRs → MVD → spec → tickets.
 
-The next effort is a choice: `/preset init` or grill-me → `/hp` → to-spec → to-tickets, or pick from **Deferred** in [[active-work]]. The sharpest new candidate is the **`sdk-cli` noise** described under Open questions — it is the one thing this session knowingly left worse.
+| # | Ticket | Blocked by |
+|---|---|---|
+| **#65** | Retire the stale `gui-45` driver so the batch has a usable gate | — |
+| **#66** | Appearance dock with the zoom control | — |
+| **#67** | Tokenise the two duplicate colour literals | — |
+| **#68** | Delete a session from the rail | — |
+| **#69** | Backdrop control: Acrylic or Mica | #66 |
+| **#70** | Four themes: Frost, Ember, Moss, Slate | #66, #67 |
 
-## What landed this leg
+## Order, and why it is not arbitrary
 
-Four unticketed changes, one commit on main. Three were owner-asked; the fourth is a bug the first one exposed.
+**#65 first.** It is not part of the feature. `gui-45.mjs` is red on `main` today — it asserts the pre-#47 rule that foreign rows are disabled, and #47 deliberately reversed that. While it stays red, "drivers green" is not a usable gate for anything in the batch and every driver run is ambiguous.
 
-1. **The sessions rail scopes to the open project.** `groupSessions` gained an opt-in `scope`, `Sidebar` defaults it to `'project'` (persisted, `sidebar-scope`), chips `This project` / `All projects` sit under the filter, and a scoped-empty project gets its own state with a way out. Scoping runs **before** the 100-row cap.
-2. **Default zoom 1.1 → 1.25**, with the storage key versioned to `zoom-level-v2` — without that the bump is invisible to anyone who has already run the app.
-3. **The composer stopped becoming a lozenge.** `.input-pill` pinned from `--r-pill` to `24px`.
-4. **The app can list its own sessions at all** — the real find, below.
+**Then #68 (delete), ahead of the rest** — not for freshness, but because it is **the only ticket whose scope is not yet known.** It opens with a probe: does Windows hold the transcript's file handle beyond the turn? If it does, the busy gate widens from "the active row while busy" to "the active row, always" — a different feature with a different empty-state story. Do the ticket with an unresolved scope while there is room to react, not at the end of a batch.
 
-Gate: typecheck clean, build clean, **743 tests green across 53 files** (+18 this leg), GUI driver green, every new behaviour mutation-verified.
+Then **#66 → #67 → #69 → #70**.
 
-## The bug worth remembering
+## What the owner asked for, and what they are getting
 
-The owner opened a fresh folder, chatted, and the rail said "No sessions in this project yet". It looked like the new scope filter had eaten the live session. It had not.
+Four things: a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes.
 
-`session-store.ts` passed `includeProgrammatic: false`. The SDK decides "programmatic" from the transcript's `entrypoint` field against `{sdk-cli, sdk-ts, sdk-py}`, and **this app writes `sdk-ts`** — so the wrapper had never once been able to list a conversation it authored. Measured on the owner's store: **560 rows vs 672**, delta exactly 75 `sdk-cli` + 37 `sdk-ts`.
+**One of them cannot be delivered literally, and the tickets say so.** Persistent *acrylic* needs a native FFI dependency that [[2026-07-23-persistent-glass-deferred]] priced and rejected on grounds that have not changed. What ships is **Mica** — native, always-on, no dependency, but wallpaper-tinted rather than blurring. Persistent without being acrylic. **The word "persistent" is banned from the UI copy and the spec title** so nobody later reads "persistent glass shipped" and expects blur-behind that never flips.
 
-Two days invisible, because the unscoped rail was always full of terminal sessions from 37 other projects. **Scoping the rail is what made it legible.** Rationale, the pin argument and the accepted cost: [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]].
+## The two reversals — read these before reviewing anything
 
-The transferable lesson: the first two hypotheses (cwd-less session, not-yet-written file) were both wrong and both would have been "fixed" by weakening the new filter. One probe against the real data source — the SDK, with the flag both ways, on the exact session id from the screenshot — separated them in a minute.
+Both are counter-intuitive, both are already written into the tickets, and both came from a grill that pushed back and turned out to be right.
 
-## Landmines most likely to bite next
+- **Preferences stay in `localStorage`.** The plan opened wanting a main-side store for the backdrop, on the premise that main must know it before the window is constructed. **That premise is false** — `setBackgroundMaterial` is runtime-settable on our Electron (`electron.d.ts:3236`, `^43.2.0`). What is left is a one-frame launch artifact, which does not earn a persistence layer — especially since `useZoom`'s mount effect already ships a *larger* version of the same artifact, for every user, where the backdrop one is opt-in.
+- **The delete call omits `dir`.** Passing it *looks* safer. The SDK's no-`dir` branch **enumerates** project directories; the `dir` branch realpaths and **encodes** one — the operation [[2026-07-28-storage-location-is-an-index-not-an-encoding]] deleted from this codebase, measured failing on **45 of 494** live sessions. Passing `dir` buys a delete button that silently no-ops on ~9% of rows. Omitting it also deletes the "unknown project" branch entirely.
 
-Full ledger in [[active-work]]. The new ones:
+## Landmines this batch will walk into
 
-- **Nothing pins the `includeProgrammatic` argument, on purpose.** `true` is the SDK's default, so an argument pin would fire on a no-op call. `tests/session-store-live.test.ts` pins the behaviour instead — it mocks **nothing** and builds a real store under `CLAUDE_CONFIG_DIR` (which it must save and restore, or later suites in the worker follow it into a deleted temp dir). Setting the flag to `false` reddens that file and only that file; deleting the key reddens nothing, deliberately.
-- **Listing and resolution have different filters.** `resolveSessionDir` reads real directory names with no SDK filter, so a session being resumable is not evidence it is listable.
-- **The session you are in is a clickable row now** — `useChat.openSession` needs its same-id guard or a click re-adopts the live session over a still-being-written transcript.
-- **`--r-pill` on anything that grows is a latent lozenge.** 999px clamps to half the shorter side, so it is invisible at rest and only wrong when tall.
-- **A persisted pref outranks the default it came from.** Bump `zoom-level-v2` again on the next default change.
-- **`sed -i` flips a `src/` file to LF.** Use `Edit` for mutations, or re-normalise. A script importing a project dep must also live under the project tree.
-- **The `@import` order in `styles.css` IS the cascade** — `tokens` → `base` → `shared` first, in that order. Reordering restyles the app with no error and no failing test.
-- **`tests/scrollbar.test.ts` scans comments too** — writing a scrollbar pseudo-element in prose reddens it.
-- **`tests/multiline-composer.test.tsx` slices raw CSS** from `.bubble {` / `.message-input {` / `.input-pill {` to the next `}`. Those selectors stay ungrouped and no comment inside may contain a closing brace.
-- **`src/` is CRLF, `.context/*.md` is LF.** A whole-file `Write` to a stylesheet flips it silently.
-- **Pins are mutation-verified; never fix a red pin by editing its expectation.** The one legitimate shape is a ticket that reverses the contract the pin describes, named and replaced by a **stronger** pin, argued in the ADR before the edit — which is exactly what `session-store.test.ts:81` was.
-- **`gui-45.mjs` is STALE and fails on `main`** (`no foreign row was disabled`). Pre-existing; do not "fix" the app for it.
-- Never hardcode a model name; the app runs the HOST `claude` when PATH has one.
-- Fable-5 refuses turns in sensitive-looking cwds (`Downloads/*`) — keep driver temp cwds away.
+Full ledger in [[active-work]]. The ones specific to these tickets:
+
+- **`themes.css` becomes the THIRD raw-text CSS reader.** Both existing ones have gone red on prose. The theme file will want comments explaining each hue, and a naive property regex counts a commented-out declaration. **Strip comments before parsing.**
+- **The accent is FOUR tokens, not three** — `rails.css:324` paints mint at 10% alpha and CSS cannot alpha a `var()`, so `--color-mint-wash` is required. A three-key expectation greens while a theme silently inherits Frost's wash.
+- **Only `--color-mint` / `--color-mint-press` may move chroma** (0.05–0.09). Neutrals move by hue angle only; `--color-mint-ink` keeps both its lightness and its chroma.
+- **The Appearance panel must have no draft state** — `App.tsx:106` closes the dock on a workspace switch, so a Save button is a data-loss bug.
+- **Join the dock-shell selector groups; do not widen them.** Editing a shared group repaints the sessions rail *and* the agents dock, silently, with a suite that loads no CSS.
+- **Backdrop must not touch any neutral**, or it becomes a second theme axis writing #70's properties.
+- **Two new IPC channels** (backdrop, delete) → the four-mock-sites rule plus `preload/index.d.ts` fires **twice**. Theme and zoom are renderer-only.
+- **A driver screenshot cannot judge the backdrop** — `--disable-gpu` flattens acrylic, so both materials look identical to it. Real window or nothing; same for whether a theme looks good.
+- **A not-found delete is `ok`, not `failed`**, and no outcome is classified by string-matching the SDK's error text.
+- Everything from earlier legs still applies — the `@import` order IS the cascade, pins are mutation-verified and never "fixed" by editing an expectation, `src/` is CRLF while `.context/*.md` is LF, and never hardcode a model name.
 
 ## Baseline
 
-`main` = the styles split (`3223127`) + this leg's commit. **Not pushed.** No open branches. Trust `git log origin/main..main` over any note.
-
-## GUI check
-
-`node .claude/skills/run-desktop/gui-scope-zoom-pill.mjs` covers all three UI changes in one run (rail scope both ways, composer resting vs grown with the radius measured, screenshots). Plus `driver.mjs [--cycle]` for the titlebar pills and `gui-42/47/48/49/51/52/54/55/61/62/63`. All need `npm run build` + `npm i --no-save playwright-core`.
-
-Expect **100 rows / 1 group** scoped in this repo (the cap engages here now) and **16 groups** on All projects. Both numbers moved this leg because of the listing fix.
+`main` = last leg's commit + this leg's `.context` commit. **Pushed.** No open branches. Trust `git log origin/main..main` over any note.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]] — this leg
-- [[2026-07-28-session-metadata-is-the-sdks-job]] — the ADR it reverses one line of
-- [[2026-07-28-the-session-list-is-global-scoping-is-a-render-concern]] — the pin-retirement bar it had to clear
-- [[2026-07-30-the-import-order-is-the-cascade]] · [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]]
-- [[2026-07-30-a-mutation-that-kills-nothing-is-an-answer]] · [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]]
+- [[2026-07-31-a-preference-lives-where-it-is-read]] — #66/#69's storage answer
+- [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] — #66
+- [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] — #69
+- [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] — #70
+- [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — #68
+- [[2026-07-23-persistent-glass-deferred]] — pre-approved the Mica route; still live for the native-dep route
+- [[2026-07-28-storage-location-is-an-index-not-an-encoding]] — why #68 omits `dir`

@@ -1,7 +1,7 @@
 ---
 type: happy-path
 project: claude-wrapper
-updated: 2026-07-27
+updated: 2026-07-31
 tags: [happy-path, mvd]
 ---
 # Happy Paths (MVD)
@@ -120,3 +120,32 @@ flowchart LR
 ```
 
 Assumptions noted, not drawn: accepting inserts text and never sends — the send stays the user's own keystroke; the composer stays single-line, with multiline still deferred.
+
+## Make the window your own (PRD D, Appearance)
+- **Idea:** a third right dock holding the three appearance preferences — theme, backdrop, zoom — each committing the moment it is touched.  **Mode:** ux+beat  **Actor:** the developer, project open, no turn running  **Goal:** re-hue the app, steady the glass, and set a text size that sticks
+- **Updated:** 2026-07-31
+
+```mermaid
+flowchart LR
+  open([Project open, chat visible]) -->|click Appearance · titlebar toggle| dock[Right dock opens, three controls]
+  dock -->|click Ember · data-theme on documentElement| themed[Whole window re-hues, live]
+  themed -->|click Mica · IPC → setBackgroundMaterial| steady[Backdrop stops flattening on blur]
+  steady -->|click + · nextZoom → webContents| sized[Text steps up, readout follows]
+  sized -->|close dock · every value already persisted| done([Reopen the app: all three survive])
+```
+
+Assumptions noted, not drawn: each control commits on change — there is no Save, because the dock closes itself on a workspace switch and a Save button behind a self-closing panel is a data-loss bug; theme and zoom are renderer-only while backdrop is the one value that crosses IPC; Mica is persistent but wallpaper-tinted, so it is not the blur-behind that Acrylic gives.
+
+## Delete a session you're done with (PRD D, delete)
+- **Idea:** a hover-revealed control on the session row that removes the transcript from the store for good.  **Mode:** ux+beat  **Actor:** the developer looking at the sessions rail  **Goal:** get a finished or junk conversation out of the list permanently
+- **Updated:** 2026-07-31
+
+```mermaid
+flowchart LR
+  rail([Sessions rail, rows listed]) -->|hover a row · control fades in| armed[Trash affordance visible]
+  armed -->|click · row arms, one at a time| confirm[Row offers Delete / Cancel]
+  confirm -->|click Delete · deleteSession id, no dir| gone[Transcript and subagent dir removed]
+  gone -->|rail re-lists| settled([Row is gone, rest of the list intact])
+```
+
+Assumptions noted, not drawn: `dir` is deliberately omitted so the SDK enumerates rather than encodes a directory name; deleting the session you are *in* is allowed and drops the pane to a new chat; there is no trash and no undo, which is the whole reason for the second click.
