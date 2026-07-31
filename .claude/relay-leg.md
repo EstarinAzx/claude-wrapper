@@ -11,13 +11,12 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31 after leg 4, spec #64)
+## Current queue (updated 2026-07-31 after leg 5, spec #64)
 
-**Two tickets left, both unblocked.** Spec **#64 — Appearance panel (theme ·
+**One ticket left, and it is unblocked.** Spec **#64 — Appearance panel (theme ·
 backdrop · zoom) and session deletion** is published and sliced. Blocking edges
 are wired as native GitHub issue dependencies and verified via
-`issue_dependencies_summary.blocked_by`; **nothing in the batch is blocked any
-more.**
+`issue_dependencies_summary.blocked_by`; **nothing in the batch is blocked.**
 
 | # | Ticket | Blocked by |
 |---|---|---|
@@ -25,41 +24,44 @@ more.**
 | ~~#68~~ | ~~Delete a session from the rail~~ — **closed `70c904f`** | — |
 | ~~#66~~ | ~~Appearance dock with the zoom control~~ — **closed `a7c0470`** | — |
 | ~~#67~~ | ~~Tokenise the two duplicate colour literals~~ — **closed `e16ace6`** | — |
-| #69 | Backdrop control: Acrylic or Mica | — |
-| #70 | Four themes: Frost, Ember, Moss, Slate | — (released by #67) |
+| ~~#69~~ | ~~Backdrop control: Acrylic or Mica~~ — **closed `add4e5b`** | — |
+| #70 | Four themes: Frost, Ember, Moss, Slate | — |
 
-**Take #69 next.** It is the older of the two and the batch ordering has always
-been #67 → #69 → #70. #70 is equally takeable; nothing sequences them against
-each other now.
+**Take #70 next — it is the last one, and closing it closes spec #64.** After it
+the queue is dry: the next leg's frontier query should return nothing, which is
+the body-signaled stop in step 7.
 
-**#67 amended the theme ADR.** Its `color-mix()` premise was false — six
-existing sites already mix `var(--mint)` with `transparent`, so they **re-hue
-for free**. #70 must not tokenise them, must not expect them in the key set
-(still exactly four accent keys), and must not read them as literals #67
+**#67 amended the theme ADR, in #70's favour.** Its `color-mix()` premise was
+false — six existing sites already mix `var(--mint)` with `transparent`, so they
+**re-hue for free**. #70 must not tokenise them, must not expect them in the key
+set (still exactly four accent keys), and must not read them as literals #67
 missed.
 
 **#71** (`gui-51`'s gutter tolerance) is open and unblocked but outside the
-chain. Its stated premise is now **spent** — it was filed expecting #66 to move
-the default zoom, and #66 did not (still `1.25`; the panel only exposes
-stepping). The ticket still stands on the pre-existing miscalibration to the old
-`1.1` default.
+chain. Its stated premise is **spent** — it was filed expecting #66 to move the
+default zoom, and #66 did not (still `1.25`). It still stands on the
+pre-existing miscalibration to the old `1.1` default.
 
-One decision in this batch is **counter-intuitive and already settled** — do not
-re-derive it, and do not "correct" it mid-leg: preferences stay in renderer
-`localStorage` (the main-side store rested on a premise that is false —
-`setBackgroundMaterial` is runtime-settable). Argued in full in
-`.context/decisions/2026-07-31-a-preference-lives-where-it-is-read.md`. #69 is
-the ticket that consumes it.
+**All three of the batch's counter-intuitive calls are now spent and in code**,
+so there is nothing left to re-derive or "correct" mid-leg: the delete call
+omits `dir`, the two duplicate colour literals are tokenised, and preferences
+stayed in renderer `localStorage`. Two of the five ADRs were amended after a
+probe measured their stated premise false (#68's Windows handle, #70's
+`color-mix()`); a third was amended to record that its premise **held** (#69's
+runtime-settable `setBackgroundMaterial`, confirmed live). **Read an ADR's
+amendment before citing it.**
 
-#68's own counter-intuitive decision (the delete call omitting `dir`) is now
-shipped and pinned in code, and its ADR was **amended** after the probe measured
-its stated premise false — Windows holds no delete-blocking handle on a
-transcript. Read the amendment before citing that ADR for anything.
+Two traps from the shipped panel that #70's control inherits directly:
 
-#66 shipped exactly as its ADR argued, reversing nothing. Its one trap worth
-carrying: `useZoom`'s lazy `useState(readStored)` initialiser is load-bearing,
-and setting that initial state from an effect instead leaves the whole
-`zoom-shortcuts` suite green while the panel reports the wrong number.
+- **The theme picker cannot use `<input>` or `<select>`** — a dock-wide pin
+  asserts the Appearance panel renders neither. #69's `BackdropChoices` is the
+  worked shape: a `Record<Value, Copy>` mapped over the whitelist, which makes
+  "exactly N options" a type constraint rather than a counted assertion.
+- **A preference with both a REPORT and an EFFECT can self-heal in the report
+  while staying broken in the effect.** Both `useZoom` and `useBackdrop` depend
+  on a lazy `useState(readStored)` initialiser; setting that state from an
+  effect instead leaves the display pins green and the real thing wrong. #70's
+  effect is the `data-theme` attribute — pin what crossed the boundary.
 
 The frontier query in step 1 is always the authority; never hand-pick from this
 section if it disagrees with the tracker.
