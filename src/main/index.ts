@@ -151,7 +151,19 @@ const createWindow = (): void => {
     backgroundColor: '#00000000',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      // #74: the renderer is the process most exposed to hostile input here —
+      // it renders arbitrary model output through react-markdown and shows tool
+      // results read from arbitrary files. `sandbox: false` is the price of a
+      // preload that needs Node, and this one does not: the BUILT bundle
+      // contains exactly one require, `require("electron")`. Nothing was bought
+      // with it, so nothing is lost by dropping it.
+      //
+      // Not a reversal — no ADR ever argued the flag; it was a default that was
+      // never revisited. The IPC trust boundary (`isTrustedIpc`) is unchanged;
+      // this moves the PROCESS boundary, not that one. gui-74 measures the
+      // effect rather than the flag, and it must launch without
+      // `--no-sandbox` — that command line would erase what it asserts.
+      sandbox: true
     }
   })
 
