@@ -7,13 +7,35 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 1: #72 landed, the tracker is empty again**_
-_At commit: `9fecc10` on `main`, pushed. Gate: typecheck clean, build clean, **823 tests green across 56 files** (unchanged — #72 touched only CSS and added a driver)_
-_Driver check: `gui-72` **PASS** (and red-verified on the unfixed tree first, then mutation-verified). No standing red anywhere in the set._
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **`/preset vibe init` on "improve the wrapper and make it production ready": queue refilled with #73 + #74**_
+_At commit: `56b11b4` on `main`, pushed. Gate measured green before filing: typecheck clean, **823 tests green across 56 files**_
+_Driver check: no standing red anywhere in the set — every driver is green, so any red is a real regression._
 
 ## Current focus
 
-**Nothing is open.** `gh issue list --state open` returns `[]`. #72 landed as `9fecc10` and closed; spec #64 is delivered and closed; #71 and now #72 closed standalone after it.
+**Two tickets open, both `ready-for-agent`, no blocking edge between them.** A relay
+chain is draining them.
+
+- **#73 — recovering from a terminal stream death discards the conversation.**
+  `chooseWorkspace` passes `resumeId: null`, so the recovery the app's own error copy
+  instructs starts a fresh SDK session and empties the pane — the exact consequence
+  [[2026-07-23-engine-terminal-on-stream-death]] cited when it rejected auto-restart.
+  The fix stays user-initiated, so the ADR is not reversed, and that ADR pre-costs it
+  under Reversibility. **AC1 is blocking:** prove a session is resumable after an
+  *abnormal* stream death before building on it.
+- **#74 — run the renderer sandboxed.** `sandbox: false` buys nothing: the built
+  preload requires only `electron`. No ADR ever argued the flag. The work is proving
+  nothing broke, and it needs a driver because vitest cannot observe `sandbox`.
+
+**Three hypotheses were probed and killed** rather than filed — see [[pick-up]]'s
+landmines: main-process crash handlers (unhandled rejections are non-fatal on
+Electron 43), silent `catch` swallows (all deliberate and commented), and
+`void watchSession` (already guarded). A window-bounds ticket was killed by
+[[2026-07-31-a-preference-lives-where-it-is-read]], which forbids a main-side store
+in those words.
+
+**Previously:** #72 landed as `9fecc10` and closed; spec #64 is delivered and closed;
+#71 and #72 closed standalone after it.
 
 **#72 — the session title truncates instead of overlapping.** CSS only, six declarations, no JSX / class name / aria-label. `.titlebar-center` went from `position: absolute; left: 50%; translateX(-50%)` to `flex: 1; min-width: 0; display: flex; justify-content: center` (keeping `pointer-events: none`), and `.session-title` gained `overflow: hidden; text-overflow: ellipsis; min-width: 0`. See [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]].
 
@@ -46,12 +68,11 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** nothing. No open branches. `main` = `9fecc10` + this leg's `.context` commit.
-- **Queue (`ready-for-agent`):** **empty.** The tracker has zero open issues.
-- **Parked for the owner (4, all reversible):** Tailwind's fate · which titlebar buttons leave · whether the three dock toggles collapse · **#72's centring trade-off, now shipped rather than hypothetical** (the title sits ~15css off true centre). Full entries with the default taken and the alternative in `.claude/vibe.md` under `## Needs you`.
-- **Landed this leg:** #72 as `9fecc10` — CSS only, plus the new `gui-72.mjs`. No JSX, no class name, no aria-label, no test expectation edited.
+- **In flight:** a relay chain draining #73 and #74. No open branches yet. `main` = `56b11b4` + this run's `.context` commit.
+- **Queue (`ready-for-agent`):** **#73** and **#74**. No blocking edge — either order works.
+- **Parked for the owner (7, all reversible):** Tailwind's fate · which titlebar buttons leave · whether the three dock toggles collapse · #72's centring trade-off · **whether the window should remember its geometry** · **which daily-driver polish item comes next** · **whether a renderer error boundary is wanted**. Full entries with the default taken and the alternative in `.claude/vibe.md` under `## Needs you`. **A leg may not decide any of them.**
+- **Landed this run:** no code. Two tickets filed after four hypotheses were probed against the real tree and three were killed.
 - **Blocked:** nothing.
-- **Open:** nothing.
 
 ## Pick up here
 

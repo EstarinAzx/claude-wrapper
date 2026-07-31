@@ -9,69 +9,108 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Chain closed — queue empty
+## Queue refilled — two tickets, both `ready-for-agent`
 
-**Relay leg 2 (2026-07-31) picked nothing and stopped the chain.** It ran the
-frontier query rather than trusting this file, and confirmed the tracker is
-genuinely empty: `gh issue list --state open --limit 100` → nothing, `gh pr list
---state open` → nothing. **No leftovers** — nothing stuck `ready-for-human`,
-nothing blocked, no `ticket/*` branch surviving. Working tree clean,
-`git log origin/main..main` empty.
+A `/preset vibe init` run on **"improve the wrapper and make it production ready"**
+filed **#73** and **#74** and fired a fresh relay chain over them. Trust the
+frontier query (`gh issue list --state open`) over this prose — that is the
+standing lesson of the last chain.
 
-That is the designed end of a spec-batch drainer, not a failure. Leg 1's #72 was
-the last unit of work; the detail below is leg 1's and is still the live state.
+**Take the lowest-numbered unblocked ticket. There is no blocking edge between
+them** — they touch different processes and different files, so either order works.
 
-## What the last leg landed
+### #73 — recovering from a terminal stream death discards the conversation
 
-**#72 closed — `9fecc10`. CSS only: six declarations in `src/renderer/src/styles/titlebar.css`, plus a new `gui-72.mjs`.** No JSX, no class name, no aria-label, no test expectation edited.
+`chooseWorkspace` calls `switchWorkspace(null, choice.cwd)` with `resumeId`
+hardcoded `null`, so the recovery the app's own error copy instructs
+("Pick the folder again to restart") starts a fresh SDK session and empties the
+pane. **That is the exact consequence `2026-07-23-engine-terminal-on-stream-death`
+invoked as its reason for rejecting auto-restart** — so there is no
+conversation-preserving way out of `terminalError` today, on a state reachable by
+routine auth expiry, a network drop, or the CLI crashing.
 
-`.titlebar-center` was `position: absolute; left: 50%; translateX(-50%)` — out of flow, bounded by nothing — and `.session-title` was an inline span with `nowrap` and no `overflow` / `text-overflow`, which are **inert on an inline box anyway**. So the title grew symmetrically from centre and slid under the pills and the dock buttons. It is now `flex: 1; min-width: 0; display: flex; justify-content: center` (keeping `pointer-events: none`), and the span carries `overflow: hidden; text-overflow: ellipsis; min-width: 0`.
+The fix stays **user-initiated**, so the ADR is not reversed, and the ADR
+pre-costs it under Reversibility ("capture `session_id` and rebuild with `resume`
+… the terminal flag is one variable"). The machinery already exists:
+`App.switchWorkspace(id, target)` with a non-null `id` already gives
+`setResume(id)` + `adoptSession(id)`.
 
-Measured with `getBoundingClientRect` against a real 60-character workspace folder, before → after:
+**#73's AC1 is BLOCKING and comes first:** nothing measured says a session is
+resumable after an *abnormal* stream death. Prove it before building on it; if it
+falsifies, degrade to an honest restart and amend the ADR (#68 is the precedent —
+its probe falsified its premise and "The scope did not widen"). **Do not skip
+this to get to the code.**
 
-| content px | page css | before | after | slot after |
-|---|---|---|---|---|
-| 1600 | 1280 | 456.5..823.5 | 478.5..845.5 | 275..1049 |
-| 1280 | 1024 | 328.5..695.5 | 350.5..717.5 | 275..793 |
-| 1024 | 819 | **226.1..593.1** (neighbours at 275 / 588.2) | 275..588.2 | 275..588.2 |
-| 860 | 688 | **160.5..527.5** (neighbours at 275 / 457) | 275..457 | 275..457 |
+The other real problem inside #73: **the renderer cannot currently tell a terminal
+error from a per-turn one** — `mapStreamError` and `mapResultError` both arrive as
+`{ type: 'error' }`. The control must not attach to the per-turn ones, which are
+already recoverable. That distinction belongs in main, where it is already known.
 
-Before, the title's rect was a **constant 366.9css at every width** — an out-of-flow box shrinks for nothing. After, it shrinks to the slot and ellipsises (`client 182 / scroll 367` at 688css) while a 60-char name still renders whole at 1280css and 1024css.
+### #74 — run the renderer sandboxed
 
-`gui-72` was shown **red on the unfixed tree first** (#65's rule) and is mutation-verified: deleting `overflow: hidden` reddens it via the computed-style assertion, not the geometry one — the box stays the right size and the ink escapes it.
+`sandbox: false` at `src/main/index.ts:135` buys nothing: the preload imports only
+`contextBridge`/`ipcRenderer` plus type-only imports, and the **built** bundle
+`out/preload/index.js` contains exactly one require, `require("electron")`.
+Verified across every `.md` in the repo that **no ADR or note ever argued the
+flag** — it is an unrevisited default, not a decision to overturn.
 
-Gate green — typecheck, build, **823 tests across 56 files** (unchanged; no source outside CSS touched).
-
-## Next ticket
-
-**None. The queue is empty** — re-verified by leg 2, see above. The relay chain
-is stopped (`stop: true` in `.claude/relay/relay-leg.md`); nothing is running
-and no leg is scheduled.
-
-If the owner brings a new want: `/preset init` → `/hp` MVD → `to-spec` → `to-tickets`, then a fresh `/relay N=1 read and follow .claude/relay-leg.md` over the batch.
-
-**The longest-waiting open question is now Tailwind's fate, and it is unblocked.** #72 was the last natural test of the utilities premise and shipped without a single utility class. It is one of the four calls parked for the owner in `.claude/vibe.md` under `## Needs you` — **do not decide it, or the other three, from a leg.** The fourth (#72's centring trade-off) is now *shipped* rather than hypothetical: the title sits ~15css off true centre, visible in a real window, and reversing it is a two-line revert plus the magic number the ticket rejected.
+The flag is one line; the work is proving nothing broke. **A vitest suite cannot
+observe `sandbox`**, so the evidence must be a driver that establishes the state
+it asserts, is shown red first, is mutation-verified by flipping the flag back,
+and completes a **real turn** through the bridge — a window that merely opens does
+not prove the bridge survived.
 
 ## Landmines
 
-Full ledger in [[active-work]]. The ones #72 added:
+Full ledger in [[active-work]] — it is long and it is load-bearing. The ones this
+run measured, which are new:
 
-- **`.titlebar-center` must stay IN FLOW.** The span's `display` is never authored — it is blockified by being a flex item, and that is the only reason `overflow` / `text-overflow` apply at all. Moving the truncation onto the span and restoring the absolute centre looks equivalent and silently does nothing.
-- **`pointer-events: none` on that slot is load-bearing**, not decoration. The slot now spans the middle of the titlebar in flow; dropping it hands a wide strip of the drag region to a non-interactive `<div>`.
-- **`.session-title` stays out of `shared.css`'s 13-selector truncation triad, deliberately.** Its rule lives in `titlebar.css`. Widening the shared group repaints the sessions rail and the agents dock against a suite that loads no CSS.
-- **When the defect is what gets PAINTED, at least one assertion must read computed style.** #72's mutation left every rect assertion green while the text painted straight out of its box.
-- **`gui-72`'s temp-dir cleanup is best-effort and runs after `app.close()`** — the engine holds the fixture as its cwd, so an EBUSY there is ordinary and must never decide the verdict.
+- **Unhandled promise rejections in main do NOT crash this app.** Probed on
+  Electron 43 / Node 24: `--unhandled-rejections=warn` is in force, so a raw
+  `Promise.reject` warns and the process survives. `shell.openExternal` on an
+  unregistered scheme does not even reject. **Do not file or "fix" a crash-handler
+  ticket on the opposite assumption** — five `void`-ed promises in main are fine.
+- **`void watchSession(...)` is deliberate and already guarded** (`try { … } catch
+  { handle = null }`), and its comment names the bare-`void` call site. Its stated
+  reason ("an escaping rejection would take the process down") is the thing the
+  probe above falsified, but the guard makes it moot. Not a defect.
+- **A main-side preference store is forbidden in those words** —
+  `2026-07-31-a-preference-lives-where-it-is-read` says "No preferences file, no
+  main-side store", and the reason is that a second store makes every later
+  preference open with a store-selection argument. Adding one is a **reversal**
+  that must say so out loud, not a gap-fill.
+- **Every `catch` in `src/` is deliberate and carries a comment naming its
+  contract.** There is no silent-swallow cleanup to do.
 
-Still true from earlier legs: **there is no expected driver failure any more — every driver is green, so any red is a real regression**; the `@import` order IS the cascade (thirteen lines, `tokens` → `themes` → `base` pinned); pins are mutation-verified and never "fixed" by editing an expectation, and **no pin retirement is authorised**; `tests/scrollbar.test.ts` scans every line containing a scrollbar pseudo-element, comments included, and does not strip them; `gui-51` compares in **device** pixels and never with `offsetWidth - clientWidth`; a screenshot cannot see the right ~20% of the layout, so measure with `getBoundingClientRect`; `--disable-gpu` is fine for geometry but flattens acrylic, so leave `gui-69` / `gui-70` on the GPU; `src/` is CRLF; and never hardcode a model name.
+Still true from earlier legs: **there is no expected driver failure — every driver
+is green, so any red is a real regression**; a driver must ESTABLISH the state it
+asserts and be shown red before it is believed; **pins are mutation-verified and
+never "fixed" by editing an expectation, and no pin retirement is authorised**; a
+failure-path test must assert the **emptiness** of the rejection path and the call
+ORDER, because a result-only test passes while the bug ships; `tests/scrollbar.test.ts`
+scans every line containing a scrollbar pseudo-element, comments included; `gui-51`
+compares in **device** pixels; a screenshot cannot see the right ~20% of the layout,
+so measure with `getBoundingClientRect`; `--disable-gpu` flattens acrylic, so leave
+`gui-69` / `gui-70` on the GPU; `.titlebar-center` must stay IN FLOW; `src/` is CRLF;
+and never hardcode a model name.
 
 ## Baseline
 
-`main` = `9fecc10` (#72) → `3a7e36e` (leg 1 handoff) → this leg's close-out
-`.context` commit, pushed. No open branches —
-`ticket/72-titlebar-title-truncation` was squash-merged and deleted. Trust
-`git log origin/main..main` over any note.
+`main` = `56b11b4` + this run's `.context` commit, pushed. No open branches.
+Gate measured green before anything was filed: typecheck clean, **823 tests across
+56 files**.
+
+## Do not decide these
+
+**Seven owner calls are parked in `.claude/vibe.md` under `## Needs you`** — four
+carried from the titlebar run (Tailwind's fate, which titlebar buttons leave,
+whether the dock toggles collapse, #72's centring trade-off) and three new
+(whether the window should remember its geometry, which daily-driver polish item
+comes next, whether a renderer error boundary is wanted). All seven are reversible
+and all seven have a default already taken. **A leg may not decide them.**
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]] — #72's ADR
+- `.claude/vibe.md` — this run's full record: 4 hypotheses probed, 3 killed
+- `.claude/vibe-2026-07-31-titlebar.md` — the previous run, archived
