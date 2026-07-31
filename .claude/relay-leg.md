@@ -11,19 +11,13 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31 by a vibe run — SIX tickets: #75–#80)
+## Current queue (filed 2026-07-31 by a vibe run as #75–#80 — FOUR left: #77–#80)
 
 Take the lowest-numbered open, unblocked `ready-for-agent` ticket. **#79 is
 blocked by #78** and must stay so.
 
-- **#75 — turn-end notification + taskbar flash when the window is unfocused.**
-  Needs no new IPC channel: main already holds the event stream and the window in
-  `chat:send`. `turn-aborted` must stay **silent** — that is an asserted
-  behaviour. Windows swallows a toast with no `setAppUserModelId`, which is why
-  the far-side driver assertion exists.
-- **#76 — `gui-48` prints `SKIPPED the busy refusal` unconditionally**, forever,
-  on every run. Its stated reason ("needs a real streaming turn") expired when
-  `gui-73` shipped, which drives one and kills it mid-flight.
+**Delivered out of this batch: #75 (`9905e1d`) and #76 (`c9114a5`).**
+
 - **#77 — `gui-51` prints four `NOT DRIVEN` lines** for surfaces it names but
   never drives into overflow. **Do not widen the gutter budgets** to fit a newly
   measured surface; a failure there is a finding.
@@ -39,6 +33,16 @@ blocked by #78** and must stay so.
 Everything before this batch is delivered and closed: spec #64 (#65 `f0dfc68` ·
 #68 `70c904f` · #66 `a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4`),
 then #71 `b6e8911`, #72 `9fecc10`, #73 `6b4a831` and #74 `07544e8` standalone.
+
+**#76 is #77's direct precedent — read its closing comment before starting.**
+Same shape (a driver printing a standing hole above a `PASS`), and it produced a
+rule that transfers: **destruction is quiet**, so an assertion phrased as an
+absence can measure nothing. Weakening the guard under test left "the turn
+completed" and "no error appeared" both green, because the failure mode clears
+the pane; only measuring the protected thing *continuing* discriminated. Assert
+what went on living, not what failed to appear. It also found that **`gui-75` is
+focus-dependent and red inside a long batch** — re-run it alone before believing
+that red.
 
 **Run the frontier query anyway — do not trust this paragraph.** Leg 5 wrote
 that closing #70 would empty the queue and was wrong: #71 was `ready-for-agent`
