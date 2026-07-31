@@ -159,12 +159,13 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#77 is the
-  frontier**, with #78 / #80 unblocked behind it and **#79 blocked by
-  #78**; #76 landed as `c9114a5`; no expected driver failure anywhere in the
+- `.context/pick-up.md` — current frontier + landmines (currently: **#78 is the
+  frontier**, with #80 unblocked behind it and **#79 blocked by
+  #78**; #77 landed as `88c1e3f`; no expected driver failure anywhere in the
   set, all 19 assertion drivers green plus the observational
-  `gui-scope-zoom-pill` — though `gui-75` is focus-dependent and unreliable
-  inside a long batch, see `active-work.md`'s Known issues)
+  `gui-scope-zoom-pill` — though `gui-75` is focus-dependent and has now gone
+  red in two consecutive batch runs while passing solo both times, see
+  `active-work.md`'s Known issues)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -182,12 +183,13 @@ tags: [context, overview]
   binding it exposed) and **#74 (`07544e8`, the renderer runs sandboxed) closed**; **#75
   (`9905e1d`, a turn ending while nobody is looking announces itself) closed**;
   **#76 (`c9114a5`, `gui-48` drives the busy refusal instead of printing
-  `SKIPPED`) closed**;
+  `SKIPPED`) closed**; **#77 (`88c1e3f`, `gui-51` drives every surface it names
+  into overflow) closed**;
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **Four open** — #77, #78 and #80
+  #20 hold the earlier history. **Three open** — #78 and #80
   `ready-for-agent` and unblocked, #79 `ready-for-agent` but **blocked by #78**.
   Run the frontier query rather than trusting this line
 

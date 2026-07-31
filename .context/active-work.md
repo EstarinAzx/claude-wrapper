@@ -7,22 +7,22 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 2 landed #76; four tickets left in the batch**_
-_At commit: `c9114a5` on `main`, pushed. Gate green: typecheck clean, **864 tests across 58 files** (unchanged — #76 touched no `src/`), build ok_
-_Driver check: all **19** assertion drivers re-run this leg and green, plus the observational `gui-scope-zoom-pill` (which prints readings and no verdict, by design — that is not a failure). `gui-75` was red **in the batch run** on a premise failure (focus theft) and green re-run alone — see Known issues. No standing red anywhere, so any red is a real regression._
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 3 landed #77; three tickets left in the batch**_
+_At commit: `88c1e3f` on `main`, pushed. Gate green: typecheck clean, **864 tests across 58 files** (unchanged — #77 touched no `src/`), build ok_
+_Driver check: all **19** assertion drivers re-run this leg and green, plus the observational `gui-scope-zoom-pill` (which prints readings and no verdict, by design — that is not a failure). `gui-75` was red **in the batch run** again, on the same premise failure (`could not drive: the window would not take focus`) and green re-run alone (`focusedAtEnd: true`) — **second consecutive leg**, so treat it as the driver's known character, not a regression; see Known issues. No standing red anywhere, so any other red is a real regression._
 
 ## Current focus
 
-**Four tickets open — #77 through #80 — from the `/preset vibe` run of
+**Three tickets open — #78, #79, #80 — from the `/preset vibe` run of
 2026-07-31 under an explicit owner autonomy grant.** A relay chain is draining
-them one per leg. **#76 landed as `c9114a5` and closed.**
+them one per leg. **#77 landed as `88c1e3f` and closed.**
 
 | # | Ticket | Note |
 |---|---|---|
 | ~~#75~~ | ~~Turn-end notification + taskbar flash when unfocused~~ | `9905e1d` |
 | ~~#76~~ | ~~`gui-48`: drive the busy refusal instead of printing `SKIPPED`~~ | `c9114a5` |
-| #77 | `gui-51`: drive every named surface into overflow | **frontier**; kept a separate leg from #76 on purpose |
-| #78 | Measure the launch artifact; gate `win.show()` only if objectionable | measurement-first, per the ADR's own "Build it only if measured" |
+| ~~#77~~ | ~~`gui-51`: drive every named surface into overflow~~ | `88c1e3f` |
+| #78 | Measure the launch artifact; gate `win.show()` only if objectionable | **frontier**; measurement-first, per the ADR's own "Build it only if measured" |
 | #79 | The window remembers its size and position | **blocked by #78** (`blocked_by: 1`, re-verified live this leg) — structural, see below |
 | #80 | Type-while-busy composer with a queued send | biggest and riskiest; filed last deliberately |
 
@@ -49,6 +49,44 @@ decision still carries a warrant or is marked as a chosen design.
   [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] **affirmatively
   rejects** putting an engine-rebuilding control on the per-turn path. The record
   supplies neither a definition nor a measured defect for it.
+
+**#77 landed, and its finding is about the ORDER of a driver's setup.** `gui-51`
+now drives all seven surfaces it names into overflow — it seeds its own store
+(24 sessions, one of them 30 turns), opens the long session for `.chat`, types
+20 lines past the composer's 8-line ceiling, types `/` for the popover and opens
+the Commands dock. The four `NOT DRIVEN` notes are gone and so is the state they
+described: a surface is **measured or the run FAILS**. No `src/` change.
+
+**The first working version measured in screen order and came back with a 1-row
+model picker and two command surfaces that never mounted** — which reads exactly
+like a CLI answering nothing. The CLI was fine: **opening a past session had
+closed the engine.** `openSession` calls `targetSession`, which closes the query
+so the next send rebuilds one pointed at the resumed transcript, and from that
+moment `listModels()` and `listCommands()` both answer `[]` **by contract**. So
+every CLI-sourced surface (`.model-menu`, `.command-popover`, `.command-list`)
+is measured **before** that boundary now, with the reason stated at it — nothing
+throws, two lists just go quiet.
+
+**Order setup steps by what each one takes away, not by what it needs.** A step
+that only reads can go anywhere; a step that closes an engine, switches a
+workspace or clears a pane is a boundary.
+
+**What hid it: an empty list beside a static row looks populated.** The picker
+always renders one row (the "default" pick) before the CLI's list, so an empty
+fetch renders as a plausible one-item menu — present, not overflowing. Reason
+about what the list was supposed to *add*, never `querySelectorAll(...).length`.
+
+**`.session-groups` was passing by inheritance** — it overflowed only because
+this machine's store holds ~490 sessions, and on a fresh machine the same line
+would have gone quiet. Seeded like the rest now. Converting a note into a
+failure is what turns establish-vs-inherit from pedantry into a red run.
+
+Mutation: `::-webkit-scrollbar` `width: 10px → 16px` reddens **all seven** at
+20dev against 12.5 expected, four of those rows having not existed before.
+Reverted; `git diff -- src/` empty, built CSS hash back to `index-yb3vXtUj.css`.
+Budgets and `GUTTER_FN` byte-identical, verified by diff.
+
+See [[2026-07-31-a-drivers-own-setup-can-revoke-what-it-measures]].
 
 **#76 landed, and it is a driver-only ticket whose finding is about assertions
 rather than about the app.** `gui-48` printed `SKIPPED the busy refusal (needs a
@@ -190,27 +228,32 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** nothing. `main` = `c9114a5` + this leg's `.context` commits, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **#77, #78, #80** unblocked; **#79** blocked by #78 (`blocked_by: 1`, re-verified live this leg). Frontier = **#77**.
-- **Landed this leg:** **#76** (`c9114a5`) — `gui-48` drives the busy refusal instead of printing `SKIPPED` forever; no `src/` change, and the mutation showed two of its three survival assertions were vacuous.
+- **In flight:** nothing. `main` = `88c1e3f` + this leg's `.context` commits, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **#78, #80** unblocked; **#79** blocked by #78 (`blocked_by: 1`, re-verified live this leg). Frontier = **#78**.
+- **Landed this leg:** **#77** (`88c1e3f`) — `gui-51` drives every surface it names into overflow; no `src/` change, and the finding is that the driver's own setup order was revoking the lists it was about to measure.
 - **Parked for the owner: NONE — all seven resolved** under the 2026-07-31 autonomy grant, with reasons in `.claude/vibe.md` under `## Decisions`. Outcomes: Tailwind **not dropped, and the adopt-utilities question deliberately left OPEN** (the record says asking it "is the honest one to ask", so closing it was the one move it argues against) · titlebar control count **unchanged** and #72's centring **stands** · dock toggles **do not collapse** · window geometry **yes, as #79** · "which polish item next" **answered by this batch's ordering** · renderer error boundary **not built** (absence real, reachability unproven — filing it would be inventing a defect).
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**The frontier is #77** — drive every surface `gui-51` names into overflow, so
-its four `NOT DRIVEN` lines stop being reachable. Run the frontier query anyway;
-this line goes stale the moment the owner files something, and that is this
-project's standing lesson: a leg once wrote that closing #70 would empty the
-queue and was wrong, because #71 had been unblocked the whole time.
+**The frontier is #78** — measure the launch artifact, and gate `win.show()`
+**only if** it is objectionable. Run the frontier query anyway; this line goes
+stale the moment the owner files something, and that is this project's standing
+lesson: a leg once wrote that closing #70 would empty the queue and was wrong,
+because #71 had been unblocked the whole time.
 
-**#76 is the immediately relevant precedent for #77** and it is worth reading
-its closing comment first — same shape (a driver printing a standing hole), and
-it produced one rule that transfers directly: **do not widen a budget to fit a
-newly measured surface**, which #77's own body already states, and **assert the
-protected thing continuing rather than the symptom being absent**.
+**#78 is a measurement ticket like #71 was: AC1 is the measurement, and the fix
+is conditional on it**, because the ADR says "Build it only if measured".
+Motivate on the **zoom** reflow — universal, every launch — not the backdrop
+flash, which is opt-in; the ADR ranks them and calls the other way round
+"backwards". If the artifact is not objectionable, saying so with numbers *is*
+the delivery.
 
-A relay chain is draining #77 → #78 → #79 → #80, one ticket per leg.
+**#79 must not use a main-side store**, and its argument for one was already
+tested and killed — [[2026-07-31-a-preference-lives-where-it-is-read]] names "a
+small main-side store for *the main-process ones*" verbatim and rejects it.
+
+A relay chain is draining #78 → #79 → #80, one ticket per leg.
 **#79 is blocked by #78 and must stay that way** — its only ADR-compatible
 implementation is built on the readiness gate #78 may produce, and the record
 binds them in a single clause.
@@ -240,6 +283,9 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Recent context
 
+- **A driver's own setup can revoke the capability it is about to measure — #77 is the case that found it.** `openSession` → `targetSession` closes the engine, so `listModels()` / `listCommands()` answer `[]` **by contract** afterwards. Measured in screen order, `gui-51` read a 1-row model picker and two command surfaces that never mounted, which is indistinguishable from a dead CLI. **Order setup steps by what each one takes away, not by what it needs** — a step that only reads can go anywhere, a step that closes an engine or switches a workspace is a boundary, and everything depending on the pre-boundary capability goes before it.
+- **An empty list rendered beside a static row looks populated.** The model picker always renders the "default" pick before whatever the CLI offers, so an empty fetch reads as a plausible one-item menu rather than as a failure. Reason about what the list was supposed to **add**, never about `querySelectorAll(...).length`. Same family as the vacuous-absence trap below: both are states where the broken reading is a legal-looking one.
+- **A surface that passes only on the machine that wrote it is inherited, not established.** `.session-groups` never printed `NOT DRIVEN` purely because this developer's store holds ~490 sessions. That was invisible while the alternative was a quiet note; it becomes a red run the moment the note is converted into a failure, which is the argument for converting it.
 - **Destruction is quiet, so an assertion phrased as an absence can measure nothing — #76 is the case that found it.** Weakening the `busy` guard so a workspace switch tore down a live turn left `gui-48`'s "the turn completed" and "no new `.msg-error`" both **green**: a switch that should have been refused clears the pane and rebuilds the engine, and *finished promptly with nothing to complain about* is exactly what the wreckage looks like. Only growth in the protected thing (+272 chars green, 0 red) told them apart. **When a guard protects something, assert the protected thing went on living — not that no symptom appeared.** This is the mutation reflex with a sharper edge: the code was alive and the *assertion* was dead, because the failure mode it was written against produces silence rather than noise.
 - **A vacuous assertion is better kept-and-labelled than deleted.** #76's two survivors guard a real, different regression (a refusal that hangs the turn or errors it out); deleting them for failing *this* mutation would trade a labelled gap for an unlabelled one. The measurement sits in the source beside them, so nobody reads them as covering the branch they do not.
 - **A skip's stated reason has a shelf life, and nobody re-reads it.** `gui-48`'s `SKIPPED (needs a real streaming turn)` was true when written and false from the moment `gui-73` shipped a driver that runs a real turn *and* kills the CLI under it. It then printed for months above a `PASS`. **Re-check the reason, not just the line** — and the same question is owed to `gui-51`'s four `NOT DRIVEN` lines, which is #77.
@@ -285,6 +331,33 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
+
+**From #77 — true of `gui-51` and of any driver that both changes app state and
+reads a CLI-sourced list:**
+
+- **Opening a past session CLOSES the engine.** `openSession` → `targetSession`,
+  after which `listModels()` and `listCommands()` answer `[]` **by contract**.
+  Any driver that needs the model picker, the slash-command popover or the
+  Commands dock must reach them **before** it opens a session. Nothing throws;
+  the lists just go quiet, and the failure looks like a broken CLI.
+- **`.model-menu` always renders one row (the static "default" pick).** A count
+  of 1 means the fetched list was EMPTY, not that the CLI offers one model.
+  `gui-51` logs it as `N rows incl. the static default` for exactly this reason.
+- **`gui-51` seeds 24 sessions + one 30-turn session into its own store dir**
+  (`~/.claude/projects/gutter51-<uuid8>/`, cleaned in `finish()` and on timeout)
+  and picks a temp workspace, not the repo. Do not "simplify" it back to picking
+  `APP_DIR`: `.session-groups` would then overflow only on a machine with a big
+  store, and under the no-third-state rule that is a FAIL, not a quiet note.
+- **`.message-input` must read `exact: false`, and the driver fails if it does
+  not.** A textarea renders no element children, so the `width:100%` shim reads
+  0 and the coarse fallback takes over. That guard is load-bearing: an exact
+  reading there means the instrument changed under us.
+- **The coarse budget is spent, not spare.** `.message-input` reads 11.25dev
+  against 12.5 expected — **past** the exact budget of 1 and inside the coarse
+  `1 + dpr` = 2.25. Whole-CSS-pixel rounding costs that 1.25dev. Tightening the
+  coarse budget toward the exact one reddens a healthy composer.
+- **`gui-51` must not touch the stylesheet.** `tests/scrollbar.test.ts` scans
+  every line naming a scrollbar pseudo-element, comments included.
 
 **From #76 — true of `gui-48` and of any driver asserting that a guard held:**
 
@@ -500,7 +573,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Known issues / not-our-bug
 
-- **`gui-75` is not reliable inside a long batch run, and its red there is a premise failure rather than a regression.** Measured this leg: in a 19-driver sequential batch it reported `could not drive: the window lost focus during the second turn` with `focusedAtEnd: false`; re-run alone in the foreground it read `focusedAtEnd: true` and **PASS**. Something on the machine steals focus during an unattended batch. It is the only focus-dependent driver in the set, so it is the only one exposed. **Read its FAIL line before believing the red** — `could not drive:` is the driver saying its own setup failed, which #65's rule makes loud on purpose. Same class as the `gui-73` batch red a previous leg diagnosed as a collapsing process tree.
+- **`gui-75` is not reliable inside a long batch run, and its red there is a premise failure rather than a regression. Reproduced on TWO consecutive legs, so this is the driver's character rather than one bad afternoon.** #76's leg: `could not drive: the window lost focus during the second turn`, `focusedAtEnd: false`. #77's leg: `could not drive: the window would not take focus`, same shape. **Both times green re-run alone** (`focusedAtEnd: true`). Something on the machine steals focus during an unattended batch; it is the only focus-dependent driver in the set, so it is the only one exposed. **Read its FAIL line before believing the red** — `could not drive:` is the driver saying its own setup failed, which #65's rule makes loud on purpose. Same class as the `gui-73` batch red a previous leg diagnosed as a collapsing process tree. **A batch that reds only here is a green batch**; re-run it solo before writing anything down.
 - **There is no expected driver failure any more.** `gui-51`'s standing red closed as #71 (`b6e8911`), and `gui-72` joined the set green at `9fecc10`; **every driver in the set is green, and any red is now a real regression.** The old note said "a second signature is a real regression" — that qualifier is gone, and so is the cover it gave.
 - **A capture cannot see the right ~20% of the layout.** The window composites `windowWidth` device px while the page lays out `windowWidth` CSS px at zoom 1.25, so every right-hand dock is clipped out of a screenshot at any window size — re-confirmed by #69's captures, where the Appearance panel is visibly cut. **Measure with `getBoundingClientRect`**; `gui-66` works around it with a presentational-only `setZoom(1)` after every assertion.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
@@ -534,6 +607,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-31-a-drivers-own-setup-can-revoke-what-it-measures]] — **#77, shipped; why the CLI-sourced surfaces are measured before the session is opened, and why `.session-groups` had to be seeded**
 - [[2026-07-31-a-refusal-is-proven-by-the-thing-that-kept-running]] — **#76, shipped; why the skip's reason expired, and why two of three survival assertions measured nothing**
 - [[2026-07-31-an-unwatched-turn-end-is-mains-to-announce]] — **#75, shipped; why main answers it with no channel, why `turn-aborted` is silent, and why `isFocused()` alone is the wrong instrument**
 - [[2026-07-31-the-renderer-is-sandboxed-and-the-driver-must-not-undo-it]] — **#74, shipped; why the flag bought nothing, and why the driver had to drop `--no-sandbox` to prove it**
