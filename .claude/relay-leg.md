@@ -11,19 +11,44 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-30, after #63)
+## Current queue (updated 2026-07-31, spec #64)
 
-**Empty. There is no batch in flight.** Spec #58 was drained across five legs —
-`#59 → #60 → #61 → #62 → #63`, blocking edges wired as native GitHub issue
-dependencies — and the spec closed with its last ticket. Every leg was
-gate-green; nothing was left `ready-for-human` or blocked.
+**Six tickets, four unblocked.** Spec **#64 — Appearance panel (theme ·
+backdrop · zoom) and session deletion** is published and sliced. Blocking edges
+are wired as native GitHub issue dependencies and verified via
+`issue_dependencies_summary.blocked_by`.
 
-A `/relay N=1 read and follow .claude/relay-leg.md` started against this state
-will take the **queue-done path in Firing step 1 on its first firing** and stop
-without doing any work. That is correct behaviour, not a failure: this body
-drains a queue, it does not invent one. Fill the tracker first (to-spec →
-to-tickets, labelling the batch `ready-for-agent` with native blocking edges),
-then start the chain.
+| # | Ticket | Blocked by |
+|---|---|---|
+| #65 | Retire the stale `gui-45` driver so the batch has a usable gate | — |
+| #66 | Appearance dock with the zoom control | — |
+| #67 | Tokenise the two duplicate colour literals | — |
+| #68 | Delete a session from the rail | — |
+| #69 | Backdrop control: Acrylic or Mica | #66 |
+| #70 | Four themes: Frost, Ember, Moss, Slate | #66, #67 |
+
+**Take #65 first**, ahead of the frontier query's default ordering. It is not
+part of the feature: `gui-45.mjs` is red on `main` today (it asserts the pre-#47
+foreign-row-disabled rule that #47 deliberately reversed), and while it stays
+red, "drivers green" is not a usable gate for any other ticket in this batch and
+every driver run is ambiguous.
+
+**Then #68 (delete), ahead of #66/#67** — not for freshness, but because it is
+the only ticket whose **scope is not yet known**. It opens with a probe of
+Windows open-handle behaviour against a real store; if the handle is held beyond
+the turn, the busy gate widens from "the active row while busy" to "the active
+row, always", which is a different feature with a different empty-state story.
+Do the ticket with an unresolved scope while there is room to react.
+
+Then #66 → #67 → #69 → #70.
+
+Two decisions in this batch are **counter-intuitive and already settled** — do
+not re-derive them, and do not "correct" them mid-leg. Preferences stay in
+renderer `localStorage` (the main-side store rested on a premise that is false:
+`setBackgroundMaterial` is runtime-settable). The delete call **omits its `dir`
+argument** (passing it opts into the SDK's realpath→encode branch, measured
+failing on 45 of 494 sessions). Both are argued in full in
+`.context/decisions/2026-07-31-*`.
 
 The frontier query in step 1 is always the authority; never hand-pick from this
 section if it disagrees with the tracker.
