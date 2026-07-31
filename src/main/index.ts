@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Notification, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Notification, screen, shell } from 'electron'
 import { basename, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { readFile, stat } from 'node:fs/promises'
@@ -21,6 +21,7 @@ import {
 import { resolveHostCli, toCliOptions } from './cli-path'
 import { clampZoom } from '../shared/zoom'
 import { normalizeBackdrop } from '../shared/backdrop'
+import { clampBounds, isBounds } from '../shared/window-bounds'
 import { normalizeSendPayload } from '../shared/attachment-types'
 import {
   MAX_IMAGE_BYTES,
@@ -169,6 +170,24 @@ const isTrustedIpc = (
     rendererUrl
   )
 
+// #79's half of the show gate, and the reason it is a module-level `let`: this
+// app has exactly ONE window (`createWindow` is called once, on ready), so a
+// map keyed by window would be ceremony around a single slot. The `bounds:set`
+// handler below calls this to say "the renderer has spoken"; `createWindow`
+// owns what that means.
+let releaseShowGate: (() => void) | null = null
+
+// How long the window waits for the renderer's bounds before showing anyway.
+// The fallback is what stops a renderer that never mounts — a crash, a blank
+// page — from leaving the user with no window at all. Measured (gui-79): the
+// push lands 300-400ms after construction, so this is roughly 4x headroom.
+const BOUNDS_GATE_TIMEOUT_MS = 1500
+
+// Long enough that a drag reports once when it settles rather than on every
+// pixel, short enough that closing the window straight after moving it still
+// stores the new position.
+const BOUNDS_REPORT_DEBOUNCE_MS = 250
+
 const createWindow = (): void => {
   const win = new BrowserWindow({
     width: 1100,
@@ -197,7 +216,60 @@ const createWindow = (): void => {
     }
   })
 
-  win.once('ready-to-show', () => win.show())
+  // #79 — the window is shown once BOTH of these hold: Chromium says it has
+  // something to paint, and the renderer has told us where the window goes.
+  //
+  // The gate that [[2026-07-31-a-preference-lives-where-it-is-read]] declined
+  // for zoom/backdrop is affordable HERE, and the amendment says why: that gate
+  // was specified as "the renderer's first preference push", which is a race
+  // between two independent messages and covers a third preference that crosses
+  // no boundary at all. Bounds are ONE named message with one meaning, so
+  // "settled" is a fact rather than a guess.
+  //
+  // It is also not optional. Without it the window is shown at the constructed
+  // default and then MOVED and RESIZED by the window manager while on screen —
+  // measured, not assumed (gui-79).
+  let readyToShow = false
+  let boundsSettled = false
+  const showWhenSettled = (): void => {
+    if (readyToShow && boundsSettled && !win.isDestroyed()) win.show()
+  }
+  win.once('ready-to-show', () => {
+    readyToShow = true
+    showWhenSettled()
+  })
+  releaseShowGate = () => {
+    boundsSettled = true
+    showWhenSettled()
+  }
+  // The renderer may never mount. A window that is never shown is a worse
+  // failure than one shown at the default size, so the wait is bounded.
+  const gateTimer = setTimeout(releaseShowGate, BOUNDS_GATE_TIMEOUT_MS)
+  win.once('show', () => clearTimeout(gateTimer))
+
+  // #79 — bounds change in MAIN, so main is what reports them. Debounced: the
+  // obvious version writes localStorage on every pixel of a drag.
+  //
+  // `getNormalBounds()` rather than `getBounds()` on purpose — it answers with
+  // the RESTORED rectangle while the window is maximised, so maximising never
+  // overwrites the remembered size with a full-screen one. Restoring the
+  // maximised STATE is deliberately out of scope for #79; this is what keeps
+  // that omission from corrupting what is in scope.
+  let reportTimer: NodeJS.Timeout | null = null
+  const reportBounds = (): void => {
+    if (reportTimer) clearTimeout(reportTimer)
+    reportTimer = setTimeout(() => {
+      if (win.isDestroyed()) return
+      win.webContents.send('bounds:changed', win.getNormalBounds())
+    }, BOUNDS_REPORT_DEBOUNCE_MS)
+  }
+  win.on('resize', reportBounds)
+  win.on('move', reportBounds)
+  win.on('closed', () => {
+    if (reportTimer) clearTimeout(reportTimer)
+    clearTimeout(gateTimer)
+    releaseShowGate = null
+  })
 
   // #75: a flashing taskbar button keeps flashing until it is told to stop, so
   // the moment the user comes back is the moment to clear it. Unconditional —
@@ -536,6 +608,32 @@ ipcMain.on('backdrop:set', (event, material: unknown) => {
   if (!isTrustedIpc(event)) return
   const win = BrowserWindow.fromWebContents(event.sender)
   win?.setBackgroundMaterial(normalizeBackdrop(material))
+})
+
+// #79 — the renderer's stored bounds arriving on mount. Two jobs, and they are
+// deliberately separate:
+//
+//   APPLY, only if the payload validates. `isBounds` compares and never
+//   coerces, so a hand-edited localStorage entry cannot drive `setBounds`.
+//
+//   RELEASE THE SHOW GATE, whatever the payload was. `null` (nothing stored)
+//   and a corrupt entry are both complete answers — the renderer has spoken and
+//   the window can be shown. Releasing only on a VALID payload would leave
+//   every first-ever launch waiting out the timeout instead.
+//
+// An untrusted sender does neither: it returns above, and the window falls back
+// to the timeout exactly as if the renderer had never spoken.
+//
+// The display list is read HERE, at apply time, never cached at boot — a
+// monitor can be unplugged while the app is running, and a stale list is how a
+// window gets restored onto a display that is no longer there.
+ipcMain.on('bounds:set', (event, bounds: unknown) => {
+  if (!isTrustedIpc(event)) return
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win && isBounds(bounds)) {
+    win.setBounds(clampBounds(bounds, screen.getAllDisplays()))
+  }
+  releaseShowGate?.()
 })
 
 // The channel carries a payload (prompt text + attachments), not a bare string.

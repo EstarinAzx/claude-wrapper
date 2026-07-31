@@ -10,6 +10,7 @@ import type {
 } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { Backdrop } from '../shared/backdrop'
+import type { Bounds } from '../shared/window-bounds'
 import type { ModelInfo } from '../shared/model-types'
 import type { SlashCommandInfo } from '../shared/command-types'
 import type { SubagentInfo } from '../shared/subagent-types'
@@ -90,6 +91,19 @@ const api = {
   // One-way, like zoom (#69): the renderer owns the stored preference, main
   // owns the window it applies to. Pushed on mount and on every change.
   setBackdrop: (material: Backdrop): void => ipcRenderer.send('backdrop:set', material),
+  // #79 — the first preference that travels BOTH ways, because it is the first
+  // one the user changes by dragging the window rather than by using a control.
+  // Out on mount (`null` = nothing stored, and main gates `show()` on this
+  // message arriving either way), and back in whenever main reports a settled
+  // move or resize.
+  setWindowBounds: (bounds: Bounds | null): void => ipcRenderer.send('bounds:set', bounds),
+  onWindowBoundsChanged: (cb: (bounds: Bounds) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, bounds: Bounds): void => cb(bounds)
+    ipcRenderer.on('bounds:changed', listener)
+    return () => {
+      ipcRenderer.removeListener('bounds:changed', listener)
+    }
+  },
   sendPrompt: (payload: SendPayload): void => ipcRenderer.send('chat:send', payload),
   stopTurn: (): void => ipcRenderer.send('chat:stop'),
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {

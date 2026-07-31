@@ -14,6 +14,7 @@ import AppearanceDock from './components/AppearanceDock'
 import { useChat } from './useChat'
 import { useZoom } from './useZoom'
 import { useBackdrop } from './useBackdrop'
+import { useWindowBounds } from './useWindowBounds'
 import { useTheme } from './useTheme'
 
 // Why a workspace switch was refused. The three rejections are the main
@@ -79,6 +80,13 @@ const App = () => {
   // the document element whether or not the panel is open, so it has to be
   // applied on launch rather than the first time someone opens Appearance.
   const theme = useTheme()
+  // #79 — no control and no readout, so it returns nothing and no component
+  // consumes it. It is mounted at App level for the sharper version of the same
+  // reason as the two above: main GATES showing the window on this hook's mount
+  // push, so mounting it any deeper (inside a dock, behind a route) would mean
+  // the window waits out the timeout on every launch where that subtree is not
+  // rendered.
+  useWindowBounds()
 
   // Read the launch mode once, then track flips the main side broadcasts.
   useEffect(() => {

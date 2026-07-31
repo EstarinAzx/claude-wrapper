@@ -7,6 +7,7 @@ import type { ModelInfo, ModelOption } from '../src/shared/model-types'
 import type { SendPayload } from '../src/shared/attachment-types'
 import type { Candidate } from '../src/shared/attachment-policy'
 import type { SlashCommandInfo } from '../src/shared/command-types'
+import type { Bounds } from '../src/shared/window-bounds'
 import type {
   DeleteStatus,
   FolderChoice,
@@ -79,6 +80,11 @@ export const fakeChatApi = (folder = FOLDER) => {
     setBackendMode: vi.fn(),
     setZoom: vi.fn(),
     setBackdrop: vi.fn(),
+    setWindowBounds: vi.fn(),
+    // Typed with the real callback rather than as a bare `vi.fn(() => ...)`:
+    // #79's boundary test reaches into `mock.calls[0][0]` to deliver a report
+    // the way main delivers one, and a zero-arg mock makes that an empty tuple.
+    onWindowBoundsChanged: vi.fn((_cb: (bounds: Bounds) => void) => () => {}),
     sendPrompt: (payload: SendPayload): void => {
       prompts.push(payload)
     },

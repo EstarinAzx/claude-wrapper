@@ -9,6 +9,7 @@ import type {
 } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { Backdrop } from '../shared/backdrop'
+import type { Bounds } from '../shared/window-bounds'
 import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { SendPayload } from '../shared/attachment-types'
@@ -51,6 +52,10 @@ export interface WrapperApi {
   setZoom: (level: number) => void
   // One-way (#69). Two values only; main normalises at the boundary regardless.
   setBackdrop: (material: Backdrop) => void
+  // #79 — two-way, uniquely: bounds change in MAIN (the user drags the window)
+  // and are merely stored here. `null` out means nothing is stored yet.
+  setWindowBounds: (bounds: Bounds | null) => void
+  onWindowBoundsChanged: (cb: (bounds: Bounds) => void) => () => void
   sendPrompt: (payload: SendPayload) => void
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void
