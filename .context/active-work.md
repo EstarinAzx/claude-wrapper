@@ -7,17 +7,28 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **vibe run while the owner slept: #72 filed, four calls deferred to them**_
-_At commit: `b6e8911` on `main`, pushed. Gate: typecheck clean, build clean, **823 tests green across 56 files** (unchanged — #71 touched no source)_
-_Driver check: `gui-51` **PASS**, and PASS at zoom 1.0 / 1.1 / 1.25 / 1.5. **The driver set has no standing red for the first time in this batch.**_
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 1: #72 landed, the tracker is empty again**_
+_At commit: `9fecc10` on `main`, pushed. Gate: typecheck clean, build clean, **823 tests green across 56 files** (unchanged — #72 touched only CSS and added a driver)_
+_Driver check: `gui-72` **PASS** (and red-verified on the unfixed tree first, then mutation-verified). No standing red anywhere in the set._
 
 ## Current focus
 
-**#72 is queued `ready-for-agent` — the titlebar's session title cannot truncate and overlaps its neighbours.** Filed by an autonomous `/preset vibe` run against the two long-deferred candidates (Tailwind's fate, the crowded titlebar) while the owner was away. See `.claude/vibe.md` for the full decision record, the warrants, and the four calls parked for the owner.
+**Nothing is open.** `gh issue list --state open` returns `[]`. #72 landed as `9fecc10` and closed; spec #64 is delivered and closed; #71 and now #72 closed standalone after it.
 
-**What the run actually found:** the crowding complaint's stated rationale — "each button eating drag region" — is **measured and false**. The titlebar's no-drag width is constant at 344.3css and does not grow with content; the draggable share falls 73.1% → 50% only because the window shrinks around it, and the widest uninterrupted grab strip is still 182css at the narrowest width tested. What the probe found instead was an unrelated real defect: `.session-title` is an inline span with `white-space: nowrap` and no `max-width` / `overflow` / `text-overflow`, inside a `.titlebar-center` that is `position: absolute` and therefore out of flow. It cannot truncate, so a long folder name grows symmetrically from centre and slides under the pills and dock buttons — at a 688css page a **21-character** name already collides. It is the only title-ish element in the app absent from the 13-selector truncation triad in `shared.css`.
+**#72 — the session title truncates instead of overlapping.** CSS only, six declarations, no JSX / class name / aria-label. `.titlebar-center` went from `position: absolute; left: 50%; translateX(-50%)` to `flex: 1; min-width: 0; display: flex; justify-content: center` (keeping `pointer-events: none`), and `.session-title` gained `overflow: hidden; text-overflow: ellipsis; min-width: 0`. See [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]].
 
-Spec #64 is delivered and closed; #71, the last standalone, closed with it.
+Measured before and after with `getBoundingClientRect` against a real 60-character workspace folder, at the four widths in the ticket:
+
+| content px | page css | before | after | slot after |
+|---|---|---|---|---|
+| 1600 | 1280 | 456.5..823.5 | 478.5..845.5 | 275..1049 |
+| 1280 | 1024 | 328.5..695.5 | 350.5..717.5 | 275..793 |
+| 1024 | 819 | **226.1..593.1** (neighbours at 275 / 588.2) | 275..588.2 | 275..588.2 |
+| 860 | 688 | **160.5..527.5** (neighbours at 275 / 457) | 275..457 | 275..457 |
+
+Before, the title was a **constant 366.9css wide at every window width**. After, it shrinks to the slot and ellipsises (`client 313 / scroll 367` at 819css; `client 182 / scroll 367` at 688css) while a 60-char name still renders whole at 1280css and 1024css.
+
+**The vibe run that filed it also falsified half the complaint it was handed, and that half stays false:** "each button eating drag region" is measured wrong — the titlebar's no-drag width is constant at 344.3css and does not grow with content; the draggable share falls 73.1% → 50% only because the window shrinks around it, and the widest uninterrupted grab strip is still 182css at the narrowest width tested. See `.claude/vibe.md` for the full record and the four calls parked for the owner.
 
 The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. All four shipped, one ticket per relay leg, plus the two driver-hygiene tickets that bracketed the batch:
 
@@ -35,22 +46,22 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** nothing yet. No open branches. `main` = `bbe91ee` + this run's `.context` commit.
-- **Queue (`ready-for-agent`):** **#72** — the session title truncation defect. Fully specified, CSS-only, no JSX or class-name change, acceptance criteria and a red-first driver requirement written into the ticket body.
-- **Parked for the owner (4, all reversible):** Tailwind's fate · which titlebar buttons leave · whether the three dock toggles collapse · #72's centring trade-off. Full entries with the default taken and the alternative in `.claude/vibe.md` under `## Needs you`.
-- **Landed this leg:** #71 as `b6e8911` — **driver-only; no source or CSS change.** `gui-51.mjs` now measures the scrollbar gutter against `10 × devicePixelRatio` in **device pixels** instead of a ±0.5 CSS-pixel window, and measures the content box exactly (a `width:100%` shim's rect) instead of `offsetWidth - clientWidth`, which rounds both operands.
+- **In flight:** nothing. No open branches. `main` = `9fecc10` + this leg's `.context` commit.
+- **Queue (`ready-for-agent`):** **empty.** The tracker has zero open issues.
+- **Parked for the owner (4, all reversible):** Tailwind's fate · which titlebar buttons leave · whether the three dock toggles collapse · **#72's centring trade-off, now shipped rather than hypothetical** (the title sits ~15css off true centre). Full entries with the default taken and the alternative in `.claude/vibe.md` under `## Needs you`.
+- **Landed this leg:** #72 as `9fecc10` — CSS only, plus the new `gui-72.mjs`. No JSX, no class name, no aria-label, no test expectation edited.
 - **Blocked:** nothing.
-- **Open:** #72 only.
+- **Open:** nothing.
 
 ## Pick up here
 
-**#72 is the frontier.** It is CSS-only, fully specified, and carries its own acceptance criteria — including that the driver must be shown **red against current `main`** before it is believed green after the fix (#65's rule), and that no test expectation may be edited, because the pin-retirement allowance is spent.
+**There is no frontier ticket.** The queue is dry, so the next relay leg finds nothing to pick and self-closes; that is the designed end of the chain, not a failure.
 
-**Do not decide the four parked calls in `.claude/vibe.md`.** They are the owner's, and #72's Out of Scope section says so explicitly.
+**Do not decide the four parked calls in `.claude/vibe.md`.** They are the owner's. Three are untouched; the fourth (#72's centring) now has its default *shipped and measurable* — open the app, look at the title, and it is either fine or it is a two-line revert to absolute centring plus the magic number.
 
-If the owner brings a new want, the route is `/preset init` → `/hp` MVD → `to-spec` → `to-tickets`, then a fresh `/relay N=1 read and follow .claude/relay-leg.md` chain over the resulting batch. `.claude/relay-leg.md`'s "Current queue" section is now stale by construction and its own text says to trust the frontier query over it.
+If the owner brings a new want, the route is `/preset init` → `/hp` MVD → `to-spec` → `to-tickets`, then a fresh `/relay N=1 read and follow .claude/relay-leg.md` chain over the resulting batch. `.claude/relay-leg.md`'s "Current queue" section is stale by construction and its own text says to trust the frontier query over it.
 
-The **Open questions** below are the live candidates if the owner wants a direction picked for them — Tailwind's fate and the crowded titlebar are the two that have been waiting longest and are both self-contained.
+The **Open questions** below are the live candidates if the owner wants a direction picked for them — **Tailwind's fate is now the longest-waiting one, and it is unblocked**: #72 was the last natural test of the utilities premise and it shipped without a single utility class.
 
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
@@ -58,13 +69,17 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 - **Should the rail filter out `sdk-cli` sessions?** The listing fix admits **112** rows to surface the **37** this app wrote; the other 75 are headless automation, ~20 of them this repo's own GUI drivers titled "say OK" / "reply with exactly: PONG". Accepted deliberately, but it is worst exactly where the owner looks first. The blocker is that `SDKSessionInfo` exposes no `entrypoint` / `origin` / `sessionKind` — the deciding field is read from disk and discarded — so filtering means either re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or `tagSession` on every session this app creates, which is prospective only and would not reach the 37 already written. **#68 was explicitly NOT the answer to this**, and shipped saying so.
 - **Should Tailwind stay at all?** Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. **#70 deliberately did not bundle this, and nothing now blocks it** — the theme override is indifferent to whether the defaults come from `@theme` or a plain `:root` block, though a move would have to keep the theme blocks unlayered or they stop winning. **Amended 2026-07-31 (vibe run, cross-model pressure): "keep them unlayered" is necessary but NOT sufficient, and the sentence above understates what a drop changes.** Today the defaults compile into `@layer theme` while the `[data-theme=…]` blocks are unlayered, so unlayered-beats-layered makes the override win *regardless of import order*. Drop Tailwind and the defaults become a plain `:root` block — at which point `:root` and `[data-theme="ember"]` are **both unlayered and both specificity (0,1,0)**, so source order becomes the only thing deciding, and the guarantee degrades from order-proof to order-dependent. It still works, because `tests/theme.test.ts` already pins the import position (it reddens on a moved import) — but that pin stops being a tidiness check and silently becomes the whole safety argument. Whoever does the drop must know that before they do it.
-- **The titlebar is crowded** — app name + session title + two pills + **three** dock buttons + window controls, each button eating drag region. Flagged for an impeccable pass, deliberately out of scope for the batch.
+- **The titlebar is crowded** — app name + session title + two pills + **three** dock buttons + window controls. **Amended 2026-07-31 (vibe run + #72): the "each button eating drag region" clause is measured and FALSE** (no-drag width constant at 344.3css; widest grab strip still 182css at 688css), and the one *measured* defect in the surface — the title overlapping its neighbours — shipped as #72. What remains is an aesthetic question about control count, which is the owner's, and #72 made it cheaper: the centring no longer depends on a number equal to the wider block, so adding or removing a control costs nothing in CSS.
 - **Partly answered by #70, and worth a look if a fourth control lands.** The theme picker reused `.appearance-field--stacked` and `.appearance-choice` with one `--theme` modifier (row instead of column, name + swatch), and the two arrow-key handlers were folded into a shared `nextInRing` helper. What did **not** converge is the ARIA role — Backdrop is a radiogroup and Theme a listbox, forced apart by #69's pin, so a single `<PickOne>` component would have to take the role as a prop. Not worth it for two call sites.
 - **Should `rails.css:325` read `var(--mint)` like every other component site?** It reads `var(--color-mint)` — the one long-name reference in component CSS. Themes correctly either way; a naming inconsistency, not a bug.
 - One deferred owner decision from #58's Out of Scope: whether an honest Write diff is wanted at permission time only, or also after an auto-run and in replay. Still open.
 
 ## Recent context
 
+- **`overflow` and `text-overflow` are inert on an inline box, and #72 is the case where that was the whole bug.** `.session-title` had `white-space: nowrap` and nothing to clip with, so it could not truncate *even in principle* — the driver read `display inline · overflow-x visible · text-overflow clip · clientWidth 0` on the unfixed tree. The fix authors no `display` on the span at all: making the parent a flex container **blockifies** the child, which is what switches those properties on. Worth carrying because the natural "tidy-up" — putting the truncation on the span and leaving the parent alone — looks equivalent and does nothing.
+- **A box whose measured width does not change with the window is not shrinking for anything.** `.titlebar-center` was `position: absolute`, so the title's rect was a constant **366.9css** at 1280 / 1024 / 819 / 688css pages while its neighbours marched inward until they crossed it. That constant is a cheap tell for an out-of-flow box, and it is more legible in a driver's output than any collision assertion.
+- **Containment by construction beat containment by arithmetic.** The rejected fix (keep absolute centring, add `max-width: calc(100% - 2 * <side>)`) is correct today and depends on a number equal to the wider titlebar block — which changes the moment anyone answers the parked "which buttons leave" question. A flex item cannot reach its siblings, so there is no number to rot. See [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]].
+- **A rect assertion cannot see ink, and #72's mutation test is what proved it matters.** Deleting `overflow: hidden` leaves every geometry assertion green — the flex box is still the right size — while the text paints straight out of it and back over the buttons. Only the computed-style assertions (`overflow-x`, `text-overflow`) reddened. **When the defect is what gets painted, at least one assertion must read computed style rather than geometry.**
 - **When two instruments disagree, suspect the instrument before the app — #71 is the worked example.** The ticket filed itself as UNCONFIRMED because a probe div read exactly `10` while `.model-menu` read `9.4` and `.session-groups` read `9`, three numbers zoom alone could not explain. Measured with un-rounded geometry, **the gutter is identical on every surface at every zoom**; the spread was `offsetWidth - clientWidth` rounding *both* operands to whole CSS pixels, so one value surfaced as three depending on where each box sat. The probe's exact `10` was rounding luck, not evidence the rule applied differently there. **The disagreement between instruments was the finding.**
 - **An authored pixel and a laid-out pixel are different units, and a driver must assert in the second.** Chromium lays the scrollbar out in whole **device** pixels: `10css × 1.25 = 12.5 → 12 → 9.6css`. So `9.6` was never a defect, and no CSS could have "fixed" it — chasing it would mean varying the authored value per zoom level, i.e. re-creating the per-context copies #51 deleted. See [[2026-07-31-the-authored-pixel-is-css-the-measured-pixel-is-device]].
 - **Removing the rounding beat tolerating it.** Relaxing ±0.5 to ±1.5css would have made the numbers fit without explaining them. Measuring the content box exactly instead kept the budget tight at 1 device px — and the tight budget is what still catches the real defect with 2.5× margin.
@@ -91,6 +106,14 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
+
+**From #72 — true of the titlebar:**
+
+- **`.titlebar-center` must stay IN FLOW, and `.session-title`'s truncation only works because of it.** The span's `display` is never authored — it is blockified by being a flex item, and that is what makes `overflow` / `text-overflow` apply. "Simplifying" the slot back to a plain block, or to absolute centring, silently restores the overlap with nothing red.
+- **`pointer-events: none` on `.titlebar-center` is load-bearing, not decoration.** Now that the slot spans the middle of the titlebar in flow, dropping it hands a wide strip of the drag region to a non-interactive `<div>`.
+- **The title is off true centre by design (~15css today).** It centres in the space available, bounded by `|left − right|`. Do not "fix" it by re-adding absolute positioning — that is the trade the ticket recorded and the owner's call to reverse.
+- **`.session-title` is still NOT in `shared.css`'s truncation triad, deliberately.** Its rule lives in `titlebar.css`. Widening the shared group instead repaints the sessions rail and the agents dock, invisibly to a suite that loads no CSS.
+- **`gui-72` measures against a real 60-character workspace folder** — a temp dir handed to the stubbed `showOpenDialog`, so the title comes from app state, not injected text. It fails loudly (`NOT DRIVEN, not a pass`) if the workspace never switched, because every geometry assertion would otherwise pass on the string "New session". Its temp-dir cleanup runs **after** `app.close()` and is best-effort: the engine holds the fixture as its cwd, so an EBUSY there is ordinary and must never decide the verdict.
 
 **From #71 — true of `gui-51` and of any driver that measures geometry:**
 
@@ -226,7 +249,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Known issues / not-our-bug
 
-- **There is no expected driver failure any more.** `gui-51`'s standing red closed as #71 (`b6e8911`); **every driver in the set is green, and any red is now a real regression.** The old note said "a second signature is a real regression" — that qualifier is gone, and so is the cover it gave.
+- **There is no expected driver failure any more.** `gui-51`'s standing red closed as #71 (`b6e8911`), and `gui-72` joined the set green at `9fecc10`; **every driver in the set is green, and any red is now a real regression.** The old note said "a second signature is a real regression" — that qualifier is gone, and so is the cover it gave.
 - **A capture cannot see the right ~20% of the layout.** The window composites `windowWidth` device px while the page lays out `windowWidth` CSS px at zoom 1.25, so every right-hand dock is clipped out of a screenshot at any window size — re-confirmed by #69's captures, where the Appearance panel is visibly cut. **Measure with `getBoundingClientRect`**; `gui-66` works around it with a presentational-only `setZoom(1)` after every assertion.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
 - **GUI driver traps:** `--disable-gpu` flattens acrylic (so `gui-69` leaves the GPU on); measure in the DOM, never off screenshots; dispatch clicks via `page.evaluate(() => el.click())`; arm a hard `setTimeout(process.exit)` before awaiting `app.close()`; never re-read an element after an action that may not have happened; **count the side effect you care about**; pass any path as an **argument** to `app.evaluate`; stub `dialog.showOpenDialog` in main before any click that opens one; and **select controls by their modifier class**.
@@ -255,6 +278,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]] — **#72, shipped; why containment is structural and what the ~15css off-centre trade buys**
 - [[2026-07-31-the-authored-pixel-is-css-the-measured-pixel-is-device]] — **#71, shipped; why the instrument moved to device pixels and the CSS did not move at all**
 - [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] — **#70, shipped; carries TWO amendments — #67's `color-mix()` correction and #70's own mechanism confirmation plus the alias limit**
 - [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] — **#69, shipped as argued; amended with the live confirmation**

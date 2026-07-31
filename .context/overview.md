@@ -136,8 +136,8 @@ tags: [context, overview]
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **the tracker
   is EMPTY — zero open issues, nothing in flight, no expected driver failure**;
-  spec #64 delivered and closed with #65, #68, #66, #67, #69, #70, and the #71
-  standalone closed after it)
+  spec #64 delivered and closed with #65, #68, #66, #67, #69, #70, then the #71
+  and #72 standalones closed after it)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -148,8 +148,9 @@ tags: [context, overview]
   DELIVERED and CLOSED** — #65 (`f0dfc68`, driver gate restored), #68
   (`70c904f`, session deletion), #66 (`a7c0470`, Appearance dock + zoom), #67
   (`e16ace6`, accent quartet + two literals tokenised), #69 (`add4e5b`, Backdrop
-  control) and #70 (`1769aa4`, four themes); **#71 closed standalone after it
-  (`b6e8911`, `gui-51` measured in device pixels)**; spec #41 (Resume anything)
+  control) and #70 (`1769aa4`, four themes); **#71 (`b6e8911`, `gui-51` measured
+  in device pixels) and #72 (`9fecc10`, the session title truncates instead of
+  overlapping) closed standalone after it**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
