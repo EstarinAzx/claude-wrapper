@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Notification, shell } from 'electron'
 import { basename, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { readFile, stat } from 'node:fs/promises'
@@ -38,6 +38,7 @@ import {
   type SwitchRequest,
   type SwitchResult
 } from './switch-workspace'
+import { announceTurn, isLooking, type AnnouncePorts } from './turn-announce'
 import type { DeleteStatus, FolderChoice } from '../shared/session-types'
 import { deleteSession, listSessions, readTranscript, titleHint } from './session-store'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
@@ -52,6 +53,35 @@ const rendererUrl = pathToFileURL(rendererFile).href
 // Snapshot the launch env once; the initial backend mode matches how the app
 // was launched (wisp env present → wisped, else native).
 initBackendMode(process.env)
+
+// #75: an unpackaged Windows app that has not claimed an identity gets NO toast
+// and NO error — the notification simply does not appear. This app is
+// dev-run-only, so it is exactly that case, and this line is a precondition of
+// the feature rather than polish. Called once at boot, before any Notification
+// can exist. Windows-only by documentation, hence the guard: the other two
+// platforms are out of scope beyond "does not crash".
+const APP_USER_MODEL_ID = 'com.estarinazx.claude-wrapper'
+if (process.platform === 'win32') app.setAppUserModelId(APP_USER_MODEL_ID)
+
+// The announcer's ports (#75), bound to the window the turn belongs to. Focus is
+// read live off that window: the renderer does not own it, and the user alt-tabs
+// mid-turn, so a value captured at turn start is the wrong one by construction.
+const announcePorts = (win: BrowserWindow): AnnouncePorts => ({
+  // `isLooking`, not `win.isFocused()` — a minimised window reports itself
+  // focused on Windows, which is measured in turn-announce.ts.
+  isFocused: () => isLooking(win),
+  notify: ({ title, body }) => {
+    const notification = new Notification({ title, body })
+    // Coming back is the point of being told. `show()` restores a minimised
+    // window on Windows; `focus()` covers the merely-buried case.
+    notification.on('click', () => {
+      win.show()
+      win.focus()
+    })
+    notification.show()
+  },
+  flash: () => win.flashFrame(true)
+})
 
 // Which Claude Code binary to run, resolved ONCE at boot. The host install is
 // preferred so the app tracks whatever Claude Code the user has rather than the
@@ -168,6 +198,11 @@ const createWindow = (): void => {
   })
 
   win.once('ready-to-show', () => win.show())
+
+  // #75: a flashing taskbar button keeps flashing until it is told to stop, so
+  // the moment the user comes back is the moment to clear it. Unconditional —
+  // clearing a flash that was never set is a no-op.
+  win.on('focus', () => win.flashFrame(false))
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)
@@ -511,10 +546,18 @@ ipcMain.on('chat:send', (event, payload: unknown) => {
   if (!engine) {
     engine = makeEngine()
   }
+  // Bound once per turn, not once per event: this callback runs on every text
+  // delta. The ports still read focus LIVE — `isFocused` closes over the window
+  // rather than over a value — so hoisting costs the announcement nothing.
+  const announce = win ? announcePorts(win) : null
   void engine.runTurn(
     normalizeSendPayload(payload),
     (e) => {
       win?.webContents.send('chat:event', e)
+      // #75: the same event stream, read for a second question — did this turn
+      // just end while nobody was looking? Main answers it locally; no channel
+      // is added and the renderer is never consulted about window focus.
+      if (announce) announceTurn(announce, e)
     },
     pendingResume ?? undefined
   )
