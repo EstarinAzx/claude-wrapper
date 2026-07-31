@@ -11,45 +11,75 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (filed 2026-07-31 by a vibe run as #75–#80 — TWO left: #79–#80)
+## Current queue (filed 2026-07-31 by a vibe run as #75–#80 — ONE left: #80)
 
-Take the lowest-numbered open, unblocked `ready-for-agent` ticket. **Both are now
-unblocked** — #78 closing released #79.
+Take the lowest-numbered open, unblocked `ready-for-agent` ticket.
 
-**Delivered out of this batch: #75 (`9905e1d`), #76 (`c9114a5`), #77 (`88c1e3f`)
-and #78 (`51ea6d5`).**
+**Delivered out of this batch: #75 (`9905e1d`), #76 (`c9114a5`), #77 (`88c1e3f`),
+#78 (`51ea6d5`) and #79 (`03ab834`).**
 
-- **#79 — the window remembers its size and position.** Renderer `localStorage` +
-  IPC push, **never a main-side store** — that argument was tested and killed.
-  Amends exactly one ADR sentence.
 - **#80 — type-while-busy composer with a queued send.** Its substance is the
-  state machine, not the typing.
+  state machine, not the typing. Flushing on every `busy → false` is wrong: it
+  resends after **Stop** and can spend the queued prompt on a **terminal**
+  engine. And while busy the send button *becomes* Stop, so there is no button
+  to press — that design hole is the ticket's to answer and no test can see it.
 
-**#78 measured its artifact and DECLINED its own fix, which is a delivery, not a
-dodge — and #79 must not inherit the wrong half of it.** No `win.show()` gate was
-built, because the ADR made it conditional ("Build it only if measured") and the
-measurement came back at ≤1 frame. But the decline covers *today's* artifact.
-**Bounds are a different class** — a window-manager move and resize landing
-38–55ms after the window is already on screen, not a CSS reflow inside it — so
-#79 re-runs `gui-78.mjs` with bounds applied and decides on those numbers.
+**#80 is the last ticket in the batch, so this leg is probably the last one.**
+Run the frontier query first regardless. If it comes back empty — because #80 is
+already closed, or relabelled — the queue is drained: rewrite `pick-up.md` to
+"queue empty", commit `.context/` on main, signal the relay stop, spawn nothing.
 
-**#78's headline is the recurring lesson of this project, for the fourth time:
-the measurement removed its own motivation.** The ADR ranked the zoom reflow
-first because it happens "every launch, for every user". **False after the first
-launch** — Chromium persists the zoom factor **per origin inside `userData`** and
-restores it at document commit, so a second launch paints its first frame already
-at 880css / dpr 1.25 and `dom-ready` reads `getZoomFactor() === 1.25` a full
-41–44ms *before* the renderer's `zoom:set` arrives. **Check whether the platform
-already holds the state before building state management for it.**
+**Two standing landmines are sharply relevant to #80.** Do **not** add a second
+busy flag, and **never un-key the composer** — `<InputBar key={cwd}>` is the
+whole workspace reset, so a queued draft surviving a workspace switch is a
+regression rather than a feature.
 
-**Four instrument traps from #78, all of which bite #79 because it measures the
-same launch:**
+**#79's headline is about SIGNALS, and it is the counterpart to #78's.** #78
+measured the launch artifact and **declined** the `win.show()` gate; #79
+**built** it, for bounds only, and the two are consistent rather than a
+flip-flop. #78 declined it *as the ADR specified it* — "gate on the renderer's
+first preference push" is a race between two independent messages and misses a
+third preference (`data-theme`) that crosses no boundary at all. Bounds are
+**one named message with one meaning**, so "ready" is a fact and the protocol
+#78 priced collapses to a `let` and a timeout. **When a readiness gate looks
+expensive, check whether the expense is in the waiting or in defining what
+"ready" means.**
+
+Measured A/B on one build (`gui-79.mjs`, five runs; the probe defeats the gate
+by showing on `ready-to-show`, the line the app used to run): gated is **0ms
+visible at the wrong bounds across 5 runs of 5**, ungated is **0–49ms on 4 runs
+of 5** with an on-screen move+resize, at a cost of 7–45ms later appearance.
+**The ungated artifact being INTERMITTENT is what settled it** — a window that
+lands somewhere different depending on machine load is worse than one that
+reliably takes a twentieth of a second longer to appear.
+
+**Two traps from #79 that bite any ticket, including #80:**
+
+- **A zero-arg `vi.fn()` mock makes its own `mock.calls[0][0]` a TYPE error.**
+  `vitest` infers an empty argument tuple, so a test reaching for the callback
+  the code was handed does not typecheck — **while `npm test` passes, because
+  `vitest run` does not typecheck.** Only `npm run typecheck` catches it. Type a
+  mock with the real signature: a loosely typed mock is not neutral, it is wrong
+  in a direction.
+- **An instrument can report a gate's SUCCESS as the artifact it measures.**
+  `boundsChangesWhileVisible` compared each visible sample against the previous
+  sample regardless of *that* sample's visibility, so a window shown
+  already-correct scored 1 for doing exactly its job.
+
+**The launch path changed in #79, so anything touching it must keep both
+conditions**: the window is shown once Chromium has something to paint AND the
+renderer has pushed its bounds (or a 1500ms timeout fired). `bounds:set` must
+keep releasing that gate on a `null` or invalid payload too, or every first-ever
+launch waits out the timeout.
+
+**Four instrument traps from #78, still binding on anything that measures a
+launch:**
 
 - **Playwright cannot measure a launch at all.** Under `_electron.launch()` this
   window never emits `ready-to-show`, so it is never shown, never painted, and
   `getEntriesByType('paint')` is empty. Fine for the DOM-driving drivers; fatal
-  for paint/visibility/timing. `gui-78` spawns Electron directly with
-  `gui-78-probe.cjs` as the **entry point**, which hooks and then `require`s
+  for paint/visibility/timing. `gui-78` and `gui-79` spawn Electron directly
+  with a probe as the **entry point**, which hooks and then `require`s
   `out/main/index.js`.
 - **`NODE_OPTIONS=--require` never reaches Electron** and
   **`context.addInitScript()` is too late** (launch resolves at ~380ms with the
@@ -59,7 +89,7 @@ same launch:**
   `BrowserWindow` with identical options does. It flattens acrylic, so no
   material is judged visually in that run.
 - **Chromium's persisted per-origin zoom makes an un-isolated launch an
-  inherited pass.** Fresh `userData` via `app.setPath` before `ready`; and the
+  inherited pass.** Fresh `userData` via `app.setPath` before `ready`; and a
   premise guard must read the first **painted** frame's dpr, never
   `getZoomFactor()` at construction, which reads 1.0 on a warm profile too and
   can therefore never fail.
