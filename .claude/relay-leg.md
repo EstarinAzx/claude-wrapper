@@ -11,15 +11,14 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31 after leg 7 — the queue is EMPTY)
+## Current queue (updated 2026-07-31 by a vibe run — ONE ticket: #72)
 
-**The tracker has zero open issues.** `gh issue list --state open` returns `[]`:
-nothing `ready-for-agent`, nothing stuck `ready-for-human`, nothing blocked.
-
-Spec #64 is delivered and closed — #65 `f0dfc68` · #68 `70c904f` · #66
-`a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4` — and #71 `b6e8911`,
-the last standalone, closed after it. The leg-7 chain stopped itself here (step
-7's body-signaled done) rather than spawning a leg with no work.
+**#72 is open and `ready-for-agent`** — the titlebar's session title cannot
+truncate and overlaps the pills and dock buttons. CSS-only, ~6 lines in
+`styles/titlebar.css`, no JSX and no class-name or aria-label change. It is the
+whole queue; spec #64 stays delivered and closed (#65 `f0dfc68` · #68 `70c904f`
+· #66 `a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4`) with #71
+`b6e8911` closed after it.
 
 **Run the frontier query anyway — do not trust this paragraph.** Leg 5 wrote
 that closing #70 would empty the queue and was wrong: #71 was `ready-for-agent`
@@ -27,6 +26,23 @@ and unblocked the whole time, merely outside the batch. **The frontier query in
 step 1 is always the authority, including over this sentence.** If it returns a
 ticket, work it; the prose here is a summary that goes stale the moment the
 owner files something.
+
+**#72 came from an autonomous `/preset vibe` run, and two things about it bind
+this leg.** First, its record is `.claude/vibe.md` — every question, the agent
+that answered it, the grepped warrant, and the cross-model verdict. Read it
+before touching the titlebar or Tailwind. Second, **four calls in it are the
+owner's and are explicitly out of scope**: Tailwind's fate, which titlebar
+buttons leave, whether the three dock toggles collapse, and #72's centring
+trade-off. Each already has a reversible default taken. Do not decide them; an
+adjacent good idea in that space is a ticket comment, never a detour.
+
+**The run also falsified the premise it was handed, which is the recurring
+lesson here.** The standing complaint was that the titlebar's buttons were
+eating the drag region. Measured: false — the no-drag width is *constant* at
+344.3css and does not grow with content, and the widest uninterrupted grab strip
+is still 182css at the narrowest width tested. The real defect was unrelated and
+found only because the probe ran. **Measure the stated cause before speccing a
+fix for it**, exactly as #71 did with the scrollbar gutter.
 
 **What leg 7 settled, because it is the kind of thing that recurs.** #71 was a
 measurement ticket whose own diagnosis was flagged unconfirmed, and the
