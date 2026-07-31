@@ -9,6 +9,18 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
+## Chain closed — queue empty
+
+**Relay leg 2 (2026-07-31) picked nothing and stopped the chain.** It ran the
+frontier query rather than trusting this file, and confirmed the tracker is
+genuinely empty: `gh issue list --state open --limit 100` → nothing, `gh pr list
+--state open` → nothing. **No leftovers** — nothing stuck `ready-for-human`,
+nothing blocked, no `ticket/*` branch surviving. Working tree clean,
+`git log origin/main..main` empty.
+
+That is the designed end of a spec-batch drainer, not a failure. Leg 1's #72 was
+the last unit of work; the detail below is leg 1's and is still the live state.
+
 ## What the last leg landed
 
 **#72 closed — `9fecc10`. CSS only: six declarations in `src/renderer/src/styles/titlebar.css`, plus a new `gui-72.mjs`.** No JSX, no class name, no aria-label, no test expectation edited.
@@ -32,7 +44,9 @@ Gate green — typecheck, build, **823 tests across 56 files** (unchanged; no so
 
 ## Next ticket
 
-**None. The queue is empty** — `gh issue list --state open` returns `[]`. The relay chain's next leg will find nothing to pick and self-close; that is the designed end, not a failure.
+**None. The queue is empty** — re-verified by leg 2, see above. The relay chain
+is stopped (`stop: true` in `.claude/relay/relay-leg.md`); nothing is running
+and no leg is scheduled.
 
 If the owner brings a new want: `/preset init` → `/hp` MVD → `to-spec` → `to-tickets`, then a fresh `/relay N=1 read and follow .claude/relay-leg.md` over the batch.
 
@@ -52,7 +66,10 @@ Still true from earlier legs: **there is no expected driver failure any more —
 
 ## Baseline
 
-`main` = `9fecc10` + this leg's `.context` commit, pushed. No open branches — `ticket/72-titlebar-title-truncation` was squash-merged and deleted. Trust `git log origin/main..main` over any note.
+`main` = `9fecc10` (#72) → `3a7e36e` (leg 1 handoff) → this leg's close-out
+`.context` commit, pushed. No open branches —
+`ticket/72-titlebar-title-truncation` was squash-merged and deleted. Trust
+`git log origin/main..main` over any note.
 
 ## Related
 
