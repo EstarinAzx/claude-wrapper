@@ -11,19 +11,19 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (filed 2026-07-31 by a vibe run as #75–#80 — FOUR left: #77–#80)
+## Current queue (filed 2026-07-31 by a vibe run as #75–#80 — THREE left: #78–#80)
 
 Take the lowest-numbered open, unblocked `ready-for-agent` ticket. **#79 is
 blocked by #78** and must stay so.
 
-**Delivered out of this batch: #75 (`9905e1d`) and #76 (`c9114a5`).**
+**Delivered out of this batch: #75 (`9905e1d`), #76 (`c9114a5`) and #77
+(`88c1e3f`).**
 
-- **#77 — `gui-51` prints four `NOT DRIVEN` lines** for surfaces it names but
-  never drives into overflow. **Do not widen the gutter budgets** to fit a newly
-  measured surface; a failure there is a finding.
 - **#78 — measure the launch artifact**, fix only if objectionable. AC1 is the
   measurement, per the ADR's own "Build it only if measured". Motivate on the
-  **zoom** reflow, not the backdrop flash.
+  **zoom** reflow, not the backdrop flash. **If the artifact is not
+  objectionable, saying so with numbers IS the delivery** — do not build the
+  gate to have built something.
 - **#79 — the window remembers its size and position.** Renderer `localStorage` +
   IPC push, **never a main-side store** — that argument was tested and killed.
   Amends exactly one ADR sentence.
@@ -34,15 +34,26 @@ Everything before this batch is delivered and closed: spec #64 (#65 `f0dfc68` ·
 #68 `70c904f` · #66 `a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4`),
 then #71 `b6e8911`, #72 `9fecc10`, #73 `6b4a831` and #74 `07544e8` standalone.
 
-**#76 is #77's direct precedent — read its closing comment before starting.**
-Same shape (a driver printing a standing hole above a `PASS`), and it produced a
-rule that transfers: **destruction is quiet**, so an assertion phrased as an
-absence can measure nothing. Weakening the guard under test left "the turn
-completed" and "no error appeared" both green, because the failure mode clears
-the pane; only measuring the protected thing *continuing* discriminated. Assert
-what went on living, not what failed to appear. It also found that **`gui-75` is
-focus-dependent and red inside a long batch** — re-run it alone before believing
-that red.
+**#77 is the freshest precedent, and its lesson is about setup order rather than
+about CSS.** A driver's own setup can revoke the capability it is about to
+measure: `openSession` calls `targetSession`, which **closes the engine**, so
+`listModels()` and `listCommands()` answer `[]` **by contract** afterwards —
+measured in screen order, `gui-51` read a 1-row model picker and two command
+surfaces that never mounted, indistinguishable from a dead CLI. **Order setup
+steps by what each one takes away, not by what it needs.** Two corollaries that
+transfer: **an empty list beside a static row looks populated** (reason about
+what the list was supposed to *add*, never `querySelectorAll(...).length`), and
+**a surface that passes only on the machine that wrote it is inherited, not
+established** — `.session-groups` had been overflowing purely because this store
+holds ~490 sessions.
+
+Before that, #76 produced the rule that **destruction is quiet**, so an
+assertion phrased as an absence can measure nothing: assert what went on living,
+not what failed to appear.
+
+**`gui-75` is focus-dependent and has now gone red in TWO consecutive batch runs
+while passing solo both times.** A batch that reds only there is a green batch —
+re-run it alone before believing the red or writing anything down.
 
 **Run the frontier query anyway — do not trust this paragraph.** Leg 5 wrote
 that closing #70 would empty the queue and was wrong: #71 was `ready-for-agent`
