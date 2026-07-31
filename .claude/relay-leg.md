@@ -11,31 +11,64 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (filed 2026-07-31 by a vibe run as #75–#80 — THREE left: #78–#80)
+## Current queue (filed 2026-07-31 by a vibe run as #75–#80 — TWO left: #79–#80)
 
-Take the lowest-numbered open, unblocked `ready-for-agent` ticket. **#79 is
-blocked by #78** and must stay so.
+Take the lowest-numbered open, unblocked `ready-for-agent` ticket. **Both are now
+unblocked** — #78 closing released #79.
 
-**Delivered out of this batch: #75 (`9905e1d`), #76 (`c9114a5`) and #77
-(`88c1e3f`).**
+**Delivered out of this batch: #75 (`9905e1d`), #76 (`c9114a5`), #77 (`88c1e3f`)
+and #78 (`51ea6d5`).**
 
-- **#78 — measure the launch artifact**, fix only if objectionable. AC1 is the
-  measurement, per the ADR's own "Build it only if measured". Motivate on the
-  **zoom** reflow, not the backdrop flash. **If the artifact is not
-  objectionable, saying so with numbers IS the delivery** — do not build the
-  gate to have built something.
 - **#79 — the window remembers its size and position.** Renderer `localStorage` +
   IPC push, **never a main-side store** — that argument was tested and killed.
   Amends exactly one ADR sentence.
 - **#80 — type-while-busy composer with a queued send.** Its substance is the
   state machine, not the typing.
 
+**#78 measured its artifact and DECLINED its own fix, which is a delivery, not a
+dodge — and #79 must not inherit the wrong half of it.** No `win.show()` gate was
+built, because the ADR made it conditional ("Build it only if measured") and the
+measurement came back at ≤1 frame. But the decline covers *today's* artifact.
+**Bounds are a different class** — a window-manager move and resize landing
+38–55ms after the window is already on screen, not a CSS reflow inside it — so
+#79 re-runs `gui-78.mjs` with bounds applied and decides on those numbers.
+
+**#78's headline is the recurring lesson of this project, for the fourth time:
+the measurement removed its own motivation.** The ADR ranked the zoom reflow
+first because it happens "every launch, for every user". **False after the first
+launch** — Chromium persists the zoom factor **per origin inside `userData`** and
+restores it at document commit, so a second launch paints its first frame already
+at 880css / dpr 1.25 and `dom-ready` reads `getZoomFactor() === 1.25` a full
+41–44ms *before* the renderer's `zoom:set` arrives. **Check whether the platform
+already holds the state before building state management for it.**
+
+**Four instrument traps from #78, all of which bite #79 because it measures the
+same launch:**
+
+- **Playwright cannot measure a launch at all.** Under `_electron.launch()` this
+  window never emits `ready-to-show`, so it is never shown, never painted, and
+  `getEntriesByType('paint')` is empty. Fine for the DOM-driving drivers; fatal
+  for paint/visibility/timing. `gui-78` spawns Electron directly with
+  `gui-78-probe.cjs` as the **entry point**, which hooks and then `require`s
+  `out/main/index.js`.
+- **`NODE_OPTIONS=--require` never reaches Electron** and
+  **`context.addInitScript()` is too late** (launch resolves at ~380ms with the
+  window already loading).
+- **`--disable-gpu` is load-bearing in this background session** — with GPU
+  compositing on the app's window never paints at all, while a standalone
+  `BrowserWindow` with identical options does. It flattens acrylic, so no
+  material is judged visually in that run.
+- **Chromium's persisted per-origin zoom makes an un-isolated launch an
+  inherited pass.** Fresh `userData` via `app.setPath` before `ready`; and the
+  premise guard must read the first **painted** frame's dpr, never
+  `getZoomFactor()` at construction, which reads 1.0 on a warm profile too and
+  can therefore never fail.
+
 Everything before this batch is delivered and closed: spec #64 (#65 `f0dfc68` ·
 #68 `70c904f` · #66 `a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4`),
 then #71 `b6e8911`, #72 `9fecc10`, #73 `6b4a831` and #74 `07544e8` standalone.
 
-**#77 is the freshest precedent, and its lesson is about setup order rather than
-about CSS.** A driver's own setup can revoke the capability it is about to
+**#77's lesson is about setup order rather than about CSS, and it still binds.** A driver's own setup can revoke the capability it is about to
 measure: `openSession` calls `targetSession`, which **closes the engine**, so
 `listModels()` and `listCommands()` answer `[]` **by contract** afterwards —
 measured in screen order, `gui-51` read a 1-row model picker and two command
