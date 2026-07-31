@@ -37,7 +37,19 @@ tags: [context, overview]
   because the built preload requires only `electron`, and the renderer is the
   process most exposed to hostile input. Nothing in vitest can observe that flag,
   so `gui-74` is its only guard, and it measures the OS-level effect
-  (`app.getAppMetrics()` joined by `getOSProcessId()`) rather than the request. Its `warmUp` port TAKES
+  (`app.getAppMetrics()` joined by `getOSProcessId()`) rather than the request.
+  That window is **no longer shown on `ready-to-show` alone** (#79): it is shown
+  once Chromium has something to paint AND the renderer has pushed its stored
+  bounds, with a 1500ms timeout so a renderer that never mounts cannot cost the
+  user a window. The `bounds:set` handler therefore has two jobs that are
+  deliberately separate — **apply** only if the payload validates, **release the
+  gate** whatever it was, since `null` (nothing stored) is a complete answer and
+  releasing only on a valid payload would make every first-ever launch wait out
+  the timeout. An untrusted sender does neither. The gate's release hook is a
+  module-level `let` because this app has exactly one window. Main also reports
+  bounds back on `move`/`resize`, debounced 250ms, using
+  **`getNormalBounds()`** so maximising never overwrites the remembered size.
+  Its `warmUp` port TAKES
   the resume target (#73) — `resume` binds when the query is CONSTRUCTED and
   `ensureQuery` returns early ever after, so a bare `warmUp()` leaves the
   rebuilt engine on a fresh session while the pane, refilled from disk, looks
@@ -134,7 +146,19 @@ tags: [context, overview]
   (#69) is the window material's two-string whitelist (`acrylic` | `mica`) and
   the trust boundary `backdrop:set` reuses before calling
   `setBackgroundMaterial`; it **compares, never coerces**, so an object that
-  stringifies to a valid value is still a stranger. `session-groups.ts`
+  stringifies to a valid value is still a stranger. `window-bounds.ts` (#79)
+  holds both halves of remembering the window's geometry: `isBounds` is the
+  trust boundary on `bounds:set` and on localStorage (four finite numbers,
+  **positive extent but negative position allowed** — the monitor left of the
+  primary has negative coordinates, so negative is a normal place to keep a
+  window, and a coercing guard would admit a blob of numeric strings), while
+  `clampBounds` is a **safety** property rather than a validation one: a stored
+  position promises a display layout that may not exist, and restoring onto an
+  unplugged monitor puts the window where it cannot be reached. Its
+  load-bearing test is the **identity** case — valid bounds pass through
+  byte-identical — because a clamp that nudged every launch would still satisfy
+  every "it is on screen afterwards" assertion. The display list is read **when
+  applying**, never cached at boot. `session-groups.ts`
   owns the sessions rail's filter/group/cap order; `cwd-key.ts` is the one
   directory fold (comparison only, never a path); `session-titles.ts` holds the
   enrichment predicate and the measured "substantive prompt" rule, with the

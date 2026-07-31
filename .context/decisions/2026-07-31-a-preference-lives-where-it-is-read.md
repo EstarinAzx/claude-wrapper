@@ -61,11 +61,63 @@ window-manager move and resize at the same 38–55ms mark, on an already-visible
 window — a different class of artifact from a CSS reflow. Re-run `gui-78.mjs`
 with bounds applied and decide on those numbers.
 
+## Amendment (#79, 2026-07-31) — one sentence above is false for bounds, and the gate it declined is BUILT here
+
+#79 stores the window's size and position. It follows this ADR's prescription
+exactly — renderer `localStorage`, pushed over IPC on mount, main calls
+`setBounds` — so **the decision is unchanged and no store was added**. Two
+corrections, one of substance and one of scope.
+
+**"there is no structural difference between this preference and the four
+already stored" is FALSE for bounds, and this is the first such preference in
+the app.** The sentence is sound for `backgroundMaterial`, and for the reason
+given: `setBackgroundMaterial` is runtime-settable, so the material needs no
+answer at construction time. A window's size and position genuinely do want one
+*before the window is on screen* — there is no "apply it late and lose a frame"
+option, because applying it late is a window-manager **move and resize** of a
+window the user is already looking at.
+
+**That is not an argument for a main-side store, and the ADR's own conclusion is
+what defuses it:** a window constructed hidden, told its bounds, and only then
+shown satisfies a constructor-time need without any store at all. Which is why
+this amendment reverses nothing.
+
+**The `win.show()` gate this file declined for zoom/backdrop IS built, for
+bounds only, and the #78 amendment is why that is consistent rather than a
+flip-flop.** #78 declined it as specified — "gate on the renderer's first
+preference push" — because "first" is a race between two independent messages
+and misses a third preference that crosses no boundary at all. Bounds are **one
+named message with one meaning**, so the readiness signal is a fact rather than
+a guess, and the protocol #78 priced is a `let` and a timeout.
+
+Measured with `gui-79.mjs`, five runs, A/B on the same build (the probe defeats
+the gate by showing on `ready-to-show`, which is the line the app used to run):
+
+| | gated (shipped) | gate defeated |
+|---|---|---|
+| window visible at the WRONG bounds | **0ms, 5 runs of 5** | 0–49ms, on **4 runs of 5** |
+| on-screen move+resize seen | **0** | 1, intermittently |
+| window appears after construction | 139–149ms | 102–138ms |
+
+**The ungated artifact is intermittent, and that is the finding.** It is a race
+between the renderer's push and `ready-to-show`, so the jump appears on most
+launches and vanishes on some — a window that lands in a different place
+depending on load is worse than one that consistently does. The gate costs
+7–45ms of later appearance and removes it entirely.
+
+**Not measured, so not claimed:** the gate necessarily shows the window later
+than React's first commit (the push happens in a mount effect), which *should*
+also close the 38–61ms empty-transparent-window span #78 measured. `gui-79`
+samples window geometry and visibility only — it reads no DOM — so that is a
+consequence to verify, not a result.
+
 ## Related
 
 - [[decisions]]
 - [[2026-07-31-the-window-is-shown-before-the-app-exists]] — #78, the measurement
   that amends this file and declined its conditional fix
+- [[2026-07-31-the-window-waits-until-it-knows-where-to-be]] — #79, which builds
+  that gate for the one preference whose signal is unambiguous
 - [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] — the panel this serves
 - [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] — the preference that raised the question
 - [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] — the same refusal to price an unmeasured cost

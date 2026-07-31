@@ -7,16 +7,15 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 4 landed #78; two tickets left in the batch**_
-_At commit: `51ea6d5` on `main`, pushed. Gate green: typecheck clean, **864 tests across 58 files** (unchanged — #78 touched no `src/`), build ok_
-_Driver check: **20** assertion drivers now (`gui-78` is new), plus the observational `gui-scope-zoom-pill`. The full batch was **deliberately not re-run** this leg: #78's diff is three new files under `.claude/skills/run-desktop/` and nothing under `src/`, so no existing driver could regress from it. `gui-69` was re-run green as a harness sanity check. `gui-75` remains focus-dependent — red in two consecutive batch runs, green solo both times; re-run it alone before believing a batch red there. No standing red anywhere, so any other red is a real regression._
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 5 landed #79; ONE ticket left in the batch**_
+_At commit: `03ab834` on `main`, pushed. Gate green: typecheck clean, **887 tests across 60 files** (was 864/58), build ok_
+_Driver check: **21** assertion drivers now (`gui-79` is new), plus the observational `gui-scope-zoom-pill`. **The full batch WAS re-run this leg and is 21/21 green** — #79 changes `src/main/index.ts`'s window-show path, so no driver could be skipped. Notably `gui-75` was **green in the batch** here after being red in the two previous ones, which confirms its red is focus-theft rather than a regression; it stays worth re-running alone before believing a batch red there. No standing red anywhere, so any other red is a real regression._
 
 ## Current focus
 
-**Two tickets open — #79 and #80 — from the `/preset vibe` run of
-2026-07-31 under an explicit owner autonomy grant.** A relay chain is draining
-them one per leg. **#78 landed as `51ea6d5` and closed, having measured and
-declined its own fix.**
+**ONE ticket open — #80 — from the `/preset vibe` run of 2026-07-31 under an
+explicit owner autonomy grant.** A relay chain is draining them one per leg.
+**#79 landed as `03ab834` and closed.**
 
 | # | Ticket | Note |
 |---|---|---|
@@ -24,16 +23,60 @@ declined its own fix.**
 | ~~#76~~ | ~~`gui-48`: drive the busy refusal instead of printing `SKIPPED`~~ | `c9114a5` |
 | ~~#77~~ | ~~`gui-51`: drive every named surface into overflow~~ | `88c1e3f` |
 | ~~#78~~ | ~~Measure the launch artifact; gate `win.show()` only if objectionable~~ | `51ea6d5` — measured **not objectionable**, no gate built, no `src/` change |
-| #79 | The window remembers its size and position | **frontier**; now unblocked (`blocked_by: 0`, re-verified live this leg) — structural, see below |
-| #80 | Type-while-busy composer with a queued send | biggest and riskiest; filed last deliberately |
+| ~~#79~~ | ~~The window remembers its size and position~~ | `03ab834` — gate **built**, on its own numbers |
+| #80 | Type-while-busy composer with a queued send | **frontier**, unblocked (`blocked_by: 0`, verified live this leg); biggest and riskiest, filed last deliberately |
 
-**#78 unblocked #79 by declining the gate, not by building it.** The ADR made
-`win.show()`-gating conditional on a measurement ("Build it only if measured");
-`gui-78.mjs` took it and the condition did not fire. **#79 must not read that as
-"no gate needed" for itself** — bounds add a *window-manager move and resize* at
-the same 38–55ms mark on an already-visible window, a different class of
-artifact from a CSS reflow, and `gui-78.mjs` is the instrument for deciding.
-See [[2026-07-31-the-window-is-shown-before-the-app-exists]].
+**#79 landed, and it BUILT the `win.show()` gate #78 declined — which is a
+distinction about signals, not about artifact size.** #78 declined it *as the
+ADR specified it*: "the renderer's first preference push" is a race between two
+independent messages and misses a third preference (`data-theme`) that crosses
+no boundary at all. Bounds are **one named message with one meaning**, so
+"ready" is a fact rather than a guess, and the protocol #78 priced collapses to
+a `let` and a 1500ms timeout. **When a readiness gate looks expensive, check
+whether the expense is in the waiting or in defining what "ready" means.**
+
+Measured by `gui-79.mjs`, five runs, **A/B on one build** — the probe defeats
+the gate by showing on `ready-to-show`, the exact line the app used to run:
+
+| | gated (shipped) | gate defeated |
+|---|---|---|
+| visible at the WRONG bounds | **0ms, 5/5 runs** | 0–49ms, on **4/5 runs** |
+| on-screen move+resize | **0** | 1, intermittently |
+| appears after construction | 139–149ms | 102–138ms |
+
+**The ungated artifact is INTERMITTENT, and that settled it.** It is a race
+between the renderer's push and `ready-to-show`, so the window jumps on most
+launches and not on others. A window that lands somewhere different depending on
+machine load is worse than one that reliably takes 7–45ms longer to appear.
+
+**The shape is renderer `localStorage` → IPC → `setBounds`, with no main-side
+store**, exactly as [[2026-07-31-a-preference-lives-where-it-is-read]]
+prescribes. It amends **one** sentence of that ADR — "there is no structural
+difference between this preference and the four already stored", false for
+bounds, which want an answer *before the window is on screen* — and **reverses
+nothing**, because that ADR's own conclusion (construct hidden, tell it, then
+show) meets a constructor-time need with no store.
+
+**Two channels, not one**, and that asymmetry is the feature's whole shape:
+bounds change in **main** (the user drags the window), so main reports them back
+debounced at 250ms and the renderer merely stores them. Main reports
+**`getNormalBounds()`, never `getBounds()`**, so maximising cannot overwrite the
+remembered size with a full-screen one — maximised restore is out of scope and
+this is what stops that omission corrupting what is in scope.
+
+**Two traps worth carrying:**
+
+- **A zero-arg `vi.fn()` mock makes its own `mock.calls[0][0]` a type error.**
+  `vitest` infers an empty argument tuple, and `vitest run` does **not**
+  typecheck — so the suite is green while `npm run typecheck` fails. A loosely
+  typed mock is not neutral; it is wrong in a direction.
+- **An instrument can report a gate's SUCCESS as the artifact.**
+  `boundsChangesWhileVisible` first compared each visible sample against the
+  previous sample regardless of *its* visibility, so the window being shown
+  already-correct scored 1 for doing its job. Fourth instance here of **suspect
+  the instrument first**.
+
+See [[2026-07-31-the-window-waits-until-it-knows-where-to-be]].
 
 **The autonomy grant is recorded in `.claude/vibe.md`** and it overrode the
 standing "a leg may not decide the parked calls" rule. All seven previously
