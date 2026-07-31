@@ -110,17 +110,33 @@
   color: oklch(0.82 0.09 25);
 }
 
+/* IN FLOW, deliberately (#72). Absolute centring took the slot out of the
+   titlebar's flex layout, so it was bounded by nothing and a long folder name
+   slid under the pills and the dock buttons — measured, 21 chars was enough at a
+   688css page. As a flex item between its two neighbours it can no longer reach
+   them, with no magic number equal to the wider side to rot when a control is
+   added or removed. `pointer-events: none` is not decoration: the slot must stay
+   inside the inherited `-webkit-app-region: drag`.
+   Trade-off taken: the title centres in the space available, not in the window,
+   so it sits off true centre by half the difference between the two blocks
+   (~15css today). Bounded, and it self-corrects if they are ever balanced. */
 .titlebar-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
   pointer-events: none;
 }
 
+/* The span is blockified by being a flex item, which is what makes `overflow` /
+   `text-overflow` apply at all — they are inert on the inline box this was. */
 .session-title {
   font-size: var(--fs-ui);
   color: var(--text-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .titlebar-right {
