@@ -7,18 +7,39 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg landed #73; #74 is the whole queue**_
-_At commit: `6b4a831` on `main`, pushed. Gate green: typecheck clean, **843 tests across 57 files**, build ok_
-_Driver check: no standing red anywhere in the set — every driver is green, so any red is a real regression. `gui-73` joined it._
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg landed #74; the tracker is EMPTY**_
+_At commit: `07544e8` on `main`, pushed. Gate green: typecheck clean, **843 tests across 57 files**, build ok_
+_Driver check: all **19** drivers re-run this leg and green. `gui-74` joined the set. No standing red anywhere, so any red is a real regression._
 
 ## Current focus
 
-**One ticket open: #74.** A relay chain is draining the queue one ticket per leg;
-this leg landed **#73** (`6b4a831`) and closed it.
+**Nothing is open. `gh issue list --state open` returns `[]`** — no
+`ready-for-agent`, no `ready-for-human`, nothing blocked, no open spec. The relay
+chain that drained the queue one ticket per leg has run it dry; this leg landed
+**#74** (`07544e8`) and closed it.
 
-- **#74 — run the renderer sandboxed.** `sandbox: false` buys nothing: the built
-  preload requires only `electron`. No ADR ever argued the flag. The work is proving
-  nothing broke, and it needs a driver because vitest cannot observe `sandbox`.
+**Next work has to be filed before it can be worked.** The candidates already on
+record, in the order they are ripest: the **Open questions** below (Tailwind's
+fate is the longest-waiting and is unblocked), the **seven owner calls** parked in
+`.claude/vibe.md` under `## Needs you` — which **a leg may not decide** — and the
+**Deferred** list at the bottom. A `/preset vibe init` run is what turned that
+material into #73 and #74.
+
+**#74 landed, and the trap was in the driver set rather than the app.** The diff
+is the one line the ticket predicted (`sandbox: false` → `true`). The evidence is
+the work, and the thing worth carrying is why the obvious driver would have been
+green and empty:
+
+**Every existing driver launches with `--no-sandbox`**, which disables OS
+sandboxing app-wide. A `gui-74` written by copying the house launch line would
+have read `getLastWebPreferences().sandbox === true` off a renderer Chromium had
+already been told not to sandbox — correct assertion, correct value, nothing
+proven. So `gui-74` launches **without** it and asserts the **effect**:
+`app.getAppMetrics()` joined to our renderer by `webContents.getOSProcessId()`,
+plus a real turn through the bridge. Red then green, with bridge width (34 keys)
+and completed turn identical on both sides, so only the process boundary moved.
+
+See [[2026-07-31-the-renderer-is-sandboxed-and-the-driver-must-not-undo-it]].
 
 **#73 landed, and it carried a second defect nobody had filed.** The control itself
 is small — one button reusing `switchWorkspace(activeSessionId, cwd)`. The two things
@@ -79,23 +100,39 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** nothing. `main` = `6b4a831` + this leg's `.context` commit, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **#74** only, unblocked (`blocked_by: 0`).
-- **Landed this leg:** **#73** (`6b4a831`) — the terminal-death way out, plus the warm-up resume binding it exposed.
+- **In flight:** nothing. `main` = `07544e8` + this leg's `.context` commit, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **empty**. The whole tracker is empty — no open issue of any label.
+- **Landed this leg:** **#74** (`07544e8`) — the renderer runs sandboxed, with `gui-74` measuring the OS-level effect rather than the flag.
 - **Parked for the owner (7, all reversible):** Tailwind's fate · which titlebar buttons leave · whether the three dock toggles collapse · #72's centring trade-off · **whether the window should remember its geometry** · **which daily-driver polish item comes next** · **whether a renderer error boundary is wanted**. Full entries with the default taken and the alternative in `.claude/vibe.md` under `## Needs you`. **A leg may not decide any of them.**
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**The frontier is #74 — run the renderer sandboxed.** It is the only open issue and it is unblocked. Run the frontier query anyway; this line is a summary and goes stale the moment the owner files something.
+**There is no frontier ticket. The tracker is empty.** Run the frontier query
+anyway — this line goes stale the moment the owner files something, and that is
+this project's standing lesson: a leg once wrote that closing #70 would empty the
+queue and was wrong, because #71 had been unblocked the whole time.
 
-Its shape: the flag at `src/main/index.ts` is one line, and the work is **proving nothing broke**. **vitest cannot observe `sandbox`**, so the evidence has to be a `gui-*.mjs` driver that establishes its own state, is shown **red first** by flipping the flag back, and completes a **real turn** through the bridge — a window that merely opens does not prove the preload survived.
+An agent arriving to an empty queue has three honest moves, and **filing is not
+the same as deciding**:
 
-**#73 just demonstrated why that bar is set there.** Its driver is the only reason the resume defect was found: 843 unit tests passed while the rebuilt engine ran a fresh session. For #74 the equivalent trap is a driver that proves the window opened rather than that the bridge works.
+1. **Ask the owner**, or run `/preset vibe init` — the autonomous funnel that
+   produced #73 and #74 by probing four hypotheses and killing three of them.
+2. **Take an Open question below** if the owner picks a direction. **Tailwind's
+   fate is the longest-waiting and is unblocked** — #72 was the last natural test
+   of the utilities premise and it shipped without a single utility class. Read
+   its amendment first: dropping Tailwind turns the theme override from
+   order-*proof* into order-*dependent*, and `tests/theme.test.ts`'s import-position
+   pin silently becomes the whole safety argument rather than a tidiness check.
+3. **File the two driver-hygiene holes #74 observed but did not fix** (one ticket
+   per leg): `gui-48` prints `SKIPPED the busy refusal (needs a real streaming
+   turn)` and `gui-51` prints four `NOT DRIVEN` lines for surfaces that were not
+   overflowing. Both drivers still PASS. By this project's own rule — **a SKIPPED
+   line is a hole in the gate, not an environment note** ([[2026-07-31-a-driver-establishes-its-premise]]) —
+   those are unfinished business, and they are exactly the shape of #65 and #71.
 
-**Do not decide the seven parked calls in `.claude/vibe.md`.** They are the owner's, all reversible, all with a default already taken.
-
-The **Open questions** below are the live candidates if the owner wants a direction picked for them — **Tailwind's fate is now the longest-waiting one, and it is unblocked**: #72 was the last natural test of the utilities premise and it shipped without a single utility class.
+**Do not decide the seven parked calls in `.claude/vibe.md`.** They are the
+owner's, all reversible, all with a default already taken.
 
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
@@ -110,6 +147,11 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Recent context
 
+- **A driver's LAUNCH LINE is part of the state it establishes, and #74 is the case that found it.** #65 established that a driver must set the app state it asserts rather than inherit it. #74 extends that one step further out: every driver in this set launches with `['--no-sandbox', '--disable-gpu', '.']`, and `--no-sandbox` disables OS sandboxing app-wide — so a driver for `sandbox: true` that copied the house launch args would have read the flag back as `true`, off a renderer Chromium had already been told not to sandbox, and passed. **A command-line flag can erase the property under test while every assertion still runs, still reads the value it expected, and still passes.** When a driver measures a process-level property, check what the launch line does to it before trusting the green.
+- **Assert the EFFECT, not the request — they are different values and only one is the feature.** `getLastWebPreferences().sandbox` says what the window was *constructed with*; `app.getAppMetrics()` says whether the OS *granted* it. #74 asserts both, joined to our own renderer by `webContents.getOSProcessId()` — the pid join is what stops a sandboxed *utility* process answering for the renderer. Reusable for any future process-boundary question, and it is the same shape as #69's "instrument the far side of the boundary".
+- **A boolean that is false everywhere is not evidence.** #74's control observation: the GPU process reads `sandboxed: true` in *every* run, the red ones included. Without a neighbour reading `true`, the renderer's `sandboxed: false` could equally have meant "Electron does not report this field on Windows". **When an assertion rests on a platform-reported flag, find something in the same reading that reports the other value** — otherwise a green and a blind spot look identical.
+- **The unchanged half of a red/green pair is what proves the change was surgical.** #74's driver reports bridge width (34 keys) and a completed real turn on *both* sides of the flip; only the two sandbox findings move. That is a stronger statement than "it passes now" — it says the process boundary moved and nothing else did, which is the entire claim of a flag whose intended effect is that nothing changes.
+- **A driver crash is not a driver failure, and the two must be told apart before a red is believed.** `gui-73` came back red in this leg's batch run: not an assertion, but `execFileSync('powershell.exe')` exiting `3221225794` (`0xC0000142`, STATUS_DLL_INIT_FAILED) right after `taskkill /F /T` on **8** claude.exe trees, while the parent session was being torn down. Re-run cleanly in the foreground it found **one** CLI child and passed every criterion. **The pid count was the tell** — a driver that walks the process tree reports a wildly wrong count when the tree it is walking is collapsing.
 - **A green suite is not evidence that a feature works end to end — #73 is the worked example, and it is the sharpest one this project has.** 843 tests passed, `setResume` was called, the transaction order was right, the status was `ok`, and the pane was full of the right conversation. The engine was on a **fresh session**. What caught it was a driver asking the *resumed* engine for a fact planted before the death and getting *"You never gave me one to remember"*. **When a feature's value is that state SURVIVES, the assertion has to interrogate the thing that holds the state, not the thing that displays it.**
 - **The driver failing at its own premise was the discovery, not a setback.** `gui-73`'s first run killed the CLI between turns and reported `{"errorShown":false}` — no error in the pane at all. That is not a driver bug: the engine only emits into an active turn, so a between-turns death is **silent** until a prompt is spent on a dead engine. A premise check written to fail loudly is what turned an invisible behaviour into a design constraint.
 - **Two designs can satisfy a ticket while only one leaves the pins alone.** Adding `terminal?: boolean` to the error event reddens five exact-`toEqual` assertions whose only repair is editing expectations — forbidden here. The out-of-band callback leaves all five byte-identical **and** is the more correct design. When a rule and a design disagree, re-read the rule before reaching for the expectation.
@@ -144,6 +186,14 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
+
+**From #74 — true of the window and of the driver set:**
+
+- **`gui-74` launches WITHOUT `--no-sandbox`, deliberately, and "standardising" it onto the house launch args silently guts it.** It would keep passing — that is the whole point. It is the second driver that diverges on purpose, after `gui-69` keeps the GPU on because `--disable-gpu` photographs neither backdrop material.
+- **`sandbox: true` is load-bearing and nothing in vitest can see it.** No test constructs a `BrowserWindow`, so the flag can be flipped back with all 843 tests green and the build clean. `gui-74` is the only thing that reddens.
+- **A preload that starts needing Node is a decision, not a fix.** If some future preload import pulls in a Node builtin, the honest move is an ADR recording the measured reason — an unmeasured `sandbox: false` puts the app back where it started with an extra commit. Check the **built** bundle (`out/preload/index.js`), never the source: today it holds exactly one require, `require("electron")`.
+- **`ProcessMetric.sandboxed` is documented for macOS and Windows only.** On Linux the field may read `undefined`, which reads in `gui-74` as a failure and is really a driver limit. The flag assertion above it tells the two apart: flag `true` + metric `undefined` is the limit, flag `false` is the defect.
+- **`gui-48` and `gui-51` have pre-existing holes, observed by #74 and deliberately not fixed.** `gui-48` prints `SKIPPED the busy refusal (needs a real streaming turn)`; `gui-51` prints four `NOT DRIVEN` lines for surfaces that were not overflowing. Both PASS. Neither is reachable by a process-sandbox flag, but a SKIPPED line is a hole in the gate.
 
 **From #73 — true of the engine's terminal path and of every resume:**
 
@@ -326,6 +376,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-31-the-renderer-is-sandboxed-and-the-driver-must-not-undo-it]] — **#74, shipped; why the flag bought nothing, and why the driver had to drop `--no-sandbox` to prove it**
 - [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] — **#73, shipped; why the distinction is a broadcast, and why resume binds at warm-up**
 - [[2026-07-23-engine-terminal-on-stream-death]] — **amended by #73: premise confirmed, reversibility clause spent, nothing reversed**
 - [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]] — **#72, shipped; why containment is structural and what the ~15css off-centre trade buys**

@@ -25,7 +25,12 @@ tags: [context, overview]
   reading the SDK's error text (`not-found` → `ok`, `unavailable` → `failed`).
   `switch-workspace.ts` owns the atomic workspace transition as a function over
   injected ports (the entry module is untestable under vitest); `index.ts` holds
-  only the binding to the real engine, broker and cwd. Its `warmUp` port TAKES
+  only the binding to the real engine, broker and cwd — plus the app's ONE
+  `BrowserWindow`, which runs **sandboxed** (#74): `sandbox: true` costs nothing
+  because the built preload requires only `electron`, and the renderer is the
+  process most exposed to hostile input. Nothing in vitest can observe that flag,
+  so `gui-74` is its only guard, and it measures the OS-level effect
+  (`app.getAppMetrics()` joined by `getOSProcessId()`) rather than the request. Its `warmUp` port TAKES
   the resume target (#73) — `resume` binds when the query is CONSTRUCTED and
   `ensureQuery` returns early ever after, so a bare `warmUp()` leaves the
   rebuilt engine on a fresh session while the pane, refilled from disk, looks
@@ -143,9 +148,9 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#74 is the
-  only open issue**, `ready-for-agent` and unblocked; #73 landed as `6b4a831`;
-  no expected driver failure anywhere in the set)
+- `.context/pick-up.md` — current frontier + landmines (currently: **the tracker
+  is EMPTY** — no open issue of any label; #74 landed as `07544e8`; no expected
+  driver failure anywhere in the set, all 19 green)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -160,12 +165,13 @@ tags: [context, overview]
   in device pixels) and #72 (`9fecc10`, the session title truncates instead of
   overlapping) closed standalone after it**; **#73 (`6b4a831`, a way out of a
   terminal stream death that keeps the conversation, plus the warm-up resume
-  binding it exposed) closed**; spec #41 (Resume anything)
+  binding it exposed) and **#74 (`07544e8`, the renderer runs sandboxed) closed**;
+  spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **#74 is the only open issue** — `gh issue list
-  --state open` returns it alone, the umbrella #1 included in the closed set
+  #20 hold the earlier history. **Nothing is open** — `gh issue list --state
+  open` returns `[]`, the umbrella #1 included in the closed set
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
