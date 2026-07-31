@@ -7,63 +7,62 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 1 of spec #64's batch: ticket **#65** landed, **#71** filed. Drivers only; **no production source touched**_
-_At commit: `f0dfc68` on `main`, pushed. Gate: typecheck clean, build clean, **743 tests green across 53 files**_
-_Driver set: **12 PASS, 1 FAIL** (`gui-51`, pre-existing and unrelated — now #71), 1 observation driver with no verdict by design_
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 2 of spec #64's batch: ticket **#68** landed, the batch's only destructive feature_
+_At commit: `70c904f` on `main`, pushed. Gate: typecheck clean, build clean, **770 tests green across 53 files** (+27)_
+_Driver check: `gui-47` re-run — `PASS all #47 criteria`, zero skips. `gui-51` remains the one expected red (#71)_
 
 ## Current focus
 
-**Spec #64's batch is draining. #65 is closed; five tickets remain, three unblocked.**
+**Spec #64's batch is draining. #65 and #68 are closed; four tickets remain, two unblocked.**
 
 The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. The funnel turned that into:
 
 | # | Ticket | Blocked by |
 |---|---|---|
 | ~~#65~~ | ~~Retire the stale `gui-45` driver~~ — **closed, `f0dfc68`** | — |
+| ~~#68~~ | ~~Delete a session from the rail~~ — **closed, `70c904f`** | — |
 | **#66** | Appearance dock with the zoom control | — |
 | **#67** | Tokenise the two duplicate colour literals | — |
-| **#68** | Delete a session from the rail | — |
 | **#69** | Backdrop control: Acrylic or Mica | #66 |
 | **#70** | Four themes: Frost, Ember, Moss, Slate | #66, #67 |
 
 Five ADRs carry the reasoning and were written **before** the spec. Read them before touching any ticket — the spec summarises, the ADRs argue.
 
-**The two reversals worth knowing about**, because both are counter-intuitive and both are already written into the tickets:
+**The reversal still ahead**, counter-intuitive and already written into the tickets. (The delete reversal below is now spent and in code: `dir` is omitted, pinned by value *and* by arity.)
 
 - **Preferences stay in `localStorage`.** The plan opened wanting a main-side store for the backdrop value, on the premise that main must know it before the window is constructed. **False** — `setBackgroundMaterial` is runtime-settable on our Electron (`electron.d.ts:3236`, `^43.2.0`). What was left is a one-frame launch artifact, which does not earn a persistence layer, especially as `useZoom`'s mount effect already ships a *larger* version of it for every user.
-- **The delete call omits its project-directory argument.** Passing it *looks* safer. It is not: the SDK's no-`dir` branch **enumerates** project directories, while the `dir` branch realpaths and **encodes** one — the operation [[2026-07-28-storage-location-is-an-index-not-an-encoding]] removed, measured failing on **45 of 494** sessions. Passing `dir` buys a delete button that silently no-ops on ~9% of rows.
+- ~~**The delete call omits its project-directory argument.**~~ **Shipped in #68** — and confirmed against the shipped `sdk.mjs` rather than the docs: the no-`dir` branch enumerates, the `dir` branch realpaths and **encodes** (the operation [[2026-07-28-storage-location-is-an-index-not-an-encoding]] removed, measured failing on 45 of 494 sessions). The same read settled the subagent question: after unlinking `<id>.jsonl` the SDK recursively removes `<projectDir>/<id>/`, so one call covers both halves.
 
 ## State
 
 - **In flight:** nothing. No open branches.
-- **Landed this leg:** #65 as `f0dfc68` — `gui-45`'s reversed and vacuous assertions retired, **and `gui-47` recovered** (same root cause, one-line fix): both drivers now widen the rail's scope through the real chip before measuring.
-- **Filed this leg:** **#71** — `gui-51` is red on `main`, pre-existing and unrelated, a scrollbar-gutter tolerance calibrated to the old `DEFAULT_ZOOM = 1.1`.
-- **Queue (`ready-for-agent`):** **six open** — #66, #67, #68 unblocked; #69 blocked by one; #70 blocked by two; **#71** unblocked. Verified via `issue_dependencies_summary.blocked_by`.
+- **Landed this leg:** #68 as `70c904f` — a hover- and focus-revealed delete control per rail row: first click arms it (Delete / Cancel), second commits, one row armed at a time, Escape or blur reverts. New `session:delete` IPC channel, `deleteSession` in `session-store.ts`, `DeleteStatus` in `shared/session-types.ts`, `.session-delete` rules in `rails.css`. Twelve mutations applied and reverted; all twelve turned a test red.
+- **Queue (`ready-for-agent`):** **five open** — #66, #67 unblocked; #69 blocked by one; #70 blocked by two; **#71** unblocked. Verified via `issue_dependencies_summary.blocked_by`.
 - **Blocked:** #69, #70 (by design).
-- **Open:** #64 (the spec, stays open until its tickets close), #66–#71.
+- **Open:** #64 (the spec, stays open until its tickets close), #66, #67, #69, #70, #71.
 
 ## Pick up here
 
-**Take #68 (delete) next** — and not for freshness. It is the only ticket whose **scope is not yet known**: it opens with a probe of Windows open-handle behaviour against a real store, and if the handle is held beyond the turn, the busy gate widens from "the active row while busy" to "the active row, always", which is a different feature with a different empty-state story. Do the ticket with an unresolved scope while there is room to react to the answer, not at the end of a batch.
+**Take #66 (Appearance dock + zoom) next.** It is the batch's hinge — both #69 and #70 are blocked on it, so nothing else in the spec moves until it lands.
 
-Then #66 → #67 → #69 → #70. **#71 is not in that chain** — it blocks no feature work, but #66 moves the zoom it depends on, so it is worth doing before or with #66 rather than after the batch.
+Then #67 → #69 → #70. **#71 is not in that chain** — it blocks no feature work, but #66 moves the zoom its measurement depends on, so it is worth doing before or with #66 rather than after the batch.
 
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
 ## Open questions
 
-- **Should the rail filter out `sdk-cli` sessions?** The listing fix admits **112** rows to surface the **37** this app wrote; the other 75 are headless automation, ~20 of them this repo's own GUI drivers titled "say OK" / "reply with exactly: PONG". Accepted deliberately, but it is worst exactly where the owner looks first. The blocker is that `SDKSessionInfo` exposes no `entrypoint` / `origin` / `sessionKind` — the deciding field is read from disk and discarded — so filtering means either re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or `tagSession` on every session this app creates, which is prospective only and would not reach the 37 already written. **#68 is explicitly NOT the answer to this** — that non-goal is written into the ticket so it stops being re-proposed as bulk delete.
+- **Should the rail filter out `sdk-cli` sessions?** The listing fix admits **112** rows to surface the **37** this app wrote; the other 75 are headless automation, ~20 of them this repo's own GUI drivers titled "say OK" / "reply with exactly: PONG". Accepted deliberately, but it is worst exactly where the owner looks first. The blocker is that `SDKSessionInfo` exposes no `entrypoint` / `origin` / `sessionKind` — the deciding field is read from disk and discarded — so filtering means either re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or `tagSession` on every session this app creates, which is prospective only and would not reach the 37 already written. **#68 was explicitly NOT the answer to this**, and shipped saying so — the non-goal is written into the closed ticket so it stops being re-proposed as bulk delete. Single-row deletion existing does not make "delete the automation rows" a plan.
 - **Should Tailwind stay at all?** Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. **#70 deliberately does not bundle this** — the theme override mechanism is indifferent to where the defaults come from, and making a reversible feature wait on an irreversible cleanup is backwards.
 - **The titlebar is crowded and #66 makes it worse** — app name + session title + two pills + **three** dock buttons + window controls, each button eating drag region. Flagged for an impeccable pass, deliberately out of scope for the batch, but do not let it silently become a seventh control nobody costed.
 - One deferred owner decision from #58's Out of Scope: whether an honest Write diff is wanted at permission time only, or also after an auto-run and in replay. Gated nothing in #59–#63; still open.
 
 ## Recent context
 
-- **The loud failure was not the expensive one.** #65 was written about `gui-45` printing `no foreign row was disabled`. Running it produced **four** failures, and the ticket's named one was the only one #47 caused. The other three, plus a fourth in `gui-47`, came from the rail now shipping project-scoped while neither driver established the cross-project premise it asserts — so both inherited whatever `sidebar-scope` a *previous driver* had stored, and their verdicts were a function of run order.
-- **`gui-47` was the real find, and it was not red enough to notice.** One failed assertion, and underneath it three of its four sections **skipped** — the ok path, the missing-cwd refusal, the colour comparison — printed as `SKIPPED ... no second real project in the store`, which reads like an environment note. The driver covering #47's entire workspace-switch transaction had quietly degraded to verifying almost nothing. It now runs a full battery with zero skips. **Read the SKIPPED lines; a driver that skipped most of itself is unverified, not green.**
-- **An assertion can pin a developer's disk.** `gui-45` required ≥2 project groups to match `playground`, on the strength of a comment recording six sibling directories on this machine. There is one now. That class of assertion cannot be fixed by establishing a premise, because the premise is somebody's filesystem — it was replaced with facts true of any store (a partial query narrows: 140 of 680; and it matches everything the full path it contains matched: 114).
-- **A driver run mutates the machine the next driver inherits.** `gui-scope-zoom-pill` ends by clicking back to "This project", so it *writes* the pref that `gui-45` and `gui-47` were reading. Nothing was wrong with any single driver; the coupling was invisible because each one passed in isolation on whichever machine state happened to be current.
-- **Attribution before a fix.** `gui-51`'s red was confirmed pre-existing by stashing this leg's work and re-running on clean `main` for a byte-identical failure — which is what made it safe to file rather than absorb. Its tolerance comment (`~0.909px`) encodes `1 / 1.1`, and the previous leg raised `DEFAULT_ZOOM` to `1.25`. That is a strong hypothesis, **not** a measurement, and #71 says so plus names the experiment that would settle it.
+- **The probe falsified its own premise and the feature survived.** #68 was written around "on Windows an open handle without `FILE_SHARE_DELETE` fails the unlink outright", with the busy gate widening to "the active row, always" if the handle outlived the turn. Measured against a real store, driving the SDK the way `engine.ts` does (one streaming query, cached, so the CLI child outlives the turn): the unlink **succeeds** mid-turn, after `result` with the child still alive, and after `close()`. No delete-blocking handle exists. The scope did not widen and the ticket's shape was untouched — the probe's value was in what it cost, which was one measurement instead of a re-litigated feature at the end of the batch.
+- **The real hazard was the opposite of the one predicted.** A mid-turn delete does not fail — it succeeds and is then **undone**. The still-running turn recreates the transcript on its next append: same path, same id, back at 1,109 bytes where the completed file was 61,317. A refused unlink at least reports failure; this one reports success, removes the row, and the row returns as a stub. The gate stayed, its comment now says why, and the ADR was amended rather than left stating a false premise.
+- **The falsified premise also sharpened the predicate.** Because only the *active* session's transcript is being appended to, the gate is `active && busy` — not the row button's neighbouring `!foreign && busy`. A local non-active row is exactly as safe as a foreign one. The test asserts all three rows in one go, because "align these two conditions" is the obvious future tidy-up and it would be wrong.
+- **A test that reads CSS by substring can match a longer selector.** The keyboard-reachability pin started as `toContain('.session-row:focus-within .session-delete')` and **survived** deleting the reveal rule — that string is also a prefix of the `:disabled` variant further down the file. It now finds the reveal rule by what it *does* (`opacity: 1`) and inspects its selector list. Found only because the mutation was actually run; it looked like a perfectly good assertion.
+- **Classify by asking the store, not by reading the error.** The SDK throws prose to signal not-found, and that prose differs between its two branches. So `deleteSession` catches, drops the index and re-resolves the id: `not-found` → `ok`, anything else (including #60's `unavailable`) → `failed`. The two status tests are driven by the **same** error object with different store contents, which turns "no string-matching" from a comment into a mechanism.
 - **A proxy grill is only worth running if you verify what it tells you.** The owner asked for the funnel to run unattended against a rehydrated subagent standing in for them. It pushed back hard four times out of five, and **twice it was right and the opening position was wrong** — but in both cases the correction rested on a factual claim (`setBackgroundMaterial` being runtime-settable; the SDK's two delete branches doing genuinely different things) that was checked in `electron.d.ts` and `sdk.mjs` before being accepted. A confident subagent asserting an implementation detail is a hypothesis, not a finding. Every reversal in #64 has its evidence recorded in the ADR.
 - **The strongest argument against a documented promise was that the document was wrong.** DESIGN.md:47 said the neutrals were provisional "until the persistent-glass follow-up lands", which read as a commitment that this work would re-tune them. It describes a mechanism that does not exist — acrylic *always* shows the desktop, blur-behind is what acrylic **is**, and the follow-up was only ever about the unfocused flip to flat. The clause is rewritten rather than deleted, because deleting it loses why the neutrals were chosen and invites a future "restore" against a reference nobody re-checked.
 - **Naming is a design decision that survives without being remembered.** The panel is **Appearance**, not Settings, for the same reason the scrollbar rule went global: a name that has to be *remembered* as appearance-only is the failure with an extra step. A heading is what makes the next person adding "reset all preferences" argue before adding it. Same trick as the structural lightness assertion in #70's test — make the rule enforceable rather than memorable.
@@ -85,17 +84,26 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 **From #64's design pass — traps that exist in the tickets, not yet in the code:**
 
 - **`themes.css` will be the THIRD raw-text CSS reader in the suite.** It joins `tests/scrollbar.test.ts` (scans every line naming a scrollbar pseudo-element, comments included) and `tests/multiline-composer.test.tsx` (slices between literal braces). Both have already gone red on prose. The theme file will *want* comments explaining each hue, and a naive `--color-\w+:` regex counts a commented-out declaration happily. **Strip comments before parsing.**
-- **The delete call must omit `dir`.** Passing it opts into the SDK's realpath→encode branch — the operation this codebase deleted, measured failing on 45 of 494 sessions. Omitting it also removes the "unknown project" branch entirely. A reviewer's instinct will be that `dir` is the safer choice; it is the opposite.
-- **A not-found delete is `ok`, not `failed`.** It is a staleness signal and the user's intent is satisfied. Do not string-match the SDK's error text to classify outcomes, and do not invent a `null`-vs-`[]` analogue for a mutation — that convention belongs to the read channels only.
+- *(#68's two delete traps have moved into the code and are pinned — see the `From #68` block below.)*
 - **The Appearance panel must have no draft state.** `switchWorkspace` clears `openDock` (`App.tsx:106`), so the panel closes itself on an unrelated action. A Save button behind a self-closing panel is a silent data-loss bug.
 - **The Appearance dock shares the dock-shell selector groups but must not widen them.** Editing a shared group in `shared.css` repaints the sessions rail *and* the agents dock, silently, with a suite that loads no CSS. Duplicating them instead is the drift the split removed. Join the shell groups; own the control rows in a new file.
 - **Backdrop must not touch any neutral.** Coupling it to the palette makes it a second theme axis writing the same custom properties as #70, from two independent controls — invisible by construction.
 - **The accent is FOUR tokens, not three.** `rails.css:324` paints mint at 10% alpha and CSS cannot apply an alpha to `var(--color-mint)`, so a `--color-mint-wash` token is required. A three-key expectation in the theme test greens while a theme silently inherits Frost's wash.
 - **`--color-mint-ink` follows the hue but keeps its lightness AND its chroma**, and the neutrals move by hue angle only — their chroma is fixed. Only `--color-mint` / `--color-mint-press` may move chroma, within `0.05`–`0.09`.
-- **`gui-45.mjs` must be retired (#65) BEFORE any other ticket's driver run**, or every result in the batch is ambiguous.
-- **Two new IPC channels this batch** (backdrop one-way, delete request/response) — the four-mock-sites rule plus `preload/index.d.ts` fires **twice**, and each needs `isTrustedIpc` plus its value whitelist at the boundary. Theme and zoom are renderer-only and fire it zero times.
+- **One new IPC channel left in this batch** (backdrop, one-way) — the four-mock-sites rule plus `preload/index.d.ts` fires once more, needing `isTrustedIpc` plus a value whitelist at the boundary. #68's `session:delete` already spent the other. Theme and zoom are renderer-only and fire it zero times. Note the mock-site count is really "the harness plus the three suites that build their own `api` object"; the ~22 other files inherit `chat-harness.ts` and go red only because of it.
 - **Lifting the zoom level out of its `useEffect` closure must not disturb the first-mount persist.** "A stored level always wins over the default" is the entire reason `zoom-level-v2` is versioned.
 - **A driver screenshot cannot judge the backdrop.** `--disable-gpu` flattens acrylic, so Acrylic and Mica look identical to it. Real window or nothing — same for whether a theme looks good.
+
+**From #68 — now true of the delete path in code:**
+
+- **`deleteSession` takes ONE argument, and the pin is on the arity as well as the value.** Adding an options object of any shape re-enters the SDK's realpath→encode branch (the ~9%-no-op operation this codebase removed). `toHaveBeenCalledWith(id)` alone reads like an ordinary happy-path assertion and invites widening, so `tests/session-store.test.ts` also asserts `mock.calls[0]` has length 1.
+- **The delete's outcome is a claim about the STORE, never about the error text.** On a throw the index is dropped and the id re-resolved: `not-found` → `ok`, everything else → `failed`. **`unavailable` must stay `failed`** — a store that will not enumerate cannot demonstrate the session is gone, and reporting success there is the "row that looks deleted" bug in the one branch where folding it into not-found is easiest.
+- **The busy gate is `active && busy`, NOT `!foreign && busy`.** It sits one line from the row button's own `!foreign && busy` and looks like an inconsistency to be tidied. It is not: the running turn appends only to the ACTIVE session's transcript. Pinned by asserting an active, a local non-active and a foreign row in the same test.
+- **Windows holds no delete-blocking handle on a transcript** — measured, all three states. Do not re-derive a lock-based argument for anything here. The real hazard is that a mid-turn delete **succeeds and is then undone** by the turn's next append.
+- **The delete control's hidden state must stay `opacity`, and the reveal must keep `:focus-within`.** `display: none` or `visibility: hidden` looks identical and takes it out of the tab order — the keyboard-inaccessible failure the hover-reveal + confirm pairing exists to prevent. jsdom sees none of this, so it is pinned by reading `rails.css` as text.
+- **The SAME button arms and commits.** Swapping in a separate confirm button unmounts the focused element, drops focus to the body, and the blur-reverts rule disarms the row the instant it arms.
+- **Escape is stopped at the row.** `SubagentDrawer` listens for Escape on `window`; without `stopPropagation` one press would disarm the row *and* close the drawer. It only fires when the key passed through an armed row, so an Escape anywhere else still closes the drawer.
+- **`session-index.ts` resolves the store as `homedir()/.claude/projects` and ignores `CLAUDE_CONFIG_DIR`, while the SDK honours it.** Pre-existing and app-wide (every read path shares it), but it now also means a *failed* delete would be classified against the wrong store if that variable were ever set. Recorded on #68 rather than fixed — widening it touches #60's module.
 
 **Carried from earlier legs:**
 
@@ -190,12 +198,13 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 **Found by the brainstorm pair, unspec'd:** stream **extended thinking** as a collapsed strip (`thinking_delta` is dropped, so a reasoning phase reads as a hang); **native turn-end notifications + taskbar flash**; **type-while-busy composer** then queued send; **one-click restart on `terminalError`**; **turn pulse** from the dropped `tool_progress` / `status` / rate-limit telemetry; **MCP + settings-parse health** surfacing.
 
-**Carried, unchanged:** live-tail's **incremental byte tailing** and the **watch-installed-after-the-read gap** (both demand-driven — a `ponytail:` comment names the fix). Plus context-pressure meter (`Query.getContextUsage()` exists but a naïve percentage lies), typed failed-turn recovery (`rewindFiles()` needs `enableFileCheckpointing`), full-text transcript search, **session rename / archive** (delete is spec'd as #68; rename and archive stay deferred), drag-and-drop, replay thumbnails, N-concurrent engines, **fork-on-resume**, busy-switch detach (decided against), folding `Welcome`'s last `pickFolder` caller onto the chooser, agent archive / control / map pan-zoom, and the smaller leftovers from #31–#36.
+**Carried, unchanged:** live-tail's **incremental byte tailing** and the **watch-installed-after-the-read gap** (both demand-driven — a `ponytail:` comment names the fix). Plus context-pressure meter (`Query.getContextUsage()` exists but a naïve percentage lies), typed failed-turn recovery (`rewindFiles()` needs `enableFileCheckpointing`), full-text transcript search, **session rename / archive** (delete **landed** in #68; rename and archive stay deferred), drag-and-drop, replay thumbnails, N-concurrent engines, **fork-on-resume**, busy-switch detach (decided against), folding `Welcome`'s last `pickFolder` caller onto the chooser, agent archive / control / map pan-zoom, and the smaller leftovers from #31–#36.
 
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-31-a-driver-establishes-its-premise]] — #65, this leg
+- [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — **#68, this leg; amended with the probe result**
+- [[2026-07-31-a-driver-establishes-its-premise]] — #65, previous leg
 - [[2026-07-31-a-preference-lives-where-it-is-read]] · [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] · [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] · [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] · [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — spec #64's five, this leg
 - [[2026-07-30-the-import-order-is-the-cascade]] — this session, second pass
 - [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]] — this session, first pass; sharpens [[2026-07-23-tailwind4-tokens]]

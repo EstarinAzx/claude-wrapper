@@ -40,7 +40,15 @@ Two outcomes, reusing the shape the app already has — main decides and returns
 
 Allowed — refusing it is tidier but leaves the user unable to delete the very conversation they just decided was junk, which is the most common motive. Afterwards the pane falls back to **`newChat()`**, and the spec says so explicitly, because the standing landmine reads *never clear the pane with `newChat()` on a switch path* and someone will over-apply it. It is right here precisely because we want what it does: the resume target points at a transcript that no longer exists, and `targetSession(null)` is what clears it.
 
-**Refuse deletion of the active session while `busy`.** A turn in flight is appending to that JSONL, and on Windows an open handle without `FILE_SHARE_DELETE` fails the unlink outright. Foreign rows stay deletable while busy — they touch no running engine — mirroring the existing `disabled={!foreign && busy}`. **Probe the open-handle behaviour against a real store before writing the ticket** rather than assuming; it is the same one-call probe that settled the listing bug.
+**Refuse deletion of the active session while `busy`.** A turn in flight is appending to that JSONL. Foreign rows stay deletable while busy — they touch no running engine.
+
+### Amended 2026-07-31 after the probe (#68): the premise was false, the conclusion holds
+
+This section originally argued the refusal from Windows file locking — "an open handle without `FILE_SHARE_DELETE` fails the unlink outright" — and told the ticket to probe it first. The probe ran against a real store, driving the SDK the way `engine.ts` does (one streaming query, built once and cached, so the CLI child outlives the turn). **The unlink succeeds in all three states**: mid-turn, after `result` with the child still alive, and after `close()`. The CLI holds no delete-blocking handle. So the gate did **not** widen to "the active row, always", and the feature's shape was unchanged.
+
+The refusal stays, for a **stronger** reason found by the same probe. A mid-turn delete succeeds and is then **undone**: the still-running turn recreates the transcript on its next append, same path, same id — measured coming back at 1,109 bytes where the completed file was 61,317. That is worse than a refused unlink, which at least reports failure. This one reports success, removes the row, and the row returns as a stub — the exact mirror of "a delete that failed must not leave a row that looks deleted".
+
+It also **sharpened the predicate**. The gate is `active && busy`, NOT the row button's `!foreign && busy`: the running turn appends to its own transcript and no other, so a non-active row in the same project is as safe as a foreign one. Do not "align" the two conditions later; `tests/sidebar.test.tsx` asserts all three rows at once to stop exactly that.
 
 ## Wiring note
 
