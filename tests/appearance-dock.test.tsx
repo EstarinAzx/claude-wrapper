@@ -21,6 +21,7 @@ afterEach(() => {
 })
 
 const KEY = 'zoom-level-v2'
+const BACKDROP_KEY = 'backdrop'
 
 const startSession = async () => {
   render(<App />)
@@ -42,6 +43,16 @@ const openDock = async () => {
 const press = (key: string): void => {
   fireEvent.keyDown(document.body, { key, ctrlKey: true })
 }
+
+const radios = (): HTMLButtonElement[] =>
+  within(dock()).getAllByRole('radio') as HTMLButtonElement[]
+const radio = (name: 'Acrylic' | 'Mica'): HTMLButtonElement =>
+  within(dock()).getByRole('radio', { name }) as HTMLButtonElement
+const checked = (): string | null =>
+  radios().find((r) => r.getAttribute('aria-checked') === 'true')?.dataset['backdrop'] ?? null
+// The copy is authored with a typographic apostrophe, like the rest of the app's
+// strings. What these tests pin is the WORDING, not the glyph.
+const flat = (s: string): string => s.replace(/[’']/g, "'")
 
 describe('appearance dock (#66)', () => {
   test('the toggle is absent before a folder is picked, present after', async () => {
@@ -175,6 +186,128 @@ describe('appearance dock (#66)', () => {
 
     press('0')
     expect(stepper('Zoom in').disabled).toBe(false)
+  })
+})
+
+// #69 — Backdrop. Two values, applied live, persisted, and honest about what
+// each one costs. The material itself is invisible to jsdom and to a driver
+// screenshot alike (disabling the GPU flattens acrylic), so everything testable
+// is the value's journey: what is offered, what is stored, what reaches main.
+describe('backdrop control (#69)', () => {
+  test('offers exactly two options — and not auto, none or tabbed', async () => {
+    await startSession()
+    await openDock()
+    expect(radios().map((r) => r.dataset['backdrop'])).toEqual(['acrylic', 'mica'])
+    // The cut three must not reach the panel by any route, including as text.
+    expect(dock().textContent).not.toMatch(/\b(auto|none|tabbed)\b/i)
+  })
+
+  test('acrylic is what a fresh install opens with', async () => {
+    await startSession()
+    await openDock()
+    expect(checked()).toBe('acrylic')
+  })
+
+  // The panel is not where the material is applied — the window wears it whether
+  // or not anyone opens Appearance. Pinned by never opening the dock.
+  test('the stored material reaches main on launch, with the panel unopened', async () => {
+    window.localStorage.setItem(BACKDROP_KEY, 'mica')
+    await startSession()
+    expect(screen.queryByRole('complementary', { name: 'Appearance' })).toBeNull()
+    expect(harness.api.setBackdrop).toHaveBeenCalledWith('mica')
+  })
+
+  test('the constructed default is pushed too, so the two declarations cannot drift', async () => {
+    await startSession()
+    expect(harness.api.setBackdrop).toHaveBeenCalledWith('acrylic')
+  })
+
+  test('a stored material, not the default, is what the panel opens checked', async () => {
+    window.localStorage.setItem(BACKDROP_KEY, 'mica')
+    await startSession()
+    await openDock()
+    expect(checked()).toBe('mica')
+  })
+
+  // Commit on change: no Save, so the click IS the apply and the persist.
+  test('picking a material applies it, stores it and moves the selection', async () => {
+    await startSession()
+    await openDock()
+
+    fireEvent.click(radio('Mica'))
+    expect(harness.api.setBackdrop).toHaveBeenLastCalledWith('mica')
+    expect(window.localStorage.getItem(BACKDROP_KEY)).toBe('mica')
+    expect(checked()).toBe('mica')
+
+    fireEvent.click(radio('Acrylic'))
+    expect(harness.api.setBackdrop).toHaveBeenLastCalledWith('acrylic')
+    expect(window.localStorage.getItem(BACKDROP_KEY)).toBe('acrylic')
+    expect(checked()).toBe('acrylic')
+  })
+
+  // A hand-edited or corrupted value must not render an unselected group, and
+  // must not be the thing handed to setBackgroundMaterial either.
+  test('an unrecognised stored material falls back to acrylic, on screen and over IPC', async () => {
+    window.localStorage.setItem(BACKDROP_KEY, 'tabbed')
+    await startSession()
+    await openDock()
+    expect(checked()).toBe('acrylic')
+    expect(harness.api.setBackdrop).toHaveBeenCalledWith('acrylic')
+    expect(harness.api.setBackdrop).not.toHaveBeenCalledWith('tabbed')
+  })
+
+  // Roving tabindex: one tab stop for the group, arrows move within it.
+  test('arrow keys move the selection and carry focus with it', async () => {
+    await startSession()
+    await openDock()
+    expect(radio('Acrylic').tabIndex).toBe(0)
+    expect(radio('Mica').tabIndex).toBe(-1)
+
+    fireEvent.keyDown(radio('Acrylic'), { key: 'ArrowDown' })
+    expect(checked()).toBe('mica')
+    expect(document.activeElement).toBe(radio('Mica'))
+    expect(radio('Mica').tabIndex).toBe(0)
+    expect(radio('Acrylic').tabIndex).toBe(-1)
+
+    fireEvent.keyDown(radio('Mica'), { key: 'ArrowUp' })
+    expect(checked()).toBe('acrylic')
+    expect(document.activeElement).toBe(radio('Acrylic'))
+  })
+})
+
+// The honesty requirement, pinned rather than remembered. The request behind
+// this feature was for "persistent acrylic"; what ships is Mica, which is
+// persistent WITHOUT being acrylic. The word must not appear anywhere in the
+// panel, and each option must state its own trade instead of a tagline.
+describe('the backdrop copy states the trade and never claims persistence (#69)', () => {
+  test('the word "persistent" appears nowhere in the panel', async () => {
+    await startSession()
+    await openDock()
+    expect(dock().textContent ?? '').not.toMatch(/persist/i)
+  })
+
+  test('each option carries its own trade, in the agreed words', async () => {
+    await startSession()
+    await openDock()
+    const text = flat(dock().textContent ?? '')
+    expect(text).toContain(
+      "Blurs what's behind the window; Windows flattens it when the window loses focus."
+    )
+    expect(text).toContain("A steady tint from your wallpaper; doesn't blur, doesn't flatten.")
+  })
+
+  // Described-by rather than folded into the name, so the option announces as
+  // "Acrylic" and the trade follows it rather than replacing it.
+  test('the description is associated with its own option', async () => {
+    await startSession()
+    await openDock()
+    for (const name of ['Acrylic', 'Mica'] as const) {
+      const el = radio(name)
+      const described = document.getElementById(el.getAttribute('aria-describedby') ?? '')
+      expect(flat(described?.textContent ?? '')).toContain(
+        name === 'Acrylic' ? 'Blurs what' : 'A steady tint'
+      )
+    }
   })
 })
 

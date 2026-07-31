@@ -20,6 +20,7 @@ import {
 } from './model-mode'
 import { resolveHostCli, toCliOptions } from './cli-path'
 import { clampZoom } from '../shared/zoom'
+import { normalizeBackdrop } from '../shared/backdrop'
 import { normalizeSendPayload } from '../shared/attachment-types'
 import {
   MAX_IMAGE_BYTES,
@@ -459,6 +460,18 @@ ipcMain.on('zoom:set', (event, level: unknown) => {
   if (!isTrustedIpc(event)) return
   const win = BrowserWindow.fromWebContents(event.sender)
   win?.webContents.setZoomFactor(clampZoom(Number(level)))
+})
+
+// Same shape as zoom (#69): the renderer stores the preference, main applies it
+// to the live window. `setBackgroundMaterial` is runtime-settable, which is the
+// fact that let this preference stay in localStorage with the other four — no
+// value has to be known at BrowserWindow construction time. normalizeBackdrop
+// is the trust boundary; the window is never handed a material we do not offer.
+// No platform branch: the API is Windows-only and so is this app.
+ipcMain.on('backdrop:set', (event, material: unknown) => {
+  if (!isTrustedIpc(event)) return
+  const win = BrowserWindow.fromWebContents(event.sender)
+  win?.setBackgroundMaterial(normalizeBackdrop(material))
 })
 
 // The channel carries a payload (prompt text + attachments), not a bare string.

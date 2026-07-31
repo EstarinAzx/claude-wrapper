@@ -35,6 +35,7 @@ beforeEach(() => {
     watchSession: vi.fn(),
     onSessionChanged: vi.fn().mockReturnValue(() => {}),
     setZoom: vi.fn(),
+    setBackdrop: vi.fn(),
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),

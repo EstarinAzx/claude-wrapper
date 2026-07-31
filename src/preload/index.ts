@@ -9,6 +9,7 @@ import type {
   TranscriptMessage
 } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
+import type { Backdrop } from '../shared/backdrop'
 import type { ModelInfo } from '../shared/model-types'
 import type { SlashCommandInfo } from '../shared/command-types'
 import type { SubagentInfo } from '../shared/subagent-types'
@@ -86,6 +87,9 @@ const api = {
     }
   },
   setZoom: (level: number): void => ipcRenderer.send('zoom:set', level),
+  // One-way, like zoom (#69): the renderer owns the stored preference, main
+  // owns the window it applies to. Pushed on mount and on every change.
+  setBackdrop: (material: Backdrop): void => ipcRenderer.send('backdrop:set', material),
   sendPrompt: (payload: SendPayload): void => ipcRenderer.send('chat:send', payload),
   stopTurn: (): void => ipcRenderer.send('chat:stop'),
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {

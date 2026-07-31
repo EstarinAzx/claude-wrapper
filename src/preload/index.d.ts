@@ -8,6 +8,7 @@ import type {
   TranscriptMessage
 } from '../shared/session-types'
 import type { BackendInfo, BackendMode } from '../shared/backend-types'
+import type { Backdrop } from '../shared/backdrop'
 import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { SendPayload } from '../shared/attachment-types'
@@ -48,6 +49,8 @@ export interface WrapperApi {
   watchSession: (id: string | null) => void
   onSessionChanged: (cb: (id: string) => void) => () => void
   setZoom: (level: number) => void
+  // One-way (#69). Two values only; main normalises at the boundary regardless.
+  setBackdrop: (material: Backdrop) => void
   sendPrompt: (payload: SendPayload) => void
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void

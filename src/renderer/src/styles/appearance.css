@@ -37,9 +37,74 @@
   gap: 12px;
 }
 
+/* A control whose options each carry a sentence cannot sit beside its label in
+   a fixed-width panel, so this variant stacks them. Same row group otherwise. */
+.appearance-field--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
 .appearance-label {
   font-size: var(--fs-ui);
   color: var(--text-muted);
+}
+
+/* Backdrop (#69): pick one of two, each stating what it costs. */
+.appearance-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.appearance-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  /* Literal 8px like the session rows, not --r-pill: this box grows with its
+     description, and a pill on a growable box becomes a lozenge. */
+  border-radius: 8px;
+  background: var(--tint-1);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 150ms var(--ease),
+    border-color 150ms var(--ease);
+}
+
+.appearance-choice:hover {
+  background: var(--tint-2);
+}
+
+.appearance-choice:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
+/* The selected option is the only mint in the panel, so the state reads at a
+   glance without a tick glyph competing with the label. */
+.appearance-choice[aria-checked='true'] {
+  border-color: var(--mint);
+  background: var(--mint-wash);
+}
+
+.appearance-choice-name {
+  font-size: var(--fs-ui);
+  color: var(--text);
+}
+
+.appearance-choice[aria-checked='true'] .appearance-choice-name {
+  color: var(--mint);
+}
+
+/* The trade, not a tagline: it is the reason to pick the other one. */
+.appearance-choice-desc {
+  font-size: var(--fs-micro);
+  line-height: 1.45;
+  color: var(--text-faint);
 }
 
 /* Minus / readout / plus as one segmented unit, so the readout reads as the

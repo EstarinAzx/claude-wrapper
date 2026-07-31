@@ -44,7 +44,7 @@ markdown list markers and button styling).
 }
 ```
 
-Never `#000`/`#fff`. Backgrounds under the acrylic must stay translucent; `html, body { background: transparent }`, the app root paints `--wash`. Wash/surface/bubble were deepened from the original 0.16/0.24/0.29 lightness to read as flat near-black against the reference (the desktop bleeds through the acrylic until the persistent-glass follow-up lands).
+Never `#000`/`#fff`. Backgrounds under the acrylic must stay translucent; `html, body { background: transparent }`, the app root paints `--wash`. Wash/surface/bubble were deepened from the original 0.16/0.24/0.29 lightness to read as flat near-black against `docs/design/frost-mono-reference.png`, tuned with the desktop showing through the acrylic. **These values are the design, not a placeholder.** An earlier version of this line said they held only "until the persistent-glass follow-up lands", which described a mechanism that does not exist: acrylic *always* shows the desktop, because blur-behind is what acrylic is. That follow-up was only ever about the flip to flat when the window loses focus, and it could never have changed what sits behind the wash. **The neutrals are not re-tuned per backdrop** (#69): backdrop and theme would then be two independent controls writing the same three custom properties, from one `:root` block, with a suite that loads no CSS. If Mica ever reads too dark, that is a theme value or a defect, not a coupling to build.
 
 ## Type
 
@@ -55,6 +55,7 @@ One family (Segoe UI Variable, native Win11). Body 15/1.6. UI labels 13. Divider
 - Chat column: max-width 760px, centered; messages breathe (24px vertical gaps, 40px around the date divider).
 - Titlebar: height 48px, full-width drag region (`-webkit-app-region: drag`; controls `no-drag`). Left: 22px mint rounded-square mark + app name 600. Center: session title, `--text-muted`. Right: the Agents-dock toggle, then a hairline separator, then min / max / close, 40px hit targets, muted glyphs, subtle hover wash (close hovers red-tinted `oklch(0.55 0.16 25 / 0.9)`). The Agents toggle is a centered 28px rounded square, not a 40px full-height cell, so the window-control run stays its own group and the toggle is never a mis-click away from Close; it is absent until a project folder is open, and takes a mint tint while the dock is showing.
 - Agents dock: in-flow resizable `aside` on the right of the workspace (`--surface`, hairline `border-left`), mirroring the Sessions rail — same 44px head, same row shell, grip on the edge that faces the chat. In-flow, never an overlay: opening it narrows the chat rather than covering it.
+- Appearance dock: third right-slot panel, fixed width, no grip, every control commits on change. Backdrop offers exactly two values, **Acrylic (default, and the identity)** and Mica; each states its own trade, and the word "persistent" is banned from that copy because what ships is Mica, which is persistent without being acrylic.
 - User bubble: right-aligned, max-width 60%, `--bubble`, radius `--r-bubble`, padding 12px 16px.
 - Assistant message: no bubble. 28px mint circle avatar left, text beside it; list items use mint en-dash markers.
 - Typing indicator: avatar + three 6px mint dots, staggered opacity pulse.

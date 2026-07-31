@@ -77,6 +77,7 @@ export const fakeChatApi = (folder = FOLDER) => {
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),
     setBackendMode: vi.fn(),
     setZoom: vi.fn(),
+    setBackdrop: vi.fn(),
     sendPrompt: (payload: SendPayload): void => {
       prompts.push(payload)
     },

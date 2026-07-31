@@ -13,6 +13,7 @@ import CommandsDock from './components/CommandsDock'
 import AppearanceDock from './components/AppearanceDock'
 import { useChat } from './useChat'
 import { useZoom } from './useZoom'
+import { useBackdrop } from './useBackdrop'
 
 // Why a workspace switch was refused. The three rejections are the main
 // process's, not the renderer's — it never second-guesses them, it phrases them.
@@ -68,6 +69,10 @@ const App = () => {
   // The level is App state now (#66) so the Appearance panel can read it back;
   // `step` is the single mutation both the shortcuts and the stepper call.
   const zoom = useZoom()
+  // Mounted at App level, not inside the dock: the material applies to the
+  // window whether or not the panel is open, and the mount push has to happen
+  // on launch rather than the first time someone opens Appearance.
+  const backdrop = useBackdrop()
 
   // Read the launch mode once, then track flips the main side broadcasts.
   useEffect(() => {
@@ -293,6 +298,8 @@ const App = () => {
           ) : null}
           {openDock === 'appearance' ? (
             <AppearanceDock
+              backdrop={backdrop.backdrop}
+              onPickBackdrop={backdrop.set}
               level={zoom.level}
               onStep={zoom.step}
               onClose={() => setOpenDock(null)}
