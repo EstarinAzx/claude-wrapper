@@ -7,24 +7,23 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg landed #74; the tracker is EMPTY**_
-_At commit: `07544e8` on `main`, pushed. Gate green: typecheck clean, **843 tests across 57 files**, build ok_
-_Driver check: all **19** drivers re-run this leg and green. `gui-74` joined the set. No standing red anywhere, so any red is a real regression._
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 1 landed #75; five tickets left in the batch**_
+_At commit: `9905e1d` on `main`, pushed. Gate green: typecheck clean, **864 tests across 58 files**, build ok_
+_Driver check: all **19** assertion drivers re-run this leg and green, `gui-75` joining the set, plus the observational `gui-scope-zoom-pill` (which prints readings and no verdict, by design — that is not a failure). No standing red anywhere, so any red is a real regression._
 
 ## Current focus
 
-**Six tickets open — #75 through #80 — filed by the `/preset vibe` run of
-2026-07-31 under an explicit owner autonomy grant.** #74 (`07544e8`) landed and
-closed first, emptying the tracker; the vibe run then refilled it from the
-set-aside work.
+**Five tickets open — #76 through #80 — from the `/preset vibe` run of
+2026-07-31 under an explicit owner autonomy grant.** A relay chain is draining
+them one per leg. **#75 landed as `9905e1d` and closed.**
 
 | # | Ticket | Note |
 |---|---|---|
-| #75 | Turn-end notification + taskbar flash when unfocused | highest daily value; record is **silent**, so it is a chosen design |
-| #76 | `gui-48`: drive the busy refusal instead of printing `SKIPPED` forever | best-warranted in the batch |
-| #77 | `gui-51`: drive every named surface into overflow | ditto; **separate leg from #76 on purpose** |
+| ~~#75~~ | ~~Turn-end notification + taskbar flash when unfocused~~ | `9905e1d` |
+| #76 | `gui-48`: drive the busy refusal instead of printing `SKIPPED` forever | **frontier**; best-warranted in the batch |
+| #77 | `gui-51`: drive every named surface into overflow | **separate leg from #76 on purpose** |
 | #78 | Measure the launch artifact; gate `win.show()` only if objectionable | measurement-first, per the ADR's own "Build it only if measured" |
-| #79 | The window remembers its size and position | **blocked by #78** (`blocked_by: 1`) — structural, see below |
+| #79 | The window remembers its size and position | **blocked by #78** (`blocked_by: 1`, re-verified live this leg) — structural, see below |
 | #80 | Type-while-busy composer with a queued send | biggest and riskiest; filed last deliberately |
 
 **The autonomy grant is recorded in `.claude/vibe.md`** and it overrode the
@@ -50,6 +49,41 @@ decision still carries a warrant or is marked as a chosen design.
   [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] **affirmatively
   rejects** putting an engine-rebuilding control on the per-turn path. The record
   supplies neither a definition nor a measured defect for it.
+
+**#75 landed, and the ticket's own prescribed instrument was the thing that was
+wrong.** The feature is small — a notification and a taskbar flash decided
+inside `chat:send`, no IPC channel, because main already holds the event stream
+and the window. What is worth carrying is why the obvious implementation would
+have shipped broken:
+
+**The AC said "`win.isFocused()` is the check". Probed before writing any code,
+on Electron 43 / Windows 11:**
+
+| action | `win.isFocused()` | `webContents.isFocused()` | `blur` event |
+|---|---|---|---|
+| `win.blur()` | **true** | true | never fires |
+| `win.minimize()` | **true** | false | never fires |
+| `win.hide()` | false | false | fires |
+
+A **minimised** window — the plainest form of walking away — reports itself
+focused, so the prescribed one-liner would have been silent in exactly the case
+the feature exists for. Shipped as `isLooking(win) = isFocused() &&
+!isMinimized()`. It also decided the driver: `gui-75` minimises rather than
+blurs, since a driver built on `win.blur()` would have sat at a premise failure
+forever, and unlike `hide()` a minimised window keeps the taskbar button the
+flash has to land on.
+
+Same shape as #71's gutter and #72's drag region — **measure the stated cause
+before building on it**, including when the ticket states it as an instruction.
+
+**`turn-aborted` is silent by design** (the user pressed Stop a second ago), and
+that silence plus the focused-turn silence were mutation-verified **separately**:
+wiring removed reddens the unfocused turn, the focus guard removed reddens
+**only** the focused turn, the abort guard removed reddens **only** Stop. Three
+separate runs rather than one "everything reddens" mutation, which is what shows
+the two silences are independently guarded.
+
+See [[2026-07-31-an-unwatched-turn-end-is-mains-to-announce]].
 
 **#74 landed, and the trap was in the driver set rather than the app.** The diff
 is the one line the ticket predicted (`sandbox: false` → `true`). The evidence is
@@ -126,20 +160,21 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** nothing. `main` = `07544e8` + this leg's `.context` commits, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **#75, #76, #77, #78, #80** unblocked; **#79** blocked by #78. Frontier = **#75**.
-- **Landed this leg:** **#74** (`07544e8`) — the renderer runs sandboxed, with `gui-74` measuring the OS-level effect rather than the flag.
+- **In flight:** nothing. `main` = `9905e1d` + this leg's `.context` commits, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **#76, #77, #78, #80** unblocked; **#79** blocked by #78. Frontier = **#76**.
+- **Landed this leg:** **#75** (`9905e1d`) — a turn ending while nobody is looking announces itself, with `isLooking` correcting the ticket's own prescribed focus check.
 - **Parked for the owner: NONE — all seven resolved** under the 2026-07-31 autonomy grant, with reasons in `.claude/vibe.md` under `## Decisions`. Outcomes: Tailwind **not dropped, and the adopt-utilities question deliberately left OPEN** (the record says asking it "is the honest one to ask", so closing it was the one move it argues against) · titlebar control count **unchanged** and #72's centring **stands** · dock toggles **do not collapse** · window geometry **yes, as #79** · "which polish item next" **answered by this batch's ordering** · renderer error boundary **not built** (absence real, reachability unproven — filing it would be inventing a defect).
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**The frontier is #75** — turn-end notification + taskbar flash. Run the frontier
-query anyway; this line goes stale the moment the owner files something, and that
-is this project's standing lesson: a leg once wrote that closing #70 would empty
-the queue and was wrong, because #71 had been unblocked the whole time.
+**The frontier is #76** — drive `gui-48`'s busy refusal instead of printing
+`SKIPPED` forever. Run the frontier query anyway; this line goes stale the moment
+the owner files something, and that is this project's standing lesson: a leg once
+wrote that closing #70 would empty the queue and was wrong, because #71 had been
+unblocked the whole time.
 
-A relay chain is draining #75 → #76 → #77 → #78 → #79 → #80, one ticket per leg.
+A relay chain is draining #76 → #77 → #78 → #79 → #80, one ticket per leg.
 **#79 is blocked by #78 and must stay that way** — its only ADR-compatible
 implementation is built on the readiness gate #78 may produce, and the record
 binds them in a single clause.
@@ -169,6 +204,9 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Recent context
 
+- **A ticket's stated instrument is a claim, not a fact, and #75 is the case that found it.** The AC said "`win.isFocused()` is the check" — measured, a minimised window reports itself focused and `win.blur()` moves nothing at all. The bodies in this project are adversarially reviewed and usually right, which is exactly why an unverified *mechanism* inside one slips through: the reviewers argue about the contract, not about what the platform call returns. **Probe the API the ticket names before building on it**, the same way #71 probed its own gutter diagnosis and #68 probed its Windows handle.
+- **Mutating each guard separately says more than mutating them together.** #75 has two silent cases — a focused turn and Stop. One mutation that reddens both proves only that *something* guards them; removing the focus guard (focused turn reddens, Stop stays green) and then the abort guard (Stop reddens, focused turn stays green) proves they are **independently** guarded. Cheap to do, and it is the difference between "the assertion can fail" and "this assertion covers this rule".
+- **A second guard that masks half a mutation is worth measuring rather than removing.** Deleting `shouldAnnounce`'s abort guard leaks `flashFrame(true)` but not the toast, because the copy lookup in `announceTurn` narrows the outcome again. Recorded in the source with the measured numbers instead of being tidied away: the asymmetry fails toward the quieter half and the driver still reddens, but a reader who does not know it would mis-read the mutation result.
 - **A driver's LAUNCH LINE is part of the state it establishes, and #74 is the case that found it.** #65 established that a driver must set the app state it asserts rather than inherit it. #74 extends that one step further out: every driver in this set launches with `['--no-sandbox', '--disable-gpu', '.']`, and `--no-sandbox` disables OS sandboxing app-wide — so a driver for `sandbox: true` that copied the house launch args would have read the flag back as `true`, off a renderer Chromium had already been told not to sandbox, and passed. **A command-line flag can erase the property under test while every assertion still runs, still reads the value it expected, and still passes.** When a driver measures a process-level property, check what the launch line does to it before trusting the green.
 - **Assert the EFFECT, not the request — they are different values and only one is the feature.** `getLastWebPreferences().sandbox` says what the window was *constructed with*; `app.getAppMetrics()` says whether the OS *granted* it. #74 asserts both, joined to our own renderer by `webContents.getOSProcessId()` — the pid join is what stops a sandboxed *utility* process answering for the renderer. Reusable for any future process-boundary question, and it is the same shape as #69's "instrument the far side of the boundary".
 - **A boolean that is false everywhere is not evidence.** #74's control observation: the GPU process reads `sandboxed: true` in *every* run, the red ones included. Without a neighbour reading `true`, the renderer's `sandboxed: false` could equally have meant "Electron does not report this field on Windows". **When an assertion rests on a platform-reported flag, find something in the same reading that reports the other value** — otherwise a green and a blind spot look identical.
@@ -208,6 +246,36 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
+
+**From #75 — true of the announcement path and of any future focus question:**
+
+- **`win.isFocused()` alone is NOT "someone is looking", and this is measured.**
+  A minimised window reports `isFocused() === true` on Electron 43 / Windows 11,
+  and `win.blur()` moves it not at all (no `blur` event either) — only
+  `win.hide()` flips it. `isLooking(win)` in `src/main/turn-announce.ts` is the
+  app's answer; "simplifying" it back to `isFocused()` makes the feature silent
+  for the commonest way of walking away, with all 864 tests green.
+- **`app.setAppUserModelId` is load-bearing and nothing at runtime can read it
+  back.** Electron exposes no getter, so deleting it costs nothing visible: the
+  toast just stops appearing, with no error. `gui-75` guards it by grepping the
+  **built** bundle and labels that as a static check.
+- **Patch `Notification.prototype.show`, never the `Notification` class.** The
+  built main bundle captures the constructor when it loads, so a class swap can
+  record nothing while the app happily notifies — the same reason `gui-69`
+  patches `BrowserWindow.prototype.setBackgroundMaterial`.
+- **`gui-75` MINIMISES rather than blurs**, deliberately, and `hide()` is not a
+  substitute: a hidden window has no taskbar button for the flash to land on.
+  Third deliberate driver divergence, after `gui-69`'s GPU and `gui-74`'s
+  missing `--no-sandbox`.
+- **`announceTurn` guards `turn-aborted` a second time, on purpose.** It is what
+  lets `ANNOUNCE_COPY` exclude the silent row by type. Measured consequence:
+  deleting the abort guard in `shouldAnnounce` leaks `flashFrame(true)` while
+  the toast stays suppressed. Not dead code — do not delete it, and do not move
+  the decision into it.
+- **A "notifications off" toggle, if ever wanted, is a renderer-stored
+  preference in the Appearance dock** under that dock's constraints (no
+  `input`, no `select`, no second `role="radio"` group). Out of scope for #75
+  and stated in the ticket.
 
 **From #74 — true of the window and of the driver set:**
 
@@ -393,13 +461,16 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 **Deferred by #58, with reasons on record:** honest whole-file **Write diff**; **per-tool rich card bodies**; **permission-mode default or persistence**; **adopting the SDK's richer permission metadata**; a **wrapper-owned truncation cap**; a **diff dependency**; **syntax highlighting inside diffs**.
 
-**Found by the brainstorm pair, unspec'd:** stream **extended thinking** as a collapsed strip; **native turn-end notifications + taskbar flash**; **type-while-busy composer** then queued send; **one-click restart on `terminalError`**; **turn pulse** from the dropped telemetry; **MCP + settings-parse health** surfacing.
+**Found by the brainstorm pair, unspec'd:** stream **extended thinking** as a collapsed strip; ~~native turn-end notifications + taskbar flash~~ (**struck 2026-07-31 — shipped as #75, `9905e1d`**); **type-while-busy composer** then queued send (**filed as #80**); ~~one-click restart on `terminalError`~~ (shipped as #73); **turn pulse** from the dropped telemetry; **MCP + settings-parse health** surfacing.
+
+**Newly noted by #75:** whether a **"notifications off" preference** is ever wanted — deliberately not built (Out of scope), and if it lands it is a renderer-stored key with a control in the Appearance dock under that dock's constraints. Also unanswered by measurement: whether the toast actually **paints** on this machine, since no driver can see Action Center; the app identity is verified statically only.
 
 **Carried, unchanged:** live-tail's **incremental byte tailing** and the **watch-installed-after-the-read gap**; context-pressure meter; typed failed-turn recovery; full-text transcript search; **session rename / archive**; drag-and-drop; replay thumbnails; N-concurrent engines; **fork-on-resume**; busy-switch detach (decided against); folding `Welcome`'s last `pickFolder` caller onto the chooser; agent archive / control / map pan-zoom; and the smaller leftovers from #31–#36.
 
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-31-an-unwatched-turn-end-is-mains-to-announce]] — **#75, shipped; why main answers it with no channel, why `turn-aborted` is silent, and why `isFocused()` alone is the wrong instrument**
 - [[2026-07-31-the-renderer-is-sandboxed-and-the-driver-must-not-undo-it]] — **#74, shipped; why the flag bought nothing, and why the driver had to drop `--no-sandbox` to prove it**
 - [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] — **#73, shipped; why the distinction is a broadcast, and why resume binds at warm-up**
 - [[2026-07-23-engine-terminal-on-stream-death]] — **amended by #73: premise confirmed, reversibility clause spent, nothing reversed**

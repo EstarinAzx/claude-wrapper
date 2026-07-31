@@ -24,7 +24,14 @@ tags: [context, overview]
   throw is classified by re-resolving the id against the store, never by
   reading the SDK's error text (`not-found` → `ok`, `unavailable` → `failed`).
   `switch-workspace.ts` owns the atomic workspace transition as a function over
-  injected ports (the entry module is untestable under vitest); `index.ts` holds
+  injected ports (the entry module is untestable under vitest);
+  `turn-announce.ts` (#75) is the same shape for the turn-end announcement —
+  `announceTurn(ports, event)` over `isFocused` / `notify` / `flash`, so the
+  call COUNT and ARGUMENTS are assertable without a window — and it also owns
+  `isLooking`, which is `isFocused() && !isMinimized()` because a **minimised**
+  window reports itself focused on Windows (measured; `win.blur()` moves
+  nothing at all), so the obvious one-liner is silent in exactly the case the
+  feature exists for. `index.ts` holds
   only the binding to the real engine, broker and cwd — plus the app's ONE
   `BrowserWindow`, which runs **sandboxed** (#74): `sandbox: true` costs nothing
   because the built preload requires only `electron`, and the renderer is the
@@ -119,7 +126,11 @@ tags: [context, overview]
   everything living inside the composer. Both entry points — a foreign session
   row and the sidebar's "Open project" affordance — share that one reset via a
   nullable `resumeId`.
-- `src/shared/` — types + pure modules both processes import. `backdrop.ts`
+- `src/shared/` — types + pure modules both processes import. `announce.ts`
+  (#75) is the turn-end decision table: `shouldAnnounce({ outcome, focused })`
+  over the three terminal outcomes, where `turn-aborted` is **silent by
+  design** and `ANNOUNCE_COPY` excludes it BY TYPE, so a fourth outcome cannot
+  ship without copy. `backdrop.ts`
   (#69) is the window material's two-string whitelist (`acrylic` | `mica`) and
   the trust boundary `backdrop:set` reuses before calling
   `setBackgroundMaterial`; it **compares, never coerces**, so an object that
@@ -148,9 +159,11 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **the tracker
-  is EMPTY** — no open issue of any label; #74 landed as `07544e8`; no expected
-  driver failure anywhere in the set, all 19 green)
+- `.context/pick-up.md` — current frontier + landmines (currently: **#76 is the
+  frontier**, with #77 / #78 / #80 unblocked behind it and **#79 blocked by
+  #78**; #75 landed as `9905e1d`; no expected driver failure anywhere in the
+  set, all 19 assertion drivers green plus the observational
+  `gui-scope-zoom-pill`)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -165,13 +178,15 @@ tags: [context, overview]
   in device pixels) and #72 (`9fecc10`, the session title truncates instead of
   overlapping) closed standalone after it**; **#73 (`6b4a831`, a way out of a
   terminal stream death that keeps the conversation, plus the warm-up resume
-  binding it exposed) and **#74 (`07544e8`, the renderer runs sandboxed) closed**;
+  binding it exposed) and **#74 (`07544e8`, the renderer runs sandboxed) closed**; **#75
+  (`9905e1d`, a turn ending while nobody is looking announces itself) closed**;
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **Nothing is open** — `gh issue list --state
-  open` returns `[]`, the umbrella #1 included in the closed set
+  #20 hold the earlier history. **Five open** — #76, #77, #78 and #80
+  `ready-for-agent` and unblocked, #79 `ready-for-agent` but **blocked by #78**.
+  Run the frontier query rather than trusting this line
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
