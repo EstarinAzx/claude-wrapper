@@ -1,0 +1,98 @@
+/* The Appearance dock's control rows (#66).
+
+   The SHELL is not here. `.appearance-dock` carries `.agents-dock` in its class
+   list, so the width, the surface, the left border, the 44px head and the
+   micro-caps title all come from the groups rails.css and shared.css already
+   own — joined, never copied and never widened. Editing one of those groups
+   repaints the sessions rail and the agents dock too, with a suite that loads
+   no CSS to notice. Everything below is new, panel-local, and touches nothing
+   else in the app.
+
+   Imported after rails.css for that reason: the one override here — killing
+   the inherited resize affordance — has to come after the group it overrides. */
+
+/* Fixed width, deliberately unlike both siblings: they are lists worth sizing,
+   this is three controls. No grip is rendered, and belt-and-braces the shell's
+   handle rule cannot apply here either. No stored width, so nothing to restore. */
+.appearance-dock > .agents-dock-resize-handle {
+  display: none;
+}
+
+.appearance-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* One control per row: label left, control right — the shape the next two
+   controls in this panel land in. */
+.appearance-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.appearance-label {
+  font-size: var(--fs-ui);
+  color: var(--text-muted);
+}
+
+/* Minus / readout / plus as one segmented unit, so the readout reads as the
+   value between its two steppers rather than as a third button. */
+.appearance-stepper {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--tint-1);
+}
+
+.appearance-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.appearance-step:hover:not(:disabled) {
+  background: var(--tint-2);
+  color: var(--text);
+}
+
+.appearance-step:focus-visible {
+  outline: none;
+  background: var(--tint-3);
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
+/* At a bound the control is inert, and says so rather than looking live and
+   doing nothing. Kept greyed and in flow — a vanishing stepper would resize the
+   row under the pointer mid-step. */
+.appearance-step:disabled {
+  color: var(--text-faint);
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Tabular so stepping 90 to 100 does not shuffle the two buttons sideways. */
+.appearance-readout {
+  min-width: 46px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}

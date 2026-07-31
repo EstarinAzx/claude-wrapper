@@ -10,6 +10,7 @@ import Welcome from './components/Welcome'
 import SubagentDrawer from './components/SubagentDrawer'
 import AgentsDock from './components/AgentsDock'
 import CommandsDock from './components/CommandsDock'
+import AppearanceDock from './components/AppearanceDock'
 import { useChat } from './useChat'
 import { useZoom } from './useZoom'
 
@@ -35,9 +36,10 @@ const App = () => {
     parentToolUseId: string
     agentType: string
   } | null>(null)
-  // ONE right-dock slot: agents or commands, never both. Stacking the two
-  // squeezes the chat column past usability, so opening one closes the other.
-  const [openDock, setOpenDock] = useState<'agents' | 'commands' | null>(null)
+  // ONE right-dock slot: agents, commands or appearance — never two. Stacking
+  // them squeezes the chat column past usability, so opening one closes the
+  // others. A union rather than three booleans is what makes that structural.
+  const [openDock, setOpenDock] = useState<'agents' | 'commands' | 'appearance' | null>(null)
   // Pending composer insert from the commands dock. The nonce is load-bearing:
   // clicking the same row twice must fire twice, and an unchanged prop would
   // not re-trigger. A prop (not lifted composer state) so the message list is
@@ -63,7 +65,9 @@ const App = () => {
     adoptSession,
     newChat
   } = useChat()
-  useZoom()
+  // The level is App state now (#66) so the Appearance panel can read it back;
+  // `step` is the single mutation both the shortcuts and the stepper call.
+  const zoom = useZoom()
 
   // Read the launch mode once, then track flips the main side broadcasts.
   useEffect(() => {
@@ -193,11 +197,15 @@ const App = () => {
         busy={busy}
         agentsOpen={openDock === 'agents'}
         commandsOpen={openDock === 'commands'}
+        appearanceOpen={openDock === 'appearance'}
         onFlip={flipBackend}
         onCyclePermission={cyclePermission}
         onToggleAgents={cwd ? () => setOpenDock((d) => (d === 'agents' ? null : 'agents')) : undefined}
         onToggleCommands={
           cwd ? () => setOpenDock((d) => (d === 'commands' ? null : 'commands')) : undefined
+        }
+        onToggleAppearance={
+          cwd ? () => setOpenDock((d) => (d === 'appearance' ? null : 'appearance')) : undefined
         }
       />
       {cwd ? (
@@ -280,6 +288,13 @@ const App = () => {
               onInsert={(name) =>
                 setPendingInsert((p) => ({ text: `/${name} `, nonce: (p?.nonce ?? 0) + 1 }))
               }
+              onClose={() => setOpenDock(null)}
+            />
+          ) : null}
+          {openDock === 'appearance' ? (
+            <AppearanceDock
+              level={zoom.level}
+              onStep={zoom.step}
               onClose={() => setOpenDock(null)}
             />
           ) : null}

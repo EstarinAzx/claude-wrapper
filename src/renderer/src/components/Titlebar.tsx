@@ -95,6 +95,26 @@ const CommandsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => voi
   </button>
 )
 
+// Toggles the right-hand Appearance dock (#66) — third member of the same
+// right-slot family; App keeps all three docks mutually exclusive. A half-filled
+// disc: the one glyph that reads as "how this looks" without borrowing the gear
+// that would promise settings this panel deliberately does not hold.
+const AppearanceToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => (
+  <button
+    type="button"
+    className={`agents-toggle${open ? ' agents-toggle--on' : ''}`}
+    aria-label="Appearance panel"
+    aria-pressed={open}
+    title={open ? 'Appearance panel — click to hide' : 'Appearance panel — click to show'}
+    onClick={onToggle}
+  >
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M7 2a5 5 0 0 1 0 10z" fill="currentColor" />
+    </svg>
+  </button>
+)
+
 // Toggles the right-hand Agents dock. Sits with the window controls rather than
 // the left-hand state pills because it governs what the right side of the
 // workspace shows, not what the next turn runs against — a hairline separates it
@@ -125,10 +145,12 @@ const Titlebar = ({
   busy = false,
   agentsOpen = false,
   commandsOpen = false,
+  appearanceOpen = false,
   onFlip,
   onCyclePermission,
   onToggleAgents,
-  onToggleCommands
+  onToggleCommands,
+  onToggleAppearance
 }: {
   cwd: string | null
   backend: BackendInfo | null
@@ -136,12 +158,17 @@ const Titlebar = ({
   busy?: boolean
   agentsOpen?: boolean
   commandsOpen?: boolean
+  appearanceOpen?: boolean
   onFlip?: (target: BackendMode) => void
   onCyclePermission?: (next: PermissionMode) => void
   // Absent until a project folder is open — there is no workspace to dock to
   // before that, so the controls simply are not rendered.
+  //
+  // Three ordinary prop pairs, deliberately not refactored into one generic
+  // dock-toggle pair: that touches every titlebar test for no behavioural gain.
   onToggleAgents?: () => void
   onToggleCommands?: () => void
+  onToggleAppearance?: () => void
 }) => (
   <header className="titlebar">
     <div className="titlebar-left">
@@ -166,7 +193,10 @@ const Titlebar = ({
         <CommandsToggle open={commandsOpen} onToggle={onToggleCommands} />
       ) : null}
       {onToggleAgents ? <AgentsToggle open={agentsOpen} onToggle={onToggleAgents} /> : null}
-      {onToggleAgents || onToggleCommands ? (
+      {onToggleAppearance ? (
+        <AppearanceToggle open={appearanceOpen} onToggle={onToggleAppearance} />
+      ) : null}
+      {onToggleAgents || onToggleCommands || onToggleAppearance ? (
         <span className="titlebar-sep" aria-hidden="true" />
       ) : null}
       <button
