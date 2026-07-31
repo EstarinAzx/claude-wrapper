@@ -7,21 +7,21 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 1 landed #75; five tickets left in the batch**_
-_At commit: `9905e1d` on `main`, pushed. Gate green: typecheck clean, **864 tests across 58 files**, build ok_
-_Driver check: all **19** assertion drivers re-run this leg and green, `gui-75` joining the set, plus the observational `gui-scope-zoom-pill` (which prints readings and no verdict, by design — that is not a failure). No standing red anywhere, so any red is a real regression._
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 2 landed #76; four tickets left in the batch**_
+_At commit: `c9114a5` on `main`, pushed. Gate green: typecheck clean, **864 tests across 58 files** (unchanged — #76 touched no `src/`), build ok_
+_Driver check: all **19** assertion drivers re-run this leg and green, plus the observational `gui-scope-zoom-pill` (which prints readings and no verdict, by design — that is not a failure). `gui-75` was red **in the batch run** on a premise failure (focus theft) and green re-run alone — see Known issues. No standing red anywhere, so any red is a real regression._
 
 ## Current focus
 
-**Five tickets open — #76 through #80 — from the `/preset vibe` run of
+**Four tickets open — #77 through #80 — from the `/preset vibe` run of
 2026-07-31 under an explicit owner autonomy grant.** A relay chain is draining
-them one per leg. **#75 landed as `9905e1d` and closed.**
+them one per leg. **#76 landed as `c9114a5` and closed.**
 
 | # | Ticket | Note |
 |---|---|---|
 | ~~#75~~ | ~~Turn-end notification + taskbar flash when unfocused~~ | `9905e1d` |
-| #76 | `gui-48`: drive the busy refusal instead of printing `SKIPPED` forever | **frontier**; best-warranted in the batch |
-| #77 | `gui-51`: drive every named surface into overflow | **separate leg from #76 on purpose** |
+| ~~#76~~ | ~~`gui-48`: drive the busy refusal instead of printing `SKIPPED`~~ | `c9114a5` |
+| #77 | `gui-51`: drive every named surface into overflow | **frontier**; kept a separate leg from #76 on purpose |
 | #78 | Measure the launch artifact; gate `win.show()` only if objectionable | measurement-first, per the ADR's own "Build it only if measured" |
 | #79 | The window remembers its size and position | **blocked by #78** (`blocked_by: 1`, re-verified live this leg) — structural, see below |
 | #80 | Type-while-busy composer with a queued send | biggest and riskiest; filed last deliberately |
@@ -49,6 +49,36 @@ decision still carries a warrant or is marked as a chosen design.
   [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] **affirmatively
   rejects** putting an engine-rebuilding control on the per-turn path. The record
   supplies neither a definition nor a measured defect for it.
+
+**#76 landed, and it is a driver-only ticket whose finding is about assertions
+rather than about the app.** `gui-48` printed `SKIPPED the busy refusal (needs a
+real streaming turn)` unconditionally, forever, and then passed. The stated
+reason had **expired when `gui-73` shipped** — that driver runs a real turn and
+kills the CLI under it mid-flight, which is strictly harder — so the skip was a
+hole in the gate standing on a reason nobody re-read. It drives it now: a real
+turn, `.model-pill` disabled as the in-flight signal, then the "Open project"
+click against a **third** temp dir so a refusal that stops working lands
+somewhere visible.
+
+**The finding: destruction is quiet, so an assertion phrased as an absence can
+measure nothing.** Mutation-verified by weakening `switchWorkspace`'s `isBusy`
+guard:
+
+| reading | refusal intact | refusal weakened |
+|---|---|---|
+| refusal shown | busy copy | **none** |
+| workspace | stayed `wrapper-empty-*` | **moved to `wrapper-refused-*`** |
+| assistant text after the attempt | **+272 chars** | **0** |
+| turn completed | true | **true** |
+| new `.msg-error` | 0 | **0** |
+
+A switch that should have been refused *clears the pane and rebuilds the engine*,
+so "finished promptly" and "nothing errored" are both exactly what the wreckage
+looks like. Only measuring the protected thing **continuing** discriminates. Both
+vacuous assertions were **kept** — they guard a different regression (a refusal
+that hangs or errors the turn) — with the measurement written beside them.
+
+See [[2026-07-31-a-refusal-is-proven-by-the-thing-that-kept-running]].
 
 **#75 landed, and the ticket's own prescribed instrument was the thing that was
 wrong.** The feature is small — a notification and a taskbar flash decided
@@ -160,21 +190,27 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** nothing. `main` = `9905e1d` + this leg's `.context` commits, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **#76, #77, #78, #80** unblocked; **#79** blocked by #78. Frontier = **#76**.
-- **Landed this leg:** **#75** (`9905e1d`) — a turn ending while nobody is looking announces itself, with `isLooking` correcting the ticket's own prescribed focus check.
+- **In flight:** nothing. `main` = `c9114a5` + this leg's `.context` commits, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **#77, #78, #80** unblocked; **#79** blocked by #78 (`blocked_by: 1`, re-verified live this leg). Frontier = **#77**.
+- **Landed this leg:** **#76** (`c9114a5`) — `gui-48` drives the busy refusal instead of printing `SKIPPED` forever; no `src/` change, and the mutation showed two of its three survival assertions were vacuous.
 - **Parked for the owner: NONE — all seven resolved** under the 2026-07-31 autonomy grant, with reasons in `.claude/vibe.md` under `## Decisions`. Outcomes: Tailwind **not dropped, and the adopt-utilities question deliberately left OPEN** (the record says asking it "is the honest one to ask", so closing it was the one move it argues against) · titlebar control count **unchanged** and #72's centring **stands** · dock toggles **do not collapse** · window geometry **yes, as #79** · "which polish item next" **answered by this batch's ordering** · renderer error boundary **not built** (absence real, reachability unproven — filing it would be inventing a defect).
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**The frontier is #76** — drive `gui-48`'s busy refusal instead of printing
-`SKIPPED` forever. Run the frontier query anyway; this line goes stale the moment
-the owner files something, and that is this project's standing lesson: a leg once
-wrote that closing #70 would empty the queue and was wrong, because #71 had been
-unblocked the whole time.
+**The frontier is #77** — drive every surface `gui-51` names into overflow, so
+its four `NOT DRIVEN` lines stop being reachable. Run the frontier query anyway;
+this line goes stale the moment the owner files something, and that is this
+project's standing lesson: a leg once wrote that closing #70 would empty the
+queue and was wrong, because #71 had been unblocked the whole time.
 
-A relay chain is draining #76 → #77 → #78 → #79 → #80, one ticket per leg.
+**#76 is the immediately relevant precedent for #77** and it is worth reading
+its closing comment first — same shape (a driver printing a standing hole), and
+it produced one rule that transfers directly: **do not widen a budget to fit a
+newly measured surface**, which #77's own body already states, and **assert the
+protected thing continuing rather than the symptom being absent**.
+
+A relay chain is draining #77 → #78 → #79 → #80, one ticket per leg.
 **#79 is blocked by #78 and must stay that way** — its only ADR-compatible
 implementation is built on the readiness gate #78 may produce, and the record
 binds them in a single clause.
@@ -204,6 +240,9 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Recent context
 
+- **Destruction is quiet, so an assertion phrased as an absence can measure nothing — #76 is the case that found it.** Weakening the `busy` guard so a workspace switch tore down a live turn left `gui-48`'s "the turn completed" and "no new `.msg-error`" both **green**: a switch that should have been refused clears the pane and rebuilds the engine, and *finished promptly with nothing to complain about* is exactly what the wreckage looks like. Only growth in the protected thing (+272 chars green, 0 red) told them apart. **When a guard protects something, assert the protected thing went on living — not that no symptom appeared.** This is the mutation reflex with a sharper edge: the code was alive and the *assertion* was dead, because the failure mode it was written against produces silence rather than noise.
+- **A vacuous assertion is better kept-and-labelled than deleted.** #76's two survivors guard a real, different regression (a refusal that hangs the turn or errors it out); deleting them for failing *this* mutation would trade a labelled gap for an unlabelled one. The measurement sits in the source beside them, so nobody reads them as covering the branch they do not.
+- **A skip's stated reason has a shelf life, and nobody re-reads it.** `gui-48`'s `SKIPPED (needs a real streaming turn)` was true when written and false from the moment `gui-73` shipped a driver that runs a real turn *and* kills the CLI under it. It then printed for months above a `PASS`. **Re-check the reason, not just the line** — and the same question is owed to `gui-51`'s four `NOT DRIVEN` lines, which is #77.
 - **A ticket's stated instrument is a claim, not a fact, and #75 is the case that found it.** The AC said "`win.isFocused()` is the check" — measured, a minimised window reports itself focused and `win.blur()` moves nothing at all. The bodies in this project are adversarially reviewed and usually right, which is exactly why an unverified *mechanism* inside one slips through: the reviewers argue about the contract, not about what the platform call returns. **Probe the API the ticket names before building on it**, the same way #71 probed its own gutter diagnosis and #68 probed its Windows handle.
 - **Mutating each guard separately says more than mutating them together.** #75 has two silent cases — a focused turn and Stop. One mutation that reddens both proves only that *something* guards them; removing the focus guard (focused turn reddens, Stop stays green) and then the abort guard (Stop reddens, focused turn stays green) proves they are **independently** guarded. Cheap to do, and it is the difference between "the assertion can fail" and "this assertion covers this rule".
 - **A second guard that masks half a mutation is worth measuring rather than removing.** Deleting `shouldAnnounce`'s abort guard leaks `flashFrame(true)` but not the toast, because the copy lookup in `announceTurn` narrows the outcome again. Recorded in the source with the measured numbers instead of being tidied away: the asymmetry fails toward the quieter half and the driver still reddens, but a reader who does not know it would mis-read the mutation result.
@@ -247,6 +286,30 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Landmines (carried forward)
 
+**From #76 — true of `gui-48` and of any driver asserting that a guard held:**
+
+- **`gui-48` now costs ONE real CLI turn and waits up to 600s** (was a 120s
+  watchdog). Its busy-refusal section runs LAST, from inside the temp workspace
+  the earlier switch moved into.
+- **The survival assertion is `replyChars > 0`, sampled BEFORE the click.**
+  Moving the sample after the click narrows the window to nothing and the
+  reading stops discriminating. `completed` and `newErrors` are **measured
+  vacuous** for this branch and kept for another; do not cite them as covering
+  the refusal, and do not delete them as dead.
+- **The premise wait is 60s, not 20s, and it earned that.** The turn starts in a
+  brand-new temp workspace, so the CLI is cold — a green run really did fail its
+  own premise at 20s. Tightening it back makes the driver flaky in the honest
+  direction (a loud FAIL), which is still a wasted run.
+- **The "Open project" affordance must stay reachable while busy.** `gui-48`
+  asserts the dialog opens exactly once during the refused switch. Busy-gating
+  that button would make main's refusal unreachable — the same reasoning the
+  foreign session row carries, and it is now pinned by a driver as well as by a
+  comment.
+- **A third temp dir (`wrapper-refused-*`) exists so a broken refusal LANDS
+  somewhere.** Pointing the busy pick at the already-open folder would make the
+  failure read as "the title did not change", which is what a working refusal
+  reads as too.
+
 **From #75 — true of the announcement path and of any future focus question:**
 
 - **`win.isFocused()` alone is NOT "someone is looking", and this is measured.**
@@ -283,7 +346,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **`sandbox: true` is load-bearing and nothing in vitest can see it.** No test constructs a `BrowserWindow`, so the flag can be flipped back with all 843 tests green and the build clean. `gui-74` is the only thing that reddens.
 - **A preload that starts needing Node is a decision, not a fix.** If some future preload import pulls in a Node builtin, the honest move is an ADR recording the measured reason — an unmeasured `sandbox: false` puts the app back where it started with an extra commit. Check the **built** bundle (`out/preload/index.js`), never the source: today it holds exactly one require, `require("electron")`.
 - **`ProcessMetric.sandboxed` is documented for macOS and Windows only.** On Linux the field may read `undefined`, which reads in `gui-74` as a failure and is really a driver limit. The flag assertion above it tells the two apart: flag `true` + metric `undefined` is the limit, flag `false` is the defect.
-- **`gui-48` and `gui-51` have pre-existing holes, observed by #74 and deliberately not fixed.** `gui-48` prints `SKIPPED the busy refusal (needs a real streaming turn)`; `gui-51` prints four `NOT DRIVEN` lines for surfaces that were not overflowing. Both PASS. Neither is reachable by a process-sandbox flag, but a SKIPPED line is a hole in the gate.
+- **`gui-48` and `gui-51` have pre-existing holes, observed by #74 and deliberately not fixed. Half spent: `gui-48`'s closed as #76 (`c9114a5`) — it drives the busy refusal now and prints no `SKIPPED` line.** `gui-51` still prints four `NOT DRIVEN` lines for surfaces that were not overflowing, and PASSes; that half is **#77**, the current frontier.
 
 **From #73 — true of the engine's terminal path and of every resume:**
 
@@ -437,6 +500,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Known issues / not-our-bug
 
+- **`gui-75` is not reliable inside a long batch run, and its red there is a premise failure rather than a regression.** Measured this leg: in a 19-driver sequential batch it reported `could not drive: the window lost focus during the second turn` with `focusedAtEnd: false`; re-run alone in the foreground it read `focusedAtEnd: true` and **PASS**. Something on the machine steals focus during an unattended batch. It is the only focus-dependent driver in the set, so it is the only one exposed. **Read its FAIL line before believing the red** — `could not drive:` is the driver saying its own setup failed, which #65's rule makes loud on purpose. Same class as the `gui-73` batch red a previous leg diagnosed as a collapsing process tree.
 - **There is no expected driver failure any more.** `gui-51`'s standing red closed as #71 (`b6e8911`), and `gui-72` joined the set green at `9fecc10`; **every driver in the set is green, and any red is now a real regression.** The old note said "a second signature is a real regression" — that qualifier is gone, and so is the cover it gave.
 - **A capture cannot see the right ~20% of the layout.** The window composites `windowWidth` device px while the page lays out `windowWidth` CSS px at zoom 1.25, so every right-hand dock is clipped out of a screenshot at any window size — re-confirmed by #69's captures, where the Appearance panel is visibly cut. **Measure with `getBoundingClientRect`**; `gui-66` works around it with a presentational-only `setZoom(1)` after every assertion.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
@@ -470,6 +534,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-31-a-refusal-is-proven-by-the-thing-that-kept-running]] — **#76, shipped; why the skip's reason expired, and why two of three survival assertions measured nothing**
 - [[2026-07-31-an-unwatched-turn-end-is-mains-to-announce]] — **#75, shipped; why main answers it with no channel, why `turn-aborted` is silent, and why `isFocused()` alone is the wrong instrument**
 - [[2026-07-31-the-renderer-is-sandboxed-and-the-driver-must-not-undo-it]] — **#74, shipped; why the flag bought nothing, and why the driver had to drop `--no-sandbox` to prove it**
 - [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] — **#73, shipped; why the distinction is a broadcast, and why resume binds at warm-up**
