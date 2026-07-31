@@ -7,25 +7,36 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **`/preset vibe init` on "improve the wrapper and make it production ready": queue refilled with #73 + #74**_
-_At commit: `56b11b4` on `main`, pushed. Gate measured green before filing: typecheck clean, **823 tests green across 56 files**_
-_Driver check: no standing red anywhere in the set — every driver is green, so any red is a real regression._
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg landed #73; #74 is the whole queue**_
+_At commit: `6b4a831` on `main`, pushed. Gate green: typecheck clean, **843 tests across 57 files**, build ok_
+_Driver check: no standing red anywhere in the set — every driver is green, so any red is a real regression. `gui-73` joined it._
 
 ## Current focus
 
-**Two tickets open, both `ready-for-agent`, no blocking edge between them.** A relay
-chain is draining them.
+**One ticket open: #74.** A relay chain is draining the queue one ticket per leg;
+this leg landed **#73** (`6b4a831`) and closed it.
 
-- **#73 — recovering from a terminal stream death discards the conversation.**
-  `chooseWorkspace` passes `resumeId: null`, so the recovery the app's own error copy
-  instructs starts a fresh SDK session and empties the pane — the exact consequence
-  [[2026-07-23-engine-terminal-on-stream-death]] cited when it rejected auto-restart.
-  The fix stays user-initiated, so the ADR is not reversed, and that ADR pre-costs it
-  under Reversibility. **AC1 is blocking:** prove a session is resumable after an
-  *abnormal* stream death before building on it.
 - **#74 — run the renderer sandboxed.** `sandbox: false` buys nothing: the built
   preload requires only `electron`. No ADR ever argued the flag. The work is proving
   nothing broke, and it needs a driver because vitest cannot observe `sandbox`.
+
+**#73 landed, and it carried a second defect nobody had filed.** The control itself
+is small — one button reusing `switchWorkspace(activeSessionId, cwd)`. The two things
+that made it work are the ones worth knowing:
+
+1. **The terminal/per-turn distinction travels out of band** (injected `onTerminal`
+   → `engine:terminal` broadcast), not as a field on the error event, because
+   **a stream dying BETWEEN turns emits nothing at all** — `emit()` only reaches an
+   active turn. Found by `gui-73` failing at its own premise, not predicted.
+2. **`resume` binds at query CONSTRUCTION**, and the switch transaction called
+   `warmUp()` bare, so the rebuilt engine ran a **fresh session while the pane,
+   refilled from disk, looked correct**. Every unit test passed with that in place.
+   `SwitchPorts.warmUp` now takes the target so the transaction's test pins it. **This
+   also repaired the foreign-session switch path**, which had the same silent defect.
+
+See [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]];
+[[2026-07-23-engine-terminal-on-stream-death]] is **amended** — its premise held and
+its reversibility clause is now spent, nothing reversed.
 
 **Three hypotheses were probed and killed** rather than filed — see [[pick-up]]'s
 landmines: main-process crash handlers (unhandled rejections are non-fatal on
@@ -68,19 +79,21 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** a relay chain draining #73 and #74. No open branches yet. `main` = `56b11b4` + this run's `.context` commit.
-- **Queue (`ready-for-agent`):** **#73** and **#74**. No blocking edge — either order works.
+- **In flight:** nothing. `main` = `6b4a831` + this leg's `.context` commit, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **#74** only, unblocked (`blocked_by: 0`).
+- **Landed this leg:** **#73** (`6b4a831`) — the terminal-death way out, plus the warm-up resume binding it exposed.
 - **Parked for the owner (7, all reversible):** Tailwind's fate · which titlebar buttons leave · whether the three dock toggles collapse · #72's centring trade-off · **whether the window should remember its geometry** · **which daily-driver polish item comes next** · **whether a renderer error boundary is wanted**. Full entries with the default taken and the alternative in `.claude/vibe.md` under `## Needs you`. **A leg may not decide any of them.**
-- **Landed this run:** no code. Two tickets filed after four hypotheses were probed against the real tree and three were killed.
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**There is no frontier ticket.** The queue is dry, so the next relay leg finds nothing to pick and self-closes; that is the designed end of the chain, not a failure.
+**The frontier is #74 — run the renderer sandboxed.** It is the only open issue and it is unblocked. Run the frontier query anyway; this line is a summary and goes stale the moment the owner files something.
 
-**Do not decide the four parked calls in `.claude/vibe.md`.** They are the owner's. Three are untouched; the fourth (#72's centring) now has its default *shipped and measurable* — open the app, look at the title, and it is either fine or it is a two-line revert to absolute centring plus the magic number.
+Its shape: the flag at `src/main/index.ts` is one line, and the work is **proving nothing broke**. **vitest cannot observe `sandbox`**, so the evidence has to be a `gui-*.mjs` driver that establishes its own state, is shown **red first** by flipping the flag back, and completes a **real turn** through the bridge — a window that merely opens does not prove the preload survived.
 
-If the owner brings a new want, the route is `/preset init` → `/hp` MVD → `to-spec` → `to-tickets`, then a fresh `/relay N=1 read and follow .claude/relay-leg.md` chain over the resulting batch. `.claude/relay-leg.md`'s "Current queue" section is stale by construction and its own text says to trust the frontier query over it.
+**#73 just demonstrated why that bar is set there.** Its driver is the only reason the resume defect was found: 843 unit tests passed while the rebuilt engine ran a fresh session. For #74 the equivalent trap is a driver that proves the window opened rather than that the bridge works.
+
+**Do not decide the seven parked calls in `.claude/vibe.md`.** They are the owner's, all reversible, all with a default already taken.
 
 The **Open questions** below are the live candidates if the owner wants a direction picked for them — **Tailwind's fate is now the longest-waiting one, and it is unblocked**: #72 was the last natural test of the utilities premise and it shipped without a single utility class.
 
@@ -97,6 +110,10 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Recent context
 
+- **A green suite is not evidence that a feature works end to end — #73 is the worked example, and it is the sharpest one this project has.** 843 tests passed, `setResume` was called, the transaction order was right, the status was `ok`, and the pane was full of the right conversation. The engine was on a **fresh session**. What caught it was a driver asking the *resumed* engine for a fact planted before the death and getting *"You never gave me one to remember"*. **When a feature's value is that state SURVIVES, the assertion has to interrogate the thing that holds the state, not the thing that displays it.**
+- **The driver failing at its own premise was the discovery, not a setback.** `gui-73`'s first run killed the CLI between turns and reported `{"errorShown":false}` — no error in the pane at all. That is not a driver bug: the engine only emits into an active turn, so a between-turns death is **silent** until a prompt is spent on a dead engine. A premise check written to fail loudly is what turned an invisible behaviour into a design constraint.
+- **Two designs can satisfy a ticket while only one leaves the pins alone.** Adding `terminal?: boolean` to the error event reddens five exact-`toEqual` assertions whose only repair is editing expectations — forbidden here. The out-of-band callback leaves all five byte-identical **and** is the more correct design. When a rule and a design disagree, re-read the rule before reaching for the expectation.
+- **A negative-direction test can pass vacuously, and mutation is the only way to know.** The first `close()` pin ("never fires the signal") passed before the feature existed *and* after it — but also passed with the guard deliberately removed, because `streamingStub`'s handle has no `close()`, so the branch never ran. It needed a closable stub plus a `finished()` confound guard before its green meant anything. **Mutation-verify the tests that assert an absence first; they are the ones that lie.**
 - **`overflow` and `text-overflow` are inert on an inline box, and #72 is the case where that was the whole bug.** `.session-title` had `white-space: nowrap` and nothing to clip with, so it could not truncate *even in principle* — the driver read `display inline · overflow-x visible · text-overflow clip · clientWidth 0` on the unfixed tree. The fix authors no `display` on the span at all: making the parent a flex container **blockifies** the child, which is what switches those properties on. Worth carrying because the natural "tidy-up" — putting the truncation on the span and leaving the parent alone — looks equivalent and does nothing.
 - **A box whose measured width does not change with the window is not shrinking for anything.** `.titlebar-center` was `position: absolute`, so the title's rect was a constant **366.9css** at 1280 / 1024 / 819 / 688css pages while its neighbours marched inward until they crossed it. That constant is a cheap tell for an out-of-flow box, and it is more legible in a driver's output than any collision assertion.
 - **Containment by construction beat containment by arithmetic.** The rejected fix (keep absolute centring, add `max-width: calc(100% - 2 * <side>)`) is correct today and depends on a number equal to the wider titlebar block — which changes the moment anyone answers the parked "which buttons leave" question. A flex item cannot reach its siblings, so there is no number to rot. See [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]].
@@ -127,6 +144,16 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
+
+**From #73 — true of the engine's terminal path and of every resume:**
+
+- **`resume` binds at query CONSTRUCTION and `ensureQuery` returns early ever after.** So whatever builds the query owns the resume — on the switch path that is `warmUp`, which now TAKES the target. Calling `warmUp()` bare, or "tidying" the argument away because `pendingResume` is already set, silently puts the rebuilt engine on a fresh session **while the pane, refilled from disk, looks perfectly correct**. No unit test can see it; `switch-workspace.test.ts`'s argument pin is the only guard.
+- **The terminal signal is out of band, and it has to be.** `emit()` only reaches `activeOnEvent`, and the stream-death branches emit only `if (turnResolve)` — so **a stream dying between turns emits nothing at all**. Moving the distinction onto the `{ type: 'error' }` event drops it in exactly that case, and reddens five existing exact-`toEqual` pins on the way.
+- **`onTerminal` must not fire for `close()`.** Main tears the engine down on every workspace switch, model pick and permission cycle; `close()` sets `terminalError` first and then ends the stream, so both stream-death branches check who got there first. Firing unconditionally puts a "restart and resume" control on screen after an ordinary model pick.
+- **`activeSessionId` is only written at turn-end.** A death mid first-turn leaves it null in the renderer while main has held the id since `init`, so the terminal handler re-reads it over `chat:session-id`. Trusting the local null offers "nothing to resume" for a conversation that resumes perfectly.
+- **A session IS resumable after an abnormal death** — measured, not assumed: killed with `taskkill /F`, the SDK accepts the id and reports **the same id** back. Do not re-file the honest-restart degradation as though it were still open.
+- **`streamingStub`'s handle has no `close()`**, so `engine.close()` cannot reach the stream-ended branch through it — a test built on it passes without running the code it names. Use a handle carrying `close`, and assert the stream actually finished.
+- **The restart control needs its `--restart` modifier class.** `.switch-refusal-retry` is already worn by the transcript-retry button; a bare selector grabs whichever renders first. Same failure mode as the tool card's, and just as silent.
 
 **From #72 — true of the titlebar:**
 
@@ -299,6 +326,8 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] — **#73, shipped; why the distinction is a broadcast, and why resume binds at warm-up**
+- [[2026-07-23-engine-terminal-on-stream-death]] — **amended by #73: premise confirmed, reversibility clause spent, nothing reversed**
 - [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]] — **#72, shipped; why containment is structural and what the ~15css off-centre trade buys**
 - [[2026-07-31-the-authored-pixel-is-css-the-measured-pixel-is-device]] — **#71, shipped; why the instrument moved to device pixels and the CSS did not move at all**
 - [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] — **#70, shipped; carries TWO amendments — #67's `color-mix()` correction and #70's own mechanism confirmation plus the alias limit**

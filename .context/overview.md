@@ -25,7 +25,16 @@ tags: [context, overview]
   reading the SDK's error text (`not-found` → `ok`, `unavailable` → `failed`).
   `switch-workspace.ts` owns the atomic workspace transition as a function over
   injected ports (the entry module is untestable under vitest); `index.ts` holds
-  only the binding to the real engine, broker and cwd. `transcript.ts` parses the
+  only the binding to the real engine, broker and cwd. Its `warmUp` port TAKES
+  the resume target (#73) — `resume` binds when the query is CONSTRUCTED and
+  `ensureQuery` returns early ever after, so a bare `warmUp()` leaves the
+  rebuilt engine on a fresh session while the pane, refilled from disk, looks
+  correct; nothing but that argument's own pin can see it. `engine.ts` reports a
+  terminal stream death through an injected `onTerminal` (#73), broadcast as
+  `engine:terminal` — deliberately not an `EngineEvent`, because `emit()` only
+  reaches an active turn and a stream dying BETWEEN turns emits nothing at all.
+  It must never fire for `close()`, which main calls on every workspace switch,
+  model pick and permission cycle. `transcript.ts` parses the
   native JSONL to the replay list and owns `sanitizeUserText`, the one place CLI
   markup is turned into readable text — anchored on the message's leading tag,
   never matched mid-string. `model-mode.ts` holds ONLY the pick state: the model
@@ -134,10 +143,9 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **the tracker
-  is EMPTY — zero open issues, nothing in flight, no expected driver failure**;
-  spec #64 delivered and closed with #65, #68, #66, #67, #69, #70, then the #71
-  and #72 standalones closed after it)
+- `.context/pick-up.md` — current frontier + landmines (currently: **#74 is the
+  only open issue**, `ready-for-agent` and unblocked; #73 landed as `6b4a831`;
+  no expected driver failure anywhere in the set)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -150,12 +158,14 @@ tags: [context, overview]
   (`e16ace6`, accent quartet + two literals tokenised), #69 (`add4e5b`, Backdrop
   control) and #70 (`1769aa4`, four themes); **#71 (`b6e8911`, `gui-51` measured
   in device pixels) and #72 (`9fecc10`, the session title truncates instead of
-  overlapping) closed standalone after it**; spec #41 (Resume anything)
+  overlapping) closed standalone after it**; **#73 (`6b4a831`, a way out of a
+  terminal stream death that keeps the conversation, plus the warm-up resume
+  binding it exposed) closed**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **Nothing is open** — `gh issue list --state
-  open` returns `[]`, the umbrella #1 included
+  #20 hold the earlier history. **#74 is the only open issue** — `gh issue list
+  --state open` returns it alone, the umbrella #1 included in the closed set
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
