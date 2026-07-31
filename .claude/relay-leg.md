@@ -11,32 +11,34 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31 by a vibe run — TWO tickets: #73, #74)
+## Current queue (updated 2026-07-31 by a vibe run — SIX tickets: #75–#80)
 
-**#73 and #74 are open and `ready-for-agent`, with no blocking edge between
-them** — either order works, take the lowest-numbered unblocked one.
+Take the lowest-numbered open, unblocked `ready-for-agent` ticket. **#79 is
+blocked by #78** and must stay so.
 
-- **#73 — recovering from a terminal stream death discards the conversation.**
-  `chooseWorkspace` passes `resumeId: null`, so the recovery the app's own error
-  copy instructs starts a fresh SDK session and empties the pane — the exact
-  consequence [[2026-07-23-engine-terminal-on-stream-death]] cited when it
-  rejected auto-restart. The fix stays **user-initiated**, so the ADR is not
-  reversed. **Its AC1 is BLOCKING and comes first:** nothing measured says a
-  session is resumable after an *abnormal* stream death — prove it before
-  building on it, and if it falsifies, degrade to an honest restart and amend the
-  ADR. Second real problem inside it: the renderer cannot currently tell a
-  terminal error from a per-turn one (both arrive as `{ type: 'error' }`), and
-  the control must not attach to the per-turn ones.
-- **#74 — run the renderer sandboxed.** `sandbox: false` buys nothing: the
-  **built** preload requires only `electron`. No ADR ever argued the flag, so
-  nothing is being reversed. The flag is one line; the work is proving nothing
-  broke — and **vitest cannot observe `sandbox`**, so the evidence must be a
-  driver that establishes its own state, is red-first, is mutation-verified by
-  flipping the flag back, and completes a **real turn** through the bridge.
+- **#75 — turn-end notification + taskbar flash when the window is unfocused.**
+  Needs no new IPC channel: main already holds the event stream and the window in
+  `chat:send`. `turn-aborted` must stay **silent** — that is an asserted
+  behaviour. Windows swallows a toast with no `setAppUserModelId`, which is why
+  the far-side driver assertion exists.
+- **#76 — `gui-48` prints `SKIPPED the busy refusal` unconditionally**, forever,
+  on every run. Its stated reason ("needs a real streaming turn") expired when
+  `gui-73` shipped, which drives one and kills it mid-flight.
+- **#77 — `gui-51` prints four `NOT DRIVEN` lines** for surfaces it names but
+  never drives into overflow. **Do not widen the gutter budgets** to fit a newly
+  measured surface; a failure there is a finding.
+- **#78 — measure the launch artifact**, fix only if objectionable. AC1 is the
+  measurement, per the ADR's own "Build it only if measured". Motivate on the
+  **zoom** reflow, not the backdrop flash.
+- **#79 — the window remembers its size and position.** Renderer `localStorage` +
+  IPC push, **never a main-side store** — that argument was tested and killed.
+  Amends exactly one ADR sentence.
+- **#80 — type-while-busy composer with a queued send.** Its substance is the
+  state machine, not the typing.
 
-Spec #64 stays delivered and closed (#65 `f0dfc68` · #68 `70c904f` · #66
-`a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4`), with #71 `b6e8911`
-and #72 `9fecc10` closed standalone after it.
+Everything before this batch is delivered and closed: spec #64 (#65 `f0dfc68` ·
+#68 `70c904f` · #66 `a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4`),
+then #71 `b6e8911`, #72 `9fecc10`, #73 `6b4a831` and #74 `07544e8` standalone.
 
 **Run the frontier query anyway — do not trust this paragraph.** Leg 5 wrote
 that closing #70 would empty the queue and was wrong: #71 was `ready-for-agent`
@@ -45,17 +47,22 @@ step 1 is always the authority, including over this sentence.** If it returns a
 ticket, work it; the prose here is a summary that goes stale the moment the
 owner files something.
 
-**#73 and #74 came from an autonomous `/preset vibe` run, and two things about it
-bind this leg.** First, its record is `.claude/vibe.md` — every question, the
-agent that answered it, the grepped warrant, and the cross-model verdict. Read it
-before touching the engine error path or `webPreferences`; the previous run's
-record is archived beside it as `.claude/vibe-2026-07-31-titlebar.md`. Second,
-**seven calls in it are the owner's and are explicitly out of scope**: Tailwind's
-fate, which titlebar buttons leave, whether the three dock toggles collapse,
-#72's centring trade-off, whether the window should remember its geometry, which
-daily-driver polish item comes next, and whether a renderer error boundary is
-wanted. Each already has a reversible default taken. Do not decide them; an
-adjacent good idea in that space is a ticket comment, never a detour.
+**#75–#80 came from an autonomous `/preset vibe` run, and two things about it bind
+this leg.** First, its record is `.claude/vibe.md` — every question, the agent
+that answered it, the grepped warrant, and the cross-model verdict. **Read it
+before starting any ticket in this batch**; the two earlier runs are archived
+beside it as `.claude/vibe-2026-07-31-titlebar.md` and
+`.claude/vibe-2026-07-31-production-ready.md`.
+
+Second, **the "seven parked owner calls" rule is SPENT.** The owner granted full
+autonomy on 2026-07-31 (quoted verbatim at the top of `.claude/vibe.md`) and all
+seven were resolved in that run. There is no longer a do-not-decide list. What
+the grant did **not** change: an answer still comes from a warrant or it is
+marked as a chosen design. Two of the seven were deliberately settled only by
+**half** — Tailwind is not dropped but the adopt-utilities question stays open,
+and the titlebar's control count does not change while the aesthetic question
+stays the owner's. **Do not close either remaining half**; the record argues
+against it in those words.
 
 **That run killed three tickets by probing them, and the corpses matter more than
 the survivors — do not re-file them.** Unhandled promise rejections in main do
