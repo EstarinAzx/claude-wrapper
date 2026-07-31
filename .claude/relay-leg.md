@@ -11,14 +11,32 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31 by a vibe run — ONE ticket: #72)
+## Current queue (updated 2026-07-31 by a vibe run — TWO tickets: #73, #74)
 
-**#72 is open and `ready-for-agent`** — the titlebar's session title cannot
-truncate and overlaps the pills and dock buttons. CSS-only, ~6 lines in
-`styles/titlebar.css`, no JSX and no class-name or aria-label change. It is the
-whole queue; spec #64 stays delivered and closed (#65 `f0dfc68` · #68 `70c904f`
-· #66 `a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4`) with #71
-`b6e8911` closed after it.
+**#73 and #74 are open and `ready-for-agent`, with no blocking edge between
+them** — either order works, take the lowest-numbered unblocked one.
+
+- **#73 — recovering from a terminal stream death discards the conversation.**
+  `chooseWorkspace` passes `resumeId: null`, so the recovery the app's own error
+  copy instructs starts a fresh SDK session and empties the pane — the exact
+  consequence [[2026-07-23-engine-terminal-on-stream-death]] cited when it
+  rejected auto-restart. The fix stays **user-initiated**, so the ADR is not
+  reversed. **Its AC1 is BLOCKING and comes first:** nothing measured says a
+  session is resumable after an *abnormal* stream death — prove it before
+  building on it, and if it falsifies, degrade to an honest restart and amend the
+  ADR. Second real problem inside it: the renderer cannot currently tell a
+  terminal error from a per-turn one (both arrive as `{ type: 'error' }`), and
+  the control must not attach to the per-turn ones.
+- **#74 — run the renderer sandboxed.** `sandbox: false` buys nothing: the
+  **built** preload requires only `electron`. No ADR ever argued the flag, so
+  nothing is being reversed. The flag is one line; the work is proving nothing
+  broke — and **vitest cannot observe `sandbox`**, so the evidence must be a
+  driver that establishes its own state, is red-first, is mutation-verified by
+  flipping the flag back, and completes a **real turn** through the bridge.
+
+Spec #64 stays delivered and closed (#65 `f0dfc68` · #68 `70c904f` · #66
+`a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4`), with #71 `b6e8911`
+and #72 `9fecc10` closed standalone after it.
 
 **Run the frontier query anyway — do not trust this paragraph.** Leg 5 wrote
 that closing #70 would empty the queue and was wrong: #71 was `ready-for-agent`
@@ -27,14 +45,29 @@ step 1 is always the authority, including over this sentence.** If it returns a
 ticket, work it; the prose here is a summary that goes stale the moment the
 owner files something.
 
-**#72 came from an autonomous `/preset vibe` run, and two things about it bind
-this leg.** First, its record is `.claude/vibe.md` — every question, the agent
-that answered it, the grepped warrant, and the cross-model verdict. Read it
-before touching the titlebar or Tailwind. Second, **four calls in it are the
-owner's and are explicitly out of scope**: Tailwind's fate, which titlebar
-buttons leave, whether the three dock toggles collapse, and #72's centring
-trade-off. Each already has a reversible default taken. Do not decide them; an
+**#73 and #74 came from an autonomous `/preset vibe` run, and two things about it
+bind this leg.** First, its record is `.claude/vibe.md` — every question, the
+agent that answered it, the grepped warrant, and the cross-model verdict. Read it
+before touching the engine error path or `webPreferences`; the previous run's
+record is archived beside it as `.claude/vibe-2026-07-31-titlebar.md`. Second,
+**seven calls in it are the owner's and are explicitly out of scope**: Tailwind's
+fate, which titlebar buttons leave, whether the three dock toggles collapse,
+#72's centring trade-off, whether the window should remember its geometry, which
+daily-driver polish item comes next, and whether a renderer error boundary is
+wanted. Each already has a reversible default taken. Do not decide them; an
 adjacent good idea in that space is a ticket comment, never a detour.
+
+**That run killed three tickets by probing them, and the corpses matter more than
+the survivors — do not re-file them.** Unhandled promise rejections in main do
+**not** crash this app (probed: Electron 43 / Node 24 keeps
+`--unhandled-rejections=warn`, and `shell.openExternal` on an unregistered scheme
+does not even reject), so the five `void`-ed promises are fine. Every `catch` in
+`src/` is deliberate and carries a comment naming its contract. `void
+watchSession(...)` is already `try`/`catch`'d. And a **main-side preference store
+is forbidden in those words** by
+[[2026-07-31-a-preference-lives-where-it-is-read]] — "No preferences file, no
+main-side store" — so a `userData` JSON is a reversal that must say so out loud,
+not a gap-fill.
 
 **The run also falsified the premise it was handed, which is the recurring
 lesson here.** The standing complaint was that the titlebar's buttons were
