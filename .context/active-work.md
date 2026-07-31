@@ -7,15 +7,15 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 6: ticket **#70** landed and **spec #64 closed**_
-_At commit: `1769aa4` on `main`, pushed. Gate: typecheck clean, build clean, **823 tests green across 56 files** (802 → 823, +1 file)_
-_Driver check: `gui-70` **PASS** in a real GPU-on window, seen red on `main` first. `gui-51` remains the one expected red (#71), unchanged signature_
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 7: ticket **#71** landed; **the tracker is empty**_
+_At commit: `b6e8911` on `main`, pushed. Gate: typecheck clean, build clean, **823 tests green across 56 files** (unchanged — #71 touched no source)_
+_Driver check: `gui-51` **PASS**, and PASS at zoom 1.0 / 1.1 / 1.25 / 1.5. **The driver set has no standing red for the first time in this batch.**_
 
 ## Current focus
 
-**Spec #64 is delivered and closed. `#71` is the only open issue in the tracker.**
+**Nothing is in flight and the tracker has zero open issues.** Spec #64 is delivered and closed; #71, the last standalone, closed with it.
 
-The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. All four shipped, one ticket per relay leg:
+The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. All four shipped, one ticket per relay leg, plus the two driver-hygiene tickets that bracketed the batch:
 
 | # | Ticket | Commit |
 |---|---|---|
@@ -25,24 +25,25 @@ The owner asked for four things — a delete-sessions button, a settings surface
 | ~~#67~~ | ~~Tokenise the two duplicate colour literals~~ | `e16ace6` |
 | ~~#69~~ | ~~Backdrop control: Acrylic or Mica~~ | `add4e5b` |
 | ~~#70~~ | ~~Four themes: Frost, Ember, Moss, Slate~~ | `1769aa4` |
+| ~~#71~~ | ~~`gui-51`'s gutter tolerance vs. the default zoom~~ | `b6e8911` |
 
-**Four of the batch's five ADRs now carry an amendment written after a probe measured their stated premise** — two because it was false (#68's Windows handle, #70's `color-mix()`), two because it held and is now measured rather than cited (#69's runtime-settable `setBackgroundMaterial`, #70's unlayered-beats-layered override). Read an ADR's amendment before citing it.
+**Four of the batch's five ADRs carry an amendment written after a probe measured their stated premise** — two because it was false (#68's Windows handle, #70's `color-mix()`), two because it held and is now measured rather than cited (#69's runtime-settable `setBackgroundMaterial`, #70's unlayered-beats-layered override). Read an ADR's amendment before citing it.
 
 ## State
 
-- **In flight:** nothing. No open branches. `main` = `1769aa4` + this leg's `.context` commit, pushed.
-- **Landed this leg:** #70 as `1769aa4` — a Theme control (Frost default / Ember / Moss / Slate) at the top of the Appearance panel, `src/shared/theme.ts` as the four-string whitelist, `useTheme.ts` storing in renderer `localStorage` (unversioned `theme` key) and applying `data-theme` to `documentElement`, four 18-key blocks in the new `styles/themes.css` (13th import, after `tokens` and before `base`), a swatch per row previewing its own palette. **Zero IPC.** `tests/theme.test.ts` is the suite's third raw-text CSS reader. New driver `gui-70.mjs`. `DESIGN.md` gained a themeable clause.
-- **Queue (`ready-for-agent`):** **one open — #71**, unblocked (`issue_dependencies_summary.blocked_by: 0`).
+- **In flight:** nothing. No open branches. `main` = `b6e8911` + this leg's `.context` commit, pushed.
+- **Landed this leg:** #71 as `b6e8911` — **driver-only; no source or CSS change.** `gui-51.mjs` now measures the scrollbar gutter against `10 × devicePixelRatio` in **device pixels** instead of a ±0.5 CSS-pixel window, and measures the content box exactly (a `width:100%` shim's rect) instead of `offsetWidth - clientWidth`, which rounds both operands.
+- **Queue (`ready-for-agent`):** **empty.** `gh issue list --state open` returns `[]` — no leftovers stuck `ready-for-human`, none blocked, none unlabelled.
 - **Blocked:** nothing.
-- **Open:** #71 only.
+- **Open:** nothing.
 
 ## Pick up here
 
-**Take #71 — `gui-51`'s scrollbar-gutter tolerance.** It is the only open issue, `ready-for-agent`, unblocked, and the last standing red in the driver set: `model menu gutter 9.4px | .session-groups gutter 9px`.
+**No active work — the queue is empty, so pick a new task or wait for the owner to file one.** The relay chain stopped itself here rather than spawning a leg with nothing to do.
 
-Its **stated premise is spent and the ticket says so itself**: it was filed expecting #66 to move the default zoom, and #66 did not (still `1.25`). What remains is the pre-existing miscalibration — the driver's ±0.5px tolerance around a 10px gutter was written when `DEFAULT_ZOOM` was `1.1`, and `ece7b9c` raised it. The ticket is explicit that **this is a hypothesis, not a cause**: the probe div reads exactly `10px` while the two zoomed elements read `9` and `9.4` and disagree with each other, which zoom alone does not explain. **Run the decisive experiment first** (set `zoom-level-v2` to `1.1` before the rail mounts, re-run `gui-51`) and record the result before writing a fix.
+If the owner brings a new want, the route is `/preset init` → `/hp` MVD → `to-spec` → `to-tickets`, then a fresh `/relay N=1 read and follow .claude/relay-leg.md` chain over the resulting batch. `.claude/relay-leg.md`'s "Current queue" section is now stale by construction and its own text says to trust the frontier query over it.
 
-The real decision the ticket asks for: whether the **driver's expectation** should be zoom-aware, or whether the **CSS** should hold a true 10px gutter under zoom. **Do not widen the tolerance until the numbers fit** — that is the move #65 existed to undo. And whatever ships must still fail if the global scrollbar rule is actually removed (mutate `base.css` to check), plus remove the standing-red note from `pick-up.md` and from "Known issues" below.
+The **Open questions** below are the live candidates if the owner wants a direction picked for them — Tailwind's fate and the crowded titlebar are the two that have been waiting longest and are both self-contained.
 
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
@@ -57,6 +58,10 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Recent context
 
+- **When two instruments disagree, suspect the instrument before the app — #71 is the worked example.** The ticket filed itself as UNCONFIRMED because a probe div read exactly `10` while `.model-menu` read `9.4` and `.session-groups` read `9`, three numbers zoom alone could not explain. Measured with un-rounded geometry, **the gutter is identical on every surface at every zoom**; the spread was `offsetWidth - clientWidth` rounding *both* operands to whole CSS pixels, so one value surfaced as three depending on where each box sat. The probe's exact `10` was rounding luck, not evidence the rule applied differently there. **The disagreement between instruments was the finding.**
+- **An authored pixel and a laid-out pixel are different units, and a driver must assert in the second.** Chromium lays the scrollbar out in whole **device** pixels: `10css × 1.25 = 12.5 → 12 → 9.6css`. So `9.6` was never a defect, and no CSS could have "fixed" it — chasing it would mean varying the authored value per zoom level, i.e. re-creating the per-context copies #51 deleted. See [[2026-07-31-the-authored-pixel-is-css-the-measured-pixel-is-device]].
+- **Removing the rounding beat tolerating it.** Relaxing ±0.5 to ±1.5css would have made the numbers fit without explaining them. Measuring the content box exactly instead kept the budget tight at 1 device px — and the tight budget is what still catches the real defect with 2.5× margin.
+- **The rejected instrument is worth recording so it is not re-proposed:** `getComputedStyle(el).width` looks like a no-mutation way to read a fractional content width, and it is not — under this app's global `box-sizing: border-box` it returns the **border-box** width, so the derived gutter came out `0` / `-9.6` / `-12`. Measured, not assumed.
 - **The obvious pin for a self-healing preference can ITSELF self-heal, and #70 is the case that proves it.** #69's lesson was "pin what crossed the boundary, not what the panel says". #70's boundary is `data-theme` on `documentElement` — and that pin **greens under the exact mutation it exists to catch**, because the attribute is *reactive*: an effect-set initial state paints Frost and settles on the stored palette a render later, so every after-the-fact assertion passes. Verified: swapping the lazy initialiser left all 36 assertions green. What separates the two is the **first value written**, so the pin watches that, via a `MutationObserver` recording `oldValue` **per record**. Reading the attribute inside the callback fails too — several writes coalesce into one callback and the settled value is all you see. **Generalise as: when the effect is idempotent and reactive, only its HISTORY distinguishes right from late.**
 - **A pin written for one control can force the next one onto a different ARIA role.** #66's dock-wide "no input, no select" already constrained #69 into a radiogroup of buttons. #69's own pin — "every radio in this panel is a backdrop" — then constrained #70 out of `role="radio"` entirely: a second radiogroup would have reddened two #69 assertions. The theme picker shipped as a **listbox**, which means the same thing for single-select and leaves both pins meaning what they said. **Read the neighbouring pins before choosing a role, not after.**
 - **A custom-property alias resolves ONCE, where it is declared.** `--mint: var(--color-mint)` is computed at `:root`; descendants inherit the *result*. So a nested element wearing `data-theme` re-resolves `var(--color-mint)` but **not** `var(--mint)`. Measured with four nested probes: the alias painted Frost's mint under all four palettes while the token painted four distinct accents. The whole-window re-hue is unaffected (the attribute is on `documentElement`, which *is* `:root`), but anything nested that wants a *different* palette must read the long name.
@@ -79,6 +84,14 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
+
+**From #71 — true of `gui-51` and of any driver that measures geometry:**
+
+- **`gui-51` compares in DEVICE pixels, and converting it back to CSS pixels re-breaks it.** The expectation is `10 × devicePixelRatio` within 1 device px. `devicePixelRatio` is read **live** because it already folds display scaling and webContents zoom into the one factor the bar is snapped against — hardcoding it, or comparing the CSS-pixel reading, pins a number that legitimately moves with the zoom preference.
+- **Never measure a gutter with `offsetWidth - clientWidth` again.** Both round to whole CSS pixels, so one true value reads as several different numbers depending on where each element's box sits — that is the entire #71 defect. The exact instrument is a `width:100%` shim whose rect **is** the content box.
+- **The shim's zero-reading guard is load-bearing, not defensive noise.** A `<textarea>` renders no element children, so its shim reads 0; the guard detects that and falls back to the coarse reading flagged `exact: false`, which is then given back the whole CSS pixel of rounding it carries. Delete the guard and `.message-input` reports a gutter of several hundred pixels the moment it overflows.
+- **Do not widen either budget (1 device px exact / `1 + dpr` coarse).** Measured headroom: deleting the global rule from `base.css` puts every surface at 15dev against an expected 12.5, so the exact budget has 2.5× margin. Widening to fit a number is the move #65 exists to undo.
+- **A tolerance can be passing by arithmetic accident.** The old ±0.5 survived only because `10 × 1.1 = 11.0` is integral; `10 × 1.25 = 12.5` is not, and the bar snapped to 12. **A green driver at one zoom says nothing about another** — #71 was re-verified at 1.0, 1.1, 1.25 and 1.5.
 
 **From #70 — now true of the theme path in code:**
 
@@ -206,7 +219,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Known issues / not-our-bug
 
-- **`gui-51.mjs` FAILS on `main`** with `model menu gutter 9.4px | .session-groups gutter 9px` — a **standing, characterised red**, tracked as **#71**. Its ±0.5px tolerance around a 10px gutter is calibrated to `DEFAULT_ZOOM = 1.1` and `ece7b9c` raised the default to `1.25`. Verified pre-existing and re-confirmed byte-identical after #66, #67 and **#69**. **This is the one expected driver failure — a second signature is a real regression.** Do not widen the tolerance until the numbers fit.
+- **There is no expected driver failure any more.** `gui-51`'s standing red closed as #71 (`b6e8911`); **every driver in the set is green, and any red is now a real regression.** The old note said "a second signature is a real regression" — that qualifier is gone, and so is the cover it gave.
 - **A capture cannot see the right ~20% of the layout.** The window composites `windowWidth` device px while the page lays out `windowWidth` CSS px at zoom 1.25, so every right-hand dock is clipped out of a screenshot at any window size — re-confirmed by #69's captures, where the Appearance panel is visibly cut. **Measure with `getBoundingClientRect`**; `gui-66` works around it with a presentational-only `setZoom(1)` after every assertion.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
 - **GUI driver traps:** `--disable-gpu` flattens acrylic (so `gui-69` leaves the GPU on); measure in the DOM, never off screenshots; dispatch clicks via `page.evaluate(() => el.click())`; arm a hard `setTimeout(process.exit)` before awaiting `app.close()`; never re-read an element after an action that may not have happened; **count the side effect you care about**; pass any path as an **argument** to `app.evaluate`; stub `dialog.showOpenDialog` in main before any click that opens one; and **select controls by their modifier class**.
@@ -235,6 +248,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-31-the-authored-pixel-is-css-the-measured-pixel-is-device]] — **#71, shipped; why the instrument moved to device pixels and the CSS did not move at all**
 - [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] — **#70, shipped; carries TWO amendments — #67's `color-mix()` correction and #70's own mechanism confirmation plus the alias limit**
 - [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] — **#69, shipped as argued; amended with the live confirmation**
 - [[2026-07-31-a-preference-lives-where-it-is-read]] — **#69 consumed it; the premise held**

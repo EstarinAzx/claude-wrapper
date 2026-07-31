@@ -134,25 +134,27 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **spec #64's
-  batch is one ticket from done — #65, #68, #66, #67 and #69 closed, take #70
-  next**; note `gui-51` is a standing expected driver failure, tracked as #71)
+- `.context/pick-up.md` — current frontier + landmines (currently: **the tracker
+  is EMPTY — zero open issues, nothing in flight, no expected driver failure**;
+  spec #64 delivered and closed with #65, #68, #66, #67, #69, #70, and the #71
+  standalone closed after it)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
   hunk diff); **spec #55 (live-tail) delivered and closed with
   #56 (gui-55 driver, red-verified) and #57 (live-tail core)**; **#52 (model pill follows the CLI),
   #53 (CLI-sourced model list), #54 (no resume before the first turn), #50 and
-  #51 closed**; **spec #64 (Appearance panel + session deletion) OPEN — #65
-  closed (`f0dfc68`, driver gate restored), #68 closed (`70c904f`, session
-  deletion), #66 closed (`a7c0470`, Appearance dock + zoom), #67 closed
-  (`e16ace6`, accent quartet + two literals tokenised) and #69 closed
-  (`add4e5b`, Backdrop control); **#70 is the last one and is unblocked**; #71 open
-  standalone (`gui-51`'s gutter tolerance)**; spec #41 (Resume anything)
+  #51 closed**; **spec #64 (Appearance panel + session deletion)
+  DELIVERED and CLOSED** — #65 (`f0dfc68`, driver gate restored), #68
+  (`70c904f`, session deletion), #66 (`a7c0470`, Appearance dock + zoom), #67
+  (`e16ace6`, accent quartet + two literals tokenised), #69 (`add4e5b`, Backdrop
+  control) and #70 (`1769aa4`, four themes); **#71 closed standalone after it
+  (`b6e8911`, `gui-51` measured in device pixels)**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **#54** closed; open: the unlabelled umbrella **#1**
+  #20 hold the earlier history. **Nothing is open** — `gh issue list --state
+  open` returns `[]`, the umbrella #1 included
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first

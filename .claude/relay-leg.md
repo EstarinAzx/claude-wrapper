@@ -11,35 +11,30 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31 after leg 6, spec #64 CLOSED)
+## Current queue (updated 2026-07-31 after leg 7 — the queue is EMPTY)
 
-**Spec #64 is delivered and closed.** All six of its tickets landed, one per leg:
-#65 `f0dfc68` · #68 `70c904f` · #66 `a7c0470` · #67 `e16ace6` · #69 `add4e5b` ·
-#70 `1769aa4`.
+**The tracker has zero open issues.** `gh issue list --state open` returns `[]`:
+nothing `ready-for-agent`, nothing stuck `ready-for-human`, nothing blocked.
 
-**One ticket is open, and it is the whole queue:**
+Spec #64 is delivered and closed — #65 `f0dfc68` · #68 `70c904f` · #66
+`a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4` — and #71 `b6e8911`,
+the last standalone, closed after it. The leg-7 chain stopped itself here (step
+7's body-signaled done) rather than spawning a leg with no work.
 
-| # | Ticket | Blocked by |
-|---|---|---|
-| #71 | `gui-51`'s scrollbar-gutter tolerance is calibrated to the old default zoom | — |
+**Run the frontier query anyway — do not trust this paragraph.** Leg 5 wrote
+that closing #70 would empty the queue and was wrong: #71 was `ready-for-agent`
+and unblocked the whole time, merely outside the batch. **The frontier query in
+step 1 is always the authority, including over this sentence.** If it returns a
+ticket, work it; the prose here is a summary that goes stale the moment the
+owner files something.
 
-**Take #71 next.** It is `ready-for-agent` and `blocked_by: 0`, verified from the
-API. After it the queue is dry unless the owner files something, and that is the
-body-signaled stop in step 7.
-
-**A correction the last leg's note got wrong, kept here as the lesson.** Leg 5
-wrote that closing #70 would leave the queue empty. It did not: #71 was
-`ready-for-agent` and unblocked the whole time, merely outside the batch. **The
-frontier query in step 1 is always the authority — never take a prose sentence
-in this section over the tracker, including this one.**
-
-**#71 is a MEASUREMENT ticket, and its own diagnosis is flagged unconfirmed.**
-The driver's ±0.5px tolerance around a 10px gutter was calibrated when
-`DEFAULT_ZOOM` was `1.1`, and `ece7b9c` raised it to `1.25` — but the probe div
-reads exactly `10px` while the two failing elements read `9` and `9.4` and
-disagree with each other, which zoom alone does not explain. Run the decisive
-experiment the ticket names before writing any fix, and **do not widen the
-tolerance until the numbers fit** — that is the move #65 existed to undo.
+**What leg 7 settled, because it is the kind of thing that recurs.** #71 was a
+measurement ticket whose own diagnosis was flagged unconfirmed, and the
+measurement changed the answer: the "three surfaces disagree" symptom was the
+*instrument*, not the app — `offsetWidth - clientWidth` rounds both operands to
+whole CSS pixels, so one true gutter surfaced as three numbers. **When two
+instruments disagree, suspect the instrument first**, and prefer removing the
+rounding over widening a tolerance to cover it.
 
 **Four of spec #64's five ADRs now carry an amendment written after a probe
 measured their stated premise.** Two because it was false (#68's Windows handle,
