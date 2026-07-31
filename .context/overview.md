@@ -34,11 +34,14 @@ tags: [context, overview]
   the CLI says it is running, display only).
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
 - `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar).
-  `styles.css` is a **23-line entry file**: Tailwind layer setup plus eleven
+  `styles.css` is a **24-line entry file**: Tailwind layer setup plus twelve
   `@import`s. The rules live in `src/renderer/src/styles/` — `tokens` · `base`
   (reset + the app-wide scrollbar rule + reduced-motion, global on purpose and
-  never scoped to a component) · `shared` · `titlebar` · `rails` · `agent-map` ·
-  `chat` · `composer` · `tool-card` · `markdown` · `subagent`.
+  never scoped to a component) · `shared` · `titlebar` · `rails` · `appearance` ·
+  `agent-map` · `chat` · `composer` · `tool-card` · `markdown` · `subagent`.
+  `appearance` (#66) sits after `rails` because the Appearance dock JOINS the
+  dock-shell groups that file owns (it carries `.agents-dock`) and its one
+  override — dropping the inherited resize grip — has to come after them.
   **The import order IS the cascade**: `tokens` → `base` → `shared` must stay
   first, because the shared groups (truncation triad, focus ring, the two hover
   washes, micro-caps label) are single-class rules that every component override
@@ -68,6 +71,13 @@ tags: [context, overview]
   (output / input / change); a pending permission card renders the input
   inspector and the diff with no toggle at all, and a Write card renders a
   labelled content preview and **never** a diff.
+  `useZoom.ts` returns `{ level, step }` (#66): the level left the mount
+  effect's closure so the Appearance panel could show a readout. The lazy
+  `useState(readStored)` initialiser is what keeps the first-mount persist
+  intact — storage is read ONCE, before anything observes the level, so a
+  stored level still beats the default. Setting it from an effect instead
+  leaves the whole `zoom-shortcuts` suite green while the panel reports the
+  wrong number.
   `App.tsx` owns the workspace switch: the `ok` branch is where every
   workspace-scoped App state must be cleared, and `<InputBar key={cwd}>` covers
   everything living inside the composer. Both entry points — a foreign session
@@ -99,9 +109,9 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **spec #64's
-  batch draining — #65 and #68 closed, take #66 next** because #69 and #70 are
-  both blocked on it; note `gui-51` is a standing expected driver failure,
-  tracked as #71)
+  batch draining — #65, #68 and #66 closed, take #67 next**; #69 is now
+  unblocked and #70 still waits on #67; note `gui-51` is a standing expected
+  driver failure, tracked as #71)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -109,8 +119,9 @@ tags: [context, overview]
   #56 (gui-55 driver, red-verified) and #57 (live-tail core)**; **#52 (model pill follows the CLI),
   #53 (CLI-sourced model list), #54 (no resume before the first turn), #50 and
   #51 closed**; **spec #64 (Appearance panel + session deletion) OPEN — #65
-  closed (`f0dfc68`, driver gate restored) and #68 closed (`70c904f`, session
-  deletion), #66/#67 unblocked, #69 blocked by #66 and #70 by #66+#67; #71 open
+  closed (`f0dfc68`, driver gate restored), #68 closed (`70c904f`, session
+  deletion) and #66 closed (`a7c0470`, Appearance dock + zoom), #67 unblocked,
+  #69 now unblocked and #70 still blocked by #67; #71 open
   standalone (`gui-51`'s gutter tolerance)**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash

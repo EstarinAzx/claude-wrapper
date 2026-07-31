@@ -11,9 +11,9 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31 after leg 2, spec #64)
+## Current queue (updated 2026-07-31 after leg 3, spec #64)
 
-**Four tickets left, two unblocked.** Spec **#64 — Appearance panel (theme ·
+**Three tickets left, two unblocked.** Spec **#64 — Appearance panel (theme ·
 backdrop · zoom) and session deletion** is published and sliced. Blocking edges
 are wired as native GitHub issue dependencies and verified via
 `issue_dependencies_summary.blocked_by`.
@@ -22,28 +22,37 @@ are wired as native GitHub issue dependencies and verified via
 |---|---|---|
 | ~~#65~~ | ~~Retire the stale `gui-45` driver~~ — **closed `f0dfc68`** | — |
 | ~~#68~~ | ~~Delete a session from the rail~~ — **closed `70c904f`** | — |
-| #66 | Appearance dock with the zoom control | — |
+| ~~#66~~ | ~~Appearance dock with the zoom control~~ — **closed `a7c0470`** | — |
 | #67 | Tokenise the two duplicate colour literals | — |
-| #69 | Backdrop control: Acrylic or Mica | #66 |
-| #70 | Four themes: Frost, Ember, Moss, Slate | #66, #67 |
+| #69 | Backdrop control: Acrylic or Mica | — (released by #66) |
+| #70 | Four themes: Frost, Ember, Moss, Slate | #67 |
 
-**Take #66 next.** It is the batch's hinge — #69 and #70 are both blocked on it,
-so nothing else moves until it lands. Then #67 → #69 → #70.
+**Take #67 next.** It is small and it is the last thing #70 waits on. #69 is
+also unblocked and depends on nothing else, so #67 → #69 → #70 keeps #70's path
+shortest.
 
 **#71** (`gui-51`'s gutter tolerance) is open and unblocked but outside the
-chain. It blocks no feature work, but #66 moves the zoom its measurement depends
-on, so do it before or alongside #66 rather than after the batch.
+chain. Its stated premise is now **spent** — it was filed expecting #66 to move
+the default zoom, and #66 did not (still `1.25`; the panel only exposes
+stepping). The ticket still stands on the pre-existing miscalibration to the old
+`1.1` default.
 
 One decision in this batch is **counter-intuitive and already settled** — do not
 re-derive it, and do not "correct" it mid-leg: preferences stay in renderer
 `localStorage` (the main-side store rested on a premise that is false —
 `setBackgroundMaterial` is runtime-settable). Argued in full in
-`.context/decisions/2026-07-31-a-preference-lives-where-it-is-read.md`.
+`.context/decisions/2026-07-31-a-preference-lives-where-it-is-read.md`. #69 is
+the ticket that consumes it.
 
 #68's own counter-intuitive decision (the delete call omitting `dir`) is now
 shipped and pinned in code, and its ADR was **amended** after the probe measured
 its stated premise false — Windows holds no delete-blocking handle on a
 transcript. Read the amendment before citing that ADR for anything.
+
+#66 shipped exactly as its ADR argued, reversing nothing. Its one trap worth
+carrying: `useZoom`'s lazy `useState(readStored)` initialiser is load-bearing,
+and setting that initial state from an effect instead leaves the whole
+`zoom-shortcuts` suite green while the panel reports the wrong number.
 
 The frontier query in step 1 is always the authority; never hand-pick from this
 section if it disagrees with the tracker.

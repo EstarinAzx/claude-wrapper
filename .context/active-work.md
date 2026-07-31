@@ -7,13 +7,13 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 2 of spec #64's batch: ticket **#68** landed, the batch's only destructive feature_
-_At commit: `70c904f` on `main`, pushed. Gate: typecheck clean, build clean, **770 tests green across 53 files** (+27)_
-_Driver check: `gui-47` re-run — `PASS all #47 criteria`, zero skips. `gui-51` remains the one expected red (#71)_
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 3 of spec #64's batch: ticket **#66** landed, the batch's hinge_
+_At commit: `a7c0470` on `main`, pushed. Gate: typecheck clean, build clean, **786 tests green across 54 files** (+16)_
+_Driver check: **`gui-66` red-verified then green**. `gui-51` re-run — still the one expected red (#71), byte-identical signature_
 
 ## Current focus
 
-**Spec #64's batch is draining. #65 and #68 are closed; four tickets remain, two unblocked.**
+**Spec #64's batch is draining. #65, #68 and #66 are closed; three tickets remain, two unblocked.**
 
 The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. The funnel turned that into:
 
@@ -21,10 +21,10 @@ The owner asked for four things — a delete-sessions button, a settings surface
 |---|---|---|
 | ~~#65~~ | ~~Retire the stale `gui-45` driver~~ — **closed, `f0dfc68`** | — |
 | ~~#68~~ | ~~Delete a session from the rail~~ — **closed, `70c904f`** | — |
-| **#66** | Appearance dock with the zoom control | — |
+| ~~#66~~ | ~~Appearance dock with the zoom control~~ — **closed, `a7c0470`** | — |
 | **#67** | Tokenise the two duplicate colour literals | — |
-| **#69** | Backdrop control: Acrylic or Mica | #66 |
-| **#70** | Four themes: Frost, Ember, Moss, Slate | #66, #67 |
+| **#69** | Backdrop control: Acrylic or Mica | — (unblocked by #66) |
+| **#70** | Four themes: Frost, Ember, Moss, Slate | #67 |
 
 Five ADRs carry the reasoning and were written **before** the spec. Read them before touching any ticket — the spec summarises, the ADRs argue.
 
@@ -36,16 +36,16 @@ Five ADRs carry the reasoning and were written **before** the spec. Read them be
 ## State
 
 - **In flight:** nothing. No open branches.
-- **Landed this leg:** #68 as `70c904f` — a hover- and focus-revealed delete control per rail row: first click arms it (Delete / Cancel), second commits, one row armed at a time, Escape or blur reverts. New `session:delete` IPC channel, `deleteSession` in `session-store.ts`, `DeleteStatus` in `shared/session-types.ts`, `.session-delete` rules in `rails.css`. Twelve mutations applied and reverted; all twelve turned a test red.
-- **Queue (`ready-for-agent`):** **five open** — #66, #67 unblocked; #69 blocked by one; #70 blocked by two; **#71** unblocked. Verified via `issue_dependencies_summary.blocked_by`.
-- **Blocked:** #69, #70 (by design).
-- **Open:** #64 (the spec, stays open until its tickets close), #66, #67, #69, #70, #71.
+- **Landed this leg:** #66 as `a7c0470` — a third right-hand dock (`AppearanceDock.tsx`), joining the existing `openDock` union rather than adding a boolean, gated on an open project, fixed width with no grip and no persisted width, no Save/Apply/Reset and no dirty state. One control: zoom as minus / readout / plus, stepping through `nextZoom` verbatim, each stepper disabled at its bound. `useZoom` now returns `{ level, step }`; new `styles/appearance.css` is the twelfth import. Four mutations applied and reverted; all four turned a test red.
+- **Queue (`ready-for-agent`):** **four open** — #67 and #69 unblocked; #70 blocked by one (#67); **#71** unblocked. Verified via `issue_dependencies_summary.blocked_by`.
+- **Blocked:** #70 (by #67, by design).
+- **Open:** #64 (the spec, stays open until its tickets close), #67, #69, #70, #71.
 
 ## Pick up here
 
-**Take #66 (Appearance dock + zoom) next.** It is the batch's hinge — both #69 and #70 are blocked on it, so nothing else in the spec moves until it lands.
+**Take #67 (tokenise the two duplicate colour literals) next.** It is the last thing #70 waits on, and it is small. Then #69 → #70 — or #69 first if you prefer, since #66 unblocked it and it depends on nothing else.
 
-Then #67 → #69 → #70. **#71 is not in that chain** — it blocks no feature work, but #66 moves the zoom its measurement depends on, so it is worth doing before or with #66 rather than after the batch.
+**#71 is not in that chain** — it blocks no feature work. Note its premise has now been overtaken: it was filed expecting #66 to move the default zoom, and **#66 did not** (the default is still `1.25`; the panel only exposes stepping). `gui-51`'s tolerance is still calibrated to the old `1.1` default, so the ticket is still valid — just for the pre-existing reason alone, not for anything #66 did.
 
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
@@ -53,11 +53,14 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 - **Should the rail filter out `sdk-cli` sessions?** The listing fix admits **112** rows to surface the **37** this app wrote; the other 75 are headless automation, ~20 of them this repo's own GUI drivers titled "say OK" / "reply with exactly: PONG". Accepted deliberately, but it is worst exactly where the owner looks first. The blocker is that `SDKSessionInfo` exposes no `entrypoint` / `origin` / `sessionKind` — the deciding field is read from disk and discarded — so filtering means either re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or `tagSession` on every session this app creates, which is prospective only and would not reach the 37 already written. **#68 was explicitly NOT the answer to this**, and shipped saying so — the non-goal is written into the closed ticket so it stops being re-proposed as bulk delete. Single-row deletion existing does not make "delete the automation rows" a plan.
 - **Should Tailwind stay at all?** Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. **#70 deliberately does not bundle this** — the theme override mechanism is indifferent to where the defaults come from, and making a reversible feature wait on an irreversible cleanup is backwards.
-- **The titlebar is crowded and #66 makes it worse** — app name + session title + two pills + **three** dock buttons + window controls, each button eating drag region. Flagged for an impeccable pass, deliberately out of scope for the batch, but do not let it silently become a seventh control nobody costed.
+- **The titlebar is crowded and #66 has now made it worse** — app name + session title + two pills + **three** dock buttons + window controls, each button eating drag region. The third button shipped as specified; the crowding is real and now actual rather than predicted. Flagged for an impeccable pass, deliberately out of scope for the batch, but do not let it silently become a seventh control nobody costed.
 - One deferred owner decision from #58's Out of Scope: whether an honest Write diff is wanted at permission time only, or also after an auto-run and in replay. Gated nothing in #59–#63; still open.
 
 ## Recent context
 
+- **The mutation that matters was the one the existing suite could not feel.** Initialising the zoom level from an effect instead of `useState`'s lazy initialiser leaves the **entire** `zoom-shortcuts` suite green — main is still told the stored level, so every assertion there still passes — while the panel reports the default. Only the new readout pins catch it. That is the shape to look for when adding a display of state that already existed: the old tests pin the *effect*, and the new surface is the *report*, and they can disagree silently.
+- **A driver assertion can fail because the baseline was wrong, not the code.** `gui-66` first compared the Appearance dock's width to the sessions rail's and failed at 248 vs 283 — the rail is drag-resizable and had a restored width. Both sibling docks carry a restored inline width, so **neither is a valid baseline** for "did this join the shell". Reading the width the shared `.agents-dock` group *declares* out of `document.styleSheets` is, and it is a stronger claim: a private copy of the shell would drift from the declaration the moment either was edited.
+- **A screenshot is not a measurement, and here it is not even a picture.** The window composites `windowWidth` DEVICE pixels while the page lays out `windowWidth` CSS pixels at zoom 1.25, so the rightmost ~20% of the layout is never painted into a capture — at any window size, because the shortfall is the zoom factor. Every right-hand dock is affected, the Agents dock included; it is not new. It cost time because the rect measurements and the image disagreed and the image looked like the layout was broken. **Trust `getBoundingClientRect`; treat a capture as evidence only after checking it contains the element.**
 - **The probe falsified its own premise and the feature survived.** #68 was written around "on Windows an open handle without `FILE_SHARE_DELETE` fails the unlink outright", with the busy gate widening to "the active row, always" if the handle outlived the turn. Measured against a real store, driving the SDK the way `engine.ts` does (one streaming query, cached, so the CLI child outlives the turn): the unlink **succeeds** mid-turn, after `result` with the child still alive, and after `close()`. No delete-blocking handle exists. The scope did not widen and the ticket's shape was untouched — the probe's value was in what it cost, which was one measurement instead of a re-litigated feature at the end of the batch.
 - **The real hazard was the opposite of the one predicted.** A mid-turn delete does not fail — it succeeds and is then **undone**. The still-running turn recreates the transcript on its next append: same path, same id, back at 1,109 bytes where the completed file was 61,317. A refused unlink at least reports failure; this one reports success, removes the row, and the row returns as a stub. The gate stayed, its comment now says why, and the ADR was amended rather than left stating a false premise.
 - **The falsified premise also sharpened the predicate.** Because only the *active* session's transcript is being appended to, the gate is `active && busy` — not the row button's neighbouring `!foreign && busy`. A local non-active row is exactly as safe as a foreign one. The test asserts all three rows in one go, because "align these two conditions" is the obvious future tidy-up and it would be wrong.
@@ -84,15 +87,22 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 **From #64's design pass — traps that exist in the tickets, not yet in the code:**
 
 - **`themes.css` will be the THIRD raw-text CSS reader in the suite.** It joins `tests/scrollbar.test.ts` (scans every line naming a scrollbar pseudo-element, comments included) and `tests/multiline-composer.test.tsx` (slices between literal braces). Both have already gone red on prose. The theme file will *want* comments explaining each hue, and a naive `--color-\w+:` regex counts a commented-out declaration happily. **Strip comments before parsing.**
-- *(#68's two delete traps have moved into the code and are pinned — see the `From #68` block below.)*
-- **The Appearance panel must have no draft state.** `switchWorkspace` clears `openDock` (`App.tsx:106`), so the panel closes itself on an unrelated action. A Save button behind a self-closing panel is a silent data-loss bug.
-- **The Appearance dock shares the dock-shell selector groups but must not widen them.** Editing a shared group in `shared.css` repaints the sessions rail *and* the agents dock, silently, with a suite that loads no CSS. Duplicating them instead is the drift the split removed. Join the shell groups; own the control rows in a new file.
+- *(#68's two delete traps have moved into the code and are pinned — see the `From #68` block below. #66's three have moved into the `From #66` block.)*
 - **Backdrop must not touch any neutral.** Coupling it to the palette makes it a second theme axis writing the same custom properties as #70, from two independent controls — invisible by construction.
 - **The accent is FOUR tokens, not three.** `rails.css:324` paints mint at 10% alpha and CSS cannot apply an alpha to `var(--color-mint)`, so a `--color-mint-wash` token is required. A three-key expectation in the theme test greens while a theme silently inherits Frost's wash.
 - **`--color-mint-ink` follows the hue but keeps its lightness AND its chroma**, and the neutrals move by hue angle only — their chroma is fixed. Only `--color-mint` / `--color-mint-press` may move chroma, within `0.05`–`0.09`.
+- ~~**Lifting the zoom level out of its `useEffect` closure must not disturb the first-mount persist.**~~ **Done in #66** and pinned four ways — see the `From #66` block.
 - **One new IPC channel left in this batch** (backdrop, one-way) — the four-mock-sites rule plus `preload/index.d.ts` fires once more, needing `isTrustedIpc` plus a value whitelist at the boundary. #68's `session:delete` already spent the other. Theme and zoom are renderer-only and fire it zero times. Note the mock-site count is really "the harness plus the three suites that build their own `api` object"; the ~22 other files inherit `chat-harness.ts` and go red only because of it.
-- **Lifting the zoom level out of its `useEffect` closure must not disturb the first-mount persist.** "A stored level always wins over the default" is the entire reason `zoom-level-v2` is versioned.
 - **A driver screenshot cannot judge the backdrop.** `--disable-gpu` flattens acrylic, so Acrylic and Mica look identical to it. Real window or nothing — same for whether a theme looks good.
+
+**From #66 — now true of the Appearance dock in code:**
+
+- **`useZoom`'s lazy `useState(readStored)` initialiser is load-bearing, and breaking it is invisible to the old suite.** Storage must be read ONCE, before anything observes the level. Set the initial state from an effect and `tests/zoom-shortcuts.test.tsx` stays **entirely green** — main is told the stored level — while the panel reports the default. Mutation-verified: only `tests/appearance-dock.test.tsx`'s readout pins die. `zoom-level-v2` stays versioned for the same reason as ever; bump it on the next default change.
+- **The keydown listener reads `levelRef`, not `level`.** It binds once, so React state alone would freeze it at the mount value. Both paths must go through `apply` — routing the keyboard around it (writing storage and calling `setZoom` directly) moves the window while the readout stalls, which is exactly the "panel disagrees with the window" bug.
+- **The Appearance dock JOINS the dock-shell groups — it carries `.agents-dock`** — and `styles/appearance.css` owns only its control rows. Do NOT widen a shared group in `rails.css` / `shared.css` to accommodate it: that repaints the sessions rail and the agents dock silently, with a suite that loads no CSS. The one override in the new file drops the inherited resize grip, which is why the file imports **after** `rails.css`.
+- **The panel must stay draft-free.** `switchWorkspace` clears `openDock` (`App.tsx:106`), so it closes itself on an unrelated action; a Save button behind a self-closing panel is silent data loss. Pinned by asserting no button in the dock matches `/save|apply|reset|revert/i`, which also catches a Reset-zoom control being re-proposed.
+- **A third dock member must go in the `openDock` UNION, never a fourth boolean.** Mutual exclusion is structural because of the union; a boolean satisfies "it opens" while stacking two panels in the one right slot. Pinned against **both** siblings in **both** directions.
+- **`@testing-library/jest-dom` is NOT installed.** `toBeDisabled` / `toBeInTheDocument` fail as `Invalid Chai property`. Assert DOM properties directly (`el.disabled`), the way the existing titlebar suite reads `className` and `textContent`.
 
 **From #68 — now true of the delete path in code:**
 
@@ -116,7 +126,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **NEW — a persisted preference silently outranks the default it was seeded from.** Raising `DEFAULT_ZOOM` does nothing for an install that already stored a level. The key carries a version (`zoom-level-v2`) for exactly this; bump it again on the next default change.
 - **NEW — `sed -i` rewrites a whole file to LF.** Mutation-testing `src/` with `sed` silently flips CRLF on the file it touches. Use the `Edit` tool for mutations, or re-normalise afterwards.
 - **NEW — a script importing a project dependency must live under the project tree.** ESM resolves a bare specifier by walking up to `node_modules`; a probe in `$TEMP` fails with `ERR_MODULE_NOT_FOUND`. Same trap the GUI drivers document.
-- **NEW — the `@import` order in `styles.css` IS the cascade, and breaking it is silent.** `tokens` → `base` → `shared` must stay first and in that order: the shared groups are single-class rules that every component override is at least as specific as, so they only work while they come earlier. Reordering those eleven lines restyles the app with no error and no failing test.
+- **NEW — the `@import` order in `styles.css` IS the cascade, and breaking it is silent.** `tokens` → `base` → `shared` must stay first and in that order: the shared groups are single-class rules that every component override is at least as specific as, so they only work while they come earlier. Reordering those **twelve** lines restyles the app with no error and no failing test. A component file that OVERRIDES another component's group (as `appearance.css` does to `rails.css`) must import after it.
 - **NEW — a new rule goes in the file that owns its surface, never in the entry.** The entry holds imports only. A scoped scrollbar copy dropped into any component file is the exact drift `tests/scrollbar.test.ts` exists to catch — which is why that test reads the whole `styles/` **directory**, not just `base.css`.
 - **NEW — `tests/scrollbar.test.ts` scans EVERY LINE of the stylesheet containing a scrollbar pseudo-element, comments included.** Naming `::-webkit-scrollbar` in a comment makes the scan treat that prose as a selector and the test goes red. Never group one of those selectors with a class on one line, and never write the token in a comment.
 - **NEW — `tests/multiline-composer.test.tsx` slices the raw CSS from `.bubble {` / `.message-input {` to the NEXT `}`.** So those two selectors must stay **ungrouped** (`.bubble` in `chat.css`, `.message-input` in `composer.css`), and no comment inside either block may contain a closing brace — one did, and the slice ended early with the pinned declarations outside it. Both failures read as "the CSS is wrong" when the CSS is fine.
@@ -178,10 +188,12 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Known issues / not-our-bug
 
-- **`gui-51.mjs` FAILS on `main`** with `model menu gutter 9.4px | .session-groups gutter 9px` — a **standing, characterised red**, tracked as **#71**. Its ±0.5px tolerance around a 10px gutter is calibrated to `DEFAULT_ZOOM = 1.1` (its own comment computes `~0.909px` = 1/1.1) and `ece7b9c` raised the default to `1.25`. Verified pre-existing by stashing #65's work and re-running on clean `main` for a byte-identical failure. **This is the one expected driver failure — a second signature is a real regression.** Do not widen the tolerance until the numbers fit.
+- **`gui-51.mjs` FAILS on `main`** with `model menu gutter 9.4px | .session-groups gutter 9px` — a **standing, characterised red**, tracked as **#71**. Its ±0.5px tolerance around a 10px gutter is calibrated to `DEFAULT_ZOOM = 1.1` (its own comment computes `~0.909px` = 1/1.1) and `ece7b9c` raised the default to `1.25`. Verified pre-existing by stashing #65's work and re-running on clean `main` for a byte-identical failure, and **re-confirmed byte-identical after #66** — #66 exposes zoom stepping but does not move the default, so #71's premise ("#66 moves the zoom its measurement depends on") is spent while the ticket itself stands on the pre-existing miscalibration. **This is the one expected driver failure — a second signature is a real regression.** Do not widen the tolerance until the numbers fit.
+- **A capture cannot see the right ~20% of the layout.** The window composites `windowWidth` DEVICE pixels while the page lays out `windowWidth` CSS pixels at zoom 1.25, so anything past `windowWidth / zoom` CSS px is never painted into a screenshot — at any window size, because the shortfall IS the zoom factor. Every right-hand dock is affected, the Agents dock included. `gui-66` works around it by calling `window.api.setZoom(1)` for a final presentational-only shot, after every assertion has run. **Measure with `getBoundingClientRect`; check a capture actually contains the element before reading anything off it.**
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
 - **GUI driver traps:** `--disable-gpu` flattens acrylic; measure in the DOM, never off screenshots; dispatch clicks via `page.evaluate(() => el.click())`; arm a hard `setTimeout(process.exit)` before awaiting `app.close()`; never re-read an element after an action that may not have happened; **count the side effect you care about**; pass any path as an **argument** to `app.evaluate`; stub `dialog.showOpenDialog` in main before any click that opens one; and **select controls by their modifier class**, since the card carries three.
 - **Driver trick (gui-scope-zoom-pill):** clearing `sidebar-scope` / `zoom-level-v2` from `localStorage` **after mount but before the folder click** makes the driver show shipped defaults rather than whatever the dev machine has stored. Reading the pref back in the same probe then reports `0`, which is the probe's own ordering, not the applied zoom.
+- **Driver trick (gui-66):** a webContents zoom change is measurable **in the DOM** as `window.innerWidth` moving inversely (880 CSS px at 1.25 → 815 at 1.35), which is how a driver proves a zoom control reaches the window rather than only a state variable. Also: read a shared group's DECLARED value out of `document.styleSheets` when the live siblings carry user-resized inline widths.
 - **Driver trick (gui-63):** two seeded tool calls in one transcript give two cards in one run, so an Edit and a Write can be compared side by side — and the Write assertion is one of **absence**.
 - **Driver trick (gui-62):** a seeded `tool_use` alone puts a card with a rich **input** on screen.
 - **Driver trick (gui-61):** the same seed carries a **tool call**. Screenshot **at the moment under test**, not only in `finish()`.
@@ -203,8 +215,9 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — **#68, this leg; amended with the probe result**
-- [[2026-07-31-a-driver-establishes-its-premise]] — #65, previous leg
+- [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] — **#66, this leg; shipped as argued, nothing reversed**
+- [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — #68, previous leg; amended with the probe result
+- [[2026-07-31-a-driver-establishes-its-premise]] — #65, two legs back
 - [[2026-07-31-a-preference-lives-where-it-is-read]] · [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] · [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] · [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] · [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — spec #64's five, this leg
 - [[2026-07-30-the-import-order-is-the-cascade]] — this session, second pass
 - [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]] — this session, first pass; sharpens [[2026-07-23-tailwind4-tokens]]
