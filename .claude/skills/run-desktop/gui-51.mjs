@@ -4,7 +4,7 @@
 // reachable through getComputedStyle, so the CSS-text pins in
 // tests/scrollbar.test.ts prove the rule is WRITTEN but not that Chromium
 // applies it. This measures the thing that matters instead: the scrollbar
-// gutter, as `offsetWidth - clientWidth`, in the real built app.
+// gutter, in the real built app, in device pixels (see GUTTER_FN — #71).
 //
 //   Windows default bar ≈ 15-17px.  Our rule = 10px.
 //
@@ -69,14 +69,44 @@ await page.evaluate(() => {
 })
 await page.waitForTimeout(2500)
 
-// `offsetWidth - clientWidth` is the gutter PLUS the horizontal borders, so a
-// bordered element (`.model-menu` has a 1px hairline) reads 2px high. Subtract
-// them or the instrument reports a defect the app does not have.
+// Measuring the gutter, and why not with `offsetWidth - clientWidth` (#71).
+//
+// Both of those are rounded to whole CSS pixels, and under a scaled renderer
+// the gutter is not a whole number: Chromium lays the bar out in whole DEVICE
+// pixels, so at zoom 1.25 a 10px rule becomes 12.5 → 12 device px → 9.6 CSS px.
+// Rounding then reports that one true value as three different numbers
+// depending on where each element's box happens to sit — measured on #71:
+//
+//   zoom 1.25, every surface truly 9.6css / 12dev, yet the old instrument read
+//   probe 10 · .model-menu 9.4 · .session-groups 9   (hence the old ±0.5 FAIL)
+//
+// So measure the content box to subpixel precision instead: a `width:100%`
+// shim's rect IS the content box, which is what `clientWidth` rounds away.
+// A textarea renders no element children, so its shim reads 0 — the guard
+// below catches that and falls back to the coarse instrument, flagged.
 const GUTTER_FN = `(el) => {
   const cs = getComputedStyle(el)
-  const borders = parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth)
-  return el.offsetWidth - el.clientWidth - borders
+  const num = (v) => parseFloat(v) || 0
+  const borders = num(cs.borderLeftWidth) + num(cs.borderRightWidth)
+  const padding = num(cs.paddingLeft) + num(cs.paddingRight)
+  const inner = el.getBoundingClientRect().width - borders - padding
+
+  const shim = document.createElement('div')
+  shim.style.cssText = 'width:100%;height:0;padding:0;margin:0;border:0'
+  el.appendChild(shim)
+  const contentW = shim.getBoundingClientRect().width
+  shim.remove()
+
+  return contentW > 0 && contentW <= inner + 0.5
+    ? { gutter: inner - contentW, exact: true }
+    : { gutter: el.offsetWidth - el.clientWidth - borders, exact: false }
 }`
+
+// The renderer is scaled (`useZoom` applies webContents zoom), and the scale is
+// what turns the authored 10px into a fractional CSS value. Read it, don't
+// assume it: `devicePixelRatio` already folds display scaling and zoom together,
+// which is exactly the factor the bar is snapped against.
+const dpr = await page.evaluate(() => window.devicePixelRatio)
 
 // 1. The global rule, live in the built CSS: a plain overflowing div inherits it.
 const probe = await page.evaluate((fnSrc) => {
@@ -103,7 +133,7 @@ const menu = await page.evaluate((fnSrc) => {
   return {
     items: el.querySelectorAll('.model-menu-item').length,
     scrolls: el.scrollHeight > el.clientHeight,
-    gutter: gutterOf(el)
+    ...gutterOf(el)
   }
 }, GUTTER_FN)
 
@@ -120,7 +150,7 @@ const others = await page.evaluate((fnSrc) => {
     out[sel] = {
       present: true,
       scrolls: el.scrollHeight > el.clientHeight,
-      gutter: gutterOf(el)
+      ...gutterOf(el)
     }
   }
   return out
@@ -129,27 +159,40 @@ const others = await page.evaluate((fnSrc) => {
 const shot = path.join(SHOT_DIR, 'gui-51-model-menu.png')
 await page.screenshot({ path: shot })
 
-console.log('=== #51 scrollbar gutters (offsetWidth - clientWidth) ===')
-console.log(`expected gutter when scrolling: ${EXPECTED_GUTTER}px  (Windows default ≈ 15-17px)`)
-console.log(`probe div (proves the rule is GLOBAL): ${probe}px`)
+// The comparison happens in DEVICE pixels, because that is the space the bar is
+// actually laid out in and the only one where the expectation is zoom-free:
+// `10px` authored is `10 * dpr` device px, snapped to a whole one. The CSS-pixel
+// reading is the derived, zoom-dependent quantity — pinning THAT is what broke.
+const dev = (cssPx) => cssPx * dpr
+const EXPECTED_DEV = dev(EXPECTED_GUTTER)
+// Budget: 1 device px for Chromium's snap (12.5 → 12 at zoom 1.25). A coarse
+// (non-exact) reading also carries up to a whole CSS pixel of rounding, so it
+// gets that back in device px. Both budgets keep their teeth — deleting the
+// rule from base.css was measured on #71 and puts every surface at 15dev
+// against an expected 12.5, i.e. 2.5x past the exact budget. Never widen these
+// to make a number fit; #65 exists to undo exactly that move.
+const isGutter = (m) => Math.abs(dev(m.gutter) - EXPECTED_DEV) < (m.exact ? 1 : 1 + dpr)
+const show = (m) =>
+  `${Number(m.gutter.toFixed(3))}css / ${Number(dev(m.gutter).toFixed(3))}dev${m.exact ? '' : ' (coarse)'}`
+
+console.log('=== #51 scrollbar gutters (content-box measured, compared in device px) ===')
+console.log(
+  `expected: ${EXPECTED_GUTTER}css → ${Number(EXPECTED_DEV.toFixed(3))}dev at dpr ${dpr}  (Windows default ≈ 15-17css)`
+)
+console.log(`probe div (proves the rule is GLOBAL): ${show(probe)}`)
 console.log('model menu:', JSON.stringify(menu))
 console.log('others:', JSON.stringify(others, null, 1))
 
-// Windows display scaling makes CSS pixels fractional: a 1px hairline computes
-// to ~0.909px, so a bordered element's gutter lands at 10.18, not 10. Compare
-// with tolerance; an exact match would fail on the owner's own monitor.
-const isGutter = (px) => Math.abs(px - EXPECTED_GUTTER) < 0.5
-
 const bad = []
-if (!isGutter(probe)) bad.push(`probe div gutter ${probe}px`)
+if (!isGutter(probe)) bad.push(`probe div gutter ${show(probe)}`)
 if (!menu) bad.push('model menu did not open — NOT DRIVEN, not a pass')
-else if (menu.scrolls && !isGutter(menu.gutter)) bad.push(`model menu gutter ${menu.gutter}px`)
+else if (menu.scrolls && !isGutter(menu)) bad.push(`model menu gutter ${show(menu)}`)
 else if (!menu.scrolls) console.log('NOT DRIVEN: model menu had too few items to overflow this run')
 // Silence is not a pass: say plainly what this run could not reach.
 for (const [sel, m] of Object.entries(others)) {
   if (!m.present) console.log(`NOT DRIVEN: ${sel} absent this run (dock closed / no popover)`)
   else if (!m.scrolls) console.log(`NOT DRIVEN: ${sel} present but not overflowing — gutter unmeasured`)
-  else if (!isGutter(m.gutter)) bad.push(`${sel} gutter ${m.gutter}px`)
+  else if (!isGutter(m)) bad.push(`${sel} gutter ${show(m)}`)
 }
 
 console.log(`screenshot: ${shot}`)
