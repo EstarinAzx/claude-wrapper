@@ -157,6 +157,25 @@ describe('listSubagents', () => {
     expect(await listSubagents('D:\\proj', 's1', fakeIo({}))).toEqual([])
   })
 
+  // Cross-feature edge with #68. Deleting a session removes <projectDir>/<id>/
+  // — the whole subagent tree — along with the transcript, so an Agents dock
+  // left open on that session is now asking about a directory that is gone.
+  //
+  // The store enumerates perfectly well here and still holds another session;
+  // this one is simply absent. That has to answer the LENIENT [], which is what
+  // makes the dock say "No agents in this session." rather than flip to
+  // "Could not read this session's agents" and imply a breakage. Distinct from
+  // the empty-store case above, where the root itself refuses to enumerate and
+  // arrives at [] by a different route — so that test cannot stand in for this
+  // one if the two answers are ever pulled apart.
+  test('a session deleted out from under an open dock lists as [], not unreadable', async () => {
+    const io = fakeIo({
+      [`${slash(homedir())}/.claude/projects/D--proj/survivor.jsonl`]: '{}'
+    })
+
+    expect(await listSubagents('D:\\proj', 's1', io)).toEqual([])
+  })
+
   test('empty session id → []', async () => {
     expect(await listSubagents('D:\\proj', '', fakeIo({}))).toEqual([])
   })

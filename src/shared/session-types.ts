@@ -32,6 +32,18 @@ export interface SwitchResult {
   status: SwitchStatus
 }
 
+// Permanently removing one session from the store (#68). TWO outcomes, and
+// deliberately no third: a not-found delete is `ok` (the store no longer holds
+// it, which is exactly what the user asked for), and every other failure is this
+// one `failed`. There is no `busy` here — the refusal of an in-flight session is
+// the rail disabling its own control, not a status main returns; see Sidebar.
+//
+// A bare union rather than a `{ status }` object like SwitchResult: this answer
+// has one field and no prospect of a second, and the type name already says what
+// the string means. Emphatically NOT a `null`-vs-`[]` analogue — that convention
+// belongs to the read channels (#60) and a third one here would buy nothing.
+export type DeleteStatus = 'ok' | 'failed'
+
 // The folder chooser (#48). A chooser and NOTHING else: it opens the dialog and
 // reports what came back, mutating no engine, no cwd and no renderer state.
 // That is the whole point of its existing beside `session:pick-folder`, which

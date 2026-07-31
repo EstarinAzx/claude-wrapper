@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { BackendInfo, BackendMode } from '../../shared/backend-types'
 import type { PermissionMode } from '../../shared/engine-types'
-import type { SwitchStatus } from '../../shared/session-types'
+import type { DeleteStatus, SwitchStatus } from '../../shared/session-types'
 import Titlebar from './components/Titlebar'
 import Sidebar from './components/Sidebar'
 import Chat from './components/Chat'
@@ -20,6 +20,11 @@ const SWITCH_REFUSAL: Record<Exclude<SwitchStatus, 'ok'>, string> = {
   'not-found': 'That session is no longer in the store.',
   'missing-cwd': 'That session records no project folder, so it cannot be resumed.'
 }
+
+// The one thing a failed delete has to say, and it says the part that matters:
+// the row is still real. A session the store no longer holds answers `ok`, so
+// reaching this line means the transcript survived and the rail is not lying.
+const DELETE_FAILURE = 'Could not delete that session — it is still in the store.'
 
 const App = () => {
   const [cwd, setCwd] = useState<string | null>(null)
@@ -112,6 +117,31 @@ const App = () => {
     await adoptSession(id)
   }
 
+  // Permanently destroy one session (#68). Irreversible: there is no trash, and
+  // the JSONL is the only copy — the rail's two-step confirm is the entire
+  // safety net, so nothing here second-guesses a confirmed click.
+  //
+  // Returns the status so the rail can gate its re-list on it. The two things
+  // App owns and the rail cannot: the inline status line (shared verbatim with
+  // the workspace switch — one status channel for both mutations, no third
+  // convention), and the pane.
+  //
+  // `newChat()` on the active row is the CORRECT use of that call, against the
+  // standing landmine that says never to clear the pane with it on a SWITCH
+  // path. Here it is wanted for exactly what it does: the resume target points
+  // at a transcript that no longer exists, and `targetSession(null)` is what
+  // drops it. It also stops the tail on a file that has just been unlinked.
+  const deleteSession = async (id: string): Promise<DeleteStatus> => {
+    setRefusal(null)
+    const status = await window.api.deleteSession(id)
+    if (status !== 'ok') {
+      setRefusal(DELETE_FAILURE)
+      return status
+    }
+    if (id === activeSessionId) newChat()
+    return status
+  }
+
   // Reach a project that has no session to resume into — a new or empty folder,
   // which session discovery alone can never find. The chooser mutates nothing,
   // so a cancel returns here having changed no engine, no cwd and no pane; only
@@ -186,6 +216,7 @@ const App = () => {
               setRefusal(null)
               newChat()
             }}
+            onDelete={deleteSession}
           />
           <div className="main-col">
             <Chat

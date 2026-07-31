@@ -1,5 +1,6 @@
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
 import type {
+  DeleteStatus,
   FolderChoice,
   SessionMeta,
   SwitchRequest,
@@ -30,6 +31,8 @@ export interface WrapperApi {
     parentToolUseId: string
   ) => Promise<TranscriptMessage[]>
   switchWorkspace: (req: SwitchRequest) => Promise<SwitchResult>
+  // Irreversible (#68). `ok` also covers a session the store no longer holds.
+  deleteSession: (id: string) => Promise<DeleteStatus>
   targetSession: (id: string | null) => void
   currentSessionId: () => Promise<string | null>
   backendMode: () => Promise<BackendInfo>

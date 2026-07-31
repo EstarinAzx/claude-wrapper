@@ -1,8 +1,11 @@
 import { join } from 'node:path'
-import { listSessions as sdkListSessions } from '@anthropic-ai/claude-agent-sdk'
-import type { SessionMeta, TranscriptMessage } from '../shared/session-types'
+import {
+  deleteSession as sdkDeleteSession,
+  listSessions as sdkListSessions
+} from '@anthropic-ai/claude-agent-sdk'
+import type { DeleteStatus, SessionMeta, TranscriptMessage } from '../shared/session-types'
 import { firstSubstantivePrompt } from '../shared/session-titles'
-import { nodeIo, resolveSessionDir, type StoreIo } from './session-index'
+import { nodeIo, resetSessionIndex, resolveSessionDir, type StoreIo } from './session-index'
 import { parseTranscript } from './transcript'
 
 // Session metadata comes from the SDK's own store reader: one pass for the whole
@@ -107,3 +110,51 @@ export const titleHint = async (
   cwd: string | null = null,
   io: StoreIo = nodeIo
 ): Promise<string | null> => firstSubstantivePrompt((await readTranscript(cwd, id, io)) ?? [])
+
+// Permanently remove one session from the native store (#68). There is no trash
+// and no undo — the JSONL is the only copy, which is what the rail's two-step
+// confirm exists to cover.
+//
+// `dir` is DELIBERATELY not passed, and this is the load-bearing line of the
+// whole feature. The SDK's no-`dir` branch enumerates the project directories
+// and stats `<id>.jsonl` in each — the same enumerate-don't-encode shape
+// session-index.ts adopted. Its `dir` branch instead runs realpath → ENCODE →
+// stat, which is precisely the synthesize-a-directory-name-from-a-cwd operation
+// this codebase removed after measuring it fail on 45 of 494 live sessions from
+// drive-letter case drift. Passing `dir` would buy a delete button that silently
+// no-ops on ~9% of rows. Verified against the shipped sdk.mjs, not just the docs.
+// Rationale: .context/decisions/2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular.md
+//
+// One call covers both halves of "remove this session": after unlinking
+// `<id>.jsonl` the SDK also removes `<projectDir>/<id>/` recursively, which is
+// the tree subagent-store.ts reads `subagents/` out of.
+//
+// NOT-FOUND IS SUCCESS, and it is classified by ASKING THE STORE — never by
+// string-matching the SDK's error text, which is prose we do not own and which
+// differs between its `dir` and no-`dir` branches. So: on any throw, resolve the
+// id again and let the answer decide. `not-found` means the store genuinely no
+// longer holds it, the user's intent is satisfied, and the row was stale.
+// Anything else — including `unavailable`, the store refusing to enumerate at
+// all — is `failed`, because we cannot demonstrate the session is gone and a
+// delete that failed must never leave a row that looks deleted.
+//
+// The index is dropped first: it is built from a listing that necessarily
+// PREDATES this deletion, and a stale hit would report a session we just failed
+// to delete as still present (right answer, wrong reason) or — worse — report an
+// already-deleted one as present and turn a staleness signal into a false
+// failure. This reset is on the failure path only; the success path deliberately
+// keeps none, since `session:list` resets the index on the re-list anyway.
+export const deleteSession = async (
+  id: string,
+  io: StoreIo = nodeIo
+): Promise<DeleteStatus> => {
+  if (!id) return 'failed'
+  try {
+    await sdkDeleteSession(id)
+    return 'ok'
+  } catch {
+    resetSessionIndex()
+    const found = await resolveSessionDir(id, null, io)
+    return found.status === 'not-found' ? 'ok' : 'failed'
+  }
+}

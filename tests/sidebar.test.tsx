@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs'
 import { describe, test, expect, afterEach, vi, type Mock } from 'vitest'
 import { render, screen, fireEvent, cleanup, act, waitFor } from '@testing-library/react'
 import App from '../src/renderer/src/App'
 import type {
+  DeleteStatus,
   SessionMeta,
   SwitchRequest,
   SwitchResult,
@@ -11,6 +13,8 @@ import type {
 let listSessions: Mock<() => Promise<SessionMeta[]>>
 let loadTranscript: Mock<(id: string) => Promise<TranscriptMessage[]>>
 let switchWorkspace: Mock<(req: SwitchRequest) => Promise<SwitchResult>>
+let deleteSession: Mock<(id: string) => Promise<DeleteStatus>>
+let targetSession: Mock<(id: string | null) => void>
 
 const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): void => {
   listSessions = vi.fn<() => Promise<SessionMeta[]>>().mockResolvedValue(sessions)
@@ -20,6 +24,8 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
   switchWorkspace = vi
     .fn<(req: SwitchRequest) => Promise<SwitchResult>>()
     .mockResolvedValue({ status: 'ok' })
+  deleteSession = vi.fn<(id: string) => Promise<DeleteStatus>>().mockResolvedValue('ok')
+  targetSession = vi.fn<(id: string | null) => void>()
   ;(window as Window & { api: unknown }).api = {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
@@ -33,7 +39,8 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
     listSubagents: vi.fn().mockResolvedValue([]),
     subagentTranscript: vi.fn().mockResolvedValue([]),
     switchWorkspace,
-    targetSession: vi.fn(),
+    deleteSession,
+    targetSession,
     currentSessionId: vi.fn().mockResolvedValue(null),
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),
     setBackendMode: vi.fn(),
@@ -469,5 +476,257 @@ describe('sidebar resize', () => {
     await screen.findByText('Keep me')
     fireEvent.click(screen.getByRole('button', { name: 'Collapse sessions' }))
     expect(screen.queryByRole('separator', { name: 'Resize sidebar' })).toBeNull()
+  })
+})
+
+// Deleting is the only destructive action in the app, and the only one with no
+// undo — the JSONL is the only copy. These pins are on the ARMING MECHANISM
+// rather than on what the rail looks like afterwards: every criterion here is
+// one a green suite could otherwise satisfy while the guard is gone.
+describe('deleting a session (#68)', () => {
+  const DOOMED: SessionMeta = { id: 'doomed', title: 'Doomed chat', lastUpdated: 3000, cwd: HERE }
+  const KEEPER: SessionMeta = { id: 'keeper', title: 'Keeper chat', lastUpdated: 2000, cwd: HERE }
+  const FAR: SessionMeta = { id: 'far', title: 'Far chat', lastUpdated: 1000, cwd: THERE }
+
+  const arm = (title: string): HTMLButtonElement =>
+    screen.getByRole('button', { name: `Delete ${title}` }) as HTMLButtonElement
+  const confirmBtn = (title: string): HTMLButtonElement =>
+    screen.getByRole('button', { name: `Confirm delete ${title}` }) as HTMLButtonElement
+  const cancelBtn = (title: string): HTMLButtonElement =>
+    screen.getByRole('button', { name: `Cancel delete ${title}` }) as HTMLButtonElement
+  const noConfirm = (title: string): boolean =>
+    screen.queryByRole('button', { name: `Confirm delete ${title}` }) === null
+  const composer = (): HTMLInputElement =>
+    screen.getByPlaceholderText('Message Claude…') as HTMLInputElement
+
+  const railWith = async (sessions: SessionMeta[]): Promise<void> => {
+    setup(sessions)
+    showAllProjects()
+    await startSession()
+    await screen.findByText(sessions[0].title)
+  }
+
+  test('the first click arms the row and destroys nothing', async () => {
+    await railWith([DOOMED])
+
+    fireEvent.click(arm('Doomed chat'))
+
+    expect(deleteSession).not.toHaveBeenCalled()
+    expect(confirmBtn('Doomed chat')).toBeTruthy()
+    expect(cancelBtn('Doomed chat')).toBeTruthy()
+  })
+
+  test('the second click commits', async () => {
+    await railWith([DOOMED])
+
+    fireEvent.click(arm('Doomed chat'))
+    fireEvent.click(confirmBtn('Doomed chat'))
+
+    await waitFor(() => expect(deleteSession).toHaveBeenCalledWith('doomed'))
+  })
+
+  // ONE slot, so this cannot be satisfied by remembering to clean up: the first
+  // row's confirm is gone from the tree, not merely restyled, and the whole rail
+  // holds exactly one confirm at a time.
+  test('arming a second row disarms the first', async () => {
+    await railWith([DOOMED, KEEPER])
+
+    fireEvent.click(arm('Doomed chat'))
+    fireEvent.click(arm('Keeper chat'))
+
+    expect(noConfirm('Doomed chat')).toBe(true)
+    expect(screen.getAllByRole('button', { name: /^Confirm delete/ })).toHaveLength(1)
+  })
+
+  test('Escape reverts an armed row', async () => {
+    await railWith([DOOMED])
+    fireEvent.click(arm('Doomed chat'))
+
+    fireEvent.keyDown(confirmBtn('Doomed chat'), { key: 'Escape' })
+
+    expect(noConfirm('Doomed chat')).toBe(true)
+  })
+
+  test('focus leaving the row reverts it', async () => {
+    await railWith([DOOMED])
+    fireEvent.click(arm('Doomed chat'))
+
+    fireEvent.focusOut(confirmBtn('Doomed chat'), { relatedTarget: document.body })
+
+    expect(noConfirm('Doomed chat')).toBe(true)
+  })
+
+  // The containment half of the same rule, and the half that breaks first: a
+  // bare onBlur disarms on the way to Cancel, making Cancel unreachable by
+  // keyboard while looking perfectly fine to a mouse.
+  test('moving focus to Cancel — still inside the row — does not revert', async () => {
+    await railWith([DOOMED])
+    fireEvent.click(arm('Doomed chat'))
+
+    fireEvent.focusOut(confirmBtn('Doomed chat'), {
+      relatedTarget: cancelBtn('Doomed chat')
+    })
+
+    expect(confirmBtn('Doomed chat')).toBeTruthy()
+  })
+
+  test('Cancel reverts without deleting', async () => {
+    await railWith([DOOMED])
+    fireEvent.click(arm('Doomed chat'))
+
+    fireEvent.click(cancelBtn('Doomed chat'))
+
+    expect(noConfirm('Doomed chat')).toBe(true)
+    expect(deleteSession).not.toHaveBeenCalled()
+  })
+
+  test('the control is focusable without a pointer ever touching the row', async () => {
+    await railWith([DOOMED])
+
+    arm('Doomed chat').focus()
+
+    expect(document.activeElement).toBe(arm('Doomed chat'))
+    expect(arm('Doomed chat').disabled).toBe(false)
+  })
+
+  // The busy gate is ACTIVE-and-busy, not local-and-busy: the running turn
+  // appends to ITS transcript and no other, so a delete there succeeds and is
+  // then undone by the next write (probed live against a real store). Every
+  // other row — same project or another one — is untouched by that turn.
+  // Asserting all three together is what stops this being quietly widened to the
+  // row button's own `!foreign && busy`.
+  test('only the ACTIVE row refuses deletion mid-turn', async () => {
+    await railWith([DOOMED, KEEPER, FAR])
+    fireEvent.click(screen.getByText('Doomed chat'))
+    await waitFor(() => expect(loadTranscript).toHaveBeenCalledWith('doomed'))
+
+    fireEvent.change(composer(), { target: { value: 'go' } })
+    fireEvent.keyDown(composer(), { key: 'Enter' })
+
+    expect(arm('Doomed chat').disabled).toBe(true)
+    expect(arm('Keeper chat').disabled).toBe(false)
+    expect(arm('Far chat').disabled).toBe(false)
+  })
+
+  test('a successful delete re-lists the rail', async () => {
+    await railWith([DOOMED])
+    const before = listSessions.mock.calls.length
+
+    fireEvent.click(arm('Doomed chat'))
+    fireEvent.click(confirmBtn('Doomed chat'))
+
+    await waitFor(() => expect(listSessions.mock.calls.length).toBeGreaterThan(before))
+  })
+
+  // A session the store no longer holds answers `ok`, so reaching the failure
+  // line means this row's transcript really did survive — and the rail must not
+  // pretend otherwise. Nothing is dropped optimistically, which is why the row
+  // is still there without a re-list having to put it back.
+  test('a failed delete says so and leaves the row where it was', async () => {
+    await railWith([DOOMED])
+    deleteSession.mockResolvedValue('failed')
+    const before = listSessions.mock.calls.length
+
+    fireEvent.click(arm('Doomed chat'))
+    fireEvent.click(confirmBtn('Doomed chat'))
+
+    expect(await screen.findByText(/still in the store/)).toBeTruthy()
+    expect(screen.getByText('Doomed chat')).toBeTruthy()
+    expect(listSessions.mock.calls.length).toBe(before)
+  })
+
+  // The failure rides the SAME inline line the workspace switch uses — one
+  // status channel for both mutations, no third convention invented here.
+  test('the failure lands on the existing inline status line', async () => {
+    await railWith([DOOMED])
+    deleteSession.mockResolvedValue('failed')
+
+    fireEvent.click(arm('Doomed chat'))
+    fireEvent.click(confirmBtn('Doomed chat'))
+
+    const said = await screen.findByText(/still in the store/)
+    expect(said.closest('[role="status"]')).toBeTruthy()
+  })
+
+  // targetSession(null) is newChat's mechanism, and the reason this is the
+  // CORRECT use of a call the standing landmine warns against on switch paths:
+  // the resume target now points at a transcript that no longer exists.
+  test('deleting the session on screen falls back to a new chat', async () => {
+    setup([DOOMED], [{ role: 'user', text: 'replayed question' }])
+    await startSession()
+    fireEvent.click(await screen.findByText('Doomed chat'))
+    expect(await screen.findByText('replayed question')).toBeTruthy()
+
+    fireEvent.click(arm('Doomed chat'))
+    fireEvent.click(confirmBtn('Doomed chat'))
+
+    await waitFor(() => expect(targetSession).toHaveBeenCalledWith(null))
+    expect(screen.queryByText('replayed question')).toBeNull()
+  })
+
+  // The mirror, and the one that catches a fallback fired unconditionally.
+  test('deleting another row leaves the open conversation untouched', async () => {
+    setup([DOOMED, KEEPER], [{ role: 'user', text: 'replayed question' }])
+    await startSession()
+    fireEvent.click(await screen.findByText('Doomed chat'))
+    expect(await screen.findByText('replayed question')).toBeTruthy()
+    targetSession.mockClear()
+
+    fireEvent.click(arm('Keeper chat'))
+    fireEvent.click(confirmBtn('Keeper chat'))
+
+    await waitFor(() => expect(deleteSession).toHaveBeenCalledWith('keeper'))
+    expect(targetSession).not.toHaveBeenCalledWith(null)
+    expect(screen.getByText('replayed question')).toBeTruthy()
+  })
+
+  // The row is a single button wrapping title and meta, so a delete control
+  // nested inside it would be invalid HTML whose click the parent also receives
+  // — opening the very session being deleted. It has to be a sibling.
+  test('the delete control is a sibling of the row button, never nested in it', async () => {
+    await railWith([DOOMED])
+
+    const rowBtn = rowButton('Doomed chat')
+    expect(rowBtn.querySelector('button')).toBeNull()
+    expect(rowBtn.parentElement).toBe(arm('Doomed chat').parentElement)
+  })
+})
+
+// The other half of "reachable by keyboard, not hover alone" — and the half no
+// component test can see. jsdom applies no hover rules, so the assertions above
+// would pass just as happily against `display: none`, which is exactly the
+// keyboard-inaccessible control the spec forbids. The reveal is CSS, so the pin
+// has to read the stylesheet, the same way the scrollbar pins do.
+describe('the delete control is revealed, never conditionally rendered', () => {
+  const css = readFileSync('src/renderer/src/styles/rails.css', 'utf8')
+
+  // The rule that actually reveals it, found by what it DOES rather than by a
+  // substring of its selector: `.session-row:focus-within .session-delete` is
+  // also a prefix of the :disabled variant further down, so a plain toContain
+  // stays green with the real reveal deleted. Splitting on the closing brace is
+  // sound here for the same reason the scrollbar pins rely on — no comment in
+  // this stylesheet may contain one.
+  const revealRule = css
+    .split('}')
+    .map((rule) => rule.trim())
+    .find((rule) => rule.includes('.session-delete') && /opacity:\s*1;/.test(rule))
+
+  const baseRule = /\.session-delete \{([^}]*)\}/.exec(css)?.[1] ?? ''
+
+  test('both hover AND keyboard focus reveal it', () => {
+    expect(revealRule).toContain('.session-row:hover .session-delete')
+    expect(revealRule).toContain('.session-row:focus-within .session-delete')
+  })
+
+  // An armed row has asked a question; its controls cannot vanish because the
+  // pointer drifted off the row on the way to answering.
+  test('an armed row keeps them visible regardless of the pointer', () => {
+    expect(revealRule).toContain('.session-row-armed .session-delete')
+  })
+
+  test('hidden means transparent — never display:none or visibility:hidden', () => {
+    expect(baseRule).toMatch(/opacity:\s*0;/)
+    expect(baseRule).not.toMatch(/display:\s*none/)
+    expect(baseRule).not.toMatch(/visibility:\s*hidden/)
   })
 })

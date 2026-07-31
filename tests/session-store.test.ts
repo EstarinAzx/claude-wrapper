@@ -7,13 +7,22 @@ import { homedir } from 'node:os'
 // readTranscript's round-trip through the storage index can be driven from a
 // fake store.
 const sdkListSessions = vi.hoisted(() => vi.fn())
+const sdkDeleteSession = vi.hoisted(() => vi.fn())
 const fs = vi.hoisted(() => ({ readFile: vi.fn(), readdir: vi.fn(), stat: vi.fn() }))
 
-vi.mock('@anthropic-ai/claude-agent-sdk', () => ({ listSessions: sdkListSessions }))
+vi.mock('@anthropic-ai/claude-agent-sdk', () => ({
+  listSessions: sdkListSessions,
+  deleteSession: sdkDeleteSession
+}))
 vi.mock('node:fs/promises', () => ({ ...fs, default: fs }))
 
 import { resetSessionIndex } from '../src/main/session-index'
-import { listSessions, readTranscript, titleHint } from '../src/main/session-store'
+import {
+  deleteSession,
+  listSessions,
+  readTranscript,
+  titleHint
+} from '../src/main/session-store'
 
 const CWD = 'D:\\projects\\demo'
 
@@ -44,6 +53,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   resetSessionIndex()
   sdkListSessions.mockResolvedValue([])
+  sdkDeleteSession.mockResolvedValue(undefined)
 })
 
 // Narrows the nullable listing for the tests that are about a SUCCESSFUL list.
@@ -213,5 +223,67 @@ describe('titleHint', () => {
     store({})
 
     expect(await titleHint('s1', CWD)).toBeNull()
+  })
+})
+
+// The ARGUMENT and the STATUS MAPPING — the two things a mocked SDK can speak
+// to. What actually leaves the disk is a different claim and lives in
+// tests/session-store-live.test.ts, which mocks nothing; asserting it here
+// against a stub would only pin the stub.
+describe('deleteSession', () => {
+  // ONE argument, and this is the load-bearing pin of the whole feature. The
+  // SDK's no-`dir` branch enumerates the project directories; its `dir` branch
+  // realpaths and ENCODES one, which is the operation #44 measured failing on 45
+  // of 494 live sessions. Passing `dir` therefore buys a delete button that
+  // silently no-ops on ~9% of rows, and the failure is invisible from here — the
+  // call still resolves. Nothing else can catch this, so it is pinned twice: by
+  // value, and by arity, because `toHaveBeenCalledWith` alone reads as an
+  // ordinary happy-path assertion and someone would "helpfully" widen it.
+  test('calls the SDK with the id ALONE — never a project directory', async () => {
+    expect(await deleteSession('sess-1')).toBe('ok')
+
+    expect(sdkDeleteSession).toHaveBeenCalledWith('sess-1')
+    expect(sdkDeleteSession.mock.calls[0]).toHaveLength(1)
+  })
+
+  // The SAME error drives this test and the next one. That is the point of the
+  // pair: the verdict comes from whether the STORE still holds the session, and
+  // never from the message — which is prose the SDK owns, differs between its
+  // two branches, and would silently reclassify everything on a dependency bump.
+  const threw = (): Error => new Error('Session sess-1 not found in any project directory')
+
+  test('a throw is SUCCESS when the store no longer holds the session', async () => {
+    // Enumerates fine, and simply has no such id — #60's `not-found`, which is
+    // exactly the staleness signal a rail row can be: listed, then deleted from
+    // a terminal before the click landed. The user's intent is already satisfied.
+    store({ [`${ROOT}/d--projects-demo/someone-else.jsonl`]: '{}' })
+    sdkDeleteSession.mockRejectedValue(threw())
+
+    expect(await deleteSession('sess-1')).toBe('ok')
+  })
+
+  test('the same throw is FAILURE when the session is still in the store', async () => {
+    store({ [`${ROOT}/d--projects-demo/sess-1.jsonl`]: '{}' })
+    sdkDeleteSession.mockRejectedValue(threw())
+
+    expect(await deleteSession('sess-1')).toBe('failed')
+  })
+
+  // #60's third state, and the one a lenient reading would get wrong. A store
+  // that will not enumerate cannot demonstrate the session is gone, so reporting
+  // success here would remove a row whose transcript is still on disk — the
+  // "delete that failed must not leave a row that looks deleted" failure, in the
+  // one branch where it is easiest to fold into the not-found case by accident.
+  test('a store that will not enumerate is a failure, never a silent success', async () => {
+    fs.readdir.mockRejectedValue(new Error('EACCES'))
+    sdkDeleteSession.mockRejectedValue(threw())
+
+    expect(await deleteSession('sess-1')).toBe('failed')
+  })
+
+  test('an empty id never reaches the SDK', async () => {
+    expect(await deleteSession('')).toBe('failed')
+
+    expect(sdkDeleteSession).not.toHaveBeenCalled()
   })
 })

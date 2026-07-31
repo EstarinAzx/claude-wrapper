@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
 import type {
+  DeleteStatus,
   FolderChoice,
   SessionMeta,
   SwitchRequest,
@@ -38,6 +39,10 @@ const api = {
     ipcRenderer.invoke('subagents:transcript', sessionId, parentToolUseId),
   switchWorkspace: (req: SwitchRequest): Promise<SwitchResult> =>
     ipcRenderer.invoke('session:switch-workspace', req),
+  // Destructive and irreversible (#68). Two outcomes only: a store that no
+  // longer holds the session is `ok`, everything else is `failed`.
+  deleteSession: (id: string): Promise<DeleteStatus> =>
+    ipcRenderer.invoke('session:delete', id),
   targetSession: (id: string | null): void => ipcRenderer.send('chat:target', id),
   currentSessionId: (): Promise<string | null> => ipcRenderer.invoke('chat:session-id'),
   backendMode: (): Promise<BackendInfo> => ipcRenderer.invoke('backend:mode'),

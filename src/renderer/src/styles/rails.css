@@ -325,6 +325,72 @@
   box-shadow: inset 2px 0 0 0 var(--color-mint);
 }
 
+/* The delete affordance (#68). Hover-reveal, because a permanently visible
+   destructive control beside 100 rows is worse — but hover-REVEAL, never
+   hover-only: opacity is the only thing that changes, so the button stays in
+   the tab order and the row reveals it on :focus-within too. display:none or
+   visibility:hidden would look identical and make the keyboard path
+   unreachable, which is the failure this pairing exists to prevent.
+
+   An armed row keeps its controls visible regardless of the pointer: the
+   confirm is a question already asked, and it must not vanish because the
+   cursor drifted off the row on its way to answer. */
+.session-delete {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: var(--fs-micro);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms var(--ease), color 150ms var(--ease),
+    background 150ms var(--ease);
+}
+
+.session-row:hover .session-delete,
+.session-row:focus-within .session-delete,
+.session-row-armed .session-delete {
+  opacity: 1;
+}
+
+.session-delete:hover {
+  background: var(--tint-2);
+  color: var(--text);
+}
+
+/* Armed: the only red in the rail, and it is worth the exception. Between the
+   two clicks this control means something no other row control means, and the
+   colour is the fastest way to say the next click is not undoable. */
+.session-delete-armed,
+.session-delete-armed:hover {
+  color: var(--danger-text);
+}
+
+.session-delete-cancel:hover {
+  color: var(--text-muted);
+}
+
+/* Inert, but NOT separately visible: the dimming lives in the reveal rules
+   below, not here. Setting opacity on :disabled directly would outrank the
+   opacity: 0 above and park a permanently visible destructive control on the
+   active row for the whole of every turn. */
+.session-delete:disabled {
+  pointer-events: none;
+}
+
+/* Revealed while refused mid-turn, at the same measure .session-row-btn:disabled
+   uses, so the two controls in a busy row read as one state rather than two. */
+.session-row:hover .session-delete:disabled,
+.session-row:focus-within .session-delete:disabled {
+  opacity: 0.55;
+}
+
 .session-row-title {
   font-size: var(--fs-ui);
   color: var(--text);

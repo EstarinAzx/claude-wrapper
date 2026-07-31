@@ -19,6 +19,7 @@ beforeEach(() => {
     listSubagents: vi.fn().mockResolvedValue([]),
     subagentTranscript: vi.fn().mockResolvedValue([]),
     switchWorkspace: vi.fn().mockResolvedValue({ status: 'ok' }),
+    deleteSession: vi.fn().mockResolvedValue('ok'),
     targetSession: vi.fn(),
     currentSessionId: vi.fn().mockResolvedValue(null),
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),

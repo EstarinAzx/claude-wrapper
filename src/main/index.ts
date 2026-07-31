@@ -37,8 +37,8 @@ import {
   type SwitchRequest,
   type SwitchResult
 } from './switch-workspace'
-import type { FolderChoice } from '../shared/session-types'
-import { listSessions, readTranscript, titleHint } from './session-store'
+import type { DeleteStatus, FolderChoice } from '../shared/session-types'
+import { deleteSession, listSessions, readTranscript, titleHint } from './session-store'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
 import type { PermissionDecision } from '../shared/engine-types'
 
@@ -265,6 +265,25 @@ ipcMain.handle('session:transcript', async (event, id: string) => {
 ipcMain.handle('session:title-hint', async (event, id: unknown, cwd: unknown) => {
   if (!isTrustedIpc(event)) return null
   return titleHint(String(id), typeof cwd === 'string' && cwd ? cwd : null)
+})
+
+// Guarded write, and the only destructive one in the app: permanently remove a
+// session from the store (#68). No trash, no undo — the rail's two-step confirm
+// is the whole safety net, so this handler must not soften anything.
+//
+// The id is whitelisted to a non-empty string rather than coerced with
+// String(id) like the read channels above: those answer a lenient empty value on
+// garbage, but here a coerced "undefined" would be handed to a delete. The SDK
+// validates it is a UUID before touching disk; this is the boundary's own check,
+// not a second opinion on that.
+//
+// Carries NO busy check. Refusing the in-flight session is the rail's disabled
+// control (only the ACTIVE session's transcript is being appended to), and
+// re-deciding it here would be a second busy source that could only disagree.
+ipcMain.handle('session:delete', async (event, id: unknown): Promise<DeleteStatus> => {
+  if (!isTrustedIpc(event)) return 'failed'
+  if (typeof id !== 'string' || !id) return 'failed'
+  return deleteSession(id)
 })
 
 // File picker returns policy Candidates rather than bare paths: an embeddable

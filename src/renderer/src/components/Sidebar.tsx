@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { SessionMeta } from '../../../shared/session-types'
+import type { DeleteStatus, SessionMeta } from '../../../shared/session-types'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
 import { groupSessions, type SessionScope } from '../../../shared/session-groups'
 import { needsEnrichment } from '../../../shared/session-titles'
@@ -45,6 +45,19 @@ const relTime = (ms: number): string => {
   return new Date(ms).toLocaleDateString()
 }
 
+const Trash = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+    <path
+      d="M2.6 3.4h6.8M4.7 3.4V2.3h2.6v1.1M3.6 3.4l.45 6.3h3.9l.45-6.3"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
   <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
     <polyline
@@ -68,20 +81,28 @@ const SessionRow = ({
   foreign,
   active,
   busy,
+  armed,
   enriched,
   onEnriched,
   onOpen,
-  onSwitch
+  onSwitch,
+  onArm,
+  onDisarm,
+  onDelete
 }: {
   session: SessionMeta
   groupLabel: string
   foreign: boolean
   active: boolean
   busy?: boolean
+  armed: boolean
   enriched?: string
   onEnriched: (id: string, label: string) => void
   onOpen?: (id: string) => void
   onSwitch?: (id: string, cwd: string | null) => void
+  onArm: (id: string) => void
+  onDisarm: () => void
+  onDelete: (id: string) => void
 }) => {
   // Only rows whose recorded title is a bare slash command ask, and each asks
   // once ever — the module cache dedupes across remounts and across the
@@ -109,7 +130,31 @@ const SessionRow = ({
   if (foreign) classes.push('session-row-btn-foreign')
 
   return (
-    <li className="session-row">
+    <li
+      className={armed ? 'session-row session-row-armed' : 'session-row'}
+      // Escape reverts an armed row. Bound to the row rather than the control so
+      // it still fires once focus has moved to Cancel.
+      //
+      // Stopped, so ONE Escape dismisses one thing: the subagent drawer listens
+      // for Escape on `window`, and without this a single press would disarm the
+      // row and close the drawer together. Narrow by construction — this only
+      // runs when the key passed through an armed row, which means focus was
+      // already inside it; an Escape pressed anywhere else never reaches here
+      // and the drawer still closes normally.
+      onKeyDown={(e) => {
+        if (!armed || e.key !== 'Escape') return
+        e.stopPropagation()
+        onDisarm()
+      }}
+      // Blur reverts. `focusout` bubbles, so this sees focus leaving ANY control
+      // in the row; the containment check is what keeps a hop from Delete to
+      // Cancel — which is still inside the row — from disarming it.
+      onBlur={(e) => {
+        if (!armed) return
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+        onDisarm()
+      }}
+    >
       <button
         type="button"
         className={classes.join(' ')}
@@ -125,6 +170,40 @@ const SessionRow = ({
         <span className="session-row-title">{label}</span>
         {meta ? <span className="session-row-meta">{meta}</span> : null}
       </button>
+      {/* A SIBLING of the row button, never a child: that button wraps the whole
+          title+meta block, and a nested button is invalid HTML whose click the
+          parent would also receive — opening the session you are deleting.
+
+          The SAME element arms and then commits, rather than swapping in a
+          separate confirm button. That keeps it mounted across the transition,
+          so it keeps focus: a replacement would unmount the focused element,
+          drop focus to the body, and the blur-reverts rule would disarm the row
+          the instant it armed. The accessible name changes with the state, which
+          is also how a test can see the transition rather than infer it. */}
+      <button
+        type="button"
+        className={armed ? 'session-delete session-delete-armed' : 'session-delete'}
+        // Refused only for the ACTIVE session mid-turn, and only that one: the
+        // running turn appends to ITS transcript, and a delete there succeeds
+        // and is then undone — the CLI recreates the file on its next write,
+        // resurrecting the row as a stub (probed against a real store, #68).
+        // Every other row, foreign or local, is untouched by that turn.
+        disabled={active && busy}
+        aria-label={armed ? `Confirm delete ${label}` : `Delete ${label}`}
+        onClick={() => (armed ? onDelete(session.id) : onArm(session.id))}
+      >
+        {armed ? 'Delete' : <Trash />}
+      </button>
+      {armed ? (
+        <button
+          type="button"
+          className="session-delete session-delete-cancel"
+          aria-label={`Cancel delete ${label}`}
+          onClick={onDisarm}
+        >
+          Cancel
+        </button>
+      ) : null}
     </li>
   )
 }
@@ -136,7 +215,8 @@ const Sidebar = ({
   onOpen,
   onSwitch,
   onChooseFolder,
-  onNewChat
+  onNewChat,
+  onDelete
 }: {
   cwd: string
   activeId?: string | null
@@ -150,6 +230,12 @@ const Sidebar = ({
   // chosen; the titlebar pills are global preferences and stay untouched.
   onChooseFolder?: () => void
   onNewChat?: () => void
+  // Commit a delete (#68). The rail owns ARMING and the re-list; the pane owns
+  // the IPC call, the failure line and the fall-back-to-a-new-chat when the row
+  // being destroyed is the one on screen. Split there because the status line
+  // and the pane are App's, and a rail that reached into either would be
+  // deciding things it cannot see.
+  onDelete?: (id: string) => Promise<DeleteStatus>
 }) => {
   // `null` = the last listing FAILED (#60), which is a different thing from the
   // empty array meaning the store holds nothing. Same nullable shape the channel
@@ -163,6 +249,11 @@ const Sidebar = ({
   // Labels derived so far, by session id (#49). Rendered rows fill this in; it
   // is never populated ahead of time, which is what keeps the reads lazy.
   const [labels, setLabels] = useState<ReadonlyMap<string, string>>(() => new Map())
+  // The id of the ONE row currently offering Delete / Cancel, or null. A single
+  // slot is the mechanism behind "only one row is armed at a time" — arming a
+  // second overwrites the first rather than being separately dismissed, so the
+  // rule cannot be violated by forgetting to clean up.
+  const [armed, setArmed] = useState<string | null>(null)
   const reqIdRef = useRef(0)
 
   // Stable, so a row's enrichment effect does not re-run every render.
@@ -220,6 +311,26 @@ const Sidebar = ({
       if (reqId === reqIdRef.current) setSessions(list)
     })
   }, [])
+
+  const disarm = useCallback(() => setArmed(null), [])
+
+  // The second click. Disarms first — the confirmation has been given, so the
+  // row must not sit armed through the round trip and invite a third click.
+  //
+  // The re-list is gated on success and is the ONLY thing that removes the row:
+  // nothing is dropped optimistically, so a delete that failed leaves the row
+  // exactly where it was rather than showing a gap that the next refresh
+  // silently refills. Main answers `ok` for a session the store no longer holds,
+  // so a stale row is re-listed away by the same path as a real deletion.
+  const commitDelete = useCallback(
+    (id: string): void => {
+      setArmed(null)
+      void onDelete?.(id).then((status) => {
+        if (status === 'ok') refresh()
+      })
+    },
+    [onDelete, refresh]
+  )
 
   useEffect(() => {
     refresh()
@@ -410,10 +521,14 @@ const Sidebar = ({
                     foreign={!group.current}
                     active={s.id === activeId}
                     busy={busy}
+                    armed={s.id === armed}
                     enriched={labels.get(s.id)}
                     onEnriched={onEnriched}
                     onOpen={onOpen}
                     onSwitch={onSwitch}
+                    onArm={setArmed}
+                    onDisarm={disarm}
+                    onDelete={commitDelete}
                   />
                 ))}
               </ul>

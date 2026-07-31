@@ -7,7 +7,12 @@ import type { ModelInfo, ModelOption } from '../src/shared/model-types'
 import type { SendPayload } from '../src/shared/attachment-types'
 import type { Candidate } from '../src/shared/attachment-policy'
 import type { SlashCommandInfo } from '../src/shared/command-types'
-import type { FolderChoice, SwitchRequest, SwitchResult } from '../src/shared/session-types'
+import type {
+  DeleteStatus,
+  FolderChoice,
+  SwitchRequest,
+  SwitchResult
+} from '../src/shared/session-types'
 
 // Mirrors what the CLI's supportedModels() actually returns — its own `value`
 // as the id, its own `displayName` as the label. Kept faithful on purpose: the
@@ -64,6 +69,9 @@ export const fakeChatApi = (folder = FOLDER) => {
     switchWorkspace: vi
       .fn<(req: SwitchRequest) => Promise<SwitchResult>>()
       .mockResolvedValue({ status: 'ok' }),
+    // Succeeds by default: a test about a FAILED delete scripts the failure, and
+    // one that never deletes cannot be surprised by a refusal it did not ask for.
+    deleteSession: vi.fn<(id: string) => Promise<DeleteStatus>>().mockResolvedValue('ok'),
     targetSession: vi.fn(),
     currentSessionId: vi.fn<() => Promise<string | null>>().mockResolvedValue(null),
     backendMode: vi.fn().mockResolvedValue({ mode: 'native', wispedAvailable: false }),

@@ -107,6 +107,32 @@ describe('live-tail — the open transcript follows the file (#57)', () => {
     expect(screen.getByText('first line')).toBeTruthy()
   })
 
+  // Cross-feature edge with #68. Deleting the session you are looking at hands
+  // the pane to a new chat, and that fallback must also END the tail — otherwise
+  // the watch stays armed on a file that has just been unlinked, and the
+  // deletion's own filesystem event arrives as a change signal for a session
+  // that no longer exists.
+  //
+  // Asserted as "no reload at all", which is the actual guard: eligibility is
+  // dropped before the delete's event can land. The weaker fallback — a reload
+  // that does happen, reads empty, and is skipped rather than clearing the pane
+  // — is the 'an EMPTY reload result keeps the pane' pin directly above.
+  test('deleting the watched session stops the watch, so a late signal is inert', async () => {
+    await openWithFirstLine()
+    fireEvent.click(screen.getByRole('button', { name: 'Delete My chat' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete My chat' }))
+    await waitFor(() => {
+      expect(harness.api.watchSession).toHaveBeenLastCalledWith(null)
+    })
+    const before = harness.api.loadTranscript.mock.calls.length
+
+    harness.emitSessionChanged('sess-1')
+
+    await waitFor(() => {
+      expect(harness.api.loadTranscript.mock.calls.length).toBe(before)
+    })
+  })
+
   test('adopting a session asks main to watch it', async () => {
     await openWithFirstLine()
     expect(harness.api.watchSession).toHaveBeenLastCalledWith('sess-1')

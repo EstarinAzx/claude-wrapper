@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -18,7 +19,7 @@ import { join } from 'node:path'
 // `false` made it blind to its own conversations. The two fixtures below differ
 // in exactly that field and nothing else, so a regression can only be the flag.
 
-import { listSessions } from '../src/main/session-store'
+import { deleteSession, listSessions } from '../src/main/session-store'
 
 const SDK_TS = '11111111-1111-4111-8111-111111111111'
 const CLI = '22222222-2222-4222-8222-222222222222'
@@ -84,5 +85,47 @@ describe('listSessions against a real store', () => {
     const found = (await listSessions())?.find((s) => s.id === SDK_TS)
 
     expect(found?.cwd).toBe(CWD)
+  })
+})
+
+// Every claim about what is actually REMOVED FROM DISK lives here, and can only
+// live here (#68). tests/session-store.test.ts stubs the SDK, so the strongest
+// thing expressible there is the argument — a stub that resolves proves nothing
+// was unlinked. This file mocks nothing and looks at the filesystem afterwards.
+describe('deleteSession against a real store', () => {
+  const project = (): string => join(root, 'projects', 'D--projects-demo')
+
+  // The subagent transcript tree, exactly where subagent-store.ts reads it from:
+  // <projectDir>/<sessionId>/subagents/agent-<id>.jsonl + its .meta.json sidecar.
+  const seedSubagents = async (): Promise<string> => {
+    const dir = join(project(), SDK_TS, 'subagents')
+    await mkdir(dir, { recursive: true })
+    await writeFile(join(dir, 'agent-a1.jsonl'), line(SDK_TS, 'sdk-ts', 'agent work') + '\n')
+    await writeFile(join(dir, 'agent-a1.meta.json'), JSON.stringify({ toolUseId: 't1' }))
+    return dir
+  }
+
+  // Both halves of "remove this session", in one assertion each. The subagent
+  // half is the one that would pass unnoticed: the rail re-lists off the
+  // transcript alone, so an orphaned subagents/ tree leaves no visible trace and
+  // grows without bound. It is the SDK's own recursive remove of
+  // <projectDir>/<id>/ that covers it — pinned here so a future switch to a
+  // hand-rolled unlink cannot quietly drop it.
+  test('removes the transcript and the subagent tree with it', async () => {
+    await seedSubagents()
+
+    expect(await deleteSession(SDK_TS)).toBe('ok')
+
+    expect(existsSync(join(project(), `${SDK_TS}.jsonl`))).toBe(false)
+    expect(existsSync(join(project(), SDK_TS))).toBe(false)
+  })
+
+  // Singular, and this is the assertion that says so: no bulk delete, no "clear
+  // this project". The neighbour shares the project directory and survives.
+  test('leaves every other session in the same project alone', async () => {
+    expect(await deleteSession(SDK_TS)).toBe('ok')
+
+    expect(existsSync(join(project(), `${CLI}.jsonl`))).toBe(true)
+    expect((await listSessions())?.map((s) => s.id)).toEqual([CLI])
   })
 })
