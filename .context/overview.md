@@ -47,7 +47,13 @@ tags: [context, overview]
   washes, micro-caps label) are single-class rules that every component override
   is at least as specific as. Reordering those lines silently restyles the app.
   Tailwind's role is the `@theme` token store and nothing else — **no utility
-  class is used anywhere in the app**. Two tests read the stylesheet as raw
+  class is used anywhere in the app**. The accent is **four** tokens (#67):
+  `--color-mint`, `-press`, `-ink` and `-wash`, the last being the 10%-alpha
+  form CSS cannot derive from a `var()` reference. Sixteen colour literals
+  outside `tokens.css` are deliberate — shadows are theme-neutral, danger and
+  syntax colours are semantic — while `color-mix(in oklch, var(--mint) N%,
+  transparent)` at six sites is already theme-correct and must not be
+  tokenised. Two tests read the stylesheet as raw
   TEXT (over the whole `styles/` directory), so `.bubble` and `.message-input`
   must stay ungrouped and no comment may name a scrollbar pseudo-element or
   contain a closing brace. See
@@ -109,8 +115,8 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **spec #64's
-  batch draining — #65, #68 and #66 closed, take #67 next**; #69 is now
-  unblocked and #70 still waits on #67; note `gui-51` is a standing expected
+  batch nearly drained — #65, #68, #66 and #67 closed, take #69 next**; #70 is
+  unblocked too now that #67 has landed; note `gui-51` is a standing expected
   driver failure, tracked as #71)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
@@ -120,8 +126,9 @@ tags: [context, overview]
   #53 (CLI-sourced model list), #54 (no resume before the first turn), #50 and
   #51 closed**; **spec #64 (Appearance panel + session deletion) OPEN — #65
   closed (`f0dfc68`, driver gate restored), #68 closed (`70c904f`, session
-  deletion) and #66 closed (`a7c0470`, Appearance dock + zoom), #67 unblocked,
-  #69 now unblocked and #70 still blocked by #67; #71 open
+  deletion), #66 closed (`a7c0470`, Appearance dock + zoom) and #67 closed
+  (`e16ace6`, accent quartet + two literals tokenised); **#69 and #70 both
+  unblocked, nothing blocked**; #71 open
   standalone (`gui-51`'s gutter tolerance)**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash

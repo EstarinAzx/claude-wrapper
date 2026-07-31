@@ -13,6 +13,19 @@ tags: [context, decision]
 
 `rails.css:324` is `oklch(0.87 0.07 180 / 0.1)` — mint **at 10% alpha** — and CSS cannot apply an alpha to `var(--color-mint)`. The fix is therefore either `color-mix()`, a new mechanism in an app that expresses everything as flat tokens, or a fourth token. Take the token: **`--color-mint-wash`**. Every theme block declares **four** accent values, and the key-set test's expected set is four, not three. Finding this now is the difference between a correct pin and one that greens while the third theme silently inherits Frost's wash.
 
+> **Amended 2026-07-31 while implementing #67 — one premise above is false, and the decision survives it on different grounds.**
+>
+> **`color-mix()` is not a new mechanism in this app.** `color-mix(in oklch, var(--mint) N%, transparent)` was already in the stylesheet **six times** at six different strengths — `subagent.css:13` (6%), `subagent.css:24` (12%), `titlebar.css:172` (14%), `titlebar.css:177` (20%), `agent-map.css:64` (22%) and `rails.css:68` (50%), that last one **256 lines above the very literal this section is about**. The sentence calling it a new mechanism was wrong on a fact that a single grep settles, and it was the load-bearing half of the argument for the fourth token.
+>
+> **The fourth token shipped anyway, and should have.** What it rests on now:
+>
+> 1. It is an **authored per-theme override point** the key-set test can pin. A `color-mix` form is derived, so there is no key for a theme to omit — which sounds strictly better until you notice it also means the theme system has no way to state that wash *differently* from a straight 10% of its accent, and no place to record that it decided not to.
+> 2. It kept the resolved value **byte-identical**, which is what let #67's acceptance criterion ("resolve every `var()` in the compiled bundle and diff effective declarations per selector") stay a strong proof. `color-mix(in oklch, mint 10%, transparent)` is *computationally* equal to `oklch(0.87 0.07 180 / 0.1)` but not textually, so accepting it would have required weakening the proof to a claim about computed values that nothing in the suite can evaluate. A dedup ticket that cannot cheaply prove it changed nothing is a worse dedup ticket.
+>
+> **The correction that matters downstream is the opposite of a problem: those six sites re-hue for free.** They read `var(--mint)` → `var(--color-mint)`, which the theme block overrides, and `color-mix` resolves at substitution time. #70 must **not** tokenise them, **must not** expect them in the key set (still exactly four), and must not read them as literals #67 missed — they are already theme-correct. Recorded on #70 directly as well.
+>
+> Same discipline as [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]]'s amendment: the shape of the work was untouched, and the ADR is corrected rather than left arguing from something measurably untrue.
+
 ## The mechanism, verified in the built output
 
 `@theme` compiles to `:root, :host` **inside `@layer theme`** (`out/renderer/assets/index-*.css:22-42`); the short aliases sit **unlayered** at `:root` (line 94+, `--mint: var(--color-mint)`). Unlayered normal declarations beat layered ones outright, so a plain `:root[data-theme="…"]` block overrides the defaults with no specificity gymnastics — and because the aliases resolve `var(--color-mint)` at substitution time, **they inherit the override for free and none of them needs touching.**
@@ -44,6 +57,8 @@ The neutral hue angle moves with the accent. That is what stops a theme reading 
 `rails.css:324` is `oklch(0.87 0.07 180 / 0.1)` — `--color-mint` verbatim at 10% alpha — and `titlebar.css:209` is `oklch(0.94 0.008 190)`, `--color-text` verbatim. Both survive an accent swap visibly: a mint-tinted active row inside an amber theme, and a hardcoded text colour on the one control whose hover is a red fill. Both get tokenised — the first onto the new `--color-mint-wash`, the second onto the existing `--color-text`.
 
 The other 16 colour literals outside `tokens.css` are **left alone**. The shadows are pure black and theme-neutral by definition; the danger shades and the three markdown syntax colours are semantic rather than brand — red must stay red in every theme, and re-hueing syntax highlighting is a feature nobody asked for.
+
+**Done in #67** (`e16ace6`): both tokenised, literal count 18 → 16, zero visual change proven by resolving every `var()` in the compiled bundle before and after and diffing effective declarations per selector — 305 rules and 301 distinct selectors both sides, 1024 painting declarations both sides, and the entire difference is the two new custom-property *definitions*, each resolving to the literal it replaced. The checker was mutation-verified in both directions (re-hue the new token; delete the titlebar declaration) so its PASS is not a diff that silently matched nothing. One neighbouring detail deliberately not touched: `rails.css:325` reads `var(--color-mint)` rather than the short alias every other component site uses. It themes correctly either way, so it is a naming inconsistency and not a bug, and widening a dedup ticket into a rename is how a reviewable slice stops being one.
 
 ## The test, and what it honestly cannot cover
 
