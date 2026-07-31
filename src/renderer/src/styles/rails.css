@@ -405,7 +405,8 @@
    second look could turn up, so it deliberately offers no button. Shares its
    shell with the composer-side refusal retry (#47). */
 .sidebar-empty-retry,
-.switch-refusal-retry {
+.switch-refusal-retry,
+.queued-note-cancel {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: transparent;

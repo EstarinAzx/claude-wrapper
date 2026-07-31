@@ -7,10 +7,20 @@ import {
 import type { Attachment } from '../../../shared/attachment-types'
 import { modelLabel, type ModelOption } from '../../../shared/model-types'
 import type { SlashCommandInfo } from '../../../shared/command-types'
+import { decideQueue, type LastTurn } from '../../../shared/queued-send'
 
 interface InputBarProps {
   busy: boolean
   model: string | null
+  // How the last turn ended (#80), which is not the same question as whether one
+  // is running. `busy` going false cannot drive the queued send: Stop, a failed
+  // turn and a finished one all clear it, and only the last has earned a send.
+  lastTurn?: LastTurn | null
+  // The CLI died under us (#73). A queued prompt must never be spent on it —
+  // read HERE, at the moment the turn ends, rather than when it was queued,
+  // because dying mid-turn is precisely one of the things that can change while
+  // a prompt waits.
+  engineDead?: boolean
   // Commands-dock insert (#39). REPLACES the composer text — a slash command
   // only expands as the first token, so inserting at the cursor is
   // meaningless; the click is deliberate. The nonce re-triggers the effect
@@ -110,8 +120,27 @@ const readAsBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file)
   })
 
-const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: InputBarProps) => {
+const InputBar = ({
+  busy,
+  model,
+  lastTurn,
+  engineDead = false,
+  pendingInsert,
+  onSend,
+  onStop,
+  onPickModel
+}: InputBarProps) => {
   const [value, setValue] = useState('')
+  // A prompt committed while a turn is still running (#80). A FLAG on the draft,
+  // never a copy of it, and that choice answers four of the ticket's questions at
+  // once: cardinality is one by construction, "replace or append" dissolves
+  // because what fires is whatever is in the box when the turn ends, cancelling
+  // costs the user nothing because the text never went anywhere, and the whole
+  // thing is cleared for free by the `key={cwd}` remount that already resets the
+  // draft, the tray and the autocomplete. A queue held in App state would have to
+  // join the `ok` branch of the workspace switch by hand — the `pendingInsert`
+  // bug class verbatim.
+  const [queued, setQueued] = useState(false)
   // Autocomplete (#40). Trigger window: the value starts with '/' and has no
   // space yet — exactly while a command NAME is being typed. A slash
   // mid-sentence never triggers; the first space means arguments, so the
@@ -188,7 +217,6 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
   // untouched, which is the overwhelmingly common case. Every file — image or
   // not — is routed by the policy module rather than filtered here.
   const onPaste = (e: ClipboardEvent<HTMLTextAreaElement>): void => {
-    if (busy) return
     const files = Array.from(e.clipboardData?.files ?? [])
     if (files.length === 0) return
     e.preventDefault()
@@ -215,7 +243,6 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
   // one route regardless of source. An empty result is cancel — leave the tray
   // and any existing rejection message untouched rather than folding nothing.
   const openPicker = (): void => {
-    if (busy) return
     void window.api.pickFiles().then((candidates) => {
       if (candidates.length === 0) return
       setTray((prev) => {
@@ -233,15 +260,46 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
   }
 
   const submit = (): void => {
-    if (busy) return
     const text = value
     const attachments = tray.items.map((i) => i.attachment)
     // Attachments alone are a message — "look at this" needs no words.
     if (!text.trim() && attachments.length === 0) return
+    // Enter during a turn COMMITS the draft instead of dropping it (#80). The
+    // guard in `useChat.send` stays exactly where it is; this sits above it, and
+    // an empty composer still queues nothing, so the commitment always has
+    // something to be about.
+    if (busy) {
+      setQueued(true)
+      return
+    }
     onSend(text, attachments)
     setValue('')
     setTray({ items: [], rejections: [] })
+    // The commitment is discharged by the send itself, so a flush leaves nothing
+    // behind to fire a second time — and nothing to spend the NEXT draft on,
+    // which is the failure a bare send-count cannot see (the flush empties the
+    // box, so the second firing has nothing to send until something is typed).
+    setQueued(false)
   }
+
+  // The queued send (#80). Keyed on the nonce and NOT on `busy` going false:
+  // every terminal outcome clears busy, so a not-busy rule resends after Stop
+  // and can spend the prompt on a dead engine. The decision is the pure table in
+  // `shared/queued-send.ts`; this effect only carries out its answer.
+  //
+  // Exactly-once falls out of the nonce: it changes once per terminal event, and
+  // the flush clears the flag through `submit`, so the next turn ending finds
+  // nothing queued. `busy` is already false in this commit — the same handler
+  // that recorded the outcome cleared it — so `useChat.send` accepts the prompt.
+  useEffect(() => {
+    if (!lastTurn) return
+    const action = decideQueue({ outcome: lastTurn.outcome, queued, engineDead })
+    if (action === 'flush') submit()
+    // Releases the commitment and NOT the text: the draft stays in the composer,
+    // so a stopped or failed turn leaves the user holding exactly what they typed.
+    else if (action === 'unqueue') setQueued(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastTurn?.nonce])
 
   // Shift+Enter is a line break, never a send. setRangeText does the splice and
   // leaves the caret after the break, so React state only has to mirror what the
@@ -346,14 +404,36 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
           ))}
         </div>
       ) : null}
+      {/* The pending state, and the answer to "there is no button to press"
+          (#80). While a turn runs the send button IS Stop, so Enter is the only
+          affordance left to commit with — which means the commitment has to be
+          legible somewhere, or the user has pressed Enter into silence.
+          Deliberately quiet, and deliberately NOT a second send button: the one
+          control here undoes the commitment.
+
+          Rendered only while something is queued, so the resting composer is
+          untouched. `.queued-note-cancel` is its own selector rather than a
+          shared base — `.tool-card-toggle` and `.switch-refusal-retry` are both
+          on record as bare selectors that started matching the wrong button. */}
+      {queued ? (
+        <div className="queued-note" role="status">
+          <span className="queued-note-label">Queued — sends when this turn finishes</span>
+          <button
+            type="button"
+            className="queued-note-cancel"
+            aria-label="Cancel queued prompt"
+            onClick={() => setQueued(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      ) : null}
       <div className="input-pill">
-        <button
-          type="button"
-          className="attach-btn"
-          aria-label="Attach files"
-          disabled={busy}
-          onClick={openPicker}
-        >
+        {/* Live while a turn streams, like the field beside it (#80): the tray is
+            part of the draft, so a composer that takes words but refuses images
+            would queue a prompt with half of it missing. The policy still runs at
+            admit time and the IPC boundary still re-checks at send. */}
+        <button type="button" className="attach-btn" aria-label="Attach files" onClick={openPicker}>
           <svg
             width="18"
             height="18"
@@ -374,7 +454,10 @@ const InputBar = ({ busy, model, pendingInsert, onSend, onStop, onPickModel }: I
           rows={1}
           placeholder="Message Claude…"
           value={value}
-          disabled={busy}
+          /* Never disabled (#80). "The composer is dead while a turn runs" is
+             the complaint this ticket answers, and `disabled` also takes focus
+             away mid-sentence. Sending is still refused while busy — by
+             `useChat.send`, which is the one place that reads busy. */
           onChange={(e) => {
             setValue(e.target.value)
             // Typing re-arms a dismissed popover and re-anchors the highlight.

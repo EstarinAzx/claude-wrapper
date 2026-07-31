@@ -43,7 +43,8 @@
 .agent-row-btn:focus-visible,
 .command-row-btn:focus-visible,
 .sidebar-empty-retry:focus-visible,
-.switch-refusal-retry:focus-visible {
+.switch-refusal-retry:focus-visible,
+.queued-note-cancel:focus-visible {
   outline: none;
   background: var(--tint-3);
   box-shadow: inset 0 0 0 1px var(--tint-6);
@@ -64,6 +65,7 @@
 .session-more:hover,
 .sidebar-empty-retry:hover,
 .switch-refusal-retry:hover,
+.queued-note-cancel:hover,
 .subagent-drawer-close:hover {
   background: var(--tint-1);
   color: var(--text);

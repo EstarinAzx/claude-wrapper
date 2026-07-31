@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { TurnOutcome } from '../../shared/announce'
+import type { LastTurn } from '../../shared/queued-send'
 import type { Attachment } from '../../shared/attachment-types'
 import type { EngineEvent, PermissionDecision } from '../../shared/engine-types'
 import type { AttachmentMarker, TranscriptMessage } from '../../shared/session-types'
@@ -42,6 +44,13 @@ const uid = (): string => {
   nextId += 1
   return String(nextId)
 }
+
+// Record how a turn ended (#80). Written once rather than three times: the nonce
+// arithmetic being wrong in one of the three terminal branches would surface
+// only as "the second queued prompt never fires", which is a bad way to find out.
+const endedTurn =
+  (outcome: TurnOutcome) =>
+  (prev: LastTurn | null): LastTurn => ({ outcome, nonce: (prev?.nonce ?? 0) + 1 })
 
 // Map a parsed transcript message to the renderer's ChatMessage. The tool
 // result is carried across COMPLETE, exactly as the live tool-result event is
@@ -91,6 +100,12 @@ export const useChat = () => {
   // per-turn failure — this is the one bit that says the conversation needs
   // rebuilding rather than another prompt.
   const [engineDead, setEngineDead] = useState(false)
+  // How the last turn ENDED (#80). Deliberately not a second busy flag: `busy`
+  // stays the one reading of whether a turn is running, and this is a record of
+  // what happened when one stopped. The composer's queued send needs the
+  // difference, because all three terminal outcomes clear `busy` and only one of
+  // them has earned a send.
+  const [lastTurn, setLastTurn] = useState<LastTurn | null>(null)
   const [liveAgents, setLiveAgents] = useState<LiveAgent[]>([])
   // Track the live assistant message id without stale closures on event handlers
   const assistantIdRef = useRef<string | null>(null)
@@ -219,6 +234,7 @@ export const useChat = () => {
       } else if (e.type === 'turn-end') {
         assistantIdRef.current = null
         setBusy(false)
+        setLastTurn(endedTurn('turn-end'))
         void window.api.currentSessionId().then((id) => {
           if (id) setActiveSessionId(id)
         })
@@ -233,6 +249,7 @@ export const useChat = () => {
           { id: uid(), role: 'error', text: e.message }
         ])
         setBusy(false)
+        setLastTurn(endedTurn('error'))
       } else if (e.type === 'turn-aborted') {
         assistantIdRef.current = null
         setMessages((prev) => [
@@ -244,6 +261,7 @@ export const useChat = () => {
           { id: uid(), role: 'notice', text: 'Stopped' }
         ])
         setBusy(false)
+        setLastTurn(endedTurn('turn-aborted'))
       }
     })
     return unsub
@@ -468,6 +486,7 @@ export const useChat = () => {
   return {
     messages,
     busy,
+    lastTurn,
     activeSessionId,
     liveAgents,
     engineDead,

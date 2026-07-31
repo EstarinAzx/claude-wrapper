@@ -212,6 +212,38 @@
   cursor: default;
 }
 
+/* ── queued prompt (#80) ── */
+
+/* A prompt committed while a turn is still running. Rendered only when one is
+   queued, so the resting composer is byte-identical to what it was before this
+   existed — and width-matched to the pill exactly as the attachment tray above
+   it is, because both are the composer reporting what it is holding.
+
+   Quiet on purpose: it states a commitment, it is not a second send button. */
+.queued-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  max-width: 760px;
+  padding: 5px 8px 5px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: var(--fs-ui);
+  line-height: 1.4;
+  color: var(--text-muted);
+  animation: msg-in 200ms var(--ease);
+}
+
+/* Shares the retry buttons' shell (see rails.css) — a quiet bordered word is the
+   same object here as it is under a refusal. */
+.queued-note-cancel {
+  flex-shrink: 0;
+  padding: 2px 10px;
+}
+
 /* ── attachment tray ── */
 
 /* Rendered only when something is attached, so the resting composer is unchanged.

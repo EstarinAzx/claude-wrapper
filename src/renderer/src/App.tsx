@@ -57,6 +57,7 @@ const App = () => {
   const {
     messages,
     busy,
+    lastTurn,
     activeSessionId,
     liveAgents,
     engineDead,
@@ -325,6 +326,8 @@ const App = () => {
               key={cwd}
               busy={busy}
               model={model}
+              lastTurn={lastTurn}
+              engineDead={engineDead}
               pendingInsert={pendingInsert}
               onSend={send}
               onStop={stop}

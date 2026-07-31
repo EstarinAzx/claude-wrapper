@@ -36,13 +36,19 @@ describe('first chat turn', () => {
     expect(input().disabled).toBe(false)
   })
 
-  test('Enter sends the prompt: user bubble appears, input clears and disarms', async () => {
+  test('Enter sends the prompt: user bubble appears, input clears and stays live', async () => {
     await startSession()
     send('hello there')
     expect(harness.prompts).toEqual([{ text: 'hello there', attachments: [] }])
     expect(screen.getByText('hello there')).toBeTruthy()
     expect(input().value).toBe('')
-    expect(input().disabled).toBe(true)
+    // This line read `toBe(true)` until #80, and the change is the ticket rather
+    // than a pin being papered over: "the composer is dead while a turn runs" is
+    // the complaint it answers, so the field now stays armed for the next prompt
+    // to be typed and queued. What did NOT change is who refuses a send while
+    // busy — `useChat.send`, still the app's one reader of `busy`, which the
+    // send-while-busy assertions in tests/queued-composer.test.tsx pin directly.
+    expect(input().disabled).toBe(false)
   })
 
   test('empty input does not send', async () => {
