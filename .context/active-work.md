@@ -13,17 +13,43 @@ _Driver check: all **19** drivers re-run this leg and green. `gui-74` joined the
 
 ## Current focus
 
-**Nothing is open. `gh issue list --state open` returns `[]`** — no
-`ready-for-agent`, no `ready-for-human`, nothing blocked, no open spec. The relay
-chain that drained the queue one ticket per leg has run it dry; this leg landed
-**#74** (`07544e8`) and closed it.
+**Six tickets open — #75 through #80 — filed by the `/preset vibe` run of
+2026-07-31 under an explicit owner autonomy grant.** #74 (`07544e8`) landed and
+closed first, emptying the tracker; the vibe run then refilled it from the
+set-aside work.
 
-**Next work has to be filed before it can be worked.** The candidates already on
-record, in the order they are ripest: the **Open questions** below (Tailwind's
-fate is the longest-waiting and is unblocked), the **seven owner calls** parked in
-`.claude/vibe.md` under `## Needs you` — which **a leg may not decide** — and the
-**Deferred** list at the bottom. A `/preset vibe init` run is what turned that
-material into #73 and #74.
+| # | Ticket | Note |
+|---|---|---|
+| #75 | Turn-end notification + taskbar flash when unfocused | highest daily value; record is **silent**, so it is a chosen design |
+| #76 | `gui-48`: drive the busy refusal instead of printing `SKIPPED` forever | best-warranted in the batch |
+| #77 | `gui-51`: drive every named surface into overflow | ditto; **separate leg from #76 on purpose** |
+| #78 | Measure the launch artifact; gate `win.show()` only if objectionable | measurement-first, per the ADR's own "Build it only if measured" |
+| #79 | The window remembers its size and position | **blocked by #78** (`blocked_by: 1`) — structural, see below |
+| #80 | Type-while-busy composer with a queued send | biggest and riskiest; filed last deliberately |
+
+**The autonomy grant is recorded in `.claude/vibe.md`** and it overrode the
+standing "a leg may not decide the parked calls" rule. All seven previously
+parked owner calls are now resolved there. **The grant removed *ownership* as a
+ground for deferring; it did not remove the requirement for evidence** — every
+decision still carries a warrant or is marked as a chosen design.
+
+**Two things the adversarial pass killed, recorded so they are not re-derived:**
+
+- **"Window bounds are exempt from the no-main-side-store rule because main
+  *reads* them"** — false. [[2026-07-31-a-preference-lives-where-it-is-read]]
+  names "a small main-side store for *the main-process ones*" verbatim and calls
+  it "the worse shape it looks like", and `backgroundMaterial` is the shipped
+  counterexample: applied by main, stored by the renderer. #79 therefore stores
+  in the renderer and pushes over IPC, and **amends exactly one ADR sentence**
+  ("there is no structural difference between this preference and the four
+  already stored" — false for bounds, which want an answer before the window
+  exists) while reversing nothing.
+- **"Typed failed-turn recovery" was dropped, not filed.** Both agents killed it
+  independently: per-turn failures are *already* classified by SDK result subtype
+  and are deliberately recoverable by another prompt, and
+  [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] **affirmatively
+  rejects** putting an engine-rebuilding control on the per-turn path. The record
+  supplies neither a definition nor a measured defect for it.
 
 **#74 landed, and the trap was in the driver set rather than the app.** The diff
 is the one line the ticket predicted (`sandbox: false` → `true`). The evidence is
@@ -100,39 +126,35 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** nothing. `main` = `07544e8` + this leg's `.context` commit, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **empty**. The whole tracker is empty — no open issue of any label.
+- **In flight:** nothing. `main` = `07544e8` + this leg's `.context` commits, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **#75, #76, #77, #78, #80** unblocked; **#79** blocked by #78. Frontier = **#75**.
 - **Landed this leg:** **#74** (`07544e8`) — the renderer runs sandboxed, with `gui-74` measuring the OS-level effect rather than the flag.
-- **Parked for the owner (7, all reversible):** Tailwind's fate · which titlebar buttons leave · whether the three dock toggles collapse · #72's centring trade-off · **whether the window should remember its geometry** · **which daily-driver polish item comes next** · **whether a renderer error boundary is wanted**. Full entries with the default taken and the alternative in `.claude/vibe.md` under `## Needs you`. **A leg may not decide any of them.**
+- **Parked for the owner: NONE — all seven resolved** under the 2026-07-31 autonomy grant, with reasons in `.claude/vibe.md` under `## Decisions`. Outcomes: Tailwind **not dropped, and the adopt-utilities question deliberately left OPEN** (the record says asking it "is the honest one to ask", so closing it was the one move it argues against) · titlebar control count **unchanged** and #72's centring **stands** · dock toggles **do not collapse** · window geometry **yes, as #79** · "which polish item next" **answered by this batch's ordering** · renderer error boundary **not built** (absence real, reachability unproven — filing it would be inventing a defect).
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**There is no frontier ticket. The tracker is empty.** Run the frontier query
-anyway — this line goes stale the moment the owner files something, and that is
-this project's standing lesson: a leg once wrote that closing #70 would empty the
-queue and was wrong, because #71 had been unblocked the whole time.
+**The frontier is #75** — turn-end notification + taskbar flash. Run the frontier
+query anyway; this line goes stale the moment the owner files something, and that
+is this project's standing lesson: a leg once wrote that closing #70 would empty
+the queue and was wrong, because #71 had been unblocked the whole time.
 
-An agent arriving to an empty queue has three honest moves, and **filing is not
-the same as deciding**:
+A relay chain is draining #75 → #76 → #77 → #78 → #79 → #80, one ticket per leg.
+**#79 is blocked by #78 and must stay that way** — its only ADR-compatible
+implementation is built on the readiness gate #78 may produce, and the record
+binds them in a single clause.
 
-1. **Ask the owner**, or run `/preset vibe init` — the autonomous funnel that
-   produced #73 and #74 by probing four hypotheses and killing three of them.
-2. **Take an Open question below** if the owner picks a direction. **Tailwind's
-   fate is the longest-waiting and is unblocked** — #72 was the last natural test
-   of the utilities premise and it shipped without a single utility class. Read
-   its amendment first: dropping Tailwind turns the theme override from
-   order-*proof* into order-*dependent*, and `tests/theme.test.ts`'s import-position
-   pin silently becomes the whole safety argument rather than a tidiness check.
-3. **File the two driver-hygiene holes #74 observed but did not fix** (one ticket
-   per leg): `gui-48` prints `SKIPPED the busy refusal (needs a real streaming
-   turn)` and `gui-51` prints four `NOT DRIVEN` lines for surfaces that were not
-   overflowing. Both drivers still PASS. By this project's own rule — **a SKIPPED
-   line is a hole in the gate, not an environment note** ([[2026-07-31-a-driver-establishes-its-premise]]) —
-   those are unfinished business, and they are exactly the shape of #65 and #71.
+**Read the ticket bodies before the code.** They were written against an
+adversarial pass that killed two proposals outright and reshaped three more, so
+the collisions are already written into them — particularly #80, whose entire
+substance is a state machine (flush condition, cardinality, cancellation, and the
+fact that **there is no button to press while busy**, because the send button
+*becomes* Stop).
 
-**Do not decide the seven parked calls in `.claude/vibe.md`.** They are the
-owner's, all reversible, all with a default already taken.
+**The parked-calls rule is spent.** All seven were resolved under the owner's
+2026-07-31 autonomy grant; there is no longer a "do not decide these" list. The
+grant is quoted in `.claude/vibe.md` — it removed ownership as a ground for
+deferring, not the requirement for a warrant.
 
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
@@ -359,7 +381,9 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Deferred (still no spec)
 
-**Deferred by #64, with reasons on record:** literal **persistent acrylic** via a native window-composition dependency ([[2026-07-23-persistent-glass-deferred]] stays live for it); a **light theme**; **re-hueing the danger shades or the three syntax-highlight colours**; **bulk delete / clear-all / archive / rename / undo / trash** for sessions; **gating `win.show()` on the first preference push** (only if a driver measures the launch artifact as objectionable — #69 did not measure it); a **resize grip or persisted width** for the Appearance dock; **refactoring the titlebar's four dock props** into a generic pair; **reducing the titlebar's control count**; **re-tuning the neutral palette per backdrop**; **migrating the four existing preference keys** to any new storage.
+**Deferred by #64, with reasons on record:** literal **persistent acrylic** via a native window-composition dependency ([[2026-07-23-persistent-glass-deferred]] stays live for it); a **light theme**; **re-hueing the danger shades or the three syntax-highlight colours**; **bulk delete / clear-all / archive / rename / undo / trash** for sessions; **gating `win.show()` on the first preference push** (only if a driver measures the launch artifact as objectionable — #69 did not measure it); a **resize grip or persisted width** for the Appearance dock; **refactoring the titlebar's four dock props** into a generic pair; **reducing the titlebar's control count**; ~~re-tuning the neutral palette per backdrop~~ (**struck 2026-07-31** — this entry contradicted `DESIGN.md`, which states the opposite as a rule: "The neutrals are not re-tuned per backdrop (#69)" and "If Mica ever reads too dark, that is a theme value or a defect, not a coupling to build." The design doc is newer, more specific, and was rewritten by #69 for this purpose, so it governs); **migrating the four existing preference keys** to any new storage.
+
+**Struck 2026-07-31 as already delivered:** "one-click restart on `terminalError`" shipped as **#73**; and "busy-switch detach" was never deferred — it was **decided against**, with a live ADR ([[2026-07-23-busy-switch-block-not-detach]]). Both were still sitting in the lists below as though open.
 
 **Newly noted by #70:** whether a fifth palette is ever wanted (the whitelist, the `Record<Theme, string>` copy map and the key-set test all make it a three-line change, deliberately); and whether `--color-mint*` should be renamed now that mint is one palette of four rather than the only one — cosmetic, and a rename touches every component site.
 
