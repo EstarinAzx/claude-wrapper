@@ -41,7 +41,9 @@ tags: [context, overview]
   `agent-map` · `chat` · `composer` · `tool-card` · `markdown` · `subagent`.
   `appearance` (#66) sits after `rails` because the Appearance dock JOINS the
   dock-shell groups that file owns (it carries `.agents-dock`) and its one
-  override — dropping the inherited resize grip — has to come after them.
+  override — dropping the inherited resize grip — has to come after them. It
+  also owns #69's Backdrop rows (`.appearance-field--stacked`, the choice
+  cards); every new panel control goes here, never into a shared group.
   **The import order IS the cascade**: `tokens` → `base` → `shared` must stay
   first, because the shared groups (truncation triad, focus ring, the two hover
   washes, micro-caps label) are single-class rules that every component override
@@ -77,6 +79,12 @@ tags: [context, overview]
   (output / input / change); a pending permission card renders the input
   inspector and the diff with no toggle at all, and a Write card renders a
   labelled content preview and **never** a diff.
+  `useBackdrop.ts` (#69) is the same pattern for the window's backdrop
+  material: renderer `localStorage` under an unversioned `backdrop` key, pushed
+  to main on mount and on change. Its lazy `useState(readStored)` initialiser
+  carries the same trap as `useZoom`'s, worse — set it from an effect and the
+  panel still ends up correct while the window is never told the stored value,
+  so the only pin that catches it is the one on what crossed IPC.
   `useZoom.ts` returns `{ level, step }` (#66): the level left the mount
   effect's closure so the Appearance panel could show a readout. The lazy
   `useState(readStored)` initialiser is what keeps the first-mount persist
@@ -89,7 +97,11 @@ tags: [context, overview]
   everything living inside the composer. Both entry points — a foreign session
   row and the sidebar's "Open project" affordance — share that one reset via a
   nullable `resumeId`.
-- `src/shared/` — types + pure modules both processes import. `session-groups.ts`
+- `src/shared/` — types + pure modules both processes import. `backdrop.ts`
+  (#69) is the window material's two-string whitelist (`acrylic` | `mica`) and
+  the trust boundary `backdrop:set` reuses before calling
+  `setBackgroundMaterial`; it **compares, never coerces**, so an object that
+  stringifies to a valid value is still a stranger. `session-groups.ts`
   owns the sessions rail's filter/group/cap order; `cwd-key.ts` is the one
   directory fold (comparison only, never a path); `session-titles.ts` holds the
   enrichment predicate and the measured "substantive prompt" rule, with the
@@ -115,9 +127,8 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **spec #64's
-  batch nearly drained — #65, #68, #66 and #67 closed, take #69 next**; #70 is
-  unblocked too now that #67 has landed; note `gui-51` is a standing expected
-  driver failure, tracked as #71)
+  batch is one ticket from done — #65, #68, #66, #67 and #69 closed, take #70
+  next**; note `gui-51` is a standing expected driver failure, tracked as #71)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -126,9 +137,9 @@ tags: [context, overview]
   #53 (CLI-sourced model list), #54 (no resume before the first turn), #50 and
   #51 closed**; **spec #64 (Appearance panel + session deletion) OPEN — #65
   closed (`f0dfc68`, driver gate restored), #68 closed (`70c904f`, session
-  deletion), #66 closed (`a7c0470`, Appearance dock + zoom) and #67 closed
-  (`e16ace6`, accent quartet + two literals tokenised); **#69 and #70 both
-  unblocked, nothing blocked**; #71 open
+  deletion), #66 closed (`a7c0470`, Appearance dock + zoom), #67 closed
+  (`e16ace6`, accent quartet + two literals tokenised) and #69 closed
+  (`add4e5b`, Backdrop control); **#70 is the last one and is unblocked**; #71 open
   standalone (`gui-51`'s gutter tolerance)**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash

@@ -49,6 +49,17 @@ DESIGN.md:47 said the neutrals were deepened "(the desktop bleeds through the ac
 
 **Reversibility:** easy.
 
+## Shipped 2026-07-31 in #69 (`add4e5b`) — premise confirmed, nothing reversed
+
+Unlike this batch's other two probes, this one held. The ADR's load-bearing fact was cited from a type declaration; it is now measured. `gui-69` patches `BrowserWindow.prototype.setBackgroundMaterial` in main before the renderer boots and reports `{"patched":true}` — the method exists on the shipped Electron, and instrumenting it proves the rest: `{"afterPick":["mica"],"idsBefore":[1],"idsAfter":[1]}` is the material reaching the **window** with the **same window id**, i.e. applied to the live window with no rebuild, which is the criterion the runtime-settable claim was standing in for. A second process then read the choice back and re-pushed it (`{"calls":["mica"],"restored":"mica"}`).
+
+Two notes for whoever builds the next control here:
+
+- **The whitelist is compared, never coerced.** `String(value)` at the boundary would admit any object with a convenient `toString`, and there is a test named for that.
+- **A self-healing display hides a push that never happened.** Mutating `useBackdrop`'s lazy `useState(readStored)` into an effect-set initial state kills exactly one assertion — the one about what reached main. The panel still ends up showing the stored value, because the effect corrects it a tick later, so every display-facing pin stays green while the window wears the wrong material. This is the same trap [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] records for `useZoom`, generalised: when a preference has both a **report** and an **effect**, only a pin on the effect can catch a late read.
+
+What could not be verified, and is stated rather than implied: **whether Acrylic and Mica look different.** That is DWM compositing over a wallpaper, and a capture of an automated window is not evidence either way. The driver prints that caveat beside its own PASS.
+
 ## Related
 
 - [[decisions]]
