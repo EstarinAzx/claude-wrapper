@@ -1,398 +1,135 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-07-31
+updated: 2026-08-01
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 5 landed #79; ONE ticket left in the batch**_
-_At commit: `03ab834` on `main`, pushed. Gate green: typecheck clean, **887 tests across 60 files** (was 864/58), build ok_
-_Driver check: **21** assertion drivers now (`gui-79` is new), plus the observational `gui-scope-zoom-pill`. **The full batch WAS re-run this leg and is 21/21 green** — #79 changes `src/main/index.ts`'s window-show path, so no driver could be skipped. Notably `gui-75` was **green in the batch** here after being red in the two previous ones, which confirms its red is focus-theft rather than a regression; it stays worth re-running alone before believing a batch red there. No standing red anywhere, so any other red is a real regression._
+_Last updated: 2026-08-01 by Opus 5 (1M) (auto) — **relay leg 6 landed #80; the batch is complete and the tracker is EMPTY**_
+_At commit: `1855910` on `main`, pushed. Gate green: typecheck clean, **914 tests across 62 files** (was 887/60), build ok_
+_Driver check: **22** assertion drivers (`gui-80` is new), plus the observational `gui-scope-zoom-pill`. **The full batch WAS re-run this leg and is 22/22 green** — #80 changes the composer, `useChat` and three stylesheets, so no driver could be skipped. `gui-75` was green in the batch for the second consecutive leg. No standing red anywhere, so any red is a real regression._
 
 ## Current focus
 
-**ONE ticket open — #80 — from the `/preset vibe` run of 2026-07-31 under an
-explicit owner autonomy grant.** A relay chain is draining them one per leg.
-**#79 landed as `03ab834` and closed.**
+**None — there is no open work.** The `/preset vibe` batch of 2026-07-31 (#75–#80,
+filed under an explicit owner autonomy grant) is delivered, and `gh issue list
+--state open` returns **nothing at all**: no tickets, no specs, no
+`ready-for-human` leftovers.
 
-| # | Ticket | Note |
+| # | Ticket | Landed |
 |---|---|---|
 | ~~#75~~ | ~~Turn-end notification + taskbar flash when unfocused~~ | `9905e1d` |
 | ~~#76~~ | ~~`gui-48`: drive the busy refusal instead of printing `SKIPPED`~~ | `c9114a5` |
 | ~~#77~~ | ~~`gui-51`: drive every named surface into overflow~~ | `88c1e3f` |
-| ~~#78~~ | ~~Measure the launch artifact; gate `win.show()` only if objectionable~~ | `51ea6d5` — measured **not objectionable**, no gate built, no `src/` change |
+| ~~#78~~ | ~~Measure the launch artifact; gate `win.show()` only if objectionable~~ | `51ea6d5` — measured, gate **declined**, no `src/` change |
 | ~~#79~~ | ~~The window remembers its size and position~~ | `03ab834` — gate **built**, on its own numbers |
-| #80 | Type-while-busy composer with a queued send | **frontier**, unblocked (`blocked_by: 0`, verified live this leg); biggest and riskiest, filed last deliberately |
+| ~~#80~~ | ~~Type-while-busy composer with a queued send~~ | `1855910` |
 
-**#79 landed, and it BUILT the `win.show()` gate #78 declined — which is a
-distinction about signals, not about artifact size.** #78 declined it *as the
-ADR specified it*: "the renderer's first preference push" is a race between two
-independent messages and misses a third preference (`data-theme`) that crosses
-no boundary at all. Bounds are **one named message with one meaning**, so
-"ready" is a fact rather than a guess, and the protocol #78 priced collapses to
-a `let` and a 1500ms timeout. **When a readiness gate looks expensive, check
-whether the expense is in the waiting or in defining what "ready" means.**
+**#80 shipped the composer staying live while a turn streams.** Enter commits the
+draft; a quiet `.queued-note` above the pill says so and carries a
+`Cancel queued prompt` control; the prompt fires when the turn ends.
 
-Measured by `gui-79.mjs`, five runs, **A/B on one build** — the probe defeats
-the gate by showing on `ready-to-show`, the exact line the app used to run:
+**The queue is a FLAG on the draft, not a copy of it**, and that one choice
+answers four of the ticket's questions at once: cardinality is one by
+construction, "replace or append" dissolves (what fires is whatever is in the box
+when the turn ends, never a hidden snapshot), cancelling costs nothing because the
+text never went anywhere, and `<InputBar key={cwd}>` resets the queue with the
+draft and the tray — so no queued prompt can cross a workspace switch without a
+hand-written line in `switchWorkspace`'s `ok` branch.
 
-| | gated (shipped) | gate defeated |
-|---|---|---|
-| visible at the WRONG bounds | **0ms, 5/5 runs** | 0–49ms, on **4/5 runs** |
-| on-screen move+resize | **0** | 1, intermittently |
-| appears after construction | 139–149ms | 102–138ms |
+**The flush condition is stated POSITIVELY and lives in a pure table**
+(`src/shared/queued-send.ts`, beside `announce.ts`). All three terminal outcomes
+clear `busy`, so a "flush once no longer busy" rule resends after Stop and can
+spend the prompt on an engine that just went terminal (#73). **Exactly one of
+twelve** outcome × queue × engine combinations sends — `turn-end` with a live
+engine. Every other row **unqueues**, which releases the commitment and never the
+text, so Stop stays safe to leave under the user's cursor.
 
-**The ungated artifact is INTERMITTENT, and that settled it.** It is a race
-between the renderer's push and `ready-to-show`, so the window jumps on most
-launches and not on others. A window that lands somewhere different depending on
-machine load is worse than one that reliably takes 7–45ms longer to appear.
+`Engine.isBusy()` is still the app's one busy source. `lastTurn` records how a
+turn **ended**, which is a different question, and carries a nonce because two
+turns ending the same way must be two events.
 
-**The shape is renderer `localStorage` → IPC → `setBounds`, with no main-side
-store**, exactly as [[2026-07-31-a-preference-lives-where-it-is-read]]
-prescribes. It amends **one** sentence of that ADR — "there is no structural
-difference between this preference and the four already stored", false for
-bounds, which want an answer *before the window is on screen* — and **reverses
-nothing**, because that ADR's own conclusion (construct hidden, tell it, then
-show) meets a constructor-time need with no store.
-
-**Two channels, not one**, and that asymmetry is the feature's whole shape:
-bounds change in **main** (the user drags the window), so main reports them back
-debounced at 250ms and the renderer merely stores them. Main reports
-**`getNormalBounds()`, never `getBounds()`**, so maximising cannot overwrite the
-remembered size with a full-screen one — maximised restore is out of scope and
-this is what stops that omission corrupting what is in scope.
-
-**Two traps worth carrying:**
-
-- **A zero-arg `vi.fn()` mock makes its own `mock.calls[0][0]` a type error.**
-  `vitest` infers an empty argument tuple, and `vitest run` does **not**
-  typecheck — so the suite is green while `npm run typecheck` fails. A loosely
-  typed mock is not neutral; it is wrong in a direction.
-- **An instrument can report a gate's SUCCESS as the artifact.**
-  `boundsChangesWhileVisible` first compared each visible sample against the
-  previous sample regardless of *its* visibility, so the window being shown
-  already-correct scored 1 for doing its job. Fourth instance here of **suspect
-  the instrument first**.
-
-See [[2026-07-31-the-window-waits-until-it-knows-where-to-be]].
-
-**The autonomy grant is recorded in `.claude/vibe.md`** and it overrode the
-standing "a leg may not decide the parked calls" rule. All seven previously
-parked owner calls are now resolved there. **The grant removed *ownership* as a
-ground for deferring; it did not remove the requirement for evidence** — every
-decision still carries a warrant or is marked as a chosen design.
-
-**Two things the adversarial pass killed, recorded so they are not re-derived:**
-
-- **"Window bounds are exempt from the no-main-side-store rule because main
-  *reads* them"** — false. [[2026-07-31-a-preference-lives-where-it-is-read]]
-  names "a small main-side store for *the main-process ones*" verbatim and calls
-  it "the worse shape it looks like", and `backgroundMaterial` is the shipped
-  counterexample: applied by main, stored by the renderer. #79 therefore stores
-  in the renderer and pushes over IPC, and **amends exactly one ADR sentence**
-  ("there is no structural difference between this preference and the four
-  already stored" — false for bounds, which want an answer before the window
-  exists) while reversing nothing.
-- **"Typed failed-turn recovery" was dropped, not filed.** Both agents killed it
-  independently: per-turn failures are *already* classified by SDK result subtype
-  and are deliberately recoverable by another prompt, and
-  [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] **affirmatively
-  rejects** putting an engine-rebuilding control on the per-turn path. The record
-  supplies neither a definition nor a measured defect for it.
-
-**#77 landed, and its finding is about the ORDER of a driver's setup.** `gui-51`
-now drives all seven surfaces it names into overflow — it seeds its own store
-(24 sessions, one of them 30 turns), opens the long session for `.chat`, types
-20 lines past the composer's 8-line ceiling, types `/` for the popover and opens
-the Commands dock. The four `NOT DRIVEN` notes are gone and so is the state they
-described: a surface is **measured or the run FAILS**. No `src/` change.
-
-**The first working version measured in screen order and came back with a 1-row
-model picker and two command surfaces that never mounted** — which reads exactly
-like a CLI answering nothing. The CLI was fine: **opening a past session had
-closed the engine.** `openSession` calls `targetSession`, which closes the query
-so the next send rebuilds one pointed at the resumed transcript, and from that
-moment `listModels()` and `listCommands()` both answer `[]` **by contract**. So
-every CLI-sourced surface (`.model-menu`, `.command-popover`, `.command-list`)
-is measured **before** that boundary now, with the reason stated at it — nothing
-throws, two lists just go quiet.
-
-**Order setup steps by what each one takes away, not by what it needs.** A step
-that only reads can go anywhere; a step that closes an engine, switches a
-workspace or clears a pane is a boundary.
-
-**What hid it: an empty list beside a static row looks populated.** The picker
-always renders one row (the "default" pick) before the CLI's list, so an empty
-fetch renders as a plausible one-item menu — present, not overflowing. Reason
-about what the list was supposed to *add*, never `querySelectorAll(...).length`.
-
-**`.session-groups` was passing by inheritance** — it overflowed only because
-this machine's store holds ~490 sessions, and on a fresh machine the same line
-would have gone quiet. Seeded like the rest now. Converting a note into a
-failure is what turns establish-vs-inherit from pedantry into a red run.
-
-Mutation: `::-webkit-scrollbar` `width: 10px → 16px` reddens **all seven** at
-20dev against 12.5 expected, four of those rows having not existed before.
-Reverted; `git diff -- src/` empty, built CSS hash back to `index-yb3vXtUj.css`.
-Budgets and `GUTTER_FN` byte-identical, verified by diff.
-
-See [[2026-07-31-a-drivers-own-setup-can-revoke-what-it-measures]].
-
-**#76 landed, and it is a driver-only ticket whose finding is about assertions
-rather than about the app.** `gui-48` printed `SKIPPED the busy refusal (needs a
-real streaming turn)` unconditionally, forever, and then passed. The stated
-reason had **expired when `gui-73` shipped** — that driver runs a real turn and
-kills the CLI under it mid-flight, which is strictly harder — so the skip was a
-hole in the gate standing on a reason nobody re-read. It drives it now: a real
-turn, `.model-pill` disabled as the in-flight signal, then the "Open project"
-click against a **third** temp dir so a refusal that stops working lands
-somewhere visible.
-
-**The finding: destruction is quiet, so an assertion phrased as an absence can
-measure nothing.** Mutation-verified by weakening `switchWorkspace`'s `isBusy`
-guard:
-
-| reading | refusal intact | refusal weakened |
-|---|---|---|
-| refusal shown | busy copy | **none** |
-| workspace | stayed `wrapper-empty-*` | **moved to `wrapper-refused-*`** |
-| assistant text after the attempt | **+272 chars** | **0** |
-| turn completed | true | **true** |
-| new `.msg-error` | 0 | **0** |
-
-A switch that should have been refused *clears the pane and rebuilds the engine*,
-so "finished promptly" and "nothing errored" are both exactly what the wreckage
-looks like. Only measuring the protected thing **continuing** discriminates. Both
-vacuous assertions were **kept** — they guard a different regression (a refusal
-that hangs or errors the turn) — with the measurement written beside them.
-
-See [[2026-07-31-a-refusal-is-proven-by-the-thing-that-kept-running]].
-
-**#75 landed, and the ticket's own prescribed instrument was the thing that was
-wrong.** The feature is small — a notification and a taskbar flash decided
-inside `chat:send`, no IPC channel, because main already holds the event stream
-and the window. What is worth carrying is why the obvious implementation would
-have shipped broken:
-
-**The AC said "`win.isFocused()` is the check". Probed before writing any code,
-on Electron 43 / Windows 11:**
-
-| action | `win.isFocused()` | `webContents.isFocused()` | `blur` event |
-|---|---|---|---|
-| `win.blur()` | **true** | true | never fires |
-| `win.minimize()` | **true** | false | never fires |
-| `win.hide()` | false | false | fires |
-
-A **minimised** window — the plainest form of walking away — reports itself
-focused, so the prescribed one-liner would have been silent in exactly the case
-the feature exists for. Shipped as `isLooking(win) = isFocused() &&
-!isMinimized()`. It also decided the driver: `gui-75` minimises rather than
-blurs, since a driver built on `win.blur()` would have sat at a premise failure
-forever, and unlike `hide()` a minimised window keeps the taskbar button the
-flash has to land on.
-
-Same shape as #71's gutter and #72's drag region — **measure the stated cause
-before building on it**, including when the ticket states it as an instruction.
-
-**`turn-aborted` is silent by design** (the user pressed Stop a second ago), and
-that silence plus the focused-turn silence were mutation-verified **separately**:
-wiring removed reddens the unfocused turn, the focus guard removed reddens
-**only** the focused turn, the abort guard removed reddens **only** Stop. Three
-separate runs rather than one "everything reddens" mutation, which is what shows
-the two silences are independently guarded.
-
-See [[2026-07-31-an-unwatched-turn-end-is-mains-to-announce]].
-
-**#74 landed, and the trap was in the driver set rather than the app.** The diff
-is the one line the ticket predicted (`sandbox: false` → `true`). The evidence is
-the work, and the thing worth carrying is why the obvious driver would have been
-green and empty:
-
-**Every existing driver launches with `--no-sandbox`**, which disables OS
-sandboxing app-wide. A `gui-74` written by copying the house launch line would
-have read `getLastWebPreferences().sandbox === true` off a renderer Chromium had
-already been told not to sandbox — correct assertion, correct value, nothing
-proven. So `gui-74` launches **without** it and asserts the **effect**:
-`app.getAppMetrics()` joined to our renderer by `webContents.getOSProcessId()`,
-plus a real turn through the bridge. Red then green, with bridge width (34 keys)
-and completed turn identical on both sides, so only the process boundary moved.
-
-See [[2026-07-31-the-renderer-is-sandboxed-and-the-driver-must-not-undo-it]].
-
-**#73 landed, and it carried a second defect nobody had filed.** The control itself
-is small — one button reusing `switchWorkspace(activeSessionId, cwd)`. The two things
-that made it work are the ones worth knowing:
-
-1. **The terminal/per-turn distinction travels out of band** (injected `onTerminal`
-   → `engine:terminal` broadcast), not as a field on the error event, because
-   **a stream dying BETWEEN turns emits nothing at all** — `emit()` only reaches an
-   active turn. Found by `gui-73` failing at its own premise, not predicted.
-2. **`resume` binds at query CONSTRUCTION**, and the switch transaction called
-   `warmUp()` bare, so the rebuilt engine ran a **fresh session while the pane,
-   refilled from disk, looked correct**. Every unit test passed with that in place.
-   `SwitchPorts.warmUp` now takes the target so the transaction's test pins it. **This
-   also repaired the foreign-session switch path**, which had the same silent defect.
-
-See [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]];
-[[2026-07-23-engine-terminal-on-stream-death]] is **amended** — its premise held and
-its reversibility clause is now spent, nothing reversed.
-
-**Three hypotheses were probed and killed** rather than filed — see [[pick-up]]'s
-landmines: main-process crash handlers (unhandled rejections are non-fatal on
-Electron 43), silent `catch` swallows (all deliberate and commented), and
-`void watchSession` (already guarded). A window-bounds ticket was killed by
-[[2026-07-31-a-preference-lives-where-it-is-read]], which forbids a main-side store
-in those words.
-
-**Previously:** #72 landed as `9fecc10` and closed; spec #64 is delivered and closed;
-#71 and #72 closed standalone after it.
-
-**#72 — the session title truncates instead of overlapping.** CSS only, six declarations, no JSX / class name / aria-label. `.titlebar-center` went from `position: absolute; left: 50%; translateX(-50%)` to `flex: 1; min-width: 0; display: flex; justify-content: center` (keeping `pointer-events: none`), and `.session-title` gained `overflow: hidden; text-overflow: ellipsis; min-width: 0`. See [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]].
-
-Measured before and after with `getBoundingClientRect` against a real 60-character workspace folder, at the four widths in the ticket:
-
-| content px | page css | before | after | slot after |
-|---|---|---|---|---|
-| 1600 | 1280 | 456.5..823.5 | 478.5..845.5 | 275..1049 |
-| 1280 | 1024 | 328.5..695.5 | 350.5..717.5 | 275..793 |
-| 1024 | 819 | **226.1..593.1** (neighbours at 275 / 588.2) | 275..588.2 | 275..588.2 |
-| 860 | 688 | **160.5..527.5** (neighbours at 275 / 457) | 275..457 | 275..457 |
-
-Before, the title was a **constant 366.9css wide at every window width**. After, it shrinks to the slot and ellipsises (`client 313 / scroll 367` at 819css; `client 182 / scroll 367` at 688css) while a 60-char name still renders whole at 1280css and 1024css.
-
-**The vibe run that filed it also falsified half the complaint it was handed, and that half stays false:** "each button eating drag region" is measured wrong — the titlebar's no-drag width is constant at 344.3css and does not grow with content; the draggable share falls 73.1% → 50% only because the window shrinks around it, and the widest uninterrupted grab strip is still 182css at the narrowest width tested. See `.claude/vibe.md` for the full record and the four calls parked for the owner.
-
-The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. All four shipped, one ticket per relay leg, plus the two driver-hygiene tickets that bracketed the batch:
-
-| # | Ticket | Commit |
-|---|---|---|
-| ~~#65~~ | ~~Retire the stale `gui-45` driver~~ | `f0dfc68` |
-| ~~#68~~ | ~~Delete a session from the rail~~ | `70c904f` |
-| ~~#66~~ | ~~Appearance dock with the zoom control~~ | `a7c0470` |
-| ~~#67~~ | ~~Tokenise the two duplicate colour literals~~ | `e16ace6` |
-| ~~#69~~ | ~~Backdrop control: Acrylic or Mica~~ | `add4e5b` |
-| ~~#70~~ | ~~Four themes: Frost, Ember, Moss, Slate~~ | `1769aa4` |
-| ~~#71~~ | ~~`gui-51`'s gutter tolerance vs. the default zoom~~ | `b6e8911` |
-
-**Four of the batch's five ADRs carry an amendment written after a probe measured their stated premise** — two because it was false (#68's Windows handle, #70's `color-mix()`), two because it held and is now measured rather than cited (#69's runtime-settable `setBackgroundMaterial`, #70's unlayered-beats-layered override). Read an ADR's amendment before citing it.
+See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `51ea6d5` + this leg's `.context` commits, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **#79 and #80**, both unblocked (`blocked_by: 0`, re-verified live this leg — #78 closing released #79). Frontier = **#79**.
-- **Landed this leg:** **#78** (`51ea6d5`) — the launch artifact measured and the `win.show()` gate **declined**; no `src/` change. The finding is that the ADR's own motivation is false after the first launch: Chromium persists the zoom factor per origin in `userData` and restores it at document commit, so the zoom reflow is **once per install**, not once per launch.
-- **Parked for the owner: NONE — all seven resolved** under the 2026-07-31 autonomy grant, with reasons in `.claude/vibe.md` under `## Decisions`. Outcomes: Tailwind **not dropped, and the adopt-utilities question deliberately left OPEN** (the record says asking it "is the honest one to ask", so closing it was the one move it argues against) · titlebar control count **unchanged** and #72's centring **stands** · dock toggles **do not collapse** · window geometry **yes, as #79** · "which polish item next" **answered by this batch's ordering** · renderer error boundary **not built** (absence real, reachability unproven — filing it would be inventing a defect).
+- **In flight:** nothing. `main` = `1855910` + this leg's `.context` commit, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **empty.** The whole tracker is empty — verified live this leg, after the comment on #80 and after `Closes #80` landed.
+- **Landed this leg:** **#80** (`1855910`), plus its ADR and this handoff.
+- **Parked for the owner: NONE.** All seven previously parked calls were resolved on 2026-07-31 under the grant quoted in `.claude/vibe.md`. **Two were deliberately settled only by HALF and those halves stay open** — Tailwind is not dropped but the adopt-utilities question stands, and the titlebar's control count does not change while the aesthetic question stays the owner's. Do not close either.
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**The frontier is #79** — the window remembers its size and position. Run the
-frontier query anyway; this line goes stale the moment the owner files
-something, and that is this project's standing lesson: a leg once wrote that
-closing #70 would empty the queue and was wrong, because #71 had been unblocked
-the whole time.
+**No active work — the queue is drained.** Run the frontier query first anyway;
+this line goes stale the moment the owner files something, and that is this
+project's standing lesson (a leg once wrote that closing #70 would empty the
+queue and was wrong, because #71 had been unblocked the whole time).
 
-**#79 must not use a main-side store**, and its argument for one was already
-tested and killed — [[2026-07-31-a-preference-lives-where-it-is-read]] names "a
-small main-side store for *the main-process ones*" verbatim and rejects it.
-Renderer `localStorage` + an IPC push on mount and on change, exactly as
-`useBackdrop` ships. It **amends one ADR sentence** ("there is no structural
-difference between this preference and the four already stored" — false for
-bounds, which want an answer before the window exists) and reverses nothing.
+```
+gh issue list --state open --label ready-for-agent
+gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
+```
 
-**#79 inherits a measured baseline from #78, and it is not permission to skip
-the question.** The `win.show()` gate was declined for *today's* artifact, whose
-worst remaining component is ≤1 frame. Bounds are different in kind: a
-window-manager move and resize landing 38–55ms after the window is already on
-screen. **Re-run `gui-78.mjs` with bounds applied and decide on those numbers** —
-it is the instrument, and the decision record spells out what a gate would have
-to beat.
+If it comes back empty, there is nothing to work: the next move is the owner's —
+file new work, or run `/preset init` / `/preset vibe init` to generate a batch.
+The `## Deferred` list below is the standing menu of candidates, and `## Open
+questions` holds the ones that need an answer before they can be specced.
 
-A relay chain is draining #79 → #80, one ticket per leg.
+**Whatever comes next inherits the ledger below.** The `## Landmines` section is
+long and load-bearing — it is the accumulated set of traps that a green suite
+cannot see. Read it before touching the composer, the stylesheet import order,
+the driver set, or anything that measures a launch.
 
-**Read the ticket bodies before the code.** They were written against an
-adversarial pass that killed two proposals outright and reshaped three more, so
-the collisions are already written into them — particularly #80, whose entire
-substance is a state machine (flush condition, cardinality, cancellation, and the
-fact that **there is no button to press while busy**, because the send button
-*becomes* Stop).
-
-**The parked-calls rule is spent.** All seven were resolved under the owner's
-2026-07-31 autonomy grant; there is no longer a "do not decide these" list. The
-grant is quoted in `.claude/vibe.md` — it removed ownership as a ground for
-deferring, not the requirement for a warrant.
-
-Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
+Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
+to main, gate green before merge, `.context/` commits on main only.
 
 ## Open questions
 
-- **Should the rail filter out `sdk-cli` sessions?** The listing fix admits **112** rows to surface the **37** this app wrote; the other 75 are headless automation, ~20 of them this repo's own GUI drivers titled "say OK" / "reply with exactly: PONG". Accepted deliberately, but it is worst exactly where the owner looks first. The blocker is that `SDKSessionInfo` exposes no `entrypoint` / `origin` / `sessionKind` — the deciding field is read from disk and discarded — so filtering means either re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or `tagSession` on every session this app creates, which is prospective only and would not reach the 37 already written. **#68 was explicitly NOT the answer to this**, and shipped saying so.
-- **Should Tailwind stay at all?** Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. **#70 deliberately did not bundle this, and nothing now blocks it** — the theme override is indifferent to whether the defaults come from `@theme` or a plain `:root` block, though a move would have to keep the theme blocks unlayered or they stop winning. **Amended 2026-07-31 (vibe run, cross-model pressure): "keep them unlayered" is necessary but NOT sufficient, and the sentence above understates what a drop changes.** Today the defaults compile into `@layer theme` while the `[data-theme=…]` blocks are unlayered, so unlayered-beats-layered makes the override win *regardless of import order*. Drop Tailwind and the defaults become a plain `:root` block — at which point `:root` and `[data-theme="ember"]` are **both unlayered and both specificity (0,1,0)**, so source order becomes the only thing deciding, and the guarantee degrades from order-proof to order-dependent. It still works, because `tests/theme.test.ts` already pins the import position (it reddens on a moved import) — but that pin stops being a tidiness check and silently becomes the whole safety argument. Whoever does the drop must know that before they do it.
-- **The titlebar is crowded** — app name + session title + two pills + **three** dock buttons + window controls. **Amended 2026-07-31 (vibe run + #72): the "each button eating drag region" clause is measured and FALSE** (no-drag width constant at 344.3css; widest grab strip still 182css at 688css), and the one *measured* defect in the surface — the title overlapping its neighbours — shipped as #72. What remains is an aesthetic question about control count, which is the owner's, and #72 made it cheaper: the centring no longer depends on a number equal to the wider block, so adding or removing a control costs nothing in CSS.
-- **Partly answered by #70, and worth a look if a fourth control lands.** The theme picker reused `.appearance-field--stacked` and `.appearance-choice` with one `--theme` modifier (row instead of column, name + swatch), and the two arrow-key handlers were folded into a shared `nextInRing` helper. What did **not** converge is the ARIA role — Backdrop is a radiogroup and Theme a listbox, forced apart by #69's pin, so a single `<PickOne>` component would have to take the role as a prop. Not worth it for two call sites.
-- **Should `rails.css:325` read `var(--mint)` like every other component site?** It reads `var(--color-mint)` — the one long-name reference in component CSS. Themes correctly either way; a naming inconsistency, not a bug.
-- One deferred owner decision from #58's Out of Scope: whether an honest Write diff is wanted at permission time only, or also after an auto-run and in replay. Still open.
+- **Should the rail filter out `sdk-cli` sessions?** The listing fix admits **112** rows to surface the **37** this app wrote; the rest are headless automation, ~20 of them this repo's own GUI drivers. Accepted deliberately, but it is worst exactly where the owner looks first. The blocker is that `SDKSessionInfo` exposes no `entrypoint` / `origin` / `sessionKind`, so filtering means either re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or `tagSession` on every session this app creates, which is prospective only. **#68 was explicitly NOT the answer to this.**
+- **Should Tailwind stay at all?** Nothing in the app uses a utility class. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. **This half is deliberately still open** (the vibe run settled only that Tailwind is not dropped today). **A drop changes more than it looks:** today the defaults compile into `@layer theme` while `[data-theme=…]` blocks are unlayered, so unlayered-beats-layered makes the override win *regardless of import order*. Drop Tailwind and both become unlayered at specificity (0,1,0), so source order becomes the only thing deciding — `tests/theme.test.ts`'s import-position pin silently stops being a tidiness check and becomes the whole safety argument.
+- **The titlebar is crowded** — app name + session title + two pills + three dock buttons + window controls. The "each button eats drag region" clause is **measured FALSE** (no-drag width constant at 344.3css; widest grab strip 182css at 688css), and the one measured defect shipped as #72. What remains is an aesthetic question about control count, which is **the owner's**, and #72 made it cheap: the centring no longer depends on a number equal to the wider block.
+- **Should `rails.css:325` read `var(--mint)` like every other component site?** A naming inconsistency, not a bug — but #70 established that the long name and the alias are **not** interchangeable inside a nested `data-theme` opt-in, so it is no longer a pure find-and-replace.
+- **Is a fifth palette ever wanted?** The whitelist, the `Record<Theme, string>` copy map and the key-set test make it a three-line change, deliberately.
+- One deferred owner decision from #58's Out of Scope: whether an honest Write diff is wanted at permission time only, or also after an auto-run and in replay.
 
 ## Recent context
 
-- **The platform may already have solved the thing you are about to gate — #78 is the case that found it.** The ADR ranked the zoom reflow first because it happens "every launch, for every user". Measured: **Chromium persists the zoom factor per origin inside the `userData` directory** and restores it when the document commits, so the second launch paints its first frame already at 880css / dpr 1.25 and `dom-ready` reads `getZoomFactor() === 1.25` a full 41–44ms **before** the renderer's `zoom:set` arrives. The reflow is **once per install**. This is #71's shape again — the measurement removed its own motivation — and the general form is: **before building state management, check whether the platform is already holding the state.**
-- **A measurement ticket's deliverable can be a decline, and the decline needs the same rigour as a build.** #78 shipped no `src/` change. What makes that a delivery rather than a shrug is that the numbers are on the ticket, the instrument is committed and mutation-verified, and the ADR carries an amendment saying which of its sentences is now false. A ticket that closes having measured and declined leaves the next person *more* able to decide, not less.
-- **The largest component of an artifact may not be the thing the ticket names.** #78 was filed about preference reflows. The biggest visible span turned out to be `ready-to-show` firing on the first paint of the **still-empty document**, putting the window on screen 38–61ms before React commits anything. Worth measuring the whole timeline rather than only the steps the ticket lists.
-- **A test harness can suppress the very behaviour under test — and Playwright does, here.** Under `_electron.launch()` this app's window **never emits `ready-to-show`**, so `win.show()` never runs, the window is never visible and never painted, and `performance.getEntriesByType('paint')` is empty. Every other driver in this set is unaffected because they drive the DOM over CDP, which does not need visibility. But **anything measuring paint, visibility or launch timing cannot use Playwright** — `gui-78` spawns Electron directly with a probe entry point that hooks and then `require`s the real built main. Same family as #74's launch-line lesson: the harness is part of the state being established.
-- **Two attachment points that look right and are not.** `NODE_OPTIONS=--require <probe>` **never reaches Electron** — `NODE_OPTIONS` reads back `null` inside main and the module never runs (verified with a marker file). `context.addInitScript()` is **too late** — `electron.launch()` resolves at ~380ms with the window already constructed and loading, so the script lands after the page's own scripts. The one that works is being the entry point.
-- **rAF is the right instrument for "what did the user actually see".** A `requestAnimationFrame` sampler fires once per paint, so a state it never observes is a state that was never on screen for a frame. That is what let #78 say "the UI was at the wrong zoom for 11–13ms" rather than "the code reflows at some point".
-- **A guard on a value the platform sets late can be vacuous.** #78's profile-isolation check originally read `getZoomFactor()` at window construction — which is **1.0 on a warm profile too**, because Chromium restores the persisted zoom at document *commit*, not at construction. It could never have failed. It reads the first **painted** frame's dpr instead (1 pristine, 1.25 warm), and the mutation that proved it also re-confirmed the leg's headline finding by a second route. Same family as the vacuous-absence traps below.
-- **A driver's own instrument can hide an environment limit.** With GPU compositing on, this app's window **never paints at all** in a background/headless session — no `ready-to-show`, `isVisible()` still false after 20s — while a standalone `BrowserWindow` with the *exact* same options and renderer file paints fine either way. `--disable-gpu` is therefore load-bearing for `gui-78` specifically, at the known cost of flattening acrylic, so that driver judges no material visually.
-- **A driver's own setup can revoke the capability it is about to measure — #77 is the case that found it.** `openSession` → `targetSession` closes the engine, so `listModels()` / `listCommands()` answer `[]` **by contract** afterwards. Measured in screen order, `gui-51` read a 1-row model picker and two command surfaces that never mounted, which is indistinguishable from a dead CLI. **Order setup steps by what each one takes away, not by what it needs** — a step that only reads can go anywhere, a step that closes an engine or switches a workspace is a boundary, and everything depending on the pre-boundary capability goes before it.
-- **An empty list rendered beside a static row looks populated.** The model picker always renders the "default" pick before whatever the CLI offers, so an empty fetch reads as a plausible one-item menu rather than as a failure. Reason about what the list was supposed to **add**, never about `querySelectorAll(...).length`. Same family as the vacuous-absence trap below: both are states where the broken reading is a legal-looking one.
-- **A surface that passes only on the machine that wrote it is inherited, not established.** `.session-groups` never printed `NOT DRIVEN` purely because this developer's store holds ~490 sessions. That was invisible while the alternative was a quiet note; it becomes a red run the moment the note is converted into a failure, which is the argument for converting it.
-- **Destruction is quiet, so an assertion phrased as an absence can measure nothing — #76 is the case that found it.** Weakening the `busy` guard so a workspace switch tore down a live turn left `gui-48`'s "the turn completed" and "no new `.msg-error`" both **green**: a switch that should have been refused clears the pane and rebuilds the engine, and *finished promptly with nothing to complain about* is exactly what the wreckage looks like. Only growth in the protected thing (+272 chars green, 0 red) told them apart. **When a guard protects something, assert the protected thing went on living — not that no symptom appeared.** This is the mutation reflex with a sharper edge: the code was alive and the *assertion* was dead, because the failure mode it was written against produces silence rather than noise.
-- **A vacuous assertion is better kept-and-labelled than deleted.** #76's two survivors guard a real, different regression (a refusal that hangs the turn or errors it out); deleting them for failing *this* mutation would trade a labelled gap for an unlabelled one. The measurement sits in the source beside them, so nobody reads them as covering the branch they do not.
-- **A skip's stated reason has a shelf life, and nobody re-reads it.** `gui-48`'s `SKIPPED (needs a real streaming turn)` was true when written and false from the moment `gui-73` shipped a driver that runs a real turn *and* kills the CLI under it. It then printed for months above a `PASS`. **Re-check the reason, not just the line** — and the same question is owed to `gui-51`'s four `NOT DRIVEN` lines, which is #77.
-- **A ticket's stated instrument is a claim, not a fact, and #75 is the case that found it.** The AC said "`win.isFocused()` is the check" — measured, a minimised window reports itself focused and `win.blur()` moves nothing at all. The bodies in this project are adversarially reviewed and usually right, which is exactly why an unverified *mechanism* inside one slips through: the reviewers argue about the contract, not about what the platform call returns. **Probe the API the ticket names before building on it**, the same way #71 probed its own gutter diagnosis and #68 probed its Windows handle.
-- **Mutating each guard separately says more than mutating them together.** #75 has two silent cases — a focused turn and Stop. One mutation that reddens both proves only that *something* guards them; removing the focus guard (focused turn reddens, Stop stays green) and then the abort guard (Stop reddens, focused turn stays green) proves they are **independently** guarded. Cheap to do, and it is the difference between "the assertion can fail" and "this assertion covers this rule".
-- **A second guard that masks half a mutation is worth measuring rather than removing.** Deleting `shouldAnnounce`'s abort guard leaks `flashFrame(true)` but not the toast, because the copy lookup in `announceTurn` narrows the outcome again. Recorded in the source with the measured numbers instead of being tidied away: the asymmetry fails toward the quieter half and the driver still reddens, but a reader who does not know it would mis-read the mutation result.
-- **A driver's LAUNCH LINE is part of the state it establishes, and #74 is the case that found it.** #65 established that a driver must set the app state it asserts rather than inherit it. #74 extends that one step further out: every driver in this set launches with `['--no-sandbox', '--disable-gpu', '.']`, and `--no-sandbox` disables OS sandboxing app-wide — so a driver for `sandbox: true` that copied the house launch args would have read the flag back as `true`, off a renderer Chromium had already been told not to sandbox, and passed. **A command-line flag can erase the property under test while every assertion still runs, still reads the value it expected, and still passes.** When a driver measures a process-level property, check what the launch line does to it before trusting the green.
-- **Assert the EFFECT, not the request — they are different values and only one is the feature.** `getLastWebPreferences().sandbox` says what the window was *constructed with*; `app.getAppMetrics()` says whether the OS *granted* it. #74 asserts both, joined to our own renderer by `webContents.getOSProcessId()` — the pid join is what stops a sandboxed *utility* process answering for the renderer. Reusable for any future process-boundary question, and it is the same shape as #69's "instrument the far side of the boundary".
-- **A boolean that is false everywhere is not evidence.** #74's control observation: the GPU process reads `sandboxed: true` in *every* run, the red ones included. Without a neighbour reading `true`, the renderer's `sandboxed: false` could equally have meant "Electron does not report this field on Windows". **When an assertion rests on a platform-reported flag, find something in the same reading that reports the other value** — otherwise a green and a blind spot look identical.
-- **The unchanged half of a red/green pair is what proves the change was surgical.** #74's driver reports bridge width (34 keys) and a completed real turn on *both* sides of the flip; only the two sandbox findings move. That is a stronger statement than "it passes now" — it says the process boundary moved and nothing else did, which is the entire claim of a flag whose intended effect is that nothing changes.
-- **A driver crash is not a driver failure, and the two must be told apart before a red is believed.** `gui-73` came back red in this leg's batch run: not an assertion, but `execFileSync('powershell.exe')` exiting `3221225794` (`0xC0000142`, STATUS_DLL_INIT_FAILED) right after `taskkill /F /T` on **8** claude.exe trees, while the parent session was being torn down. Re-run cleanly in the foreground it found **one** CLI child and passed every criterion. **The pid count was the tell** — a driver that walks the process tree reports a wildly wrong count when the tree it is walking is collapsing.
-- **A green suite is not evidence that a feature works end to end — #73 is the worked example, and it is the sharpest one this project has.** 843 tests passed, `setResume` was called, the transaction order was right, the status was `ok`, and the pane was full of the right conversation. The engine was on a **fresh session**. What caught it was a driver asking the *resumed* engine for a fact planted before the death and getting *"You never gave me one to remember"*. **When a feature's value is that state SURVIVES, the assertion has to interrogate the thing that holds the state, not the thing that displays it.**
-- **The driver failing at its own premise was the discovery, not a setback.** `gui-73`'s first run killed the CLI between turns and reported `{"errorShown":false}` — no error in the pane at all. That is not a driver bug: the engine only emits into an active turn, so a between-turns death is **silent** until a prompt is spent on a dead engine. A premise check written to fail loudly is what turned an invisible behaviour into a design constraint.
-- **Two designs can satisfy a ticket while only one leaves the pins alone.** Adding `terminal?: boolean` to the error event reddens five exact-`toEqual` assertions whose only repair is editing expectations — forbidden here. The out-of-band callback leaves all five byte-identical **and** is the more correct design. When a rule and a design disagree, re-read the rule before reaching for the expectation.
-- **A negative-direction test can pass vacuously, and mutation is the only way to know.** The first `close()` pin ("never fires the signal") passed before the feature existed *and* after it — but also passed with the guard deliberately removed, because `streamingStub`'s handle has no `close()`, so the branch never ran. It needed a closable stub plus a `finished()` confound guard before its green meant anything. **Mutation-verify the tests that assert an absence first; they are the ones that lie.**
-- **`overflow` and `text-overflow` are inert on an inline box, and #72 is the case where that was the whole bug.** `.session-title` had `white-space: nowrap` and nothing to clip with, so it could not truncate *even in principle* — the driver read `display inline · overflow-x visible · text-overflow clip · clientWidth 0` on the unfixed tree. The fix authors no `display` on the span at all: making the parent a flex container **blockifies** the child, which is what switches those properties on. Worth carrying because the natural "tidy-up" — putting the truncation on the span and leaving the parent alone — looks equivalent and does nothing.
-- **A box whose measured width does not change with the window is not shrinking for anything.** `.titlebar-center` was `position: absolute`, so the title's rect was a constant **366.9css** at 1280 / 1024 / 819 / 688css pages while its neighbours marched inward until they crossed it. That constant is a cheap tell for an out-of-flow box, and it is more legible in a driver's output than any collision assertion.
-- **Containment by construction beat containment by arithmetic.** The rejected fix (keep absolute centring, add `max-width: calc(100% - 2 * <side>)`) is correct today and depends on a number equal to the wider titlebar block — which changes the moment anyone answers the parked "which buttons leave" question. A flex item cannot reach its siblings, so there is no number to rot. See [[2026-07-31-the-titlebar-centre-is-a-flex-item-not-an-overlay]].
-- **A rect assertion cannot see ink, and #72's mutation test is what proved it matters.** Deleting `overflow: hidden` leaves every geometry assertion green — the flex box is still the right size — while the text paints straight out of it and back over the buttons. Only the computed-style assertions (`overflow-x`, `text-overflow`) reddened. **When the defect is what gets painted, at least one assertion must read computed style rather than geometry.**
-- **When two instruments disagree, suspect the instrument before the app — #71 is the worked example.** The ticket filed itself as UNCONFIRMED because a probe div read exactly `10` while `.model-menu` read `9.4` and `.session-groups` read `9`, three numbers zoom alone could not explain. Measured with un-rounded geometry, **the gutter is identical on every surface at every zoom**; the spread was `offsetWidth - clientWidth` rounding *both* operands to whole CSS pixels, so one value surfaced as three depending on where each box sat. The probe's exact `10` was rounding luck, not evidence the rule applied differently there. **The disagreement between instruments was the finding.**
-- **An authored pixel and a laid-out pixel are different units, and a driver must assert in the second.** Chromium lays the scrollbar out in whole **device** pixels: `10css × 1.25 = 12.5 → 12 → 9.6css`. So `9.6` was never a defect, and no CSS could have "fixed" it — chasing it would mean varying the authored value per zoom level, i.e. re-creating the per-context copies #51 deleted. See [[2026-07-31-the-authored-pixel-is-css-the-measured-pixel-is-device]].
-- **Removing the rounding beat tolerating it.** Relaxing ±0.5 to ±1.5css would have made the numbers fit without explaining them. Measuring the content box exactly instead kept the budget tight at 1 device px — and the tight budget is what still catches the real defect with 2.5× margin.
-- **The rejected instrument is worth recording so it is not re-proposed:** `getComputedStyle(el).width` looks like a no-mutation way to read a fractional content width, and it is not — under this app's global `box-sizing: border-box` it returns the **border-box** width, so the derived gutter came out `0` / `-9.6` / `-12`. Measured, not assumed.
-- **The obvious pin for a self-healing preference can ITSELF self-heal, and #70 is the case that proves it.** #69's lesson was "pin what crossed the boundary, not what the panel says". #70's boundary is `data-theme` on `documentElement` — and that pin **greens under the exact mutation it exists to catch**, because the attribute is *reactive*: an effect-set initial state paints Frost and settles on the stored palette a render later, so every after-the-fact assertion passes. Verified: swapping the lazy initialiser left all 36 assertions green. What separates the two is the **first value written**, so the pin watches that, via a `MutationObserver` recording `oldValue` **per record**. Reading the attribute inside the callback fails too — several writes coalesce into one callback and the settled value is all you see. **Generalise as: when the effect is idempotent and reactive, only its HISTORY distinguishes right from late.**
-- **A pin written for one control can force the next one onto a different ARIA role.** #66's dock-wide "no input, no select" already constrained #69 into a radiogroup of buttons. #69's own pin — "every radio in this panel is a backdrop" — then constrained #70 out of `role="radio"` entirely: a second radiogroup would have reddened two #69 assertions. The theme picker shipped as a **listbox**, which means the same thing for single-select and leaves both pins meaning what they said. **Read the neighbouring pins before choosing a role, not after.**
-- **A custom-property alias resolves ONCE, where it is declared.** `--mint: var(--color-mint)` is computed at `:root`; descendants inherit the *result*. So a nested element wearing `data-theme` re-resolves `var(--color-mint)` but **not** `var(--mint)`. Measured with four nested probes: the alias painted Frost's mint under all four palettes while the token painted four distinct accents. The whole-window re-hue is unaffected (the attribute is on `documentElement`, which *is* `:root`), but anything nested that wants a *different* palette must read the long name.
-- **A self-previewing control removes a whole class of drift.** The four theme swatches carry `data-theme` and read `var(--color-mint)`, so `themes.css` paints them — no palette colour is repeated in `appearance.css`, and there is nothing to fall out of sync when a hue is tuned. The failure mode it replaces is silent: hardcoded swatches keep rendering, just wrong.
-- **"Nothing is left behind" is a measurable claim, and it is the strongest one a theme feature can make.** `gui-70` records Frost's accent and its 10% wash, switches palette, then scans every element's computed `color` / `background` / `border` / `fill` for either — excluding elements that deliberately opted into another palette. That single check subsumes "did you miss a literal", "did an alias fail to follow" and "did a `color-mix` site resolve stale".
-- **A structural test earns its keep by what it does NOT fire on.** `theme.test.ts` reddens on a deleted declaration, a moved lightness, a moved neutral chroma, an out-of-band accent chroma, a hue collision, a typo'd key and a moved import — and stays green on a re-tint, which is the condition that stops it being retired the first time someone adjusts a hue. It also stays red when the deleted declaration is left behind **inside a comment**, which is the comment-stripping requirement verified rather than asserted.
-- **A self-healing display hides a push that never happened, and only a pin on the EFFECT catches it.** #69's sharpest mutation: replacing `useBackdrop`'s lazy `useState(readStored)` with an effect-set initial state kills exactly **one** assertion — the one asserting what reached main. Every display-facing pin stays green, because the effect corrects the panel a tick later; the window meanwhile wears the constructed default while the panel reports the stored choice. This is #66's `useZoom` trap generalised: **when a preference has both a report and an effect, the report can self-heal and the effect cannot**, so the pin must be on what crossed the boundary. Worth carrying into #70, whose "effect" is a `data-theme` attribute rather than an IPC call — same shape, same blind spot.
-- **A trust boundary must compare, never coerce.** `normalizeBackdrop` checks membership on the raw value. A `String(value)` boundary is the natural-looking version and admits any object with a convenient `toString`; there is a test named for exactly that, and it dies when the coercion is added back. `clampZoom`'s `Number()` is not the same thing — a numeric clamp has a defined answer for garbage, a string whitelist does not.
-- **Instrumenting the far side of a boundary is what separates "called" from "applied".** The vitest suite can only observe that a preload function was invoked. `gui-69` patches `setBackgroundMaterial` **in main**, which is what turns "the renderer tried" into "the window was told", and the same trick proves the *absence* of a rebuild: window id `1` before and after. Reusable for any main-affecting preference.
-- **A driver should print what it cannot prove, next to its own PASS.** `gui-69` cannot say whether Acrylic and Mica look different — that is DWM compositing over a wallpaper, and a capture of an automated window is not evidence either way. It says so in its output rather than letting a green read as more than it is. The GPU is deliberately left **on** in that driver, unlike every other one here, because `--disable-gpu` photographs neither material.
-- **A pin written for one control can constrain the next one's markup.** #66's "the zoom control is not a slider or a select" is written **dock-wide** (`dock().querySelector('input, select')`), so #69's pick-one-of-two could not use radio inputs. It shipped as a `role="radiogroup"` of buttons with roving tabindex, which is the app's idiom anyway. Not a stale pin and not a workaround — the constraint was read and satisfied.
-- **`Record<Value, Copy>` mapped over the whitelist makes "exactly N options" structural.** #69's option list cannot drift from `BACKDROPS`: a material without copy is a type error, copy without a material renders nowhere. Cheaper than a test asserting the count, and it is the shape #70's four themes want.
-- **An ADR's premise can also survive, and saying so is worth as much as an amendment.** [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] rested on `setBackgroundMaterial` being runtime-settable, cited from `electron.d.ts`. It is now measured live (`{"patched":true}`), and the ADR records that. Two probes in this batch falsified their premise; this one confirmed it, and the difference is only visible because all three were run.
-- **An ADR's conclusion can be right while its stated reason is measurably false, and the fix is to amend rather than to reverse.** [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] justified the fourth accent token by calling `color-mix()` "a new mechanism". One grep settles it: it was already in the stylesheet **six times** (6/12/14/20/22/50%), one of them 256 lines above the literal in question. The token shipped anyway, standing on two other things: it is an authored per-theme override point the key-set test can pin, and it kept #67's resolved value byte-identical. **The correction is load-bearing for #70, and in its favour** — those six read `var(--mint)` and so **re-hue for free**.
-- **A proof method constrains which implementations are acceptable, not just which are correct.** `color-mix(… 10%, transparent)` is computationally identical to `oklch(0.87 0.07 180 / 0.1)` but not textually, and #67's acceptance criteria asked for equivalence proven by resolving `var()` in the compiled bundle.
-- **A diff harness that silently matches nothing reports a clean PASS.** #67's checker was mutation-verified in both directions before its result was believed.
-- **The probe falsified its own premise and the feature survived.** #68 was written around a Windows delete-blocking handle. Measured: the unlink **succeeds** mid-turn. The scope did not widen; the real hazard was the opposite of the predicted one — a mid-turn delete succeeds and is then **undone** by the running turn's next append.
-- **Classify by asking the store, not by reading the error.** `deleteSession` catches, drops the index and re-resolves the id.
-- **A feature can be a diagnostic.** Project-scoping the rail revealed a two-day-old listing bug an unscoped rail had been hiding.
-- **A mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
+The per-ticket narrative for #64–#79 has been folded into the ADRs listed under
+`## Related` and the traps under `## Landmines`. What stays here is the set of
+lessons that keep recurring across unrelated tickets.
+
+- **A queued action needs a POSITIVE trigger, never the absence of a state — #80 is the case that found it.** `busy` going false is not "the turn succeeded": Stop, a failed turn and a finished one all clear it. Naming the one outcome that earns the action (and asserting the other rows do something specific) is what makes the negatives visible; "when no longer busy" would have resent into a turn the user had just killed.
+- **Releasing a commitment must not release the user's WORK.** #80's `unqueue` drops the flag and leaves the draft in the composer, which is what lets Stop stay the button under the cursor while a prompt is queued. The general form: when undoing a user's action, ask what of theirs the undo destroys.
+- **A mutation can expose a hole in your TEST rather than in the code, and #80's is the clean example.** Leaving the queued flag standing after its own flush did *not* redden a bare send-count — the flush had emptied the composer, so the second firing had nothing to send. The real bug there is not a double send; it is spending the **next** draft without the user ever committing it. The test now types a fresh draft first.
+- **An edge between two samples is not observable by sampling.** `gui-80`'s first run reported "the flushed prompt never put the app back in flight" for a prompt that had already sent, run and finished: the turn ending and the flushed turn starting are one React commit apart, so a `busy` poll steps straight over the boundary. Wait on a **monotonic** side effect (a count that only goes up), never on an edge.
+- **Count the side effect at the layer that owns it.** jsdom cannot tell one flush from two, because `useChat.send`'s own busy guard swallows the second and leaves no trace. `gui-80` adds a **second `ipcMain.on('chat:send')` listener in main** beside the real one — `on` appends, so the real handler is untouched and every prompt is witnessed exactly once. (A `handle` channel could not be counted this way; invoke allows one handler.)
+- **When two instruments disagree, suspect the instrument first** (#71, and #77 again). The disagreement is usually the finding.
+- **Measure the stated cause before speccing a fix for it.** #71's gutter, #68's Windows handle, #70's `color-mix()`, #78's "every launch" premise and the titlebar's drag region were all measured FALSE. Four of spec #64's five ADRs now carry an amendment written after a probe measured their stated premise; **read an ADR's amendment before citing it.**
+- **A driver's own setup can revoke what it measures (#77), and its LAUNCH LINE is part of that setup (#74).** Order setup steps by what each one takes away, not by what it needs.
+- **Destruction is quiet, so an assertion phrased as an absence can measure nothing (#76).** Assert what went on living, not what failed to appear — and mutation-verify absence assertions first, because they are the ones that lie.
+- **A green suite is not evidence a feature works end to end (#73).** When a feature's value is that state SURVIVES, interrogate the thing that holds the state, not the thing that displays it.
+- **When a preference has both a REPORT and an EFFECT, the report can self-heal while the effect stays broken — and if the effect is reactive, the obvious pin on it self-heals too (#69, #70).** Pin the FIRST value written.
+- **A measurement ticket's deliverable can be a decline, and the decline needs the same rigour as a build (#78).** Numbers on the ticket, instrument committed and mutation-verified, ADR amended to say which sentence is now false.
+- **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #80 — true of the composer and of the queued send:**
+
+- **The composer is never `disabled` any more, and `useChat.send` is still the one place that refuses a send while busy.** Re-adding `disabled={busy}` to the textarea, the paperclip or the paste handler puts the ticket's whole complaint back with every test green except the two that name it. The tray is live while busy **on purpose**: a composer that took words but refused images would queue a prompt with half of it missing.
+- **The queue lives in `InputBar` so that `<InputBar key={cwd}>` resets it.** Lifting it into `App` or `useChat` means it must join the `ok` branch of `switchWorkspace` by hand — the `pendingInsert` bug class verbatim, and the failure is a queued prompt firing into the *next* project.
+- **The queue is a FLAG on the draft, never a copy.** Snapshotting the text at commit time re-introduces every question the flag design dissolves (replace-vs-append, a stale copy to cancel, a second thing to reset) and makes what fires differ from what is on screen.
+- **`lastTurn` is not a second busy flag, and its NONCE is load-bearing.** It records how a turn *ended*; `Engine.isBusy()` is still the only reading of whether one is running. Drop the nonce and `{ outcome: 'turn-end' }` twice in a row is not a dependency change — the second queued prompt of a conversation silently never fires.
+- **Flush on `turn-end` positively, never on "no longer busy".** All three terminal outcomes clear `busy`. The decision is the twelve-row table in `src/shared/queued-send.ts`; keep it pure and keep the rows asserted positively (`toBe('unqueue')`, never `not.toBe('flush')`) or the two negatives go absence-shaped and pass vacuously.
+- **`unqueue` releases the commitment and NEVER the text.** Every non-flush row is lossless by design, which is the entire reason Stop is safe to leave under the user's cursor while a prompt is queued. A "tidy-up" that also clears the draft turns Stop into a paragraph-eater.
+- **A double flush is invisible to jsdom.** The second one is swallowed by `useChat.send`'s busy guard and leaves no trace, so one send and two look identical from the DOM. Only `gui-80`'s IPC count can tell them apart — and only because it counts with a **second `ipcMain.on` listener**, which appends rather than replacing.
+- **A bare send-count cannot see a commitment that outlived its own flush**, because the flush empties the composer and the next firing has nothing to send. Type a fresh draft first; the real bug is spending the NEXT draft without the user committing it.
+- **`.queued-note-cancel` is its own selector, and it joins the shared shell/focus/hover groups** (`rails.css` + `shared.css`), not a bare base. `.tool-card-toggle` and `.switch-refusal-retry` are both on record as bare selectors that started matching the wrong button.
+- **Queueing must not grow a second Send button.** While busy the send slot IS Stop and must stay that way; `gui-80` asserts the count of `Send`-labelled buttons is zero during a queued turn, because a second send affordance would race the queue.
+- **`stopTail()` still runs at FLUSH, inside `send`, not at enqueue.** A commitment is not driving the session; the tail stops when the prompt actually goes.
 
 **From #78 — true of anything measuring launch, paint, visibility or window
 geometry:**
@@ -666,7 +403,7 @@ reads a CLI-sourced list:**
 
 ## Known issues / not-our-bug
 
-- **`gui-75` is not reliable inside a long batch run, and its red there is a premise failure rather than a regression. Reproduced on TWO consecutive legs, so this is the driver's character rather than one bad afternoon.** #76's leg: `could not drive: the window lost focus during the second turn`, `focusedAtEnd: false`. #77's leg: `could not drive: the window would not take focus`, same shape. **Both times green re-run alone** (`focusedAtEnd: true`). Something on the machine steals focus during an unattended batch; it is the only focus-dependent driver in the set, so it is the only one exposed. **Read its FAIL line before believing the red** — `could not drive:` is the driver saying its own setup failed, which #65's rule makes loud on purpose. Same class as the `gui-73` batch red a previous leg diagnosed as a collapsing process tree. **A batch that reds only here is a green batch**; re-run it solo before writing anything down.
+- **`gui-75` is not reliable inside a long batch run, and its red there is a premise failure rather than a regression. Reproduced on two consecutive legs and then GREEN in the two batches after them (#79's and #80's), which settles it as focus theft rather than anything in the app.** #76's leg: `could not drive: the window lost focus during the second turn`, `focusedAtEnd: false`. #77's leg: `could not drive: the window would not take focus`, same shape. **Both times green re-run alone** (`focusedAtEnd: true`). Something on the machine steals focus during an unattended batch; it is the only focus-dependent driver in the set, so it is the only one exposed. **Read its FAIL line before believing the red** — `could not drive:` is the driver saying its own setup failed, which #65's rule makes loud on purpose. Same class as the `gui-73` batch red a previous leg diagnosed as a collapsing process tree. **A batch that reds only here is a green batch**; re-run it solo before writing anything down.
 - **There is no expected driver failure any more.** `gui-51`'s standing red closed as #71 (`b6e8911`), and `gui-72` joined the set green at `9fecc10`; **every driver in the set is green, and any red is now a real regression.** The old note said "a second signature is a real regression" — that qualifier is gone, and so is the cover it gave.
 - **A capture cannot see the right ~20% of the layout.** The window composites `windowWidth` device px while the page lays out `windowWidth` CSS px at zoom 1.25, so every right-hand dock is clipped out of a screenshot at any window size — re-confirmed by #69's captures, where the Appearance panel is visibly cut. **Measure with `getBoundingClientRect`**; `gui-66` works around it with a presentational-only `setZoom(1)` after every assertion.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
@@ -691,7 +428,16 @@ reads a CLI-sourced list:**
 
 **Deferred by #58, with reasons on record:** honest whole-file **Write diff**; **per-tool rich card bodies**; **permission-mode default or persistence**; **adopting the SDK's richer permission metadata**; a **wrapper-owned truncation cap**; a **diff dependency**; **syntax highlighting inside diffs**.
 
-**Found by the brainstorm pair, unspec'd:** stream **extended thinking** as a collapsed strip; ~~native turn-end notifications + taskbar flash~~ (**struck 2026-07-31 — shipped as #75, `9905e1d`**); **type-while-busy composer** then queued send (**filed as #80**); ~~one-click restart on `terminalError`~~ (shipped as #73); **turn pulse** from the dropped telemetry; **MCP + settings-parse health** surfacing.
+**Found by the brainstorm pair, unspec'd:** stream **extended thinking** as a collapsed strip; ~~native turn-end notifications + taskbar flash~~ (**struck 2026-07-31 — shipped as #75, `9905e1d`**); ~~type-while-busy composer then queued send~~ (**struck 2026-08-01 — shipped as #80, `1855910`**); ~~one-click restart on `terminalError`~~ (shipped as #73); **turn pulse** from the dropped telemetry; **MCP + settings-parse health** surfacing.
+
+**Newly noted by #80, and named Out of Scope on its ticket:** a **multi-prompt
+queue** with reordering and post-commit editing — a different feature with its
+own UI, and the flag-on-the-draft design is deliberately one-by-construction, so
+this is a rewrite rather than an extension. Also unaddressed: whether a queued
+prompt should survive a **Stop** as a queued prompt rather than as a draft (it
+currently un-queues and leaves the text), and whether the pending row should show
+the text itself rather than a fixed label — it does not need to today, because the
+draft it refers to is visible in the composer directly beneath it.
 
 **Newly noted by #75:** whether a **"notifications off" preference** is ever wanted — deliberately not built (Out of scope), and if it lands it is a renderer-stored key with a control in the Appearance dock under that dock's constraints. Also unanswered by measurement: whether the toast actually **paints** on this machine, since no driver can see Action Center; the app identity is verified statically only.
 
@@ -700,6 +446,8 @@ reads a CLI-sourced list:**
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]] — **#80, shipped; why the queue is a flag rather than a payload, why the flush condition is positive, and why an unqueue keeps the text**
+- [[2026-07-31-the-window-waits-until-it-knows-where-to-be]] — **#79, shipped; the window remembers its size and position, and the `win.show()` gate #78 declined was built here**
 - [[2026-07-31-a-drivers-own-setup-can-revoke-what-it-measures]] — **#77, shipped; why the CLI-sourced surfaces are measured before the session is opened, and why `.session-groups` had to be seeded**
 - [[2026-07-31-a-refusal-is-proven-by-the-thing-that-kept-running]] — **#76, shipped; why the skip's reason expired, and why two of three survival assertions measured nothing**
 - [[2026-07-31-an-unwatched-turn-end-is-mains-to-announce]] — **#75, shipped; why main answers it with no channel, why `turn-aborted` is silent, and why `isFocused()` alone is the wrong instrument**

@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-07-31
+updated: 2026-08-01
 tags: [context, overview]
 ---
 
@@ -133,6 +133,14 @@ tags: [context, overview]
   stored level still beats the default. Setting it from an effect instead
   leaves the whole `zoom-shortcuts` suite green while the panel reports the
   wrong number.
+  `InputBar.tsx` is **never disabled while a turn runs** (#80) — the field, the
+  paperclip and the paste handler all stay live, and `useChat.send` remains the
+  one place that refuses a send while busy. Enter during a turn COMMITS the
+  draft: the commitment is a **boolean flag on the draft**, not a copy of it, so
+  cardinality is one by construction, what fires is whatever is in the box when
+  the turn ends, and the `key={cwd}` remount resets the queue along with the
+  draft and the tray. A queue held in `App` would have to join the `ok` branch of
+  `switchWorkspace` by hand.
   `App.tsx` owns the workspace switch: the `ok` branch is where every
   workspace-scoped App state must be cleared, and `<InputBar key={cwd}>` covers
   everything living inside the composer. Both entry points — a foreign session
@@ -146,7 +154,17 @@ tags: [context, overview]
   (#69) is the window material's two-string whitelist (`acrylic` | `mica`) and
   the trust boundary `backdrop:set` reuses before calling
   `setBackgroundMaterial`; it **compares, never coerces**, so an object that
-  stringifies to a valid value is still a stranger. `window-bounds.ts` (#79)
+  stringifies to a valid value is still a stranger. `queued-send.ts` (#80) is the
+  composer's queued-send decision: `decideQueue({ outcome, queued, engineDead })`
+  → `flush` | `unqueue` | `none`, stated POSITIVELY as "turn-end with a live
+  engine" because all three terminal outcomes clear `busy` — a not-busy rule
+  resends after **Stop** and can spend the prompt on a terminal engine (#73).
+  Exactly one of its twelve rows sends; every other row **unqueues**, which
+  releases the commitment and never the text, and that is what lets Stop stay
+  the button under the user's cursor while a prompt is queued. It also holds
+  `LastTurn`, whose **nonce** is load-bearing: two turns ending the same way must
+  be two events or the second queued prompt never fires.
+  `window-bounds.ts` (#79)
   holds both halves of remembering the window's geometry: `isBounds` is the
   trust boundary on `bounds:set` and on localStorage (four finite numbers,
   **positive extent but negative position allowed** — the monitor left of the
@@ -183,12 +201,13 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#79 is the
-  frontier**, unblocked by #78 closing, with #80 unblocked beside it; #78 landed
-  as `51ea6d5`; no expected driver failure anywhere in the set, **20** assertion
-  drivers plus the observational `gui-scope-zoom-pill` — though `gui-75` is
-  focus-dependent and has now gone red in two consecutive batch runs while
-  passing solo both times, see `active-work.md`'s Known issues)
+- `.context/pick-up.md` — current frontier + landmines (currently: **the tracker
+  is EMPTY** — the #75–#80 batch is delivered and no issue of any kind is open,
+  verified live 2026-08-01; run the frontier query anyway, it is the authority.
+  No expected driver failure anywhere in the set, **22** assertion drivers plus
+  the observational `gui-scope-zoom-pill` — `gui-75` is focus-dependent and its
+  batch reds are premise failures, green in the last two batches, see
+  `active-work.md`'s Known issues)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -210,13 +229,15 @@ tags: [context, overview]
   into overflow) closed**; **#78 (`51ea6d5`, the launch artifact measured and the
   `win.show()` gate **declined** — no `src/` change; the ADR's "every launch, for
   every user" premise measured FALSE, because Chromium persists the per-origin
-  zoom in `userData`) closed**;
+  zoom in `userData`) closed**; **#79 (`03ab834`, the window remembers its size
+  and position, and the `win.show()` gate #78 declined was BUILT here for bounds
+  only) closed**; **#80 (`1855910`, type-while-busy composer with a queued send)
+  closed**;
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **Two open** — #79 and #80, both
-  `ready-for-agent` and both unblocked (#78 closing released #79).
+  #20 hold the earlier history. **Nothing open at all** as of 2026-08-01.
   Run the frontier query rather than trusting this line
 
 ## Conventions
