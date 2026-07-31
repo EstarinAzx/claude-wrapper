@@ -22,7 +22,12 @@ export interface SwitchPorts {
   setCwd(cwd: string): void
   rebuildEngine(): void
   setResume(id: string | null): void
-  warmUp(): void
+  /** Build the query eagerly. TAKES the resume target: the streaming query
+   *  binds `resume` at CONSTRUCTION and is then cached, so a warm-up that omits
+   *  it builds a query the later turn's own resume argument can no longer
+   *  reach — `ensureQuery` returns early once the queue exists. The engine then
+   *  runs a fresh session while the pane, refilled from disk, looks correct. */
+  warmUp(resume: string | null): void
   resolveTarget(sessionId: string, cwd: string): Promise<ResumeTarget>
 }
 
@@ -53,6 +58,8 @@ export const switchWorkspace = async (
   // After the rebuild, deliberately: the fresh engine reads the target when the
   // next turn runs, so writing it earlier would hand it to the engine we close.
   ports.setResume(resumeId)
-  ports.warmUp()
+  // Handed the target explicitly rather than left to read it back: the warm-up
+  // is what CONSTRUCTS the query, and resume binds there or not at all.
+  ports.warmUp(resumeId)
   return { status: 'ok' }
 }

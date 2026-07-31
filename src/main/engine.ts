@@ -252,7 +252,20 @@ export const createEngine = (
   // Which Claude Code binary to spawn (pathToClaudeCodeExecutable, or {} for
   // the SDK's bundled one). Injected like the getters above so the engine does
   // not care how the host install is found — see cli-path.ts.
-  getCliOptions: () => Record<string, unknown> = () => ({})
+  getCliOptions: () => Record<string, unknown> = () => ({}),
+  // The stream died and this engine is now terminal (#73). Injected like
+  // onModelReport above, and deliberately NOT an EngineEvent for the SAME
+  // reason: emit() only reaches activeOnEvent, which is null outside a turn —
+  // and a stream dying BETWEEN turns emits nothing at all. Routed through an
+  // EngineEvent this would be dropped in one of the two cases it exists for.
+  //
+  // It is also the ONLY thing that separates a terminal error from a per-turn
+  // one downstream: mapStreamError and mapResultError both leave as
+  // `{ type: 'error' }`, so the renderer cannot tell them apart from the text.
+  //
+  // Fires ONLY where the CLI died under us — never for close(), which is main's
+  // own teardown on every workspace switch, model pick and permission cycle.
+  onTerminal: () => void = () => {}
 ): Engine & { close(): void } => {
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
@@ -622,8 +635,17 @@ export const createEngine = (
             resetToIdle()
             return
           }
-          terminalError ??=
-            'Claude session ended unexpectedly. Pick the folder again to restart.'
+          // The `??=` spelled out, because the SIGNAL has to respect the same
+          // precedence the message already did: close() sets terminalError and
+          // then ends this stream, so whoever got here first owns the state.
+          // Signalling unconditionally would put a "restart and resume" control
+          // on screen after an ordinary model pick, while main is already
+          // rebuilding the engine underneath it.
+          if (terminalError === null) {
+            terminalError =
+              'Claude session ended unexpectedly. Pick the folder again to restart.'
+            onTerminal()
+          }
           if (turnResolve) {
             drainSubagents()
             emit({ type: 'error', message: terminalError })
@@ -634,11 +656,15 @@ export const createEngine = (
             resetToIdle()
             return
           }
+          // Same precedence question as the branch above, asked BEFORE the
+          // assignment overwrites the answer.
+          const mainClosedFirst = terminalError !== null
           const raw = err instanceof Error ? err.message : String(err)
           terminalError = mapStreamError(raw)
           drainSubagents()
           emit({ type: 'error', message: terminalError })
           finishTurn()
+          if (!mainClosedFirst) onTerminal()
         } finally {
           queue?.end()
           currentQuery = null

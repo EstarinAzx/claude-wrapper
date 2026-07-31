@@ -58,6 +58,7 @@ const App = () => {
     busy,
     activeSessionId,
     liveAgents,
+    engineDead,
     transcriptFailed,
     retryTranscript,
     send,
@@ -260,6 +261,45 @@ const App = () => {
                   onClick={retryTranscript}
                 >
                   Retry
+                </button>
+              </p>
+            ) : null}
+            {/* The engine went terminal (#73) — the CLI died under us, so no
+                later prompt can recover it in place. Until now the app's own
+                error copy said "pick the folder again", and that path passed
+                resumeId: null, which threw the conversation away: the exact
+                consequence the ADR cited when it REJECTED auto-restart.
+                Recovery stays user-initiated, so that reasoning is untouched;
+                this is the way out it endorsed, actually built.
+
+                It reuses `switchWorkspace` rather than inventing a recovery
+                path — a non-null id already means rebuild-and-resume, and the
+                transaction's order and rejection-emptiness are already pinned
+                (#47). The whole fix is which id gets passed.
+
+                Two honest states, never one dressed as the other: with a
+                session to resume it offers to bring the conversation back;
+                without one (#54 — a death before any turn finished, so nothing
+                resumable was ever recorded) it SAYS the conversation is gone
+                rather than offering a control that would silently do nothing. */}
+            {engineDead ? (
+              <p className="switch-refusal" role="status">
+                {activeSessionId
+                  ? 'This conversation was cut off. '
+                  : 'This conversation was cut off before it could be saved, so it cannot be resumed. '}
+                <button
+                  type="button"
+                  className="switch-refusal-retry switch-refusal-retry--restart"
+                  aria-label={
+                    activeSessionId
+                      ? 'Restart and resume this conversation'
+                      : 'Start a fresh session'
+                  }
+                  onClick={() => {
+                    void switchWorkspace(activeSessionId, cwd)
+                  }}
+                >
+                  {activeSessionId ? 'Restart and resume' : 'Start fresh'}
                 </button>
               </p>
             ) : null}

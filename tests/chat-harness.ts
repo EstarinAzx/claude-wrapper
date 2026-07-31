@@ -47,6 +47,7 @@ export const fakeChatApi = (folder = FOLDER) => {
   const permListeners = new Set<(mode: PermissionMode) => void>()
   const modelListeners = new Set<(model: string | null) => void>()
   const sessionChangedListeners = new Set<(id: string) => void>()
+  const terminalListeners = new Set<() => void>()
   const api = {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
@@ -89,6 +90,12 @@ export const fakeChatApi = (folder = FOLDER) => {
     onChatEvent: (cb: (e: EngineEvent) => void): (() => void) => {
       listeners.add(cb)
       return () => listeners.delete(cb)
+    },
+    // #73: the engine went terminal. Driven by `emitTerminal()` below — the
+    // signal is payload-free, so the fixture is just the subscription.
+    onEngineTerminal: (cb: () => void): (() => void) => {
+      terminalListeners.add(cb)
+      return () => terminalListeners.delete(cb)
     },
     onBackendChanged: (cb: (info: BackendInfo) => void): (() => void) => {
       backendListeners.add(cb)
@@ -146,6 +153,11 @@ export const fakeChatApi = (folder = FOLDER) => {
       sessionChangedListeners.forEach((l) => l(id))
     })
   }
+  const emitTerminal = (): void => {
+    act(() => {
+      terminalListeners.forEach((l) => l())
+    })
+  }
   const waitForPermission = (toolUseId: string): Promise<PermissionDecision> =>
     broker.request({ toolUseId, signal: new AbortController().signal })
   return {
@@ -157,6 +169,7 @@ export const fakeChatApi = (folder = FOLDER) => {
     emitPermission,
     emitModel,
     emitSessionChanged,
+    emitTerminal,
     waitForPermission
   }
 }

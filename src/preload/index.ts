@@ -95,6 +95,16 @@ const api = {
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {
     ipcRenderer.send('chat:permission-response', toolUseId, decision)
   },
+  // #73: the engine went terminal — the CLI died under us, as opposed to a
+  // per-turn failure. Payload-free: the error text already arrives on
+  // `chat:event`, and the only thing missing there is which kind it was.
+  onEngineTerminal: (cb: () => void): (() => void) => {
+    const listener = (): void => cb()
+    ipcRenderer.on('engine:terminal', listener)
+    return () => {
+      ipcRenderer.removeListener('engine:terminal', listener)
+    }
+  },
   onChatEvent: (cb: (e: EngineEvent) => void): (() => void) => {
     const listener = (_e: Electron.IpcRendererEvent, ev: EngineEvent): void => cb(ev)
     ipcRenderer.on('chat:event', listener)

@@ -80,7 +80,21 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
         win.webContents.send('model:changed', getDisplayModel())
       }
     },
-    () => toCliOptions(hostCli)
+    () => toCliOptions(hostCli),
+    // #73: the CLI died under us and this engine is terminal. Broadcast like
+    // the model report above — and for the same reason it is not an
+    // EngineEvent: a stream dying BETWEEN turns has no active turn to emit
+    // into, which is precisely when the renderer most needs to know before a
+    // prompt is spent on a dead engine.
+    //
+    // Carries no payload. The error TEXT already travels as an EngineEvent;
+    // all that is missing downstream is which KIND of error it was, and that
+    // is one bit.
+    () => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        win.webContents.send('engine:terminal')
+      }
+    }
   )
 
 // The atomic workspace transition (#46), bound to this process's real engine,
@@ -104,8 +118,11 @@ export const switchWorkspace = (req: SwitchRequest): Promise<SwitchResult> =>
       setResume: (id) => {
         pendingResume = id
       },
-      warmUp: () => {
-        engine?.warmUp()
+      // The resume target travels INTO the warm-up: it binds when the query is
+      // constructed, and the warm-up is the construction. Warming up bare left
+      // the rebuilt engine on a fresh session while the pane looked right.
+      warmUp: (resume) => {
+        engine?.warmUp(resume ?? undefined)
       },
       resolveTarget: (id, cwd) => resolveResumeTarget(id, cwd)
     },

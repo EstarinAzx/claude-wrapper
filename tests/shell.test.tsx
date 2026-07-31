@@ -36,7 +36,8 @@ beforeEach(() => {
     sendPrompt: vi.fn(),
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),
-    onChatEvent: vi.fn().mockReturnValue(() => {})
+    onChatEvent: vi.fn().mockReturnValue(() => {}),
+    onEngineTerminal: vi.fn().mockReturnValue(() => {})
   }
 })
 

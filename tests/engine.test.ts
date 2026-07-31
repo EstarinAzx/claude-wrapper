@@ -2022,3 +2022,215 @@ describe('engine busy state', () => {
     expect(engine.isBusy()).toBe(false)
   })
 })
+
+// #73 — the terminal-death signal. The renderer offers "restart and resume"
+// ONLY on a dead stream, and it could not tell one from a per-turn error:
+// mapStreamError and mapResultError both arrive as `{ type: 'error' }`.
+//
+// The distinction is routed OUT OF BAND, exactly like onModelReport (#52) and
+// for the same measured reason: emit() only reaches activeOnEvent, which is
+// null outside a turn — and a stream that dies BETWEEN turns emits nothing at
+// all (the `if (turnResolve)` guard). An EngineEvent would be dropped in one of
+// the two cases this signal exists for.
+//
+// Every assertion below is on the MECHANISM — how many times the callback
+// fired — because the error text is identical on both sides of the
+// distinction, so no message assertion can tell them apart.
+describe('engine — terminal death signal (#73)', () => {
+  const watcher = () => {
+    let fired = 0
+    return {
+      count: () => fired,
+      onTerminal: () => {
+        fired += 1
+      }
+    }
+  }
+
+  // streamingStub's handle has no close(), so engine.close() cannot reach the
+  // stream-ended branch through it — a close() test built on it passes without
+  // ever running the code it is about. The real SDK handle DOES close its own
+  // output stream, so this one models that, and `finished` proves the stream
+  // actually ended rather than leaving the assertion vacuous.
+  const closableStub = () => {
+    const msgQ: SdkMessage[] = []
+    let wake: (() => void) | null = null
+    let ended = false
+    let finished = false
+    const endStream = (): void => {
+      ended = true
+      wake?.()
+    }
+    const fn: QueryFn = ({ prompt }) => {
+      void (async () => {
+        for await (const _ of prompt) {
+          /* keep consuming user messages */
+        }
+      })()
+      // ponytail: generators require function*; no arrow form
+      return Object.assign(
+        (async function* (): AsyncGenerator<SdkMessage> {
+          try {
+            while (!ended || msgQ.length > 0) {
+              while (msgQ.length === 0 && !ended) {
+                await new Promise<void>((r) => {
+                  wake = r
+                })
+              }
+              if (msgQ.length === 0 && ended) return
+              yield msgQ.shift() as SdkMessage
+            }
+          } finally {
+            finished = true
+          }
+        })(),
+        { close: endStream }
+      )
+    }
+    return {
+      fn,
+      push: (m: SdkMessage): void => {
+        msgQ.push(m)
+        wake?.()
+      },
+      finished: () => finished
+    }
+  }
+
+  const engineWithTerminal = (fn: QueryFn, onTerminal: () => void) =>
+    createEngine(
+      () => 'D:\proj',
+      autoAllow(),
+      fn,
+      () => process.env,
+      () => ({}),
+      () => ({}),
+      () => {},
+      () => ({}),
+      onTerminal
+    )
+
+  test('a stream that THROWS after a turn ran fires the signal exactly once', async () => {
+    const w = watcher()
+    const fn: QueryFn = () =>
+      (async function* (): AsyncGenerator<SdkMessage> {
+        throw new Error('Claude Code process exited with code 1')
+      })()
+    const engine = engineWithTerminal(fn, w.onTerminal)
+    await collect(engine, 'hi')
+    expect(w.count()).toBe(1)
+  })
+
+  test('a stream that ENDS after a turn ran fires the signal exactly once', async () => {
+    const w = watcher()
+    const { fn, push, close } = streamingStub()
+    const engine = engineWithTerminal(fn, w.onTerminal)
+    const first = collect(engine, 'first')
+    await Promise.resolve()
+    push(success)
+    await first
+    expect(w.count()).toBe(0)
+    close()
+    await new Promise((r) => setTimeout(r, 0))
+    expect(w.count()).toBe(1)
+  })
+
+  // The between-turns death is the case an EngineEvent cannot carry: the stream
+  // is already dead when the signal fires, and the error the user eventually
+  // sees is the STORED one replayed by the next runTurn. Firing once, at death,
+  // is what lets the renderer know before a prompt is spent on a dead engine.
+  test('the signal fires at death, not at the replayed error of the next turn', async () => {
+    const w = watcher()
+    const { fn, push, close } = streamingStub()
+    const engine = engineWithTerminal(fn, w.onTerminal)
+    const first = collect(engine, 'first')
+    await Promise.resolve()
+    push(success)
+    await first
+    close()
+    await new Promise((r) => setTimeout(r, 0))
+    expect(w.count()).toBe(1)
+    // The next turn replays the stored terminal error — and must NOT re-fire.
+    const second = await Promise.race([
+      collect(engine, 'second'),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 20))
+    ])
+    expect(second).toEqual([{ type: 'error', message: STREAM_ENDED }])
+    expect(w.count()).toBe(1)
+  })
+
+  // The other direction, and the one the control must never attach to: both
+  // mapResultError messages are per-turn and already recoverable by sending
+  // another prompt. A control offering to rebuild the engine here would throw
+  // away a conversation that was never in danger.
+  test('a per-turn error result (error_during_execution) NEVER fires the signal', async () => {
+    const w = watcher()
+    const { fn, push } = streamingStub()
+    const engine = engineWithTerminal(fn, w.onTerminal)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push({
+      type: 'result',
+      subtype: 'error_during_execution',
+      session_id: 'sess-1',
+      is_error: true
+    })
+    const events = await turn
+    expect(events[events.length - 1]).toEqual({ type: 'error', message: TURN_FAILED })
+    expect(w.count()).toBe(0)
+  })
+
+  test('a per-turn error result (error_max_turns) NEVER fires the signal', async () => {
+    const w = watcher()
+    const { fn, push } = streamingStub()
+    const engine = engineWithTerminal(fn, w.onTerminal)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push({
+      type: 'result',
+      subtype: 'error_max_turns',
+      session_id: 'sess-1',
+      is_error: true
+    })
+    const events = await turn
+    expect(events[events.length - 1]).toEqual({ type: 'error', message: MAX_TURNS })
+    expect(w.count()).toBe(0)
+  })
+
+  // The sharpest false positive: close() is main's own teardown, and it runs on
+  // EVERY workspace switch, model pick and permission cycle. It sets
+  // terminalError and then ends the stream — so a signal fired from the
+  // stream-ended branch without checking who got there first would put a
+  // "restart and resume" control on the screen after an ordinary model pick,
+  // while main is already rebuilding the engine underneath it.
+  test('close() — main tearing the engine down — NEVER fires the signal', async () => {
+    const w = watcher()
+    const { fn, push, finished } = closableStub()
+    const engine = engineWithTerminal(fn, w.onTerminal)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    engine.close()
+    await new Promise((r) => setTimeout(r, 0))
+    // Confound guard: the stream must actually have ENDED, or the branch under
+    // test never ran and a count of 0 proves nothing.
+    expect(finished()).toBe(true)
+    expect(w.count()).toBe(0)
+  })
+
+  // Warm-up inertness (#54 / the engine's own contract): a stream that dies
+  // before any turn ran is a failed warm-up, reset to idle and invisible. A
+  // signal here would offer to resume a session that does not exist yet.
+  test('a stream dying before any turn ran NEVER fires the signal', async () => {
+    const w = watcher()
+    const { fn, close } = streamingStub()
+    const engine = engineWithTerminal(fn, w.onTerminal)
+    engine.warmUp()
+    close()
+    await new Promise((r) => setTimeout(r, 0))
+    expect(w.count()).toBe(0)
+  })
+})

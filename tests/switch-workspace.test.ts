@@ -12,12 +12,24 @@ const FOLDER = 'D:/projects/app'
  */
 const ports = (
   over: Partial<SwitchPorts> = {}
-): SwitchPorts & { calls: string[]; state: { cwd: string | null; resume: string | null } } => {
+): SwitchPorts & {
+  calls: string[]
+  state: { cwd: string | null; resume: string | null }
+  /** What warmUp was handed. Undefined until it runs, so "never warmed" and
+   *  "warmed with null" stay distinguishable — they are different bugs. Kept
+   *  OUT of `state`, which is asserted whole with toEqual. */
+  warmedWith: () => string | null | undefined
+} => {
   const calls: string[] = []
-  const state = { cwd: 'D:/projects/before' as string | null, resume: 'prior-session' as string | null }
+  let warmedWith: string | null | undefined
+  const state = {
+    cwd: 'D:/projects/before' as string | null,
+    resume: 'prior-session' as string | null
+  }
   return {
     calls,
     state,
+    warmedWith: () => warmedWith,
     isBusy: () => false,
     closeEngine: () => {
       calls.push('closeEngine')
@@ -36,8 +48,9 @@ const ports = (
       calls.push('setResume')
       state.resume = id
     },
-    warmUp: () => {
+    warmUp: (resume: string | null) => {
       calls.push('warmUp')
+      warmedWith = resume
     },
     resolveTarget: async (id: string): Promise<ResumeTarget> => {
       calls.push('resolveTarget')
@@ -68,6 +81,23 @@ describe('switchWorkspace — the ok path', () => {
     expect(p.state).toEqual({ cwd: FOLDER, resume: KNOWN })
   })
 
+  // #73 found this the hard way, with a real CLI: the pane came back and the
+  // engine did not. The streaming query binds `resume` at CONSTRUCTION and is
+  // then cached, so the warm-up here IS the only chance to bind it — a later
+  // turn's own resume argument hits `ensureQuery`'s early return and is
+  // silently dropped. Warming up bare leaves the rebuilt engine on a fresh
+  // session while the transcript, refilled from disk, looks perfectly correct.
+  //
+  // Nothing else can see it: `setResume` was called, the order is right, the
+  // status is ok. Only the ARGUMENT handed to warmUp tells the two apart.
+  test('hands the resume target to warmUp, because resume binds at construction', async () => {
+    const p = ports()
+
+    await switchWorkspace(p, { cwd: FOLDER, resumeId: KNOWN })
+
+    expect(p.warmedWith()).toBe(KNOWN)
+  })
+
   test('writes the resume target AFTER the engine is rebuilt', async () => {
     const p = ports()
 
@@ -85,6 +115,9 @@ describe('switchWorkspace — a null resumeId opens a new chat', () => {
 
     expect(result).toEqual({ status: 'ok' })
     expect(p.state).toEqual({ cwd: FOLDER, resume: null })
+    // Warmed with null, not left unwarmed: an empty workspace still wants its
+    // query built (the commands dock reads it) — just with nothing to resume.
+    expect(p.warmedWith()).toBeNull()
     // An empty folder has no session to resume — validating one would reject
     // exactly the case this branch exists for.
     expect(p.calls).not.toContain('resolveTarget')

@@ -85,6 +85,12 @@ export const useChat = () => {
   // id rather than a boolean so the retry re-reads the session that actually
   // failed, not whatever happens to be active by the time it is pressed.
   const [failedTranscript, setFailedTranscript] = useState<string | null>(null)
+  // The engine went terminal (#73): the CLI died under us, so every later turn
+  // fails with the stored error and nothing recovers in place. Separate from the
+  // error MESSAGE, which arrives on the chat stream and reads identically to a
+  // per-turn failure — this is the one bit that says the conversation needs
+  // rebuilding rather than another prompt.
+  const [engineDead, setEngineDead] = useState(false)
   const [liveAgents, setLiveAgents] = useState<LiveAgent[]>([])
   // Track the live assistant message id without stale closures on event handlers
   const assistantIdRef = useRef<string | null>(null)
@@ -243,6 +249,23 @@ export const useChat = () => {
     return unsub
   }, [])
 
+  // The engine died (#73). Two things happen, and the second is the one that is
+  // easy to miss: the resumable id is re-read from MAIN.
+  //
+  // `activeSessionId` is only written at turn-end, so a stream that dies mid
+  // first-turn leaves it null here while main has held the id since `init`
+  // (engine.ts captures it from any message once a turn has run). Trusting the
+  // local null would offer "there is nothing to resume" for a conversation that
+  // is perfectly resumable — the #54 fallback firing on a case it is not for.
+  useEffect(() => {
+    return window.api.onEngineTerminal(() => {
+      setEngineDead(true)
+      void window.api.currentSessionId().then((id) => {
+        if (id) setActiveSessionId(id)
+      })
+    })
+  }, [])
+
   // Re-read the watched session's transcript and replace the pane with it. The
   // read is the SAME channel a reopen uses — no new parsing surface — so a
   // tailed pane and a reopened one can never diverge.
@@ -364,6 +387,11 @@ export const useChat = () => {
     assistantIdRef.current = null
     setBusy(false)
     busyRef.current = false
+    // Every adoption path arrives on a rebuilt or freshly-targeted engine — the
+    // workspace transaction rebuilds it, `targetSession` closes and nulls it so
+    // the next send builds one. Either way the dead engine this flag described
+    // is gone, so the control that offers to rebuild it must go with it.
+    setEngineDead(false)
     // A failed read still clears the pane: leaving the previous conversation up
     // beside a notice about a different one is the stale-pane bug in miniature.
     // The notice plus its retry is what replaces it — never an empty pane, which
@@ -414,6 +442,7 @@ export const useChat = () => {
     assistantIdRef.current = null
     setBusy(false)
     setFailedTranscript(null)
+    setEngineDead(false)
     setMessages([])
     setLiveAgents([])
     setActiveSessionId(null)
@@ -441,6 +470,7 @@ export const useChat = () => {
     busy,
     activeSessionId,
     liveAgents,
+    engineDead,
     transcriptFailed: failedTranscript !== null,
     retryTranscript,
     send,

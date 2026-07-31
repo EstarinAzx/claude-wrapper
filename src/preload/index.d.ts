@@ -54,6 +54,7 @@ export interface WrapperApi {
   sendPrompt: (payload: SendPayload) => void
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void
+  onEngineTerminal: (cb: () => void) => () => void
   onChatEvent: (cb: (e: EngineEvent) => void) => () => void
 }
 
