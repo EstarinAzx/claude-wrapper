@@ -11,28 +11,30 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (filed 2026-07-31 by a vibe run as #75–#80 — ONE left: #80)
+## Current queue — EMPTY as of 2026-08-01
 
 Take the lowest-numbered open, unblocked `ready-for-agent` ticket.
 
-**Delivered out of this batch: #75 (`9905e1d`), #76 (`c9114a5`), #77 (`88c1e3f`),
-#78 (`51ea6d5`) and #79 (`03ab834`).**
+**The 2026-07-31 vibe batch is fully delivered: #75 (`9905e1d`), #76
+(`c9114a5`), #77 (`88c1e3f`), #78 (`51ea6d5`), #79 (`03ab834`) and #80
+(`1855910`).** The relay chain closed at leg 6 on the body's own done-signal
+rather than on `max_legs`, and `gh issue list --state open` returns **nothing at
+all** — no tickets, no specs, no `ready-for-human` leftovers.
 
-- **#80 — type-while-busy composer with a queued send.** Its substance is the
-  state machine, not the typing. Flushing on every `busy → false` is wrong: it
-  resends after **Stop** and can spend the queued prompt on a **terminal**
-  engine. And while busy the send button *becomes* Stop, so there is no button
-  to press — that design hole is the ticket's to answer and no test can see it.
+**Run the frontier query anyway; it is the authority over this paragraph.** If
+it returns a ticket, work it. If it comes back empty the queue is drained:
+rewrite `pick-up.md` to "queue empty", commit `.context/` on main, signal the
+relay stop, spawn nothing.
 
-**#80 is the last ticket in the batch, so this leg is probably the last one.**
-Run the frontier query first regardless. If it comes back empty — because #80 is
-already closed, or relabelled — the queue is drained: rewrite `pick-up.md` to
-"queue empty", commit `.context/` on main, signal the relay stop, spawn nothing.
-
-**Two standing landmines are sharply relevant to #80.** Do **not** add a second
-busy flag, and **never un-key the composer** — `<InputBar key={cwd}>` is the
-whole workspace reset, so a queued draft surviving a workspace switch is a
-regression rather than a feature.
+**What #80 settled, because the next composer ticket inherits it.** The
+type-while-busy queue is a **flag on the draft**, not a stored payload — so
+cardinality is one by construction, what fires is whatever is in the box when the
+turn ends, cancelling is lossless, and `<InputBar key={cwd}>` resets it for free.
+The flush condition is **positive** (`turn-end` with a live engine, decided by
+the twelve-row table in `src/shared/queued-send.ts`); every other row
+**unqueues**, releasing the commitment and never the text. Do **not** add a
+second busy flag — `lastTurn` records how a turn *ended*, which is a different
+question — and **never un-key the composer**.
 
 **#79's headline is about SIGNALS, and it is the counterpart to #78's.** #78
 measured the launch artifact and **declined** the `win.show()` gate; #79
