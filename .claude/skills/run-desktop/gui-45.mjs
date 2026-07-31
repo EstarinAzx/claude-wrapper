@@ -12,6 +12,15 @@
 // literal, so the escaped-backslash trap cannot bite. The picked folder is this
 // repo, which is a real project in the store — so the "current" group is
 // genuinely populated rather than a fixture.
+//
+// #65 retired this driver's foreign-row assertions. #45 shipped foreign rows as
+// INERT; #47 deliberately made them openable, so "no foreign row was disabled"
+// was asserting a contract the app had reversed on purpose — and the click
+// probe behind it could no longer find a row to probe. What the run still
+// verifies is everything #47 did NOT touch: that the list spans projects, that
+// the cap engages at real scale, that the filter narrows and restores, and that
+// a long group heading is head-truncated by real layout. gui-47.mjs owns the
+// openable-foreign-row contract now.
 
 import { _electron as electron } from 'playwright-core'
 import path from 'node:path'
@@ -63,6 +72,18 @@ await page.evaluate(() => {
 
 await page.waitForSelector('.session-group-head', { timeout: 20000 })
 
+// The rail SHIPS scoped to the open project, so a cross-project run has to
+// establish that premise rather than inherit whatever this machine last stored.
+// Without this the whole file measures one group and reads as a regression in
+// the app (#65). Clicked through the real chip rather than seeded into
+// localStorage, so it cannot depend on mounting after the write.
+await page.evaluate(() => {
+  ;[...document.querySelectorAll('.session-scope-btn')]
+    .find((b) => b.textContent === 'All projects')
+    ?.click()
+})
+await page.waitForTimeout(300)
+
 const log = (label, m) => console.log(label.padEnd(10) + JSON.stringify(m))
 
 const survey = () =>
@@ -76,7 +97,10 @@ const survey = () =>
       enabled: rows.filter((r) => !r.disabled).length,
       disabled: rows.filter((r) => r.disabled).length,
       firstGroup: heads[0]?.textContent ?? null,
-      more: more?.textContent ?? null
+      more: more?.textContent ?? null,
+      // Matched count, not page size: every row survey below the cap would
+      // otherwise read as 100 and no filter could be compared against another.
+      total: rows.length + Number(/Show (\d+) more/.exec(more?.textContent ?? '')?.[1] ?? 0)
     }
   })
 
@@ -114,19 +138,6 @@ const current = await page.evaluate((dir) => {
 }, PICK_DIR)
 log('CURRENT', current)
 
-// Foreign rows must be inert, not merely styled as such: click one and assert
-// the pane did not replace itself. Measured by watching the message count, not
-// by re-reading the row (which would still look the same either way).
-const foreignClick = await page.evaluate(async () => {
-  const row = [...document.querySelectorAll('.session-row-btn')].find((r) => r.disabled)
-  if (!row) return { probed: false }
-  const before = document.querySelectorAll('.msg').length
-  row.click()
-  await new Promise((r) => setTimeout(r, 600))
-  return { probed: true, before, after: document.querySelectorAll('.msg').length }
-})
-log('FOREIGN', foreignClick)
-
 const setFilter = (text) =>
   page.evaluate((text) => {
     const el = document.querySelector('.sidebar-filter-input')
@@ -137,8 +148,11 @@ const setFilter = (text) =>
 
 // Filter by a project path: the group label is matchable, so a full path must
 // narrow to that one project. A partial name legitimately keeps every project
-// it is a substring of — this machine has six directories containing
-// "playground" — so only the full path can assert "exactly one".
+// it is a substring of, so it cannot assert a group COUNT — the old ">= 2
+// groups" here was really asserting that this machine still had six sibling
+// "playground" directories with sessions in them, and went red when it did not
+// (#65). The machine-independent facts are that the partial narrows the store,
+// and that it matches at least everything the full path it contains matched.
 await setFilter(PICK_DIR)
 await page.waitForTimeout(300)
 const byProject = await survey()
@@ -180,16 +194,13 @@ const fails = []
 if (initial.groups < 2) fails.push('only one project group — the list is not global')
 if (initial.rows > 100) fails.push(`cap not enforced (${initial.rows} rows)`)
 if (!current.found) fails.push('the open workspace has no group of its own')
-if (current.found && !current.allEnabled) fails.push('a row in the open project is inert')
 if (current.found && current.direction !== 'rtl') fails.push('group heading is not head-truncated')
-if (initial.disabled === 0) fails.push('no foreign row was disabled')
-if (foreignClick.probed && foreignClick.after !== foreignClick.before) {
-  fails.push('clicking a foreign row changed the pane')
-}
 if (byProject.groups !== 1) fails.push(`full-path filter left ${byProject.groups} groups`)
-if (byProject.disabled !== 0) fails.push('full-path filter kept a foreign row')
-if (byPartial.groups < 2 || byPartial.groups >= initial.groups) {
-  fails.push(`partial project filter did not narrow (${byPartial.groups} groups)`)
+if (byPartial.total >= initial.total) {
+  fails.push(`partial project filter did not narrow (${byPartial.total} of ${initial.total})`)
+}
+if (byPartial.total < byProject.total) {
+  fails.push(`partial filter matched fewer (${byPartial.total}) than the full path it contains (${byProject.total})`)
 }
 if (!headOverflow.any) fails.push('no long group heading engaged head-truncation')
 if (noMatch.groups !== 0 || !noMatch.empty?.startsWith('No sessions match')) {

@@ -68,6 +68,20 @@ await page.evaluate(() => {
 
 await page.waitForSelector('.session-group-head', { timeout: 20000 })
 
+// The rail SHIPS scoped to the open project, so this file has to establish the
+// cross-project premise rather than inherit whatever this machine last stored.
+// Without it there is nothing foreign to switch INTO: the run went red on the
+// group count and silently skipped its ok path, its missing-cwd refusal and its
+// colour comparison — three of four sections, reported as SKIPPED rather than
+// as a hole in the gate (#65). Clicked through the real chip rather than seeded
+// into localStorage, so it cannot depend on mounting after the write.
+await page.evaluate(() => {
+  ;[...document.querySelectorAll('.session-scope-btn')]
+    .find((b) => b.textContent === 'All projects')
+    ?.click()
+})
+await page.waitForTimeout(300)
+
 const log = (label, m) => console.log(label.padEnd(10) + JSON.stringify(m))
 
 // One reading of everything a switch is supposed to move (or leave alone).
