@@ -159,13 +159,12 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#78 is the
-  frontier**, with #80 unblocked behind it and **#79 blocked by
-  #78**; #77 landed as `88c1e3f`; no expected driver failure anywhere in the
-  set, all 19 assertion drivers green plus the observational
-  `gui-scope-zoom-pill` — though `gui-75` is focus-dependent and has now gone
-  red in two consecutive batch runs while passing solo both times, see
-  `active-work.md`'s Known issues)
+- `.context/pick-up.md` — current frontier + landmines (currently: **#79 is the
+  frontier**, unblocked by #78 closing, with #80 unblocked beside it; #78 landed
+  as `51ea6d5`; no expected driver failure anywhere in the set, **20** assertion
+  drivers plus the observational `gui-scope-zoom-pill` — though `gui-75` is
+  focus-dependent and has now gone red in two consecutive batch runs while
+  passing solo both times, see `active-work.md`'s Known issues)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -184,13 +183,16 @@ tags: [context, overview]
   (`9905e1d`, a turn ending while nobody is looking announces itself) closed**;
   **#76 (`c9114a5`, `gui-48` drives the busy refusal instead of printing
   `SKIPPED`) closed**; **#77 (`88c1e3f`, `gui-51` drives every surface it names
-  into overflow) closed**;
+  into overflow) closed**; **#78 (`51ea6d5`, the launch artifact measured and the
+  `win.show()` gate **declined** — no `src/` change; the ADR's "every launch, for
+  every user" premise measured FALSE, because Chromium persists the per-origin
+  zoom in `userData`) closed**;
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **Three open** — #78 and #80
-  `ready-for-agent` and unblocked, #79 `ready-for-agent` but **blocked by #78**.
+  #20 hold the earlier history. **Two open** — #79 and #80, both
+  `ready-for-agent` and both unblocked (#78 closing released #79).
   Run the frontier query rather than trusting this line
 
 ## Conventions

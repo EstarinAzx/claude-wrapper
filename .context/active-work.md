@@ -7,24 +7,33 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 3 landed #77; three tickets left in the batch**_
-_At commit: `88c1e3f` on `main`, pushed. Gate green: typecheck clean, **864 tests across 58 files** (unchanged — #77 touched no `src/`), build ok_
-_Driver check: all **19** assertion drivers re-run this leg and green, plus the observational `gui-scope-zoom-pill` (which prints readings and no verdict, by design — that is not a failure). `gui-75` was red **in the batch run** again, on the same premise failure (`could not drive: the window would not take focus`) and green re-run alone (`focusedAtEnd: true`) — **second consecutive leg**, so treat it as the driver's known character, not a regression; see Known issues. No standing red anywhere, so any other red is a real regression._
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **relay leg 4 landed #78; two tickets left in the batch**_
+_At commit: `51ea6d5` on `main`, pushed. Gate green: typecheck clean, **864 tests across 58 files** (unchanged — #78 touched no `src/`), build ok_
+_Driver check: **20** assertion drivers now (`gui-78` is new), plus the observational `gui-scope-zoom-pill`. The full batch was **deliberately not re-run** this leg: #78's diff is three new files under `.claude/skills/run-desktop/` and nothing under `src/`, so no existing driver could regress from it. `gui-69` was re-run green as a harness sanity check. `gui-75` remains focus-dependent — red in two consecutive batch runs, green solo both times; re-run it alone before believing a batch red there. No standing red anywhere, so any other red is a real regression._
 
 ## Current focus
 
-**Three tickets open — #78, #79, #80 — from the `/preset vibe` run of
+**Two tickets open — #79 and #80 — from the `/preset vibe` run of
 2026-07-31 under an explicit owner autonomy grant.** A relay chain is draining
-them one per leg. **#77 landed as `88c1e3f` and closed.**
+them one per leg. **#78 landed as `51ea6d5` and closed, having measured and
+declined its own fix.**
 
 | # | Ticket | Note |
 |---|---|---|
 | ~~#75~~ | ~~Turn-end notification + taskbar flash when unfocused~~ | `9905e1d` |
 | ~~#76~~ | ~~`gui-48`: drive the busy refusal instead of printing `SKIPPED`~~ | `c9114a5` |
 | ~~#77~~ | ~~`gui-51`: drive every named surface into overflow~~ | `88c1e3f` |
-| #78 | Measure the launch artifact; gate `win.show()` only if objectionable | **frontier**; measurement-first, per the ADR's own "Build it only if measured" |
-| #79 | The window remembers its size and position | **blocked by #78** (`blocked_by: 1`, re-verified live this leg) — structural, see below |
+| ~~#78~~ | ~~Measure the launch artifact; gate `win.show()` only if objectionable~~ | `51ea6d5` — measured **not objectionable**, no gate built, no `src/` change |
+| #79 | The window remembers its size and position | **frontier**; now unblocked (`blocked_by: 0`, re-verified live this leg) — structural, see below |
 | #80 | Type-while-busy composer with a queued send | biggest and riskiest; filed last deliberately |
+
+**#78 unblocked #79 by declining the gate, not by building it.** The ADR made
+`win.show()`-gating conditional on a measurement ("Build it only if measured");
+`gui-78.mjs` took it and the condition did not fire. **#79 must not read that as
+"no gate needed" for itself** — bounds add a *window-manager move and resize* at
+the same 38–55ms mark on an already-visible window, a different class of
+artifact from a CSS reflow, and `gui-78.mjs` is the instrument for deciding.
+See [[2026-07-31-the-window-is-shown-before-the-app-exists]].
 
 **The autonomy grant is recorded in `.claude/vibe.md`** and it overrode the
 standing "a leg may not decide the parked calls" rule. All seven previously
@@ -228,35 +237,37 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** nothing. `main` = `88c1e3f` + this leg's `.context` commits, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **#78, #80** unblocked; **#79** blocked by #78 (`blocked_by: 1`, re-verified live this leg). Frontier = **#78**.
-- **Landed this leg:** **#77** (`88c1e3f`) — `gui-51` drives every surface it names into overflow; no `src/` change, and the finding is that the driver's own setup order was revoking the lists it was about to measure.
+- **In flight:** nothing. `main` = `51ea6d5` + this leg's `.context` commits, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **#79 and #80**, both unblocked (`blocked_by: 0`, re-verified live this leg — #78 closing released #79). Frontier = **#79**.
+- **Landed this leg:** **#78** (`51ea6d5`) — the launch artifact measured and the `win.show()` gate **declined**; no `src/` change. The finding is that the ADR's own motivation is false after the first launch: Chromium persists the zoom factor per origin in `userData` and restores it at document commit, so the zoom reflow is **once per install**, not once per launch.
 - **Parked for the owner: NONE — all seven resolved** under the 2026-07-31 autonomy grant, with reasons in `.claude/vibe.md` under `## Decisions`. Outcomes: Tailwind **not dropped, and the adopt-utilities question deliberately left OPEN** (the record says asking it "is the honest one to ask", so closing it was the one move it argues against) · titlebar control count **unchanged** and #72's centring **stands** · dock toggles **do not collapse** · window geometry **yes, as #79** · "which polish item next" **answered by this batch's ordering** · renderer error boundary **not built** (absence real, reachability unproven — filing it would be inventing a defect).
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**The frontier is #78** — measure the launch artifact, and gate `win.show()`
-**only if** it is objectionable. Run the frontier query anyway; this line goes
-stale the moment the owner files something, and that is this project's standing
-lesson: a leg once wrote that closing #70 would empty the queue and was wrong,
-because #71 had been unblocked the whole time.
-
-**#78 is a measurement ticket like #71 was: AC1 is the measurement, and the fix
-is conditional on it**, because the ADR says "Build it only if measured".
-Motivate on the **zoom** reflow — universal, every launch — not the backdrop
-flash, which is opt-in; the ADR ranks them and calls the other way round
-"backwards". If the artifact is not objectionable, saying so with numbers *is*
-the delivery.
+**The frontier is #79** — the window remembers its size and position. Run the
+frontier query anyway; this line goes stale the moment the owner files
+something, and that is this project's standing lesson: a leg once wrote that
+closing #70 would empty the queue and was wrong, because #71 had been unblocked
+the whole time.
 
 **#79 must not use a main-side store**, and its argument for one was already
 tested and killed — [[2026-07-31-a-preference-lives-where-it-is-read]] names "a
 small main-side store for *the main-process ones*" verbatim and rejects it.
+Renderer `localStorage` + an IPC push on mount and on change, exactly as
+`useBackdrop` ships. It **amends one ADR sentence** ("there is no structural
+difference between this preference and the four already stored" — false for
+bounds, which want an answer before the window exists) and reverses nothing.
 
-A relay chain is draining #78 → #79 → #80, one ticket per leg.
-**#79 is blocked by #78 and must stay that way** — its only ADR-compatible
-implementation is built on the readiness gate #78 may produce, and the record
-binds them in a single clause.
+**#79 inherits a measured baseline from #78, and it is not permission to skip
+the question.** The `win.show()` gate was declined for *today's* artifact, whose
+worst remaining component is ≤1 frame. Bounds are different in kind: a
+window-manager move and resize landing 38–55ms after the window is already on
+screen. **Re-run `gui-78.mjs` with bounds applied and decide on those numbers** —
+it is the instrument, and the decision record spells out what a gate would have
+to beat.
+
+A relay chain is draining #79 → #80, one ticket per leg.
 
 **Read the ticket bodies before the code.** They were written against an
 adversarial pass that killed two proposals outright and reshaped three more, so
@@ -283,6 +294,14 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Recent context
 
+- **The platform may already have solved the thing you are about to gate — #78 is the case that found it.** The ADR ranked the zoom reflow first because it happens "every launch, for every user". Measured: **Chromium persists the zoom factor per origin inside the `userData` directory** and restores it when the document commits, so the second launch paints its first frame already at 880css / dpr 1.25 and `dom-ready` reads `getZoomFactor() === 1.25` a full 41–44ms **before** the renderer's `zoom:set` arrives. The reflow is **once per install**. This is #71's shape again — the measurement removed its own motivation — and the general form is: **before building state management, check whether the platform is already holding the state.**
+- **A measurement ticket's deliverable can be a decline, and the decline needs the same rigour as a build.** #78 shipped no `src/` change. What makes that a delivery rather than a shrug is that the numbers are on the ticket, the instrument is committed and mutation-verified, and the ADR carries an amendment saying which of its sentences is now false. A ticket that closes having measured and declined leaves the next person *more* able to decide, not less.
+- **The largest component of an artifact may not be the thing the ticket names.** #78 was filed about preference reflows. The biggest visible span turned out to be `ready-to-show` firing on the first paint of the **still-empty document**, putting the window on screen 38–61ms before React commits anything. Worth measuring the whole timeline rather than only the steps the ticket lists.
+- **A test harness can suppress the very behaviour under test — and Playwright does, here.** Under `_electron.launch()` this app's window **never emits `ready-to-show`**, so `win.show()` never runs, the window is never visible and never painted, and `performance.getEntriesByType('paint')` is empty. Every other driver in this set is unaffected because they drive the DOM over CDP, which does not need visibility. But **anything measuring paint, visibility or launch timing cannot use Playwright** — `gui-78` spawns Electron directly with a probe entry point that hooks and then `require`s the real built main. Same family as #74's launch-line lesson: the harness is part of the state being established.
+- **Two attachment points that look right and are not.** `NODE_OPTIONS=--require <probe>` **never reaches Electron** — `NODE_OPTIONS` reads back `null` inside main and the module never runs (verified with a marker file). `context.addInitScript()` is **too late** — `electron.launch()` resolves at ~380ms with the window already constructed and loading, so the script lands after the page's own scripts. The one that works is being the entry point.
+- **rAF is the right instrument for "what did the user actually see".** A `requestAnimationFrame` sampler fires once per paint, so a state it never observes is a state that was never on screen for a frame. That is what let #78 say "the UI was at the wrong zoom for 11–13ms" rather than "the code reflows at some point".
+- **A guard on a value the platform sets late can be vacuous.** #78's profile-isolation check originally read `getZoomFactor()` at window construction — which is **1.0 on a warm profile too**, because Chromium restores the persisted zoom at document *commit*, not at construction. It could never have failed. It reads the first **painted** frame's dpr instead (1 pristine, 1.25 warm), and the mutation that proved it also re-confirmed the leg's headline finding by a second route. Same family as the vacuous-absence traps below.
+- **A driver's own instrument can hide an environment limit.** With GPU compositing on, this app's window **never paints at all** in a background/headless session — no `ready-to-show`, `isVisible()` still false after 20s — while a standalone `BrowserWindow` with the *exact* same options and renderer file paints fine either way. `--disable-gpu` is therefore load-bearing for `gui-78` specifically, at the known cost of flattening acrylic, so that driver judges no material visually.
 - **A driver's own setup can revoke the capability it is about to measure — #77 is the case that found it.** `openSession` → `targetSession` closes the engine, so `listModels()` / `listCommands()` answer `[]` **by contract** afterwards. Measured in screen order, `gui-51` read a 1-row model picker and two command surfaces that never mounted, which is indistinguishable from a dead CLI. **Order setup steps by what each one takes away, not by what it needs** — a step that only reads can go anywhere, a step that closes an engine or switches a workspace is a boundary, and everything depending on the pre-boundary capability goes before it.
 - **An empty list rendered beside a static row looks populated.** The model picker always renders the "default" pick before whatever the CLI offers, so an empty fetch reads as a plausible one-item menu rather than as a failure. Reason about what the list was supposed to **add**, never about `querySelectorAll(...).length`. Same family as the vacuous-absence trap below: both are states where the broken reading is a legal-looking one.
 - **A surface that passes only on the machine that wrote it is inherited, not established.** `.session-groups` never printed `NOT DRIVEN` purely because this developer's store holds ~490 sessions. That was invisible while the alternative was a quiet note; it becomes a red run the moment the note is converted into a failure, which is the argument for converting it.
@@ -331,6 +350,37 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
+
+**From #78 — true of anything measuring launch, paint, visibility or window
+geometry:**
+
+- **Chromium persists the zoom factor per origin, in `userData`.** A driver run
+  against the real profile opens at the stored zoom and reports no reflow — an
+  inherited pass. `gui-78` gives every launch a fresh `userData` via
+  `app.setPath` **before `ready`** (which also means it never touches the user's
+  real localStorage). Any future launch measurement must do the same.
+- **Playwright cannot measure a launch.** Under `_electron.launch()` the window
+  never emits `ready-to-show`, so it is never shown and never painted and
+  `getEntriesByType('paint')` is **empty**. Fine for DOM-driving drivers, fatal
+  for paint/visibility/timing ones.
+- **`NODE_OPTIONS=--require` never reaches Electron** (`NODE_OPTIONS` is `null`
+  inside main), and **`context.addInitScript()` is too late** — `launch()`
+  resolves at ~380ms with the window already loading. Being the Electron **entry
+  point** is the hook that works: `gui-78-probe.cjs` hooks and then `require`s
+  `out/main/index.js`.
+- **In a background/headless session the app's window never paints with GPU
+  compositing on.** No `ready-to-show`, `isVisible()` false after 20s. Add
+  `--disable-gpu` — but know it flattens acrylic, so no material can be judged
+  visually in that run.
+- **`ready-to-show` fires on the first paint of the still-EMPTY document.** The
+  window goes on screen 38–61ms before React commits anything, showing a
+  transparent frame (`body` computes `rgba(0, 0, 0, 0)`) — the bare backdrop
+  material. Anything reasoning about "what the window shows at launch" must not
+  assume the UI is in it.
+- **`getZoomFactor()` at window construction reads 1.0 even on a warm profile**,
+  because the persisted zoom is restored at document commit. A premise check on
+  it can never fail; read the first **painted** frame's `devicePixelRatio`
+  instead.
 
 **From #77 — true of `gui-51` and of any driver that both changes app state and
 reads a CLI-sourced list:**

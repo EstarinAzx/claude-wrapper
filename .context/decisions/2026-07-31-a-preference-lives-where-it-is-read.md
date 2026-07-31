@@ -19,9 +19,53 @@ If a driver run ever measures the flash as objectionable, the fix is still not a
 
 **Reversibility:** easy — the seam is one IPC channel.
 
+## Amendment (#78, 2026-07-31) — the flash was measured, the gate was declined, and one premise above is false
+
+`gui-78.mjs` ran the measurement this ADR made the fix conditional on. **The
+condition did not fire: no gate was built**, and `src/` is unchanged. Full
+numbers in [[2026-07-31-the-window-is-shown-before-the-app-exists]]; three
+corrections to the text above.
+
+**"every launch paints at 1.0 and reflows to the stored level, for every user"
+is FALSE after the first launch.** Chromium persists the zoom factor per origin
+inside the userData directory and restores it at document commit, so the second
+launch paints its first frame already at 1.25 — `dom-ready` reads
+`getZoomFactor() === 1.25` some 41–44ms before the renderer's `zoom:set` even
+arrives. The zoom reflow is **once per install**. Since this sentence is the
+whole ground for ranking zoom above the material flash, that ranking no longer
+holds either: the material flash is the artifact that actually recurs, and it is
+still one frame.
+
+**"one frame of the constructed default" is the right order of magnitude, and
+that is the point.** Measured: 11–13ms of UI at the pre-zoom layout on a
+first-ever launch, 2–12ms of UI in the Frost palette before `data-theme` lands,
+against a 16.7ms frame — under `--disable-gpu` software compositing, which is
+slower than the shipped path, so these are upper bounds.
+
+**The largest visible component is not a preference.** `ready-to-show` fires on
+the first paint of the still-empty document, so the window is on screen 38–61ms
+before React commits anything. That frame is transparent (`body` computes
+`rgba(0, 0, 0, 0)`), so it is the bare backdrop material rather than a white
+flash.
+
+**"gate `win.show()` on the renderer's first preference push" is not
+implementable as written**, and must not be cited as though it were precise.
+Zoom and backdrop are two separate IPC messages, so "first" is a race between
+them; theme crosses no boundary at all, so no count of preference messages can
+cover it. Building it would mean defining an explicit renderer→main readiness
+signal plus a timeout fallback — a protocol, not a line. That cost is why the
+measurement declined it, exactly as **"Build it only if measured"** intended.
+
+**This does not pre-decide the window-bounds ticket (#79).** Bounds add a
+window-manager move and resize at the same 38–55ms mark, on an already-visible
+window — a different class of artifact from a CSS reflow. Re-run `gui-78.mjs`
+with bounds applied and decide on those numbers.
+
 ## Related
 
 - [[decisions]]
+- [[2026-07-31-the-window-is-shown-before-the-app-exists]] — #78, the measurement
+  that amends this file and declined its conditional fix
 - [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] — the panel this serves
 - [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] — the preference that raised the question
 - [[2026-07-30-a-diff-without-a-baseline-is-worse-than-none]] — the same refusal to price an unmeasured cost
