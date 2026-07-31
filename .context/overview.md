@@ -34,11 +34,16 @@ tags: [context, overview]
   the CLI says it is running, display only).
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
 - `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar).
-  `styles.css` is a **24-line entry file**: Tailwind layer setup plus twelve
-  `@import`s. The rules live in `src/renderer/src/styles/` — `tokens` · `base`
-  (reset + the app-wide scrollbar rule + reduced-motion, global on purpose and
-  never scoped to a component) · `shared` · `titlebar` · `rails` · `appearance` ·
-  `agent-map` · `chat` · `composer` · `tool-card` · `markdown` · `subagent`.
+  `styles.css` is a **26-line entry file**: Tailwind layer setup plus thirteen
+  `@import`s. The rules live in `src/renderer/src/styles/` — `tokens` · `themes`
+  · `base` (reset + the app-wide scrollbar rule + reduced-motion, global on
+  purpose and never scoped to a component) · `shared` · `titlebar` · `rails` ·
+  `appearance` · `agent-map` · `chat` · `composer` · `tool-card` · `markdown` ·
+  `subagent`.
+  `themes` (#70) holds the four palette blocks and MUST stay immediately after
+  `tokens` and before `base` — a theme block landing before the tokens it
+  overrides is the silent restyle the cascade rule exists to prevent, and
+  `tests/theme.test.ts` pins the position.
   `appearance` (#66) sits after `rails` because the Appearance dock JOINS the
   dock-shell groups that file owns (it carries `.agents-dock`) and its one
   override — dropping the inherited resize grip — has to come after them. It
@@ -55,10 +60,13 @@ tags: [context, overview]
   outside `tokens.css` are deliberate — shadows are theme-neutral, danger and
   syntax colours are semantic — while `color-mix(in oklch, var(--mint) N%,
   transparent)` at six sites is already theme-correct and must not be
-  tokenised. Two tests read the stylesheet as raw
-  TEXT (over the whole `styles/` directory), so `.bubble` and `.message-input`
-  must stay ungrouped and no comment may name a scrollbar pseudo-element or
-  contain a closing brace. See
+  tokenised — a `data-theme` block overrides the token they read, so they
+  re-hue for free. **Three** tests now read the stylesheet as raw
+  TEXT (two over the whole `styles/` directory), so `.bubble` and
+  `.message-input` must stay ungrouped and no comment may name a scrollbar
+  pseudo-element or contain a closing brace; the third (`theme.test.ts`) strips
+  comments before parsing, which is why `themes.css` may carry prose the other
+  two could not. See
   [[2026-07-30-the-import-order-is-the-cascade]] and
   [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
   `useChat.ts` stores a tool result **complete** on both write paths

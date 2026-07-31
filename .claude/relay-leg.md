@@ -11,60 +11,55 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31 after leg 5, spec #64)
+## Current queue (updated 2026-07-31 after leg 6, spec #64 CLOSED)
 
-**One ticket left, and it is unblocked.** Spec **#64 — Appearance panel (theme ·
-backdrop · zoom) and session deletion** is published and sliced. Blocking edges
-are wired as native GitHub issue dependencies and verified via
-`issue_dependencies_summary.blocked_by`; **nothing in the batch is blocked.**
+**Spec #64 is delivered and closed.** All six of its tickets landed, one per leg:
+#65 `f0dfc68` · #68 `70c904f` · #66 `a7c0470` · #67 `e16ace6` · #69 `add4e5b` ·
+#70 `1769aa4`.
+
+**One ticket is open, and it is the whole queue:**
 
 | # | Ticket | Blocked by |
 |---|---|---|
-| ~~#65~~ | ~~Retire the stale `gui-45` driver~~ — **closed `f0dfc68`** | — |
-| ~~#68~~ | ~~Delete a session from the rail~~ — **closed `70c904f`** | — |
-| ~~#66~~ | ~~Appearance dock with the zoom control~~ — **closed `a7c0470`** | — |
-| ~~#67~~ | ~~Tokenise the two duplicate colour literals~~ — **closed `e16ace6`** | — |
-| ~~#69~~ | ~~Backdrop control: Acrylic or Mica~~ — **closed `add4e5b`** | — |
-| #70 | Four themes: Frost, Ember, Moss, Slate | — |
+| #71 | `gui-51`'s scrollbar-gutter tolerance is calibrated to the old default zoom | — |
 
-**Take #70 next — it is the last one, and closing it closes spec #64.** After it
-the queue is dry: the next leg's frontier query should return nothing, which is
-the body-signaled stop in step 7.
+**Take #71 next.** It is `ready-for-agent` and `blocked_by: 0`, verified from the
+API. After it the queue is dry unless the owner files something, and that is the
+body-signaled stop in step 7.
 
-**#67 amended the theme ADR, in #70's favour.** Its `color-mix()` premise was
-false — six existing sites already mix `var(--mint)` with `transparent`, so they
-**re-hue for free**. #70 must not tokenise them, must not expect them in the key
-set (still exactly four accent keys), and must not read them as literals #67
-missed.
+**A correction the last leg's note got wrong, kept here as the lesson.** Leg 5
+wrote that closing #70 would leave the queue empty. It did not: #71 was
+`ready-for-agent` and unblocked the whole time, merely outside the batch. **The
+frontier query in step 1 is always the authority — never take a prose sentence
+in this section over the tracker, including this one.**
 
-**#71** (`gui-51`'s gutter tolerance) is open and unblocked but outside the
-chain. Its stated premise is **spent** — it was filed expecting #66 to move the
-default zoom, and #66 did not (still `1.25`). It still stands on the
-pre-existing miscalibration to the old `1.1` default.
+**#71 is a MEASUREMENT ticket, and its own diagnosis is flagged unconfirmed.**
+The driver's ±0.5px tolerance around a 10px gutter was calibrated when
+`DEFAULT_ZOOM` was `1.1`, and `ece7b9c` raised it to `1.25` — but the probe div
+reads exactly `10px` while the two failing elements read `9` and `9.4` and
+disagree with each other, which zoom alone does not explain. Run the decisive
+experiment the ticket names before writing any fix, and **do not widen the
+tolerance until the numbers fit** — that is the move #65 existed to undo.
 
-**All three of the batch's counter-intuitive calls are now spent and in code**,
-so there is nothing left to re-derive or "correct" mid-leg: the delete call
-omits `dir`, the two duplicate colour literals are tokenised, and preferences
-stayed in renderer `localStorage`. Two of the five ADRs were amended after a
-probe measured their stated premise false (#68's Windows handle, #70's
-`color-mix()`); a third was amended to record that its premise **held** (#69's
-runtime-settable `setBackgroundMaterial`, confirmed live). **Read an ADR's
-amendment before citing it.**
+**Four of spec #64's five ADRs now carry an amendment written after a probe
+measured their stated premise.** Two because it was false (#68's Windows handle,
+#70's `color-mix()`), two because it held and is now measured rather than cited
+(#69's `setBackgroundMaterial`, #70's unlayered-beats-layered override, which
+also recorded a limit the ADR had not stated). **Read an ADR's amendment before
+citing it.**
 
-Two traps from the shipped panel that #70's control inherits directly:
+Two traps the shipped Appearance panel imposes on any future control in it:
 
-- **The theme picker cannot use `<input>` or `<select>`** — a dock-wide pin
-  asserts the Appearance panel renders neither. #69's `BackdropChoices` is the
-  worked shape: a `Record<Value, Copy>` mapped over the whitelist, which makes
-  "exactly N options" a type constraint rather than a counted assertion.
+- **No `<input>` and no `<select>`** — a dock-wide pin asserts the panel renders
+  neither. And **no second `role="radio"` group**: #69's pin reads every radio in
+  the panel as a backdrop, which is why #70's picker is a listbox. Read the
+  neighbouring pins before choosing a role.
 - **A preference with both a REPORT and an EFFECT can self-heal in the report
-  while staying broken in the effect.** Both `useZoom` and `useBackdrop` depend
-  on a lazy `useState(readStored)` initialiser; setting that state from an
-  effect instead leaves the display pins green and the real thing wrong. #70's
-  effect is the `data-theme` attribute — pin what crossed the boundary.
-
-The frontier query in step 1 is always the authority; never hand-pick from this
-section if it disagrees with the tracker.
+  while staying broken in the effect — and if the effect is REACTIVE, the
+  obvious pin on the effect self-heals too.** `useZoom`, `useBackdrop` and
+  `useTheme` all depend on a lazy `useState(readStored)` initialiser. For
+  `data-theme` only a pin on the FIRST value written catches the mutation; an
+  after-the-fact `getAttribute` passes.
 
 **When a new batch exists, read its parent spec and every
 `.context/decisions/` entry the tickets name before writing code.** The bodies

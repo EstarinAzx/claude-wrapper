@@ -30,6 +30,36 @@ tags: [context, decision]
 
 `@theme` compiles to `:root, :host` **inside `@layer theme`** (`out/renderer/assets/index-*.css:22-42`); the short aliases sit **unlayered** at `:root` (line 94+, `--mint: var(--color-mint)`). Unlayered normal declarations beat layered ones outright, so a plain `:root[data-theme="…"]` block overrides the defaults with no specificity gymnastics — and because the aliases resolve `var(--color-mint)` at substitution time, **they inherit the override for free and none of them needs touching.**
 
+> **Amended 2026-07-31 on delivery in #70 — the mechanism HELD, measured in a
+> real GPU-on window rather than cited, and it carries one limit worth stating.**
+>
+> `gui-70.mjs` drove all four palettes through the shipped app. The blocks land
+> unlayered in the built CSS, and `#root`'s wash — painted through the SHORT
+> alias `var(--wash)` — moved with every palette (`h210 → h100 → h160 → h270`,
+> lightness and alpha identical). Not one alias was touched, exactly as argued.
+> The driver also proved the stronger claim the ADR only implies: after
+> switching off Frost, **no element anywhere in the window still paints Frost's
+> accent or its wash**.
+>
+> **The limit: "the aliases inherit the override for free" is true because the
+> attribute sits on documentElement, and only there.** `--mint: var(--color-mint)`
+> resolves at `:root`, and descendants inherit the RESULT — so a nested element
+> wearing `data-theme` re-resolves `var(--color-mint)` but NOT `var(--mint)`.
+> Measured: four nested probes reading the alias all painted Frost's mint while
+> the same probes reading the token painted four distinct accents. This is
+> load-bearing, because the panel's four swatches preview themselves by wearing
+> `data-theme` — which is also why the blocks are selected as `[data-theme=…]`
+> rather than `:root[data-theme=…]`, and why the swatch rule reads the token.
+> A swatch switched to the short alias goes silently wrong: four identical
+> swatches, no error, and a picker that previews nothing.
+>
+> Two smaller calls, neither contradicting anything above. **Frost is authored
+> as a block** even though its values equal the defaults, because the key-set
+> test needs something to be structurally equal TO. And the picker is a
+> **listbox, not a radiogroup** like Backdrop: #69's dock-wide pin reads every
+> radio in the panel as a backdrop, so a second radiogroup would have broken it —
+> single-select is what both roles mean, so the pin keeps its meaning.
+
 `themes.css` imports **immediately after `tokens.css` and before `base.css`**. The import order is the cascade ([[2026-07-30-the-import-order-is-the-cascade]]); a theme block landing before the tokens it overrides is exactly the silent restyle that rule exists to prevent. The overview's cascade paragraph goes from eleven imports to twelve.
 
 ## Why dark only

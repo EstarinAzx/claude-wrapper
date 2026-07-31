@@ -7,56 +7,62 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 5 of spec #64's batch: ticket **#69** landed_
-_At commit: `add4e5b` on `main`, pushed. Gate: typecheck clean, build clean, **802 tests green across 55 files** (786 → 802, +1 file)_
-_Driver check: `gui-69` **PASS** in a real GPU-on window, seen red on `main` first. `gui-66` re-run **PASS**. `gui-51` remains the one expected red (#71), byte-identical signature_
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 6: ticket **#70** landed and **spec #64 closed**_
+_At commit: `1769aa4` on `main`, pushed. Gate: typecheck clean, build clean, **823 tests green across 56 files** (802 → 823, +1 file)_
+_Driver check: `gui-70` **PASS** in a real GPU-on window, seen red on `main` first. `gui-51` remains the one expected red (#71), unchanged signature_
 
 ## Current focus
 
-**Spec #64's batch is one ticket from done. #65, #68, #66, #67 and #69 are closed; #70 is the last one, and it is unblocked.**
+**Spec #64 is delivered and closed. `#71` is the only open issue in the tracker.**
 
-The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. The funnel turned that into:
+The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. All four shipped, one ticket per relay leg:
 
-| # | Ticket | Blocked by |
+| # | Ticket | Commit |
 |---|---|---|
-| ~~#65~~ | ~~Retire the stale `gui-45` driver~~ — **closed, `f0dfc68`** | — |
-| ~~#68~~ | ~~Delete a session from the rail~~ — **closed, `70c904f`** | — |
-| ~~#66~~ | ~~Appearance dock with the zoom control~~ — **closed, `a7c0470`** | — |
-| ~~#67~~ | ~~Tokenise the two duplicate colour literals~~ — **closed, `e16ace6`** | — |
-| ~~#69~~ | ~~Backdrop control: Acrylic or Mica~~ — **closed, `add4e5b`** | — |
-| **#70** | Four themes: Frost, Ember, Moss, Slate | — |
+| ~~#65~~ | ~~Retire the stale `gui-45` driver~~ | `f0dfc68` |
+| ~~#68~~ | ~~Delete a session from the rail~~ | `70c904f` |
+| ~~#66~~ | ~~Appearance dock with the zoom control~~ | `a7c0470` |
+| ~~#67~~ | ~~Tokenise the two duplicate colour literals~~ | `e16ace6` |
+| ~~#69~~ | ~~Backdrop control: Acrylic or Mica~~ | `add4e5b` |
+| ~~#70~~ | ~~Four themes: Frost, Ember, Moss, Slate~~ | `1769aa4` |
 
-Five ADRs carry the reasoning and were written **before** the spec. Read [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] before touching #70 — it argues, the spec only summarises — **and read its amendment**, which is load-bearing and in #70's favour.
-
-**All three of the batch's counter-intuitive calls are now spent and in code:** the delete call omits `dir` (pinned by value *and* arity), the two duplicate colour literals are tokenised, and preferences stayed in renderer `localStorage` rather than moving to a main-side store. Nothing is left waiting to be reversed. #70 is the batch's one straightforwardly additive ticket.
+**Four of the batch's five ADRs now carry an amendment written after a probe measured their stated premise** — two because it was false (#68's Windows handle, #70's `color-mix()`), two because it held and is now measured rather than cited (#69's runtime-settable `setBackgroundMaterial`, #70's unlayered-beats-layered override). Read an ADR's amendment before citing it.
 
 ## State
 
-- **In flight:** nothing. No open branches.
-- **Landed this leg:** #69 as `add4e5b` — a Backdrop control (Acrylic default / Mica) in the Appearance panel, `src/shared/backdrop.ts` as the two-string whitelist and trust boundary, `backdrop:set` as a one-way guarded channel, `useBackdrop.ts` storing in renderer `localStorage` and pushing on mount and on change, new rows in `styles/appearance.css` only. `DESIGN.md`'s false neutrals clause rewritten; `PRODUCT.md` untouched. New driver `gui-69.mjs`.
-- **Queue (`ready-for-agent`):** **two open** — **#70** (the last batch ticket) and **#71** (unblocked, standalone, outside the chain). Verified via `issue_dependencies_summary.blocked_by`.
+- **In flight:** nothing. No open branches. `main` = `1769aa4` + this leg's `.context` commit, pushed.
+- **Landed this leg:** #70 as `1769aa4` — a Theme control (Frost default / Ember / Moss / Slate) at the top of the Appearance panel, `src/shared/theme.ts` as the four-string whitelist, `useTheme.ts` storing in renderer `localStorage` (unversioned `theme` key) and applying `data-theme` to `documentElement`, four 18-key blocks in the new `styles/themes.css` (13th import, after `tokens` and before `base`), a swatch per row previewing its own palette. **Zero IPC.** `tests/theme.test.ts` is the suite's third raw-text CSS reader. New driver `gui-70.mjs`. `DESIGN.md` gained a themeable clause.
+- **Queue (`ready-for-agent`):** **one open — #71**, unblocked (`issue_dependencies_summary.blocked_by: 0`).
 - **Blocked:** nothing.
-- **Open:** #64 (the spec, stays open until #70 closes), #70, #71.
+- **Open:** #71 only.
 
 ## Pick up here
 
-**Take #70 (Four themes) — it is the last ticket in the batch, and closing it closes spec #64.**
+**Take #71 — `gui-51`'s scrollbar-gutter tolerance.** It is the only open issue, `ready-for-agent`, unblocked, and the last standing red in the driver set: `model menu gutter 9.4px | .session-groups gutter 9px`.
 
-**#71 is not in that chain** and blocks nothing. Its premise is overtaken: it was filed expecting #66 to move the default zoom, and #66 did not (still `1.25`). `gui-51`'s tolerance is still calibrated to the old `1.1` default, so the ticket stands on the pre-existing miscalibration alone.
+Its **stated premise is spent and the ticket says so itself**: it was filed expecting #66 to move the default zoom, and #66 did not (still `1.25`). What remains is the pre-existing miscalibration — the driver's ±0.5px tolerance around a 10px gutter was written when `DEFAULT_ZOOM` was `1.1`, and `ece7b9c` raised it. The ticket is explicit that **this is a hypothesis, not a cause**: the probe div reads exactly `10px` while the two zoomed elements read `9` and `9.4` and disagree with each other, which zoom alone does not explain. **Run the decisive experiment first** (set `zoom-level-v2` to `1.1` before the rail mounts, re-run `gui-51`) and record the result before writing a fix.
+
+The real decision the ticket asks for: whether the **driver's expectation** should be zoom-aware, or whether the **CSS** should hold a true 10px gutter under zoom. **Do not widen the tolerance until the numbers fit** — that is the move #65 existed to undo. And whatever ships must still fail if the global scrollbar rule is actually removed (mutate `base.css` to check), plus remove the standing-red note from `pick-up.md` and from "Known issues" below.
 
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
 ## Open questions
 
 - **Should the rail filter out `sdk-cli` sessions?** The listing fix admits **112** rows to surface the **37** this app wrote; the other 75 are headless automation, ~20 of them this repo's own GUI drivers titled "say OK" / "reply with exactly: PONG". Accepted deliberately, but it is worst exactly where the owner looks first. The blocker is that `SDKSessionInfo` exposes no `entrypoint` / `origin` / `sessionKind` — the deciding field is read from disk and discarded — so filtering means either re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or `tagSession` on every session this app creates, which is prospective only and would not reach the 37 already written. **#68 was explicitly NOT the answer to this**, and shipped saying so.
-- **Should Tailwind stay at all?** Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. **#70 deliberately does not bundle this.**
+- **Should Tailwind stay at all?** Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. **#70 deliberately did not bundle this, and nothing now blocks it** — the theme override is indifferent to whether the defaults come from `@theme` or a plain `:root` block, though a move would have to keep the theme blocks unlayered or they stop winning.
 - **The titlebar is crowded** — app name + session title + two pills + **three** dock buttons + window controls, each button eating drag region. Flagged for an impeccable pass, deliberately out of scope for the batch.
-- **Should the Appearance panel's two control shapes converge?** #69 introduced `.appearance-field--stacked` beside #66's label-left/control-right row, because an option carrying a sentence of trade cannot sit beside its label in a fixed-width panel. #70's theme picker is a third case (four options, no descriptions). Whether those become one component is a #70 call, not a defect.
+- **Partly answered by #70, and worth a look if a fourth control lands.** The theme picker reused `.appearance-field--stacked` and `.appearance-choice` with one `--theme` modifier (row instead of column, name + swatch), and the two arrow-key handlers were folded into a shared `nextInRing` helper. What did **not** converge is the ARIA role — Backdrop is a radiogroup and Theme a listbox, forced apart by #69's pin, so a single `<PickOne>` component would have to take the role as a prop. Not worth it for two call sites.
 - **Should `rails.css:325` read `var(--mint)` like every other component site?** It reads `var(--color-mint)` — the one long-name reference in component CSS. Themes correctly either way; a naming inconsistency, not a bug.
 - One deferred owner decision from #58's Out of Scope: whether an honest Write diff is wanted at permission time only, or also after an auto-run and in replay. Still open.
 
 ## Recent context
 
+- **The obvious pin for a self-healing preference can ITSELF self-heal, and #70 is the case that proves it.** #69's lesson was "pin what crossed the boundary, not what the panel says". #70's boundary is `data-theme` on `documentElement` — and that pin **greens under the exact mutation it exists to catch**, because the attribute is *reactive*: an effect-set initial state paints Frost and settles on the stored palette a render later, so every after-the-fact assertion passes. Verified: swapping the lazy initialiser left all 36 assertions green. What separates the two is the **first value written**, so the pin watches that, via a `MutationObserver` recording `oldValue` **per record**. Reading the attribute inside the callback fails too — several writes coalesce into one callback and the settled value is all you see. **Generalise as: when the effect is idempotent and reactive, only its HISTORY distinguishes right from late.**
+- **A pin written for one control can force the next one onto a different ARIA role.** #66's dock-wide "no input, no select" already constrained #69 into a radiogroup of buttons. #69's own pin — "every radio in this panel is a backdrop" — then constrained #70 out of `role="radio"` entirely: a second radiogroup would have reddened two #69 assertions. The theme picker shipped as a **listbox**, which means the same thing for single-select and leaves both pins meaning what they said. **Read the neighbouring pins before choosing a role, not after.**
+- **A custom-property alias resolves ONCE, where it is declared.** `--mint: var(--color-mint)` is computed at `:root`; descendants inherit the *result*. So a nested element wearing `data-theme` re-resolves `var(--color-mint)` but **not** `var(--mint)`. Measured with four nested probes: the alias painted Frost's mint under all four palettes while the token painted four distinct accents. The whole-window re-hue is unaffected (the attribute is on `documentElement`, which *is* `:root`), but anything nested that wants a *different* palette must read the long name.
+- **A self-previewing control removes a whole class of drift.** The four theme swatches carry `data-theme` and read `var(--color-mint)`, so `themes.css` paints them — no palette colour is repeated in `appearance.css`, and there is nothing to fall out of sync when a hue is tuned. The failure mode it replaces is silent: hardcoded swatches keep rendering, just wrong.
+- **"Nothing is left behind" is a measurable claim, and it is the strongest one a theme feature can make.** `gui-70` records Frost's accent and its 10% wash, switches palette, then scans every element's computed `color` / `background` / `border` / `fill` for either — excluding elements that deliberately opted into another palette. That single check subsumes "did you miss a literal", "did an alias fail to follow" and "did a `color-mix` site resolve stale".
+- **A structural test earns its keep by what it does NOT fire on.** `theme.test.ts` reddens on a deleted declaration, a moved lightness, a moved neutral chroma, an out-of-band accent chroma, a hue collision, a typo'd key and a moved import — and stays green on a re-tint, which is the condition that stops it being retired the first time someone adjusts a hue. It also stays red when the deleted declaration is left behind **inside a comment**, which is the comment-stripping requirement verified rather than asserted.
 - **A self-healing display hides a push that never happened, and only a pin on the EFFECT catches it.** #69's sharpest mutation: replacing `useBackdrop`'s lazy `useState(readStored)` with an effect-set initial state kills exactly **one** assertion — the one asserting what reached main. Every display-facing pin stays green, because the effect corrects the panel a tick later; the window meanwhile wears the constructed default while the panel reports the stored choice. This is #66's `useZoom` trap generalised: **when a preference has both a report and an effect, the report can self-heal and the effect cannot**, so the pin must be on what crossed the boundary. Worth carrying into #70, whose "effect" is a `data-theme` attribute rather than an IPC call — same shape, same blind spot.
 - **A trust boundary must compare, never coerce.** `normalizeBackdrop` checks membership on the raw value. A `String(value)` boundary is the natural-looking version and admits any object with a convenient `toString`; there is a test named for exactly that, and it dies when the coercion is added back. `clampZoom`'s `Number()` is not the same thing — a numeric clamp has a defined answer for garbage, a string whitelist does not.
 - **Instrumenting the far side of a boundary is what separates "called" from "applied".** The vitest suite can only observe that a preload function was invoked. `gui-69` patches `setBackgroundMaterial` **in main**, which is what turns "the renderer tried" into "the window was told", and the same trick proves the *absence* of a rebuild: window id `1` before and after. Reusable for any main-affecting preference.
@@ -73,6 +79,16 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
+
+**From #70 — now true of the theme path in code:**
+
+- **`useTheme`'s lazy `useState(readStored)` initialiser is load-bearing, and the OBVIOUS pin does not catch breaking it.** Only `tests/appearance-dock.test.tsx`'s MutationObserver pin ("the default is never applied first") dies; every attribute assertion self-heals. Do not simplify that test into a plain `getAttribute` check, and do not read the attribute inside the observer callback — writes coalesce.
+- **The theme picker is a LISTBOX, not a radiogroup, and it has to be.** #69's pin reads every `role="radio"` in the Appearance panel as a backdrop (`r.dataset.backdrop`), so a second radiogroup in that panel reddens it. Any future pick-one control in this panel faces the same constraint, on top of #66's dock-wide "no `input`, no `select`".
+- **`themes.css` blocks are selected as `[data-theme=…]`, deliberately without `:root`.** The bare form also matches nested elements, which is what lets the four swatches preview themselves. Adding `:root` back silently kills the preview — four identical swatches, nothing red.
+- **A nested `data-theme` opt-in must read `var(--color-mint)`, never `var(--mint)`.** The short alias resolved once at `:root`. `.appearance-swatch` is the one rule in the app that depends on this; "tidying" it onto the alias is a silent regression.
+- **Frost is authored as a block even though its values equal the defaults.** It is the structural reference the key-set and lightness pins compare against. Deleting it as redundant guts three tests.
+- **The theme file's rules are pinned STRUCTURALLY — do not hand-tune a value past them.** Lightness and alpha are fixed on every key, neutral chroma is fixed, accent chroma lives in `0.05`–`0.09`, and the four hues must stay distinct. `tests/theme.test.ts` strips comments first, so prose in `themes.css` is safe (unlike the other two raw-text readers).
+- **`data-theme` outlives `cleanup()` in jsdom.** `tests/appearance-dock.test.tsx` removes it in `beforeEach`; a new test file touching themes needs the same line or it inherits the previous file's palette.
 
 **From #69 — now true of the backdrop path in code:**
 
@@ -98,12 +114,12 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A dock member must go in the `openDock` UNION, never another boolean.** Pinned against both siblings in both directions.
 - **`@testing-library/jest-dom` is NOT installed.** Assert DOM properties directly (`el.disabled`).
 
-**From #64's design pass — traps still ahead in #70:**
+**From #64's design pass — all spent in code now, and true of it:**
 
-- **`themes.css` will be the THIRD raw-text CSS reader in the suite**, joining `tests/scrollbar.test.ts` and `tests/multiline-composer.test.tsx`. Both have gone red on prose. The theme file will *want* comments explaining each hue, and a naive `--color-\w+:` regex counts a commented-out declaration happily. **Strip comments before parsing.** #67 and #69 both deliberately declined to add a fourth.
-- **`themes.css` imports immediately after `tokens.css` and before `base.css`** — thirteenth import. A theme block landing before the tokens it overrides is the silent restyle the cascade rule exists to prevent.
-- **`--color-mint-ink` follows the hue but keeps its lightness AND its chroma**; neutrals move by hue angle only. Only `--color-mint` / `--color-mint-press` may move chroma, within `0.05`–`0.09`.
-- **No test can say whether a theme looks good**, and a driver screenshot cannot judge the backdrop at all. Real window or nothing.
+- **`tests/theme.test.ts` IS the third raw-text CSS reader**, joining `tests/scrollbar.test.ts` and `tests/multiline-composer.test.tsx`. It is the only one of the three that strips comments before parsing — verified by deleting a declaration and leaving it behind commented out, which still reddens.
+- **`themes.css` imports immediately after `tokens.css` and before `base.css`** — thirteenth import, and the position is pinned. A theme block landing before the tokens it overrides is the silent restyle the cascade rule exists to prevent; a `themes.css` that is never imported at all leaves every disk-reading pin green while the feature does nothing.
+- **`--color-mint-ink` follows the hue but keeps its lightness AND its chroma**; neutrals move by hue angle only. Only `--color-mint`, `--color-mint-press` and `--color-mint-wash` may move chroma, within `0.05`–`0.09`.
+- **No test can say whether a theme looks good**, and a driver screenshot cannot judge the backdrop at all. Real window or nothing. All four palettes were eyeballed by hand at `1769aa4`.
 - **The IPC rule is spent for this batch.** #68 and #69 took both new channels; theme and zoom are renderer-only and fire it zero times.
 
 **From #68 — true of the delete path:**
@@ -132,7 +148,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - **A persisted preference silently outranks the default it was seeded from.**
 - **`sed -i` rewrites a whole file to LF.** Use the `Edit` tool for mutations, or re-normalise afterwards.
 - **A script importing a project dependency must live under the project tree.**
-- **The `@import` order in `styles.css` IS the cascade, and breaking it is silent.** `tokens` → `base` → `shared` must stay first. **Twelve** lines today, thirteen after #70.
+- **The `@import` order in `styles.css` IS the cascade, and breaking it is silent.** `tokens` → `themes` → `base` → `shared` must stay first, **thirteen** lines today. The first three are pinned by `tests/theme.test.ts`; the rest are not.
 - **A new rule goes in the file that owns its surface, never in the entry.**
 - **`tests/scrollbar.test.ts` scans EVERY LINE containing a scrollbar pseudo-element, comments included.**
 - **`tests/multiline-composer.test.tsx` slices raw CSS between literal braces.** `.bubble` and `.message-input` must stay **ungrouped**.
@@ -204,9 +220,9 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 **Deferred by #64, with reasons on record:** literal **persistent acrylic** via a native window-composition dependency ([[2026-07-23-persistent-glass-deferred]] stays live for it); a **light theme**; **re-hueing the danger shades or the three syntax-highlight colours**; **bulk delete / clear-all / archive / rename / undo / trash** for sessions; **gating `win.show()` on the first preference push** (only if a driver measures the launch artifact as objectionable — #69 did not measure it); a **resize grip or persisted width** for the Appearance dock; **refactoring the titlebar's four dock props** into a generic pair; **reducing the titlebar's control count**; **re-tuning the neutral palette per backdrop**; **migrating the four existing preference keys** to any new storage.
 
-**Newly noted by #69:** whether the panel's two control-row shapes (`.appearance-field` and `.appearance-field--stacked`) should converge once #70 adds a third; and **arrow-key selection in the Backdrop radiogroup is implemented, but no other radiogroup exists yet to share it with** — extract only when #70 makes it a second copy.
+**Newly noted by #70:** whether a fifth palette is ever wanted (the whitelist, the `Record<Theme, string>` copy map and the key-set test all make it a three-line change, deliberately); and whether `--color-mint*` should be renamed now that mint is one palette of four rather than the only one — cosmetic, and a rename touches every component site.
 
-**Noted by #67:** renaming `rails.css:325`'s `var(--color-mint)` to the short alias every other component site uses — cosmetic, themes correctly either way.
+**Noted by #67, now with a caveat:** renaming `rails.css:325`'s `var(--color-mint)` to the short alias every other component site uses. Still cosmetic **at that site** (it is not nested under a `data-theme` opt-in) — but #70 established that the long name and the alias are **not** interchangeable inside one, so this is no longer a pure find-and-replace class of change.
 
 **Carried, still unspec'd:** filter or de-noise the `sdk-cli` rows (**#68 is explicitly not the answer**); revisit the scope-chip control for contrast; give `.command-row-btn` its `font: inherit`; decide whether tint steps 1 and 2 should collapse; decide Tailwind's fate.
 
@@ -219,7 +235,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
-- [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] — **#70, the last ticket; read its amendment**
+- [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] — **#70, shipped; carries TWO amendments — #67's `color-mix()` correction and #70's own mechanism confirmation plus the alias limit**
 - [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] — **#69, shipped as argued; amended with the live confirmation**
 - [[2026-07-31-a-preference-lives-where-it-is-read]] — **#69 consumed it; the premise held**
 - [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] — #66, shipped as argued

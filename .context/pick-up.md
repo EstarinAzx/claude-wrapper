@@ -7,54 +7,48 @@ tags: [context, pick-up]
 
 # Pick up
 
-Start: read `.context/overview.md` + `active-work.md`. Then read the ADRs listed below **before touching the ticket** — the spec summarises, the ADRs argue. **Three now carry amendments**; read the amendment before citing any of them.
+Start: read `.context/overview.md` + `active-work.md`. **#71 names no ADR** — it is a measurement ticket, not a design one, so there is nothing to read before it beyond the ticket body itself, which is unusually specific and should be followed rather than summarised.
 
 ## What the last leg landed
 
-**#69 closed — `add4e5b`.** The Appearance panel has a **Backdrop** control: Acrylic (default and identity) and Mica, as a `role="radiogroup"` of buttons with roving tabindex. `src/shared/backdrop.ts` holds the two-string whitelist and `normalizeBackdrop`, which is the trust boundary main reuses before `win.setBackgroundMaterial`; `backdrop:set` is one-way and `isTrustedIpc`-guarded, registered at all four mock sites plus `preload/index.d.ts`. `useBackdrop.ts` stores the choice in renderer `localStorage` (unversioned `backdrop` key) and pushes it on mount and on change.
+**#70 closed — `1769aa4`. Spec #64 is delivered and closed with it.** The Appearance panel gained a **Theme** control: Frost (default), Ember, Moss, Slate, as a `role="listbox"` of buttons with roving tabindex and a swatch per row. `src/shared/theme.ts` holds the four-string whitelist and `normalizeTheme`; `useTheme.ts` reads storage in a lazy `useState` initialiser and applies `data-theme` to `documentElement`. **Theme fires no IPC.** `src/renderer/src/styles/themes.css` (new, 13th import, after `tokens` and before `base`) holds four unlayered 18-key blocks.
 
-**Verified in a real GPU-on window** (`gui-69.mjs`, seen red on `main` first): `setBackgroundMaterial` was called **on the window** with only whitelisted values, the **window id did not change** (applies live, no rebuild), and a **real second process** read the choice back and re-pushed it. `DESIGN.md`'s false neutrals clause was rewritten, not deleted; `PRODUCT.md` untouched; **no neutral moved** (`tokens.css` is not in the diff).
+**Verified in a real GPU-on window** (`gui-70.mjs`, seen red on `main` first): four distinct swatch paints, all four palettes painting the window differently pairwise, the neutrals moving through the untouched `var(--wash)` alias, **nothing left painting Frost's accent after switching away**, and the choice surviving a real restart. All four were eyeballed by hand — no test says whether a palette looks good.
 
-Gate green — typecheck, build, **802 tests across 55 files** (786 → 802). `gui-66` re-run PASS. `gui-51` unchanged.
+Gate green — typecheck, build, **823 tests across 56 files** (802 → 823).
 
 ## Next ticket
 
-**#70 — Four themes: Frost, Ember, Moss, Slate.** Open, `ready-for-agent`, `blocked_by: 0`. **It is the last ticket in spec #64's batch — closing it closes the spec.**
+**#71 — `gui-51`'s scrollbar-gutter tolerance is calibrated to the old default zoom.** Open, `ready-for-agent`, `blocked_by: 0`. **It is the only open issue in the tracker.**
 
-**#71 is not in that chain** and blocks nothing.
+The queue after it is dry unless the owner files something. **Do not treat "the batch is done" as "the queue is empty"** — that was the last leg's stated expectation and it was wrong; the frontier query is the authority, and it returns #71.
 
 ## Landmines
 
-Full ledger in [[active-work]]. The ones that will bite #70:
+Full ledger in [[active-work]]. The ones that will bite #71:
 
-- **`color-mix()` is NOT a new mechanism here, and the six existing sites re-hue for FREE.** [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] argued the fourth accent token partly by calling it one. False — `color-mix(in oklch, var(--mint) N%, transparent)` was already in the stylesheet **six times** (6/12/14/20/22/50%). They read `var(--mint)`, so a `:root[data-theme]` override reaches them for nothing. **Do not tokenise them, do not expect them in the key set (still exactly four accent keys), do not read them as literals #67 missed.**
-- **`themes.css` will be the THIRD raw-text CSS reader in the suite.** The other two have already gone red on prose. The theme file will *want* a comment per hue, and a naive `--color-\w+:` regex counts a commented-out declaration happily. **Strip comments before parsing.** #67 and #69 both declined to add a fourth reader; this ticket is where one is actually warranted.
-- **`themes.css` imports immediately after `tokens.css` and before `base.css`** — thirteenth import. A theme block landing before the tokens it overrides is the silent restyle the cascade rule exists to prevent.
-- **The key-set test must be mutation-verified in BOTH directions** — deleting one declaration reddens it, and a value re-tint must **not**. A key-set test that fires on a re-tint gets retired the first time someone adjusts a hue. Name it for what it pins ("every theme declares the same keys"), never "themes are correct".
-- **`--color-mint-ink` follows the hue but keeps its lightness AND its chroma**; neutrals move by **hue angle only** (their chroma is fixed). Only `--color-mint` / `--color-mint-press` may move chroma, within `0.05`–`0.09`.
-- **New controls go in `styles/appearance.css`, beside the Backdrop and Zoom rows.** Do **not** widen a shared dock-shell group to fit a theme picker: that repaints the sessions rail and the agents dock silently, with a suite that loads no CSS.
-- **The theme picker cannot use `<input>` or `<select>`.** A **dock-wide** pin asserts the Appearance panel renders neither. #69's `BackdropChoices` is the worked shape: a `Record<Value, Copy>` mapped over the whitelist, so a value without copy is a type error and copy without a value renders nowhere — which makes "exactly four options" structural rather than a counted assertion. Copy or extract as suits.
-- **A preference that has both a REPORT and an EFFECT can self-heal in the report and stay broken in the effect.** #69's sharpest mutation: an effect-set initial state instead of `useState`'s lazy initialiser leaves every display pin green while the window never hears the stored value. #70's "effect" is the `data-theme` attribute on `documentElement` — same shape. **Pin what crossed the boundary, not what the panel says.**
-- **The panel must stay draft-free.** A pin asserts no button in the dock matches `/save|apply|reset|revert/i`. The theme control commits on change like its two siblings.
-- **Theme is renderer-only — it fires the IPC rule ZERO times.** #68 and #69 spent both of this batch's new channels.
-- **The pref is a four-string whitelist falling back to `frost`.** An unknown stored string sets an attribute matching no block and silently renders the defaults.
-- **`@testing-library/jest-dom` is NOT installed** — `toBeDisabled` / `toBeInTheDocument` fail as `Invalid Chai property`. Assert DOM properties directly.
-- **No test can say whether Ember looks good.** Say so rather than implying coverage. A driver measures computed values; the aesthetic call needs a real window and a human.
-- **A screenshot cannot see the right ~20% of the layout** — every right-hand dock is clipped, re-confirmed by #69's captures. Measure with `getBoundingClientRect`; `gui-66` shows the `setZoom(1)` workaround for a presentational shot.
-- **`gui-51` is the ONE expected driver failure** — `model menu gutter 9.4px | .session-groups gutter 9px`, tracked as #71, re-confirmed after #66, #67 and #69. A second failing driver, or a different signature, is a real regression.
-- Everything from earlier legs still applies — the `@import` order IS the cascade (**twelve** lines today, thirteen after #70), pins are mutation-verified and never "fixed" by editing an expectation, `src/` is CRLF, and never hardcode a model name.
+- **The ticket's own diagnosis is flagged as UNCONFIRMED, by the ticket.** The probe div reads exactly `10px` while the two zoomed elements read `9` and `9.4` **and disagree with each other**, which zoom alone does not explain. **Run the decisive experiment first** — set `zoom-level-v2` to `1.1` before the rail mounts, re-run `gui-51`, record the result. Failing at both zoom levels means the diagnosis is wrong and the ticket needs re-writing, not patching.
+- **Do NOT widen the tolerance until the numbers fit.** That is the exact move #65 existed to undo, and this queue authorises no pin retirement at all.
+- **Whatever ships, `gui-51` must still fail if the global scrollbar rule is actually removed.** Mutate `base.css` to check — a driver that passes with the rule deleted is measuring nothing.
+- **The real question is a design one:** should the *driver's expectation* be zoom-aware (read the applied zoom and scale `EXPECTED_GUTTER`, or measure device pixels), or should the *CSS* hold a true 10px gutter under zoom? That is what #51's one-global-rule contract means under a scaled renderer, and it is why this was never folded into #65.
+- **`#71`'s last acceptance criterion is a documentation edit**: remove the standing-red note from this file and from `active-work.md`'s "Known issues". The note is in both.
+- **`gui-51` is the ONE expected driver failure** and its signature has been byte-identical across #65, #66, #67, #69 and #70. A second failing driver, or a different signature, is a real regression and not this ticket.
+- **`tests/scrollbar.test.ts` scans every line containing a scrollbar pseudo-element, comments included** — it is one of the three raw-text CSS readers, and the one most likely to be touched by a `base.css` edit. It does **not** strip comments (only `tests/theme.test.ts` does).
+- **`--disable-gpu` is fine for `gui-51`** — it measures geometry, not material. Do not "standardise" `gui-69` or `gui-70` onto it, though: that flattens acrylic and photographs neither backdrop.
+- **A screenshot cannot see the right ~20% of the layout** — measure with `getBoundingClientRect`, as this ticket already does.
+- Everything from earlier legs still applies — the `@import` order IS the cascade (**thirteen** lines now, `tokens` → `themes` → `base` pinned), pins are mutation-verified and never "fixed" by editing an expectation, `src/` is CRLF, and never hardcode a model name.
 
 ## Baseline
 
-`main` = `add4e5b` + this leg's `.context` commit. **Pushed.** No open branches. Trust `git log origin/main..main` over any note.
+`main` = `1769aa4` + this leg's `.context` commit. **Pushed.** No open branches. Trust `git log origin/main..main` over any note.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] — **#70, the next and last ticket; #67 delivered its two-literal section and AMENDED its `color-mix()` premise**
-- [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] — #69, shipped as argued and amended with the live confirmation
-- [[2026-07-31-a-preference-lives-where-it-is-read]] — #69 consumed it; the runtime-settable premise held
-- [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] — #66, the panel #70's control joins
+- [[2026-07-28-a-scrollbar-belongs-to-the-surface-not-the-component]] — **#51, the contract #71 is really asking about**
+- [[2026-07-31-a-driver-establishes-its-premise]] — #65's outcome, and why widening a tolerance is the wrong fix
+- [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] — #70, shipped; two amendments
+- [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] — #69, shipped as argued
+- [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] — #66, the panel all three controls live in
 - [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — #68, amended with the probe result
-- [[2026-07-31-a-driver-establishes-its-premise]] — #65's outcome, and the rule the driver set now follows
-- [[2026-07-30-the-import-order-is-the-cascade]] — why `themes.css` imports before `base.css`
+- [[2026-07-30-the-import-order-is-the-cascade]] — why `themes.css` sits where it does
