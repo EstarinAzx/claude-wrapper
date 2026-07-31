@@ -11,44 +11,39 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31, spec #64)
+## Current queue (updated 2026-07-31 after leg 2, spec #64)
 
-**Six tickets, four unblocked.** Spec **#64 — Appearance panel (theme ·
+**Four tickets left, two unblocked.** Spec **#64 — Appearance panel (theme ·
 backdrop · zoom) and session deletion** is published and sliced. Blocking edges
 are wired as native GitHub issue dependencies and verified via
 `issue_dependencies_summary.blocked_by`.
 
 | # | Ticket | Blocked by |
 |---|---|---|
-| #65 | Retire the stale `gui-45` driver so the batch has a usable gate | — |
+| ~~#65~~ | ~~Retire the stale `gui-45` driver~~ — **closed `f0dfc68`** | — |
+| ~~#68~~ | ~~Delete a session from the rail~~ — **closed `70c904f`** | — |
 | #66 | Appearance dock with the zoom control | — |
 | #67 | Tokenise the two duplicate colour literals | — |
-| #68 | Delete a session from the rail | — |
 | #69 | Backdrop control: Acrylic or Mica | #66 |
 | #70 | Four themes: Frost, Ember, Moss, Slate | #66, #67 |
 
-**Take #65 first**, ahead of the frontier query's default ordering. It is not
-part of the feature: `gui-45.mjs` is red on `main` today (it asserts the pre-#47
-foreign-row-disabled rule that #47 deliberately reversed), and while it stays
-red, "drivers green" is not a usable gate for any other ticket in this batch and
-every driver run is ambiguous.
+**Take #66 next.** It is the batch's hinge — #69 and #70 are both blocked on it,
+so nothing else moves until it lands. Then #67 → #69 → #70.
 
-**Then #68 (delete), ahead of #66/#67** — not for freshness, but because it is
-the only ticket whose **scope is not yet known**. It opens with a probe of
-Windows open-handle behaviour against a real store; if the handle is held beyond
-the turn, the busy gate widens from "the active row while busy" to "the active
-row, always", which is a different feature with a different empty-state story.
-Do the ticket with an unresolved scope while there is room to react.
+**#71** (`gui-51`'s gutter tolerance) is open and unblocked but outside the
+chain. It blocks no feature work, but #66 moves the zoom its measurement depends
+on, so do it before or alongside #66 rather than after the batch.
 
-Then #66 → #67 → #69 → #70.
+One decision in this batch is **counter-intuitive and already settled** — do not
+re-derive it, and do not "correct" it mid-leg: preferences stay in renderer
+`localStorage` (the main-side store rested on a premise that is false —
+`setBackgroundMaterial` is runtime-settable). Argued in full in
+`.context/decisions/2026-07-31-a-preference-lives-where-it-is-read.md`.
 
-Two decisions in this batch are **counter-intuitive and already settled** — do
-not re-derive them, and do not "correct" them mid-leg. Preferences stay in
-renderer `localStorage` (the main-side store rested on a premise that is false:
-`setBackgroundMaterial` is runtime-settable). The delete call **omits its `dir`
-argument** (passing it opts into the SDK's realpath→encode branch, measured
-failing on 45 of 494 sessions). Both are argued in full in
-`.context/decisions/2026-07-31-*`.
+#68's own counter-intuitive decision (the delete call omitting `dir`) is now
+shipped and pinned in code, and its ADR was **amended** after the probe measured
+its stated premise false — Windows holds no delete-blocking handle on a
+transcript. Read the amendment before citing that ADR for anything.
 
 The frontier query in step 1 is always the authority; never hand-pick from this
 section if it disagrees with the tracker.
