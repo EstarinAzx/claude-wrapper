@@ -7,13 +7,17 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 7: ticket **#71** landed; **the tracker is empty**_
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — **vibe run while the owner slept: #72 filed, four calls deferred to them**_
 _At commit: `b6e8911` on `main`, pushed. Gate: typecheck clean, build clean, **823 tests green across 56 files** (unchanged — #71 touched no source)_
 _Driver check: `gui-51` **PASS**, and PASS at zoom 1.0 / 1.1 / 1.25 / 1.5. **The driver set has no standing red for the first time in this batch.**_
 
 ## Current focus
 
-**Nothing is in flight and the tracker has zero open issues.** Spec #64 is delivered and closed; #71, the last standalone, closed with it.
+**#72 is queued `ready-for-agent` — the titlebar's session title cannot truncate and overlaps its neighbours.** Filed by an autonomous `/preset vibe` run against the two long-deferred candidates (Tailwind's fate, the crowded titlebar) while the owner was away. See `.claude/vibe.md` for the full decision record, the warrants, and the four calls parked for the owner.
+
+**What the run actually found:** the crowding complaint's stated rationale — "each button eating drag region" — is **measured and false**. The titlebar's no-drag width is constant at 344.3css and does not grow with content; the draggable share falls 73.1% → 50% only because the window shrinks around it, and the widest uninterrupted grab strip is still 182css at the narrowest width tested. What the probe found instead was an unrelated real defect: `.session-title` is an inline span with `white-space: nowrap` and no `max-width` / `overflow` / `text-overflow`, inside a `.titlebar-center` that is `position: absolute` and therefore out of flow. It cannot truncate, so a long folder name grows symmetrically from centre and slides under the pills and dock buttons — at a 688css page a **21-character** name already collides. It is the only title-ish element in the app absent from the 13-selector truncation triad in `shared.css`.
+
+Spec #64 is delivered and closed; #71, the last standalone, closed with it.
 
 The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. All four shipped, one ticket per relay leg, plus the two driver-hygiene tickets that bracketed the batch:
 
@@ -31,15 +35,18 @@ The owner asked for four things — a delete-sessions button, a settings surface
 
 ## State
 
-- **In flight:** nothing. No open branches. `main` = `b6e8911` + this leg's `.context` commit, pushed.
+- **In flight:** nothing yet. No open branches. `main` = `bbe91ee` + this run's `.context` commit.
+- **Queue (`ready-for-agent`):** **#72** — the session title truncation defect. Fully specified, CSS-only, no JSX or class-name change, acceptance criteria and a red-first driver requirement written into the ticket body.
+- **Parked for the owner (4, all reversible):** Tailwind's fate · which titlebar buttons leave · whether the three dock toggles collapse · #72's centring trade-off. Full entries with the default taken and the alternative in `.claude/vibe.md` under `## Needs you`.
 - **Landed this leg:** #71 as `b6e8911` — **driver-only; no source or CSS change.** `gui-51.mjs` now measures the scrollbar gutter against `10 × devicePixelRatio` in **device pixels** instead of a ±0.5 CSS-pixel window, and measures the content box exactly (a `width:100%` shim's rect) instead of `offsetWidth - clientWidth`, which rounds both operands.
-- **Queue (`ready-for-agent`):** **empty.** `gh issue list --state open` returns `[]` — no leftovers stuck `ready-for-human`, none blocked, none unlabelled.
 - **Blocked:** nothing.
-- **Open:** nothing.
+- **Open:** #72 only.
 
 ## Pick up here
 
-**No active work — the queue is empty, so pick a new task or wait for the owner to file one.** The relay chain stopped itself here rather than spawning a leg with nothing to do.
+**#72 is the frontier.** It is CSS-only, fully specified, and carries its own acceptance criteria — including that the driver must be shown **red against current `main`** before it is believed green after the fix (#65's rule), and that no test expectation may be edited, because the pin-retirement allowance is spent.
+
+**Do not decide the four parked calls in `.claude/vibe.md`.** They are the owner's, and #72's Out of Scope section says so explicitly.
 
 If the owner brings a new want, the route is `/preset init` → `/hp` MVD → `to-spec` → `to-tickets`, then a fresh `/relay N=1 read and follow .claude/relay-leg.md` chain over the resulting batch. `.claude/relay-leg.md`'s "Current queue" section is now stale by construction and its own text says to trust the frontier query over it.
 
@@ -50,7 +57,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Open questions
 
 - **Should the rail filter out `sdk-cli` sessions?** The listing fix admits **112** rows to surface the **37** this app wrote; the other 75 are headless automation, ~20 of them this repo's own GUI drivers titled "say OK" / "reply with exactly: PONG". Accepted deliberately, but it is worst exactly where the owner looks first. The blocker is that `SDKSessionInfo` exposes no `entrypoint` / `origin` / `sessionKind` — the deciding field is read from disk and discarded — so filtering means either re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or `tagSession` on every session this app creates, which is prospective only and would not reach the 37 already written. **#68 was explicitly NOT the answer to this**, and shipped saying so.
-- **Should Tailwind stay at all?** Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. **#70 deliberately did not bundle this, and nothing now blocks it** — the theme override is indifferent to whether the defaults come from `@theme` or a plain `:root` block, though a move would have to keep the theme blocks unlayered or they stop winning.
+- **Should Tailwind stay at all?** Nothing in the app uses a utility class — eight specs after [[2026-07-23-tailwind4-tokens]] promised "new/evolving UI uses utilities," it has never happened. Either adopt utilities deliberately for new UI, or drop two devDependencies and the vite plugin and inline `@theme` into `:root`. **#70 deliberately did not bundle this, and nothing now blocks it** — the theme override is indifferent to whether the defaults come from `@theme` or a plain `:root` block, though a move would have to keep the theme blocks unlayered or they stop winning. **Amended 2026-07-31 (vibe run, cross-model pressure): "keep them unlayered" is necessary but NOT sufficient, and the sentence above understates what a drop changes.** Today the defaults compile into `@layer theme` while the `[data-theme=…]` blocks are unlayered, so unlayered-beats-layered makes the override win *regardless of import order*. Drop Tailwind and the defaults become a plain `:root` block — at which point `:root` and `[data-theme="ember"]` are **both unlayered and both specificity (0,1,0)**, so source order becomes the only thing deciding, and the guarantee degrades from order-proof to order-dependent. It still works, because `tests/theme.test.ts` already pins the import position (it reddens on a moved import) — but that pin stops being a tidiness check and silently becomes the whole safety argument. Whoever does the drop must know that before they do it.
 - **The titlebar is crowded** — app name + session title + two pills + **three** dock buttons + window controls, each button eating drag region. Flagged for an impeccable pass, deliberately out of scope for the batch.
 - **Partly answered by #70, and worth a look if a fourth control lands.** The theme picker reused `.appearance-field--stacked` and `.appearance-choice` with one `--theme` modifier (row instead of column, name + swatch), and the two arrow-key handlers were folded into a shared `nextInRing` helper. What did **not** converge is the ARIA role — Backdrop is a radiogroup and Theme a listbox, forced apart by #69's pin, so a single `<PickOne>` component would have to take the role as a prop. Not worth it for two call sites.
 - **Should `rails.css:325` read `var(--mint)` like every other component site?** It reads `var(--color-mint)` — the one long-name reference in component CSS. Themes correctly either way; a naming inconsistency, not a bug.

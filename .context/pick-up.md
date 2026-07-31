@@ -23,15 +23,15 @@ Gate green — typecheck, build, **823 tests across 56 files** (unchanged; no so
 
 ## Next ticket
 
-**None. The queue is empty — `gh issue list --state open` returns `[]`.**
+**#72 — the session title cannot truncate and overlaps the pills and dock buttons.** `ready-for-agent`, CSS-only, ~6 lines in `styles/titlebar.css`. No JSX, no class name, no aria-label changes.
 
-Zero open issues: nothing `ready-for-agent`, nothing stuck `ready-for-human`, nothing blocked, and the old unlabelled umbrella #1 is closed too. **Spec #64 is delivered and closed**, and #71 was the last standalone. The relay chain stopped itself here rather than spawning a leg with no work.
+Filed by an autonomous `/preset vibe` run against the two candidates the last leg listed (Tailwind's fate, the crowded titlebar), with the owner asleep. The full record — every question, which agent answered it, the grepped warrant, and the cross-model verdict — is in **`.claude/vibe.md`**. Read it before touching either topic.
 
-**This is the one claim in this file worth re-checking rather than trusting** — the previous leg's prediction that the queue would be dry was wrong, because #71 was `ready-for-agent` and outside the batch the whole time. Re-run the frontier query; it is the authority over this sentence, exactly as it was over that one.
+**The run falsified half the premise it was given.** "Each button eating drag region" is measured and **false**: the titlebar's no-drag width is constant at 344.3css, and the widest uninterrupted grab strip is still 182css at the narrowest width tested. The defect it found instead is unrelated to crowding — `.session-title` is an inline span with `nowrap` and no `max-width`/`overflow`/`text-overflow`, inside an out-of-flow `position: absolute` centre. Collision thresholds by page width: 1280css → 111 chars · 1024css → 72 · 819css → 41 · **688css → 21**.
 
-If the owner brings a new want: `/preset init` → `/hp` MVD → `to-spec` → `to-tickets`, then a fresh `/relay N=1 read and follow .claude/relay-leg.md` chain. **`.claude/relay-leg.md`'s "Current queue" section is now stale by construction** — it still describes #71 as the frontier. Its own text already says never to take a prose sentence there over the tracker.
+**Four calls are parked for the owner and must NOT be decided by an agent** — Tailwind's fate, which buttons leave, whether the three dock toggles collapse, and #72's centring trade-off. Each is listed in `.claude/vibe.md` under `## Needs you` with the reversible default already taken and the alternative written next to it. #72's Out of Scope section repeats the boundary.
 
-The live candidates, if a direction is wanted: **Tailwind's fate** (nothing in the app uses a utility class, eight specs on) and **the crowded titlebar** (an impeccable pass, deferred through the whole batch). Both are self-contained. Full list under "Open questions" and "Deferred" in [[active-work]].
+Still true: `.claude/relay-leg.md`'s "Current queue" section is stale by construction, and its own text says never to take a prose sentence there over the tracker. Re-run the frontier query — it is the authority over this section.
 
 ## Landmines
 
@@ -48,7 +48,12 @@ Still true from earlier legs: **there is no expected driver failure any more —
 
 ## Baseline
 
-`main` = `b6e8911` + this leg's `.context` commit. **Pushed.** No open branches. Trust `git log origin/main..main` over any note.
+`main` = `bbe91ee` + this run's `.context` commit. No open branches, no source or CSS touched by the vibe run — it filed a ticket and amended the record, nothing more. Trust `git log origin/main..main` over any note.
+
+## Added by the vibe run
+
+- **A record correction, in [[active-work]] under "Should Tailwind stay at all?".** The sentence "the theme override is indifferent to whether the defaults come from `@theme` or a plain `:root` block, though a move would have to keep the theme blocks unlayered" is **incomplete**, and a future Tailwind drop would have leaned on it. Unlayered is necessary but not sufficient: once the defaults are *also* unlayered, `:root` and `[data-theme=…]` are both specificity (0,1,0) and **source order alone decides**. It still works — `tests/theme.test.ts` pins the import position — but the guarantee degrades from order-proof to order-dependent, and that pin quietly becomes the whole safety argument. Raised by the cross-model pressure agent, confirmed against the record, written back as an amendment.
+- **`.session-title` is the only title-ish element absent from the 13-selector truncation triad** in `styles/shared.css`. Put #72's rule in `titlebar.css` (the file that owns the surface) — do **not** widen the shared group, which repaints the sessions rail and agents dock silently against a suite that loads no CSS.
 
 ## Related
 
