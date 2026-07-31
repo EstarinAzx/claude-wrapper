@@ -321,7 +321,7 @@
 
 .session-row-btn-active,
 .session-row-btn-active:hover {
-  background: oklch(0.87 0.07 180 / 0.1);
+  background: var(--mint-wash);
   box-shadow: inset 2px 0 0 0 var(--color-mint);
 }
 

@@ -29,10 +29,16 @@
   --color-tint-6: oklch(0.92 0.01 210 / 0.18);     /* focus ring, pill focus */
   --color-tint-7: oklch(0.92 0.01 210 / 0.2);      /* scrollbar thumb hover */
 
-  /* the one accent: frost mint */
+  /* The one accent: frost mint. FOUR tokens, not three — the wash is authored
+     rather than derived because a theme has to be able to state it. It has a
+     single caller today, which normally means indirection rather than a system
+     (see the danger note below), but the rule it is exempt from is about
+     repetition, and this one earns its name as an override point: it is the
+     value a theme block re-declares. */
   --color-mint: oklch(0.87 0.07 180);
   --color-mint-press: oklch(0.8 0.08 182);
   --color-mint-ink: oklch(0.25 0.02 200);          /* glyphs on mint fills */
+  --color-mint-wash: oklch(0.87 0.07 180 / 0.1);   /* active row ground */
 
   /* Error hue (h≈25), tokenised only where it actually repeats. The one-off
      shades — the close button's red, the diff's deletion band, the failed tool
@@ -81,6 +87,7 @@
   --mint: var(--color-mint);
   --mint-press: var(--color-mint-press);
   --mint-ink: var(--color-mint-ink);
+  --mint-wash: var(--color-mint-wash);
   --danger-line: var(--color-danger-line);
   --danger-fill: var(--color-danger-fill);
   --danger-text: var(--color-danger-text);
