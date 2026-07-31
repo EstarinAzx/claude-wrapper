@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-07-30
+updated: 2026-07-31
 tags: [context, overview]
 ---
 
@@ -94,18 +94,19 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **spec #64
-  sliced into #65–#70, four unblocked**; take #65 first to restore the driver
-  gate, then #68 because its scope is still open)
+- `.context/pick-up.md` — current frontier + landmines (currently: **spec #64's
+  batch draining — #65 closed, take #68 next** because its scope is still open;
+  note `gui-51` is a standing expected driver failure, tracked as #71)
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
   hunk diff); **spec #55 (live-tail) delivered and closed with
   #56 (gui-55 driver, red-verified) and #57 (live-tail core)**; **#52 (model pill follows the CLI),
   #53 (CLI-sourced model list), #54 (no resume before the first turn), #50 and
-  #51 closed**; **spec #64 (Appearance panel + session deletion) OPEN with
-  #65–#70 — the current queue, four unblocked, #69 blocked by #66 and #70 by
-  #66+#67**; spec #41 (Resume anything)
+  #51 closed**; **spec #64 (Appearance panel + session deletion) OPEN — #65
+  closed (`f0dfc68`, driver gate restored), #66/#67/#68 unblocked, #69 blocked
+  by #66 and #70 by #66+#67; #71 open standalone (`gui-51`'s gutter
+  tolerance)**; spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /

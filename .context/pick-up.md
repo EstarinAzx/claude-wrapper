@@ -7,68 +7,46 @@ tags: [context, pick-up]
 
 # Pick up
 
-Start: read `.context/overview.md` + `active-work.md`. Then read the five ADRs listed below **before touching any ticket** — the spec summarises, the ADRs argue.
+Start: read `.context/overview.md` + `active-work.md`. Then read the ADRs listed below **before touching any ticket** — the spec summarises, the ADRs argue.
 
-## The queue is no longer empty
+## What the last leg landed
 
-**Spec #64 is published and sliced into six tickets. Four are unblocked.** No code was written this leg — the whole leg was the `/preset init` funnel: grill → ADRs → MVD → spec → tickets.
+**#65 closed — `f0dfc68`.** The stale `gui-45` driver is retired, and `gui-47` was recovered with it.
 
-| # | Ticket | Blocked by |
-|---|---|---|
-| **#65** | Retire the stale `gui-45` driver so the batch has a usable gate | — |
-| **#66** | Appearance dock with the zoom control | — |
-| **#67** | Tokenise the two duplicate colour literals | — |
-| **#68** | Delete a session from the rail | — |
-| **#69** | Backdrop control: Acrylic or Mica | #66 |
-| **#70** | Four themes: Frost, Ember, Moss, Slate | #66, #67 |
+The ticket named one failure. There were **four**, and only one was #47's doing. The rest — plus a fourth in `gui-47` — came from the rail shipping **scoped to the open project** while neither driver established the cross-project premise it asserts, so both inherited whatever `sidebar-scope` a previous driver had stored. `gui-47` was the expensive one: one red assertion on top of **three of its four sections silently skipped**, leaving the driver that covers #47's whole workspace-switch transaction verifying almost nothing. Both now widen the scope through the real chip; `gui-47` runs a full battery with zero skips.
 
-## Order, and why it is not arbitrary
+**#71 filed.** `gui-51` is red on `main` — pre-existing, unrelated, confirmed by stashing #65's work and re-running on clean `main` for a byte-identical failure.
 
-**#65 first.** It is not part of the feature. `gui-45.mjs` is red on `main` today — it asserts the pre-#47 rule that foreign rows are disabled, and #47 deliberately reversed that. While it stays red, "drivers green" is not a usable gate for anything in the batch and every driver run is ambiguous.
+## Next ticket
 
-**Then #68 (delete), ahead of the rest** — not for freshness, but because it is **the only ticket whose scope is not yet known.** It opens with a probe: does Windows hold the transcript's file handle beyond the turn? If it does, the busy gate widens from "the active row while busy" to "the active row, always" — a different feature with a different empty-state story. Do the ticket with an unresolved scope while there is room to react, not at the end of a batch.
+**#68 — Delete a session from the rail.** Open, `ready-for-agent`, `blocked_by: 0`.
 
-Then **#66 → #67 → #69 → #70**.
+Take it ahead of #66/#67, and not for freshness: it is the only ticket whose **scope is not yet known.** It opens with a probe — does Windows hold the transcript's file handle beyond the turn? If it does, the busy gate widens from "the active row while busy" to "the active row, always", which is a different feature with a different empty-state story. Do the ticket with an unresolved scope while there is room to react, not at the end of a batch.
 
-## What the owner asked for, and what they are getting
+Then **#66 → #67 → #69 → #70**. **#71 is not in that chain** — it blocks no feature work, but #66 moves the zoom its measurement depends on, so it is worth doing before or alongside #66 rather than after the batch.
 
-Four things: a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes.
+## Landmines
 
-**One of them cannot be delivered literally, and the tickets say so.** Persistent *acrylic* needs a native FFI dependency that [[2026-07-23-persistent-glass-deferred]] priced and rejected on grounds that have not changed. What ships is **Mica** — native, always-on, no dependency, but wallpaper-tinted rather than blurring. Persistent without being acrylic. **The word "persistent" is banned from the UI copy and the spec title** so nobody later reads "persistent glass shipped" and expects blur-behind that never flips.
+Full ledger in [[active-work]]. The one that is new, and the one that will bite #68:
 
-## The two reversals — read these before reviewing anything
-
-Both are counter-intuitive, both are already written into the tickets, and both came from a grill that pushed back and turned out to be right.
-
-- **Preferences stay in `localStorage`.** The plan opened wanting a main-side store for the backdrop, on the premise that main must know it before the window is constructed. **That premise is false** — `setBackgroundMaterial` is runtime-settable on our Electron (`electron.d.ts:3236`, `^43.2.0`). What is left is a one-frame launch artifact, which does not earn a persistence layer — especially since `useZoom`'s mount effect already ships a *larger* version of the same artifact, for every user, where the backdrop one is opt-in.
-- **The delete call omits `dir`.** Passing it *looks* safer. The SDK's no-`dir` branch **enumerates** project directories; the `dir` branch realpaths and **encodes** one — the operation [[2026-07-28-storage-location-is-an-index-not-an-encoding]] deleted from this codebase, measured failing on **45 of 494** live sessions. Passing `dir` buys a delete button that silently no-ops on ~9% of rows. Omitting it also deletes the "unknown project" branch entirely.
-
-## Landmines this batch will walk into
-
-Full ledger in [[active-work]]. The ones specific to these tickets:
-
-- **`themes.css` becomes the THIRD raw-text CSS reader.** Both existing ones have gone red on prose. The theme file will want comments explaining each hue, and a naive property regex counts a commented-out declaration. **Strip comments before parsing.**
-- **The accent is FOUR tokens, not three** — `rails.css:324` paints mint at 10% alpha and CSS cannot alpha a `var()`, so `--color-mint-wash` is required. A three-key expectation greens while a theme silently inherits Frost's wash.
-- **Only `--color-mint` / `--color-mint-press` may move chroma** (0.05–0.09). Neutrals move by hue angle only; `--color-mint-ink` keeps both its lightness and its chroma.
-- **The Appearance panel must have no draft state** — `App.tsx:106` closes the dock on a workspace switch, so a Save button is a data-loss bug.
-- **Join the dock-shell selector groups; do not widen them.** Editing a shared group repaints the sessions rail *and* the agents dock, silently, with a suite that loads no CSS.
-- **Backdrop must not touch any neutral**, or it becomes a second theme axis writing #70's properties.
-- **Two new IPC channels** (backdrop, delete) → the four-mock-sites rule plus `preload/index.d.ts` fires **twice**. Theme and zoom are renderer-only.
-- **A driver screenshot cannot judge the backdrop** — `--disable-gpu` flattens acrylic, so both materials look identical to it. Real window or nothing; same for whether a theme looks good.
-- **A not-found delete is `ok`, not `failed`**, and no outcome is classified by string-matching the SDK's error text.
+- **`gui-51` is an EXPECTED driver failure right now** — `model menu gutter 9.4px | .session-groups gutter 9px`, tracked as #71. It is the *only* one. A second failing driver, or a different signature from this one, is a real regression. Do not absorb it into your ticket and do not widen its tolerance to fit.
+- **A driver must establish the app state it asserts, never inherit it.** Drivers write each other's persisted preferences — `gui-scope-zoom-pill` clicks back to "This project" on exit, which is what `gui-45` and `gui-47` were reading. Click the real control; seeding `localStorage` only works if the surface mounts after the write. And read the `SKIPPED` lines: a driver that skipped most of itself is unverified, not green.
+- **The delete call omits `dir`.** Passing it *looks* safer. The SDK's no-`dir` branch **enumerates** project directories; the `dir` branch realpaths and **encodes** one — the operation [[2026-07-28-storage-location-is-an-index-not-an-encoding]] deleted, measured failing on **45 of 494** live sessions. Passing `dir` buys a delete button that silently no-ops on ~9% of rows, and omitting it deletes the "unknown project" branch entirely.
+- **A not-found delete is `ok`, not `failed`** — a staleness signal, and the user's intent is satisfied. No string-matching the SDK's error text, and no `null`-vs-`[]` analogue invented for a mutation; that convention belongs to the read channels.
+- **Two new IPC channels this batch** (backdrop, delete) → the four-mock-sites rule plus `preload/index.d.ts` fires **twice**, each needing `isTrustedIpc` and a value whitelist. Theme and zoom are renderer-only.
 - Everything from earlier legs still applies — the `@import` order IS the cascade, pins are mutation-verified and never "fixed" by editing an expectation, `src/` is CRLF while `.context/*.md` is LF, and never hardcode a model name.
 
 ## Baseline
 
-`main` = last leg's commit + this leg's `.context` commit. **Pushed.** No open branches. Trust `git log origin/main..main` over any note.
+`main` = `f0dfc68` + this leg's `.context` commit. **Pushed.** No open branches. Trust `git log origin/main..main` over any note.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
+- [[2026-07-31-a-driver-establishes-its-premise]] — #65's outcome, and the rule the driver set now follows
+- [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — **#68, the next ticket**
 - [[2026-07-31-a-preference-lives-where-it-is-read]] — #66/#69's storage answer
 - [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] — #66
 - [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] — #69
 - [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] — #70
-- [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — #68
-- [[2026-07-23-persistent-glass-deferred]] — pre-approved the Mica route; still live for the native-dep route
 - [[2026-07-28-storage-location-is-an-index-not-an-encoding]] — why #68 omits `dir`

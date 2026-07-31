@@ -7,19 +7,19 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — `/preset init` funnel run end to end: grill → ADRs → MVD → spec #64 → tickets #65–#70. **No code written this leg**_
-_At commit: `main`, pushed. Gate: unchanged from last leg (typecheck clean, build clean, **743 tests green across 53 files**) — nothing in `src/` was touched_
-_The grill was run against a rehydrated Opus owner-proxy subagent rather than the owner (who was asleep and asked for the funnel to run unattended). Every one of its factual claims was independently verified against the repo before being accepted; **two of them reversed the position the grill opened with**_
+_Last updated: 2026-07-31 by Opus 5 (1M) (auto) — relay leg 1 of spec #64's batch: ticket **#65** landed, **#71** filed. Drivers only; **no production source touched**_
+_At commit: `f0dfc68` on `main`, pushed. Gate: typecheck clean, build clean, **743 tests green across 53 files**_
+_Driver set: **12 PASS, 1 FAIL** (`gui-51`, pre-existing and unrelated — now #71), 1 observation driver with no verdict by design_
 
 ## Current focus
 
-**Spec #64 is published and sliced. The `ready-for-agent` queue has six tickets, four of them unblocked.**
+**Spec #64's batch is draining. #65 is closed; five tickets remain, three unblocked.**
 
 The owner asked for four things — a delete-sessions button, a settings surface ("you decide what to put there"), a persistent-acrylic toggle, and colour themes. The funnel turned that into:
 
 | # | Ticket | Blocked by |
 |---|---|---|
-| **#65** | Retire the stale `gui-45` driver so the batch has a usable gate | — |
+| ~~#65~~ | ~~Retire the stale `gui-45` driver~~ — **closed, `f0dfc68`** | — |
 | **#66** | Appearance dock with the zoom control | — |
 | **#67** | Tokenise the two duplicate colour literals | — |
 | **#68** | Delete a session from the rail | — |
@@ -35,19 +35,18 @@ Five ADRs carry the reasoning and were written **before** the spec. Read them be
 
 ## State
 
-- **In flight:** nothing. No open branches. **No source file was modified this leg.**
-- **Landed this session:** spec #64, tickets #65–#70 with native blocking edges, five ADRs, two new happy-path MVD sections, the decisions index.
-- **Queue (`ready-for-agent`):** **six** — #65, #66, #67, #68 unblocked; #69 blocked by one; #70 blocked by two. Verified via `issue_dependencies_summary.blocked_by`.
+- **In flight:** nothing. No open branches.
+- **Landed this leg:** #65 as `f0dfc68` — `gui-45`'s reversed and vacuous assertions retired, **and `gui-47` recovered** (same root cause, one-line fix): both drivers now widen the rail's scope through the real chip before measuring.
+- **Filed this leg:** **#71** — `gui-51` is red on `main`, pre-existing and unrelated, a scrollbar-gutter tolerance calibrated to the old `DEFAULT_ZOOM = 1.1`.
+- **Queue (`ready-for-agent`):** **six open** — #66, #67, #68 unblocked; #69 blocked by one; #70 blocked by two; **#71** unblocked. Verified via `issue_dependencies_summary.blocked_by`.
 - **Blocked:** #69, #70 (by design).
-- **Open:** #64 (the spec, stays open until its tickets close) plus the six tickets.
+- **Open:** #64 (the spec, stays open until its tickets close), #66–#71.
 
 ## Pick up here
 
-**Take #65 first.** It is not part of the feature — it retires a driver that is red on `main` today, and until it goes, "drivers green" is not a usable gate for anything else in the batch and every driver run is ambiguous.
+**Take #68 (delete) next** — and not for freshness. It is the only ticket whose **scope is not yet known**: it opens with a probe of Windows open-handle behaviour against a real store, and if the handle is held beyond the turn, the busy gate widens from "the active row while busy" to "the active row, always", which is a different feature with a different empty-state story. Do the ticket with an unresolved scope while there is room to react to the answer, not at the end of a batch.
 
-**Then #68 (delete), ahead of the others** — and not for freshness. It is the only ticket whose **scope is not yet known**: it opens with a probe of Windows open-handle behaviour against a real store, and if the handle is held beyond the turn, the busy gate widens from "the active row while busy" to "the active row, always", which is a different feature with a different empty-state story. Do the ticket with an unresolved scope while there is room to react to the answer, not at the end of a batch.
-
-Then #66 → #67 → #69 → #70.
+Then #66 → #67 → #69 → #70. **#71 is not in that chain** — it blocks no feature work, but #66 moves the zoom it depends on, so it is worth doing before or with #66 rather than after the batch.
 
 Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green before merge, `.context/` commits on main only.
 
@@ -60,6 +59,11 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Recent context
 
+- **The loud failure was not the expensive one.** #65 was written about `gui-45` printing `no foreign row was disabled`. Running it produced **four** failures, and the ticket's named one was the only one #47 caused. The other three, plus a fourth in `gui-47`, came from the rail now shipping project-scoped while neither driver established the cross-project premise it asserts — so both inherited whatever `sidebar-scope` a *previous driver* had stored, and their verdicts were a function of run order.
+- **`gui-47` was the real find, and it was not red enough to notice.** One failed assertion, and underneath it three of its four sections **skipped** — the ok path, the missing-cwd refusal, the colour comparison — printed as `SKIPPED ... no second real project in the store`, which reads like an environment note. The driver covering #47's entire workspace-switch transaction had quietly degraded to verifying almost nothing. It now runs a full battery with zero skips. **Read the SKIPPED lines; a driver that skipped most of itself is unverified, not green.**
+- **An assertion can pin a developer's disk.** `gui-45` required ≥2 project groups to match `playground`, on the strength of a comment recording six sibling directories on this machine. There is one now. That class of assertion cannot be fixed by establishing a premise, because the premise is somebody's filesystem — it was replaced with facts true of any store (a partial query narrows: 140 of 680; and it matches everything the full path it contains matched: 114).
+- **A driver run mutates the machine the next driver inherits.** `gui-scope-zoom-pill` ends by clicking back to "This project", so it *writes* the pref that `gui-45` and `gui-47` were reading. Nothing was wrong with any single driver; the coupling was invisible because each one passed in isolation on whichever machine state happened to be current.
+- **Attribution before a fix.** `gui-51`'s red was confirmed pre-existing by stashing this leg's work and re-running on clean `main` for a byte-identical failure — which is what made it safe to file rather than absorb. Its tolerance comment (`~0.909px`) encodes `1 / 1.1`, and the previous leg raised `DEFAULT_ZOOM` to `1.25`. That is a strong hypothesis, **not** a measurement, and #71 says so plus names the experiment that would settle it.
 - **A proxy grill is only worth running if you verify what it tells you.** The owner asked for the funnel to run unattended against a rehydrated subagent standing in for them. It pushed back hard four times out of five, and **twice it was right and the opening position was wrong** — but in both cases the correction rested on a factual claim (`setBackgroundMaterial` being runtime-settable; the SDK's two delete branches doing genuinely different things) that was checked in `electron.d.ts` and `sdk.mjs` before being accepted. A confident subagent asserting an implementation detail is a hypothesis, not a finding. Every reversal in #64 has its evidence recorded in the ADR.
 - **The strongest argument against a documented promise was that the document was wrong.** DESIGN.md:47 said the neutrals were provisional "until the persistent-glass follow-up lands", which read as a commitment that this work would re-tune them. It describes a mechanism that does not exist — acrylic *always* shows the desktop, blur-behind is what acrylic **is**, and the follow-up was only ever about the unfocused flip to flat. The clause is rewritten rather than deleted, because deleting it loses why the neutrals were chosen and invites a future "restore" against a reference nobody re-checked.
 - **Naming is a design decision that survives without being remembered.** The panel is **Appearance**, not Settings, for the same reason the scrollbar rule went global: a name that has to be *remembered* as appearance-only is the failure with an extra step. A heading is what makes the next person adding "reset all preferences" argue before adding it. Same trick as the structural lightness assertion in #70's test — make the rule enforceable rather than memorable.
@@ -71,6 +75,12 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 - Everything from #58's five legs is carried in the landmine list below; the notable one is that **a mutation that kills nothing may mean the code is dead** — #63's coalescing pass is the worked example.
 
 ## Landmines (carried forward)
+
+**From #65 — now true of the driver set itself:**
+
+- **A driver must ESTABLISH the app state it asserts, never inherit it.** The rail ships scoped to the open project; `gui-45` and `gui-47` widen it through the real **All projects** chip before measuring. Clicked, not seeded into `localStorage` — seeding only works if the rail mounts after the write. Any new driver that depends on a persisted preference needs the same step, and drivers write each other's state (`gui-scope-zoom-pill` clicks back to "This project" on exit).
+- **A `SKIPPED` line is a hole in the gate, not an environment note.** `gui-47` skipped three of its four sections while printing one failure, and read as "mostly fine". Treat a driver that skipped most of itself as unverified.
+- **Never assert a fact about this machine's disk.** The retired `>= 2 groups match "playground"` pinned six sibling directories that no longer exist. Compare filters against *each other* (a partial narrows the store; it matches at least what the full path it contains matched), and compare **totals**, since every survey below the 100-row cap reads as exactly 100.
 
 **From #64's design pass — traps that exist in the tickets, not yet in the code:**
 
@@ -160,7 +170,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 
 ## Known issues / not-our-bug
 
-- **`gui-45.mjs` is STALE and fails on `main`** with `no foreign row was disabled` — it asserts the pre-#47 rule, and #47 made foreign sessions openable. Verified pre-existing by rebuilding against the original `styles.css`. Either retire the assertion or retire the driver; do not "fix" the app to satisfy it.
+- **`gui-51.mjs` FAILS on `main`** with `model menu gutter 9.4px | .session-groups gutter 9px` — a **standing, characterised red**, tracked as **#71**. Its ±0.5px tolerance around a 10px gutter is calibrated to `DEFAULT_ZOOM = 1.1` (its own comment computes `~0.909px` = 1/1.1) and `ece7b9c` raised the default to `1.25`. Verified pre-existing by stashing #65's work and re-running on clean `main` for a byte-identical failure. **This is the one expected driver failure — a second signature is a real regression.** Do not widen the tolerance until the numbers fit.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
 - **GUI driver traps:** `--disable-gpu` flattens acrylic; measure in the DOM, never off screenshots; dispatch clicks via `page.evaluate(() => el.click())`; arm a hard `setTimeout(process.exit)` before awaiting `app.close()`; never re-read an element after an action that may not have happened; **count the side effect you care about**; pass any path as an **argument** to `app.evaluate`; stub `dialog.showOpenDialog` in main before any click that opens one; and **select controls by their modifier class**, since the card carries three.
 - **Driver trick (gui-scope-zoom-pill):** clearing `sidebar-scope` / `zoom-level-v2` from `localStorage` **after mount but before the folder click** makes the driver show shipped defaults rather than whatever the dev machine has stored. Reading the pref back in the same probe then reports `0`, which is the probe's own ordering, not the applied zoom.
@@ -185,6 +195,7 @@ Conventions unchanged: one ticket per branch `ticket/<id>-<slug>`, squash-merged
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-07-31-a-driver-establishes-its-premise]] — #65, this leg
 - [[2026-07-31-a-preference-lives-where-it-is-read]] · [[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] · [[2026-07-31-backdrop-offers-mica-not-persistent-acrylic]] · [[2026-07-31-a-theme-is-a-re-hue-not-a-re-design]] · [[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]] — spec #64's five, this leg
 - [[2026-07-30-the-import-order-is-the-cascade]] — this session, second pass
 - [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]] — this session, first pass; sharpens [[2026-07-23-tailwind4-tokens]]
