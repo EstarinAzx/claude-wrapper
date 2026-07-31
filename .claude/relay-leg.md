@@ -11,25 +11,32 @@ a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
 relabel plus a comment.
 
-## Current queue (updated 2026-07-31 after leg 3, spec #64)
+## Current queue (updated 2026-07-31 after leg 4, spec #64)
 
-**Three tickets left, two unblocked.** Spec **#64 — Appearance panel (theme ·
+**Two tickets left, both unblocked.** Spec **#64 — Appearance panel (theme ·
 backdrop · zoom) and session deletion** is published and sliced. Blocking edges
 are wired as native GitHub issue dependencies and verified via
-`issue_dependencies_summary.blocked_by`.
+`issue_dependencies_summary.blocked_by`; **nothing in the batch is blocked any
+more.**
 
 | # | Ticket | Blocked by |
 |---|---|---|
 | ~~#65~~ | ~~Retire the stale `gui-45` driver~~ — **closed `f0dfc68`** | — |
 | ~~#68~~ | ~~Delete a session from the rail~~ — **closed `70c904f`** | — |
 | ~~#66~~ | ~~Appearance dock with the zoom control~~ — **closed `a7c0470`** | — |
-| #67 | Tokenise the two duplicate colour literals | — |
-| #69 | Backdrop control: Acrylic or Mica | — (released by #66) |
-| #70 | Four themes: Frost, Ember, Moss, Slate | #67 |
+| ~~#67~~ | ~~Tokenise the two duplicate colour literals~~ — **closed `e16ace6`** | — |
+| #69 | Backdrop control: Acrylic or Mica | — |
+| #70 | Four themes: Frost, Ember, Moss, Slate | — (released by #67) |
 
-**Take #67 next.** It is small and it is the last thing #70 waits on. #69 is
-also unblocked and depends on nothing else, so #67 → #69 → #70 keeps #70's path
-shortest.
+**Take #69 next.** It is the older of the two and the batch ordering has always
+been #67 → #69 → #70. #70 is equally takeable; nothing sequences them against
+each other now.
+
+**#67 amended the theme ADR.** Its `color-mix()` premise was false — six
+existing sites already mix `var(--mint)` with `transparent`, so they **re-hue
+for free**. #70 must not tokenise them, must not expect them in the key set
+(still exactly four accent keys), and must not read them as literals #67
+missed.
 
 **#71** (`gui-51`'s gutter tolerance) is open and unblocked but outside the
 chain. Its stated premise is now **spent** — it was filed expecting #66 to move
