@@ -160,14 +160,30 @@ const consume = (async () => {
           ms: Date.now() - t0,
           task_id: msg.task_id,
           task_type: msg.task_type,
-          tool_use_id: msg.tool_use_id
+          tool_use_id: msg.tool_use_id,
+          // #84. The two fields that decide whether a background task's spawner
+          // is reachable at all. `parent_tool_use_id` is NOT declared on the
+          // `system` variant in engine.ts's model of the stream (only on
+          // `assistant`/`user`, engine.ts:31,48), so record whether the wire
+          // carries one anyway. `keys` is recorded because a parent under some
+          // OTHER name would otherwise hide from this run — an absence is only
+          // a measurement if a differently-named field could have been seen.
+          parent_tool_use_id: msg.parent_tool_use_id ?? null,
+          keys: Object.keys(msg).sort()
         })
         // engine.ts populates taskToParent ONLY for local_agent — condition 2
         // is stated against those keys, so mirror the filter exactly.
         if (msg.task_type === 'local_agent' && msg.task_id && msg.tool_use_id) {
           taskToParent.set(msg.task_id, msg.tool_use_id)
         }
-        console.log(`  .. task_started ${msg.task_type} ${msg.task_id}`)
+        // #84: print what was already being captured. #81 recorded tool_use_id
+        // at capture but never surfaced it here, and its evidence sink is a
+        // temp dir outside the repo, so the answer was written once and lost.
+        console.log(
+          `  .. task_started ${msg.task_type} ${msg.task_id}` +
+            ` tool_use=${msg.tool_use_id ?? '(none)'}` +
+            ` parent=${msg.parent_tool_use_id ?? '(none)'}`
+        )
       } else if (sub === 'task_notification') {
         taskNotifications.push({
           seq: seq - 1,
@@ -251,6 +267,19 @@ console.log('\nturn B — a backgrounded Bash command')
 await runTurn(
   'Run the Bash tool with command `sleep 30` and run_in_background set to true. Report the shell id it gives you and stop — do not wait for it to finish and do not read its output.',
   180_000
+)
+
+// --- Turn C (#84): a backgrounded Bash spawned from INSIDE a subagent.
+//
+// This is the case #81 never ran, and it is the only one that can answer #84's
+// question (2). Turn B's backgrounded Bash comes off the main thread, where
+// there IS no owning agent — so a missing parent there is indistinguishable
+// from a parent that simply does not exist to be named. Only a bash task nested
+// inside an agent has an owner that the wire could name but might not.
+console.log('\nturn C — a backgrounded Bash spawned from inside a subagent (#84)')
+await runTurn(
+  'Use the Agent tool to spawn exactly one general-purpose subagent. Its task: run the Bash tool with command `sleep 30` and run_in_background set to true, report the shell id it is given, and stop immediately without waiting for it or reading its output. Do not run any Bash yourself, and do not spawn a second agent.',
+  240_000
 )
 
 // Give any trailing level signal a moment to land after the result.
@@ -344,6 +373,51 @@ console.log(`  C1 arrives on the stream   : ${conditions.c1_arrives}`)
 console.log(`  C2 ids correlate           : ${conditions.c2_correlates}`)
 console.log(`  C3 a non-local_agent type  : ${conditions.c3_nonAgentType}`)
 console.log(`AUTHORISED TO BUILD          : ${authorised}`)
+
+// --- #84: is a background task's spawner reachable on the wire?
+//
+// Reported separately from #81's C1/C2/C3, which authorised the background-tasks
+// VIEW. These two answer a different question: whether that view's rows could
+// ever be nested under whatever spawned them.
+const bashStarted = taskStarted.filter((t) => t.task_type !== 'local_agent')
+const q1 = bashStarted.filter((t) => typeof t.tool_use_id === 'string' && t.tool_use_id.length > 0)
+const q2 = bashStarted.filter(
+  (t) => typeof t.parent_tool_use_id === 'string' && t.parent_tool_use_id.length > 0
+)
+// Every key seen on a non-agent task_started, minus the ones already accounted
+// for. A parent hiding under another name shows up here rather than as a false
+// negative on q2.
+const known = new Set([
+  'type',
+  'subtype',
+  'uuid',
+  'session_id',
+  'task_id',
+  'task_type',
+  'tool_use_id',
+  'parent_tool_use_id',
+  'description',
+  'subagent_type'
+])
+const unaccounted = [...new Set(bashStarted.flatMap((t) => t.keys ?? []))]
+  .filter((k) => !known.has(k))
+  .sort()
+
+console.log('\n--- #84: is the spawner reachable? ---')
+console.log(`non-agent task_started seen  : ${bashStarted.length}`)
+console.log(`  Q1 carries tool_use_id     : ${q1.length}/${bashStarted.length}`)
+console.log(`  Q2 names an owning agent   : ${q2.length}/${bashStarted.length}`)
+console.log(`  other keys on the wire     : ${unaccounted.length ? unaccounted.join(', ') : '(none)'}`)
+for (const t of bashStarted) {
+  console.log(
+    `  - ${t.task_id} tool_use=${t.tool_use_id ?? '(none)'} parent=${t.parent_tool_use_id ?? '(none)'}`
+  )
+}
+console.log(
+  'NOTE: Q2 is only measured if turn C actually nested a bash task inside an agent.' +
+    ' A 0/0 is NOT a negative — it is an unexercised path.'
+)
+
 console.log(`\nsummary : ${summaryPath}`)
 
 process.exit(0)
