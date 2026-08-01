@@ -133,6 +133,20 @@ tags: [context, overview]
   stored level still beats the default. Setting it from an effect instead
   leaves the whole `zoom-shortcuts` suite green while the panel reports the
   wrong number.
+  `AgentsDock.tsx` re-reads its sidecars on **every** turn end (#82), through one
+  `read(id, keepStale)` callback that both effects call. `keepStale` is the whole
+  design: `false` (session changed) clears first and reports a failure as
+  `unreadable`; `true` (same session, re-read) is **stale-while-revalidate** —
+  it touches nothing until the new list is in hand and keeps the last good rows
+  when the read fails, because `loading` before a refresh blanks the disk rows
+  and nested edges are disk-only, so the tree shape would flicker out and back.
+  The trigger is #80's `LastTurn` taken **whole** — the outcome decides WHETHER,
+  the nonce decides WHEN — and **never `busy === false`**, which all three
+  terminal outcomes clear. The seen-nonce is consumed on every outcome and
+  **seeded at mount**: skip either and the dock fires late or reads twice for one
+  event. `sessionId` alone cannot be the trigger — it is written inside
+  `useChat`'s `turn-end` branch, so it moves once per SESSION and the effect was
+  structurally incapable of firing on turns 2..N.
   `InputBar.tsx` is **never disabled while a turn runs** (#80) — the field, the
   paperclip and the paste handler all stay live, and `useChat.send` remains the
   one place that refuses a send while busy. Enter during a turn COMMITS the
@@ -201,13 +215,12 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#82 is the
-  frontier**, with **#83 blocked by it** — both filed 2026-08-01 under the
-  autonomy grant that took all seven of `.claude/vibe.md`'s parked calls; run the
+- `.context/pick-up.md` — current frontier + landmines (currently: **#83 is the
+  frontier and the only open ticket** — #82 landed, which unblocked it; run the
   frontier query anyway, it is the authority. No expected driver failure anywhere in the set,
   **22** assertion drivers plus the observational `gui-scope-zoom-pill` —
-  `gui-75` is focus-dependent and its batch reds are premise failures, green in
-  the last two batches, see `active-work.md`'s Known issues)
+  `gui-75` is focus-dependent and its batch reds are premise failures, green on
+  re-run in the last three batches, see `active-work.md`'s Known issues)
 - `scripts/spike-81-background-tasks.mjs` — the CLI-measurement harness (#81),
   the #27 pattern with the background path actually exercised. Drives SDK
   `query()` with `engine.ts`'s exact options, imports the app's **real**
@@ -241,15 +254,19 @@ tags: [context, overview]
   closed**; **#81 (`002e524`, `background_tasks_changed` measured on the host CLI
   2.1.220 — it **does** fire, all three authorising conditions HELD, and `src/` is
   **still unchanged** because every avenue for surfacing it is Out of scope on
-  that ticket; the build is authorised for a future one) closed**; **#82 (Agents
-  dock refresh trigger) and #83 (background-tasks section, blocked by #82) OPEN,
-  filed under the 2026-08-01 autonomy grant that took all seven parked calls —
-  see [[2026-08-01-the-background-agents-seed-decided]]**;
+  that ticket; the build is authorised for a future one) closed**;
+  **#82 (`3f34737`, the Agents dock re-reads its sidecars on every turn end, and
+  a re-read no longer blanks what it already has — see
+  [[2026-08-01-a-refresh-must-not-blank-what-it-has]]) closed**; **#83
+  (background-tasks section fed by the level signal, through an injected port)
+  OPEN and now UNBLOCKED — the frontier, and the only open ticket.** Both were
+  filed under the 2026-08-01 autonomy grant that took all seven parked calls, see
+  [[2026-08-01-the-background-agents-seed-decided]];
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **Nothing open at all** as of 2026-08-01.
+  #20 hold the earlier history. **One ticket open — #83** as of 2026-08-01.
   Run the frontier query rather than trusting this line
 
 ## Conventions

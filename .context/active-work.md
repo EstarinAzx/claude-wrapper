@@ -7,35 +7,42 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-01 by Opus 5 (1M) (auto) — **relay leg 1 landed #81, a spike; the tracker is EMPTY again**_
-_At commit: `002e524` on `main`, pushed. Gate green: typecheck clean, **914 tests across 62 files** (unchanged — #81 touched no `src/`), build ok_
-_Driver check: **not re-run this leg, deliberately.** #81 added one script and changed no `src/`, no CSS and no renderer code, so no driver is implicated. The set is **22** assertion drivers plus the observational `gui-scope-zoom-pill`, last 22/22 green at `1855910`. No standing red anywhere, so any red is a real regression._
+_Last updated: 2026-08-01 by Opus 5 (1M) (auto) — **relay leg 1 landed #82; #83 is unblocked and is now the frontier**_
+_At commit: `3f34737` on `main`, pushed. Gate green: typecheck clean, **921 tests across 62 files** (was 914 — seven added by #82), build ok_
+_Driver check: **re-run this leg, 22/22 green at `3f34737`.** #82 changed renderer code, so the whole assertion set is implicated and was driven. `gui-75` failed its focus premise on the first pass (`the window lost focus during the second turn`) and was green on re-run with `focusedAtEnd: true` — the documented flake, not a red. The set is **22** assertion drivers plus the observational `gui-scope-zoom-pill`. No standing red anywhere, so any red is a real regression._
 
 ## Current focus
 
-**Two tickets, filed 2026-08-01 under a live autonomy grant.** #81 closed as a
-**measurement with an empty `src/` diff** (its correct outcome), and the owner
-then made a grant live, so all seven calls parked in `.claude/vibe.md` were
-taken — **two authorise work, four closed as no, one struck**.
+**One ticket open — #83 — and it is unblocked.** Both #82 and #83 were filed
+2026-08-01 under a live autonomy grant that took all seven calls parked in
+`.claude/vibe.md` (**two authorise work, four closed as no, one struck**). **#82
+landed this leg**, which removed #83's only blocking edge.
 
 | # | Ticket | State |
 |---|---|---|
-| **#82** | The Agents dock re-reads its sidecars every turn, without blanking what it already has | `ready-for-agent`, **unblocked — the frontier** |
-| **#83** | Surface live background tasks in the Agents dock, through an injected port | `ready-for-agent`, **blocked by #82** |
+| ~~#82~~ | ~~The Agents dock re-reads its sidecars every turn, without blanking what it already has~~ | `3f34737`, **closed** |
+| **#83** | Surface live background tasks in the Agents dock, through an injected port | `ready-for-agent`, **unblocked — the frontier** |
 
-Both edit `AgentsDock`'s state shape, which is why #83 is serialised behind #82
-rather than run beside it.
+They were serialised rather than run beside each other because both edit
+`AgentsDock`'s state shape. #83 inherits the shape #82 just changed.
 
-**#82 is a defect that exists today.** `setActiveSessionId` sits **inside the
-`turn-end` branch** of `useChat.ts`, so the dock's only disk trigger —
-`[sessionId]` — cannot change on turns 2..N and is **structurally incapable of
-firing** in the window where subagents spawn. First turn works (`null → id`);
-with the dock left open, nothing after it does. The trigger to use already
-exists: #80's `LastTurn` + nonce. The naive fix regresses the panel — the effect
-sets `loading` before every read and the merge is
-`mergeAgents(state.status === 'ok' ? state.agents : [], liveAgents)`, so a re-read
-blanks the disk rows and the nested edges flicker out and back. **Stale-while-
-revalidate, not a second dep.**
+**#82 landed: the dock re-reads on every turn end.** The defect was **a
+dependency that could only change once** — `useChat` writes `setActiveSessionId`
+**inside the `turn-end` branch**, so `[sessionId]` moves `null → id` on turn ONE
+and the read effect was **structurally incapable of firing** on turns 2..N,
+exactly the window where subagents spawn. The suite was green throughout, because
+that effect *does* fire — just never twice.
+
+The trigger is #80's `LastTurn` taken **whole**: the outcome decides WHETHER, the
+nonce decides WHEN, and never `busy === false`. The read now carries a
+**`keepStale` flag**, because a session change and a same-session re-read want
+opposite things done to what is already on screen — `false` clears first, `true`
+is stale-while-revalidate and keeps the last good rows even when the read fails.
+Seven tests added (the suite's first `toHaveBeenCalledTimes`), four mutants
+killed, **no `gui-82` driver** because every surface is React state over a channel
+jsdom already mocks.
+
+See [[2026-08-01-a-refresh-must-not-blank-what-it-has]].
 
 **#83 became buildable only because #81 measured a second source.** The
 mutation-verified `local_agent` guard governs which *task messages become
@@ -54,6 +61,7 @@ See [[2026-08-01-the-background-agents-seed-decided]].
 | ~~#79~~ | ~~The window remembers its size and position~~ | `03ab834` — gate **built**, on its own numbers |
 | ~~#80~~ | ~~Type-while-busy composer with a queued send~~ | `1855910` |
 | ~~#81~~ | ~~Measure whether `background_tasks_changed` fires on the host CLI~~ | `002e524` — measured, **all three conditions HELD**, `src/` still unchanged |
+| ~~#82~~ | ~~The Agents dock re-reads its sidecars every turn, without blanking what it already has~~ | `3f34737` — stale-while-revalidate, and #83 unblocked |
 
 **#81 measured `background_tasks_changed` and it FIRES.** Host CLI **2.1.220** /
 SDK **0.3.220**, wisped, two runs identical. All three of the ticket's
@@ -106,17 +114,17 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `002e524` + this leg's `.context` commits, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **#82** (unblocked, the frontier) then **#83** (blocked by #82). Filed after the grant went live; the queue was empty for the few minutes between #81 closing and them being filed.
-- **Landed:** **#81** (`002e524`) — the harness, its ADR and the handoff. **No `src/` diff, deliberately.** Then the seven parked calls taken, with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
+- **In flight:** nothing. `main` = `3f34737` + this leg's `.context` commit, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **#83 alone, and unblocked** — #82 closing removed its only blocking edge. `blocked_by: 0` with `total_blocked_by: 1` (the closed #82) is what an unblocked-by-completion ticket looks like on this tracker; read the *open* count, not the total.
+- **Landed:** **#82** (`3f34737`) — the dock's turn-end re-read, `keepStale`, seven tests and an ADR. Before it, **#81** (`002e524`), the harness and its ADR with **no `src/` diff, deliberately**, then the seven parked calls taken with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
 - **Parked for the owner: TWO, and they are the older halves — the seven are DONE.** The 2026-08-01 `/preset vibe init` run parked seven calls with no grant; the owner made one live after #81 landed and **all seven were taken** ([[2026-08-01-the-background-agents-seed-decided]]): two authorise work (#82, #83), four closed as **no** (the seed's meaning is the SDK concept; no labelled map; no new top-level surface; non-agent work **yes** but as its own section), one **struck** (map pan-zoom). `.claude/vibe.md`'s `## Needs you` is **history now, not a queue** — its `## Taken` section carries the resolutions. **What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's. **#83 was deliberately routed into the existing Agents dock so it does not pre-empt that second one.**
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**No active work — the queue is drained.** Run the frontier query first anyway;
-this line goes stale the moment the owner files something, and that is this
-project's standing lesson (a leg once wrote that closing #70 would empty the
+**#83 is the frontier, and it is unblocked.** Run the frontier query first
+anyway; this line goes stale the moment the owner files something, and that is
+this project's standing lesson (a leg once wrote that closing #70 would empty the
 queue and was wrong, because #71 had been unblocked the whole time).
 
 ```
@@ -124,7 +132,15 @@ gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-If it comes back empty, there is nothing to work: the next move is the owner's —
+**Read [[2026-08-01-the-background-agents-seed-decided]] (call 5) and
+[[2026-08-01-a-refresh-must-not-blank-what-it-has]] before starting #83** — the
+first is its warrant, the second is the state shape it inherits. Its four sharp
+edges are in [[pick-up]]: injected port never an `EngineEvent`; do not touch the
+mutation-verified `local_agent` guard; background tasks get their own section and
+must not join `mergeAgents`; the level speaks `local_agent` / `local_bash`, not
+`BackgroundTaskSummary`'s friendly labels.
+
+If the queue comes back empty, the next move is the owner's —
 file new work, or run `/preset init` / `/preset vibe init` to generate a batch.
 The `## Deferred` list below is the standing menu of candidates, and `## Open
 questions` holds the ones that need an answer before they can be specced.
@@ -152,6 +168,9 @@ The per-ticket narrative for #64–#79 has been folded into the ADRs listed unde
 `## Related` and the traps under `## Landmines`. What stays here is the set of
 lessons that keep recurring across unrelated tickets.
 
+- **A value written once per session cannot be the trigger for something that happens once per turn — #82 is the case that found it.** The dock's read effect depended on `[sessionId]`, which `useChat` writes inside the `turn-end` branch: it moves `null → id` on turn ONE and never again, so the effect was **structurally incapable of firing** on turns 2..N. Nothing was missing and nothing threw; the suite was green because the effect *does* fire, just never twice. When a trigger is a dependency, ask how many times that dependency can change in the lifetime you care about.
+- **An assertion that something SURVIVED is vacuous unless the thing it survives is shown to have HAPPENED (#82).** "The rows are still on screen after a re-read" passes perfectly against a panel that never re-read. The pin asserts `toHaveBeenCalledTimes(2)` first. This is the sibling of #76's absence lesson: both failure modes are a test measuring nothing while reading as though it measured something.
+- **A refresh must not blank what it already has (#82).** Setting `loading` before every read, with a merge that drops the disk half unless `status === 'ok'`, means each refresh destroys the rows for its own duration — worst exactly while the user is watching the panel change, and it takes the nested edges with it because those are disk-only. Stale-while-revalidate, and a transient failure keeps the last good snapshot rather than downgrading it.
 - **A NEGATIVE is only a measurement if the path was exercised — #81 is the case that found it.** #27 recorded "`background_tasks_changed` never fired" from two turns in which nothing could have produced a background task. That is an *untested* negative, and it reads on the page exactly like a tested one. Before citing an absence, ask what in that run could have made the thing appear; if the answer is nothing, the note is a gap, not a finding.
 - **State the authorising condition BEFORE the run, and honour it in both directions (#78, then #81).** #78 named its condition, measured, and declined. #81 named three, measured, and all three *held* — and it still changed no `src/`, because the same ticket's Out of scope had already named every avenue. "Authorised" is permission for a future ticket, not an instruction to grow this one.
 - **A queued action needs a POSITIVE trigger, never the absence of a state — #80 is the case that found it.** `busy` going false is not "the turn succeeded": Stop, a failed turn and a finished one all clear it. Naming the one outcome that earns the action (and asserting the other rows do something specific) is what makes the negatives visible; "when no longer busy" would have resent into a turn the user had just killed.
@@ -169,6 +188,14 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #82 — binding on the Agents dock, and on #83 which edits the same state:**
+
+- **The dock's disk read is now ONE callback with a `keepStale` flag, and the two callers want opposite things.** `false` (session changed) clears first and reports a failure as `unreadable`; `true` (same session, re-read) touches nothing until the new list is in hand and keeps the last good rows when the read fails. Re-splitting these into two read paths is how the `null` vs `[]` contract drifts between them.
+- **The trigger is `lastTurn.outcome === 'turn-end'` plus the nonce, never `busy === false`.** All three terminal outcomes clear busy, so a not-busy rule re-reads after Stop and after a failed turn. Second time this codebase has needed the rule (#80 was the first).
+- **The seen-nonce is consumed on EVERY outcome and SEEDED at mount.** Skip the bookkeeping on outcomes that read nothing and a stale nonce fires on a later render; skip the seed and opening the dock after a turn reads the same directory twice for one event. Neither is visible without a count assertion.
+- **`sessionId` moves once per SESSION, not once per turn.** It is written inside `useChat`'s `turn-end` branch, from a promise, so it also lands a render LATER than `lastTurn` — which is why the first turn is covered by the session effect and not by the trigger.
+- **#83 should replace the TRIGGER and leave `keepStale` alone.** They were split for exactly that.
 
 **From #81 — true of anything built on the CLI's background-task signal:**
 
@@ -465,7 +492,7 @@ reads a CLI-sourced list:**
 
 ## Known issues / not-our-bug
 
-- **`gui-75` is not reliable inside a long batch run, and its red there is a premise failure rather than a regression. Reproduced on two consecutive legs and then GREEN in the two batches after them (#79's and #80's), which settles it as focus theft rather than anything in the app.** #76's leg: `could not drive: the window lost focus during the second turn`, `focusedAtEnd: false`. #77's leg: `could not drive: the window would not take focus`, same shape. **Both times green re-run alone** (`focusedAtEnd: true`). Something on the machine steals focus during an unattended batch; it is the only focus-dependent driver in the set, so it is the only one exposed. **Read its FAIL line before believing the red** — `could not drive:` is the driver saying its own setup failed, which #65's rule makes loud on purpose. Same class as the `gui-73` batch red a previous leg diagnosed as a collapsing process tree. **A batch that reds only here is a green batch**; re-run it solo before writing anything down.
+- **`gui-75` is not reliable inside a long batch run, and its red there is a premise failure rather than a regression. Reproduced on three legs now, green on a solo re-run every time, which settles it as focus theft rather than anything in the app.** #76's leg: `could not drive: the window lost focus during the second turn`, `focusedAtEnd: false`. #77's leg: `could not drive: the window would not take focus`, same shape. **#82's leg reproduced the first form exactly** and was green on re-run with `focusedAtEnd: true`. **Every time green re-run alone.** Something on the machine steals focus during an unattended batch; it is the only focus-dependent driver in the set, so it is the only one exposed. **Read its FAIL line before believing the red** — `could not drive:` is the driver saying its own setup failed, which #65's rule makes loud on purpose. Same class as the `gui-73` batch red a previous leg diagnosed as a collapsing process tree. **A batch that reds only here is a green batch**; re-run it solo before writing anything down.
 - **There is no expected driver failure any more.** `gui-51`'s standing red closed as #71 (`b6e8911`), and `gui-72` joined the set green at `9fecc10`; **every driver in the set is green, and any red is now a real regression.** The old note said "a second signature is a real regression" — that qualifier is gone, and so is the cover it gave.
 - **A capture cannot see the right ~20% of the layout.** The window composites `windowWidth` device px while the page lays out `windowWidth` CSS px at zoom 1.25, so every right-hand dock is clipped out of a screenshot at any window size — re-confirmed by #69's captures, where the Appearance panel is visibly cut. **Measure with `getBoundingClientRect`**; `gui-66` works around it with a presentational-only `setZoom(1)` after every assertion.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
@@ -512,6 +539,7 @@ draft it refers to is visible in the composer directly beneath it.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-08-01-a-refresh-must-not-blank-what-it-has]] — **#82, shipped; a dependency that could only change once, why the second dep was rejected, and why `keepStale` lives on the read rather than the effect**
 - [[2026-08-01-the-background-agents-seed-decided]] — **all seven parked calls taken under a live grant; two authorise work (#82, #83), four close as no, one is struck, and four are decided against the seed's literal words**
 - [[2026-08-01-background-tasks-changed-fires-and-the-ids-join]] — **#81, measured; all three conditions held, `src/` unchanged anyway, and the two findings that bind any future build (the async Agent tool, and a level event landing past `result`)**
 - [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]] — **#80, shipped; why the queue is a flag rather than a payload, why the flush condition is positive, and why an unqueue keeps the text**
