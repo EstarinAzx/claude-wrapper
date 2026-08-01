@@ -201,10 +201,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **the tracker
-  is EMPTY** — the #75–#80 batch is delivered, #81's spike closed after it, and no
-  issue of any kind is open, verified live 2026-08-01; run the frontier query
-  anyway, it is the authority. No expected driver failure anywhere in the set,
+- `.context/pick-up.md` — current frontier + landmines (currently: **#82 is the
+  frontier**, with **#83 blocked by it** — both filed 2026-08-01 under the
+  autonomy grant that took all seven of `.claude/vibe.md`'s parked calls; run the
+  frontier query anyway, it is the authority. No expected driver failure anywhere in the set,
   **22** assertion drivers plus the observational `gui-scope-zoom-pill` —
   `gui-75` is focus-dependent and its batch reds are premise failures, green in
   the last two batches, see `active-work.md`'s Known issues)
@@ -241,7 +241,10 @@ tags: [context, overview]
   closed**; **#81 (`002e524`, `background_tasks_changed` measured on the host CLI
   2.1.220 — it **does** fire, all three authorising conditions HELD, and `src/` is
   **still unchanged** because every avenue for surfacing it is Out of scope on
-  that ticket; the build is authorised for a future one) closed**;
+  that ticket; the build is authorised for a future one) closed**; **#82 (Agents
+  dock refresh trigger) and #83 (background-tasks section, blocked by #82) OPEN,
+  filed under the 2026-08-01 autonomy grant that took all seven parked calls —
+  see [[2026-08-01-the-background-agents-seed-decided]]**;
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash

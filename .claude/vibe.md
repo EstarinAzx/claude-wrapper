@@ -141,6 +141,12 @@ night and that run is archived (`grep -c -i "autonomy grant" .claude/vibe.md` �
 So "this is the owner's call" is a legitimate ground for deferring here in a way it
 was not on 2026-07-31. Every entry below is reversible; none was taken.
 
+> **RESOLVED 2026-08-01, after #81 landed.** The owner made a grant live and all
+> seven were taken — see `## Taken` below, and
+> `.context/decisions/2026-08-01-the-background-agents-seed-decided.md` for the
+> warrants. **This section is left standing as the record of what was parked and
+> why**; it is history now, not a queue.
+
 - [ ] **What does "background" mean in your seed?** This is the run's root defer and
       nothing in three rounds filled it.
       took: treat it as the SDK's own background-task concept and **measure it first** (#81)
@@ -182,6 +188,49 @@ was not on 2026-07-31. Every entry below is reversible; none was taken.
       else; the map ADR argues the fixed canvas makes it unnecessary below ~40 leaves.
       took: leave deferred, do not reconstruct intent from the phrase
       reversible: yes
+
+## Taken
+
+**2026-08-01, grant live, after #81 measured.** Full warrants in
+`.context/decisions/2026-08-01-the-background-agents-seed-decided.md`. Two
+authorise work, four are closed as **no**, one is **struck**. Four are decided
+*against* the seed's literal words, on the record's reasons — a grant that
+flipped every defer to "yes" would just be the seed re-read louder.
+
+- [x] **What does "background" mean in the seed?** → **the SDK's background-task
+      concept**, now *measured* rather than assumed (#81). The alternatives are
+      unwarranted: a cross-session view appears nowhere in the seed's words, and
+      multi-engine is on record as "a different project".
+- [x] **Node boxes — a labelled map?** → **NO**, closed rather than deferred. The
+      map ADR states a principle *and* a mechanism — *"the list stays the labelled
+      view; the map is the shape view"*, and captions were explicitly rejected
+      because *"conditional labels would make the picture jump between agent
+      counts"*. The mechanism survives a wider container. Identity already ships
+      in `aria-label` + `<title>`.
+- [x] **A new top-level surface?** → **NO.** Background tasks join the **Agents
+      dock**, which sidesteps the parked titlebar-control-count call instead of
+      pre-empting it. That call is untouched and still the owner's.
+- [x] **The Agents dock refresh trigger.** → **BUILD**, filed as **#82**.
+      `lastTurn.outcome === 'turn-end'` + the nonce #80 already built, with
+      **stale-while-revalidate** — because the effect sets `loading` before every
+      read and the merge drops disk rows unless `status === 'ok'`, so a naive
+      second dep flickers the nested edges out and back.
+- [x] **Non-agent background work in the panel?** → **YES**, as its own section
+      fed by the **level signal**, filed as **#83**. This is the one the run got
+      wrong for a good reason: it had no measurement. The mutation-verified guard
+      governs which *task messages become subagent rows*; #81 measured the level
+      as a **second, independent source**, so a separate section **amends** rather
+      than reverses it and the Bash test stays green.
+- [x] **Injected port or `EngineEvent`?** → **PORT.** No taste half left: #81
+      measured a level event landing 3.3s past `result`, where `activeOnEvent` is
+      already null.
+- [x] **What was "map pan-zoom" meant to solve?** → **STRUCK.** The fixed canvas
+      is the *reason* it is unnecessary (*"dividing a fixed canvas is what makes a
+      wide fan fit without pan or zoom"*), and the one named ceiling has a
+      cheaper recorded fix (`ponytail:` in `agent-layout.ts`: inset the slot span
+      by the radius past ~40 leaves; real sessions top out at 28). Nothing states
+      what it was for, and reconstructing intent from a phrase is not warranted
+      even under a grant. Re-file it if a real complaint ever attaches.
 
 ## Log
 - [boot] Prior run (`phase: fired`, idea "everything we set aside") was terminal:

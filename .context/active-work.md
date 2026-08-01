@@ -13,9 +13,37 @@ _Driver check: **not re-run this leg, deliberately.** #81 added one script and c
 
 ## Current focus
 
-**None — there is no open work.** #81 closed as a **measurement with an empty
-`src/` diff**, which is its correct outcome, and `gh issue list --state open`
-returns **nothing at all**: no tickets, no specs, no `ready-for-human` leftovers.
+**Two tickets, filed 2026-08-01 under a live autonomy grant.** #81 closed as a
+**measurement with an empty `src/` diff** (its correct outcome), and the owner
+then made a grant live, so all seven calls parked in `.claude/vibe.md` were
+taken — **two authorise work, four closed as no, one struck**.
+
+| # | Ticket | State |
+|---|---|---|
+| **#82** | The Agents dock re-reads its sidecars every turn, without blanking what it already has | `ready-for-agent`, **unblocked — the frontier** |
+| **#83** | Surface live background tasks in the Agents dock, through an injected port | `ready-for-agent`, **blocked by #82** |
+
+Both edit `AgentsDock`'s state shape, which is why #83 is serialised behind #82
+rather than run beside it.
+
+**#82 is a defect that exists today.** `setActiveSessionId` sits **inside the
+`turn-end` branch** of `useChat.ts`, so the dock's only disk trigger —
+`[sessionId]` — cannot change on turns 2..N and is **structurally incapable of
+firing** in the window where subagents spawn. First turn works (`null → id`);
+with the dock left open, nothing after it does. The trigger to use already
+exists: #80's `LastTurn` + nonce. The naive fix regresses the panel — the effect
+sets `loading` before every read and the merge is
+`mergeAgents(state.status === 'ok' ? state.agents : [], liveAgents)`, so a re-read
+blanks the disk rows and the nested edges flicker out and back. **Stale-while-
+revalidate, not a second dep.**
+
+**#83 became buildable only because #81 measured a second source.** The
+mutation-verified `local_agent` guard governs which *task messages become
+subagent rows and events*; the level signal is independent of it, so a separate
+section fed from the level **amends** rather than reverses — the guard is never
+touched and the Bash test stays green.
+
+See [[2026-08-01-the-background-agents-seed-decided]].
 
 | # | Ticket | Landed |
 |---|---|---|
@@ -78,10 +106,10 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `002e524` + this leg's `.context` commit, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **empty.** The whole tracker is empty — verified live this leg, after the comment on #81 and after `Closes #81` landed.
-- **Landed this leg:** **#81** (`002e524`) — the harness, its ADR and this handoff. **No `src/` diff, deliberately.**
-- **Parked for the owner: SEVEN, and they are live.** The 2026-08-01 `/preset vibe init` run filed its `## Needs you` list in `.claude/vibe.md` **with no autonomy grant** — unlike 2026-07-31's batch, "this is the owner's call" was a legitimate ground for deferring there, so all seven stand. **#81 answers the factual half of four of them and settles none:** what "background" meant in the seed, the Agents-dock refresh trigger, whether non-agent background work belongs in the panel, and injected-port-vs-`EngineEvent` (that last one is now *measured* — it must be a port). The other three are the node-box map, a new top-level surface, and what "map pan-zoom" was for. **Separately, two older halves also stay open** — Tailwind is not dropped but the adopt-utilities question stands, and the titlebar's control count does not change while the aesthetic question stays the owner's. Do not close any of them.
+- **In flight:** nothing. `main` = `002e524` + this leg's `.context` commits, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **#82** (unblocked, the frontier) then **#83** (blocked by #82). Filed after the grant went live; the queue was empty for the few minutes between #81 closing and them being filed.
+- **Landed:** **#81** (`002e524`) — the harness, its ADR and the handoff. **No `src/` diff, deliberately.** Then the seven parked calls taken, with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
+- **Parked for the owner: TWO, and they are the older halves — the seven are DONE.** The 2026-08-01 `/preset vibe init` run parked seven calls with no grant; the owner made one live after #81 landed and **all seven were taken** ([[2026-08-01-the-background-agents-seed-decided]]): two authorise work (#82, #83), four closed as **no** (the seed's meaning is the SDK concept; no labelled map; no new top-level surface; non-agent work **yes** but as its own section), one **struck** (map pan-zoom). `.claude/vibe.md`'s `## Needs you` is **history now, not a queue** — its `## Taken` section carries the resolutions. **What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's. **#83 was deliberately routed into the existing Agents dock so it does not pre-empt that second one.**
 - **Blocked:** nothing.
 
 ## Pick up here
@@ -473,15 +501,18 @@ currently un-queues and leaves the text), and whether the pending row should sho
 the text itself rather than a fixed label — it does not need to today, because the
 draft it refers to is visible in the composer directly beneath it.
 
-**Newly AUTHORISED by #81, and the only deferred item with a measurement behind it:** a **background-tasks feature** built on the CLI's `background_tasks_changed` level signal. All three of #81's conditions held, so the build is permitted — but #81 deliberately built none of it, and the shape is constrained before anyone starts: the signal must arrive through an **injected port** (an `EngineEvent` is dropped, measured), the payload gives **no parentage** so `taskToParent` is the only route to it, and showing `local_bash` rows in the Agents panel **reverses a mutation-verified exclusion** and needs its own ticket. The remaining questions are the owner's, in `.claude/vibe.md` → `## Needs you`.
+**No longer deferred — SPEC'D as #83:** the **background-tasks feature** on the CLI's `background_tasks_changed` level signal. #81 authorised it and the 2026-08-01 grant decided its shape: an **injected port** (an `EngineEvent` is dropped past `result`, measured), **no parentage in the payload** so `taskToParent` is the only route to it, **its own section rather than agent rows** — which is what makes showing `local_bash` an *amend* of the mutation-verified guard rather than a reversal — and **inside the existing Agents dock**, so it does not pre-empt the titlebar-control-count call.
+
+**Struck 2026-08-01 by the grant, with warrants:** ~~a labelled / node-box map~~ (the map ADR states a principle *and* a mechanism, and the mechanism survives a wider container); ~~a new top-level surface~~ (background tasks join the Agents dock instead); ~~**map pan-zoom**~~ (the fixed canvas is the *reason* it is unnecessary, its one named ceiling has a cheaper recorded fix, and nothing anywhere states what it was for — re-file it only if a real complaint attaches).
 
 **Newly noted by #75:** whether a **"notifications off" preference** is ever wanted — deliberately not built (Out of scope), and if it lands it is a renderer-stored key with a control in the Appearance dock under that dock's constraints. Also unanswered by measurement: whether the toast actually **paints** on this machine, since no driver can see Action Center; the app identity is verified statically only.
 
-**Carried, unchanged:** live-tail's **incremental byte tailing** and the **watch-installed-after-the-read gap**; context-pressure meter; typed failed-turn recovery; full-text transcript search; **session rename / archive**; drag-and-drop; replay thumbnails; N-concurrent engines; **fork-on-resume**; busy-switch detach (decided against); folding `Welcome`'s last `pickFolder` caller onto the chooser; agent archive / control / map pan-zoom; and the smaller leftovers from #31–#36.
+**Carried, unchanged:** live-tail's **incremental byte tailing** and the **watch-installed-after-the-read gap**; context-pressure meter; typed failed-turn recovery; full-text transcript search; **session rename / archive**; drag-and-drop; replay thumbnails; N-concurrent engines; **fork-on-resume**; busy-switch detach (decided against); folding `Welcome`'s last `pickFolder` caller onto the chooser; agent archive / control (**map pan-zoom struck 2026-08-01**); and the smaller leftovers from #31–#36.
 
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-08-01-the-background-agents-seed-decided]] — **all seven parked calls taken under a live grant; two authorise work (#82, #83), four close as no, one is struck, and four are decided against the seed's literal words**
 - [[2026-08-01-background-tasks-changed-fires-and-the-ids-join]] — **#81, measured; all three conditions held, `src/` unchanged anyway, and the two findings that bind any future build (the async Agent tool, and a level event landing past `result`)**
 - [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]] — **#80, shipped; why the queue is a flag rather than a payload, why the flush condition is positive, and why an unqueue keeps the text**
 - [[2026-07-31-the-window-waits-until-it-knows-where-to-be]] — **#79, shipped; the window remembers its size and position, and the `win.show()` gate #78 declined was built here**

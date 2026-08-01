@@ -9,10 +9,21 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## queue empty
+## Next ticket: #82
 
-**Nothing is open.** #81 landed and closed; `gh issue list --state open` returns
-no rows of any kind — no tickets, no specs, no `ready-for-human` leftovers.
+**#82 — "The Agents dock re-reads its sidecars every turn, without blanking what
+it already has."** `ready-for-agent`, **unblocked**, and the frontier.
+
+**#83** ("Surface live background tasks in the Agents dock, through an injected
+port") is filed and **blocked by #82** — both edit `AgentsDock`'s state shape, so
+they are serialised rather than run beside each other.
+
+Both were authorised by the 2026-08-01 grant that took all seven parked calls;
+the reasoning behind each is in
+[[2026-08-01-the-background-agents-seed-decided]]. **Read that ADR before either
+ticket** — four of the seven were decided *against* the seed's literal words, and
+#83's whole "amend, not reversal" argument rests on #81 having measured the level
+as a **second, independent source**.
 
 **Run the frontier query anyway.** This line is a snapshot and goes stale the
 moment the owner files something. It is this project's standing lesson: a leg
@@ -24,14 +35,18 @@ gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-If it really is empty, the next move is the owner's: file something, or run
+If both are gone, the next move is the owner's: file something, or run
 `/preset init` (or `/preset vibe init` for an unattended funnel). Candidates are
 already written down — `## Deferred (still no spec)` in [[active-work]] is the
 menu, and `## Open questions` there holds the ones needing an answer first.
 
-**The one deferred item that now has a measurement behind it is the
-background-tasks feature** — #81 authorised it and built none of it. Its shape is
-already constrained; see the landmines below before speccing it.
+**#82's landmine, up front, because the obvious fix regresses the panel:** the
+dock's read effect sets `{ status: 'loading' }` **before every read**, and the
+merge is `mergeAgents(state.status === 'ok' ? state.agents : [], liveAgents)` —
+so adding a second dep blanks the disk rows and flickers the nested edges (which
+are disk-only by construction) out and back on every refresh. **Stale-while-
+revalidate.** The trigger to use already exists: #80's `LastTurn` + nonce, on the
+positive `turn-end`, **never** on `busy === false`.
 
 ## Landed last leg
 
@@ -120,22 +135,25 @@ origin inside `userData`**, so an un-isolated launch is an inherited pass.
 
 ## Do not decide these
 
-**Seven owner calls are parked and LIVE** in `.claude/vibe.md` → `## Needs you`,
-filed 2026-08-01 with **no autonomy grant** — unlike the 2026-07-31 batch,
-"this is the owner's call" is a legitimate ground for deferring here. #81 answers
-the factual half of four (the seed's meaning, the Agents-dock refresh trigger,
-whether non-agent background work belongs in the panel, injected-port-vs-
-`EngineEvent`) and **settles none**. The other three: the node-box map, a new
-top-level surface, and what "map pan-zoom" was meant to solve.
+**The seven are DONE.** The owner made a grant live on 2026-08-01 and all seven
+of `.claude/vibe.md`'s parked calls were taken — that file's `## Needs you` is
+**history now, not a queue**, and its `## Taken` section carries the resolutions.
+Do not re-open them from the seed; four were decided *against* the seed's literal
+words on the record's reasons, and a new **reason** reopens them, not a re-read.
 
-**Two older halves also stay open:** Tailwind is **not dropped** but the
-adopt-utilities question **stays open**, and the titlebar's control count **does
-not change** while the aesthetic question **stays the owner's**.
+**Two older halves still stand and are still the owner's:** Tailwind is **not
+dropped** but the adopt-utilities question **stays open**, and the titlebar's
+control count **does not change** while the aesthetic question **stays the
+owner's**. **#83 was deliberately routed into the existing Agents dock so it does
+not pre-empt that second one** — a fourth dock would have forced a fourth
+titlebar control.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
+- [[2026-08-01-the-background-agents-seed-decided]] — **the grant, and why #82 and #83 exist while four other calls closed as no**
 - [[2026-08-01-background-tasks-changed-fires-and-the-ids-join]] — #81
+- [[2026-07-25-map-geometry-is-a-pure-slot-layout]] — the warrant that closed the labelled map and struck pan-zoom
 - [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]] — #80
 - [[2026-07-31-the-window-waits-until-it-knows-where-to-be]] — #79
 - [[2026-07-31-the-window-is-shown-before-the-app-exists]] — #78, whose
