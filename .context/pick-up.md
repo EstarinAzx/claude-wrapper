@@ -12,7 +12,10 @@ Start: read `.context/overview.md` + `active-work.md`.
 ## Next ticket: queue empty
 
 **Nothing is open on the tracker — not one issue, in any state of triage.** #84
-landed and closed this leg. `main` is pushed, no open branches.
+**and #85** landed and closed. `main` is pushed, no open branches.
+
+**The background-task nesting line of work is COMPLETE.** #84 measured it, the
+owner answered both blocking calls, #85 shipped it. Nothing is parked on it.
 
 **Run the frontier query anyway.** This line is a snapshot and goes stale the
 moment the owner files something. It is this project's standing lesson: a leg
@@ -24,21 +27,35 @@ gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-**If it really is empty, the next move is the owner's — and there is now exactly
-one thing waiting on them.** #84 measured the ground for the background-task
-nesting feature and proved it buildable **both ways**, so the build is blocked
-only on a design call nobody but the owner can make: **what should nesting look
-like?** See `## Do not decide these` below. Everything needed to build it the
-moment that is answered is in
-[[2026-08-01-the-spawner-is-one-hop-off-task-started]].
-
-Other candidates as before: `## Deferred (still no spec)` in [[active-work]] is
-the menu, `## Open questions` there holds the ones needing an answer first.
+**If it really is empty, the next move is the owner's.** `## Deferred (still no
+spec)` in [[active-work]] is the menu, and `## Open questions` there holds the
+ones needing an answer first. The two older halves in `## Do not decide these`
+below are still parked and still the owner's.
 
 ## Landed last leg
 
-**#84 — measured whether a background task's spawner is reachable. It is, one
-hop off where everyone was looking.** Landed as `335df49`, ticket closed.
+**#85 — agent-spawned background tasks now nest under their spawner.** Landed as
+`3e24a53`, ticket closed. The owner answered both blocking calls (nest under the
+spawning **agent**; **hybrid** with the Background section as fallback), and the
+hybrid is the shape of the data rather than a compromise — #84 measured 2 of 3
+tasks parented and 1 not.
+
+- **Two new maps, and `taskToParent` is deliberately not one of them** — its
+  membership doubles as the accept-list keeping Bash out of the agent panel.
+- **`toolUseToAgent` is filled where `handleMessage` already held the parent and
+  was stepping over it** — `:419` returns before anything looks inside a
+  subagent's message, so its `tool_use` blocks were never associated with it.
+- **`taskIdToAgent` is filled BEFORE the `local_agent` gate**, because a
+  backgrounded Bash is exactly what that gate turns away. Mutation-verified.
+- **Nesting is a RENDER concern**, so #83's separate prop is **kept, not
+  reversed**: `buildAgentTree`, `flattenAgentTree`, `AgentRow` and `mergeAgents`
+  are untouched and a shell command still never claims agent usage.
+- **Five mutants killed — and one killed a bad test first.** See landmines.
+
+953 tests (+9). See [[2026-08-01-nesting-happens-in-the-render-not-the-model]].
+
+**Landed the leg before: #84 — measured whether a background task's spawner is
+reachable. It is, one hop off where everyone was looking.** `335df49`, closed.
 Measurement only, **no `src/` change**. Gate green: typecheck clean, **944 tests
 across 63 files** (baseline unchanged — scripts-only). The 23-driver GUI batch
 was **not** triggered: no renderer code and no CSS changed.
@@ -72,7 +89,31 @@ was **missing from `decisions.md`'s index** until this leg added it.
 
 ## Landmines
 
-Full ledger in [[active-work]] — long and load-bearing. New from #84:
+Full ledger in [[active-work]] — long and load-bearing. New from #85:
+
+- **A mutant can kill a BAD TEST before it kills the code — and that is the most
+  valuable thing mutation testing does here.** #85's check that a bash task never
+  becomes an agent row **passed against the broken code**: widening the
+  accept-list does not create a row keyed to the bash task, it resolves that
+  task's parent to the **AGENT** and terminates the agent early. The assertion
+  was checking the wrong shape entirely. **Assert the harm, not the shape**, and
+  confirm the fixed assertion reds with the mutant still in place.
+- **Before calling a driver red, reproduce it on clean `main` with the work
+  stashed.** `gui-75` failed 3/3 here and looked deterministic; it fails
+  identically at the baseline commit. A `could not drive:` line is a premise the
+  driver could not establish, which is a different animal from a failed
+  assertion.
+- **A batch script's own grep can manufacture a red.** `gui-61` "failed" because
+  the pattern matched the string `FAIL` inside the driver's *fixture card text*.
+  Judge drivers by **exit code**, never by scraping their stdout.
+- **When a guard turns your case away, record before the guard, not after.**
+  `taskIdToAgent` must be written ahead of the `local_agent` early return —
+  writing after it is the plausible-looking version that silently never fires.
+- **Nesting can be a render concern.** Keeping `buildAgentTree` / `AgentRow` /
+  `mergeAgents` untouched let #85 honour #83's separate prop rather than reverse
+  it — a shell command renders as a child without ever claiming agent semantics.
+
+Still true from #84:
 
 - **A field's absence is only a measurement if a differently-named field could
   have been seen.** Record `Object.keys(msg)`, not just the key you expected.
@@ -155,17 +196,25 @@ origin inside `userData`**, so an un-isolated launch is an inherited pass.
 
 ## Baseline
 
-`main` = `335df49` + this leg's `.context` commit, pushed. No open branches.
-**22** assertion drivers plus the observational `gui-scope-zoom-pill`, **23/23
-green at `ea780a0`** — **not re-run at `335df49`, and correctly so**: #84 changed
-only `scripts/` and `.context/`, no renderer code and no CSS, so the batch was not
-triggered. `gui-75` passed first try inside the last batch — the documented focus
-flake is intermittent, not batch-deterministic, so do not treat a future red there
-as expected without reading its `could not drive:` line.
+`main` = `3e24a53` + this leg's `.context` commit, pushed. No open branches.
+Test baseline is now **953 across 63 files** (#85 added 9; #84 added none).
 
-Test baseline holds at **944 across 63 files**, unchanged by #84 (measurement
-only). `scripts/spike-81-background-tasks.mjs` is now **+76 lines** past what #81
-ran; git history holds the original, and #81's findings are unaffected.
+**22** assertion drivers plus the observational `gui-scope-zoom-pill`. Batch re-run
+at `3e24a53` (renderer + CSS changed): **22 green, `gui-75` red**. That red is
+**environmental and NOT a regression** — verified by reproducing the identical
+`could not drive: the window lost focus during the second turn` on **clean `main`
+(`47ad14d`) with the work stashed**. It is a premise the driver could not
+establish, not a failed assertion. It failed 3/3 here, so **the documented focus
+flake is not always intermittent in a background session** — but still read the
+`could not drive:` line, and still reproduce on clean main before blaming a
+change.
+
+**Judge drivers by exit code.** A batch script grepping stdout for `FAIL` reports
+`gui-61` red on its own fixture card text (`"Bashnpm testFailed: FAIL
+tests/auth.test.ts…"`); its exit code is 0.
+
+`scripts/spike-81-background-tasks.mjs` is **+76 lines** past what #81 ran; git
+history holds the original, and #81's findings are unaffected.
 
 ## Do not decide these
 
@@ -184,28 +233,18 @@ owner's**. **#83 honoured the second one** — it joined the existing Agents doc
 rather than adding a fourth surface, which would have forced a fourth titlebar
 control.
 
-**NEW and the most actionable thing waiting on the owner — what should background
-task nesting LOOK like?** #84 proved the data is there **both ways** (name the
-spawning tool call, or nest under the spawning agent), so this is now the only
-thing blocking a build ticket, and it is purely a design call. Three raised
-defers from the 2026-08-01 vibe run sit in `.claude/vibe.md` → `## Needs you`,
-all reversible, none taken irreversibly:
-
-1. **Which reading of "spawner" did you mean?** #84 did *not* collapse this into
-   a fact — both are buildable. Still a real choice.
-2. **May parentage state be recorded for non-agent tasks at all?** No state was
-   shipped; the spike renders nothing.
-3. **What should nesting look like?** Deliberately not chosen. The agent tree's
-   flat-with-a-depth precedent (`paddingLeft: depth * 14`, `aria-level`) is
-   *available but unwarranted* here — it is stated for `AgentRow`s inside
-   `buildAgentTree`, and background tasks deliberately never reach it
-   ("A separate prop, never folded into liveAgents", `src/renderer/src/App.tsx:342`).
-   Borrowing it would be a taste call wearing a citation.
+**The three defers from the 2026-08-01 vibe run are ANSWERED and SPENT.** The
+owner took all three on 2026-08-01 — nest under the spawning **agent**, record
+parentage for non-agent tasks (implied by the first), and the **hybrid** visual
+form. #85 shipped exactly that. `.claude/vibe.md` → `## Needs you` keeps them
+with their reasoning for the trail; **that section is history now, not a queue**,
+apart from the two carried halves above.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-08-01-the-spawner-is-one-hop-off-task-started]] — **#84, this leg; the spawner IS reachable, on the `assistant` envelope rather than `task_started`, and the ticket's own predicted conclusion was falsified**
+- [[2026-08-01-nesting-happens-in-the-render-not-the-model]] — **#85, this leg; the hybrid, the two maps, why #83's separate prop survived, and the mutant that killed a bad test**
+- [[2026-08-01-the-spawner-is-one-hop-off-task-started]] — **#84; the spawner IS reachable, on the `assistant` envelope rather than `task_started`, and the ticket's own predicted conclusion was falsified**
 - [[2026-08-01-a-level-is-replaced-not-accumulated]] — **#83, shipped; the port, the reset site, and why the level is filtered rather than joined**
 - [[2026-08-01-a-refresh-must-not-blank-what-it-has]] — #82, the state shape #83 inherited and left alone
 - [[2026-08-01-the-background-agents-seed-decided]] — the grant, now fully spent

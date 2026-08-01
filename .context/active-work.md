@@ -13,26 +13,29 @@ _Driver check: **re-run this leg, 23/23 green at `ea780a0`.** #83 changed render
 
 ## Current focus
 
-**Nothing open. The queue is dry and the next move is the owner's — and it is now
-a single, sharp design question.** #84 landed this leg and closed. It was filed by
-a second unattended `/preset vibe init` run (on the `taskToParent` join #83
-reserved) and it was **measurement only, no `src/` change**.
+**Nothing open. The queue is dry and the next move is the owner's.** #84 and #85
+both landed and closed, and **the background-task nesting line of work is now
+complete** — nothing is parked on it.
 
-**#84's result is the thing to read first: the spawner IS reachable, both ways.**
-A `local_bash` `task_started` carries `tool_use_id` but no parent under any name
-(key set exhaustive at eight fields) — yet the owning agent sits one hop away, on
-the `assistant` message carrying that Bash `tool_use` block. #84 had predicted
-that a negative there would kill agent-nesting; **that prediction was falsified by
-its own measurement.** So both readings of "nest under its spawner" are buildable,
-the owner's choice did **not** collapse into a fact, and the only thing blocking a
-build ticket is **what nesting should look like** — a pure design call. See
-[[2026-08-01-the-spawner-is-one-hop-off-task-started]].
+The arc, because it is the useful part: a second unattended `/preset vibe init`
+run took the `taskToParent` join #83 reserved and filed **#84** as a
+measurement-only spike. #84 found a `local_bash` `task_started` carries
+`tool_use_id` but **no parent under any name** (key set exhaustive at eight
+fields) — while the owning agent sits **one hop away**, on the `assistant` message
+carrying that Bash `tool_use` block. **#84's own predicted conclusion was
+falsified by its own measurement**: it had stated that a negative there would kill
+agent-nesting, and it does not. So the owner's choice did not collapse into a
+fact; they then answered it directly (**nest under the spawning agent**, **hybrid**
+with Background as fallback), and **#85** shipped it. See
+[[2026-08-01-the-spawner-is-one-hop-off-task-started]] and
+[[2026-08-01-nesting-happens-in-the-render-not-the-model]].
 
 | # | Ticket | State |
 |---|---|---|
 | ~~#82~~ | ~~The Agents dock re-reads its sidecars every turn, without blanking what it already has~~ | `3f34737`, **closed** |
 | ~~#83~~ | ~~Surface live background tasks in the Agents dock, through an injected port~~ | `ea780a0`, **closed** |
 | ~~#84~~ | ~~Measure whether a background task's spawner is reachable on the wire~~ | `335df49`, **closed** — measurement only |
+| ~~#85~~ | ~~Nest agent-spawned background tasks under their spawning agent~~ | `3e24a53`, **closed** |
 
 They were serialised rather than run beside each other because both edit
 `AgentsDock`'s state shape. #83 inherited the shape #82 changed and, as its
@@ -593,6 +596,9 @@ the text itself rather than a fixed label — it does not need to today, because
 draft it refers to is visible in the composer directly beneath it.
 
 **Struck 2026-08-01 as delivered:** ~~the **background-tasks feature** on the CLI's `background_tasks_changed` level signal~~ — **shipped as #83 (`ea780a0`)**, with every shape the grant decided: injected port, own section, `local_agent` guard untouched, inside the existing Agents dock.
+
+**DELIVERED 2026-08-01 as #85 (`3e24a53`)** — nesting shipped as the hybrid the
+owner chose. The two notes below are kept for the trail only; neither is open.
 
 **MEASURED 2026-08-01 by #84** — the entry below is superseded on its central
 factual claim and kept for the trail. #84 found the spawner **is** reachable: a

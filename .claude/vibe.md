@@ -80,7 +80,24 @@ run's `max_defer`.
       why: Partner DEFERred; pure taste. The stated rationale ("each button eating drag region") is measured and false, so the remaining case is aesthetic, which is yours.
       reversible: yes
 
-**Raised by this run — three, all reversible.**
+**ALL THREE ANSWERED BY THE OWNER, 2026-08-01, after #84 landed.** Kept below
+with their reasoning intact, because the reasoning is what a later leg needs.
+
+1. **Which reading of "spawner"?** → **nest under the spawning AGENT.** (The
+   cheaper "name the spawning tool call" is ruled out.)
+2. **May parentage state be recorded for non-agent tasks?** → **yes, implicitly** —
+   answer 1 requires it.
+3. **What should nesting look like?** → **hybrid: nest if parented, else
+   Background.** Agent-spawned tasks become children in the agent tree;
+   parentless ones (main-thread bash) stay in the Background section. This
+   matches the measured data exactly — 2 of 3 had a parent, 1 did not.
+
+Filed as **#85**. Note the mechanism keeps #83's separate prop **intact rather
+than reversed**: background tasks render nested without ever becoming `AgentRow`s
+or reaching `mergeAgents`, because `AgentRow.parentToolUseId` is already the same
+id the measurement recovers, so the join needs nothing new in the renderer.
+
+**Raised by this run — three, all reversible. All now answered.**
 
 - [ ] **What did you actually mean by "its spawner"?** This is the run's central defer, and it is genuinely undecidable from the record.
       took: MEASURE FIRST — file a spike that turns as much of the question as possible into a fact rather than a preference
