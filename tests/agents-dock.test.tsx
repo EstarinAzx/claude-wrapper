@@ -946,3 +946,101 @@ describe('agents dock — background tasks (#83)', () => {
     expect(await screen.findByText('npm run build')).toBeTruthy()
   })
 })
+
+// #85 — a background task spawned BY an agent nests under it. The parent id is
+// the same value as AgentRow.parentToolUseId, so the join needs nothing new in
+// the renderer. Nesting happens in the RENDER only: these rows still never reach
+// mergeAgents or become AgentRows, so #83's separate prop is kept rather than
+// reversed, and a shell command still never claims agent usage.
+describe('agents dock — background tasks nested under their spawner (#85)', () => {
+  const listRows = (): HTMLElement[] => within(dock()).getAllByRole('listitem')
+  const tasksSection = (): HTMLElement | null => dock().querySelector('.background-tasks')
+
+  const showAgents = async (agents: SubagentInfo[]): Promise<void> => {
+    harness.api.listSubagents.mockResolvedValue(agents)
+    await startSession([sess('sess-1', 'past work')])
+    fireEvent.click(await screen.findByText('past work'))
+    openDock()
+  }
+
+  const owned = (over: Partial<BackgroundTask> = {}): BackgroundTask => ({
+    taskId: 't-owned',
+    taskType: 'local_bash',
+    description: 'sleep 30',
+    parentAgentToolUseId: 'task-1',
+    ...over
+  })
+
+  test('a task spawned by an agent renders as its child, one level deeper', async () => {
+    await showAgents([
+      agent({ parentToolUseId: 'task-1', agentId: 'a1', description: 'the explorer' })
+    ])
+    expect(await screen.findByText('the explorer')).toBeTruthy()
+
+    harness.emitBackgroundTasks([owned()])
+    expect(await screen.findByText('sleep 30')).toBeTruthy()
+
+    const rows = listRows()
+    expect(rows.map((li) => li.textContent?.includes('sleep 30'))).toEqual([false, true])
+    // The tree's own indent convention, one step past its parent — and the same
+    // depth reaches a screen reader, which cannot see the padding.
+    expect(rows[1].style.paddingLeft).toBe('14px')
+    expect(rows[1].getAttribute('aria-level')).toBe('2')
+    // It moved OUT of the Background section rather than being shown twice.
+    expect(tasksSection()).toBeNull()
+  })
+
+  test('nesting does not promote it into an agent — no button, no agent row', async () => {
+    await showAgents([
+      agent({ parentToolUseId: 'task-1', agentId: 'a1', description: 'the explorer' })
+    ])
+    harness.emitBackgroundTasks([owned()])
+    expect(await screen.findByText('sleep 30')).toBeTruthy()
+
+    const nested = listRows()[1]
+    expect(nested.querySelector('button')).toBeNull()
+    expect(nested.classList.contains('agent-row')).toBe(false)
+    expect(nested.classList.contains('background-task-row')).toBe(true)
+    // The raw discriminant still renders verbatim, never a friendly label.
+    expect(within(nested).getByText('local_bash')).toBeTruthy()
+  })
+
+  test('a task with no owning agent stays in the Background section', async () => {
+    // The main-thread Bash case. #84 measured 2 of 3 parented and 1 not, so this
+    // is the normal state of a real session, not an edge.
+    await showAgents([
+      agent({ parentToolUseId: 'task-1', agentId: 'a1', description: 'the explorer' })
+    ])
+    harness.emitBackgroundTasks([owned({ taskId: 't-loose', parentAgentToolUseId: undefined })])
+    expect(await screen.findByText('sleep 30')).toBeTruthy()
+
+    expect(tasksSection()).toBeTruthy()
+    expect(listRows().map((li) => li.textContent?.includes('sleep 30'))).toContain(false)
+    expect(within(tasksSection() as HTMLElement).getByText('sleep 30')).toBeTruthy()
+  })
+
+  test('a task naming an agent absent from the list falls back, it never vanishes', async () => {
+    // Same spirit as the tree's "a row naming a parent absent from the list
+    // degrades to a root": a missing row is worse than a mis-placed one.
+    await showAgents([
+      agent({ parentToolUseId: 'task-1', agentId: 'a1', description: 'the explorer' })
+    ])
+    harness.emitBackgroundTasks([owned({ parentAgentToolUseId: 'task-NOBODY' })])
+    expect(await screen.findByText('sleep 30')).toBeTruthy()
+    expect(tasksSection()).toBeTruthy()
+    expect(within(tasksSection() as HTMLElement).getByText('sleep 30')).toBeTruthy()
+  })
+
+  test('a nested task still LEAVES when the level drops it', async () => {
+    // REPLACE governs the nested rows exactly as it governs the section.
+    await showAgents([
+      agent({ parentToolUseId: 'task-1', agentId: 'a1', description: 'the explorer' })
+    ])
+    harness.emitBackgroundTasks([owned()])
+    expect(await screen.findByText('sleep 30')).toBeTruthy()
+
+    harness.emitBackgroundTasks([])
+    expect(screen.queryByText('sleep 30')).toBeNull()
+    expect(listRows()).toHaveLength(1)
+  })
+})

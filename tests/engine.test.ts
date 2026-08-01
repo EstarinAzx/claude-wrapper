@@ -2380,4 +2380,125 @@ describe('engine — background tasks level (#83)', () => {
     const events = await turn
     expect(events.some((e) => e.type === 'error')).toBe(false)
   })
+
+  // ── #85: nesting a background task under its spawning agent ──
+  //
+  // #84 measured that the parent is on the `assistant` ENVELOPE and never on
+  // task_started (whose key set is exhaustive at eight fields). These pin that
+  // the engine reads it from the one place it exists.
+  const ownerMsg = (agent: string, toolUseId: string): SdkMessage =>
+    ({
+      type: 'assistant',
+      session_id: 'sess-1',
+      parent_tool_use_id: agent,
+      message: { content: [{ type: 'tool_use', id: toolUseId, name: 'Bash', input: {} }] }
+    }) as unknown as SdkMessage
+
+  const bashStarted = (taskId: string, toolUseId: string): SdkMessage =>
+    ({
+      type: 'system',
+      subtype: 'task_started',
+      session_id: 'sess-1',
+      task_id: taskId,
+      tool_use_id: toolUseId,
+      task_type: 'local_bash',
+      description: 'npm test'
+    }) as unknown as SdkMessage
+
+  test('a background task spawned inside an agent reaches the panel naming that agent', async () => {
+    const { fn, push } = streamingStub()
+    const c = collector()
+    const engine = engineWithTasks(fn, c.onTasks)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(ownerMsg('toolu_owner', 'toolu_bash'))
+    push(bashStarted('t-bash', 'toolu_bash'))
+    push(level([bash]))
+    push(success)
+    await turn
+    expect(c.sets.at(-1)).toEqual([
+      {
+        taskId: 't-bash',
+        taskType: 'local_bash',
+        description: 'npm test',
+        parentAgentToolUseId: 'toolu_owner'
+      }
+    ])
+  })
+
+  // The control, and the reason the field is optional rather than nullable: a
+  // main-thread Bash has no owning agent to name. #84 measured exactly this —
+  // 2 of 3 tasks parented, 1 not. Absent must mean "no owner", never "unknown".
+  test('a background task from the main thread carries no owner at all', async () => {
+    const { fn, push } = streamingStub()
+    const c = collector()
+    const engine = engineWithTasks(fn, c.onTasks)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    // No owner envelope: the tool_use was issued by the main thread.
+    push(bashStarted('t-bash', 'toolu_bash'))
+    push(level([bash]))
+    push(success)
+    await turn
+    expect(c.sets.at(-1)).toEqual([
+      { taskId: 't-bash', taskType: 'local_bash', description: 'npm test' }
+    ])
+    expect(c.sets.at(-1)?.[0]).not.toHaveProperty('parentAgentToolUseId')
+  })
+
+  // THE pin for #85's central constraint. Recording parentage must not widen the
+  // accept-list: taskToParent's membership is what keeps bash out of the agent
+  // panel, so if the new lookup ever wrote there, this bash task's later
+  // messages would resolve a parent and emit agent rows for a shell command.
+  test('recording a background task parent does NOT make it an agent row', async () => {
+    const { fn, push } = streamingStub()
+    const c = collector()
+    const engine = engineWithTasks(fn, c.onTasks)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(ownerMsg('toolu_owner', 'toolu_bash'))
+    push(bashStarted('t-bash', 'toolu_bash'))
+    // The message that would create the row if the accept-list had been widened.
+    push({
+      type: 'system',
+      subtype: 'task_notification',
+      session_id: 'sess-1',
+      task_id: 't-bash',
+      status: 'completed'
+    } as unknown as SdkMessage)
+    push(success)
+    const events = await turn
+    // Assert the HARM, not the shape. Widening the accept-list does not create a
+    // row keyed to the bash task — it resolves the bash task's parent to the
+    // AGENT and terminates that agent early, so a check for `t-bash` events
+    // passes against the broken code and pins nothing. What must not happen is
+    // any terminal status: the owner envelope legitimately emits one `running`
+    // for the agent, and the bash finishing must add nothing at all.
+    const subagentEvts = events.filter((e) => e.type === 'subagent')
+    expect(subagentEvts.map((e) => e.status)).toEqual(['running'])
+    expect(subagentEvts.every((e) => e.parentToolUseId === 'toolu_owner')).toBe(true)
+    expect(c.sets.at(-1) ?? []).toEqual([])
+  })
+
+  // REPLACE still governs the rendered set. Enrichment happens on the way out,
+  // so a task that leaves the level leaves the panel — the parent lookup living
+  // longer must not keep a finished task alive.
+  test('an enriched task still LEAVES when the level drops it', async () => {
+    const { fn, push } = streamingStub()
+    const c = collector()
+    const engine = engineWithTasks(fn, c.onTasks)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(ownerMsg('toolu_owner', 'toolu_bash'))
+    push(bashStarted('t-bash', 'toolu_bash'))
+    push(level([bash]))
+    push(level([]))
+    push(success)
+    await turn
+    expect(c.sets.at(-1)).toEqual([])
+  })
 })

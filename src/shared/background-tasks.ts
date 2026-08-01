@@ -10,6 +10,15 @@ export type BackgroundTask = {
   taskId: string
   taskType: string
   description: string
+  // #85. The `tool_use` id of the AGENT that spawned this task, when it had one.
+  // Absent — never empty-string — for a task spawned from the main thread, which
+  // genuinely has no owning agent: #84 measured 2 of 3 parented and 1 not.
+  //
+  // It is NOT parsed from the level, which carries no parentage at all. The
+  // engine fills it on the way out, from a lookup built off the `assistant`
+  // envelope. Absent here therefore means "no owner", not "not yet known" —
+  // the level and the lookup are populated from the same stream, in order.
+  parentAgentToolUseId?: string
 }
 
 // The raw discriminant the LEVEL speaks — `local_agent` / `local_bash`.

@@ -189,6 +189,22 @@
   min-width: 0;
 }
 
+/* #85. The same row, living inside .agent-list as a child of its spawning agent
+   rather than in the Background section. It keeps every .background-task-row
+   property above and adds only what the new position needs: the vertical rhythm
+   of the list it now sits in, and a left rule marking it as owned. Its
+   paddingLeft is inline (depth * INDENT_PX), exactly as .agent-row--nested does
+   it, so one indent convention governs both and neither can drift.
+
+   Deliberately NOT given .agent-row's styling: nesting moves a shell command,
+   it does not promote it into an agent. */
+.background-task-row--in-tree {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border-left: 1px solid var(--border);
+  margin-left: 3px;
+}
+
 .background-task-desc {
   font-size: var(--fs-ui);
   color: var(--text);

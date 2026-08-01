@@ -304,6 +304,19 @@ export const createEngine = (
   // Needed at all because task_progress/task_updated for a nested agent carry
   // task_id and nothing else — the two ids are separate keys, so we keep both.
   const taskToParent = new Map<string, string>()
+  // #85. Deliberately SEPARATE from taskToParent, which cannot be reused: its
+  // membership doubles as the accept-list above, so putting a bash task's id in
+  // it would make the lookup below succeed for that task's later messages and
+  // emit an agent row for a shell command.
+  //
+  // tool_use id -> the agent tool_use id that owns it. Built from the `assistant`
+  // envelope, which #84 measured as the ONLY place a background task's parentage
+  // appears — `task_started` itself carries `tool_use_id` but no parent under any
+  // name (its key set is exhaustive at eight fields).
+  const toolUseToAgent = new Map<string, string>()
+  // task_id -> owning agent tool_use id, for ANY task_type. Absent means the task
+  // has no owning agent (main thread), which is a real state, not a gap.
+  const taskIdToAgent = new Map<string, string>()
 
   const emit = (e: EngineEvent): void => {
     activeOnEvent?.(e)
@@ -352,6 +365,14 @@ export const createEngine = (
     const taskId = str(src.task_id)
 
     if (subtype === 'task_started') {
+      // #85. Parentage is recorded for EVERY task_type, and deliberately BEFORE
+      // the local_agent gate below — a backgrounded Bash is exactly the case
+      // that needs it, and it is the case the gate exists to turn away. This
+      // writes only to taskIdToAgent, never to taskToParent, so the gate's job
+      // as the accept-list is untouched and no bash task gains an agent row.
+      const owner = toolUseToAgent.get(str(src.tool_use_id) ?? '')
+      if (taskId !== undefined && owner !== undefined) taskIdToAgent.set(taskId, owner)
+
       // local_bash tasks share this stream; only real agents become rows.
       if (str(src.task_type) !== 'local_agent') return
       const parent = str(src.tool_use_id)
@@ -412,6 +433,21 @@ export const createEngine = (
       parent.length > 0 &&
       (msg.type === 'assistant' || msg.type === 'user')
     ) {
+      // #85. This is the one place the stream states parentage, and it was being
+      // stepped over: the early return below drops the message before anything
+      // looks INSIDE it, so the tool_use blocks a subagent issued — including a
+      // backgrounded Bash — were never associated with the agent that issued
+      // them. Both halves of the join have been in this function all along.
+      const blocks = (msg as { message?: { content?: unknown } }).message?.content
+      if (Array.isArray(blocks)) {
+        for (const b of blocks) {
+          const block = b as { type?: unknown; id?: unknown }
+          if (block?.type === 'tool_use' && typeof block.id === 'string' && block.id.length > 0) {
+            toolUseToAgent.set(block.id, parent)
+          }
+        }
+      }
+
       if (!subagentParents.has(parent)) {
         subagentParents.add(parent)
         emit({ type: 'subagent', parentToolUseId: parent, status: 'running' })
@@ -440,7 +476,16 @@ export const createEngine = (
         // local_agent row in the payload would take the subagent path a second
         // time. The `local_agent` guard down there is mutation-verified and
         // stays untouched — this branch amends, it does not reverse.
-        onBackgroundTasks(parseBackgroundTasks(src.tasks))
+        // #85. Enriched on the way OUT, never accumulated: the level still
+        // carries the whole live set and still REPLACES wholesale. The parent
+        // lookup is separate state that happens to be consulted here, so a task
+        // leaving the set still leaves the panel.
+        onBackgroundTasks(
+          parseBackgroundTasks(src.tasks).map((t) => {
+            const agent = taskIdToAgent.get(t.taskId)
+            return agent === undefined ? t : { ...t, parentAgentToolUseId: agent }
+          })
+        )
       } else if (subtype === 'informational') {
         // 'info' is documented transcript-mode-only; this app has no transcript
         // mode, so that level is dropped rather than rendered.

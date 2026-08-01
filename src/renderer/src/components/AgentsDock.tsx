@@ -215,6 +215,27 @@ const AgentsDock = ({
   // twice, under two different names for the same work.
   const tasks = nonAgentTasks(backgroundTasks)
 
+  // #85. Split by whether this task has an owning agent that is actually on
+  // screen to hang from. Three separate things send a task to the Background
+  // section instead, and none of them is an error: it has no owner at all (a
+  // main-thread Bash — #84 measured 2 of 3 parented and 1 not), its owner is
+  // absent from the list, or the map mode is showing, which has no <li>s to nest
+  // under. The fallback is never a drop — "a missing row is worse than a
+  // mis-indented one".
+  const onScreen = new Set(nodes.map((n) => n.row.parentToolUseId))
+  const nestedByAgent = new Map<string, BackgroundTask[]>()
+  const looseTasks: BackgroundTask[] = []
+  for (const t of tasks) {
+    const owner = t.parentAgentToolUseId
+    if (mode !== 'map' && owner !== undefined && onScreen.has(owner)) {
+      const siblings = nestedByAgent.get(owner)
+      if (siblings === undefined) nestedByAgent.set(owner, [t])
+      else siblings.push(t)
+    } else {
+      looseTasks.push(t)
+    }
+  }
+
   return (
     <aside className="agents-dock" aria-label="Agents" style={{ width }}>
       <div
@@ -298,7 +319,7 @@ const AgentsDock = ({
         <AgentMap rows={rows} selectedId={selectedId} onOpenAgent={openAgent} />
       ) : (
         <ul className="agent-list">
-          {nodes.map(({ row: a, depth }) => {
+          {nodes.flatMap(({ row: a, depth }) => {
             // Absent fields are dropped, never rendered as a zero or a blank —
             // a sidecar that never recorded a model must not read as "no model".
             const meta = [a.model, a.spawnDepth === undefined ? '' : `depth ${a.spawnDepth}`]
@@ -306,7 +327,7 @@ const AgentsDock = ({
               .join(' · ')
             const stats = liveStats(a)
             const selected = selectedId === a.parentToolUseId
-            return (
+            const agentLi = (
               <li
                 key={a.parentToolUseId}
                 // aria-level carries the depth that is otherwise only in the
@@ -342,6 +363,31 @@ const AgentsDock = ({
                 </button>
               </li>
             )
+            // #85. The agent's own background tasks, one level deeper, sharing
+            // the same flat-with-a-depth convention as the tree rather than a
+            // nested <ul>. They stay NON-INTERACTIVE and keep the background-task
+            // classes: nesting changes where a shell command sits, never what it
+            // claims to be, so it gains no button, no usage and no agent styling.
+            const owned = nestedByAgent.get(a.parentToolUseId)
+            if (owned === undefined) return [agentLi]
+            return [
+              agentLi,
+              ...owned.map((t) => (
+                <li
+                  key={`bg-${t.taskId}`}
+                  aria-level={depth + 2}
+                  style={{ paddingLeft: (depth + 1) * INDENT_PX }}
+                  className="background-task-row background-task-row--in-tree"
+                >
+                  {t.description ? (
+                    <span className="background-task-desc" title={t.description}>
+                      {t.description}
+                    </span>
+                  ) : null}
+                  <span className="background-task-type">{t.taskType}</span>
+                </li>
+              ))
+            ]
           })}
         </ul>
       )}
@@ -352,14 +398,16 @@ const AgentsDock = ({
           competing with the three above it, for the case that is the norm.
 
           Non-interactive by design. A background task has nothing to open: no
-          sidecar, no transcript, and no parentage in the payload to reach one
-          by. Rows with nothing behind them stay plain text rather than becoming
-          buttons that do nothing. */}
-      {tasks.length > 0 ? (
+          sidecar and no transcript. (#84 since found its PARENTAGE — on the
+          `assistant` envelope, not the payload — and #85 uses that to nest the
+          owned ones above; but knowing who spawned a shell command still does
+          not give it a transcript of its own.) Rows with nothing behind them
+          stay plain text rather than becoming buttons that do nothing. */}
+      {looseTasks.length > 0 ? (
         <section className="background-tasks" aria-label="Background tasks">
           <span className="background-tasks-title">Background</span>
           <ul className="background-task-list">
-            {tasks.map((t) => (
+            {looseTasks.map((t) => (
               <li key={t.taskId} className="background-task-row">
                 {t.description ? (
                   <span className="background-task-desc" title={t.description}>
