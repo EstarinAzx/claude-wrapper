@@ -87,6 +87,15 @@ run's `max_defer`.
       alt: commit now to (i) "name the spawning tool call" — cheap, reachable today; or (ii) "nest under the spawning **agent**" — which needs `parent_tool_use_id` on a *system* message, a field this repo's SDK type declares only on `assistant`/`user` (`engine.ts:31,48`), that no fixture exercises, and that `handleMessage`'s envelope check at `:410-414` is gated away from
       why: The seed did not come from your prose this run — you picked a menu option whose wording was mine, so reading intent out of the phrase "nest under its spawner" would be reading my own words back as if they were yours. That is the exact failure this preset exists to prevent. If the measurement comes back negative for (ii), the choice collapses into a fact and you never have to make it.
       reversible: yes
+      **UPDATE 2026-08-01, after #84 measured: the choice did NOT collapse — it is
+      still yours, and it is now a real one.** The spike found (i) reachable as
+      expected, and found (ii) reachable too, just not where this entry assumed:
+      the owning agent is **not** on `task_started` (no parent field of any name,
+      key set exhaustive) but **is** on the `assistant` message carrying the Bash
+      `tool_use` block. #84 predicted that a negative there would kill (ii); that
+      prediction was wrong and the measurement caught it. Both readings are
+      buildable, so this entry stands unanswered — see
+      [[2026-08-01-the-spawner-is-one-hop-off-task-started]].
 - [ ] **May parentage state be recorded for NON-agent tasks at all?** (Partner: DEFER — nothing on the record reaches non-agent parentage; the two nearest items are scoped to the agent tree and to the level payload respectively.)
       took: NO STATE SHIPPED THIS TICKET — the spike measures and renders nothing, so no engine state is added until you have the answer
       alt: authorise the engine change up front and let the ticket both measure and ship

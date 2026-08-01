@@ -9,74 +9,93 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Next ticket: #84 — measure the background task's spawner
+## Next ticket: queue empty
 
-**One ticket is open and unblocked: #84**, `ready-for-agent`, filed 2026-08-01 by
-an unattended `/preset vibe init` run on the `taskToParent` join. It is a
-**measurement-only spike — it ships no `src/` change at all**, and an ADR
-recording a negative is a complete, successful delivery of it.
+**Nothing is open on the tracker — not one issue, in any state of triage.** #84
+landed and closed this leg. `main` is pushed, no open branches.
 
-**Run the frontier query anyway** before starting. This line is a snapshot and
-goes stale the moment the owner files something. It is this project's standing
-lesson: a leg once wrote that closing #70 would empty the queue and was wrong,
-because #71 had been unblocked the whole time.
+**Run the frontier query anyway.** This line is a snapshot and goes stale the
+moment the owner files something. It is this project's standing lesson: a leg
+once wrote that closing #70 would empty the queue and was wrong, because #71 had
+been unblocked the whole time.
 
 ```
 gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-**What #84 exists to settle, in one line:** the reserved join does not do what
-its name suggests, because `taskToParent` is `local_agent`-only
-(`src/main/engine.ts:356`) while the background section renders its exact
-complement (`src/shared/background-tasks.ts:53`) — **the two sets are disjoint,
-so a join over them returns nothing.** The spawner is nevertheless observable on
-`task_started`, which does carry `tool_use_id`. But that id names the **Bash
-tool_use call**, not the owning agent; nesting under an *agent* would need
-`parent_tool_use_id` on a `system` message, a field this repo's SDK type declares
-only on `assistant`/`user` (`engine.ts:31,48`). #84 measures which of those two
-readings is reachable.
+**If it really is empty, the next move is the owner's — and there is now exactly
+one thing waiting on them.** #84 measured the ground for the background-task
+nesting feature and proved it buildable **both ways**, so the build is blocked
+only on a design call nobody but the owner can make: **what should nesting look
+like?** See `## Do not decide these` below. Everything needed to build it the
+moment that is answered is in
+[[2026-08-01-the-spawner-is-one-hop-off-task-started]].
 
-**The instrument already exists and has been recording half the answer since #81
-— nobody has read it back.** `scripts/spike-81-background-tasks.mjs` captures
-`tool_use_id` for every `task_started` at line 163 (before the `local_agent`
-filter at 167) and persists it at line 322, but its console line 170 prints only
-type and id, and the evidence sink is a temp dir **outside the repo by design**,
-so nothing survived. It does **not** capture `parent_tool_use_id` at all — that
-is the one-line addition #84 asks for.
-
-**Do not let #84 grow into the feature.** Its visual form is an **open owner
-decision** and blocks any build ticket. Full reasoning, warrants and the three
-deferred owner calls are in `.claude/vibe.md`.
+Other candidates as before: `## Deferred (still no spec)` in [[active-work]] is
+the menu, `## Open questions` there holds the ones needing an answer first.
 
 ## Landed last leg
 
-**#83 — live background tasks in the Agents dock, through an injected port.**
-Merged as `ea780a0`, ticket closed. Gate green: typecheck clean, **944 tests
-across 63 files** (was 921/62), build ok. **The 23-driver GUI batch was re-run —
-all green**, because this changed renderer code *and* added CSS.
+**#84 — measured whether a background task's spawner is reachable. It is, one
+hop off where everyone was looking.** Landed as `335df49`, ticket closed.
+Measurement only, **no `src/` change**. Gate green: typecheck clean, **944 tests
+across 63 files** (baseline unchanged — scripts-only). The 23-driver GUI batch
+was **not** triggered: no renderer code and no CSS changed.
 
-Four choices, all structural:
+Measured live on host CLI **2.1.220 / SDK 0.3.220**, backend `wisped`, 101
+messages, by extending `scripts/spike-81-background-tasks.mjs` in place (+76).
 
-- **A port, not an `EngineEvent`** — third of the shape after #52 and #73, but
-  the case it protects is not an edge: #81 timed a level landing **3.3s past
-  `result/success`**, and a task settling between turns is the NORMAL case for
-  background work. The pins are therefore about WHEN a message arrives, not what
-  it carries.
-- **REPLACE, never accumulate**, at every layer. Mutation-verified.
-- **The per-process reset lives in `engine.close()`**, not `makeEngine()` — four
-  of the six discard paths rebuild *lazily*, so a reset at construction leaves a
-  dead process's tasks on screen until the next send.
-- **Its own section**, `local_agent` dropped from it, and the level branch placed
-  **before** the fallthrough to `handleTaskMessage` so the mutation-verified
-  guard is untouched.
+- **A `local_bash` `task_started` carries `tool_use_id` (3/3) but no parent under
+  any name.** The key set is exhaustive at eight fields, and the harness now
+  records `Object.keys(msg)` for exactly that reason — *an absence is only a
+  measurement if a differently-named field could have been seen.*
+- **The owning agent IS reachable — on the `assistant` message carrying the Bash
+  `tool_use` block**, as `parent_tool_use_id`. Proven at seq 90, and the control
+  discriminates cleanly: agent-spawned bash → the agent's id, main-thread bash →
+  `null`.
+- **The ticket's own predicted conclusion was FALSIFIED.** #84 stated that a
+  negative on the parent field would mean agent-nesting "is not buildable on the
+  current stream model". It is buildable. The #68 pattern again — the probe
+  falsified its own premise and the feature survived.
+- **Turn C is why this is a measurement and not a guess.** #81's only bash came
+  off the main thread, where there is no owner at all, so a missing parent there
+  could not distinguish "absent" from "nothing to name".
 
-Five mutants killed, 23 tests added. See
-[[2026-08-01-a-level-is-replaced-not-accumulated]].
+See [[2026-08-01-the-spawner-is-one-hop-off-task-started]].
+
+**Landed the leg before: #83** — live background tasks in the Agents dock through
+a third injected port (`ea780a0`), REPLACE-never-accumulate, reset carried by
+`engine.close()` rather than `makeEngine()` because four of six discard paths
+rebuild lazily. See [[2026-08-01-a-level-is-replaced-not-accumulated]] — which
+was **missing from `decisions.md`'s index** until this leg added it.
 
 ## Landmines
 
-Full ledger in [[active-work]] — long and load-bearing. New from #83:
+Full ledger in [[active-work]] — long and load-bearing. New from #84:
+
+- **A field's absence is only a measurement if a differently-named field could
+  have been seen.** Record `Object.keys(msg)`, not just the key you expected.
+  #84's "no parent on `task_started`" is trustworthy *because* the key set came
+  back exhaustive at eight fields.
+- **Check whether your negative path was ever exercised.** #81 concluded nothing
+  about bash parentage because its only backgrounded Bash ran on the main thread,
+  where there is no owner — the same trap as #27's "never fired". A control that
+  cannot distinguish "absent" from "nothing to name" measures nothing.
+- **A ticket's stated implication can be wrong even when its stated observation
+  is right.** #84 predicted Q1-positive/Q2-negative would kill agent-nesting; the
+  observation held and the implication did not. Write the condition falsifiably
+  and then actually check it against what you found.
+- **Data captured is not data recorded.** #81's harness captured `tool_use_id` on
+  every `task_started` from day one, but never printed it and wrote its evidence
+  to a temp dir outside the repo on purpose — so the answer was produced and lost
+  three times before anyone read it back.
+- **`parent_tool_use_id` is on the `assistant` envelope, never on the `system`
+  message.** `engine.ts:409` already reads it and `:419` returns immediately, so
+  the `tool_use` blocks inside subagent messages are never inspected. Both halves
+  of the join have always been in the process.
+
+Still true from #83:
 
 - **When hunting for the one place to put an invariant, check whether every path
   reaches your candidate EAGERLY.** `makeEngine()` is the single funnel for
@@ -136,11 +155,17 @@ origin inside `userData`**, so an un-isolated launch is an inherited pass.
 
 ## Baseline
 
-`main` = `ea780a0` + this leg's `.context` commit, pushed. No open branches.
+`main` = `335df49` + this leg's `.context` commit, pushed. No open branches.
 **22** assertion drivers plus the observational `gui-scope-zoom-pill`, **23/23
-green at `ea780a0`**. `gui-75` passed first try inside the batch this time — the
-documented focus flake is intermittent, not batch-deterministic, so do not treat
-a future red there as expected without reading its `could not drive:` line.
+green at `ea780a0`** — **not re-run at `335df49`, and correctly so**: #84 changed
+only `scripts/` and `.context/`, no renderer code and no CSS, so the batch was not
+triggered. `gui-75` passed first try inside the last batch — the documented focus
+flake is intermittent, not batch-deterministic, so do not treat a future red there
+as expected without reading its `could not drive:` line.
+
+Test baseline holds at **944 across 63 files**, unchanged by #84 (measurement
+only). `scripts/spike-81-background-tasks.mjs` is now **+76 lines** past what #81
+ran; git history holds the original, and #81's findings are unaffected.
 
 ## Do not decide these
 
@@ -159,9 +184,28 @@ owner's**. **#83 honoured the second one** — it joined the existing Agents doc
 rather than adding a fourth surface, which would have forced a fourth titlebar
 control.
 
+**NEW and the most actionable thing waiting on the owner — what should background
+task nesting LOOK like?** #84 proved the data is there **both ways** (name the
+spawning tool call, or nest under the spawning agent), so this is now the only
+thing blocking a build ticket, and it is purely a design call. Three raised
+defers from the 2026-08-01 vibe run sit in `.claude/vibe.md` → `## Needs you`,
+all reversible, none taken irreversibly:
+
+1. **Which reading of "spawner" did you mean?** #84 did *not* collapse this into
+   a fact — both are buildable. Still a real choice.
+2. **May parentage state be recorded for non-agent tasks at all?** No state was
+   shipped; the spike renders nothing.
+3. **What should nesting look like?** Deliberately not chosen. The agent tree's
+   flat-with-a-depth precedent (`paddingLeft: depth * 14`, `aria-level`) is
+   *available but unwarranted* here — it is stated for `AgentRow`s inside
+   `buildAgentTree`, and background tasks deliberately never reach it
+   ("A separate prop, never folded into liveAgents", `src/renderer/src/App.tsx:342`).
+   Borrowing it would be a taste call wearing a citation.
+
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
+- [[2026-08-01-the-spawner-is-one-hop-off-task-started]] — **#84, this leg; the spawner IS reachable, on the `assistant` envelope rather than `task_started`, and the ticket's own predicted conclusion was falsified**
 - [[2026-08-01-a-level-is-replaced-not-accumulated]] — **#83, shipped; the port, the reset site, and why the level is filtered rather than joined**
 - [[2026-08-01-a-refresh-must-not-blank-what-it-has]] — #82, the state shape #83 inherited and left alone
 - [[2026-08-01-the-background-agents-seed-decided]] — the grant, now fully spent

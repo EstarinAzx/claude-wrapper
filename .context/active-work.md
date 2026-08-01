@@ -13,15 +13,26 @@ _Driver check: **re-run this leg, 23/23 green at `ea780a0`.** #83 changed render
 
 ## Current focus
 
-**Nothing open. The queue is dry and the next move is the owner's.** #83 landed
-this leg and closed; it was the last of the two tickets the 2026-08-01 autonomy
-grant filed out of `.claude/vibe.md`'s seven parked calls (**two authorise work,
-four closed as no, one struck**).
+**Nothing open. The queue is dry and the next move is the owner's — and it is now
+a single, sharp design question.** #84 landed this leg and closed. It was filed by
+a second unattended `/preset vibe init` run (on the `taskToParent` join #83
+reserved) and it was **measurement only, no `src/` change**.
+
+**#84's result is the thing to read first: the spawner IS reachable, both ways.**
+A `local_bash` `task_started` carries `tool_use_id` but no parent under any name
+(key set exhaustive at eight fields) — yet the owning agent sits one hop away, on
+the `assistant` message carrying that Bash `tool_use` block. #84 had predicted
+that a negative there would kill agent-nesting; **that prediction was falsified by
+its own measurement.** So both readings of "nest under its spawner" are buildable,
+the owner's choice did **not** collapse into a fact, and the only thing blocking a
+build ticket is **what nesting should look like** — a pure design call. See
+[[2026-08-01-the-spawner-is-one-hop-off-task-started]].
 
 | # | Ticket | State |
 |---|---|---|
 | ~~#82~~ | ~~The Agents dock re-reads its sidecars every turn, without blanking what it already has~~ | `3f34737`, **closed** |
 | ~~#83~~ | ~~Surface live background tasks in the Agents dock, through an injected port~~ | `ea780a0`, **closed** |
+| ~~#84~~ | ~~Measure whether a background task's spawner is reachable on the wire~~ | `335df49`, **closed** — measurement only |
 
 They were serialised rather than run beside each other because both edit
 `AgentsDock`'s state shape. #83 inherited the shape #82 changed and, as its
@@ -582,6 +593,16 @@ the text itself rather than a fixed label — it does not need to today, because
 draft it refers to is visible in the composer directly beneath it.
 
 **Struck 2026-08-01 as delivered:** ~~the **background-tasks feature** on the CLI's `background_tasks_changed` level signal~~ — **shipped as #83 (`ea780a0`)**, with every shape the grant decided: injected port, own section, `local_agent` guard untouched, inside the existing Agents dock.
+
+**MEASURED 2026-08-01 by #84** — the entry below is superseded on its central
+factual claim and kept for the trail. #84 found the spawner **is** reachable: a
+`local_bash` `task_started` carries `tool_use_id` (3/3) but no parent of any name,
+and the owning agent sits on the **`assistant` message carrying that Bash
+`tool_use` block** as `parent_tool_use_id`. So the join is
+**level `task_id` → `task_started.tool_use_id` → the containing assistant
+message's `parent_tool_use_id`**, every hop already received by `engine.ts`. What
+remains unspec'd is **not** feasibility but the **visual form**, which is an open
+owner decision. See [[2026-08-01-the-spawner-is-one-hop-off-task-started]].
 
 **Newly noted by #83, and named Out of Scope on its ticket:** the **`taskToParent` join**. #81 measured the level's `task_id` matching `task_started.task_id`, the `taskToParent` key and the `agent-<id>` sidecar id — one value in four places — but the payload carries **no `tool_use_id` and no parent**, so parentage is reachable only when the `task_started` was seen. #83 treats the join as **observed and reserved** and does not use it; nesting a background task under its spawner is a separate ticket. Also unaddressed: whether a background task should ever become **clickable** (it has no sidecar and no transcript today, so there is nothing behind it), and whether the CLI's `backgroundTasks()` accessor is ever worth calling — #81 measured it changing no membership, because the `Agent` tool is already async.
 
