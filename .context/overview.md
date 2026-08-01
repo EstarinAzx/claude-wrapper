@@ -58,7 +58,15 @@ tags: [context, overview]
   `engine:terminal` — deliberately not an `EngineEvent`, because `emit()` only
   reaches an active turn and a stream dying BETWEEN turns emits nothing at all.
   It must never fire for `close()`, which main calls on every workspace switch,
-  model pick and permission cycle. `transcript.ts` parses the
+  model pick and permission cycle. Its **third** injected port is
+  `onBackgroundTasks` (#83), broadcast as `tasks:changed`, carrying the CLI's
+  `background_tasks_changed` level — and it **inverts** `onTerminal`'s `close()`
+  rule on purpose: firing `[]` there IS the feature, because the level is
+  per-process and `close()` is the one funnel **all six** engine-discard paths in
+  main pass through, so the reset is structural rather than hand-copied to each
+  call site. Its branch sits **before** the fallthrough to `handleTaskMessage`,
+  which is what keeps the mutation-verified `local_agent` guard untouched.
+  `transcript.ts` parses the
   native JSONL to the replay list and owns `sanitizeUserText`, the one place CLI
   markup is turned into readable text — anchored on the message's leading tag,
   never matched mid-string. `model-mode.ts` holds ONLY the pick state: the model
@@ -147,6 +155,16 @@ tags: [context, overview]
   event. `sessionId` alone cannot be the trigger — it is written inside
   `useChat`'s `turn-end` branch, so it moves once per SESSION and the effect was
   structurally incapable of firing on turns 2..N.
+  It also renders #83's **background-tasks footer** — a separate section from a
+  separate prop, which never joins `mergeAgents` because a `local_bash` task has
+  no sidecar, no `parentToolUseId` and no usage, so a merged row would claim it
+  ran as an agent and spent nothing. It renders only when non-empty (a fourth
+  empty state would compete with the three above it), its rows are
+  **non-interactive** because a background task has nothing to open, and the set
+  lives in `useChat` rather than here because the dock unmounts on every close
+  while the level only re-fires on a membership CHANGE. `local_agent` rows are
+  dropped from it (`nonAgentTasks`) — the Agent tool is async, so a subagent is
+  in the level beside its own agent row.
   `InputBar.tsx` is **never disabled while a turn runs** (#80) — the field, the
   paperclip and the paste handler all stay live, and `useChat.send` remains the
   one place that refuses a send while busy. Enter during a turn COMMITS the
@@ -160,7 +178,13 @@ tags: [context, overview]
   everything living inside the composer. Both entry points — a foreign session
   row and the sidebar's "Open project" affordance — share that one reset via a
   nullable `resumeId`.
-- `src/shared/` — types + pure modules both processes import. `announce.ts`
+- `src/shared/` — types + pure modules both processes import. `background-tasks.ts`
+  (#83) is the CLI level's whole vocabulary: `parseBackgroundTasks` is the trust
+  boundary on the payload (`task_id` is identity so a row without one is dropped;
+  `task_type` and `description` are display-only so a missing one costs a label,
+  never a row), and `nonAgentTasks` drops **only** `local_agent` — an unknown
+  future `task_type` is KEPT, because an allow-list would make the panel lie by
+  omission the first time the CLI grows a kind. `announce.ts`
   (#75) is the turn-end decision table: `shouldAnnounce({ outcome, focused })`
   over the three terminal outcomes, where `turn-aborted` is **silent by
   design** and `ANNOUNCE_COPY` excludes it BY TYPE, so a fourth outcome cannot
@@ -215,9 +239,9 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#83 is the
-  frontier and the only open ticket** — #82 landed, which unblocked it; run the
-  frontier query anyway, it is the authority. No expected driver failure anywhere in the set,
+- `.context/pick-up.md` — current frontier + landmines (currently: **the queue is
+  DRY — #83 landed and closed, and nothing is open**; run the frontier query
+  anyway, it is the authority and this line has been wrong before. No expected driver failure anywhere in the set,
   **22** assertion drivers plus the observational `gui-scope-zoom-pill` —
   `gui-75` is focus-dependent and its batch reds are premise failures, green on
   re-run in the last three batches, see `active-work.md`'s Known issues)
@@ -258,15 +282,17 @@ tags: [context, overview]
   **#82 (`3f34737`, the Agents dock re-reads its sidecars on every turn end, and
   a re-read no longer blanks what it already has — see
   [[2026-08-01-a-refresh-must-not-blank-what-it-has]]) closed**; **#83
-  (background-tasks section fed by the level signal, through an injected port)
-  OPEN and now UNBLOCKED — the frontier, and the only open ticket.** Both were
+  (`ea780a0`, the background-tasks section fed by the CLI's level through a third
+  injected port — REPLACE semantics end to end, the per-process reset carried by
+  the engine's own `close()`, and the `local_agent` guard untouched; see
+  [[2026-08-01-a-level-is-replaced-not-accumulated]]) closed.** Both were
   filed under the 2026-08-01 autonomy grant that took all seven parked calls, see
   [[2026-08-01-the-background-agents-seed-decided]];
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **One ticket open — #83** as of 2026-08-01.
+  #20 hold the earlier history. **Nothing open — the queue is DRY** as of 2026-08-01.
   Run the frontier query rather than trusting this line
 
 ## Conventions

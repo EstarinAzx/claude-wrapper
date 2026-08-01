@@ -7,24 +7,56 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-01 by Opus 5 (1M) (auto) — **relay leg 1 landed #82; #83 is unblocked and is now the frontier**_
-_At commit: `3f34737` on `main`, pushed. Gate green: typecheck clean, **921 tests across 62 files** (was 914 — seven added by #82), build ok_
-_Driver check: **re-run this leg, 22/22 green at `3f34737`.** #82 changed renderer code, so the whole assertion set is implicated and was driven. `gui-75` failed its focus premise on the first pass (`the window lost focus during the second turn`) and was green on re-run with `focusedAtEnd: true` — the documented flake, not a red. The set is **22** assertion drivers plus the observational `gui-scope-zoom-pill`. No standing red anywhere, so any red is a real regression._
+_Last updated: 2026-08-01 by Opus 5 (1M) (auto) — **relay leg 2 landed #83; the queue is DRY**_
+_At commit: `ea780a0` on `main`, pushed. Gate green: typecheck clean, **944 tests across 63 files** (was 921/62 — 23 added by #83), build ok_
+_Driver check: **re-run this leg, 23/23 green at `ea780a0`.** #83 changed renderer code AND added CSS, so the whole set is implicated and was driven. The set is **22** assertion drivers plus the observational `gui-scope-zoom-pill`. No standing red anywhere, so any red is a real regression._
 
 ## Current focus
 
-**One ticket open — #83 — and it is unblocked.** Both #82 and #83 were filed
-2026-08-01 under a live autonomy grant that took all seven calls parked in
-`.claude/vibe.md` (**two authorise work, four closed as no, one struck**). **#82
-landed this leg**, which removed #83's only blocking edge.
+**Nothing open. The queue is dry and the next move is the owner's.** #83 landed
+this leg and closed; it was the last of the two tickets the 2026-08-01 autonomy
+grant filed out of `.claude/vibe.md`'s seven parked calls (**two authorise work,
+four closed as no, one struck**).
 
 | # | Ticket | State |
 |---|---|---|
 | ~~#82~~ | ~~The Agents dock re-reads its sidecars every turn, without blanking what it already has~~ | `3f34737`, **closed** |
-| **#83** | Surface live background tasks in the Agents dock, through an injected port | `ready-for-agent`, **unblocked — the frontier** |
+| ~~#83~~ | ~~Surface live background tasks in the Agents dock, through an injected port~~ | `ea780a0`, **closed** |
 
 They were serialised rather than run beside each other because both edit
-`AgentsDock`'s state shape. #83 inherits the shape #82 just changed.
+`AgentsDock`'s state shape. #83 inherited the shape #82 changed and, as its
+ticket asked, left `keepStale` alone.
+
+**#83 shipped the background-tasks section, and its four choices are all
+structural rather than stylistic.**
+
+The **port** is the third of its shape (`onModelReport` #52, `onTerminal` #73),
+but the case it protects is not an edge: #81 timed a level landing **3.3s after
+`result/success`**, and **a task settling between turns is the NORMAL case** for
+background work. So the pins are about WHEN a message arrives, not what it
+carries — two tests deliver a level with no active turn, one after `warmUp()`
+alone and one after a turn has fully resolved.
+
+**REPLACE, never accumulate**, end to end. Mutation-verified: making the renderer
+append reds two tests (a finished task that never leaves, a section that never
+empties).
+
+**The per-process reset lives in the engine's own `close()`.** `makeEngine()`
+looked like the single funnel and is the wrong one — four of the six discard
+paths set `engine = null` and rebuild **lazily on the next send**, so a reset at
+construction leaves a dead process's tasks on screen from the model pick until
+the next send. All six paths call `close()`. Note the deliberate inversion:
+`onTerminal` must NEVER fire for `close()`, `onBackgroundTasks` firing there IS
+the feature.
+
+**Its own section, and the guard untouched.** The level branch sits BEFORE the
+fallthrough to `handleTaskMessage`, so a `local_agent` row in a level emits zero
+subagent events — pinned. `local_agent` is dropped from the section too (the
+Agent tool is async, so a subagent is in the level beside its own agent row),
+filtered by `task_type` rather than joined because the payload carries nothing to
+join on.
+
+See [[2026-08-01-a-level-is-replaced-not-accumulated]].
 
 **#82 landed: the dock re-reads on every turn end.** The defect was **a
 dependency that could only change once** — `useChat` writes `setActiveSessionId`
@@ -62,6 +94,7 @@ See [[2026-08-01-the-background-agents-seed-decided]].
 | ~~#80~~ | ~~Type-while-busy composer with a queued send~~ | `1855910` |
 | ~~#81~~ | ~~Measure whether `background_tasks_changed` fires on the host CLI~~ | `002e524` — measured, **all three conditions HELD**, `src/` still unchanged |
 | ~~#82~~ | ~~The Agents dock re-reads its sidecars every turn, without blanking what it already has~~ | `3f34737` — stale-while-revalidate, and #83 unblocked |
+| ~~#83~~ | ~~Surface live background tasks in the Agents dock, through an injected port~~ | `ea780a0` — the level consumed, the guard untouched |
 
 **#81 measured `background_tasks_changed` and it FIRES.** Host CLI **2.1.220** /
 SDK **0.3.220**, wisped, two runs identical. All three of the ticket's
@@ -114,36 +147,39 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `3f34737` + this leg's `.context` commit, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **#83 alone, and unblocked** — #82 closing removed its only blocking edge. `blocked_by: 0` with `total_blocked_by: 1` (the closed #82) is what an unblocked-by-completion ticket looks like on this tracker; read the *open* count, not the total.
-- **Landed:** **#82** (`3f34737`) — the dock's turn-end re-read, `keepStale`, seven tests and an ADR. Before it, **#81** (`002e524`), the harness and its ADR with **no `src/` diff, deliberately**, then the seven parked calls taken with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
+- **In flight:** nothing. `main` = `ea780a0` + this leg's `.context` commit, pushed. No open branches.
+- **Queue (`ready-for-agent`): EMPTY.** #83 was the last open ticket and it closed this leg. Nothing is blocked on anything; there is simply nothing filed. The next move is the owner's — see `## Pick up here`.
+- **Landed:** **#83** (`ea780a0`) — the background-tasks section, a third injected port, 23 tests, five mutants killed and an ADR. Before it, **#82** (`3f34737`) — the dock's turn-end re-read, `keepStale`, seven tests and an ADR; **#81** (`002e524`), the harness and its ADR with **no `src/` diff, deliberately**, then the seven parked calls taken with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
 - **Parked for the owner: TWO, and they are the older halves — the seven are DONE.** The 2026-08-01 `/preset vibe init` run parked seven calls with no grant; the owner made one live after #81 landed and **all seven were taken** ([[2026-08-01-the-background-agents-seed-decided]]): two authorise work (#82, #83), four closed as **no** (the seed's meaning is the SDK concept; no labelled map; no new top-level surface; non-agent work **yes** but as its own section), one **struck** (map pan-zoom). `.claude/vibe.md`'s `## Needs you` is **history now, not a queue** — its `## Taken` section carries the resolutions. **What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's. **#83 was deliberately routed into the existing Agents dock so it does not pre-empt that second one.**
 - **Blocked:** nothing.
 
 ## Pick up here
 
-**#83 is the frontier, and it is unblocked.** Run the frontier query first
-anyway; this line goes stale the moment the owner files something, and that is
-this project's standing lesson (a leg once wrote that closing #70 would empty the
-queue and was wrong, because #71 had been unblocked the whole time).
+**The queue is dry.** Run the frontier query first anyway — this line goes stale
+the moment the owner files something, and that is this project's standing lesson
+(a leg once wrote that closing #70 would empty the queue and was wrong, because
+#71 had been unblocked the whole time).
 
 ```
 gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-**Read [[2026-08-01-the-background-agents-seed-decided]] (call 5) and
-[[2026-08-01-a-refresh-must-not-blank-what-it-has]] before starting #83** — the
-first is its warrant, the second is the state shape it inherits. Its four sharp
-edges are in [[pick-up]]: injected port never an `EngineEvent`; do not touch the
-mutation-verified `local_agent` guard; background tasks get their own section and
-must not join `mergeAgents`; the level speaks `local_agent` / `local_bash`, not
-`BackgroundTaskSummary`'s friendly labels.
+If it really is empty, **the next move is the owner's** — file new work, or run
+`/preset init` / `/preset vibe init` to generate a batch. The `## Deferred` list
+below is the standing menu of candidates, and `## Open questions` holds the ones
+that need an answer before they can be specced. **Two owner calls stand and are
+named in [[pick-up]]** (Tailwind's adopt-utilities half, the titlebar's control
+count); do not take either without a grant.
 
-If the queue comes back empty, the next move is the owner's —
-file new work, or run `/preset init` / `/preset vibe init` to generate a batch.
-The `## Deferred` list below is the standing menu of candidates, and `## Open
-questions` holds the ones that need an answer before they can be specced.
+**Do not re-open the seven from `.claude/vibe.md`.** They were all taken on
+2026-08-01 and that file's `## Needs you` is history, not a queue. A new *reason*
+reopens one of them; a re-read does not.
+
+The most concrete unspec'd candidate #83 leaves behind is the **`taskToParent`
+join** — #81 measured the level's `task_id` matching the edge stream's key, but
+the payload carries no parent, so the join is **observed and reserved**. It is
+its own ticket, deliberately not grown into #83.
 
 **Whatever comes next inherits the ledger below.** The `## Landmines` section is
 long and load-bearing — it is the accumulated set of traps that a green suite
@@ -168,6 +204,9 @@ The per-ticket narrative for #64–#79 has been folded into the ADRs listed unde
 `## Related` and the traps under `## Landmines`. What stays here is the set of
 lessons that keep recurring across unrelated tickets.
 
+- **When a lifecycle hook is the only funnel every path passes through, the reset belongs IN it — #83 is the case that found it.** The obvious single site for the per-process reset was `makeEngine()`, and it is wrong: four of the six discard paths null the engine and rebuild *lazily on the next send*, so resetting at construction leaves a dead process's tasks on screen from the model pick until the user sends again. `close()` is the funnel that actually holds. The general form: when hunting for the one place to put an invariant, check whether the paths reach your candidate **eagerly** — a lazy rebuild is a window, and windows are where stale indicators live.
+- **Two ports on one lifecycle hook can want OPPOSITE things, and consistency between them is the bug (#83).** `onTerminal` must never fire for `close()` (main's teardown is not a death); `onBackgroundTasks` firing for `close()` is the entire per-process reset. Both are commented at their definitions for that reason. A future tidy-up that "makes the close() handling consistent" breaks exactly one of them, silently.
+- **A signal whose dropped case is the NORMAL case needs its pin written about timing, not payload (#83).** Every mid-turn delivery test passes against a wrongly-wired `EngineEvent`. The tests that discriminate are the ones with no active turn at all — after `warmUp()` alone, and after a turn has fully resolved with `isBusy()` asserted false first. Sibling of #80's "an edge between two samples is not observable by sampling": ask what state the system must be IN for the assertion to mean anything.
 - **A value written once per session cannot be the trigger for something that happens once per turn — #82 is the case that found it.** The dock's read effect depended on `[sessionId]`, which `useChat` writes inside the `turn-end` branch: it moves `null → id` on turn ONE and never again, so the effect was **structurally incapable of firing** on turns 2..N. Nothing was missing and nothing threw; the suite was green because the effect *does* fire, just never twice. When a trigger is a dependency, ask how many times that dependency can change in the lifetime you care about.
 - **An assertion that something SURVIVED is vacuous unless the thing it survives is shown to have HAPPENED (#82).** "The rows are still on screen after a re-read" passes perfectly against a panel that never re-read. The pin asserts `toHaveBeenCalledTimes(2)` first. This is the sibling of #76's absence lesson: both failure modes are a test measuring nothing while reading as though it measured something.
 - **A refresh must not blank what it already has (#82).** Setting `loading` before every read, with a merge that drops the disk half unless `status === 'ok'`, means each refresh destroys the rows for its own duration — worst exactly while the user is watching the panel change, and it takes the nested edges with it because those are disk-only. Stale-while-revalidate, and a transient failure keeps the last good snapshot rather than downgrading it.
@@ -188,6 +227,20 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #83 — binding on the background-tasks path and on anything built on the
+CLI's level signal:**
+
+- **The reset lives in `engine.close()`, and moving it to `makeEngine()` reopens the stale window.** All six discard paths in `index.ts` call `close()`; only three of them rebuild eagerly. A reset at construction is green in every test and wrong on screen for as long as the user waits between a model pick and their next send.
+- **`onTerminal` must NEVER fire for `close()`. `onBackgroundTasks` MUST.** Do not harmonise them.
+- **The `background_tasks_changed` branch must stay BEFORE the `else` that calls `handleTaskMessage`.** Moving it after — or deleting it so the level falls through — puts `local_agent` rows from the level through the subagent path a second time. Mutation-verified: it reds five tests, including the "a level NEVER produces subagent events" pin.
+- **REPLACE, never append, at every layer.** Mutation-verified in the renderer (`[...prev, ...t]` reds two tests). The whole value of a level is that a dropped message costs one frame instead of wedging a finished task on screen forever.
+- **The set lives in `useChat`, not in `AgentsDock`.** The dock unmounts on every panel close and the level only re-fires on a membership CHANGE, so a set held in the component is lost with no way back. Pinned by a close-and-reopen test.
+- **`nonAgentTasks` excludes ONLY `local_agent`.** An unknown future `task_type` is kept on purpose — an allow-list makes the panel lie by omission the first time the CLI grows a kind, and that failure is invisible.
+- **Render the raw `task_type`, never a friendly label.** `BackgroundTaskSummary`'s `shell` / `subagent` / `monitor` / `workflow` ride the hook payload this app never registers. A test pins that `shell` never appears.
+- **Background tasks must never reach `mergeAgents`**, and the two travel as separate props all the way to the DOM for that reason.
+- **`.background-tasks` relies on `.agents-dock` being a flex column with `min-height: 0`.** That was read, not assumed. Its `flex-shrink: 0` and `max-height: 40%` are what keep a burst of background work from eating the panel; the list scrolls instead.
+- **The section renders only when non-empty and its rows are non-interactive.** A fourth empty state would compete with the three the agent half already has, and a background task has no sidecar, no transcript and no parentage in the payload — there is nothing to open.
 
 **From #82 — binding on the Agents dock, and on #83 which edits the same state:**
 
@@ -492,7 +545,7 @@ reads a CLI-sourced list:**
 
 ## Known issues / not-our-bug
 
-- **`gui-75` is not reliable inside a long batch run, and its red there is a premise failure rather than a regression. Reproduced on three legs now, green on a solo re-run every time, which settles it as focus theft rather than anything in the app.** #76's leg: `could not drive: the window lost focus during the second turn`, `focusedAtEnd: false`. #77's leg: `could not drive: the window would not take focus`, same shape. **#82's leg reproduced the first form exactly** and was green on re-run with `focusedAtEnd: true`. **Every time green re-run alone.** Something on the machine steals focus during an unattended batch; it is the only focus-dependent driver in the set, so it is the only one exposed. **Read its FAIL line before believing the red** — `could not drive:` is the driver saying its own setup failed, which #65's rule makes loud on purpose. Same class as the `gui-73` batch red a previous leg diagnosed as a collapsing process tree. **A batch that reds only here is a green batch**; re-run it solo before writing anything down.
+- **`gui-75` is not reliable inside a long batch run, and its red there is a premise failure rather than a regression. Reproduced on three legs, green on a solo re-run every time — and #83's leg ran it inside a full 23-driver batch and it PASSED first try, so the flake is intermittent rather than batch-deterministic.** #76's leg: `could not drive: the window lost focus during the second turn`, `focusedAtEnd: false`. #77's leg: `could not drive: the window would not take focus`, same shape. **#82's leg reproduced the first form exactly** and was green on re-run with `focusedAtEnd: true`. **Every time green re-run alone.** Something on the machine steals focus during an unattended batch; it is the only focus-dependent driver in the set, so it is the only one exposed. **Read its FAIL line before believing the red** — `could not drive:` is the driver saying its own setup failed, which #65's rule makes loud on purpose. Same class as the `gui-73` batch red a previous leg diagnosed as a collapsing process tree. **A batch that reds only here is a green batch**; re-run it solo before writing anything down.
 - **There is no expected driver failure any more.** `gui-51`'s standing red closed as #71 (`b6e8911`), and `gui-72` joined the set green at `9fecc10`; **every driver in the set is green, and any red is now a real regression.** The old note said "a second signature is a real regression" — that qualifier is gone, and so is the cover it gave.
 - **A capture cannot see the right ~20% of the layout.** The window composites `windowWidth` device px while the page lays out `windowWidth` CSS px at zoom 1.25, so every right-hand dock is clipped out of a screenshot at any window size — re-confirmed by #69's captures, where the Appearance panel is visibly cut. **Measure with `getBoundingClientRect`**; `gui-66` works around it with a presentational-only `setZoom(1)` after every assertion.
 - **Fable-5 refuses turns whose cwd looks sensitive** (`Downloads/*`). Don't point a GUI driver's temp cwd there.
@@ -528,7 +581,9 @@ currently un-queues and leaves the text), and whether the pending row should sho
 the text itself rather than a fixed label — it does not need to today, because the
 draft it refers to is visible in the composer directly beneath it.
 
-**No longer deferred — SPEC'D as #83:** the **background-tasks feature** on the CLI's `background_tasks_changed` level signal. #81 authorised it and the 2026-08-01 grant decided its shape: an **injected port** (an `EngineEvent` is dropped past `result`, measured), **no parentage in the payload** so `taskToParent` is the only route to it, **its own section rather than agent rows** — which is what makes showing `local_bash` an *amend* of the mutation-verified guard rather than a reversal — and **inside the existing Agents dock**, so it does not pre-empt the titlebar-control-count call.
+**Struck 2026-08-01 as delivered:** ~~the **background-tasks feature** on the CLI's `background_tasks_changed` level signal~~ — **shipped as #83 (`ea780a0`)**, with every shape the grant decided: injected port, own section, `local_agent` guard untouched, inside the existing Agents dock.
+
+**Newly noted by #83, and named Out of Scope on its ticket:** the **`taskToParent` join**. #81 measured the level's `task_id` matching `task_started.task_id`, the `taskToParent` key and the `agent-<id>` sidecar id — one value in four places — but the payload carries **no `tool_use_id` and no parent**, so parentage is reachable only when the `task_started` was seen. #83 treats the join as **observed and reserved** and does not use it; nesting a background task under its spawner is a separate ticket. Also unaddressed: whether a background task should ever become **clickable** (it has no sidecar and no transcript today, so there is nothing behind it), and whether the CLI's `backgroundTasks()` accessor is ever worth calling — #81 measured it changing no membership, because the `Agent` tool is already async.
 
 **Struck 2026-08-01 by the grant, with warrants:** ~~a labelled / node-box map~~ (the map ADR states a principle *and* a mechanism, and the mechanism survives a wider container); ~~a new top-level surface~~ (background tasks join the Agents dock instead); ~~**map pan-zoom**~~ (the fixed canvas is the *reason* it is unnecessary, its one named ceiling has a cheaper recorded fix, and nothing anywhere states what it was for — re-file it only if a real complaint attaches).
 
@@ -539,6 +594,7 @@ draft it refers to is visible in the composer directly beneath it.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-08-01-a-level-is-replaced-not-accumulated]] — **#83, shipped; why the port's pin is about timing rather than payload, why the reset lives in `close()` rather than `makeEngine()`, why `onTerminal`'s `close()` rule is deliberately inverted here, and why the level is filtered rather than joined**
 - [[2026-08-01-a-refresh-must-not-blank-what-it-has]] — **#82, shipped; a dependency that could only change once, why the second dep was rejected, and why `keepStale` lives on the read rather than the effect**
 - [[2026-08-01-the-background-agents-seed-decided]] — **all seven parked calls taken under a live grant; two authorise work (#82, #83), four close as no, one is struck, and four are decided against the seed's literal words**
 - [[2026-08-01-background-tasks-changed-fires-and-the-ids-join]] — **#81, measured; all three conditions held, `src/` unchanged anyway, and the two findings that bind any future build (the async Agent tool, and a level event landing past `result`)**
