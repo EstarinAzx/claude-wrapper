@@ -9,11 +9,22 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Queue empty
+## One ticket: #81, a spike
 
-**The tracker is empty — no open issues at all.** Not just no
-`ready-for-agent` ones: no specs, no `needs-info`, no `ready-for-human`
-leftovers, nothing blocked. Verified live on 2026-08-01 after #80 closed.
+**#81 is the only open issue** — `ready-for-agent`, unblocked, filed 2026-08-01 by
+a `/preset vibe init` run against the owner's "background agents view" seed.
+
+**It is a measurement, not a feature, and its deliverable may be a decline.**
+It re-runs spike #27's harness against the **host** CLI to find out whether
+`background_tasks_changed` fires at all, and it names **three authorising
+conditions up front** (#78's pattern) — all three must hold before any `src/`
+change is permitted. If any fails, the correct output is an ADR recording what
+was observed and **no code**. Do not treat an empty diff as a failed leg.
+
+**Do not let it grow.** Its Out of scope section is load-bearing: no node boxes,
+no new dock or view, no `local_bash` amendment, no refresh-trigger change, no new
+`window.api` channel. Each of those is deferred to the owner in
+`.claude/vibe.md` → `## Needs you`, and three of them are blocked on #81's result.
 
 **Run the frontier query anyway.** This section is a summary and goes stale the
 moment the owner files something — the standing lesson of this project's chains,
