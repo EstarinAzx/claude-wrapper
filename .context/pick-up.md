@@ -9,110 +9,102 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## One ticket: #81, a spike
+## queue empty
 
-**#81 is the only open issue** — `ready-for-agent`, unblocked, filed 2026-08-01 by
-a `/preset vibe init` run against the owner's "background agents view" seed.
+**Nothing is open.** #81 landed and closed; `gh issue list --state open` returns
+no rows of any kind — no tickets, no specs, no `ready-for-human` leftovers.
 
-**It is a measurement, not a feature, and its deliverable may be a decline.**
-It re-runs spike #27's harness against the **host** CLI to find out whether
-`background_tasks_changed` fires at all, and it names **three authorising
-conditions up front** (#78's pattern) — all three must hold before any `src/`
-change is permitted. If any fails, the correct output is an ADR recording what
-was observed and **no code**. Do not treat an empty diff as a failed leg.
-
-**Do not let it grow.** Its Out of scope section is load-bearing: no node boxes,
-no new dock or view, no `local_bash` amendment, no refresh-trigger change, no new
-`window.api` channel. Each of those is deferred to the owner in
-`.claude/vibe.md` → `## Needs you`, and three of them are blocked on #81's result.
-
-**Run the frontier query anyway.** This section is a summary and goes stale the
-moment the owner files something — the standing lesson of this project's chains,
-from the leg that wrote "closing #70 empties the queue" while #71 sat unblocked
-the whole time.
+**Run the frontier query anyway.** This line is a snapshot and goes stale the
+moment the owner files something. It is this project's standing lesson: a leg
+once wrote that closing #70 would empty the queue and was wrong, because #71 had
+been unblocked the whole time.
 
 ```
 gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-If it is still empty, there is nothing to work and the next move is the owner's:
-file something, or run `/preset init` (or `/preset vibe init` for an unattended
-funnel) to generate the next batch. Candidates are already written down —
-`## Deferred (still no spec)` in [[active-work]] is the menu, and
-`## Open questions` there holds the ones needing an answer before they can be
-specced.
+If it really is empty, the next move is the owner's: file something, or run
+`/preset init` (or `/preset vibe init` for an unattended funnel). Candidates are
+already written down — `## Deferred (still no spec)` in [[active-work]] is the
+menu, and `## Open questions` there holds the ones needing an answer first.
+
+**The one deferred item that now has a measurement behind it is the
+background-tasks feature** — #81 authorised it and built none of it. Its shape is
+already constrained; see the landmines below before speccing it.
 
 ## Landed last leg
 
-**#80 — type-while-busy composer with a queued send.** Merged as `1855910`,
-ticket closed. Gate green: typecheck clean, **914 tests across 62 files** (was
-887/60), build ok, and the **full driver batch 22/22** — re-run in full because
-#80 changes the composer, `useChat` and three stylesheets. `gui-80` is new.
+**#81 — a spike, and its correct outcome was an empty `src/` diff.** Merged as
+`002e524`, ticket closed. Gate green: typecheck clean, **914 tests across 62
+files** (unchanged), build ok. The **driver batch was not re-run**, deliberately:
+no `src/`, no CSS and no renderer code changed, so no driver is implicated.
 
-The composer now stays live while a turn streams (field, paperclip and paste).
-Enter commits the draft; a quiet `.queued-note` above the pill says so and
-carries a `Cancel queued prompt` control; the prompt fires when the turn ends.
+**`background_tasks_changed` FIRES.** Host CLI **2.1.220** / SDK **0.3.220**,
+wisped, two runs identical in shape. All three authorising conditions held —
+it arrives under `engine.ts`'s exact options; its `task_id` is the *same value*
+as `task_started.task_id`, the `taskToParent` key and the `agent-<id>` sidecar
+id; and `local_bash` rides it, so the level shows work the Agents panel filters
+out.
 
-**The queue is a FLAG on the draft, not a copy of it**, which answers four of the
-ticket's questions at once — cardinality is one by construction, "replace or
-append" dissolves (what fires is whatever is in the box when the turn ends),
-cancelling costs nothing because the text never went anywhere, and
-`<InputBar key={cwd}>` resets it with the draft and the tray.
+**#27's "never fired" was an untested negative**, not a wrong reading: the app
+never calls `backgroundTasks()`, and nothing in #27's two turns could have
+produced a background task.
 
-**The flush condition is positive** — `turn-end` with a live engine — decided by
-a pure twelve-row table in `src/shared/queued-send.ts`. All three terminal
-outcomes clear `busy`, so a "flush once no longer busy" rule resends after Stop
-and can spend the prompt on a terminal engine. **Exactly one of twelve** rows
-sends; every other row **unqueues**, releasing the commitment and never the text.
+**A build is authorised. This ticket still built nothing**, because every avenue
+for surfacing it is named in its own Out of scope section. No autonomy grant is
+live, so the seven calls in `.claude/vibe.md` → `## Needs you` all stand — #81
+answers the factual half of four of them and settles none.
 
-See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
+Harness: `scripts/spike-81-background-tasks.mjs`, ~20s a run.
+See [[2026-08-01-background-tasks-changed-fires-and-the-ids-join]].
 
 ## Landmines
 
-Full ledger in [[active-work]] — long and load-bearing. New from #80:
+Full ledger in [[active-work]] — long and load-bearing. New from #81:
 
-- **The composer is never `disabled` any more.** Re-adding `disabled={busy}` to
-  the textarea, the paperclip or the paste handler restores the exact complaint
-  #80 answered, with every test green except the two that name it.
-  `useChat.send` is still the one place that refuses a send while busy.
-- **The queue must stay in `InputBar`.** Lifting it into `App`/`useChat` means
-  joining the `ok` branch of `switchWorkspace` by hand, and the failure is a
-  queued prompt firing into the *next* project.
-- **`lastTurn` is not a second busy flag, and its nonce is load-bearing.** Drop
-  the nonce and the second queued prompt of a conversation silently never fires.
-- **`unqueue` releases the commitment, never the text.** That is what makes Stop
-  safe to leave under the user's cursor while a prompt is queued.
-- **A double flush is invisible to jsdom** — swallowed by `useChat.send`'s busy
-  guard. Only `gui-80`'s IPC count (a *second* `ipcMain.on('chat:send')`
-  listener, which appends) can see it. And **a bare send-count cannot see a
-  commitment that outlived its own flush**, because the flush emptied the box:
-  type a fresh draft first.
-- **An edge between two samples is not observable by sampling.** `gui-80`'s
-  first run called a completed flush "never in flight" because the turn ending
-  and the flushed turn starting are one React commit apart. Wait on a monotonic
-  count, never on an edge.
+- **A level event can land AFTER `result`** (measured, 3.3s past it), where
+  `finishTurn()` has already nulled `activeOnEvent`. An `EngineEvent` is dropped
+  **in exactly the case the signal exists for** — it must be an injected port,
+  the shape of #52's `onModelReport` and #73's `onTerminal`.
+- **The `Agent` tool is ASYNC on this CLI and #27's blocking observation is
+  stale.** *"Async agent launched successfully"* ~12ms after the `tool_use`, and
+  the turn's `result/success` arrives while the subagent still runs. **A subagent
+  is a background task from birth**; `backgroundTasks()` returns `true` while
+  changing no membership.
+- **The join key works but parentage is NOT in the payload.** The SDK's *"do not
+  correlate it with the edge stream"* means no `tool_use_id` and no parent ride
+  along — the `task_id` itself matched in four places. Parentage is reachable
+  only through `taskToParent`, i.e. only if the `task_started` was seen.
+  Observed and **reserved**, not guaranteed.
+- **The level speaks the edge stream's vocabulary** (`local_agent` /
+  `local_bash`), not `BackgroundTaskSummary`'s friendly labels (`shell`,
+  `subagent`, `monitor`, `workflow`) declared in the same `sdk.d.ts`.
+- **A NEGATIVE is only a measurement if the path was exercised.** Before citing
+  an absence, ask what in that run could have made the thing appear.
+- **Sidecars live at `<projectDir>/<sessionId>/subagents/`** — exactly where
+  `subagent-store.ts` reads. A flat scan of the project dir finds zero and looks
+  like a CLI regression. Copy `subagentsDir()`, never guess it.
 
-Still true: **`resume` binds at query CONSTRUCTION** and `warmUp` TAKES the
-target; **a stream dying BETWEEN turns emits nothing**; **`onTerminal` must never
-fire for `close()`**; **`win.isFocused()` alone is not "someone is looking"**;
-**`app.setAppUserModelId` cannot be read back at runtime**; **opening a past
-session CLOSES the engine** (reach `listModels()` / `listCommands()` first);
-**`.model-menu` always renders one static "default" row**; **a test asserting an
-ABSENCE is the one most likely to be vacuous**; **no expected driver failure —
-any red is a real regression**; a driver must ESTABLISH the state it asserts and
-be shown red first; **pins are mutation-verified and no pin retirement is
-authorised**; **do not add a second busy flag**; **never un-key the composer**
-and **anything workspace-scoped must join the `ok` branch**;
-**main reports `getNormalBounds()`, never `getBounds()`**; **the window is no
-longer shown on `ready-to-show` alone** (both conditions, or the 1500ms timeout);
-**a zero-arg `vi.fn()` mock makes its own `mock.calls[0][0]` a TYPE error** while
-`npm test` stays green; `tests/scrollbar.test.ts` scans every line containing a
-scrollbar pseudo-element, comments included; `gui-51` compares in **device**
+Still true: **the composer is never `disabled`** and the queue stays in
+`InputBar`; **`lastTurn`'s nonce is load-bearing**; **`unqueue` releases the
+commitment, never the text**; **a double flush is invisible to jsdom**; **an edge
+between two samples is not observable by sampling**; **`resume` binds at query
+CONSTRUCTION** and `warmUp` TAKES the target; **a stream dying BETWEEN turns
+emits nothing**; **`onTerminal` must never fire for `close()`**;
+**`win.isFocused()` alone is not "someone is looking"**; **opening a past session
+CLOSES the engine** (reach `listModels()` / `listCommands()` first); **a test
+asserting an ABSENCE is the one most likely to be vacuous**; **no expected driver
+failure — any red is a real regression**; a driver must ESTABLISH the state it
+asserts and be shown red first; **pins are mutation-verified and no pin
+retirement is authorised**; **do not add a second busy flag**; **never un-key the
+composer** and **anything workspace-scoped must join the `ok` branch**; **main
+reports `getNormalBounds()`**; `tests/scrollbar.test.ts` scans every line naming
+a scrollbar pseudo-element, comments included; `gui-51` compares in **device**
 pixels; measure with `getBoundingClientRect`, not screenshots;
-`.titlebar-center` must stay IN FLOW; **`src/` is CRLF**; a new `window.api`
-channel needs **all four** mock sites plus `preload/index.d.ts`; never hardcode
-a model name.
+`.titlebar-center` must stay IN FLOW; **`src/` is CRLF** and `.context/*.md` is
+LF; a new `window.api` channel needs **all four** mock sites plus
+`preload/index.d.ts`; never hardcode a model name.
 
 From #78, binding on anything that measures a launch: **Playwright cannot
 measure a launch**; **`NODE_OPTIONS=--require` never reaches Electron** and
@@ -122,37 +114,39 @@ origin inside `userData`**, so an un-isolated launch is an inherited pass.
 
 ## Baseline
 
-`main` = `1855910` + this leg's `.context` commit, pushed. No open branches.
-**22** assertion drivers (`gui-80` is new), plus the observational
-`gui-scope-zoom-pill`. Full batch re-run this leg: **22/22 green**, `gui-75`
-included.
+`main` = `002e524` + this leg's `.context` commit, pushed. No open branches.
+**22** assertion drivers plus the observational `gui-scope-zoom-pill`, last
+22/22 green at `1855910`; **not re-run for #81** because it changed no app code.
 
 ## Do not decide these
 
-**Nothing is off limits** — all seven previously parked owner calls were resolved
-on 2026-07-31 under the grant quoted in `.claude/vibe.md`, which removed
-*ownership* as a ground for deferring but not the requirement for evidence.
+**Seven owner calls are parked and LIVE** in `.claude/vibe.md` → `## Needs you`,
+filed 2026-08-01 with **no autonomy grant** — unlike the 2026-07-31 batch,
+"this is the owner's call" is a legitimate ground for deferring here. #81 answers
+the factual half of four (the seed's meaning, the Agents-dock refresh trigger,
+whether non-agent background work belongs in the panel, injected-port-vs-
+`EngineEvent`) and **settles none**. The other three: the node-box map, a new
+top-level surface, and what "map pan-zoom" was meant to solve.
 
-**Two were deliberately settled only by HALF, and those halves stay open:**
-Tailwind is **not dropped** but the adopt-utilities question **stays open**, and
-the titlebar's control count **does not change** while the aesthetic question
-**stays the owner's**. The record argues against closing either.
+**Two older halves also stay open:** Tailwind is **not dropped** but the
+adopt-utilities question **stays open**, and the titlebar's control count **does
+not change** while the aesthetic question **stays the owner's**.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
+- [[2026-08-01-background-tasks-changed-fires-and-the-ids-join]] — #81
 - [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]] — #80
 - [[2026-07-31-the-window-waits-until-it-knows-where-to-be]] — #79
-- [[2026-07-31-a-preference-lives-where-it-is-read]] — amended by #78 and #79;
-  governs where any preference goes
-- [[2026-07-31-the-window-is-shown-before-the-app-exists]] — #78
-- [[2026-07-31-a-drivers-own-setup-can-revoke-what-it-measures]] — #77
-- [[2026-07-31-a-refusal-is-proven-by-the-thing-that-kept-running]] — #76
-- [[2026-07-31-an-unwatched-turn-end-is-mains-to-announce]] — #75
-- [[2026-07-23-busy-switch-block-not-detach]] — the escape hatch #80 answers
-  rather than competes with
+- [[2026-07-31-the-window-is-shown-before-the-app-exists]] — #78, whose
+  conditions-stated-in-advance pattern #81 reused
+- [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] — #73, the injected-port
+  shape #81 measured a second reason for
+- [[2026-07-25-task-messages-confirmed-live-shape]] — #27, whose
+  `background_tasks_changed` line #81 supersedes as **untested** rather than wrong
 - [[2026-07-31-a-driver-establishes-its-premise]] — #65, extended by #74 to the
   launch line, #75 to focus, #76 to an expired skip reason, #77 to setup order,
-  #78 to the launch profile, #79 to a pristine `userData`, and #80 to the two
-  premises a queued-send driver has to establish (busy at commit, busy at Stop)
-- `.claude/vibe.md` — the batch's run: the autonomy grant, 9 proposals, 7 refuted
+  #78 to the launch profile, #79 to a pristine `userData`, #80 to the two
+  premises a queued-send driver has to establish, and #81 to a harness that has
+  to exercise the path before its negative means anything
+- `.claude/vibe.md` — the 2026-08-01 run that filed #81, and its seven live defers

@@ -7,16 +7,15 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-01 by Opus 5 (1M) (auto) — **relay leg 6 landed #80; the batch is complete and the tracker is EMPTY**_
-_At commit: `1855910` on `main`, pushed. Gate green: typecheck clean, **914 tests across 62 files** (was 887/60), build ok_
-_Driver check: **22** assertion drivers (`gui-80` is new), plus the observational `gui-scope-zoom-pill`. **The full batch WAS re-run this leg and is 22/22 green** — #80 changes the composer, `useChat` and three stylesheets, so no driver could be skipped. `gui-75` was green in the batch for the second consecutive leg. No standing red anywhere, so any red is a real regression._
+_Last updated: 2026-08-01 by Opus 5 (1M) (auto) — **relay leg 1 landed #81, a spike; the tracker is EMPTY again**_
+_At commit: `002e524` on `main`, pushed. Gate green: typecheck clean, **914 tests across 62 files** (unchanged — #81 touched no `src/`), build ok_
+_Driver check: **not re-run this leg, deliberately.** #81 added one script and changed no `src/`, no CSS and no renderer code, so no driver is implicated. The set is **22** assertion drivers plus the observational `gui-scope-zoom-pill`, last 22/22 green at `1855910`. No standing red anywhere, so any red is a real regression._
 
 ## Current focus
 
-**None — there is no open work.** The `/preset vibe` batch of 2026-07-31 (#75–#80,
-filed under an explicit owner autonomy grant) is delivered, and `gh issue list
---state open` returns **nothing at all**: no tickets, no specs, no
-`ready-for-human` leftovers.
+**None — there is no open work.** #81 closed as a **measurement with an empty
+`src/` diff**, which is its correct outcome, and `gh issue list --state open`
+returns **nothing at all**: no tickets, no specs, no `ready-for-human` leftovers.
 
 | # | Ticket | Landed |
 |---|---|---|
@@ -26,6 +25,30 @@ filed under an explicit owner autonomy grant) is delivered, and `gh issue list
 | ~~#78~~ | ~~Measure the launch artifact; gate `win.show()` only if objectionable~~ | `51ea6d5` — measured, gate **declined**, no `src/` change |
 | ~~#79~~ | ~~The window remembers its size and position~~ | `03ab834` — gate **built**, on its own numbers |
 | ~~#80~~ | ~~Type-while-busy composer with a queued send~~ | `1855910` |
+| ~~#81~~ | ~~Measure whether `background_tasks_changed` fires on the host CLI~~ | `002e524` — measured, **all three conditions HELD**, `src/` still unchanged |
+
+**#81 measured `background_tasks_changed` and it FIRES.** Host CLI **2.1.220** /
+SDK **0.3.220**, wisped, two runs identical. All three of the ticket's
+authorising conditions held: it arrives on the stream under `engine.ts`'s exact
+options; its `task_id` is the *same value* as `task_started.task_id`, the
+`taskToParent` key and the `agent-<id>` sidecar id; and `local_bash` rides it, so
+the level shows work the Agents panel filters out.
+
+**A build is therefore authorised — and this ticket still built nothing**, because
+every avenue for surfacing it is named in its own Out of scope section. The
+authorisation is the deliverable; the feature is a separate ticket, and no
+autonomy grant is live to file it. #27's "never fired" was an **untested
+negative**, not a wrong reading: the app never calls `backgroundTasks()` and
+nothing in #27's two turns could produce a background task.
+
+Two findings bind whatever builds on it. **The `Agent` tool is ASYNC on this
+CLI** — new since #27 — so a subagent is a background task from birth and
+`backgroundTasks()` changes no membership. And **a level event lands 3.3s AFTER
+`result`**, where `finishTurn()` has already nulled `activeOnEvent`, so `emit()`
+reaches nobody: a background signal must be an **injected port** (#52/#73 shape),
+never an `EngineEvent`. Harness: `scripts/spike-81-background-tasks.mjs`, ~20s.
+
+See [[2026-08-01-background-tasks-changed-fires-and-the-ids-join]].
 
 **#80 shipped the composer staying live while a turn streams.** Enter commits the
 draft; a quiet `.queued-note` above the pill says so and carries a
@@ -55,10 +78,10 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `1855910` + this leg's `.context` commit, pushed. No open branches.
-- **Queue (`ready-for-agent`):** **empty.** The whole tracker is empty — verified live this leg, after the comment on #80 and after `Closes #80` landed.
-- **Landed this leg:** **#80** (`1855910`), plus its ADR and this handoff.
-- **Parked for the owner: NONE.** All seven previously parked calls were resolved on 2026-07-31 under the grant quoted in `.claude/vibe.md`. **Two were deliberately settled only by HALF and those halves stay open** — Tailwind is not dropped but the adopt-utilities question stands, and the titlebar's control count does not change while the aesthetic question stays the owner's. Do not close either.
+- **In flight:** nothing. `main` = `002e524` + this leg's `.context` commit, pushed. No open branches.
+- **Queue (`ready-for-agent`):** **empty.** The whole tracker is empty — verified live this leg, after the comment on #81 and after `Closes #81` landed.
+- **Landed this leg:** **#81** (`002e524`) — the harness, its ADR and this handoff. **No `src/` diff, deliberately.**
+- **Parked for the owner: SEVEN, and they are live.** The 2026-08-01 `/preset vibe init` run filed its `## Needs you` list in `.claude/vibe.md` **with no autonomy grant** — unlike 2026-07-31's batch, "this is the owner's call" was a legitimate ground for deferring there, so all seven stand. **#81 answers the factual half of four of them and settles none:** what "background" meant in the seed, the Agents-dock refresh trigger, whether non-agent background work belongs in the panel, and injected-port-vs-`EngineEvent` (that last one is now *measured* — it must be a port). The other three are the node-box map, a new top-level surface, and what "map pan-zoom" was for. **Separately, two older halves also stay open** — Tailwind is not dropped but the adopt-utilities question stands, and the titlebar's control count does not change while the aesthetic question stays the owner's. Do not close any of them.
 - **Blocked:** nothing.
 
 ## Pick up here
@@ -101,6 +124,8 @@ The per-ticket narrative for #64–#79 has been folded into the ADRs listed unde
 `## Related` and the traps under `## Landmines`. What stays here is the set of
 lessons that keep recurring across unrelated tickets.
 
+- **A NEGATIVE is only a measurement if the path was exercised — #81 is the case that found it.** #27 recorded "`background_tasks_changed` never fired" from two turns in which nothing could have produced a background task. That is an *untested* negative, and it reads on the page exactly like a tested one. Before citing an absence, ask what in that run could have made the thing appear; if the answer is nothing, the note is a gap, not a finding.
+- **State the authorising condition BEFORE the run, and honour it in both directions (#78, then #81).** #78 named its condition, measured, and declined. #81 named three, measured, and all three *held* — and it still changed no `src/`, because the same ticket's Out of scope had already named every avenue. "Authorised" is permission for a future ticket, not an instruction to grow this one.
 - **A queued action needs a POSITIVE trigger, never the absence of a state — #80 is the case that found it.** `busy` going false is not "the turn succeeded": Stop, a failed turn and a finished one all clear it. Naming the one outcome that earns the action (and asserting the other rows do something specific) is what makes the negatives visible; "when no longer busy" would have resent into a turn the user had just killed.
 - **Releasing a commitment must not release the user's WORK.** #80's `unqueue` drops the flag and leaves the draft in the composer, which is what lets Stop stay the button under the cursor while a prompt is queued. The general form: when undoing a user's action, ask what of theirs the undo destroys.
 - **A mutation can expose a hole in your TEST rather than in the code, and #80's is the clean example.** Leaving the queued flag standing after its own flush did *not* redden a bare send-count — the flush had emptied the composer, so the second firing had nothing to send. The real bug there is not a double send; it is spending the **next** draft without the user ever committing it. The test now types a fresh draft first.
@@ -116,6 +141,15 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #81 — true of anything built on the CLI's background-task signal:**
+
+- **`background_tasks_changed` FIRES, and a level event can land AFTER `result`.** Measured 3.3s past turn B's `result/success`. `finishTurn()` nulls `activeOnEvent` at `result`, so `emit()` reaches nobody — a background signal routed as an `EngineEvent` is dropped **in exactly the case it exists for**. It must be an injected port, the shape of #52's `onModelReport` and #73's `onTerminal`.
+- **The `Agent` tool is ASYNC on this CLI (2.1.220), and #27's blocking observation is stale.** Its `tool_result` reads *"Async agent launched successfully"* ~12ms after the `tool_use`, and the turn's `result/success` arrives while the subagent is still running and still emitting. **A subagent is a background task from birth** — it is in the level payload before anything backgrounds it, and `backgroundTasks()` returns `true` while changing no membership. Any design that assumes the Agent tool blocks, or that the app must background a subagent, is built on the old shape.
+- **The level's `task_id` joins, but parentage does NOT ride in the payload.** The declaration's *"do not correlate it with the edge stream"* is about the payload carrying no `tool_use_id` and no parent — the join key itself matched `task_started.task_id`, the `taskToParent` key and the `agent-<id>` sidecar id, one value in four places. So parentage is only reachable through `taskToParent`, i.e. only if the `task_started` was seen. Treat the join as **observed and reserved**, not guaranteed.
+- **The level speaks the EDGE stream's vocabulary, not `BackgroundTaskSummary`'s.** `tasks[].task_type` carries the raw `local_agent` / `local_bash` discriminants. `BackgroundTaskSummary.type`, in the same `sdk.d.ts`, documents friendly labels (`shell`, `subagent`, `monitor`, `workflow`). Two vocabularies for one idea; do not map one onto the other by assumption.
+- **The sidecars live at `<projectDir>/<sessionId>/subagents/`, which is exactly where `subagent-store.ts` reads.** The spike's first run scanned the project dir FLAT, found zero, and looked like "the CLI stopped writing sidecars" — a false alarm that cost a detour. Any tool re-deriving that path must copy `subagentsDir()`, not guess.
+- **Re-running the spike costs ~20s** (`node --experimental-strip-types scripts/spike-81-background-tasks.mjs`), dumps JSONL outside the repo, and evaluates the three conditions mechanically. It imports the app's **real** `cli-path.ts` rather than a copy of the PATH walk, so it cannot drift into measuring a different binary than the app runs. **Measurement gap, unchanged from #27: the native backend is still unobserved** — both runs were wisped.
 
 **From #80 — true of the composer and of the queued send:**
 
@@ -439,6 +473,8 @@ currently un-queues and leaves the text), and whether the pending row should sho
 the text itself rather than a fixed label — it does not need to today, because the
 draft it refers to is visible in the composer directly beneath it.
 
+**Newly AUTHORISED by #81, and the only deferred item with a measurement behind it:** a **background-tasks feature** built on the CLI's `background_tasks_changed` level signal. All three of #81's conditions held, so the build is permitted — but #81 deliberately built none of it, and the shape is constrained before anyone starts: the signal must arrive through an **injected port** (an `EngineEvent` is dropped, measured), the payload gives **no parentage** so `taskToParent` is the only route to it, and showing `local_bash` rows in the Agents panel **reverses a mutation-verified exclusion** and needs its own ticket. The remaining questions are the owner's, in `.claude/vibe.md` → `## Needs you`.
+
 **Newly noted by #75:** whether a **"notifications off" preference** is ever wanted — deliberately not built (Out of scope), and if it lands it is a renderer-stored key with a control in the Appearance dock under that dock's constraints. Also unanswered by measurement: whether the toast actually **paints** on this machine, since no driver can see Action Center; the app identity is verified statically only.
 
 **Carried, unchanged:** live-tail's **incremental byte tailing** and the **watch-installed-after-the-read gap**; context-pressure meter; typed failed-turn recovery; full-text transcript search; **session rename / archive**; drag-and-drop; replay thumbnails; N-concurrent engines; **fork-on-resume**; busy-switch detach (decided against); folding `Welcome`'s last `pickFolder` caller onto the chooser; agent archive / control / map pan-zoom; and the smaller leftovers from #31–#36.
@@ -446,6 +482,7 @@ draft it refers to is visible in the composer directly beneath it.
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-08-01-background-tasks-changed-fires-and-the-ids-join]] — **#81, measured; all three conditions held, `src/` unchanged anyway, and the two findings that bind any future build (the async Agent tool, and a level event landing past `result`)**
 - [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]] — **#80, shipped; why the queue is a flag rather than a payload, why the flush condition is positive, and why an unqueue keeps the text**
 - [[2026-07-31-the-window-waits-until-it-knows-where-to-be]] — **#79, shipped; the window remembers its size and position, and the `win.show()` gate #78 declined was built here**
 - [[2026-07-31-a-drivers-own-setup-can-revoke-what-it-measures]] — **#77, shipped; why the CLI-sourced surfaces are measured before the session is opened, and why `.session-groups` had to be seeded**

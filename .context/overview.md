@@ -202,12 +202,18 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **the tracker
-  is EMPTY** — the #75–#80 batch is delivered and no issue of any kind is open,
-  verified live 2026-08-01; run the frontier query anyway, it is the authority.
-  No expected driver failure anywhere in the set, **22** assertion drivers plus
-  the observational `gui-scope-zoom-pill` — `gui-75` is focus-dependent and its
-  batch reds are premise failures, green in the last two batches, see
-  `active-work.md`'s Known issues)
+  is EMPTY** — the #75–#80 batch is delivered, #81's spike closed after it, and no
+  issue of any kind is open, verified live 2026-08-01; run the frontier query
+  anyway, it is the authority. No expected driver failure anywhere in the set,
+  **22** assertion drivers plus the observational `gui-scope-zoom-pill` —
+  `gui-75` is focus-dependent and its batch reds are premise failures, green in
+  the last two batches, see `active-work.md`'s Known issues)
+- `scripts/spike-81-background-tasks.mjs` — the CLI-measurement harness (#81),
+  the #27 pattern with the background path actually exercised. Drives SDK
+  `query()` with `engine.ts`'s exact options, imports the app's **real**
+  `cli-path.ts` so it cannot drift onto a different binary, dumps JSONL outside
+  the repo and evaluates the ticket's three conditions mechanically. ~20s a run;
+  re-run it after any CLI upgrade that makes a background-task claim doubtful
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -232,7 +238,10 @@ tags: [context, overview]
   zoom in `userData`) closed**; **#79 (`03ab834`, the window remembers its size
   and position, and the `win.show()` gate #78 declined was BUILT here for bounds
   only) closed**; **#80 (`1855910`, type-while-busy composer with a queued send)
-  closed**;
+  closed**; **#81 (`002e524`, `background_tasks_changed` measured on the host CLI
+  2.1.220 — it **does** fire, all three authorising conditions HELD, and `src/` is
+  **still unchanged** because every avenue for surfacing it is Out of scope on
+  that ticket; the build is authorised for a future one) closed**;
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
