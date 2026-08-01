@@ -9,34 +9,45 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Next ticket: queue empty
+## Next ticket: #84 — measure the background task's spawner
 
-**Nothing is open on the tracker — not one issue, in any state of triage.** #83
-landed and closed this leg; it was the last of the two tickets the 2026-08-01
-autonomy grant filed. No branches are open and `main` is pushed.
+**One ticket is open and unblocked: #84**, `ready-for-agent`, filed 2026-08-01 by
+an unattended `/preset vibe init` run on the `taskToParent` join. It is a
+**measurement-only spike — it ships no `src/` change at all**, and an ADR
+recording a negative is a complete, successful delivery of it.
 
-**Run the frontier query anyway.** This line is a snapshot and goes stale the
-moment the owner files something. It is this project's standing lesson: a leg
-once wrote that closing #70 would empty the queue and was wrong, because #71 had
-been unblocked the whole time.
+**Run the frontier query anyway** before starting. This line is a snapshot and
+goes stale the moment the owner files something. It is this project's standing
+lesson: a leg once wrote that closing #70 would empty the queue and was wrong,
+because #71 had been unblocked the whole time.
 
 ```
 gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-**If it really is empty, the next move is the owner's.** File work, or run
-`/preset init` (or `/preset vibe init` for an unattended funnel). The candidates
-are already written down — `## Deferred (still no spec)` in [[active-work]] is the
-menu, and `## Open questions` there holds the ones that need an answer first.
+**What #84 exists to settle, in one line:** the reserved join does not do what
+its name suggests, because `taskToParent` is `local_agent`-only
+(`src/main/engine.ts:356`) while the background section renders its exact
+complement (`src/shared/background-tasks.ts:53`) — **the two sets are disjoint,
+so a join over them returns nothing.** The spawner is nevertheless observable on
+`task_started`, which does carry `tool_use_id`. But that id names the **Bash
+tool_use call**, not the owning agent; nesting under an *agent* would need
+`parent_tool_use_id` on a `system` message, a field this repo's SDK type declares
+only on `assistant`/`user` (`engine.ts:31,48`). #84 measures which of those two
+readings is reachable.
 
-The most concrete unspec'd candidate is the one #83 deliberately left behind: the
-**`taskToParent` join**, so a background task could nest under whatever spawned
-it. #81 measured the level's `task_id` matching `task_started.task_id`, the
-`taskToParent` key and the `agent-<id>` sidecar id — one value in four places —
-but the payload carries **no `tool_use_id` and no parent**, so parentage is
-reachable only where the `task_started` was seen. Treat that join as **observed
-and reserved**, and give it its own ticket rather than growing anything into it.
+**The instrument already exists and has been recording half the answer since #81
+— nobody has read it back.** `scripts/spike-81-background-tasks.mjs` captures
+`tool_use_id` for every `task_started` at line 163 (before the `local_agent`
+filter at 167) and persists it at line 322, but its console line 170 prints only
+type and id, and the evidence sink is a temp dir **outside the repo by design**,
+so nothing survived. It does **not** capture `parent_tool_use_id` at all — that
+is the one-line addition #84 asks for.
+
+**Do not let #84 grow into the feature.** Its visual form is an **open owner
+decision** and blocks any build ticket. Full reasoning, warrants and the three
+deferred owner calls are in `.claude/vibe.md`.
 
 ## Landed last leg
 

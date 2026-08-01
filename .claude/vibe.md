@@ -1,6 +1,6 @@
 ---
 target: init
-idea: "backgorund agents view i want it to have like yknow node boxes that represent liek oh this is one background tasks and if those tasks deployed subagents i can see that it has like children or whatever like yknow i mean yknow the drill"
+idea: "Spec the taskToParent join — nest a background task under its spawner in the Agents dock. #83's reserved leftover."
 partner: opus
 pressure: codex/gpt-5.6-sol
 pressure_via: sonnet
@@ -9,312 +9,188 @@ phase: fired
 halted: false
 ---
 
-## The seed, read literally
+## The seed, and exactly how much of it is the owner's
 
-The owner's words, unedited, are the spec's only source of intent:
+**Provenance matters here more than usual.** The owner did not type prose this
+run. They were shown a four-option menu built from the record and answered
+**"number 1 but vibe it"**. So the seed is the option they selected, and the
+option's wording is *mine*, not theirs:
 
-> *"backgorund agents view i want it to have like yknow node boxes that represent
-> liek oh this is one background tasks and if those tasks deployed subagents i can
-> see that it has like children or whatever like yknow i mean yknow the drill"*
+> **Spec the taskToParent join** — Run `/preset init` on #83's reserved leftover,
+> nesting a background task under its spawner. Most concrete candidate on the
+> record; the join key is already measured, the parentage gap is already
+> documented. Ends as a filed ticket.
 
-Three claims are extractable and nothing else is: a **view** of background agents;
-**node boxes** as the mark; and **children** shown when a task spawned subagents.
-"yknow the drill" is not a warrant for anything — where the seed is silent, the
-record speaks or the call defers.
+What the owner's answer actually authorises, read strictly:
 
-**The adjacency that decides this run:** the app already ships an agent tree and a
-map. #31 built the tree, #33 built the map, both with live ADRs. So the honest
-question is not "build an agent map" — it is **what the seed asks for that #33
-deliberately declined**, and whether the record's reasons for declining it still
-hold.
+1. **The subject** — the `taskToParent` join, i.e. nesting a background task
+   under whatever spawned it.
+2. **The route** — `/preset init`, run unattended (`vibe`), ending in filed
+   tickets rather than code this session.
+
+Everything else — how nesting should look, whether it is a tree or an
+indent or a badge, what happens when the parent is unknown — is **not** in the
+seed. It comes from the record or it defers. The one prior `vibe` run on this
+project turned a fogged one-sentence seed into four `no` calls decided
+*against* the seed's literal words on the record's reasons; the lesson carried
+forward is that a thin seed is not a licence to invent, it is a reason to cite
+harder.
+
+**The known hard constraint, already measured.** #81 measured that the level's
+`task_id` matches `task_started.task_id`, the `taskToParent` key and the
+`agent-<id>` sidecar id — one value in four places — but that the payload
+carries **no `tool_use_id` and no parent**. So parentage is reachable *only*
+where the `task_started` was seen. #83 treated the join as **observed and
+reserved** and deliberately did not use it. Any design this run produces has to
+survive that gap rather than assume it away.
 
 ## Decisions
 
-- **The seed is not greenfield, and it is not already built either.** The agent
-  tree (#31) and the SVG map (#33) ship; what the seed names beyond them is a
-  real, unmodelled data source. — warrant: `"#33's map places \`buildAgentTree\`'s output in fixed slots with parents centred over their children"` @ `.context/decisions.md` · pressure: REFUTED my "just presentation" framing, and was right
-- **"Background" is a precise word, not a vague one.** The SDK declares
-  `SDKBackgroundTasksChangedMessage` (`subtype: 'background_tasks_changed'`,
-  REPLACE semantics). — warrant: `"subtype: 'background_tasks_changed';"` @ `node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` · verified by me at source
-  **Correction, against myself:** I first wrote that `BackgroundTaskSummary`
-  "spans `shell | subagent | monitor | workflow`". It does not — `type` is
-  declared **`string`**, and those four names are examples inside a doc comment
-  that explicitly "Falls back to the raw discriminant for unknown types". I read
-  a doc comment as a union. Pressure caught it; verified at source.
-- **The app receives it and throws it away.** Unknown system subtypes fall
-  through to `handleTaskMessage`, which handles only the four `task_*` subtypes.
-  Zero matches for `background_tasks_changed` in `src/`. — verified by grep
-- **The exclusion of non-agent background work is deliberate and in code.** —
-  warrant: `"// local_bash tasks share this stream; only real agents become rows."` @ `src/main/engine.ts` · the guard is `if (str(src.task_type) !== 'local_agent') return`
-- **The rich `BackgroundTaskSummary` never reaches this app.** It rides only
-  `StopHookInput` and `SubagentStopHookInput` — hook payloads — and the app
-  registers **zero** SDK hooks (`grep -c hooks src/main/engine.ts` → 0). So
-  `agent_type`, `status`, `command`, `server`, `tool` are all unavailable without
-  registering a hook the app does not have. The stream's payload is
-  `{task_id, task_type, description}` and nothing else.
-- **The correlation key exists anyway, and it is better than `agent_type`.**
-  `engine.ts` already maps `task_id` → the spawning Agent `tool_use_id`, which
-  **is** the Agents panel's own `parentToolUseId` key. — warrant: `"      taskToParent.set(taskId, parent)"` @ `src/main/engine.ts`
-- **The live tree's parent edge is effectively dead in the case the owner will
-  look at.** `LiveAgent` carries neither `agentId` nor `parentAgentId`; the disk
-  read fires only on `[sessionId]`, so a sidecar landing mid-session never
-  refreshes. A nested agent reads top-level until a session switch. — warrant: `"// parentage (a nested agent's traffic is not forwarded), so a nested agent"` @ `src/shared/subagent-types.ts` · pressure: found it, I confirmed it
+Every warrant below was verified with `grep -qF -- "<quote>" <path>` before being
+accepted. All six of Partner's passed.
 
-- **The SDK forbids the correlation the seed's "children" needs.** Its own doc
-  comment on `SDKBackgroundTasksChangedMessage` says the payload is ids-only and
-  instructs consumers not to correlate it with the edge stream. — warrant: `"the payload carries ids only, so do not correlate it with the edge stream"` @ `node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` · pressure: pending, but this is the SDK's own text, not an inference
-- **The subtype has already been measured, and it never fired.** Spike #27 ran
-  two instrumented turns before #30 wrote a line and recorded it silent. —
-  warrant: `` "`background_tasks_changed` never fired." `` @ `.context/decisions/2026-07-25-task-messages-confirmed-live-shape.md``
-- **The project has a hard precedent for observing before wiring, and its stated
-  reason is this exact failure.** #27 exists because "type declarations promise a
-  superset of what the runtime delivers", and its expensive half was learning
-  that "the obvious nesting implementation — follow `parent_tool_use_id` —
-  cannot work, which would have surfaced as a silent empty tree deep inside #31".
-  I proposed the 2026 equivalent of that same wrong turn and the record caught it.
-- **A fourth dock member needs a fourth titlebar control**, which is the parked
-  owner call — so a background view joins the Agents dock or it waits. — warrant: `"    aria-label=\"Agents panel\""` @ `src/renderer/src/components/Titlebar.tsx` · every dock is opened from a titlebar toggle and nowhere else
-- **A between-turns signal cannot be an `EngineEvent`.** `emit()` reaches only
-  `activeOnEvent`, which is null outside a turn; both prior between-turn signals
-  (#52 model report, #73 terminal death) were made injected ports for exactly
-  this reason. — warrant: `"// above, and deliberately NOT an EngineEvent: emit() only reaches"` @ `src/main/engine.ts`
-- **The `local_bash` exclusion is a mutation-verified decision, not a gap.**
-  Showing shell/monitor/workflow tasks reverses it and needs amend-don't-reverse.
-  — warrant: `"reds the Bash test."` @ `.context/decisions/2026-07-25-live-rows-two-sources-one-event.md`
-
-- **The one ticket that looked buildable tonight is dead, and I killed it
-  myself.** I claimed the Agents dock never re-reads sidecars within a session,
-  so a spawning agent's children "never appear at all". False: `App.tsx` renders
-  the dock as `{openDock === 'agents' ? <AgentsDock …/> : null}`, so closing and
-  reopening it **unmounts and remounts**, re-running the `[sessionId]` effect and
-  re-reading the disk. The ADR's "nests on the next disk read" is satisfied by a
-  close/reopen. The real behaviour is a papercut — you must reopen the dock — not
-  an absence, and the ADR calls that lag accepted. Filing against it would have
-  been **reversing a recorded decision on an overstated premise**.
-
-- **…but the ticket survives on a better premise than mine, which Partner
-  supplied.** `AgentsDock`'s only disk trigger is `[sessionId]`, and
-  `activeSessionId` **is only written at turn-end**. So during the turn in which
-  subagents spawn and nest, the trigger is **structurally incapable of firing**.
-  The honest defect is not "never refreshes" but "cannot refresh in the window
-  the owner described, and needs the dock closed and reopened to catch up". —
-  warrant: `` "  // `activeSessionId` is only written at turn-end, so a stream that dies mid" `` @ `src/renderer/src/useChat.ts` · pressure: pending
-- **That ticket is a gap, not a reversal.** #31 decided *where the edge comes
-  from*, and its reversibility clause names the actual reversal — adding
-  `parentAgentId` to `LiveAgent`. A refresh trigger touches none of it, and **no
-  cadence for "the next disk read" is stated anywhere**. — warrant: `"**Reversibility:** Cheap, and the seams are already right. Live nesting = add"` @ `.context/decisions/2026-07-25-agent-tree-edge-is-the-sidecar.md`
-- **Nothing deliberate would red, verified rather than assumed.**
-  `tests/agents-dock.test.tsx` contains **zero** `toHaveBeenCalledTimes`; its
-  `listSubagents` assertions are `toHaveBeenCalledWith` / `toHaveBeenLastCalledWith`,
-  which a second trigger satisfies. — verified by `grep -c`
-- **The fix pattern already ships in this codebase, for the sibling panel.** The
-  Sessions rail refreshes on mount, on `[cwd, activeId]`, on window focus, and
-  from a manual button. — warrant: `"    window.addEventListener('focus', refresh)"` @ `src/renderer/src/components/Sidebar.tsx`
-- **The spike's shape is fully on record and so is permission to decline.** #27
-  ran two instrumented turns against the *installed* CLI with `engine.ts`'s exact
-  options; #78 measured and **built nothing**, legitimately, because the ADR made
-  the build conditional on the measurement **in advance**. — warrant: `"**Decision:** #78 measured the launch artifact and **built nothing**. The"` @ `.context/decisions/2026-07-31-the-window-is-shown-before-the-app-exists.md`
-- **The spike must record which binary it observed**, because the app follows the
-  host install. — warrant: `"// whatever Claude Code the user installs, including a version it has never been"` @ `src/main/cli-path.ts`
-
-- **Pressure narrowed the refresh defect a third time, correctly, and I verified
-  it.** `setActiveSessionId(id)` sits **inside the `turn-end` branch**, so on the
-  FIRST turn of a session the id goes `null → id`, the dep changes, and the dock
-  does re-read. The true defect is only **turns 2..N with the dock left open**.
-  Three successive statements of this bug — mine, Partner's, and Pressure's —
-  each smaller than the last, and only the third survives.
-- **A naive fix has two visible regressions, both verified at source.**
-  `AgentsDock` runs `setState({ status: 'loading' })` **before every read**, and
-  the merge is `mergeAgents(state.status === 'ok' ? state.agents : [], liveAgents)`
-  — so any re-read **blanks the disk rows**, and nested edges (which are
-  disk-only by construction) flicker out and back. A transient failure replaces a
-  known-good snapshot with `unreadable`. The fix needs stale-while-revalidate,
-  not a second call to the same effect.
-- **If it is ever built, the trigger is already determined by #80's discipline:**
-  the positive `lastTurn.outcome === 'turn-end'` plus the nonce, never
-  `busy === false`. — warrant: `"//   turn-end     + alive → FLUSH.    The answer arrived. This is the feature."` @ `src/shared/queued-send.ts`
+- **D1 — The seed's two halves are disjoint, so no join over the current state can work.** `taskToParent` is `local_agent`-only (`engine.ts:356`); the background section is its exact complement (`background-tasks.ts:53`). Any honest version changes what is *recorded*, not merely what is read — main-thread code reading · pressure: STANDS
+- **D2 — The spawner is observable at `task_started`, and keeping it is not "inventing a key".** `engine.ts:357` already reads `src.tool_use_id`; the fixture at `tests/engine.test.ts:962-968` carries it beside `task_type: 'local_bash'` — main-thread code reading · pressure: STANDS
+- **D3 — `background-tasks.ts:51`'s refusal is scoped to the LEVEL and survives intact.** "the level carries no `tool_use_id` and no parent" is about `background_tasks_changed`; `task_started` is a different message on the same stream. Building on the latter contradicts neither that comment nor #81's finding 4 — main-thread code reading · pressure: STANDS
+- **D4 — ~~The feature requires a SECOND map.~~ WITHDRAWN.** pressure: **REFUTED** — the pin proves only that the *naive insertion* reds `tests/engine.test.ts:954`; it does not prove the data structure. A single map with a typed value, or equivalent membership metadata, could retain parentage while keeping emission gated. **Replaced by the weaker claim that survives:** agent-row emission must stay gated to `local_agent`; the data-structure shape is an open implementation choice and is deliberately left to the ticket.
+- **D5 — The sidecar-edge ADR does not forbid stream-sourced nesting for a background task.** It is scoped to the agent tree and declined the live route on **cost**, not principle. A background task, having no sidecar, simply cannot use the edge that ADR built — warrant: "It was declined because it costs engine work, a second correlation" @ `.context/decisions/2026-07-25-agent-tree-edge-is-the-sidecar.md`
+- **D6 — ~~An unreachable parent must not render as the known-negative "top-level".~~ WITHDRAWN.** pressure: **REFUTED** — the more specific tree ADR already decides the shape of this case ("A row naming a parent absent from the list degrades to a root" @ `.context/decisions/2026-07-25-agent-tree-edge-is-the-sidecar.md`), and the absent-not-zero rule is about **inventing stored data**, not about rendering position. **Residue worth keeping, and it cuts against both sides:** that tree ADR governs `AgentRow`s inside `buildAgentTree`, and background tasks deliberately never reach it (#83's separate prop), so *neither* rule cleanly governs a background row. This is therefore **not settled** — it is folded into the open visual-form defer rather than recorded as a decision.
+- **D7 — ~~Added parentage state must reset in `engine.close()`.~~ WITHDRAWN.** pressure: **REFUTED** — the `close()` warrant is about resetting the **externally retained** REPLACE level, and does not generalise to every engine-local structure. State living in `makeEngine`'s closure (as `taskToParent` does) dies with the discarded engine and needs no explicit clearing. **The reset obligation depends on where the state lives**, which this run has not decided — so it is a constraint for the eventual build ticket to resolve, not a decision now.
+- **D8 — One separate ticket, filed rather than grown into anything.** No size or acceptance shape is stated anywhere — warrant: "and give it its own ticket rather than growing anything into it." @ `.context/pick-up.md`
+- **D9 — `nonAgentTasks`' `local_agent` exclusion is independent of nesting and stays untouched.** Its reason is duplication (a subagent already has a row), not parentage — warrant: "rows are dropped from the section itself, because the \`Agent\` tool" @ `.context/decisions/2026-08-01-a-level-is-replaced-not-accumulated.md`
+- **D10 — Making a background task clickable is NOT authorised by this work** — warrant: "whether a background task should ever become **clickable**" @ `.context/active-work.md`
 
 ## Needs you
 
-**No autonomy grant is live in this run.** The 2026-07-31 grant was given for that
-night and that run is archived (`grep -c -i "autonomy grant" .claude/vibe.md` → 0).
-So "this is the owner's call" is a legitimate ground for deferring here in a way it
-was not on 2026-07-31. Every entry below is reversible; none was taken.
+**Carried from the 2026-07-31 runs — still parked, still the owner's.** Full
+original entries in `.claude/vibe-2026-07-31-titlebar.md` and
+`.claude/vibe-2026-07-31-production-ready.md`; kept here verbatim so every
+`.context/` pointer at "`.claude/vibe.md` under `## Needs you`" stays true.
+These two are **carried, not raised by this run**, and do not count toward this
+run's `max_defer`.
 
-> **RESOLVED 2026-08-01, after #81 landed.** The owner made a grant live and all
-> seven were taken — see `## Taken` below, and
-> `.context/decisions/2026-08-01-the-background-agents-seed-decided.md` for the
-> warrants. **This section is left standing as the record of what was parked and
-> why**; it is history now, not a queue.
-
-- [ ] **What does "background" mean in your seed?** This is the run's root defer and
-      nothing in three rounds filled it.
-      took: treat it as the SDK's own background-task concept and **measure it first** (#81)
-      alt: a cross-session view of agents from sessions not currently open; or a genuinely
-           new concurrency feature (multi-engine), which is a different project
-      why: zero hits for the concept across `.context/`, `DESIGN.md`, `docs/` and `src/`
+- [ ] **Tailwind's fate — adopt utilities, drop it, or keep it as a token store?**
+      took: KEEP AS-IS (no change, zero diff)
+      alt: drop two devDependencies + the vite plugin and inline `@theme` into `:root`; or deliberately adopt utilities for new UI
+      why: Partner DEFERred — no warrant exists. The record is explicit that you personally overrode a YAGNI push-back to install it, on the stated grounds the app "will evolve" and you wanted utilities from day one. Reversing your own override while you sleep is not a call an agent gets to make.
       reversible: yes
-- [ ] **Node boxes — do you want the map labelled?** The literal ask, and the one thing
-      the record argues against.
-      took: build nothing
-      alt: a labelled/box map, as a third mode or a bigger surface
-      why: the record states a principle, not just a width constraint — *"The list stays
-           the labelled view; the map is the shape view"* — and per-node captions were
-           **explicitly considered and rejected**, partly on a reason that survives a
-           wider container (conditional labels make the picture jump between agent counts)
-      reversible: yes
-- [ ] **Is a new top-level surface wanted at all?** A fourth dock member needs a fourth
-      titlebar control, and the titlebar's control count is your parked aesthetic call.
-      took: no new surface
-      alt: a fourth dock, a modal, or a full-window view (the app has no router today)
-      reversible: yes
-- [ ] **The Agents dock refresh trigger, and what a re-read owes the rows on screen.**
-      took: change nothing, let #81 run first
-      alt: refresh on `turn-end` + nonce, on window focus, on a manual button (the
-           Sessions rail already ships all four), with stale-while-revalidate
-      why: real but narrow — turns 2..N with the dock left open; close/reopen already
-           forces a fresh read; and if #81 succeeds a live level signal may answer it instead
-      reversible: yes
-- [ ] **Should non-agent background work (shell / monitor / workflow) appear in the
-      Agents panel?** Blocked on #81, and it reverses a mutation-verified decision.
-      took: no
-      why: *"reds the Bash test"* — amend-don't-reverse territory, needs its own ticket
-      reversible: yes
-- [ ] **Injected port or `EngineEvent`** for any future background signal.
-      took: nothing built; noted on #81 that a between-turns signal must be an injected
-            port following #52/#73, since `emit()` reaches only `activeOnEvent`
-      reversible: yes
-- [ ] **What was "map pan-zoom" meant to solve?** `active-work.md` names it and nothing
-      else; the map ADR argues the fixed canvas makes it unnecessary below ~40 leaves.
-      took: leave deferred, do not reconstruct intent from the phrase
+- [ ] **Which of the titlebar's 8 buttons should leave or move?**
+      took: NONE — #72 fixed the measured defect and changed no control
+      alt: relocate the two pills, drop the app name, or move a dock toggle out
+      why: Partner DEFERred; pure taste. The stated rationale ("each button eating drag region") is measured and false, so the remaining case is aesthetic, which is yours.
       reversible: yes
 
-## Taken
+**Raised by this run — three, all reversible.**
 
-**2026-08-01, grant live, after #81 measured.** Full warrants in
-`.context/decisions/2026-08-01-the-background-agents-seed-decided.md`. Two
-authorise work, four are closed as **no**, one is **struck**. Four are decided
-*against* the seed's literal words, on the record's reasons — a grant that
-flipped every defer to "yes" would just be the seed re-read louder.
-
-- [x] **What does "background" mean in the seed?** → **the SDK's background-task
-      concept**, now *measured* rather than assumed (#81). The alternatives are
-      unwarranted: a cross-session view appears nowhere in the seed's words, and
-      multi-engine is on record as "a different project".
-- [x] **Node boxes — a labelled map?** → **NO**, closed rather than deferred. The
-      map ADR states a principle *and* a mechanism — *"the list stays the labelled
-      view; the map is the shape view"*, and captions were explicitly rejected
-      because *"conditional labels would make the picture jump between agent
-      counts"*. The mechanism survives a wider container. Identity already ships
-      in `aria-label` + `<title>`.
-- [x] **A new top-level surface?** → **NO.** Background tasks join the **Agents
-      dock**, which sidesteps the parked titlebar-control-count call instead of
-      pre-empting it. That call is untouched and still the owner's.
-- [x] **The Agents dock refresh trigger.** → **BUILD**, filed as **#82**.
-      `lastTurn.outcome === 'turn-end'` + the nonce #80 already built, with
-      **stale-while-revalidate** — because the effect sets `loading` before every
-      read and the merge drops disk rows unless `status === 'ok'`, so a naive
-      second dep flickers the nested edges out and back.
-- [x] **Non-agent background work in the panel?** → **YES**, as its own section
-      fed by the **level signal**, filed as **#83**. This is the one the run got
-      wrong for a good reason: it had no measurement. The mutation-verified guard
-      governs which *task messages become subagent rows*; #81 measured the level
-      as a **second, independent source**, so a separate section **amends** rather
-      than reverses it and the Bash test stays green.
-- [x] **Injected port or `EngineEvent`?** → **PORT.** No taste half left: #81
-      measured a level event landing 3.3s past `result`, where `activeOnEvent` is
-      already null.
-- [x] **What was "map pan-zoom" meant to solve?** → **STRUCK.** The fixed canvas
-      is the *reason* it is unnecessary (*"dividing a fixed canvas is what makes a
-      wide fan fit without pan or zoom"*), and the one named ceiling has a
-      cheaper recorded fix (`ponytail:` in `agent-layout.ts`: inset the slot span
-      by the radius past ~40 leaves; real sessions top out at 28). Nothing states
-      what it was for, and reconstructing intent from a phrase is not warranted
-      even under a grant. Re-file it if a real complaint ever attaches.
+- [ ] **What did you actually mean by "its spawner"?** This is the run's central defer, and it is genuinely undecidable from the record.
+      took: MEASURE FIRST — file a spike that turns as much of the question as possible into a fact rather than a preference
+      alt: commit now to (i) "name the spawning tool call" — cheap, reachable today; or (ii) "nest under the spawning **agent**" — which needs `parent_tool_use_id` on a *system* message, a field this repo's SDK type declares only on `assistant`/`user` (`engine.ts:31,48`), that no fixture exercises, and that `handleMessage`'s envelope check at `:410-414` is gated away from
+      why: The seed did not come from your prose this run — you picked a menu option whose wording was mine, so reading intent out of the phrase "nest under its spawner" would be reading my own words back as if they were yours. That is the exact failure this preset exists to prevent. If the measurement comes back negative for (ii), the choice collapses into a fact and you never have to make it.
+      reversible: yes
+- [ ] **May parentage state be recorded for NON-agent tasks at all?** (Partner: DEFER — nothing on the record reaches non-agent parentage; the two nearest items are scoped to the agent tree and to the level payload respectively.)
+      took: NO STATE SHIPPED THIS TICKET — the spike measures and renders nothing, so no engine state is added until you have the answer
+      alt: authorise the engine change up front and let the ticket both measure and ship
+      why: Adding per-process engine state is the kind of change this project pins hard (D7 shows even the *reset site* is load-bearing and non-obvious). Measuring costs nothing and forecloses nothing.
+      reversible: yes
+- [ ] **What should nesting LOOK like?** (Partner: DEFER — the record fixes presentation for agent rows only, and fixes that background rows are non-interactive; it chooses nothing among indent / child-in-tree / parent label.)
+      took: NOT CHOSEN — deliberately left out of the ticket
+      alt: adopt the agent tree's flat-with-a-depth precedent (`paddingLeft: depth * 14` + `aria-level`) by analogy
+      why: The analogy is available but unwarranted — that precedent is stated for `AgentRow`s inside `buildAgentTree`, and #83 deliberately keeps background tasks out of `mergeAgents` and off that path entirely ("A separate prop, never folded into liveAgents" @ `src/renderer/src/App.tsx:342`). Borrowing it would be a taste call wearing a citation.
+      reversible: yes
 
 ## Log
-- [boot] Prior run (`phase: fired`, idea "everything we set aside") was terminal:
-  its six tickets #75–#80 all landed and closed, the relay chain closed at leg 6,
-  tracker drained. Archived to `.claude/vibe-2026-07-31-everything.md`. This is a
-  boot, not a resume.
-- [boot] Baseline verified LIVE, not trusted from prose: `gh issue list --state open`
-  → empty (zero open issues of any label), `gh pr list` → empty, `git branch -a` →
-  `main` only, tree clean but for two 0-byte untracked Obsidian stubs, `main` =
-  `9418a94` in sync with origin.
-- [boot] Destination detected as GitHub (no AskUserQuestion): `gh` authed as
-  EstarinAzx, remote → EstarinAzx/claude-wrapper. `.context/` and `docs/agents/`
-  both present → no init offers fired.
-- [boot] Pressure resolved by rule 3 against live `wisp routing` (first non-Claude
-  family in order): **sonnet → codex/gpt-5.6-sol**. No slot rebind, so no restore
-  debt on any halt path.
-- [boot] Grill fork taken (never wayfind). `grill-with-docs` machinery: no
-  `CONTEXT.md` and no `docs/adr/`, but `.context/decisions.md` + dated ADR notes +
-  `DESIGN.md` are a domain model on record by any honest reading.
-- [round 0] Partner returned 7 answers and an adjacency verdict; **all 32 warrants
-  grepped clean** as fixed strings, zero failures. Its verdict was "mostly already
-  built — I would kill this run at boot", which I nearly acted on.
-- [round 0] Partner's strongest finding is a **principle, not a container
-  consequence**: the list and the map are a deliberate division of labour ("The
-  list stays the labelled view; the map is the shape view"), so a labelled
-  box-map collapses two modes into one. It also found per-node captions were
-  **explicitly considered and rejected** on a reason that survives a wider
-  container — conditional labels make the picture jump between agent counts.
-- [round 0] Partner correctly DEFERRED the meaning of "background", reporting
-  **zero hits** for the concept across `.context/`, `DESIGN.md`, `docs/` and
-  `src/`. That defer was honest and is what left room for the finding below.
-- [round 0] Pressure **REFUTED 4 of my 5 boot claims** and reframed the run. Its
-  C4 refutation — that the framing omitted a real SDK background-task concept —
-  is the reason this run has anything to build. All its claims were checked at
-  source before being accepted.
-- [round 0] **Two models, two opposite verdicts, and the disagreement was the
-  finding.** Partner said "already built" from the record; Pressure said "you
-  missed a whole data source" from `node_modules`. Both were right about their
-  own evidence: the record genuinely does not contain the SDK's background-task
-  concept, because nobody ever wrote it down.
-- [round 0] Pressure's C2 was **checked and found half-right, and I am recording
-  the half that is wrong.** It cited the map ADR "calls a different layout a
-  rewrite" as damning. That sentence sits under **`## Reversibility` → "Easy."**
-  and finishes *"a rewrite of that function and its tests, with no change to the
-  tree, the dock, or the merge."* The ADR is arguing the change is cheap and
-  contained; the quote was true but its force was inverted by dropping its
-  section. The real obstacle to boxes is the two-modes principle, not layout cost.
-- [round 2] Pressure REFUTED both G-claims and I verified all three of its points
-  at source before spending the contract's **single** rebuttal round on them.
-- [round 2] **Partner conceded and returned `DEFER`** — it did not defend its own
-  position once the `turn-end` fact was put to it. It also found the thing I
-  should have checked at boot: **no autonomy grant is live in this run**
-  (`grep -c -i "autonomy grant" .claude/vibe.md` → 0). The 2026-07-31 grant was
-  scoped to that night and is archived, so ownership is a legitimate ground for
-  deferring here. Without that check I would have spent owner calls I was never
-  given.
-- [round 2] The reversible default that decided it, quoted from the record the
-  project wrote after #78: *"measure the stated cause before speccing a fix for
-  it."* If `background_tasks_changed` does fire, a live level signal may answer
-  the refresh question outright, and a trigger built tonight is dead code chosen
-  before its cause was measured.
-- [tickets] Filed **one** ticket, **#81**, `ready-for-agent`: the #27-shaped
-  spike, carrying #78's decline clause with its **authorising condition stated
-  before the run** (three conditions, all must hold), and required to record
-  which host binary it observed. Out-of-scope section names the four things it
-  must not grow into.
-- [tickets] **Skipped `/hp` and `/to-spec` deliberately**, as all three prior runs
-  did: one measurement ticket has no golden path, and an MVD over it is ceremony.
-- [tickets] **Nothing else was filed, and that is the result, not a shortfall.**
-  The seed's three claims resolve to: *view* — already shipped; *node boxes* —
-  the owner's call against a recorded principle; *children* — not buildable from
-  the named source, because the SDK's own declaration forbids the correlation.
-- [halt-check] `## Needs you` = **7** of `max_defer: 12`; **zero** entries flagged
-  `reversible: NO`; wayfind fork not taken; `to-tickets` produced #81. Clear to
-  fire. `pressure_via: sonnet` was a plain family route, not a `slot:` rebind, so
-  there is **no restore debt** on this or any halt path.
-- [scoreboard] **82 warrants demanded, 82 grepped clean, zero invented** across
-  four rounds. Partner never fabricated a citation. Pressure refuted **9 of 11**
-  claims put to it. **I was wrong four times** — the `taskToParent` correlation,
-  a doc comment read as a type union, "children never appear at all", and
-  "structurally incapable of firing" — and every one was caught by the grep gate
-  or the cross-model attack rather than by me noticing.
-- [boot] **The seed is not greenfield.** Verified in source before framing anything:
-  `AgentMap.tsx` (132 lines), `AgentsDock.tsx` (280), `SubagentDrawer.tsx` (101),
-  `agent-layout.ts` (252), `subagent-store.ts` (156), `subagent-types.ts` (105),
-  `agent-map.css` (96) all exist and ship. The dock already has a `list | map`
-  toggle and a shared selection across both.
+
+- [boot] Queue verified dry (0 open issues, any label). Prior run `.claude/vibe.md` was `phase: fired` with both its tickets (#82, #83) landed and closed — a completed run, not a crash — so it was archived to `.claude/vibe-2026-08-01-background-agents.md` rather than resumed, following the existing `vibe-<date>-<slug>` convention.
+- [boot] Destination **detected** as GitHub (`gh auth status` ✓ as EstarinAzx, `origin` → EstarinAzx/claude-wrapper). `.context/` and `docs/agents/` both exist, so init steps 3–4 raise no offer.
+- [boot] Pressure Target resolved by rule "first non-Claude family in `wisp routing`": `opus` is Claude → skip; **`sonnet` → `codex/gpt-5.6-sol`**, taken. No `slot` rebind owed, so `pressure_via: sonnet` and step 6 owes no restore.
+- [round 1] Partner hydrated on 36 files and returned a 14-item mutation-verified pin list. Eight design questions asked; **6 answered with warrants, 2 DEFERred** (parentage state for non-agent tasks; the visual form of nesting). **All 6 warrants passed `grep -qF --` verification.**
+- [round 1] Pressure attacked 4 main-thread grounding findings: **F1/F2/F3 STAND, F4 REFUTED** — the pin proves the naive insertion fails, not that a second map is required. Claim withdrawn and weakened.
+- [round 2] Pressure attacked the 6 warranted decisions: **D5/D8/D9/D10 STAND, D6 and D7 REFUTED**, both withdrawn. D6 because a more specific tree ADR already governs the degrade case (and, on inspection, neither rule cleanly reaches a background row — folded into the visual-form defer). D7 because the `close()` warrant is about externally-retained level state, and engine-closure state dies with the engine.
+- [round 2] Pressure **REFUTED the ticket shape** on two prongs. The structural prong was accepted in full: a ticket that conditionally builds while deferring the visual form cannot honestly specify its build branch. The factual prong — that #81 already live-measured `tool_use_id` on a `local_bash` `task_started` — was **rebutted with evidence** and not re-asserted: the harness captures the field but its console never prints it, the ADR records the *level* instead, and the evidence sink is a temp dir outside the repo by design, so nothing survives.
+- [round 3] Revised to a **measurement-only** ticket, no build branch. Pressure: **STANDS**.
+- [tickets] Filed **#84** — "Measure whether a background task's spawner is reachable on the wire (measurement only, no build)", label `ready-for-agent`, unblocked. Modelled on #81's body structure (problem → why the record does not settle it → authorising condition stated up front → what to run → out of scope).
+- [deviation] **Skipped init step 6 (`/hp`).** A measurement-only spike renders nothing and has no golden-path user journey; mapping one would mean inventing the visual design this run deliberately deferred, and `.context/happy-path.md` already holds the app's real multi-journey MVD, which an overwrite would clobber.
+- [deviation] **Skipped init step 7's separate PRD issue.** #81 — the direct precedent for this exact kind of ticket — was spec and ticket in one, with no parent PRD. A PRD restating a single spike is duplication on a tracker the owner reads. The ticket body carries the full spec.
+- [halt check] `## Needs you` = 5 (2 carried + 3 raised), under `max_defer: 12`. **No entry flagged `reversible: NO`.** Grill fork was taken, not wayfind. `to-tickets` produced one ticket. **Clear to fire.**
+
+## Main-thread grounding (measured before the grill, in code, not from the record)
+
+These are the main thread's own readings of `src/`, done while the agents
+hydrated. They are stated here because they reframe the seed, and because a
+crash should not lose them. They are **code facts**, independently checkable —
+not warrants, and not Partner's to cite.
+
+1. **The seed's two halves are disjoint by construction.** `taskToParent` is
+   populated **only** when `task_type === 'local_agent'` — `if (str(src.task_type) !== 'local_agent') return`
+   at `src/main/engine.ts:356`. The dock's background section renders **only**
+   the complement — `tasks.filter((t) => t.taskType !== AGENT_TASK_TYPE)` at
+   `src/shared/background-tasks.ts:53`. So *every row in the background section
+   is precisely a row with no `taskToParent` entry.* Joining the two as they
+   stand yields the empty set. Any honest version of this feature must therefore
+   change what gets recorded, not merely read an existing map.
+
+2. **But the spawner IS observable, and recording it is not "inventing a key".**
+   `engine.ts:357` reads `src.tool_use_id` off `task_started`, and the fixture at
+   `tests/engine.test.ts:962-968` — labelled *"Real local\_bash shape"* — carries
+   `tool_use_id: 'toolu_bash_1'` **together with** `task_type: 'local_bash'`. The
+   parent is in the payload; line 356 discards it before line 357 can keep it.
+
+3. **The ADR comment that looks like a blocker is precisely scoped, and survives.**
+   `background-tasks.ts:51` says the join was refused because "the level carries
+   no `tool_use_id` and no parent, so there is nothing to join ON". That is a
+   statement about the **`background_tasks_changed` level**, and it remains true
+   and unchallenged. `task_started` is a **different message** on the same stream,
+   and it does carry the parent. The distinction is the whole feature.
+
+4. **`taskToParent` does DOUBLE DUTY, and that is why the naive change reds a pin.**
+   `engine.ts:300-303` states the second job outright: the map is "also what keeps
+   backgrounded Bash calls out of the panel: they ride the same stream with their
+   own task ids, and later task messages are ignored unless their task_id is in
+   here." Membership *is* the accept-list. So simply recording bash parents into
+   `taskToParent` would make the lookup at `engine.ts:368` succeed for a bash
+   `task_notification`, which then emits `subagentEvent(...)` at 372/377/382 — an
+   agent row for a Bash task, reddening `tests/engine.test.ts:954` ("a backgrounded
+   Bash task never becomes an agent row"), a mutation-verified pin. **The feature
+   therefore needs a SECOND, separate map keyed for all task types, leaving
+   `taskToParent` untouched in both of its jobs.** This is the central structural
+   finding of this run's grounding.
+
+5. **"Spawner" is ambiguous, and the cheap reading does not give you an agent.**
+   `tool_use_id` on a `local_bash` `task_started` names **the Bash tool_use call**,
+   not the agent that owns it. To nest a background task under an *agent row* you
+   need the message envelope's `parent_tool_use_id`, which is a different field —
+   and correlating the two is precisely the "second correlation table" that
+   `.context/decisions/2026-07-25-agent-tree-edge-is-the-sidecar.md` §1 considered
+   and **declined** for agents.
+
+6. **As typed, that route does not exist.** This repo's own SDK message type
+   declares `parent_tool_use_id` on the **`assistant`** and **`user`** variants
+   only (`src/main/engine.ts:31` and `:48`); the `system` variant — which is what
+   `task_started` arrives as — has no such field, and `handleMessage`'s envelope
+   check at `:410-414` is explicitly gated `msg.type === 'assistant' || msg.type === 'user'`.
+   So on this app's model of the stream there is **no route from a background task
+   to its owning agent**. Whether the live CLI nonetheless puts one on the system
+   message is **unmeasured** — and it is the single highest-value thing to measure,
+   because it decides whether "nest under the spawning agent" is buildable at all
+   or whether only "name the spawning tool call" is.
+
+7. **The instrument to settle all of this already exists, and has always recorded
+   half the answer — nobody has read it back.** `scripts/spike-81-background-tasks.mjs`
+   captures `tool_use_id` on **every** `task_started` at line 163, *before* the
+   `local_agent` filter at 167, and persists it into `summary.json` via
+   `taskStarted` at line 322. But its console line 170 prints only `task_type` and
+   `task_id`, #81's ADR records C3 about the **level** rather than `task_started`,
+   and the evidence sink is a `mkdtempSync` temp dir **outside the repo on purpose**
+   ("a JSONL of a real turn carries session ids and file contents, and the repo is
+   pushed", lines 33-36) — so **no artifact is committed and none survives**.
+   Criterion (1) is therefore **capturable-but-unrecorded**, not measured. The
+   harness does **not** capture `parent_tool_use_id` at all, so the agent-ownership
+   question needs a one-line addition before even a re-run could answer it.
+
+8. **Caveat that must not be smoothed over.** Point 2 rests on a **test fixture**
+   asserting the real shape, not on a live measurement. This project's standing
+   practice is to measure, and #81 measured the *level*, not `local_bash`'s
+   `task_started`. So "a `local_bash` `task_started` carries `tool_use_id` on the
+   live CLI" is an **unmeasured premise**, and by this project's own established
+   practice it ships as a ticket's **first, blocking acceptance criterion** with a
+   specified fallback — not as an assumption.
