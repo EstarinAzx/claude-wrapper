@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AgentRow, LiveAgent, SubagentInfo } from '../../../shared/subagent-types'
+import type { LastTurn } from '../../../shared/queued-send'
 import { mergeAgents } from '../../../shared/subagent-types'
 import { buildAgentTree, flattenAgentTree } from '../../../shared/agent-layout'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
@@ -65,11 +66,16 @@ const liveStats = (a: AgentRow): string =>
 const AgentsDock = ({
   sessionId,
   liveAgents,
+  lastTurn,
   onOpenAgent,
   onClose
 }: {
   sessionId: string | null
   liveAgents: LiveAgent[]
+  // How the last turn ended (#80's `LastTurn`), used here as the re-read
+  // trigger (#82). Taken as the whole record rather than a bare boolean: the
+  // outcome decides WHETHER to read and the nonce decides WHEN.
+  lastTurn: LastTurn | null
   onOpenAgent: (parentToolUseId: string, agentType: string) => void
   onClose: () => void
 }) => {
@@ -79,6 +85,10 @@ const AgentsDock = ({
   // One selection shared by list and map — toggling modes must not drop it.
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const reqIdRef = useRef(0)
+  // The turn already ended when this dock mounted, if there was one. The mount
+  // read below covers it, so seeding from it is what keeps opening the panel
+  // one read rather than two.
+  const seenNonceRef = useRef(lastTurn?.nonce ?? 0)
 
   const openAgent = useCallback(
     (parentToolUseId: string, agentType: string): void => {
@@ -114,24 +124,75 @@ const AgentsDock = ({
     [width, setWidth]
   )
 
-  // Re-read whenever the session being looked at changes, so switching sessions
-  // swaps the list rather than merging two sessions' agents. The req-id guard
-  // drops a slow response for a session the user already navigated away from.
-  useEffect(() => {
+  // ONE read with two callers, and `keepStale` is the entire difference between
+  // them.
+  //
+  // `false` — a different session is being looked at. Clear first, because
+  // showing the previous session's agents under the new session's name is worse
+  // than showing nothing, and report a failure as `unreadable` because there is
+  // no earlier answer to fall back on.
+  //
+  // `true` — the SAME session, re-read (#82). **Stale-while-revalidate**: touch
+  // nothing until the new list is in hand. Clearing here would blank the disk
+  // rows for the duration of every refresh, and nested edges come from the
+  // sidecars alone, so the tree shape would flicker out and back at exactly the
+  // moment the user is watching the panel change. A failure keeps the last good
+  // rows for the same reason: a transient read error is not news worth
+  // destroying a correct snapshot over, and the next turn re-reads anyway. Same
+  // shape as the sessions rail, which holds its list "rather than showing a gap
+  // that the next refresh" fills.
+  const read = useCallback((id: string, keepStale: boolean): void => {
     const reqId = ++reqIdRef.current
-    if (!sessionId) {
-      setState({ status: 'ok', agents: [] })
-      return
-    }
-    setState({ status: 'loading' })
+    if (!keepStale) setState({ status: 'loading' })
     void window.api
-      .listSubagents(sessionId)
+      .listSubagents(id)
       .catch(() => null)
       .then((list) => {
         if (reqId !== reqIdRef.current) return
-        setState(list === null ? { status: 'unreadable' } : { status: 'ok', agents: list })
+        // `null` is still "the directory could not be read" and `[]` is still
+        // "none spawned" — the two never collapse. What changes is only whether
+        // a failure is allowed to overwrite an answer we already had.
+        if (list === null) {
+          if (!keepStale) setState({ status: 'unreadable' })
+          return
+        }
+        setState({ status: 'ok', agents: list })
       })
-  }, [sessionId])
+  }, [])
+
+  // Re-read whenever the session being looked at changes, so switching sessions
+  // swaps the list rather than merging two sessions' agents. The req-id guard
+  // drops a slow response for a session the user already navigated away from —
+  // including away to no session at all, which is why the null branch bumps it.
+  useEffect(() => {
+    if (!sessionId) {
+      ++reqIdRef.current
+      setState({ status: 'ok', agents: [] })
+      return
+    }
+    read(sessionId, false)
+  }, [sessionId, read])
+
+  // Turns 2..N (#82). `sessionId` is written inside `useChat`'s `turn-end`
+  // branch, so it moves `null → id` once and then never again — which left the
+  // effect above structurally incapable of firing in the window where subagents
+  // spawn and nest. With the dock left open, they simply never appeared.
+  //
+  // Keyed on the nonce and NOT on `busy` going false: all three terminal
+  // outcomes clear busy, so a not-busy rule would re-read after Stop and after
+  // a failed turn too — #80's finding, and the reason `LastTurn` carries the
+  // outcome at all. The nonce is what makes two turns ending the same way two
+  // events rather than one unchanged value.
+  //
+  // The nonce is consumed whatever the outcome was, so a stopped turn is not
+  // left behind to fire this on the next unrelated render.
+  useEffect(() => {
+    if (!lastTurn || lastTurn.nonce === seenNonceRef.current) return
+    seenNonceRef.current = lastTurn.nonce
+    if (lastTurn.outcome !== 'turn-end' || !sessionId) return
+    read(sessionId, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastTurn?.nonce])
 
   // Live rows are shown whatever the disk read did: a first turn has no session
   // id yet, and an unreadable agent directory must not hide agents we watched

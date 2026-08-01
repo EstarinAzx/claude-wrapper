@@ -371,6 +371,171 @@ describe('agents dock — live rows', () => {
   })
 })
 
+// #82. The dock's only disk trigger used to be its read effect's `[sessionId]`
+// dep, and `useChat` writes `activeSessionId` inside the `turn-end` branch — so
+// the id moves `null → id` on turn ONE and never again. Turns 2..N were
+// structurally incapable of re-reading, which is exactly the window in which
+// subagents spawn and nest.
+//
+// Every test here ends a turn at least twice, because one turn end proves
+// nothing: it is the SECOND one, on an unchanged session id, that the old code
+// could not act on.
+describe('agents dock — re-reads on turn end', () => {
+  // Turn end is the trigger, and it is also what first gives the app a session
+  // id at all: `useChat` reads `currentSessionId()` in a promise, so the id
+  // lands a render LATER than `lastTurn`. Flush both.
+  const endTurn = async (): Promise<void> => {
+    harness.emit({ type: 'turn-end' })
+    await act(async () => {})
+  }
+
+  // Live session, no rail row clicked: this is the dock-left-open path, not the
+  // open-a-past-session path the rest of the file drives.
+  const liveSession = async (): Promise<void> => {
+    harness.api.currentSessionId.mockResolvedValue('sess-1')
+    await startSession()
+    openDock()
+  }
+
+  test('a subagent that spawns on a later turn appears without closing the dock', async () => {
+    harness.api.listSubagents.mockResolvedValue([])
+    await liveSession()
+    await endTurn()
+    expect(await screen.findByText('No agents in this session.')).toBeTruthy()
+
+    harness.api.listSubagents.mockResolvedValue([agent({ description: 'spawned on turn two' })])
+    await endTurn()
+
+    expect(await screen.findByText('spawned on turn two')).toBeTruthy()
+  })
+
+  // The count assertion this suite had none of. Every other assertion here is
+  // `toHaveBeenCalledWith`-shaped, which a trigger that never fires satisfies
+  // just as well as one that does.
+  test('each turn that ends re-reads the sidecars exactly once', async () => {
+    harness.api.listSubagents.mockResolvedValue([])
+    await liveSession()
+    // Nothing yet: the dock mounted on a null session id, which is answered
+    // without touching the store at all.
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(0)
+
+    await endTurn()
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(1)
+
+    await endTurn()
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(2)
+
+    await endTurn()
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(3)
+    expect(harness.api.listSubagents).toHaveBeenLastCalledWith('sess-1')
+  })
+
+  // Stale-while-revalidate, and the reason the one-more-dep fix was rejected.
+  // A nested spine is the sharp case: the parent edge comes from the sidecar
+  // alone, so blanking the disk rows takes the whole tree shape with it and puts
+  // it back — a flicker at exactly the moment the user is watching the panel.
+  test('disk rows and their nesting stay on screen while a re-read is in flight', async () => {
+    harness.api.listSubagents.mockResolvedValue([
+      agent({ parentToolUseId: 'task-1', agentId: 'root-a', description: 'the parent' }),
+      agent({
+        parentToolUseId: 'task-2',
+        agentId: 'kid-b',
+        agentType: 'Plan',
+        description: 'the child',
+        parentAgentId: 'root-a'
+      })
+    ])
+    await liveSession()
+    await endTurn()
+    expect(await screen.findByText('the child')).toBeTruthy()
+
+    // A read that never settles — the whole duration of a re-read, held open.
+    harness.api.listSubagents.mockReturnValue(new Promise(() => {}))
+    await endTurn()
+
+    // It really is in flight: without this the assertions below pass against a
+    // dock that simply never re-read.
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(2)
+    expect(screen.getByText('the parent')).toBeTruthy()
+    expect(screen.getByText('the child')).toBeTruthy()
+    expect(screen.queryByText('Loading…')).toBeNull()
+    const rows = within(dock()).getAllByRole('listitem')
+    expect(rows.map((li) => li.style.paddingLeft)).toEqual(['', '14px'])
+    expect(rows.map((li) => li.getAttribute('aria-level'))).toEqual(['1', '2'])
+  })
+
+  test('a re-read that fails leaves the last good rows alone rather than reporting the directory unreadable', async () => {
+    harness.api.listSubagents.mockResolvedValue([agent({ description: 'read once, fine' })])
+    await liveSession()
+    await endTurn()
+    expect(await screen.findByText('read once, fine')).toBeTruthy()
+
+    harness.api.listSubagents.mockResolvedValue(null)
+    await endTurn()
+
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(2)
+    expect(screen.getByText('read once, fine')).toBeTruthy()
+    expect(screen.queryByText(/Could not read this session/)).toBeNull()
+  })
+
+  // The other direction: `unreadable` is not sticky either. A directory that
+  // could not be read once and can be read now is a recovery, and the panel has
+  // to take it.
+  test('a re-read that succeeds after a failed one recovers the panel', async () => {
+    harness.api.listSubagents.mockResolvedValue(null)
+    await liveSession()
+    await endTurn()
+    expect(await screen.findByText(/Could not read this session/)).toBeTruthy()
+
+    harness.api.listSubagents.mockResolvedValue([agent({ description: 'readable again' })])
+    await endTurn()
+
+    expect(await screen.findByText('readable again')).toBeTruthy()
+    expect(screen.queryByText(/Could not read this session/)).toBeNull()
+  })
+
+  // The common real-world order: run a turn, THEN open the panel to look at it.
+  // The dock mounts with a turn already ended behind it, and the mount read
+  // covers that turn — firing the trigger for it as well would read the same
+  // directory twice for one event.
+  test('opening the dock after a turn has ended reads once, not twice', async () => {
+    harness.api.listSubagents.mockResolvedValue([])
+    harness.api.currentSessionId.mockResolvedValue('sess-1')
+    await startSession()
+    harness.emit({ type: 'turn-end' })
+    await act(async () => {})
+    // The premise: the dock was shut for that turn, so nothing has read yet.
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(0)
+
+    openDock()
+    await act(async () => {})
+
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(1)
+  })
+
+  // The #80 finding, applied here: all three terminal outcomes clear `busy`, so
+  // a "no longer busy" trigger fires after Stop and after a failure too. The
+  // trigger is the POSITIVE outcome plus its nonce, and nothing else.
+  test('a stopped or failed turn does not re-read', async () => {
+    harness.api.listSubagents.mockResolvedValue([])
+    await liveSession()
+    await endTurn()
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(1)
+
+    harness.emit({ type: 'turn-aborted' })
+    await act(async () => {})
+    harness.emit({ type: 'error', message: 'boom' })
+    await act(async () => {})
+
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(1)
+
+    // …and the trigger still works afterwards, so this is not passing because
+    // the dock stopped listening altogether.
+    await endTurn()
+    expect(harness.api.listSubagents).toHaveBeenCalledTimes(2)
+  })
+})
+
 // The tree half. Depth comes from the sidecar's parentAgentId alone — the pure
 // assembly is covered in agent-layout.test.ts, so these are seam tests: does the
 // panel render the tree, and is a nested agent still openable.

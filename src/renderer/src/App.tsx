@@ -338,6 +338,10 @@ const App = () => {
             <AgentsDock
               sessionId={activeSessionId}
               liveAgents={liveAgents}
+              // The re-read trigger (#82). `activeSessionId` only moves on the
+              // FIRST turn of a session, so the dock needs an event that fires
+              // on every one — and this is already that event.
+              lastTurn={lastTurn}
               onOpenAgent={(parentToolUseId, agentType) =>
                 setOpenSubagent({ parentToolUseId, agentType })
               }
