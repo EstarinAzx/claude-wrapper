@@ -155,6 +155,50 @@
   font: inherit;
 }
 
+/* ── background tasks (#83) ──
+   A footer strip in the agents dock, mirroring .agents-dock-head's hairline
+   from the other end. flex-shrink: 0 so it never gets squeezed by the agent
+   list above it, and a max-height so a burst of background work cannot eat the
+   panel — the list scrolls instead. It exists only while something is running,
+   so nothing here is styled for an empty state. */
+.background-tasks {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 40%;
+  padding: 8px 16px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.background-task-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Two lines, not a row of controls: the description leads and the raw
+   discriminant sits under it as meta, the same shape .agent-row-btn uses for
+   its type/desc pair. No hover and no focus ring — there is nothing to open. */
+.background-task-row {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.background-task-desc {
+  font-size: var(--fs-ui);
+  color: var(--text);
+}
+
+.background-task-type {
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+}
+
 /* ── sessions rail ── */
 
 .sidebar-collapsed {

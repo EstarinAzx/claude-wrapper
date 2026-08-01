@@ -62,7 +62,8 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
     stopTurn: vi.fn(),
     respondToPermission: vi.fn(),
     onChatEvent: vi.fn().mockReturnValue(() => {}),
-    onEngineTerminal: vi.fn().mockReturnValue(() => {})
+    onEngineTerminal: vi.fn().mockReturnValue(() => {}),
+    onBackgroundTasks: vi.fn().mockReturnValue(() => {})
   }
 }
 

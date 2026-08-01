@@ -8,6 +8,7 @@ import type {
 import type { SendPayload } from '../shared/attachment-types'
 import type { SlashCommandInfo } from '../shared/command-types'
 import type { ModelOption } from '../shared/model-types'
+import { parseBackgroundTasks, type BackgroundTask } from '../shared/background-tasks'
 
 export type SdkMessage =
   | { type: 'system'; subtype: string; session_id: string }
@@ -265,7 +266,19 @@ export const createEngine = (
   //
   // Fires ONLY where the CLI died under us — never for close(), which is main's
   // own teardown on every workspace switch, model pick and permission cycle.
-  onTerminal: () => void = () => {}
+  onTerminal: () => void = () => {},
+  // The CLI's live background-task set (#83). Third injected port, and the
+  // measurement behind it is the sharpest of the three: #81 timed a level event
+  // landing 3.3s AFTER `result/success`, by which point finishTurn() has nulled
+  // activeOnEvent and emit() reaches nobody. A task settling BETWEEN turns is
+  // the NORMAL case for background work, so an EngineEvent would be dropped in
+  // exactly the case this signal exists for.
+  //
+  // Carries the whole set every time, because the CLI's message does: this is a
+  // level, not an edge pair. Fired with [] on close() as well — the level is
+  // per-process and the SDK emits nothing at startup, so a set that outlives its
+  // engine is a permanently stale indicator.
+  onBackgroundTasks: (tasks: BackgroundTask[]) => void = () => {}
 ): Engine & { close(): void } => {
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
@@ -420,6 +433,14 @@ export const createEngine = (
         // message is worse than none.
         const content = str(src.content)
         if (content !== undefined) emit({ type: 'command-output', text: content })
+      } else if (subtype === 'background_tasks_changed') {
+        // Out of band, and BEFORE the task-message fallthrough below. This
+        // level shares the `system` type with the task bookends but is a
+        // different source: handleTaskMessage must never see it, or a
+        // local_agent row in the payload would take the subagent path a second
+        // time. The `local_agent` guard down there is mutation-verified and
+        // stays untouched — this branch amends, it does not reverse.
+        onBackgroundTasks(parseBackgroundTasks(src.tasks))
       } else if (subtype === 'informational') {
         // 'info' is documented transcript-mode-only; this app has no transcript
         // mode, so that level is dropped rather than rendered.
@@ -814,6 +835,14 @@ export const createEngine = (
     currentQuery = null
     queue = null
     consumeStarted = false
+    // The background level is per-process, and this process is going away. Every
+    // rebuild path in main — workspace switch, model pick, permission cycle,
+    // backend flip, targeting another session — calls close() before it drops or
+    // replaces the engine, so ONE line here covers all of them; hand-copying the
+    // reset to each call site is the "must join the ok branch by hand" failure
+    // this codebase keeps re-learning. Unlike onTerminal, firing on close() is
+    // the point rather than the bug: nothing is running once the CLI is gone.
+    onBackgroundTasks([])
     if (turnResolve) {
       drainSubagents()
       emit({ type: 'error', message: 'query closed' })

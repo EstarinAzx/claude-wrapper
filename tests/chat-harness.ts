@@ -8,6 +8,7 @@ import type { SendPayload } from '../src/shared/attachment-types'
 import type { Candidate } from '../src/shared/attachment-policy'
 import type { SlashCommandInfo } from '../src/shared/command-types'
 import type { Bounds } from '../src/shared/window-bounds'
+import type { BackgroundTask } from '../src/shared/background-tasks'
 import type {
   DeleteStatus,
   FolderChoice,
@@ -49,6 +50,7 @@ export const fakeChatApi = (folder = FOLDER) => {
   const modelListeners = new Set<(model: string | null) => void>()
   const sessionChangedListeners = new Set<(id: string) => void>()
   const terminalListeners = new Set<() => void>()
+  const taskListeners = new Set<(t: BackgroundTask[]) => void>()
   const api = {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
@@ -102,6 +104,13 @@ export const fakeChatApi = (folder = FOLDER) => {
     onEngineTerminal: (cb: () => void): (() => void) => {
       terminalListeners.add(cb)
       return () => terminalListeners.delete(cb)
+    },
+    // #83: the CLI's live background-task set. Driven by `emitBackgroundTasks()`
+    // below, which delivers a whole set the way main does — the payload IS the
+    // membership, so a fixture that appended would be testing the wrong contract.
+    onBackgroundTasks: (cb: (tasks: BackgroundTask[]) => void): (() => void) => {
+      taskListeners.add(cb)
+      return () => taskListeners.delete(cb)
     },
     onBackendChanged: (cb: (info: BackendInfo) => void): (() => void) => {
       backendListeners.add(cb)
@@ -164,6 +173,11 @@ export const fakeChatApi = (folder = FOLDER) => {
       terminalListeners.forEach((l) => l())
     })
   }
+  const emitBackgroundTasks = (tasks: BackgroundTask[]): void => {
+    act(() => {
+      taskListeners.forEach((l) => l(tasks))
+    })
+  }
   const waitForPermission = (toolUseId: string): Promise<PermissionDecision> =>
     broker.request({ toolUseId, signal: new AbortController().signal })
   return {
@@ -176,6 +190,7 @@ export const fakeChatApi = (folder = FOLDER) => {
     emitModel,
     emitSessionChanged,
     emitTerminal,
+    emitBackgroundTasks,
     waitForPermission
   }
 }

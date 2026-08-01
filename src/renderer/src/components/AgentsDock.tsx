@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AgentRow, LiveAgent, SubagentInfo } from '../../../shared/subagent-types'
 import type { LastTurn } from '../../../shared/queued-send'
 import { mergeAgents } from '../../../shared/subagent-types'
+import { nonAgentTasks, type BackgroundTask } from '../../../shared/background-tasks'
 import { buildAgentTree, flattenAgentTree } from '../../../shared/agent-layout'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
 import AgentMap from './AgentMap'
@@ -66,12 +67,17 @@ const liveStats = (a: AgentRow): string =>
 const AgentsDock = ({
   sessionId,
   liveAgents,
+  backgroundTasks,
   lastTurn,
   onOpenAgent,
   onClose
 }: {
   sessionId: string | null
   liveAgents: LiveAgent[]
+  // The CLI's live background-task set (#83). Kept apart from `liveAgents` all
+  // the way to the DOM: a local_bash task has no sidecar, no parentToolUseId and
+  // no usage, so a merged row would claim it ran as an agent and spent nothing.
+  backgroundTasks: BackgroundTask[]
   // How the last turn ended (#80's `LastTurn`), used here as the re-read
   // trigger (#82). Taken as the whole record rather than a bare boolean: the
   // outcome decides WHETHER to read and the nonce decides WHEN.
@@ -204,6 +210,11 @@ const AgentsDock = ({
   // flat shape keeps the common case a plain list with nothing extra in the DOM.
   const nodes = flattenAgentTree(buildAgentTree(rows))
 
+  // Agents are already listed above, and the Agent tool is async on this CLI —
+  // so every subagent is in the level from birth and would otherwise appear
+  // twice, under two different names for the same work.
+  const tasks = nonAgentTasks(backgroundTasks)
+
   return (
     <aside className="agents-dock" aria-label="Agents" style={{ width }}>
       <div
@@ -334,6 +345,37 @@ const AgentsDock = ({
           })}
         </ul>
       )}
+      {/* Below the agent half, not above it: this strip appears and disappears
+          on its own schedule, and growing it downward leaves the list the user
+          is reading where it was. Rendered ONLY when something is running —
+          a standing "no background tasks" line would be a fourth empty state
+          competing with the three above it, for the case that is the norm.
+
+          Non-interactive by design. A background task has nothing to open: no
+          sidecar, no transcript, and no parentage in the payload to reach one
+          by. Rows with nothing behind them stay plain text rather than becoming
+          buttons that do nothing. */}
+      {tasks.length > 0 ? (
+        <section className="background-tasks" aria-label="Background tasks">
+          <span className="background-tasks-title">Background</span>
+          <ul className="background-task-list">
+            {tasks.map((t) => (
+              <li key={t.taskId} className="background-task-row">
+                {t.description ? (
+                  <span className="background-task-desc" title={t.description}>
+                    {t.description}
+                  </span>
+                ) : null}
+                {/* The level's own discriminant, verbatim. `BackgroundTaskSummary`
+                    declares friendly labels in the same sdk.d.ts, for the hook
+                    payload this app never registers — printing `shell` here
+                    would be showing the user an assumption as a fact. */}
+                <span className="background-task-type">{t.taskType}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </aside>
   )
 }

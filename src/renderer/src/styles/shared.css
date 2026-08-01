@@ -29,6 +29,8 @@
 .command-option-desc,
 .tool-card-key,
 .tool-card-result,
+.background-task-desc,
+.background-task-type,
 .chip-name {
   white-space: nowrap;
   overflow: hidden;
@@ -75,6 +77,7 @@
    typographic role. Only the tracking differs, so only the tracking is local. */
 .sidebar-title,
 .agents-dock-title,
+.background-tasks-title,
 .tool-card-toggle,
 .tool-card-change-label,
 .tool-card-arg-key {

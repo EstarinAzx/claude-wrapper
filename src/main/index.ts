@@ -125,6 +125,20 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
       for (const win of BrowserWindow.getAllWindows()) {
         win.webContents.send('engine:terminal')
       }
+    },
+    // #83: the CLI's live background-task set. Third out-of-band port, and the
+    // one with the hardest measurement behind it — #81 timed a level landing
+    // 3.3s past `result`, so an EngineEvent would be dropped in the ordinary
+    // case rather than an edge one.
+    //
+    // Carries the WHOLE set every time, because the CLI's message does. The
+    // renderer replaces its set rather than pairing bookends, so a dropped
+    // message can never wedge a finished task on screen. `[]` also arrives here
+    // from the engine's own close(), which is the per-process reset.
+    (tasks) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        win.webContents.send('tasks:changed', tasks)
+      }
     }
   )
 

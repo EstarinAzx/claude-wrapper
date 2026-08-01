@@ -5,6 +5,7 @@ import { fakeChatApi, FOLDER } from './chat-harness'
 import type { SessionMeta } from '../src/shared/session-types'
 import type { SubagentInfo } from '../src/shared/subagent-types'
 import type { EngineEvent } from '../src/shared/engine-types'
+import type { BackgroundTask } from '../src/shared/background-tasks'
 
 let harness: ReturnType<typeof fakeChatApi>
 
@@ -806,5 +807,142 @@ describe('agents dock — width', () => {
     openDock()
     dragHandleBy(screen.getByRole('separator', { name: 'Resize agents panel' }), 2000, 0)
     expect(dock().style.width).toBe('480px')
+  })
+})
+
+// #83 — background tasks. Its own section in this dock, fed by the CLI's level
+// signal through an injected port, and deliberately NOT merged into the agent
+// rows: a local_bash task has no sidecar, no parentToolUseId and no usage, so
+// putting it through mergeAgents would re-create the "a disk-only row claims it
+// used 0 tokens" failure the disk contract exists to prevent.
+describe('agents dock — background tasks (#83)', () => {
+  const bashTask = (over: Partial<BackgroundTask> = {}): BackgroundTask => ({
+    taskId: 't-bash',
+    taskType: 'local_bash',
+    description: 'npm run build',
+    ...over
+  })
+
+  const tasksSection = (): HTMLElement | null =>
+    dock().querySelector('.background-tasks')
+
+  test('a backgrounded Bash appears while it runs', async () => {
+    await startSession()
+    openDock()
+    expect(tasksSection()).toBeNull()
+
+    harness.emitBackgroundTasks([bashTask()])
+    expect(await screen.findByText('npm run build')).toBeTruthy()
+    expect(tasksSection()).toBeTruthy()
+  })
+
+  test('and leaves when it settles — the set is REPLACED, never accumulated', async () => {
+    // The whole point of consuming a level rather than pairing bookends. If this
+    // appended, a missed finish would wedge a completed task on screen forever,
+    // which is the stale-indicator failure the SDK shapes the signal to avoid.
+    await startSession()
+    openDock()
+    harness.emitBackgroundTasks([bashTask(), bashTask({ taskId: 't-2', description: 'npm test' })])
+    expect(await screen.findByText('npm test')).toBeTruthy()
+
+    harness.emitBackgroundTasks([bashTask({ taskId: 't-2', description: 'npm test' })])
+    expect(screen.queryByText('npm run build')).toBeNull()
+    expect(screen.getByText('npm test')).toBeTruthy()
+
+    harness.emitBackgroundTasks([])
+    expect(tasksSection()).toBeNull()
+  })
+
+  test('the section is absent entirely when nothing is running', async () => {
+    // Not an empty-state row. The dock already has three empty states for the
+    // AGENT half; a permanent "no background tasks" line would be a second one
+    // competing with them in a 248px panel for a case that is the norm.
+    await startSession()
+    openDock()
+    harness.emitBackgroundTasks([bashTask()])
+    expect(await screen.findByText('npm run build')).toBeTruthy()
+    harness.emitBackgroundTasks([])
+    expect(tasksSection()).toBeNull()
+  })
+
+  test('a local_agent task produces NO row — it already has an agent row', async () => {
+    // The Agent tool is async on this CLI, so every subagent is in this level
+    // from birth. Acceptance: no duplicate row alongside its agent row.
+    await startSession()
+    openDock()
+    harness.emitBackgroundTasks([
+      { taskId: 't-agent', taskType: 'local_agent', description: 'Explore the codebase' },
+      bashTask()
+    ])
+    expect(await screen.findByText('npm run build')).toBeTruthy()
+    expect(screen.queryByText('Explore the codebase')).toBeNull()
+    expect(tasksSection()!.querySelectorAll('li')).toHaveLength(1)
+  })
+
+  test('a task arriving BETWEEN turns still reaches the dock', async () => {
+    // The case an EngineEvent would drop: #81 measured a level landing 3.3s past
+    // `result`, where finishTurn() has already nulled activeOnEvent. Driven here
+    // through the port after a turn has fully ended, so a re-wiring onto
+    // `chat:event` reddens this test and not the mid-turn one below.
+    await startSession()
+    openDock()
+    harness.emit({ type: 'turn-end' })
+    harness.emitBackgroundTasks([bashTask()])
+    expect(await screen.findByText('npm run build')).toBeTruthy()
+  })
+
+  test('a task arriving mid-turn also reaches the dock', async () => {
+    await startSession()
+    openDock()
+    fireEvent.change(screen.getByPlaceholderText('Message Claude…'), {
+      target: { value: 'go' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+    harness.emitBackgroundTasks([bashTask()])
+    expect(await screen.findByText('npm run build')).toBeTruthy()
+  })
+
+  test('the raw task_type is shown, never remapped to a friendly label', async () => {
+    // `BackgroundTaskSummary` declares `shell` / `subagent` / `monitor` /
+    // `workflow` in the same sdk.d.ts, for the hook payload this app never
+    // registers. Two vocabularies for one idea; printing one for the other would
+    // be an assumption presented to the user as a fact.
+    await startSession()
+    openDock()
+    harness.emitBackgroundTasks([bashTask()])
+    expect(await screen.findByText('local_bash')).toBeTruthy()
+    expect(screen.queryByText('shell')).toBeNull()
+  })
+
+  test('a task with no description still renders, identified by its type', async () => {
+    await startSession()
+    openDock()
+    harness.emitBackgroundTasks([bashTask({ description: '' })])
+    expect(await screen.findByText('local_bash')).toBeTruthy()
+    expect(tasksSection()!.querySelectorAll('li')).toHaveLength(1)
+  })
+
+  test('background tasks do NOT become agent rows', async () => {
+    // The amend-not-reverse guarantee at the render layer. The agent half must
+    // still say it has nothing, because a local_bash task is not an agent.
+    await startSession()
+    openDock()
+    harness.emitBackgroundTasks([bashTask()])
+    expect(await screen.findByText('npm run build')).toBeTruthy()
+    expect(screen.getByText('No agents in this session.')).toBeTruthy()
+    expect(dock().querySelectorAll('.agent-row')).toHaveLength(0)
+  })
+
+  test('the set survives the dock being closed and reopened', async () => {
+    // The set lives in useChat, not in the dock: closing the panel unmounts the
+    // component, and a set held there would be lost with no way back — the level
+    // only re-fires when membership CHANGES.
+    await startSession()
+    openDock()
+    harness.emitBackgroundTasks([bashTask()])
+    expect(await screen.findByText('npm run build')).toBeTruthy()
+    openDock()
+    openDock()
+    expect(await screen.findByText('npm run build')).toBeTruthy()
   })
 })

@@ -5,6 +5,7 @@ import type { Attachment } from '../../shared/attachment-types'
 import type { EngineEvent, PermissionDecision } from '../../shared/engine-types'
 import type { AttachmentMarker, TranscriptMessage } from '../../shared/session-types'
 import type { LiveAgent } from '../../shared/subagent-types'
+import type { BackgroundTask } from '../../shared/background-tasks'
 
 export type ChatMessage =
   // `attachments` holds live image bytes and renders thumbnails;
@@ -107,6 +108,7 @@ export const useChat = () => {
   // them has earned a send.
   const [lastTurn, setLastTurn] = useState<LastTurn | null>(null)
   const [liveAgents, setLiveAgents] = useState<LiveAgent[]>([])
+  const [backgroundTasks, setBackgroundTasks] = useState<BackgroundTask[]>([])
   // Track the live assistant message id without stale closures on event handlers
   const assistantIdRef = useRef<string | null>(null)
   // Live-tail (#57) eligibility: the session we are WATCHING, which is not the
@@ -282,6 +284,21 @@ export const useChat = () => {
         if (id) setActiveSessionId(id)
       })
     })
+  }, [])
+
+  // The CLI's live background-task set (#83). REPLACE, never append: each
+  // payload is the whole membership, so a dropped message costs one frame of
+  // accuracy instead of wedging a finished task on screen for good.
+  //
+  // Held HERE rather than in AgentsDock because the dock unmounts every time the
+  // user closes the panel, and the level only re-fires when membership CHANGES —
+  // a set living in the component would be lost on close with no way to get it
+  // back until the next task started or ended.
+  //
+  // `[]` also arrives on every engine rebuild (the engine's own close() sends
+  // it), which is the per-process reset: nothing is running once the CLI is gone.
+  useEffect(() => {
+    return window.api.onBackgroundTasks(setBackgroundTasks)
   }, [])
 
   // Re-read the watched session's transcript and replace the pane with it. The
@@ -489,6 +506,7 @@ export const useChat = () => {
     lastTurn,
     activeSessionId,
     liveAgents,
+    backgroundTasks,
     engineDead,
     transcriptFailed: failedTranscript !== null,
     retryTranscript,

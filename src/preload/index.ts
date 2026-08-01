@@ -14,6 +14,7 @@ import type { Bounds } from '../shared/window-bounds'
 import type { ModelInfo } from '../shared/model-types'
 import type { SlashCommandInfo } from '../shared/command-types'
 import type { SubagentInfo } from '../shared/subagent-types'
+import type { BackgroundTask } from '../shared/background-tasks'
 import type { SendPayload } from '../shared/attachment-types'
 import type { Candidate } from '../shared/attachment-policy'
 
@@ -117,6 +118,18 @@ const api = {
     ipcRenderer.on('engine:terminal', listener)
     return () => {
       ipcRenderer.removeListener('engine:terminal', listener)
+    }
+  },
+  // #83: the CLI's live background-task set, pushed whenever membership changes
+  // and reset to `[]` whenever main rebuilds the engine. REPLACE semantics —
+  // swap the set for each payload; pairing starts with finishes is what lets a
+  // dropped message wedge a stale "running" row.
+  onBackgroundTasks: (cb: (tasks: BackgroundTask[]) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, tasks: BackgroundTask[]): void =>
+      cb(tasks)
+    ipcRenderer.on('tasks:changed', listener)
+    return () => {
+      ipcRenderer.removeListener('tasks:changed', listener)
     }
   },
   onChatEvent: (cb: (e: EngineEvent) => void): (() => void) => {

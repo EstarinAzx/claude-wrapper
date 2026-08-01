@@ -8,6 +8,7 @@ import {
 } from '../src/main/engine'
 import type { EngineEvent, PermissionDecision } from '../src/shared/engine-types'
 import type { SendPayload } from '../src/shared/attachment-types'
+import type { BackgroundTask } from '../src/shared/background-tasks'
 import { parseTranscript } from '../src/main/transcript'
 import { resultSummary } from '../src/renderer/src/toolSummaries'
 
@@ -2232,5 +2233,151 @@ describe('engine — terminal death signal (#73)', () => {
     close()
     await new Promise((r) => setTimeout(r, 0))
     expect(w.count()).toBe(0)
+  })
+})
+
+// #83 — the CLI's background-task LEVEL, routed out of band for the third time.
+//
+// #81 measured a level event landing 3.3s AFTER `result/success`, where
+// finishTurn() has already nulled activeOnEvent — so emit() reaches nobody. A
+// task settling BETWEEN turns is the normal case for background work, which
+// makes an EngineEvent wrong in exactly the case the signal exists for. Same
+// injected-port shape as onModelReport (#52) and onTerminal (#73).
+//
+// The assertions below are on WHEN the callback fired and WITH WHAT, because
+// the level is the app's only source for this and there is no second instrument
+// to cross-check it against.
+describe('engine — background tasks level (#83)', () => {
+  const collector = () => {
+    const sets: BackgroundTask[][] = []
+    return { sets, onTasks: (t: BackgroundTask[]) => sets.push(t) }
+  }
+
+  const engineWithTasks = (fn: QueryFn, onTasks: (t: BackgroundTask[]) => void) =>
+    createEngine(
+      () => 'D:\proj',
+      autoAllow(),
+      fn,
+      () => process.env,
+      () => ({}),
+      () => ({}),
+      () => {},
+      () => ({}),
+      () => {},
+      onTasks
+    )
+
+  const level = (
+    tasks: Array<{ task_id: string; task_type: string; description: string }>
+  ): SdkMessage =>
+    ({
+      type: 'system',
+      subtype: 'background_tasks_changed',
+      session_id: 'sess-1',
+      tasks
+    }) as unknown as SdkMessage
+
+  const bash = { task_id: 't-bash', task_type: 'local_bash', description: 'npm test' }
+  const agent = { task_id: 't-agent', task_type: 'local_agent', description: 'Explore' }
+
+  // THE test for the port. warmUp only — no turn has run, so activeOnEvent is
+  // null and an EngineEvent would be dropped on the floor. A mid-turn-only test
+  // would pass against the wrong wiring, which is the bug this pins.
+  test('a level arriving with NO active turn still reaches the callback', async () => {
+    const { fn, push } = streamingStub()
+    const c = collector()
+    const engine = engineWithTasks(fn, c.onTasks)
+    engine.warmUp()
+    push(level([bash]))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(c.sets).toEqual([
+      [{ taskId: 't-bash', taskType: 'local_bash', description: 'npm test' }]
+    ])
+  })
+
+  // The same message AFTER a turn has fully resolved — the 3.3s-past-`result`
+  // case #81 actually measured, rather than the merely-unstarted one above.
+  test('a level arriving after the turn resolved still reaches the callback', async () => {
+    const { fn, push } = streamingStub()
+    const c = collector()
+    const engine = engineWithTasks(fn, c.onTasks)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(engine.isBusy()).toBe(false)
+    push(level([bash]))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(c.sets).toHaveLength(1)
+    expect(c.sets[0]).toHaveLength(1)
+  })
+
+  // REPLACE, never accumulate. Each payload is the whole live set, so the
+  // engine hands each one over whole; pairing or unioning them here would wedge
+  // a finished task on screen forever the first time a bookend went missing.
+  test('each payload is handed over whole — never merged with the last', async () => {
+    const { fn, push } = streamingStub()
+    const c = collector()
+    const engine = engineWithTasks(fn, c.onTasks)
+    engine.warmUp()
+    push(level([bash, agent]))
+    push(level([agent]))
+    push(level([]))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(c.sets.map((s) => s.map((t) => t.taskId))).toEqual([
+      ['t-bash', 't-agent'],
+      ['t-agent'],
+      []
+    ])
+  })
+
+  // The level is per-process: the SDK emits nothing at startup, so a set that
+  // survives its engine is a permanently stale indicator. main tears the engine
+  // down on every workspace switch, model pick and permission cycle — and every
+  // one of those paths calls close() before it rebuilds, which is why the reset
+  // lives here rather than being hand-copied to each call site.
+  test('close() reports the empty set — the per-process reset', async () => {
+    const { fn, push } = streamingStub()
+    const c = collector()
+    const engine = engineWithTasks(fn, c.onTasks)
+    engine.warmUp()
+    push(level([bash]))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(c.sets).toHaveLength(1)
+    engine.close()
+    expect(c.sets).toHaveLength(2)
+    expect(c.sets[1]).toEqual([])
+  })
+
+  // The amend-don't-reverse guarantee, asserted rather than argued. The level
+  // carries local_agent rows, and engine.ts's `task_type !== 'local_agent'`
+  // guard governs a DIFFERENT source (task_started). Feeding the section from
+  // the level must not put a second row through the subagent path.
+  test('a level NEVER produces subagent events, whatever it carries', async () => {
+    const { fn, push } = streamingStub()
+    const c = collector()
+    const engine = engineWithTasks(fn, c.onTasks)
+    const events: EngineEvent[] = []
+    const turn = engine.runTurn(p('hi'), (e) => events.push(e))
+    await Promise.resolve()
+    push(level([agent, bash]))
+    push(success)
+    await turn
+    expect(c.sets).toHaveLength(1)
+    expect(events.filter((e) => e.type === 'subagent')).toEqual([])
+  })
+
+  // Absence of the port is the shipped default for every other injected
+  // callback here, and a message arriving with no consumer must be inert rather
+  // than a throw inside the message loop.
+  test('an engine built without the port survives the message', async () => {
+    const { fn, push } = streamingStub()
+    const engine = createEngine(() => 'D:\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(level([bash]))
+    push(success)
+    const events = await turn
+    expect(events.some((e) => e.type === 'error')).toBe(false)
   })
 })

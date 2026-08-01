@@ -12,6 +12,7 @@ import type { Backdrop } from '../shared/backdrop'
 import type { Bounds } from '../shared/window-bounds'
 import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
+import type { BackgroundTask } from '../shared/background-tasks'
 import type { SendPayload } from '../shared/attachment-types'
 import type { Candidate } from '../shared/attachment-policy'
 import type { SlashCommandInfo } from '../shared/command-types'
@@ -60,6 +61,9 @@ export interface WrapperApi {
   stopTurn: () => void
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void
   onEngineTerminal: (cb: () => void) => () => void
+  // #83 — REPLACE semantics: every payload is the full live set, and `[]` on an
+  // engine rebuild is the per-process reset, not "nothing happened".
+  onBackgroundTasks: (cb: (tasks: BackgroundTask[]) => void) => () => void
   onChatEvent: (cb: (e: EngineEvent) => void) => () => void
 }
 

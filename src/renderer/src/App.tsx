@@ -60,6 +60,7 @@ const App = () => {
     lastTurn,
     activeSessionId,
     liveAgents,
+    backgroundTasks,
     engineDead,
     transcriptFailed,
     retryTranscript,
@@ -338,6 +339,11 @@ const App = () => {
             <AgentsDock
               sessionId={activeSessionId}
               liveAgents={liveAgents}
+              // #83. A separate prop, never folded into liveAgents: a
+              // background task has no sidecar, no parentToolUseId and no
+              // usage, so merging it would make a shell command claim it ran
+              // as an agent and spent zero tokens.
+              backgroundTasks={backgroundTasks}
               // The re-read trigger (#82). `activeSessionId` only moves on the
               // FIRST turn of a session, so the dock needs an event that fires
               // on every one — and this is already that event.
