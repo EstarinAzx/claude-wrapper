@@ -1,21 +1,62 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-08-01
+updated: 2026-08-02
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-08-01 by Opus 5 (1M) (auto) — **relay leg 2 landed #83; the queue is DRY**_
-_At commit: `ea780a0` on `main`, pushed. Gate green: typecheck clean, **944 tests across 63 files** (was 921/62 — 23 added by #83), build ok_
-_Driver check: **re-run this leg, 23/23 green at `ea780a0`.** #83 changed renderer code AND added CSS, so the whole set is implicated and was driven. The set is **22** assertion drivers plus the observational `gui-scope-zoom-pill`. No standing red anywhere, so any red is a real regression._
+_Last updated: 2026-08-02 by Opus 5 (1M) (auto) — **relay leg 1 landed #87; the queue is NOT dry (#88, #89)**_
+_At commit: `75f1db9` on `main`, pushed. Gate green: typecheck clean, **953 tests across 63 files**, unchanged by this leg — #87 is measurement-only with no `src/` change_
+_Driver check: **not run this leg, and not implicated.** #87 touched only `scripts/`; no renderer code and no CSS, so the GUI batch has nothing to observe. Last full run was 23/23 green at `ea780a0`. No standing red anywhere, so any red is a real regression._
 
 ## Current focus
 
-**Nothing open. The queue is dry and the next move is the owner's.** #84 and #85
-both landed and closed, and **the background-task nesting line of work is now
-complete** — nothing is parked on it.
+**#88 and #89 are open, `ready-for-agent`, and mutually unblocked — take #88 next
+(lowest id).** #87 landed and closed; #86 remains `ready-for-human` and is not
+loop work.
+
+**#87 measured Feature A dead, and on a stronger ground than the one that blocked
+it.** The question was whether an extended-thinking block ever reaches the app.
+It does — on the app's own options, with no thinking config set at all — and its
+`thinking` field is **empty**: 0 characters in all five configs, with only
+`signature` populated at 756–952 chars. So a collapsed thinking strip has nothing
+to render, **independently of #86's UI constraints**: even with a surface granted
+and owner call 1 answered, it would draw an empty string. Owner call 2 (does a
+thinking strip owe the tool card's DOM-exclusion contract) is moot for want of a
+subject. See [[2026-08-02-the-thinking-block-arrives-empty]].
+
+The one open thread on it is **not code**: the measurement is on the `wisped`
+path, and the native path is unmeasurable on this machine — with the wisp vars
+stripped by the app's own `resolveSpawnEnv`, the host CLI answers `Not logged in
+· Please run /login`. `SPIKE87_BACKEND=native SPIKE87_ONLY=control-app-options`
+closes it after a human logs in.
+
+| # | Ticket | State |
+|---|---|---|
+| ~~#87~~ | ~~spike: does an extended-thinking block ever reach the app?~~ | `75f1db9`, **closed** — measurement only |
+| #88 | spike: is MCP server status non-empty, and does it change between turns? | open, `ready-for-agent` — **next** |
+| #89 | The session-listing comment claims this app writes `sdk-ts`; there are zero such records | open, `ready-for-agent` |
+| #86 | Three seeded features, three unmeasured premises | open, `ready-for-human` — **not loop work** |
+
+**Two landmines from #87 that generalise to any future spike:**
+
+**`result.subtype` is `'success'` on a failed turn.** The first native control
+returned `subtype: 'success'` twice while every assistant message was the
+synthetic text `Invalid API key`. `is_error` is the field that says so. A spike
+that reads only `subtype` reports a clean zero for a config that never reached a
+model — indistinguishable from a real negative.
+
+**Unsetting `ANTHROPIC_BASE_URL` by hand is not native mode.** It leaves
+`ANTHROPIC_API_KEY` in place, so the CLI takes the gateway's key to the real
+endpoint and every turn comes back `Invalid API key`. `backend-mode.ts` strips
+**three** `WISP_KEYS`; import its `resolveSpawnEnv` rather than approximating it,
+for the same reason spikes import `cli-path.ts` rather than copying the PATH walk.
+
+## Previously (the #84/#85 nesting line, complete)
+
+**Nothing is parked on it.** #84 and #85 both landed and closed.
 
 The arc, because it is the useful part: a second unattended `/preset vibe init`
 run took the `taskToParent` join #83 reserved and filed **#84** as a

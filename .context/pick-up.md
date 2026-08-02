@@ -1,7 +1,7 @@
 ---
 type: pick-up
 project: claude-wrapper
-updated: 2026-08-01
+updated: 2026-08-02
 tags: [context, pick-up]
 ---
 
@@ -9,15 +9,15 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Next ticket: #87, #88 or #89 — three spikes, none blocking any other
+## Next ticket: #88 — MCP server status (then #89)
 
-**The queue was empty and is not any more.** A `/preset vibe` run on 2026-08-02
-filed four issues. Take any of the three `ready-for-agent` spikes; they are
-mutually independent, so **prefer lowest id** (#87) by the usual rule.
+**Queue is NOT dry.** #87 landed and closed this leg. Two `ready-for-agent`
+spikes remain, mutually independent, so **prefer lowest id** (#88) by the usual
+rule.
 
-- **#87** — spike: does an extended-thinking block ever reach the app?
-- **#88** — spike: is MCP server status non-empty, and does it change between turns?
+- **#88** — spike: is MCP server status non-empty, and does it change between turns? — **next**
 - **#89** — the session-listing comment claims this app writes `sdk-ts`; there are zero such records.
+- ~~**#87**~~ — closed, `75f1db9`. The block arrives **empty**; see below.
 - **#86** — `ready-for-human`, **not yours**: the findings + five owner calls.
 
 **Run the frontier query anyway** — this line is a snapshot and the owner may
@@ -29,25 +29,79 @@ gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-### Read #86 before starting any of them
+### Read #86 before starting either of them
 
-It carries the measurements the three tickets rest on, and two constraints that
-will otherwise waste a leg:
+It carries the measurements both remaining tickets rest on, and two constraints
+that will otherwise waste a leg:
 
 - **No new titlebar control is permitted**, and every dock opens from a titlebar
   toggle (`App.tsx:45`, `Titlebar.tsx:191-201`). So **no new surface is
   reachable**, and which existing dock would host new UI is an open owner call.
-  **All three spikes are therefore measurement-only and must not build UI** —
+  **Both remaining spikes are therefore measurement-only and must not build UI** —
   even a positive result does not unblock rendering.
 - **Any between-turn signal must ride an injected port, never an `EngineEvent`**
   — `activeOnEvent` is `null` outside a turn and the emit reaches nobody
-  (`engine.ts:247-281`). MCP health is exactly such a signal.
+  (`engine.ts:247-281`). **MCP health is exactly such a signal**, so #88 hits this
+  one directly.
 
-**Why all three are spikes and no feature was filed:** two of the three seeded
+**Why they are spikes and no feature was filed:** two of the three seeded
 premises were falsified outright and the third is unmeasurable from the code.
-That is the #84→#85 pattern — measure, then ship — not a shortfall.
+That is the #84→#85 pattern — measure, then ship — not a shortfall. #87 has now
+run that pattern to its end: the measurement **closed** its feature.
+
+### Two landmines from #87 that apply to #88 directly
+
+- **`result.subtype` is `'success'` on a failed turn.** #87's native control came
+  back `subtype: 'success'` twice while every message was the synthetic text
+  `Invalid API key`. **`is_error` is the field that says so.** A spike reading
+  only `subtype` reports a clean zero for a config that never reached a model —
+  indistinguishable from a real negative. #88 is a "is it non-empty" question, so
+  this is the exact shape of trap it can fall into.
+- **Unsetting `ANTHROPIC_BASE_URL` by hand is not native mode.** It leaves
+  `ANTHROPIC_API_KEY` in place and the CLI takes the gateway's key to the real
+  endpoint. `backend-mode.ts` strips **three** `WISP_KEYS` — import its
+  `resolveSpawnEnv`, the same way spikes import `cli-path.ts` instead of copying
+  the PATH walk. `scripts/spike-87-thinking.mjs` does both and is the closer
+  precedent for #88 than #81's harness.
 
 ## Landed last leg
+
+**#87 — the extended-thinking block arrives, and it is empty.** Landed as
+`75f1db9`, ticket closed. Measurement only, **no `src/` change**. Gate green:
+typecheck clean, **953 tests across 63 files** (baseline unchanged — scripts
+only). GUI batch **not** triggered: no renderer code and no CSS changed.
+
+Measured on host CLI **2.1.220 / SDK 0.3.220**, backend `wisped`, model
+`claude-opus-5[1m]`, by `scripts/spike-87-thinking.mjs` — five configs × two
+turns. Evidence committed at `scripts/spike-87-findings.json` (scrubbed: type
+census, key sets, counts, char *lengths*, zero message text).
+
+- **A `thinking` block DOES reach the app**, on the app's own options with no
+  thinking config set — whole block on the `assistant` message, plus
+  `content_block_start` with `content_block.type === 'thinking'`.
+- **Its `thinking` field is empty. 0 chars, all five configs**, with only
+  `signature` populated at 756–952. **So the feature is blocked on content, not
+  reachability** — and independently of #86's UI constraints. Owner call 2 is
+  moot for want of a subject.
+- **The result discriminates**: 5 blocks on the reasoning prompt, **0** on the
+  trivial control — the #27/#81 trap avoided.
+- **No `thinking_delta` ever appears** (the block emits only `signature_delta`),
+  no `system`/`thinking_tokens` lands, and neither `maxThinkingTokens` nor
+  `thinking: adaptive` nor `display: 'summarized'` changes any of it.
+- **One hypothesis died on inspection**: the delta census first read as thinking
+  text streaming as `text_delta`, which `engine.ts:499-510` matches without
+  checking which block a delta belongs to — a live leak. Correlating deltas to
+  their `content_block_start` **index** killed it. A type census answers what
+  shapes exist, never what belongs to what.
+- **One thread left open, and it is not code.** The native path is unmeasurable
+  here — wisp vars stripped, the host CLI answers `Not logged in`. Recorded as
+  `scripts/spike-87-findings-native.json`, self-declaring `erroredTurns: 2`.
+  After a human `/login`: `SPIKE87_BACKEND=native
+  SPIKE87_ONLY=control-app-options`.
+
+See [[2026-08-02-the-thinking-block-arrives-empty]].
+
+## Landed the leg before
 
 **#85 — agent-spawned background tasks now nest under their spawner.** Landed as
 `3e24a53`, ticket closed. The owner answered both blocking calls (nest under the
