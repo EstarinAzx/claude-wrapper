@@ -276,6 +276,11 @@ triggered on that ground** (count 5, `max_defer` 12).
 - [halt-check] Clear on all four gates: 5 defers < `max_defer` 12; **no entry
   flagged `reversible: NO`**; grill fork taken, not wayfind; `to-tickets`
   produced three tickets. No `slot` restore owed.
+- [fired] Relay chain re-inited (prior chain was `stop: true`, closed on an empty
+  queue) and **leg 1 spawned and confirmed `working`** as `relay-ticket-loop-leg1`
+  in `claude agents`, `binary: claude-wisp` carried over. `max_legs` raised 3 → 6
+  for three tickets — headroom, not a target. Note `.claude/relay/` is
+  **gitignored**, so the chain state is local machinery and was not committed.
 - [fired] **No feature ticket was filed for any of the three seeded items, and
   that is the honest result rather than a shortfall.** Two premises were
   falsified and the third is unmeasurable from the code; the UI half of all
