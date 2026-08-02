@@ -9,28 +9,43 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Next ticket: queue empty
+## Next ticket: #87, #88 or #89 — three spikes, none blocking any other
 
-**Nothing is open on the tracker — not one issue, in any state of triage.** #84
-**and #85** landed and closed. `main` is pushed, no open branches.
+**The queue was empty and is not any more.** A `/preset vibe` run on 2026-08-02
+filed four issues. Take any of the three `ready-for-agent` spikes; they are
+mutually independent, so **prefer lowest id** (#87) by the usual rule.
 
-**The background-task nesting line of work is COMPLETE.** #84 measured it, the
-owner answered both blocking calls, #85 shipped it. Nothing is parked on it.
+- **#87** — spike: does an extended-thinking block ever reach the app?
+- **#88** — spike: is MCP server status non-empty, and does it change between turns?
+- **#89** — the session-listing comment claims this app writes `sdk-ts`; there are zero such records.
+- **#86** — `ready-for-human`, **not yours**: the findings + five owner calls.
 
-**Run the frontier query anyway.** This line is a snapshot and goes stale the
-moment the owner files something. It is this project's standing lesson: a leg
-once wrote that closing #70 would empty the queue and was wrong, because #71 had
-been unblocked the whole time.
+**Run the frontier query anyway** — this line is a snapshot and the owner may
+have filed or closed since. Standing lesson: a leg once wrote that closing #70
+would empty the queue and was wrong, because #71 had been unblocked all along.
 
 ```
 gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-**If it really is empty, the next move is the owner's.** `## Deferred (still no
-spec)` in [[active-work]] is the menu, and `## Open questions` there holds the
-ones needing an answer first. The two older halves in `## Do not decide these`
-below are still parked and still the owner's.
+### Read #86 before starting any of them
+
+It carries the measurements the three tickets rest on, and two constraints that
+will otherwise waste a leg:
+
+- **No new titlebar control is permitted**, and every dock opens from a titlebar
+  toggle (`App.tsx:45`, `Titlebar.tsx:191-201`). So **no new surface is
+  reachable**, and which existing dock would host new UI is an open owner call.
+  **All three spikes are therefore measurement-only and must not build UI** —
+  even a positive result does not unblock rendering.
+- **Any between-turn signal must ride an injected port, never an `EngineEvent`**
+  — `activeOnEvent` is `null` outside a turn and the emit reaches nobody
+  (`engine.ts:247-281`). MCP health is exactly such a signal.
+
+**Why all three are spikes and no feature was filed:** two of the three seeded
+premises were falsified outright and the third is unmeasurable from the code.
+That is the #84→#85 pattern — measure, then ship — not a shortfall.
 
 ## Landed last leg
 
@@ -89,7 +104,36 @@ was **missing from `decisions.md`'s index** until this leg added it.
 
 ## Landmines
 
-Full ledger in [[active-work]] — long and load-bearing. New from #85:
+Full ledger in [[active-work]] — long and load-bearing. New from the 2026-08-02
+vibe run (details in #86):
+
+- **A comment in this repo can assert a fact the disk does not support.**
+  `session-store.ts:34-40` says "THIS APP WRITES `sdk-ts`"; there are **zero**
+  such records in this project's session directory against 825 `sdk-cli`. The
+  mechanism half is real — the SDK does stamp it — but behind an
+  `if(!CLAUDE_CODE_ENTRYPOINT)` guard, and `resolveSpawnEnv`
+  (`backend-mode.ts:43-55`) spreads `process.env` without setting it, so a
+  wrapper launched inside a Claude Code session **inherits the parent's
+  entrypoint**. Verify provenance claims against disk before building on them.
+- **The `entrypoint` value set is larger than the SDK's.** `claude-vscode`
+  exists on disk (15 records) and `grep -c 'claude-vscode' sdk.mjs` returns
+  **0** — the SDK's Set has three members, so anything outside it is silently
+  classified *interactive*. A filter assuming three values is wrong the first
+  time it meets a fourth.
+- **The app silently drops every content-block type it does not know** — bare
+  `for` + single `if`, no `else`, no default, no throw (`engine.ts:546-570`) —
+  and there is **no logging anywhere in `src/`** (`grep -rn "console\." src`
+  returns zero). So "we never saw X" is not evidence about X.
+- **`engine.ts:461-465` reads one field off the `init` message** (`src.model`)
+  and discards 15 declared ones, `mcp_servers` among them. Before adding a
+  channel, check whether the data is already arriving and being thrown away.
+- **Skipping a step beats fabricating its artifact.** `/hp` was skipped this run
+  because `.context/happy-path.md` is a live 151-line map and the night's output
+  was measurement spikes with no user journey — running it would have overwritten
+  something true with something invented. Record the deviation; don't do it
+  quietly, and don't do it anyway.
+
+New from #85:
 
 - **A mutant can kill a BAD TEST before it kills the code — and that is the most
   valuable thing mutation testing does here.** #85's check that a bash task never
@@ -197,7 +241,9 @@ origin inside `userData`**, so an un-isolated launch is an inherited pass.
 ## Baseline
 
 `main` = `3e24a53` + this leg's `.context` commit, pushed. No open branches.
-Test baseline is now **953 across 63 files** (#85 added 9; #84 added none).
+Test baseline is unchanged at **953 across 63 files** (#85 added 9; #84 added
+none). The 2026-08-02 vibe run touched **no `src/`** — only `.claude/` and
+`.context/` — so no driver batch was owed and none was run.
 
 **22** assertion drivers plus the observational `gui-scope-zoom-pill`. Batch re-run
 at `3e24a53` (renderer + CSS changed): **22 green, `gui-75` red**. That red is
