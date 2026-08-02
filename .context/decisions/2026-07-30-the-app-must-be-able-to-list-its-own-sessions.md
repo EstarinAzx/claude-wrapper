@@ -7,6 +7,20 @@ tags: [decision, sessions, sdk]
 
 # The app must be able to list its own sessions
 
+> **AMENDED 2026-08-02 by #89 — the DECISION stands, one PREMISE sentence below
+> is false.** "**This app writes `entrypoint: "sdk-ts"`**" is wrong in the
+> common case. The value is a fact about the LAUNCH ENV, not about this app: the
+> SDK's stamp is inherit-wins, so launched from a terminal Claude Code session
+> the app writes **`sdk-cli`**, launched from outside any session it writes
+> `sdk-ts`, and launched from a VS Code session it writes `claude-vscode` —
+> which is **interactive** and not hidden by `false` at all. Two of the three are
+> programmatic, so the conclusion (`includeProgrammatic: true` MUST stay) is
+> unchanged and is now measured at the store level: 806 rows vs 567 here, a
+> 239-row delta. The 112-row split quoted below is likewise still a real
+> reading, just of a smaller store at an earlier date. See
+> [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]] before citing any
+> `entrypoint` claim on this page.
+
 `src/main/session-store.ts` asks the SDK's store reader for everything it knows
 and passes `includeProgrammatic: true`. It used to pass `false`.
 

@@ -7,15 +7,43 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-02 by Opus 5 (1M) (auto) — **relay leg 2 landed #88; the queue is NOT dry (#89)**_
-_At commit: `833f969` on `main`, pushed. Gate green: typecheck clean, **953 tests across 63 files**, unchanged by this leg — #88 is measurement-only with no `src/` change_
-_Driver check: **not run this leg, and not implicated.** #88 touched only `scripts/`; no renderer code and no CSS, so the GUI batch has nothing to observe. Last full run was 23/23 green at `ea780a0`. No standing red anywhere, so any red is a real regression._
+_Last updated: 2026-08-02 by Opus 5 (1M) (auto) — **relay leg 3 landed #89; the queue is DRY and the chain stopped**_
+_At commit: `5e41520` on `main`, pushed. Gate green: typecheck clean, **953 tests across 63 files**, unchanged by this leg — #89's `src/` diff is comment-only_
+_Driver check: **not run this leg, and not implicated.** #89 touched `scripts/`, one main-process comment and one test comment; no renderer code and no CSS, so the GUI batch has nothing to observe. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`. No standing red anywhere else, so any other red is a real regression._
 
 ## Current focus
 
-**#89 is the only open `ready-for-agent` ticket and it is unblocked — take it
-next.** #88 landed and closed this leg; #86 remains `ready-for-human` and is not
-loop work.
+**Nothing. The queue is dry.** #89 landed and closed this leg and was the last
+`ready-for-agent` ticket; #86 remains `ready-for-human` and is not loop work. The
+relay chain stopped rather than spawning a leg 4 — an empty queue is its designed
+stop, with `max_legs: 6` never reached.
+
+**#89 corrected a load-bearing comment, and the correction is to the REASONING,
+not the decision.** `session-store.ts` justified `includeProgrammatic: true` with
+"THIS APP WRITES `sdk-ts`", and this project's store holds zero such records. The
+measured truth is that **the value is a fact about the launch env, not about this
+app**: the SDK's stamp is inherit-wins and `resolveSpawnEnv` spreads
+`process.env` wholesale, so a terminal Claude Code session gives `sdk-cli`, no
+session at all gives `sdk-ts`, and a VS Code session gives `claude-vscode` —
+which is **interactive** and not hidden at all. Two of three are programmatic, so
+the argument stays, now measured at the store level: **806 rows vs 567**, a
+239-row delta.
+
+Three findings beyond the four steps: an inherited value is **transformed, not
+passed through** (there is no `sdk-` prefix rule — a third config was added to
+test exactly that); **one record decides a whole session** (a 64KB head window,
+first match, else the tail's last), which retires record-counting as a way to
+reason about sessions; and **`sessionKind: daemon|daemon-worker` is a second
+programmatic path** the old comment's mechanism half missed entirely. The full
+value set is **five**, not four — `claude-desktop` was unknown.
+
+See [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]], which
+**amends** [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]].
+
+**This lands a stronger negative on #86's `sdk-cli` de-noising half than it asked
+for:** the wrapper's own sessions and the ~20 GUI-driver sessions carry the
+**same** `entrypoint` value and are not separable by it. No filter was built;
+whether to filter at all is still the owner's call.
 
 **#88 measured Feature B's MCP half ALIVE — the opposite outcome to #87 — and
 made it cheaper than #86 assumed.** All four questions came back positive:
@@ -50,10 +78,42 @@ SPIKE87_ONLY=control-app-options` closes it after a human logs in.
 |---|---|---|
 | ~~#87~~ | ~~spike: does an extended-thinking block ever reach the app?~~ | `75f1db9`, **closed** — measurement only |
 | ~~#88~~ | ~~spike: is MCP server status non-empty, and does it change between turns?~~ | `833f969`, **closed** — measurement only |
-| #89 | The session-listing comment claims this app writes `sdk-ts`; there are zero such records | open, `ready-for-agent` — **next** |
+| ~~#89~~ | ~~The session-listing comment claims this app writes `sdk-ts`; there are zero such records~~ | `5e41520`, **closed** — comment-only `src/` diff |
 | #86 | Three seeded features, three unmeasured premises | open, `ready-for-human` — **not loop work** |
 
-**Landmines new from #88:**
+**Landmines new from #89:**
+
+- **`entrypoint` is decided by the LAUNCH ENV, never by this app.** Any claim of
+  the form "this app writes X" is wrong by construction. Measured: `cli` in →
+  `sdk-cli` out, absent → `sdk-ts`, `claude-vscode` → `claude-vscode`. That last
+  one is **interactive**, so the app *can* write a non-programmatic transcript.
+- **ONE record decides a whole session.** The SDK reads only a 64KB head and a
+  64KB tail window; the verdict is the **first** `entrypoint` in the head, else
+  the **last** in the tail. **Counting records is not counting sessions** — which
+  retires the method #89's own ticket used. Mixed-value session files exist
+  (three in a 400-file scan, mixing `claude-vscode` with `cli`), so "the
+  session's entrypoint" is not a well-defined thing.
+- **`sessionKind: "daemon" | "daemon-worker"` is a SECOND programmatic path**,
+  independent of `entrypoint`. The old comment's mechanism half was *incomplete*,
+  not merely mis-provenanced. Only `"bg"` exists on this disk (38575 records), so
+  the path is unexercised here rather than absent (#81's rule).
+- **The value set is FIVE**, swept exhaustively over all 1178 JSONL files in 139
+  project dirs: `cli` 100750, `claude-vscode` 7154, `sdk-cli` 3647, `sdk-ts`
+  1172, **`claude-desktop` 21**. Anything outside the SDK's three-member set is
+  silently classified **interactive**.
+- **`entrypoint` rides the MESSAGE envelope**, beside `cwd` / `sessionId` /
+  `version` / `gitBranch` / `sessionKind` / `userType`. Metadata records carry
+  none — 81 of 113 lines in a live file.
+- **`session-index.ts` cannot be imported by a spike**: it imports
+  `../shared/cwd-key` extensionless and node's ESM resolver rejects that under
+  `--experimental-strip-types`. `cli-path.ts` and `backend-mode.ts` import fine.
+  A spike needing a session's file enumerates the store itself — and still never
+  re-derives a store path from cwd.
+- **An agent-run measurement is inside a Claude Code session by construction.**
+  #89's outside-a-session config is a reconstruction by environment, recorded as
+  a `limit` field rather than reported as the real case — #87's precedent.
+
+**Landmines from #88:**
 
 - **A lever whose own effect is unverifiable cannot test anything.**
   `toggleMcpServer` returns `void`; it returned ok for an sdk-type server and
@@ -235,8 +295,8 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `ea780a0` + this leg's `.context` commit, pushed. No open branches.
-- **Queue (`ready-for-agent`): EMPTY.** #83 was the last open ticket and it closed this leg. Nothing is blocked on anything; there is simply nothing filed. The next move is the owner's — see `## Pick up here`.
+- **In flight:** nothing. `main` = `5e41520` + this leg's `.context` commit, pushed. No open branches.
+- **Queue (`ready-for-agent`): EMPTY.** #89 was the last open ticket and it closed this leg (after #87 and #88 before it). Nothing is blocked on anything; there is simply nothing filed. #86 is open but `ready-for-human`. The next move is the owner's — see `## Pick up here`.
 - **Landed:** **#83** (`ea780a0`) — the background-tasks section, a third injected port, 23 tests, five mutants killed and an ADR. Before it, **#82** (`3f34737`) — the dock's turn-end re-read, `keepStale`, seven tests and an ADR; **#81** (`002e524`), the harness and its ADR with **no `src/` diff, deliberately**, then the seven parked calls taken with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
 - **Parked for the owner: TWO, and they are the older halves — the seven are DONE.** The 2026-08-01 `/preset vibe init` run parked seven calls with no grant; the owner made one live after #81 landed and **all seven were taken** ([[2026-08-01-the-background-agents-seed-decided]]): two authorise work (#82, #83), four closed as **no** (the seed's meaning is the SDK concept; no labelled map; no new top-level surface; non-agent work **yes** but as its own section), one **struck** (map pan-zoom). `.claude/vibe.md`'s `## Needs you` is **history now, not a queue** — its `## Taken` section carries the resolutions. **What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's. **#83 was deliberately routed into the existing Agents dock so it does not pre-empt that second one.**
 - **Blocked:** nothing.
@@ -292,6 +352,8 @@ The per-ticket narrative for #64–#79 has been folded into the ADRs listed unde
 `## Related` and the traps under `## Landmines`. What stays here is the set of
 lessons that keep recurring across unrelated tickets.
 
+- **A correct observation can carry a wrong stated implication, and #89 is the third instance.** The ticket measured zero `sdk-ts` records and concluded the comment's discriminator could not be relied on. The count was right; the conclusion was half wrong, because the discriminator was a *different member of the same set* (`sdk-cli`). #84 was the first of these and #78's "every launch" premise the second. The general form: when a measurement kills a claim, check whether it kills the claim's *conclusion* or only its *stated reason* — #89 changed a comment and no behaviour, because only the reason was wrong.
+- **When a value is set by the environment, "what this app writes" is not a property of the app (#89).** The whole defect was a sentence phrased as though the app decided something its launcher decides. Before writing "this app does X", ask whether X is inherited — and if it is, the honest statement is a table of launch contexts, not a single value.
 - **When a lifecycle hook is the only funnel every path passes through, the reset belongs IN it — #83 is the case that found it.** The obvious single site for the per-process reset was `makeEngine()`, and it is wrong: four of the six discard paths null the engine and rebuild *lazily on the next send*, so resetting at construction leaves a dead process's tasks on screen from the model pick until the user sends again. `close()` is the funnel that actually holds. The general form: when hunting for the one place to put an invariant, check whether the paths reach your candidate **eagerly** — a lazy rebuild is a window, and windows are where stale indicators live.
 - **Two ports on one lifecycle hook can want OPPOSITE things, and consistency between them is the bug (#83).** `onTerminal` must never fire for `close()` (main's teardown is not a death); `onBackgroundTasks` firing for `close()` is the entire per-process reset. Both are commented at their definitions for that reason. A future tidy-up that "makes the close() handling consistent" breaks exactly one of them, silently.
 - **A signal whose dropped case is the NORMAL case needs its pin written about timing, not payload (#83).** Every mid-turn delivery test passes against a wrongly-wired `EngineEvent`. The tests that discriminate are the ones with no active turn at all — after `warmUp()` alone, and after a turn has fully resolved with `isBusy()` asserted false first. Sibling of #80's "an edge between two samples is not observable by sampling": ask what state the system must be IN for the assertion to mean anything.

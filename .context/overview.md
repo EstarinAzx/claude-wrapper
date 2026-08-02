@@ -18,7 +18,15 @@ tags: [context, overview]
   enumerate, `not-found` when it enumerates fine and lacks the id — and a failed
   build is never cached. `session-store.ts` carries that outward as `null` vs
   `[]` on both `listSessions` and `readTranscript`; `?? []` at a new call site
-  restores the silent-empty-state bug. Its `deleteSession(id)` (#68) is the
+  restores the silent-empty-state bug. Its `includeProgrammatic: true` is
+  load-bearing, and #89 corrected the comment justifying it: the `entrypoint` a
+  session carries is decided by the **launch env**, never by this app — `sdk-cli`
+  from a terminal Claude Code session, `sdk-ts` from no session at all,
+  `claude-vscode` from a VS Code one (that last being *interactive*, so the app
+  CAN write a non-programmatic transcript). Two of the three are hidden by
+  `false`, which is why the argument stays explicit; see
+  [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]].
+  Its `deleteSession(id)` (#68) is the
   app's ONE destructive call: the SDK is invoked with the id ALONE — passing
   `dir` re-enters the realpath→encode branch this codebase removed — and a
   throw is classified by re-resolving the id against the store, never by
@@ -240,7 +248,8 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **the queue is
-  DRY — #83 landed and closed, and nothing is open**; run the frontier query
+  DRY — #89 landed and closed, and the only open issue is #86, which is
+  `ready-for-human`**; run the frontier query
   anyway, it is the authority and this line has been wrong before. No expected driver failure anywhere in the set,
   **22** assertion drivers plus the observational `gui-scope-zoom-pill` —
   `gui-75` is focus-dependent and its batch reds are premise failures, green on
@@ -288,11 +297,20 @@ tags: [context, overview]
   [[2026-08-01-a-level-is-replaced-not-accumulated]]) closed.** Both were
   filed under the 2026-08-01 autonomy grant that took all seven parked calls, see
   [[2026-08-01-the-background-agents-seed-decided]];
+  **#84 (`335df49`) and #85 (`3e24a53`) closed** — the spawner measured reachable,
+  then nesting shipped as the owner's hybrid; **#87 (`75f1db9`, the
+  extended-thinking block reaches the app and its `thinking` field is EMPTY —
+  measurement only) and #88 (`833f969`, MCP status measured alive and `init`
+  found to fire once per TURN — measurement only) closed**; **#89 (`5e41520`, the
+  `entrypoint` this app writes is a fact about the LAUNCH ENV — comment-only
+  `src/` diff, and it AMENDS
+  [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]]) closed**;
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **Nothing open — the queue is DRY** as of 2026-08-01.
+  #20 hold the earlier history. **The queue is DRY as of 2026-08-02** — the only
+  open issue is **#86**, `ready-for-human` and not loop work.
   Run the frontier query rather than trusting this line
 
 ## Conventions
