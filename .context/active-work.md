@@ -7,38 +7,71 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-02 by Opus 5 (1M) (auto) — **relay leg 1 landed #87; the queue is NOT dry (#88, #89)**_
-_At commit: `75f1db9` on `main`, pushed. Gate green: typecheck clean, **953 tests across 63 files**, unchanged by this leg — #87 is measurement-only with no `src/` change_
-_Driver check: **not run this leg, and not implicated.** #87 touched only `scripts/`; no renderer code and no CSS, so the GUI batch has nothing to observe. Last full run was 23/23 green at `ea780a0`. No standing red anywhere, so any red is a real regression._
+_Last updated: 2026-08-02 by Opus 5 (1M) (auto) — **relay leg 2 landed #88; the queue is NOT dry (#89)**_
+_At commit: `833f969` on `main`, pushed. Gate green: typecheck clean, **953 tests across 63 files**, unchanged by this leg — #88 is measurement-only with no `src/` change_
+_Driver check: **not run this leg, and not implicated.** #88 touched only `scripts/`; no renderer code and no CSS, so the GUI batch has nothing to observe. Last full run was 23/23 green at `ea780a0`. No standing red anywhere, so any red is a real regression._
 
 ## Current focus
 
-**#88 and #89 are open, `ready-for-agent`, and mutually unblocked — take #88 next
-(lowest id).** #87 landed and closed; #86 remains `ready-for-human` and is not
+**#89 is the only open `ready-for-agent` ticket and it is unblocked — take it
+next.** #88 landed and closed this leg; #86 remains `ready-for-human` and is not
 loop work.
 
-**#87 measured Feature A dead, and on a stronger ground than the one that blocked
-it.** The question was whether an extended-thinking block ever reaches the app.
-It does — on the app's own options, with no thinking config set at all — and its
-`thinking` field is **empty**: 0 characters in all five configs, with only
-`signature` populated at 756–952 chars. So a collapsed thinking strip has nothing
-to render, **independently of #86's UI constraints**: even with a surface granted
-and owner call 1 answered, it would draw an empty string. Owner call 2 (does a
-thinking strip owe the tool card's DOM-exclusion contract) is moot for want of a
-subject. See [[2026-08-02-the-thinking-block-arrives-empty]].
+**#88 measured Feature B's MCP half ALIVE — the opposite outcome to #87 — and
+made it cheaper than #86 assumed.** All four questions came back positive:
+`init.mcp_servers` is non-empty (4 measured, **3 app-visible**), a deliberately
+broken server reports `status: 'failed'` with a populated `error`, that failure
+is **visible on the `init` snapshot itself**, and `mcpServerStatus()` works
+through a handle built the app's way at every poll point in 0–13ms — **including
+before the first turn, before any `init` has arrived at all**.
 
-The one open thread on it is **not code**: the measurement is on the `wisped`
-path, and the native path is unmeasurable on this machine — with the wisp vars
-stripped by the app's own `resolveSpawnEnv`, the host CLI answers `Not logged in
-· Please run /login`. `SPIKE87_BACKEND=native SPIKE87_ONLY=control-app-options`
-closes it after a human logs in.
+**The finding none of the four questions asked for: `init` fires once per TURN,
+not once per session** (2 inits / 2 turns, every config). So `engine.ts:461-465`
+is already handed a fresh `mcp_servers` every turn and throws it away. The
+cheapest version of this feature is a second field read in a branch that already
+exists — no port, no polling, no timer. **This partly retires #86's "MCP health
+must ride an injected port" constraint**: the `EngineEvent` half still holds, but
+the port is only needed to refresh **while idle**, not to refresh at all.
+
+The two paths are not equivalent, and that is the real trade: `init` carries
+exactly `{name, status}` and is enough to render a red dot; only
+`mcpServerStatus()` says **why** it failed (`error`) and answers before turn 1.
+See [[2026-08-02-mcp-health-already-arrives-once-per-turn]].
+
+**No UI was built and none is unblocked.** #86's structural block is untouched —
+no new titlebar control, every dock opens from a toggle, so owner call 1 is still
+the gate and is still the owner's.
+
+Still open from #87 and **not code**: the native-backend control is unmeasurable
+on this machine (host CLI answers `Not logged in`). `SPIKE87_BACKEND=native
+SPIKE87_ONLY=control-app-options` closes it after a human logs in.
 
 | # | Ticket | State |
 |---|---|---|
 | ~~#87~~ | ~~spike: does an extended-thinking block ever reach the app?~~ | `75f1db9`, **closed** — measurement only |
-| #88 | spike: is MCP server status non-empty, and does it change between turns? | open, `ready-for-agent` — **next** |
-| #89 | The session-listing comment claims this app writes `sdk-ts`; there are zero such records | open, `ready-for-agent` |
+| ~~#88~~ | ~~spike: is MCP server status non-empty, and does it change between turns?~~ | `833f969`, **closed** — measurement only |
+| #89 | The session-listing comment claims this app writes `sdk-ts`; there are zero such records | open, `ready-for-agent` — **next** |
 | #86 | Three seeded features, three unmeasured premises | open, `ready-for-human` — **not loop work** |
+
+**Landmines new from #88:**
+
+- **A lever whose own effect is unverifiable cannot test anything.**
+  `toggleMcpServer` returns `void`; it returned ok for an sdk-type server and
+  changed nothing observable, which cannot be distinguished from a frozen
+  status. `setMcpServers` settled the question precisely because it returns
+  `{added, removed, errors}` — the pull is confirmed *before* the effect is
+  consulted. Prefer the lever that reports itself.
+- **`init` fires per turn, not per session.** Any reasoning treating it as a
+  one-shot session snapshot — including #86's — is wrong.
+- **`McpServerStatus.config` carries `env`**, which is where an MCP server's API
+  keys live. Never log or commit it; record the key set and `type` only.
+- **`disabled` is a status, and the common one here** (3 of 4 servers). A panel
+  rendering only `connected`/`failed` shows almost nothing.
+- **cwd selects the project MCP scope.** The spike's temp cwd under `C:\` picked
+  up a `scope: "local"` server keyed to `"C:/"` in `~/.claude.json` that the repo
+  cwd on `D:\` never sees — measured via the per-server `scope` field, after the
+  findings file's first draft asserted the two cwds were equivalent and was
+  wrong.
 
 **Two landmines from #87 that generalise to any future spike:**
 

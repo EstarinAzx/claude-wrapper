@@ -9,15 +9,14 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Next ticket: #88 — MCP server status (then #89)
+## Next ticket: #89 — the `sdk-ts` provenance comment
 
-**Queue is NOT dry.** #87 landed and closed this leg. Two `ready-for-agent`
-spikes remain, mutually independent, so **prefer lowest id** (#88) by the usual
-rule.
+**Queue is NOT dry, but it is down to one.** #88 landed and closed this leg.
 
-- **#88** — spike: is MCP server status non-empty, and does it change between turns? — **next**
-- **#89** — the session-listing comment claims this app writes `sdk-ts`; there are zero such records.
-- ~~**#87**~~ — closed, `75f1db9`. The block arrives **empty**; see below.
+- **#89** — the session-listing comment claims this app writes `sdk-ts`; there
+  are zero such records — **next, and the last `ready-for-agent` ticket**
+- ~~**#88**~~ — closed, `833f969`. MCP health measured **alive**; see below.
+- ~~**#87**~~ — closed, `75f1db9`. The thinking block arrives **empty**.
 - **#86** — `ready-for-human`, **not yours**: the findings + five owner calls.
 
 **Run the frontier query anyway** — this line is a snapshot and the owner may
@@ -29,328 +28,232 @@ gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-### Read #86 before starting either of them
+### #89 is the first ticket in this batch that TOUCHES `src/`
 
-It carries the measurements both remaining tickets rest on, and two constraints
-that will otherwise waste a leg:
+#87 and #88 were both measurement-only. #89 is not — step 4 of its body edits
+`src/main/session-store.ts:34-40`. So unlike the last two legs:
 
-- **No new titlebar control is permitted**, and every dock opens from a titlebar
-  toggle (`App.tsx:45`, `Titlebar.tsx:191-201`). So **no new surface is
-  reachable**, and which existing dock would host new UI is an open owner call.
-  **Both remaining spikes are therefore measurement-only and must not build UI** —
-  even a positive result does not unblock rendering.
-- **Any between-turn signal must ride an injected port, never an `EngineEvent`**
-  — `activeOnEvent` is `null` outside a turn and the emit reaches nobody
-  (`engine.ts:247-281`). **MCP health is exactly such a signal**, so #88 hits this
-  one directly.
+- The **full gate is owed**: typecheck + `npm test`. Baseline is **953 tests
+  across 63 files**; it should stay 953 unless you add tests.
+- `tests/session-store-live.test.ts` **pins the behaviour against a real store** —
+  read it before touching the comment, and do not weaken the pin.
+- **Do not delete the argument.** The comment explains that
+  `includeProgrammatic: true` stays explicit so a future SDK default flip cannot
+  take it silently. Fix the reasoning; keep the guard.
+- The **GUI driver batch is still not owed** — a main-process comment is not
+  renderer code and not CSS. If you do touch the renderer, the batch is 22
+  assertion drivers + the observational `gui-scope-zoom-pill`, and `gui-75` has a
+  documented environmental red (reproduce on clean `main` before blaming it).
 
-**Why they are spikes and no feature was filed:** two of the three seeded
-premises were falsified outright and the third is unmeasurable from the code.
-That is the #84→#85 pattern — measure, then ship — not a shortfall. #87 has now
-run that pattern to its end: the measurement **closed** its feature.
+### Two things from #88 that bear on #89 directly
 
-### Two landmines from #87 that apply to #88 directly
-
-- **`result.subtype` is `'success'` on a failed turn.** #87's native control came
-  back `subtype: 'success'` twice while every message was the synthetic text
-  `Invalid API key`. **`is_error` is the field that says so.** A spike reading
-  only `subtype` reports a clean zero for a config that never reached a model —
-  indistinguishable from a real negative. #88 is a "is it non-empty" question, so
-  this is the exact shape of trap it can fall into.
-- **Unsetting `ANTHROPIC_BASE_URL` by hand is not native mode.** It leaves
-  `ANTHROPIC_API_KEY` in place and the CLI takes the gateway's key to the real
-  endpoint. `backend-mode.ts` strips **three** `WISP_KEYS` — import its
-  `resolveSpawnEnv`, the same way spikes import `cli-path.ts` instead of copying
-  the PATH walk. `scripts/spike-87-thinking.mjs` does both and is the closer
-  precedent for #88 than #81's harness.
+- **`resolveSpawnEnv` (`backend-mode.ts:43-55`) spreads `process.env` wholesale**
+  and never sets `CLAUDE_CODE_ENTRYPOINT`. #88 imported that same function rather
+  than approximating it — do the same for #89's step 1, because the whole finding
+  is what the app's real spawn env does, not what a hand-rolled one does.
+- **A launch from inside a Claude Code session inherits the parent's
+  entrypoint.** #89's step 1 asks for the launched-from-outside case explicitly;
+  that comparison IS the finding, and an agent-run measurement is inside a
+  session by construction. If you cannot get an outside-a-session launch, say so
+  plainly rather than reporting the inside case as the answer — #87 recorded
+  exactly that shape of limit for the native backend and it was the right call.
 
 ## Landed last leg
 
-**#87 — the extended-thinking block arrives, and it is empty.** Landed as
-`75f1db9`, ticket closed. Measurement only, **no `src/` change**. Gate green:
-typecheck clean, **953 tests across 63 files** (baseline unchanged — scripts
-only). GUI batch **not** triggered: no renderer code and no CSS changed.
+**#88 — MCP health already arrives, once per turn.** Landed as `833f969`, ticket
+closed. Measurement only, **no `src/` change**. Gate green: typecheck clean,
+**953 tests across 63 files** (baseline unchanged — scripts only). GUI batch
+**not** triggered.
 
-Measured on host CLI **2.1.220 / SDK 0.3.220**, backend `wisped`, model
-`claude-opus-5[1m]`, by `scripts/spike-87-thinking.mjs` — five configs × two
-turns. Evidence committed at `scripts/spike-87-findings.json` (scrubbed: type
-census, key sets, counts, char *lengths*, zero message text).
+Measured on host CLI **2.1.220 / SDK 0.3.220**, backend `wisped`, by
+`scripts/spike-88-mcp-status.mjs` — three configs × two turns, 4–6 poll points
+each. Evidence at `scripts/spike-88-findings.json` (scrubbed: `config` values
+never recorded, only key sets and `type`; `error` verbatim only for
+spike-injected servers).
 
-- **A `thinking` block DOES reach the app**, on the app's own options with no
-  thinking config set — whole block on the `assistant` message, plus
-  `content_block_start` with `content_block.type === 'thinking'`.
-- **Its `thinking` field is empty. 0 chars, all five configs**, with only
-  `signature` populated at 756–952. **So the feature is blocked on content, not
-  reachability** — and independently of #86's UI constraints. Owner call 2 is
-  moot for want of a subject.
-- **The result discriminates**: 5 blocks on the reasoning prompt, **0** on the
-  trivial control — the #27/#81 trap avoided.
-- **No `thinking_delta` ever appears** (the block emits only `signature_delta`),
-  no `system`/`thinking_tokens` lands, and neither `maxThinkingTokens` nor
-  `thinking: adaptive` nor `display: 'summarized'` changes any of it.
-- **One hypothesis died on inspection**: the delta census first read as thinking
-  text streaming as `text_delta`, which `engine.ts:499-510` matches without
-  checking which block a delta belongs to — a live leak. Correlating deltas to
-  their `content_block_start` **index** killed it. A type census answers what
-  shapes exist, never what belongs to what.
-- **One thread left open, and it is not code.** The native path is unmeasurable
-  here — wisp vars stripped, the host CLI answers `Not logged in`. Recorded as
-  `scripts/spike-87-findings-native.json`, self-declaring `erroredTurns: 2`.
-  After a human `/login`: `SPIKE87_BACKEND=native
-  SPIKE87_ONLY=control-app-options`.
+**All four questions positive**, the opposite outcome to #87:
 
-See [[2026-08-02-the-thinking-block-arrives-empty]].
+- **Q1 — `init.mcp_servers` is non-empty.** 4 measured, **3 app-visible**.
+- **Q2 — no push of any kind.** The only mcp-shaped key on any message at any
+  depth is `$.mcp_servers` on `system:init`.
+- **Q3 — `mcpServerStatus()` works at every poll point**, 0–13ms, **including
+  before the first turn and before any `init` has arrived**.
+- **Q4 — a broken server reports `status: 'failed'` with
+  `error: "MCP error -32000: Connection closed"` — and the failure is visible on
+  the `init` snapshot too.**
+
+**The finding the four questions did not ask for: `init` fires once per TURN,
+not once per session.** So `engine.ts:461-465` is already handed a fresh
+`mcp_servers` every turn and discards it. The cheapest build is a second field
+read in a branch that already exists. **This partly retires #86's "must ride an
+injected port" constraint** — the port is only needed to refresh *while idle*.
+
+`init` carries exactly `{name, status}` and is enough for a red dot; only
+`mcpServerStatus()` says **why** (`error`) and answers before turn 1.
+
+See [[2026-08-02-mcp-health-already-arrives-once-per-turn]].
 
 ## Landed the leg before
 
-**#85 — agent-spawned background tasks now nest under their spawner.** Landed as
-`3e24a53`, ticket closed. The owner answered both blocking calls (nest under the
-spawning **agent**; **hybrid** with the Background section as fallback), and the
-hybrid is the shape of the data rather than a compromise — #84 measured 2 of 3
-tasks parented and 1 not.
+**#87 — the extended-thinking block arrives, and it is empty.** `75f1db9`,
+closed. Measurement only. A `thinking` block **does** reach the app on the app's
+own options with no config set, and its `thinking` field is **0 chars in all
+five configs**, only `signature` populated at 756–952. So the collapsed-strip
+feature closes on **content**, not reachability, independently of #86's UI
+constraints. Discriminating: 5 blocks on the reasoning prompt, 0 on the control.
 
-- **Two new maps, and `taskToParent` is deliberately not one of them** — its
-  membership doubles as the accept-list keeping Bash out of the agent panel.
-- **`toolUseToAgent` is filled where `handleMessage` already held the parent and
-  was stepping over it** — `:419` returns before anything looks inside a
-  subagent's message, so its `tool_use` blocks were never associated with it.
-- **`taskIdToAgent` is filled BEFORE the `local_agent` gate**, because a
-  backgrounded Bash is exactly what that gate turns away. Mutation-verified.
-- **Nesting is a RENDER concern**, so #83's separate prop is **kept, not
-  reversed**: `buildAgentTree`, `flattenAgentTree`, `AgentRow` and `mergeAgents`
-  are untouched and a shell command still never claims agent usage.
-- **Five mutants killed — and one killed a bad test first.** See landmines.
+One thread open and **not code**: the native path is unmeasurable here (host CLI
+says `Not logged in`). After a human `/login`: `SPIKE87_BACKEND=native
+SPIKE87_ONLY=control-app-options`.
 
-953 tests (+9). See [[2026-08-01-nesting-happens-in-the-render-not-the-model]].
+See [[2026-08-02-the-thinking-block-arrives-empty]].
 
-**Landed the leg before: #84 — measured whether a background task's spawner is
-reachable. It is, one hop off where everyone was looking.** `335df49`, closed.
-Measurement only, **no `src/` change**. Gate green: typecheck clean, **944 tests
-across 63 files** (baseline unchanged — scripts-only). The 23-driver GUI batch
-was **not** triggered: no renderer code and no CSS changed.
-
-Measured live on host CLI **2.1.220 / SDK 0.3.220**, backend `wisped`, 101
-messages, by extending `scripts/spike-81-background-tasks.mjs` in place (+76).
-
-- **A `local_bash` `task_started` carries `tool_use_id` (3/3) but no parent under
-  any name.** The key set is exhaustive at eight fields, and the harness now
-  records `Object.keys(msg)` for exactly that reason — *an absence is only a
-  measurement if a differently-named field could have been seen.*
-- **The owning agent IS reachable — on the `assistant` message carrying the Bash
-  `tool_use` block**, as `parent_tool_use_id`. Proven at seq 90, and the control
-  discriminates cleanly: agent-spawned bash → the agent's id, main-thread bash →
-  `null`.
-- **The ticket's own predicted conclusion was FALSIFIED.** #84 stated that a
-  negative on the parent field would mean agent-nesting "is not buildable on the
-  current stream model". It is buildable. The #68 pattern again — the probe
-  falsified its own premise and the feature survived.
-- **Turn C is why this is a measurement and not a guess.** #81's only bash came
-  off the main thread, where there is no owner at all, so a missing parent there
-  could not distinguish "absent" from "nothing to name".
-
-See [[2026-08-01-the-spawner-is-one-hop-off-task-started]].
-
-**Landed the leg before: #83** — live background tasks in the Agents dock through
-a third injected port (`ea780a0`), REPLACE-never-accumulate, reset carried by
-`engine.close()` rather than `makeEngine()` because four of six discard paths
-rebuild lazily. See [[2026-08-01-a-level-is-replaced-not-accumulated]] — which
-was **missing from `decisions.md`'s index** until this leg added it.
+**Before that: #85** — agent-spawned background tasks nest under their spawner
+(`3e24a53`); two new maps, `taskToParent` deliberately not one of them, nesting
+kept a RENDER concern so #83's separate prop survived. See
+[[2026-08-01-nesting-happens-in-the-render-not-the-model]].
 
 ## Landmines
 
-Full ledger in [[active-work]] — long and load-bearing. New from the 2026-08-02
-vibe run (details in #86):
+Full ledger in [[active-work]] — long and load-bearing. New from #88:
 
-- **A comment in this repo can assert a fact the disk does not support.**
-  `session-store.ts:34-40` says "THIS APP WRITES `sdk-ts`"; there are **zero**
-  such records in this project's session directory against 825 `sdk-cli`. The
-  mechanism half is real — the SDK does stamp it — but behind an
-  `if(!CLAUDE_CODE_ENTRYPOINT)` guard, and `resolveSpawnEnv`
-  (`backend-mode.ts:43-55`) spreads `process.env` without setting it, so a
-  wrapper launched inside a Claude Code session **inherits the parent's
-  entrypoint**. Verify provenance claims against disk before building on them.
-- **The `entrypoint` value set is larger than the SDK's.** `claude-vscode`
-  exists on disk (15 records) and `grep -c 'claude-vscode' sdk.mjs` returns
-  **0** — the SDK's Set has three members, so anything outside it is silently
-  classified *interactive*. A filter assuming three values is wrong the first
-  time it meets a fourth.
-- **The app silently drops every content-block type it does not know** — bare
-  `for` + single `if`, no `else`, no default, no throw (`engine.ts:546-570`) —
-  and there is **no logging anywhere in `src/`** (`grep -rn "console\." src`
-  returns zero). So "we never saw X" is not evidence about X.
-- **`engine.ts:461-465` reads one field off the `init` message** (`src.model`)
-  and discards 15 declared ones, `mcp_servers` among them. Before adding a
-  channel, check whether the data is already arriving and being thrown away.
-- **Skipping a step beats fabricating its artifact.** `/hp` was skipped this run
-  because `.context/happy-path.md` is a live 151-line map and the night's output
-  was measurement spikes with no user journey — running it would have overwritten
-  something true with something invented. Record the deviation; don't do it
-  quietly, and don't do it anyway.
+- **A lever whose own effect is unverifiable cannot test anything.**
+  `toggleMcpServer` returns `void`. It returned ok for an sdk-type server and
+  changed nothing observable — indistinguishable from a frozen status.
+  `setMcpServers` settled the question *because* it returns
+  `{added, removed, errors}`: the pull is confirmed before the effect is
+  consulted. **Prefer the lever that reports itself.**
+- **`init` fires per turn, not per session.** Any reasoning treating it as a
+  one-shot session snapshot — including #86's — is wrong.
+- **`McpServerStatus.config` carries `env`**, which is where an MCP server's API
+  keys live. Never log or commit it; key set and `type` only.
+- **`disabled` is a status and the common one here** (3 of 4 servers). A panel
+  rendering only `connected`/`failed` shows almost nothing.
+- **cwd selects the project MCP scope.** The temp cwd under `C:\` picked up a
+  `scope: "local"` server keyed `"C:/"` in `~/.claude.json` that the repo cwd on
+  `D:\` never sees. Caught by the measured per-server `scope` field **after** the
+  findings file's first draft asserted the two cwds were equivalent — a written
+  assumption corrected by a measurement, which is the #86 landmine again.
 
-New from #85:
+Still true from #87:
 
-- **A mutant can kill a BAD TEST before it kills the code — and that is the most
-  valuable thing mutation testing does here.** #85's check that a bash task never
-  becomes an agent row **passed against the broken code**: widening the
-  accept-list does not create a row keyed to the bash task, it resolves that
-  task's parent to the **AGENT** and terminates the agent early. The assertion
-  was checking the wrong shape entirely. **Assert the harm, not the shape**, and
-  confirm the fixed assertion reds with the mutant still in place.
-- **Before calling a driver red, reproduce it on clean `main` with the work
-  stashed.** `gui-75` failed 3/3 here and looked deterministic; it fails
-  identically at the baseline commit. A `could not drive:` line is a premise the
-  driver could not establish, which is a different animal from a failed
-  assertion.
-- **A batch script's own grep can manufacture a red.** `gui-61` "failed" because
-  the pattern matched the string `FAIL` inside the driver's *fixture card text*.
-  Judge drivers by **exit code**, never by scraping their stdout.
-- **When a guard turns your case away, record before the guard, not after.**
-  `taskIdToAgent` must be written ahead of the `local_agent` early return —
-  writing after it is the plausible-looking version that silently never fires.
-- **Nesting can be a render concern.** Keeping `buildAgentTree` / `AgentRow` /
-  `mergeAgents` untouched let #85 honour #83's separate prop rather than reverse
-  it — a shell command renders as a child without ever claiming agent semantics.
+- **`result.subtype` is `'success'` on a failed turn.** `is_error` is the field
+  that says so. A spike reading only `subtype` reports a clean zero for a config
+  that never reached a model — indistinguishable from a real negative.
+- **Unsetting `ANTHROPIC_BASE_URL` by hand is not native mode.** It leaves
+  `ANTHROPIC_API_KEY` in place. Import `backend-mode.ts`'s `resolveSpawnEnv`.
+- **A type census answers what shapes exist, never what belongs to what.**
+  Correlating deltas to their `content_block_start` index killed a live-leak
+  hypothesis that the census alone appeared to support.
 
-Still true from #84:
+Still true from #86:
 
-- **A field's absence is only a measurement if a differently-named field could
-  have been seen.** Record `Object.keys(msg)`, not just the key you expected.
-  #84's "no parent on `task_started`" is trustworthy *because* the key set came
-  back exhaustive at eight fields.
-- **Check whether your negative path was ever exercised.** #81 concluded nothing
-  about bash parentage because its only backgrounded Bash ran on the main thread,
-  where there is no owner — the same trap as #27's "never fired". A control that
-  cannot distinguish "absent" from "nothing to name" measures nothing.
-- **A ticket's stated implication can be wrong even when its stated observation
-  is right.** #84 predicted Q1-positive/Q2-negative would kill agent-nesting; the
-  observation held and the implication did not. Write the condition falsifiably
-  and then actually check it against what you found.
-- **Data captured is not data recorded.** #81's harness captured `tool_use_id` on
-  every `task_started` from day one, but never printed it and wrote its evidence
-  to a temp dir outside the repo on purpose — so the answer was produced and lost
-  three times before anyone read it back.
-- **`parent_tool_use_id` is on the `assistant` envelope, never on the `system`
-  message.** `engine.ts:409` already reads it and `:419` returns immediately, so
-  the `tool_use` blocks inside subagent messages are never inspected. Both halves
-  of the join have always been in the process.
+- **A comment in this repo can assert a fact the disk does not support** —
+  `session-store.ts:34-40`, which is **#89's whole subject**.
+- **The `entrypoint` value set is larger than the SDK's** (`claude-vscode`
+  exists on disk, 0 matches in `sdk.mjs`).
+- **The app silently drops every content-block type it does not know**
+  (`engine.ts:546-570`) and there is **no logging anywhere in `src/`**. So "we
+  never saw X" is not evidence about X.
+- **`engine.ts:461-465` reads one field off `init` and discards 15** — #88 turned
+  this from a note into the cheapest half of a feature.
+- **Skipping a step beats fabricating its artifact.** Record the deviation.
 
-Still true from #83:
+Still true from #85: **a mutant can kill a BAD TEST before it kills the code**;
+**reproduce a red on clean `main` with the work stashed before calling it a
+regression**; **judge drivers by exit code, never by scraping stdout**; **when a
+guard turns your case away, record before the guard, not after**.
 
-- **When hunting for the one place to put an invariant, check whether every path
-  reaches your candidate EAGERLY.** `makeEngine()` is the single funnel for
-  engine creation and was still the wrong site, because four of six discard paths
-  rebuild lazily and a lazy rebuild is a window. `close()` is the funnel that
-  holds.
-- **Two ports on one lifecycle hook can want opposite things, and consistency
-  between them is the bug.** `onTerminal` must never fire for `close()`;
-  `onBackgroundTasks` firing there is the whole reset.
-- **A signal whose dropped case is the NORMAL case needs its pin written about
-  timing, not payload.** Every mid-turn test passes against a wrongly-wired
-  `EngineEvent`; only the no-active-turn ones discriminate.
-- **`nonAgentTasks` excludes only `local_agent`** — an unknown future
-  `task_type` is kept, because an allow-list makes the panel lie by omission the
-  first time the CLI grows a kind.
-- **Render the raw `task_type`**, never `BackgroundTaskSummary`'s friendly
-  labels; they ride a hook payload this app never registers.
-- **`.background-tasks` depends on `.agents-dock` being a flex column with
-  `min-height: 0`** — read, not assumed.
+Still true from #84: **a field's absence is only a measurement if a
+differently-named field could have been seen** — record `Object.keys(msg)`;
+**check whether your negative path was ever exercised**; **a ticket's stated
+implication can be wrong even when its observation is right**; **data captured is
+not data recorded**; **`parent_tool_use_id` is on the `assistant` envelope**.
+
+Still true from #83: **check whether every path reaches your candidate EAGERLY**
+(`close()`, not `makeEngine()`); **two ports on one lifecycle hook can want
+opposite things**; **`nonAgentTasks` excludes only `local_agent`**; **render the
+raw `task_type`**; **`.background-tasks` depends on `.agents-dock` being a flex
+column with `min-height: 0`**.
 
 Still true from #82: **a value written once per session cannot trigger something
 that happens once per turn**; **an assertion that something SURVIVED is vacuous
 unless the thing it survives is shown to have happened**; **a refresh must not
-blank what it already has**; **the nonce is consumed on every outcome and seeded
-at mount**; **`keepStale` is on the read and #83 left it alone.**
+blank what it already has**; **`keepStale` is on the read**.
 
 Still true from #81: **a level event can land AFTER `result`**; **the `Agent`
-tool is ASYNC and #27's blocking observation is stale**; **the join key works but
-parentage is NOT in the payload**; **a NEGATIVE is only a measurement if the path
-was exercised**; **sidecars live at `<projectDir>/<sessionId>/subagents/`** —
-copy `subagentsDir()`, never guess it.
+tool is ASYNC**; **a NEGATIVE is only a measurement if the path was exercised**;
+**sidecars live at `<projectDir>/<sessionId>/subagents/`** — copy
+`subagentsDir()`, never guess it.
 
-Still true: **the composer is never `disabled`** and the queue stays in
-`InputBar`; **`lastTurn`'s nonce is load-bearing**; **`unqueue` releases the
-commitment, never the text**; **a double flush is invisible to jsdom**; **an edge
-between two samples is not observable by sampling**; **`resume` binds at query
-CONSTRUCTION** and `warmUp` TAKES the target; **a stream dying BETWEEN turns
-emits nothing**; **`win.isFocused()` alone is not "someone is looking"**;
-**opening a past session CLOSES the engine** (reach `listModels()` /
-`listCommands()` first); **a test asserting an ABSENCE is the one most likely to
-be vacuous**; **no expected driver failure — any red is a real regression**; a
-driver must ESTABLISH the state it asserts and be shown red first; **pins are
-mutation-verified and no pin retirement is authorised**; **do not add a second
-busy flag**; **never un-key the composer** and **anything workspace-scoped must
-join the `ok` branch**; **main reports `getNormalBounds()`**;
-`tests/scrollbar.test.ts` scans every line naming a scrollbar pseudo-element,
-comments included; `gui-51` compares in **device** pixels; measure with
-`getBoundingClientRect`, not screenshots; `.titlebar-center` must stay IN FLOW;
-**`src/` is CRLF** and `.context/*.md` is LF; a new `window.api` channel needs
-**all four** mock sites plus `preload/index.d.ts`; never hardcode a model name.
+Still true: **the composer is never `disabled`**; **`lastTurn`'s nonce is
+load-bearing**; **`unqueue` releases the commitment, never the text**; **a double
+flush is invisible to jsdom**; **an edge between two samples is not observable by
+sampling**; **`resume` binds at query CONSTRUCTION** and `warmUp` TAKES the
+target; **a stream dying BETWEEN turns emits nothing**; **`win.isFocused()` alone
+is not "someone is looking"**; **opening a past session CLOSES the engine**;
+**a test asserting an ABSENCE is the one most likely to be vacuous**; **no
+expected driver failure**; **pins are mutation-verified and no pin retirement is
+authorised**; **do not add a second busy flag**; **never un-key the composer**;
+**anything workspace-scoped must join the `ok` branch**; **main reports
+`getNormalBounds()`**; `tests/scrollbar.test.ts` scans every line naming a
+scrollbar pseudo-element; `gui-51` compares in **device** pixels; measure with
+`getBoundingClientRect`; `.titlebar-center` must stay IN FLOW; **`src/` is CRLF**
+(and so is `scripts/`) while `.context/*.md` is LF; a new `window.api` channel
+needs **all four** mock sites plus `preload/index.d.ts`; never hardcode a model
+name.
 
-From #78, binding on anything that measures a launch: **Playwright cannot
-measure a launch**; **`NODE_OPTIONS=--require` never reaches Electron** and
-`addInitScript()` is too late — be the **entry point**; **`--disable-gpu` is
-load-bearing in a background session**; **Chromium persists the zoom factor per
-origin inside `userData`**, so an un-isolated launch is an inherited pass.
+From #78: **Playwright cannot measure a launch**; **`NODE_OPTIONS=--require`
+never reaches Electron**; **`--disable-gpu` is load-bearing in a background
+session**; **Chromium persists the zoom factor per origin inside `userData`**.
 
 ## Baseline
 
-`main` = `3e24a53` + this leg's `.context` commit, pushed. No open branches.
-Test baseline is unchanged at **953 across 63 files** (#85 added 9; #84 added
-none). The 2026-08-02 vibe run touched **no `src/`** — only `.claude/` and
-`.context/` — so no driver batch was owed and none was run.
+`main` = `833f969` + this leg's `.context` commit, pushed. No open branches.
+Test baseline **953 across 63 files** — unchanged by #87 and #88, both
+scripts-only.
 
-**22** assertion drivers plus the observational `gui-scope-zoom-pill`. Batch re-run
-at `3e24a53` (renderer + CSS changed): **22 green, `gui-75` red**. That red is
-**environmental and NOT a regression** — verified by reproducing the identical
-`could not drive: the window lost focus during the second turn` on **clean `main`
-(`47ad14d`) with the work stashed**. It is a premise the driver could not
-establish, not a failed assertion. It failed 3/3 here, so **the documented focus
-flake is not always intermittent in a background session** — but still read the
-`could not drive:` line, and still reproduce on clean main before blaming a
-change.
+**22** assertion drivers plus the observational `gui-scope-zoom-pill`. Last full
+batch run at `3e24a53`: **22 green, `gui-75` red**, and that red is
+**environmental, NOT a regression** — reproduced identically on clean `main`
+(`47ad14d`) with the work stashed. It is a premise the driver could not
+establish. Failed 3/3 there, so **the documented focus flake is not always
+intermittent in a background session**.
 
 **Judge drivers by exit code.** A batch script grepping stdout for `FAIL` reports
-`gui-61` red on its own fixture card text (`"Bashnpm testFailed: FAIL
-tests/auth.test.ts…"`); its exit code is 0.
+`gui-61` red on its own fixture card text; its exit code is 0.
 
-`scripts/spike-81-background-tasks.mjs` is **+76 lines** past what #81 ran; git
-history holds the original, and #81's findings are unaffected.
+Spike harnesses in `scripts/`: `spike-81-background-tasks.mjs` (**+76 lines**
+past what #81 ran), `spike-87-thinking.mjs`, `spike-88-mcp-status.mjs`. All three
+import the app's real `cli-path.ts` / `backend-mode.ts` rather than copying them
+— follow that when writing the next one.
 
 ## Do not decide these
 
-**The seven are DONE.** The owner made a grant live on 2026-08-01 and all seven
-of `.claude/vibe.md`'s parked calls were taken — that file's `## Needs you` is
-**history now, not a queue**, and its `## Taken` section carries the resolutions.
-Do not re-open them from the seed; four were decided *against* the seed's literal
-words on the record's reasons, and a new **reason** reopens them, not a re-read.
-**Both tickets the grant filed have now landed (#82, #83), so the grant is
-fully spent.**
+**The seven are DONE** and the 2026-08-01 grant is **fully spent** (#82, #83 both
+landed). `.claude/vibe.md`'s `## Needs you` is history, not a queue. A new
+**reason** reopens one of those calls, not a re-read.
 
 **Two older halves still stand and are still the owner's:** Tailwind is **not
-dropped** but the adopt-utilities question **stays open**, and the titlebar's
-control count **does not change** while the aesthetic question **stays the
-owner's**. **#83 honoured the second one** — it joined the existing Agents dock
-rather than adding a fourth surface, which would have forced a fourth titlebar
-control.
+dropped** but the adopt-utilities question **stays open**; the titlebar's control
+count **does not change** while the aesthetic question **stays the owner's**.
 
-**The three defers from the 2026-08-01 vibe run are ANSWERED and SPENT.** The
-owner took all three on 2026-08-01 — nest under the spawning **agent**, record
-parentage for non-agent tasks (implied by the first), and the **hybrid** visual
-form. #85 shipped exactly that. `.claude/vibe.md` → `## Needs you` keeps them
-with their reasoning for the trail; **that section is history now, not a queue**,
-apart from the two carried halves above.
+**The 2026-08-02 vibe run's five calls are the owner's and are OPEN** — #86 holds
+them. #88 moved the ground under two of them but answered neither: owner call 1
+(where does a non-agent panel live?) is still **the gate on any MCP UI**, and
+owner call 5 (settings-parse half — drop or re-scope?) is untouched. Owner call 2
+went moot on #87 for want of a subject.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
-- [[2026-08-01-nesting-happens-in-the-render-not-the-model]] — **#85, this leg; the hybrid, the two maps, why #83's separate prop survived, and the mutant that killed a bad test**
-- [[2026-08-01-the-spawner-is-one-hop-off-task-started]] — **#84; the spawner IS reachable, on the `assistant` envelope rather than `task_started`, and the ticket's own predicted conclusion was falsified**
-- [[2026-08-01-a-level-is-replaced-not-accumulated]] — **#83, shipped; the port, the reset site, and why the level is filtered rather than joined**
-- [[2026-08-01-a-refresh-must-not-blank-what-it-has]] — #82, the state shape #83 inherited and left alone
-- [[2026-08-01-the-background-agents-seed-decided]] — the grant, now fully spent
-- [[2026-08-01-background-tasks-changed-fires-and-the-ids-join]] — #81, the measurement #83 rests on
-- [[2026-07-25-agents-dock-disk-contract]] — the `null` vs `[]` split the separate section protects
-- [[2026-07-25-live-rows-two-sources-one-event]] — the mutation-verified `local_bash` exclusion #83 amended rather than reversed
-- [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] — #73, the port shape, and the `close()` rule #83 deliberately inverts
+- [[2026-08-02-mcp-health-already-arrives-once-per-turn]] — **#88, this leg; init fires per turn, the failure is already in the payload, and the lever that made the negative real**
+- [[2026-08-02-the-thinking-block-arrives-empty]] — #87; the block arrives with nothing in it
+- [[2026-08-01-nesting-happens-in-the-render-not-the-model]] — #85; the hybrid, the two maps, and the mutant that killed a bad test
+- [[2026-08-01-the-spawner-is-one-hop-off-task-started]] — #84; the spawner IS reachable, and the ticket's predicted conclusion was falsified
+- [[2026-08-01-a-level-is-replaced-not-accumulated]] — #83; the injected-port shape #86 assumed #88's feature would need
+- [[2026-08-01-a-refresh-must-not-blank-what-it-has]] — #82
+- [[2026-07-25-agents-dock-disk-contract]] · [[2026-07-25-live-rows-two-sources-one-event]]
+- [[2026-07-31-a-terminal-death-is-a-signal-not-an-event]] — #73, the port shape
 - [[2026-07-31-a-driver-establishes-its-premise]] — #65, extended by #74–#81
-- `.claude/vibe.md` — the 2026-08-01 run that filed #81, and the seven calls since taken
+- `.claude/vibe.md` — the runs that filed #81 and #86–#89
