@@ -1,0 +1,1799 @@
+{
+  "spike": 88,
+  "cli": "C:\\Users\\S.D\\.local\\bin\\claude.exe",
+  "cliVersion": "2.1.220 (Claude Code)",
+  "sdkVersion": "0.3.220",
+  "backend": "wisped",
+  "cwd": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike-88-cwd-LBlZKc",
+  "cwdNote": "temp dir under C:\\, not the repo. Adds one local-scope server (caveman-shrink) from ~/.claude.json's \"C:/\" project entry that the repo cwd on D:\\ would not see. App-visible count on this machine is 3 user-scope servers; measured count here is 4.",
+  "rawJsonl": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike-88-hxboda\\messages.jsonl",
+  "messages": 102,
+  "answers": {
+    "q1_init_carries_mcp_servers": true,
+    "q1_init_server_count": 4,
+    "q1b_init_messages_vs_turns": [
+      {
+        "label": "control-app-options",
+        "inits": 2,
+        "turns": 2,
+        "initTurnIndexes": [
+          0,
+          1
+        ]
+      },
+      {
+        "label": "injected-broken",
+        "inits": 2,
+        "turns": 2,
+        "initTurnIndexes": [
+          0,
+          1
+        ]
+      },
+      {
+        "label": "mutate-between-turns",
+        "inits": 2,
+        "turns": 2,
+        "initTurnIndexes": [
+          0,
+          1
+        ]
+      }
+    ],
+    "q1_init_statuses": {
+      "connected": 2,
+      "disabled": 6
+    },
+    "q2_mcp_key_paths_outside_init": {},
+    "q2_undeclared_push_seen": false,
+    "q2_init_messages_per_config": [
+      {
+        "label": "control-app-options",
+        "inits": 2
+      },
+      {
+        "label": "injected-broken",
+        "inits": 2
+      },
+      {
+        "label": "mutate-between-turns",
+        "inits": 2
+      }
+    ],
+    "q2_status_changed_across_polls": [
+      {
+        "label": "control-app-options",
+        "changed": false,
+        "signatures": [
+          {
+            "at": "before-first-turn",
+            "ok": true,
+            "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+          },
+          {
+            "at": "mid-turn-1",
+            "ok": true,
+            "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+          },
+          {
+            "at": "between-turns-1",
+            "ok": true,
+            "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+          },
+          {
+            "at": "after-last-turn",
+            "ok": true,
+            "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+          }
+        ]
+      },
+      {
+        "label": "injected-broken",
+        "changed": false,
+        "signatures": [
+          {
+            "at": "before-first-turn",
+            "ok": true,
+            "signature": "spike88_broken=failed,spike88_ok=connected"
+          },
+          {
+            "at": "mid-turn-1",
+            "ok": true,
+            "signature": "spike88_broken=failed,spike88_ok=connected"
+          },
+          {
+            "at": "between-turns-1",
+            "ok": true,
+            "signature": "spike88_broken=failed,spike88_ok=connected"
+          },
+          {
+            "at": "after-last-turn",
+            "ok": true,
+            "signature": "spike88_broken=failed,spike88_ok=connected"
+          }
+        ]
+      },
+      {
+        "label": "mutate-between-turns",
+        "changed": true,
+        "signatures": [
+          {
+            "at": "before-first-turn",
+            "ok": true,
+            "signature": "spike88_broken=failed,spike88_ok=connected"
+          },
+          {
+            "at": "mid-turn-1",
+            "ok": true,
+            "signature": "spike88_broken=failed,spike88_ok=connected"
+          },
+          {
+            "at": "between-turns-1",
+            "ok": true,
+            "signature": "spike88_broken=failed,spike88_ok=connected"
+          },
+          {
+            "at": "after-toggle",
+            "ok": true,
+            "signature": "spike88_broken=failed,spike88_ok=connected"
+          },
+          {
+            "at": "after-set-servers",
+            "ok": true,
+            "signature": "spike88_broken=failed"
+          },
+          {
+            "at": "after-last-turn",
+            "ok": true,
+            "signature": "spike88_broken=failed"
+          }
+        ]
+      }
+    ],
+    "q2_lever_toggle": {
+      "attempted": true,
+      "returnedOk": true,
+      "error": null,
+      "statusBefore": "connected",
+      "statusAfter": "connected",
+      "pollTrackedTheChange": false,
+      "note": "toggleMcpServer returns void, so \"returned ok but nothing moved\" cannot distinguish a frozen status from a no-op toggle. Read q2_lever_set_servers for the answer."
+    },
+    "q2_lever_set_servers": {
+      "attempted": true,
+      "returnedOk": true,
+      "error": null,
+      "result": {
+        "added": [
+          "spike88_broken"
+        ],
+        "removed": [
+          "spike88_ok"
+        ],
+        "errors": {
+          "spike88_broken": "MCP error -32000: Connection closed"
+        }
+      },
+      "leverActuallyPulled": true,
+      "countBefore": 2,
+      "countAfter": 1,
+      "statusBefore": "connected",
+      "statusAfter": null,
+      "pollTrackedTheChange": true,
+      "initTurn1": "connected",
+      "initTurn2AfterChange": null,
+      "nextInitTrackedTheChange": true
+    },
+    "q3_mcpServerStatus_ok_by_point": {
+      "before-first-turn": "ok",
+      "mid-turn-1": "ok",
+      "between-turns-1": "ok",
+      "after-last-turn": "ok"
+    },
+    "q3_between_turns_ok": true,
+    "q3_before_first_turn_ok": true,
+    "q4_broken_server_seen": true,
+    "q4_broken_status_values": [
+      "failed"
+    ],
+    "q4_broken_error_populated": true,
+    "q4_broken_error_text": "MCP error -32000: Connection closed",
+    "q4_good_server_seen": true,
+    "q4_good_status_values": [
+      "connected"
+    ],
+    "q4_broken_visible_on_init": true,
+    "q4_broken_init_status": [
+      "failed"
+    ],
+    "erroredTurnsByConfig": {
+      "control-app-options": 0,
+      "injected-broken": 0,
+      "mutate-between-turns": 0
+    }
+  },
+  "configs": [
+    {
+      "label": "control-app-options",
+      "options": {},
+      "skipped": null,
+      "error": null,
+      "initBeforeFirstTurn": false,
+      "messageTypes": {
+        "assistant": 2,
+        "result:success": 2,
+        "stream_event": 12,
+        "system:hook_response": 7,
+        "system:hook_started": 7,
+        "system:init": 2,
+        "system:status": 2
+      },
+      "messageKeys": {
+        "assistant": [
+          "message",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "result": [
+          "api_error_status",
+          "duration_api_ms",
+          "duration_ms",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "is_error",
+          "modelUsage",
+          "num_turns",
+          "origin",
+          "permission_denials",
+          "result",
+          "session_id",
+          "stop_reason",
+          "subtype",
+          "terminal_reason",
+          "time_to_request_ms",
+          "total_cost_usd",
+          "ttft_ms",
+          "ttft_stream_ms",
+          "type",
+          "usage",
+          "uuid"
+        ],
+        "stream_event": [
+          "event",
+          "parent_tool_use_id",
+          "session_id",
+          "ttft_ms",
+          "type",
+          "uuid"
+        ],
+        "system": [
+          "agents",
+          "analytics_disabled",
+          "apiKeySource",
+          "capabilities",
+          "claude_code_version",
+          "cwd",
+          "exit_code",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "hook_event",
+          "hook_id",
+          "hook_name",
+          "mcp_servers",
+          "memory_paths",
+          "model",
+          "outcome",
+          "output",
+          "output_style",
+          "permissionMode",
+          "plugins",
+          "product_feedback_disabled",
+          "session_id",
+          "skills",
+          "slash_commands",
+          "status",
+          "stderr",
+          "stdout",
+          "subtype",
+          "tools",
+          "type",
+          "uuid"
+        ]
+      },
+      "systemSubtypes": {
+        "hook_response": 7,
+        "hook_started": 7,
+        "init": 2,
+        "status": 2
+      },
+      "initMcpServers": [
+        {
+          "ms": 20297,
+          "turn": 0,
+          "prompt": "turn-1",
+          "present": true,
+          "count": 4,
+          "servers": [
+            {
+              "name": "_disabled_pencil",
+              "status": "disabled",
+              "keys": [
+                "name",
+                "status"
+              ]
+            },
+            {
+              "name": "codeboarding",
+              "status": "disabled",
+              "keys": [
+                "name",
+                "status"
+              ]
+            },
+            {
+              "name": "pencil",
+              "status": "connected",
+              "keys": [
+                "name",
+                "status"
+              ]
+            },
+            {
+              "name": "caveman-shrink",
+              "status": "disabled",
+              "keys": [
+                "name",
+                "status"
+              ]
+            }
+          ]
+        },
+        {
+          "ms": 22791,
+          "turn": 1,
+          "prompt": "turn-2",
+          "present": true,
+          "count": 4,
+          "servers": [
+            {
+              "name": "_disabled_pencil",
+              "status": "disabled",
+              "keys": [
+                "name",
+                "status"
+              ]
+            },
+            {
+              "name": "codeboarding",
+              "status": "disabled",
+              "keys": [
+                "name",
+                "status"
+              ]
+            },
+            {
+              "name": "pencil",
+              "status": "connected",
+              "keys": [
+                "name",
+                "status"
+              ]
+            },
+            {
+              "name": "caveman-shrink",
+              "status": "disabled",
+              "keys": [
+                "name",
+                "status"
+              ]
+            }
+          ]
+        }
+      ],
+      "mcpKeyPathsByMessage": {
+        "system:init": [
+          "$.mcp_servers"
+        ]
+      },
+      "polls": [
+        {
+          "at": "before-first-turn",
+          "ms": 20137,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "_disabled_pencil",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "user",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "codeboarding",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "user",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "pencil",
+              "status": "connected",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "serverInfo",
+                "status",
+                "tools"
+              ],
+              "scope": "user",
+              "hasServerInfo": true,
+              "serverInfo": {
+                "name": "pencil",
+                "version": "1.0.0"
+              },
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": 9
+            },
+            {
+              "name": "caveman-shrink",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "local",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            }
+          ],
+          "present": true,
+          "count": 4,
+          "elapsedMs": 1,
+          "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+        },
+        {
+          "at": "mid-turn-1",
+          "ms": 22641,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "_disabled_pencil",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "user",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "codeboarding",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "user",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "pencil",
+              "status": "connected",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "serverInfo",
+                "status",
+                "tools"
+              ],
+              "scope": "user",
+              "hasServerInfo": true,
+              "serverInfo": {
+                "name": "pencil",
+                "version": "1.0.0"
+              },
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": 9
+            },
+            {
+              "name": "caveman-shrink",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "local",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            }
+          ],
+          "present": true,
+          "count": 4,
+          "elapsedMs": 0,
+          "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+        },
+        {
+          "at": "between-turns-1",
+          "ms": 22641,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "_disabled_pencil",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "user",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "codeboarding",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "user",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "pencil",
+              "status": "connected",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "serverInfo",
+                "status",
+                "tools"
+              ],
+              "scope": "user",
+              "hasServerInfo": true,
+              "serverInfo": {
+                "name": "pencil",
+                "version": "1.0.0"
+              },
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": 9
+            },
+            {
+              "name": "caveman-shrink",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "local",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            }
+          ],
+          "present": true,
+          "count": 4,
+          "elapsedMs": 1,
+          "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+        },
+        {
+          "at": "after-last-turn",
+          "ms": 28017,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "_disabled_pencil",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "user",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "codeboarding",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "user",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "pencil",
+              "status": "connected",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "serverInfo",
+                "status",
+                "tools"
+              ],
+              "scope": "user",
+              "hasServerInfo": true,
+              "serverInfo": {
+                "name": "pencil",
+                "version": "1.0.0"
+              },
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": 9
+            },
+            {
+              "name": "caveman-shrink",
+              "status": "disabled",
+              "keys": [
+                "config",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "local",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            }
+          ],
+          "present": true,
+          "count": 4,
+          "elapsedMs": 1,
+          "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+        }
+      ],
+      "toggles": [],
+      "results": [
+        {
+          "subtype": "success",
+          "is_error": false
+        },
+        {
+          "subtype": "success",
+          "is_error": false
+        }
+      ],
+      "erroredTurns": 0,
+      "pollSignatures": [
+        {
+          "at": "before-first-turn",
+          "ok": true,
+          "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+        },
+        {
+          "at": "mid-turn-1",
+          "ok": true,
+          "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+        },
+        {
+          "at": "between-turns-1",
+          "ok": true,
+          "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+        },
+        {
+          "at": "after-last-turn",
+          "ok": true,
+          "signature": "_disabled_pencil=disabled,caveman-shrink=disabled,codeboarding=disabled,pencil=connected"
+        }
+      ],
+      "statusChangedAcrossPolls": false
+    },
+    {
+      "label": "injected-broken",
+      "options": {
+        "strictMcpConfig": true,
+        "mcpServers": {
+          "spike88_broken": {
+            "type": "stdio",
+            "command": "__spike88_no_such_command__"
+          },
+          "spike88_ok": {
+            "type": "sdk"
+          }
+        }
+      },
+      "skipped": null,
+      "error": null,
+      "initBeforeFirstTurn": false,
+      "messageTypes": {
+        "assistant": 2,
+        "result:success": 2,
+        "stream_event": 12,
+        "system:hook_response": 7,
+        "system:hook_started": 7,
+        "system:init": 2,
+        "system:status": 2
+      },
+      "messageKeys": {
+        "assistant": [
+          "message",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "result": [
+          "api_error_status",
+          "duration_api_ms",
+          "duration_ms",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "is_error",
+          "modelUsage",
+          "num_turns",
+          "origin",
+          "permission_denials",
+          "result",
+          "session_id",
+          "stop_reason",
+          "subtype",
+          "terminal_reason",
+          "time_to_request_ms",
+          "total_cost_usd",
+          "ttft_ms",
+          "ttft_stream_ms",
+          "type",
+          "usage",
+          "uuid"
+        ],
+        "stream_event": [
+          "event",
+          "parent_tool_use_id",
+          "session_id",
+          "ttft_ms",
+          "type",
+          "uuid"
+        ],
+        "system": [
+          "agents",
+          "analytics_disabled",
+          "apiKeySource",
+          "capabilities",
+          "claude_code_version",
+          "cwd",
+          "exit_code",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "hook_event",
+          "hook_id",
+          "hook_name",
+          "mcp_servers",
+          "memory_paths",
+          "model",
+          "outcome",
+          "output",
+          "output_style",
+          "permissionMode",
+          "plugins",
+          "product_feedback_disabled",
+          "session_id",
+          "skills",
+          "slash_commands",
+          "status",
+          "stderr",
+          "stdout",
+          "subtype",
+          "tools",
+          "type",
+          "uuid"
+        ]
+      },
+      "systemSubtypes": {
+        "hook_response": 7,
+        "hook_started": 7,
+        "init": 2,
+        "status": 2
+      },
+      "initMcpServers": [
+        {
+          "ms": 49033,
+          "turn": 0,
+          "prompt": "turn-1",
+          "present": true,
+          "count": 2,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "name",
+                "status"
+              ]
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "status"
+              ]
+            }
+          ]
+        },
+        {
+          "ms": 52594,
+          "turn": 1,
+          "prompt": "turn-2",
+          "present": true,
+          "count": 2,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "name",
+                "status"
+              ]
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "status"
+              ]
+            }
+          ]
+        }
+      ],
+      "mcpKeyPathsByMessage": {
+        "system:init": [
+          "$.mcp_servers"
+        ]
+      },
+      "polls": [
+        {
+          "at": "before-first-turn",
+          "ms": 48826,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "scope",
+                "status",
+                "tools"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": null,
+              "configKeys": [],
+              "toolCount": 0
+            }
+          ],
+          "present": true,
+          "count": 2,
+          "elapsedMs": 1,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "mid-turn-1",
+          "ms": 51342,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "scope",
+                "status",
+                "tools"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": null,
+              "configKeys": [],
+              "toolCount": 0
+            }
+          ],
+          "present": true,
+          "count": 2,
+          "elapsedMs": 5,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "between-turns-1",
+          "ms": 52444,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "scope",
+                "status",
+                "tools"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": null,
+              "configKeys": [],
+              "toolCount": 0
+            }
+          ],
+          "present": true,
+          "count": 2,
+          "elapsedMs": 0,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "after-last-turn",
+          "ms": 57955,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "scope",
+                "status",
+                "tools"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": null,
+              "configKeys": [],
+              "toolCount": 0
+            }
+          ],
+          "present": true,
+          "count": 2,
+          "elapsedMs": 13,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        }
+      ],
+      "toggles": [],
+      "results": [
+        {
+          "subtype": "success",
+          "is_error": false
+        },
+        {
+          "subtype": "success",
+          "is_error": false
+        }
+      ],
+      "erroredTurns": 0,
+      "pollSignatures": [
+        {
+          "at": "before-first-turn",
+          "ok": true,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "mid-turn-1",
+          "ok": true,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "between-turns-1",
+          "ok": true,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "after-last-turn",
+          "ok": true,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        }
+      ],
+      "statusChangedAcrossPolls": false
+    },
+    {
+      "label": "mutate-between-turns",
+      "options": {
+        "strictMcpConfig": true,
+        "mcpServers": {
+          "spike88_broken": {
+            "type": "stdio",
+            "command": "__spike88_no_such_command__"
+          },
+          "spike88_ok": {
+            "type": "sdk"
+          }
+        }
+      },
+      "skipped": null,
+      "error": null,
+      "initBeforeFirstTurn": false,
+      "messageTypes": {
+        "assistant": 2,
+        "result:success": 2,
+        "stream_event": 12,
+        "system:hook_response": 7,
+        "system:hook_started": 7,
+        "system:init": 2,
+        "system:status": 2
+      },
+      "messageKeys": {
+        "assistant": [
+          "message",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "result": [
+          "api_error_status",
+          "duration_api_ms",
+          "duration_ms",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "is_error",
+          "modelUsage",
+          "num_turns",
+          "origin",
+          "permission_denials",
+          "result",
+          "session_id",
+          "stop_reason",
+          "subtype",
+          "terminal_reason",
+          "time_to_request_ms",
+          "total_cost_usd",
+          "ttft_ms",
+          "ttft_stream_ms",
+          "type",
+          "usage",
+          "uuid"
+        ],
+        "stream_event": [
+          "event",
+          "parent_tool_use_id",
+          "session_id",
+          "ttft_ms",
+          "type",
+          "uuid"
+        ],
+        "system": [
+          "agents",
+          "analytics_disabled",
+          "apiKeySource",
+          "capabilities",
+          "claude_code_version",
+          "cwd",
+          "exit_code",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "hook_event",
+          "hook_id",
+          "hook_name",
+          "mcp_servers",
+          "memory_paths",
+          "model",
+          "outcome",
+          "output",
+          "output_style",
+          "permissionMode",
+          "plugins",
+          "product_feedback_disabled",
+          "session_id",
+          "skills",
+          "slash_commands",
+          "status",
+          "stderr",
+          "stdout",
+          "subtype",
+          "tools",
+          "type",
+          "uuid"
+        ]
+      },
+      "systemSubtypes": {
+        "hook_response": 7,
+        "hook_started": 7,
+        "init": 2,
+        "status": 2
+      },
+      "initMcpServers": [
+        {
+          "ms": 79040,
+          "turn": 0,
+          "prompt": "turn-1",
+          "present": true,
+          "count": 2,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "name",
+                "status"
+              ]
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "status"
+              ]
+            }
+          ]
+        },
+        {
+          "ms": 81556,
+          "turn": 1,
+          "prompt": "turn-2",
+          "present": true,
+          "count": 1,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "name",
+                "status"
+              ]
+            }
+          ]
+        }
+      ],
+      "mcpKeyPathsByMessage": {
+        "system:init": [
+          "$.mcp_servers"
+        ]
+      },
+      "polls": [
+        {
+          "at": "before-first-turn",
+          "ms": 78880,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "scope",
+                "status",
+                "tools"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": null,
+              "configKeys": [],
+              "toolCount": 0
+            }
+          ],
+          "present": true,
+          "count": 2,
+          "elapsedMs": 2,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "mid-turn-1",
+          "ms": 81393,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "scope",
+                "status",
+                "tools"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": null,
+              "configKeys": [],
+              "toolCount": 0
+            }
+          ],
+          "present": true,
+          "count": 2,
+          "elapsedMs": 1,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "between-turns-1",
+          "ms": 81405,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "scope",
+                "status",
+                "tools"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": null,
+              "configKeys": [],
+              "toolCount": 0
+            }
+          ],
+          "present": true,
+          "count": 2,
+          "elapsedMs": 0,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "after-toggle",
+          "ms": 81408,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            },
+            {
+              "name": "spike88_ok",
+              "status": "connected",
+              "keys": [
+                "name",
+                "scope",
+                "status",
+                "tools"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": null,
+              "error": null,
+              "configType": null,
+              "configKeys": [],
+              "toolCount": 0
+            }
+          ],
+          "present": true,
+          "count": 2,
+          "elapsedMs": 0,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "after-set-servers",
+          "ms": 81410,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            }
+          ],
+          "present": true,
+          "count": 1,
+          "elapsedMs": 1,
+          "signature": "spike88_broken=failed"
+        },
+        {
+          "at": "after-last-turn",
+          "ms": 86592,
+          "ok": true,
+          "timedOut": false,
+          "error": null,
+          "servers": [
+            {
+              "name": "spike88_broken",
+              "status": "failed",
+              "keys": [
+                "config",
+                "error",
+                "name",
+                "scope",
+                "status"
+              ],
+              "scope": "dynamic",
+              "hasServerInfo": false,
+              "serverInfo": null,
+              "errorChars": 35,
+              "error": "MCP error -32000: Connection closed",
+              "configType": "stdio",
+              "configKeys": [
+                "args",
+                "command",
+                "type"
+              ],
+              "toolCount": null
+            }
+          ],
+          "present": true,
+          "count": 1,
+          "elapsedMs": 0,
+          "signature": "spike88_broken=failed"
+        }
+      ],
+      "toggles": [
+        {
+          "action": "toggleMcpServer(spike88_ok,false)",
+          "ms": 81405,
+          "ok": true,
+          "error": null,
+          "result": null
+        },
+        {
+          "action": "setMcpServers(drop spike88_ok)",
+          "ms": 81408,
+          "ok": true,
+          "error": null,
+          "result": {
+            "added": [
+              "spike88_broken"
+            ],
+            "removed": [
+              "spike88_ok"
+            ],
+            "errors": {
+              "spike88_broken": "MCP error -32000: Connection closed"
+            }
+          }
+        }
+      ],
+      "results": [
+        {
+          "subtype": "success",
+          "is_error": false
+        },
+        {
+          "subtype": "success",
+          "is_error": false
+        }
+      ],
+      "erroredTurns": 0,
+      "pollSignatures": [
+        {
+          "at": "before-first-turn",
+          "ok": true,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "mid-turn-1",
+          "ok": true,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "between-turns-1",
+          "ok": true,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "after-toggle",
+          "ok": true,
+          "signature": "spike88_broken=failed,spike88_ok=connected"
+        },
+        {
+          "at": "after-set-servers",
+          "ok": true,
+          "signature": "spike88_broken=failed"
+        },
+        {
+          "at": "after-last-turn",
+          "ok": true,
+          "signature": "spike88_broken=failed"
+        }
+      ],
+      "statusChangedAcrossPolls": true
+    }
+  ]
+}
