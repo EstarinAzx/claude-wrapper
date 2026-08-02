@@ -15,9 +15,16 @@ import { join } from 'node:path'
 // .context/decisions/2026-07-30-the-app-must-be-able-to-list-its-own-sessions.md
 //
 // The SDK decides "programmatic" by scanning the raw JSONL for `entrypoint`
-// against {sdk-cli, sdk-ts, sdk-py}. This app writes `sdk-ts`, which is why
-// `false` made it blind to its own conversations. The two fixtures below differ
-// in exactly that field and nothing else, so a regression can only be the flag.
+// against {sdk-cli, sdk-ts, sdk-py}, which is why `false` made this app blind to
+// its own conversations. The two fixtures below differ in exactly that field and
+// nothing else, so a regression can only be the flag.
+//
+// `sdk-ts` is a value this app really can write, but only when it is launched
+// from OUTSIDE a Claude Code session; launched from inside a terminal one it
+// writes `sdk-cli` (#89, measured — see the comment on the flag itself). Both are
+// in the SDK's set, so either fixture value pins the same flag. Do not "correct"
+// this pair to a single realistic value: the point of the pair is one row on each
+// side of the classifier.
 
 import { deleteSession, listSessions } from '../src/main/session-store'
 

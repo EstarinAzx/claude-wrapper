@@ -1,0 +1,137 @@
+{
+  "spike": 89,
+  "question": "Does this app ever stamp entrypoint \"sdk-ts\" into a transcript it writes?",
+  "measuredAt": "2026-08-02T11:08:42.671Z",
+  "runDir": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike-89-GPVtU8",
+  "env": {
+    "backendMode": "wisped",
+    "hostCliUsed": true,
+    "cliVersion": "2.1.220 (Claude Code)",
+    "sdkVersion": "0.3.220"
+  },
+  "limit": "outside-session is a reconstruction by environment, not a real detached launch: every process this script can start descends from a Claude Code session. It removes exactly the key the SDK guard reads, plus the other session-provenance vars, but a true outside launch could differ in ways no env edit reproduces.",
+  "sdkMechanism": {
+    "stampGuard": "if (!env.CLAUDE_CODE_ENTRYPOINT) env.CLAUDE_CODE_ENTRYPOINT = \"sdk-ts\"",
+    "stampSites": 2,
+    "programmaticSet": [
+      "sdk-cli",
+      "sdk-ts",
+      "sdk-py"
+    ],
+    "readWindowBytes": 65536,
+    "decidingRecord": "first \"entrypoint\" in the head window, else the last in the tail window",
+    "secondProgrammaticPath": "sessionKind === \"daemon\" | \"daemon-worker\", read off the first record containing \"parentUuid\""
+  },
+  "configs": [
+    {
+      "label": "inherited",
+      "spawnEnv": {
+        "claudeCodeEntrypoint": "cli",
+        "sessionVarsPresent": [
+          "CLAUDE_CODE_ENTRYPOINT",
+          "CLAUDECODE",
+          "CLAUDE_CODE_SESSION_ID",
+          "CLAUDE_CODE_CHILD_SESSION",
+          "CLAUDE_CODE_EXECPATH",
+          "CLAUDE_PID",
+          "CLAUDE_JOB_DIR"
+        ]
+      },
+      "turn": {
+        "subtype": "success",
+        "isError": false
+      },
+      "transcript": {
+        "found": true,
+        "sizeBytes": 61503,
+        "fitsInOneWindow": true,
+        "entrypointValuesInHead": [
+          "sdk-cli"
+        ],
+        "entrypointRecordsInHead": 14
+      },
+      "classifier": {
+        "deciding": "sdk-cli",
+        "programmatic": true,
+        "via": "entrypoint"
+      },
+      "sdkListing": {
+        "visibleWithProgrammatic": true,
+        "visibleWithoutProgrammatic": false,
+        "totalWithProgrammatic": 808,
+        "totalWithoutProgrammatic": 567
+      }
+    },
+    {
+      "label": "outside-session",
+      "spawnEnv": {
+        "claudeCodeEntrypoint": null,
+        "sessionVarsPresent": []
+      },
+      "turn": {
+        "subtype": "success",
+        "isError": false
+      },
+      "transcript": {
+        "found": true,
+        "sizeBytes": 61573,
+        "fitsInOneWindow": true,
+        "entrypointValuesInHead": [
+          "sdk-ts"
+        ],
+        "entrypointRecordsInHead": 14
+      },
+      "classifier": {
+        "deciding": "sdk-ts",
+        "programmatic": true,
+        "via": "entrypoint"
+      },
+      "sdkListing": {
+        "visibleWithProgrammatic": true,
+        "visibleWithoutProgrammatic": false,
+        "totalWithProgrammatic": 809,
+        "totalWithoutProgrammatic": 567
+      }
+    },
+    {
+      "label": "inherited-vscode",
+      "spawnEnv": {
+        "claudeCodeEntrypoint": "claude-vscode",
+        "sessionVarsPresent": [
+          "CLAUDE_CODE_ENTRYPOINT",
+          "CLAUDECODE",
+          "CLAUDE_CODE_SESSION_ID",
+          "CLAUDE_CODE_CHILD_SESSION",
+          "CLAUDE_CODE_EXECPATH",
+          "CLAUDE_PID",
+          "CLAUDE_JOB_DIR"
+        ]
+      },
+      "turn": {
+        "subtype": "success",
+        "isError": false
+      },
+      "transcript": {
+        "found": true,
+        "sizeBytes": 62658,
+        "fitsInOneWindow": true,
+        "entrypointValuesInHead": [
+          "claude-vscode"
+        ],
+        "entrypointRecordsInHead": 14
+      },
+      "classifier": {
+        "deciding": "claude-vscode",
+        "programmatic": false,
+        "via": "none",
+        "sessionKind": null
+      },
+      "sdkListing": {
+        "visibleWithProgrammatic": true,
+        "visibleWithoutProgrammatic": true,
+        "totalWithProgrammatic": 810,
+        "totalWithoutProgrammatic": 568
+      }
+    }
+  ]
+}

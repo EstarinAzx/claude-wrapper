@@ -32,12 +32,35 @@ export const listSessions = async (): Promise<SessionMeta[] | null> => {
   let infos: Awaited<ReturnType<typeof sdkListSessions>>
   try {
     // MUST be true: the SDK reads "programmatic" off the transcript's
-    // `entrypoint` field against {sdk-cli, sdk-ts, sdk-py}, and THIS APP WRITES
-    // `sdk-ts`. `false` therefore hid every conversation the wrapper itself
-    // authored — 560 rows vs 672 here, the whole 112-row delta being sdk-ts +
-    // sdk-cli. It was chosen for "parity with terminal /resume", but that
+    // `entrypoint` field against {sdk-cli, sdk-ts, sdk-py}, and the value this
+    // app writes lands in that set in the launch cases that matter. `false`
+    // therefore hides conversations the wrapper itself authored — measured
+    // 2026-08-02 against this machine's real store: 806 rows vs 567, a 239-row
+    // delta. It was chosen for "parity with terminal /resume", but that
     // reasoning inverts for a client listing sessions it wrote: parity for the
     // terminal means showing the terminal's own work.
+    //
+    // WHICH value it writes is a fact about the LAUNCH ENV, not about this app,
+    // and #89 measured all three cases end to end (scripts/spike-89-entrypoint.mjs,
+    // scripts/spike-89-findings.json). The SDK's stamp is inherit-wins —
+    // `if (!env.CLAUDE_CODE_ENTRYPOINT) env.CLAUDE_CODE_ENTRYPOINT = "sdk-ts"` —
+    // and backend-mode.ts's resolveSpawnEnv spreads process.env wholesale and
+    // never sets the key, so whatever launched the app decides:
+    //
+    //   launched from a terminal Claude Code session (env `cli`) → `sdk-cli`
+    //   launched from outside any session (env absent)           → `sdk-ts`
+    //   launched from a VS Code Claude Code session              → `claude-vscode`
+    //
+    // The first two are programmatic and are hidden by `false`. The THIRD IS
+    // NOT — `claude-vscode` is passed through untransformed and is outside the
+    // SDK's three-member set, so that launch's own sessions are classified
+    // interactive and stay listable either way. So this argument is load-bearing
+    // for the common launches and simply inert for that one; it is never wrong
+    // to pass, and there is no launch in which `false` is safe.
+    //
+    // Do not read the old "THIS APP WRITES sdk-ts" claim back into this: `sdk-ts`
+    // is the OUTSIDE-a-session case and is the rarest one here (0 records in this
+    // project's own store directory, against 827 sdk-cli).
     //
     // `true` is also the SDK's default. The key stays explicit so a future
     // default flip cannot take this with it silently — deleting it is a no-op
