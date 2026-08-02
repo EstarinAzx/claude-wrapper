@@ -1,0 +1,1230 @@
+{
+  "spike": 87,
+  "cli": "C:\\Users\\S.D\\.local\\bin\\claude.exe",
+  "cliVersion": "2.1.220 (Claude Code)",
+  "sdkVersion": "0.3.220",
+  "backend": "wisped",
+  "rawJsonl": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike-87-iC2WqM\\messages.jsonl",
+  "messages": 199,
+  "answers": {
+    "q1_whole_or_any_thinking_block": true,
+    "q1_in_app_config_only": true,
+    "q2_delta_types_seen": [],
+    "q1b_max_thinking_text_chars": 0,
+    "q1c_blocks_by_prompt": {
+      "reasoning": 5,
+      "control": 0
+    },
+    "q3_thinking_tokens_message": false,
+    "q4_config_changed_anything": false
+  },
+  "configs": [
+    {
+      "label": "control-app-options",
+      "options": {},
+      "skipped": null,
+      "error": null,
+      "models": [
+        "claude-opus-5",
+        "claude-opus-5[1m]"
+      ],
+      "messageTypes": {
+        "assistant": 3,
+        "result:success": 2,
+        "stream_event": 22,
+        "system:hook_response": 7,
+        "system:hook_started": 7,
+        "system:init": 2,
+        "system:status": 2
+      },
+      "messageKeys": {
+        "assistant": [
+          "message",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "result": [
+          "api_error_status",
+          "duration_api_ms",
+          "duration_ms",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "is_error",
+          "modelUsage",
+          "num_turns",
+          "origin",
+          "permission_denials",
+          "result",
+          "session_id",
+          "stop_reason",
+          "subtype",
+          "terminal_reason",
+          "time_to_request_ms",
+          "total_cost_usd",
+          "ttft_ms",
+          "ttft_stream_ms",
+          "type",
+          "usage",
+          "uuid"
+        ],
+        "stream_event": [
+          "event",
+          "parent_tool_use_id",
+          "session_id",
+          "ttft_ms",
+          "type",
+          "uuid"
+        ],
+        "system": [
+          "agents",
+          "analytics_disabled",
+          "apiKeySource",
+          "capabilities",
+          "claude_code_version",
+          "cwd",
+          "exit_code",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "hook_event",
+          "hook_id",
+          "hook_name",
+          "mcp_servers",
+          "memory_paths",
+          "model",
+          "outcome",
+          "output",
+          "output_style",
+          "permissionMode",
+          "plugins",
+          "product_feedback_disabled",
+          "session_id",
+          "skills",
+          "slash_commands",
+          "status",
+          "stderr",
+          "stdout",
+          "subtype",
+          "tools",
+          "type",
+          "uuid"
+        ]
+      },
+      "blockTypes": {
+        "text": 2,
+        "thinking": 1
+      },
+      "blockKeys": {
+        "stream:text": [
+          "text",
+          "type"
+        ],
+        "stream:thinking": [
+          "signature",
+          "thinking",
+          "type"
+        ],
+        "text": [
+          "text",
+          "type"
+        ],
+        "thinking": [
+          "signature",
+          "thinking",
+          "type"
+        ]
+      },
+      "streamEventTypes": {
+        "content_block_delta": 10,
+        "content_block_start": 3,
+        "content_block_stop": 3,
+        "message_delta": 2,
+        "message_start": 2,
+        "message_stop": 2
+      },
+      "streamBlockTypes": {
+        "text": 2,
+        "thinking": 1
+      },
+      "streamDeltaTypes": {
+        "signature_delta": 1,
+        "text_delta": 9
+      },
+      "streamDeltaKeys": {
+        "signature_delta": [
+          "signature",
+          "type"
+        ],
+        "text_delta": [
+          "text",
+          "type"
+        ]
+      },
+      "systemSubtypes": {
+        "hook_response": 7,
+        "hook_started": 7,
+        "init": 2,
+        "status": 2
+      },
+      "thinkingTokens": [],
+      "thinkingBlocks": [
+        {
+          "turn": 0,
+          "prompt": "reasoning",
+          "type": "thinking",
+          "keys": [
+            "signature",
+            "thinking",
+            "type"
+          ],
+          "thinkingChars": 0,
+          "signatureChars": 640,
+          "dataChars": null
+        }
+      ],
+      "results": [
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 61051,
+            "output_tokens": 315,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        },
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 61610,
+            "cache_read_input_tokens": 0,
+            "output_tokens": 4,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        }
+      ],
+      "erroredTurns": 0,
+      "thinking": {
+        "wholeBlocks": [
+          "thinking"
+        ],
+        "streamBlocks": [
+          "thinking"
+        ],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    },
+    {
+      "label": "maxThinkingTokens",
+      "options": {
+        "maxThinkingTokens": 8000
+      },
+      "skipped": null,
+      "error": null,
+      "models": [
+        "claude-opus-5",
+        "claude-opus-5[1m]"
+      ],
+      "messageTypes": {
+        "assistant": 3,
+        "result:success": 2,
+        "stream_event": 21,
+        "system:hook_response": 7,
+        "system:hook_started": 7,
+        "system:init": 2,
+        "system:status": 2
+      },
+      "messageKeys": {
+        "assistant": [
+          "message",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "result": [
+          "api_error_status",
+          "duration_api_ms",
+          "duration_ms",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "is_error",
+          "modelUsage",
+          "num_turns",
+          "origin",
+          "permission_denials",
+          "result",
+          "session_id",
+          "stop_reason",
+          "subtype",
+          "terminal_reason",
+          "time_to_request_ms",
+          "total_cost_usd",
+          "ttft_ms",
+          "ttft_stream_ms",
+          "type",
+          "usage",
+          "uuid"
+        ],
+        "stream_event": [
+          "event",
+          "parent_tool_use_id",
+          "session_id",
+          "ttft_ms",
+          "type",
+          "uuid"
+        ],
+        "system": [
+          "agents",
+          "analytics_disabled",
+          "apiKeySource",
+          "capabilities",
+          "claude_code_version",
+          "cwd",
+          "exit_code",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "hook_event",
+          "hook_id",
+          "hook_name",
+          "mcp_servers",
+          "memory_paths",
+          "model",
+          "outcome",
+          "output",
+          "output_style",
+          "permissionMode",
+          "plugins",
+          "product_feedback_disabled",
+          "session_id",
+          "skills",
+          "slash_commands",
+          "status",
+          "stderr",
+          "stdout",
+          "subtype",
+          "tools",
+          "type",
+          "uuid"
+        ]
+      },
+      "blockTypes": {
+        "text": 2,
+        "thinking": 1
+      },
+      "blockKeys": {
+        "stream:text": [
+          "text",
+          "type"
+        ],
+        "stream:thinking": [
+          "signature",
+          "thinking",
+          "type"
+        ],
+        "text": [
+          "text",
+          "type"
+        ],
+        "thinking": [
+          "signature",
+          "thinking",
+          "type"
+        ]
+      },
+      "streamEventTypes": {
+        "content_block_delta": 9,
+        "content_block_start": 3,
+        "content_block_stop": 3,
+        "message_delta": 2,
+        "message_start": 2,
+        "message_stop": 2
+      },
+      "streamBlockTypes": {
+        "text": 2,
+        "thinking": 1
+      },
+      "streamDeltaTypes": {
+        "signature_delta": 1,
+        "text_delta": 8
+      },
+      "streamDeltaKeys": {
+        "signature_delta": [
+          "signature",
+          "type"
+        ],
+        "text_delta": [
+          "text",
+          "type"
+        ]
+      },
+      "systemSubtypes": {
+        "hook_response": 7,
+        "hook_started": 7,
+        "init": 2,
+        "status": 2
+      },
+      "thinkingTokens": [],
+      "thinkingBlocks": [
+        {
+          "turn": 0,
+          "prompt": "reasoning",
+          "type": "thinking",
+          "keys": [
+            "signature",
+            "thinking",
+            "type"
+          ],
+          "thinkingChars": 0,
+          "signatureChars": 820,
+          "dataChars": null
+        }
+      ],
+      "results": [
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 61051,
+            "output_tokens": 363,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        },
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 605,
+            "cache_read_input_tokens": 61051,
+            "output_tokens": 4,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        }
+      ],
+      "erroredTurns": 0,
+      "thinking": {
+        "wholeBlocks": [
+          "thinking"
+        ],
+        "streamBlocks": [
+          "thinking"
+        ],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    },
+    {
+      "label": "thinking-adaptive",
+      "options": {
+        "thinking": {
+          "type": "adaptive"
+        }
+      },
+      "skipped": null,
+      "error": null,
+      "models": [
+        "claude-opus-5",
+        "claude-opus-5[1m]"
+      ],
+      "messageTypes": {
+        "assistant": 3,
+        "result:success": 2,
+        "stream_event": 20,
+        "system:hook_response": 7,
+        "system:hook_started": 7,
+        "system:init": 2,
+        "system:status": 2
+      },
+      "messageKeys": {
+        "assistant": [
+          "message",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "result": [
+          "api_error_status",
+          "duration_api_ms",
+          "duration_ms",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "is_error",
+          "modelUsage",
+          "num_turns",
+          "origin",
+          "permission_denials",
+          "result",
+          "session_id",
+          "stop_reason",
+          "subtype",
+          "terminal_reason",
+          "time_to_request_ms",
+          "total_cost_usd",
+          "ttft_ms",
+          "ttft_stream_ms",
+          "type",
+          "usage",
+          "uuid"
+        ],
+        "stream_event": [
+          "event",
+          "parent_tool_use_id",
+          "session_id",
+          "ttft_ms",
+          "type",
+          "uuid"
+        ],
+        "system": [
+          "agents",
+          "analytics_disabled",
+          "apiKeySource",
+          "capabilities",
+          "claude_code_version",
+          "cwd",
+          "exit_code",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "hook_event",
+          "hook_id",
+          "hook_name",
+          "mcp_servers",
+          "memory_paths",
+          "model",
+          "outcome",
+          "output",
+          "output_style",
+          "permissionMode",
+          "plugins",
+          "product_feedback_disabled",
+          "session_id",
+          "skills",
+          "slash_commands",
+          "status",
+          "stderr",
+          "stdout",
+          "subtype",
+          "tools",
+          "type",
+          "uuid"
+        ]
+      },
+      "blockTypes": {
+        "text": 2,
+        "thinking": 1
+      },
+      "blockKeys": {
+        "stream:text": [
+          "text",
+          "type"
+        ],
+        "stream:thinking": [
+          "signature",
+          "thinking",
+          "type"
+        ],
+        "text": [
+          "text",
+          "type"
+        ],
+        "thinking": [
+          "signature",
+          "thinking",
+          "type"
+        ]
+      },
+      "streamEventTypes": {
+        "content_block_delta": 8,
+        "content_block_start": 3,
+        "content_block_stop": 3,
+        "message_delta": 2,
+        "message_start": 2,
+        "message_stop": 2
+      },
+      "streamBlockTypes": {
+        "text": 2,
+        "thinking": 1
+      },
+      "streamDeltaTypes": {
+        "signature_delta": 1,
+        "text_delta": 7
+      },
+      "streamDeltaKeys": {
+        "signature_delta": [
+          "signature",
+          "type"
+        ],
+        "text_delta": [
+          "text",
+          "type"
+        ]
+      },
+      "systemSubtypes": {
+        "hook_response": 7,
+        "hook_started": 7,
+        "init": 2,
+        "status": 2
+      },
+      "thinkingTokens": [],
+      "thinkingBlocks": [
+        {
+          "turn": 0,
+          "prompt": "reasoning",
+          "type": "thinking",
+          "keys": [
+            "signature",
+            "thinking",
+            "type"
+          ],
+          "thinkingChars": 0,
+          "signatureChars": 828,
+          "dataChars": null
+        }
+      ],
+      "results": [
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 61051,
+            "output_tokens": 362,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        },
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 604,
+            "cache_read_input_tokens": 61051,
+            "output_tokens": 4,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        }
+      ],
+      "erroredTurns": 0,
+      "thinking": {
+        "wholeBlocks": [
+          "thinking"
+        ],
+        "streamBlocks": [
+          "thinking"
+        ],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    },
+    {
+      "label": "thinking-adaptive-summarized",
+      "options": {
+        "thinking": {
+          "type": "adaptive",
+          "display": "summarized"
+        }
+      },
+      "skipped": null,
+      "error": null,
+      "models": [
+        "claude-opus-5",
+        "claude-opus-5[1m]"
+      ],
+      "messageTypes": {
+        "assistant": 3,
+        "result:success": 2,
+        "stream_event": 23,
+        "system:hook_response": 7,
+        "system:hook_started": 7,
+        "system:init": 2,
+        "system:status": 2
+      },
+      "messageKeys": {
+        "assistant": [
+          "message",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "result": [
+          "api_error_status",
+          "duration_api_ms",
+          "duration_ms",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "is_error",
+          "modelUsage",
+          "num_turns",
+          "origin",
+          "permission_denials",
+          "result",
+          "session_id",
+          "stop_reason",
+          "subtype",
+          "terminal_reason",
+          "time_to_request_ms",
+          "total_cost_usd",
+          "ttft_ms",
+          "ttft_stream_ms",
+          "type",
+          "usage",
+          "uuid"
+        ],
+        "stream_event": [
+          "event",
+          "parent_tool_use_id",
+          "session_id",
+          "ttft_ms",
+          "type",
+          "uuid"
+        ],
+        "system": [
+          "agents",
+          "analytics_disabled",
+          "apiKeySource",
+          "capabilities",
+          "claude_code_version",
+          "cwd",
+          "exit_code",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "hook_event",
+          "hook_id",
+          "hook_name",
+          "mcp_servers",
+          "memory_paths",
+          "model",
+          "outcome",
+          "output",
+          "output_style",
+          "permissionMode",
+          "plugins",
+          "product_feedback_disabled",
+          "session_id",
+          "skills",
+          "slash_commands",
+          "status",
+          "stderr",
+          "stdout",
+          "subtype",
+          "tools",
+          "type",
+          "uuid"
+        ]
+      },
+      "blockTypes": {
+        "text": 2,
+        "thinking": 1
+      },
+      "blockKeys": {
+        "stream:text": [
+          "text",
+          "type"
+        ],
+        "stream:thinking": [
+          "signature",
+          "thinking",
+          "type"
+        ],
+        "text": [
+          "text",
+          "type"
+        ],
+        "thinking": [
+          "signature",
+          "thinking",
+          "type"
+        ]
+      },
+      "streamEventTypes": {
+        "content_block_delta": 11,
+        "content_block_start": 3,
+        "content_block_stop": 3,
+        "message_delta": 2,
+        "message_start": 2,
+        "message_stop": 2
+      },
+      "streamBlockTypes": {
+        "text": 2,
+        "thinking": 1
+      },
+      "streamDeltaTypes": {
+        "signature_delta": 1,
+        "text_delta": 10
+      },
+      "streamDeltaKeys": {
+        "signature_delta": [
+          "signature",
+          "type"
+        ],
+        "text_delta": [
+          "text",
+          "type"
+        ]
+      },
+      "systemSubtypes": {
+        "hook_response": 7,
+        "hook_started": 7,
+        "init": 2,
+        "status": 2
+      },
+      "thinkingTokens": [],
+      "thinkingBlocks": [
+        {
+          "turn": 0,
+          "prompt": "reasoning",
+          "type": "thinking",
+          "keys": [
+            "signature",
+            "thinking",
+            "type"
+          ],
+          "thinkingChars": 0,
+          "signatureChars": 596,
+          "dataChars": null
+        }
+      ],
+      "results": [
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 61051,
+            "output_tokens": 316,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        },
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 558,
+            "cache_read_input_tokens": 61051,
+            "output_tokens": 4,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        }
+      ],
+      "erroredTurns": 0,
+      "thinking": {
+        "wholeBlocks": [
+          "thinking"
+        ],
+        "streamBlocks": [
+          "thinking"
+        ],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    },
+    {
+      "label": "no-partial-messages",
+      "options": {
+        "thinking": {
+          "type": "adaptive",
+          "display": "summarized"
+        },
+        "includePartialMessages": false
+      },
+      "skipped": null,
+      "error": null,
+      "models": [
+        "claude-opus-5",
+        "claude-opus-5[1m]"
+      ],
+      "messageTypes": {
+        "assistant": 3,
+        "result:success": 2,
+        "system:hook_response": 7,
+        "system:hook_started": 7,
+        "system:init": 2
+      },
+      "messageKeys": {
+        "assistant": [
+          "message",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "result": [
+          "api_error_status",
+          "duration_api_ms",
+          "duration_ms",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "is_error",
+          "modelUsage",
+          "num_turns",
+          "origin",
+          "permission_denials",
+          "result",
+          "session_id",
+          "stop_reason",
+          "subtype",
+          "terminal_reason",
+          "time_to_request_ms",
+          "total_cost_usd",
+          "ttft_ms",
+          "ttft_stream_ms",
+          "type",
+          "usage",
+          "uuid"
+        ],
+        "system": [
+          "agents",
+          "analytics_disabled",
+          "apiKeySource",
+          "capabilities",
+          "claude_code_version",
+          "cwd",
+          "exit_code",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "hook_event",
+          "hook_id",
+          "hook_name",
+          "mcp_servers",
+          "memory_paths",
+          "model",
+          "outcome",
+          "output",
+          "output_style",
+          "permissionMode",
+          "plugins",
+          "product_feedback_disabled",
+          "session_id",
+          "skills",
+          "slash_commands",
+          "stderr",
+          "stdout",
+          "subtype",
+          "tools",
+          "type",
+          "uuid"
+        ]
+      },
+      "blockTypes": {
+        "text": 2,
+        "thinking": 1
+      },
+      "blockKeys": {
+        "text": [
+          "text",
+          "type"
+        ],
+        "thinking": [
+          "signature",
+          "thinking",
+          "type"
+        ]
+      },
+      "streamEventTypes": {},
+      "streamBlockTypes": {},
+      "streamDeltaTypes": {},
+      "streamDeltaKeys": {},
+      "systemSubtypes": {
+        "hook_response": 7,
+        "hook_started": 7,
+        "init": 2
+      },
+      "thinkingTokens": [],
+      "thinkingBlocks": [
+        {
+          "turn": 0,
+          "prompt": "reasoning",
+          "type": "thinking",
+          "keys": [
+            "signature",
+            "thinking",
+            "type"
+          ],
+          "thinkingChars": 0,
+          "signatureChars": 676,
+          "dataChars": null
+        }
+      ],
+      "results": [
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 61051,
+            "output_tokens": 337,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        },
+        {
+          "subtype": "success",
+          "is_error": false,
+          "usage": {
+            "input_tokens": 2,
+            "cache_creation_input_tokens": 579,
+            "cache_read_input_tokens": 61051,
+            "output_tokens": 4,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        }
+      ],
+      "erroredTurns": 0,
+      "thinking": {
+        "wholeBlocks": [
+          "thinking"
+        ],
+        "streamBlocks": [],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    }
+  ]
+}

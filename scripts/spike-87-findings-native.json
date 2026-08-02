@@ -1,0 +1,320 @@
+{
+  "spike": 87,
+  "cli": "C:\\Users\\S.D\\.local\\bin\\claude.exe",
+  "cliVersion": "2.1.220 (Claude Code)",
+  "sdkVersion": "0.3.220",
+  "backend": "native",
+  "rawJsonl": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike-87-JDh5VO\\messages.jsonl",
+  "messages": 22,
+  "answers": {
+    "q1_whole_or_any_thinking_block": false,
+    "q1_in_app_config_only": false,
+    "q2_delta_types_seen": [],
+    "q1b_max_thinking_text_chars": 0,
+    "q1c_blocks_by_prompt": {
+      "reasoning": 0,
+      "control": 0
+    },
+    "q3_thinking_tokens_message": false,
+    "q4_config_changed_anything": false
+  },
+  "configs": [
+    {
+      "label": "control-app-options",
+      "options": {},
+      "skipped": null,
+      "error": null,
+      "models": [
+        "<synthetic>",
+        "claude-opus-5[1m]"
+      ],
+      "messageTypes": {
+        "assistant": 2,
+        "result:success": 2,
+        "system:hook_response": 7,
+        "system:hook_started": 7,
+        "system:init": 2,
+        "system:status": 2
+      },
+      "messageKeys": {
+        "assistant": [
+          "error",
+          "is_api_error_message",
+          "message",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "result": [
+          "api_error_status",
+          "duration_api_ms",
+          "duration_ms",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "is_error",
+          "modelUsage",
+          "num_turns",
+          "origin",
+          "permission_denials",
+          "result",
+          "session_id",
+          "stop_reason",
+          "subtype",
+          "terminal_reason",
+          "total_cost_usd",
+          "type",
+          "usage",
+          "uuid"
+        ],
+        "system": [
+          "agents",
+          "analytics_disabled",
+          "apiKeySource",
+          "capabilities",
+          "claude_code_version",
+          "cwd",
+          "exit_code",
+          "fast_mode_disabled_reason",
+          "fast_mode_state",
+          "hook_event",
+          "hook_id",
+          "hook_name",
+          "mcp_servers",
+          "memory_paths",
+          "model",
+          "outcome",
+          "output",
+          "output_style",
+          "permissionMode",
+          "plugins",
+          "product_feedback_disabled",
+          "session_id",
+          "skills",
+          "slash_commands",
+          "status",
+          "stderr",
+          "stdout",
+          "subtype",
+          "tools",
+          "type",
+          "uuid"
+        ]
+      },
+      "blockTypes": {
+        "text": 2
+      },
+      "blockKeys": {
+        "text": [
+          "text",
+          "type"
+        ]
+      },
+      "streamEventTypes": {},
+      "streamBlockTypes": {},
+      "streamDeltaTypes": {},
+      "streamDeltaKeys": {},
+      "systemSubtypes": {
+        "hook_response": 7,
+        "hook_started": 7,
+        "init": 2,
+        "status": 2
+      },
+      "thinkingTokens": [],
+      "thinkingBlocks": [],
+      "results": [
+        {
+          "subtype": "success",
+          "is_error": true,
+          "usage": {
+            "input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "output_tokens": 0,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        },
+        {
+          "subtype": "success",
+          "is_error": true,
+          "usage": {
+            "input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "output_tokens": 0,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "usageKeys": [
+            "cache_creation",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "inference_geo",
+            "input_tokens",
+            "iterations",
+            "output_tokens",
+            "server_tool_use",
+            "service_tier",
+            "speed"
+          ]
+        }
+      ],
+      "erroredTurns": 2,
+      "thinking": {
+        "wholeBlocks": [],
+        "streamBlocks": [],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    },
+    {
+      "label": "maxThinkingTokens",
+      "options": {
+        "maxThinkingTokens": 8000
+      },
+      "skipped": "SPIKE87_ONLY=control-app-options",
+      "error": null,
+      "models": [],
+      "messageTypes": {},
+      "messageKeys": {},
+      "blockTypes": {},
+      "blockKeys": {},
+      "streamEventTypes": {},
+      "streamBlockTypes": {},
+      "streamDeltaTypes": {},
+      "streamDeltaKeys": {},
+      "systemSubtypes": {},
+      "thinkingTokens": [],
+      "thinkingBlocks": [],
+      "results": [],
+      "erroredTurns": 0,
+      "thinking": {
+        "wholeBlocks": [],
+        "streamBlocks": [],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    },
+    {
+      "label": "thinking-adaptive",
+      "options": {
+        "thinking": {
+          "type": "adaptive"
+        }
+      },
+      "skipped": "SPIKE87_ONLY=control-app-options",
+      "error": null,
+      "models": [],
+      "messageTypes": {},
+      "messageKeys": {},
+      "blockTypes": {},
+      "blockKeys": {},
+      "streamEventTypes": {},
+      "streamBlockTypes": {},
+      "streamDeltaTypes": {},
+      "streamDeltaKeys": {},
+      "systemSubtypes": {},
+      "thinkingTokens": [],
+      "thinkingBlocks": [],
+      "results": [],
+      "erroredTurns": 0,
+      "thinking": {
+        "wholeBlocks": [],
+        "streamBlocks": [],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    },
+    {
+      "label": "thinking-adaptive-summarized",
+      "options": {
+        "thinking": {
+          "type": "adaptive",
+          "display": "summarized"
+        }
+      },
+      "skipped": "SPIKE87_ONLY=control-app-options",
+      "error": null,
+      "models": [],
+      "messageTypes": {},
+      "messageKeys": {},
+      "blockTypes": {},
+      "blockKeys": {},
+      "streamEventTypes": {},
+      "streamBlockTypes": {},
+      "streamDeltaTypes": {},
+      "streamDeltaKeys": {},
+      "systemSubtypes": {},
+      "thinkingTokens": [],
+      "thinkingBlocks": [],
+      "results": [],
+      "erroredTurns": 0,
+      "thinking": {
+        "wholeBlocks": [],
+        "streamBlocks": [],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    },
+    {
+      "label": "no-partial-messages",
+      "options": null,
+      "skipped": "no thinking evidence in any prior config — nothing whose delivery mode could differ",
+      "error": null,
+      "models": [],
+      "messageTypes": {},
+      "messageKeys": {},
+      "blockTypes": {},
+      "blockKeys": {},
+      "streamEventTypes": {},
+      "streamBlockTypes": {},
+      "streamDeltaTypes": {},
+      "streamDeltaKeys": {},
+      "systemSubtypes": {},
+      "thinkingTokens": [],
+      "thinkingBlocks": [],
+      "results": [],
+      "erroredTurns": 0,
+      "thinking": {
+        "wholeBlocks": [],
+        "streamBlocks": [],
+        "streamDeltas": [],
+        "thinkingTokenMessages": 0
+      }
+    }
+  ]
+}
