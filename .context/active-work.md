@@ -7,11 +7,59 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (chain 2, relay leg 2, `ticket-loop`) — **#95 landed as `e9a3c28`: the subagent scrim is out of the tab order**_
-_At commit: `e9a3c28` on `main` (unpushed; `main` is **9 ahead of origin** — it was 8 before this leg, which was already the pre-existing state). Gate green: typecheck clean, **979 tests across 64 files** (+1), `gui-95` PASS (exit 0), red-verified first_
-_Driver check: **partial and deliberate.** `gui-95` (new, PASS) plus a full `npm run build`. The other 25 drivers were **not** re-run: this touched one component's JSX and added a test file and a driver — **no shared CSS, no rail layout**, which is the condition the previous leg wrote for running the batch. Last full batch was 22 green + the environmental `gui-75` red at `3e24a53`._
+_Last updated: 2026-08-04 by Opus 5 (chain 2, relay leg 3, `ticket-loop`) — **#96 landed as `93ccd7d`: the two off-scale values conform to `DESIGN.md`**_
+_At commit: `93ccd7d` on `main` (unpushed; `main` is **11 ahead of origin** before this leg's `.context` commit). Gate green: typecheck clean, **979 tests across 64 files** (unchanged — no vitest test was added, deliberately), `gui-96` PASS (exit 0), red-verified first_
+_Driver check: **targeted, four drivers.** `gui-96` (new, PASS) plus `gui-51`, `gui-93`, `gui-95` — the ones measuring the two surfaces this touched (model menu, subagent drawer), all exit 0. **`gui-52` exits 1 and is environmental, not a regression** — reproduced identically on clean `main` with the work stashed. Last full batch was 22 green + the environmental `gui-75` red at `3e24a53`._
 
 ## Current focus
+
+**#96 landed (`93ccd7d`). The two authored values that sat off the scales
+`DESIGN.md` names now conform, and the two accepted exceptions are pinned in
+place.**
+
+Two declarations, nothing else:
+
+- **`composer.css:112`** — `.model-menu-item { font-weight: 500 }` **deleted**.
+  The rule went empty when the declaration went, so the rule went too; the row
+  drops to the inherited **400**. Not raised to 600 — the doc reserves that for
+  "app name and bubble-less emphasis", which a menu row is not, and the jump is
+  visibly heavier than the 500 was asking for. Same consistency argument that
+  killed "widen the doc" for the accent clause in the same audit.
+- **`subagent.css:84`** — `subagent-slide` 180ms → **200ms**. It is an *entry*,
+  and the doc names exactly one entry duration.
+
+**`agent-map.css` and `rails.css` have no diff.** Both `subagent-pulse 1.4s`
+sites are accepted exceptions — the clause governs transitions and entries, an
+infinite ambient loop is neither — and `gui-96` now asserts them **positively**,
+so a later tidy-up that "conforms" them reds instead of passing quietly.
+
+**The reusable part is the instrument, and it is about a vacuity trap.** AC5 asks
+that the row's box not move (#94's bug one property over). That cannot be
+measured across the source edit in one run, and the tempting weaker form — "the
+row computes 400 and its height is H" — **passes against any H**. So `gui-96`
+drives the **live** row through both weights in-run: forced to 400, reflow,
+measure; forced to 500, reflow, measure; restore. Non-vacuous in the red run and
+the green run alike. Measured **Δ 0.000 device px** at 1.25 dpr, so the #94 class
+is **absent by measurement**, not merely unobserved. Seventh instance of this
+trap after #76, #82, #93, #94, #91, #95.
+
+**A second trap nearly made two criteria measure nothing.** `base.css:92` sets
+`animation: none !important` under `prefers-reduced-motion: reduce`, globally.
+Under that state AC3 would read `0s` and pass **for the wrong reason** while AC4
+failed for one. The driver forces `no-preference` **and then reads the media
+state back**, because forcing something is not the same as it having taken.
+
+**No vitest test was added, and that is the ticket's own reasoning.** jsdom sees
+neither a computed weight nor an animation duration, so `gui-96.mjs` is the
+**only** guard on all five criteria, in either direction — the same exposure
+`gui-94` carries for the command-row font.
+
+See [[2026-08-04-an-unchanged-box-is-measured-in-run-not-across-the-edit]].
+
+**Queue after this: ONE, unblocked** — #97 (measure the mint budget,
+**measurement only, no `src/` change**). `ready-for-human` is still empty.
+
+## Previously (2026-08-04) — #95, the subagent scrim
 
 **#95 landed (`e9a3c28`). `.subagent-drawer-backdrop` is out of the tab order,
 and the drawer turned out to be drivable without a live turn.**
@@ -544,8 +592,10 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `e9a3c28` + the `.context` commits, **unpushed** — `main` is **9 ahead of origin** (8 before this leg, which was already the pre-existing state). No open branches — `ticket/95-subagent-backdrop-tabstop` was squash-merged and deleted.
-- **Queue (`ready-for-agent`): TWO, both unblocked** — **#96** (two off-scale values conform to `DESIGN.md`, small), **#97** (measure the mint budget, **no `src/` change**, medium). `blocked_by: 0` verified on both after #95 closed. **The `ready-for-human` queue is still EMPTY.**
+- **In flight:** nothing. `main` = `93ccd7d` + the `.context` commits, **unpushed**. No open branches — `ticket/96-conform-two-off-scale-values` was squash-merged and deleted.
+- **Queue (`ready-for-agent`): ONE, unblocked** — **#97** (measure the mint budget, **measurement only, no `src/` change**, medium). `blocked_by: 0` verified after #96 closed. **The `ready-for-human` queue is still EMPTY.** After #97 the queue is dry and the next move is the owner's.
+- **#96 is CLOSED and landed** (`93ccd7d`) — `.model-menu-item`'s `font-weight: 500` rule deleted (row inherits 400) and `subagent-slide` 180ms → 200ms, plus `gui-96.mjs`. **No vitest test, deliberately** — jsdom can see neither value, so the driver is the only guard in either direction. See [[2026-08-04-an-unchanged-box-is-measured-in-run-not-across-the-edit]]. **The reusable part is the instrument:** an "unchanged box" criterion is measured by driving the live element through **both** states in one run, never across the source edit — the weaker form passes against any value.
+- **`.claude/settings.json` carries a working-tree modification holding a live `ANTHROPIC_API_KEY`.** Pre-existing, untouched by this leg and by the previous ones, and **never staged** — the committed version has no key. It is tracked, so a `git commit -a` from any session would publish it. Flagged for the owner; not this leg's to fix.
 - **#95 is CLOSED and landed** (`e9a3c28`) — `tabIndex={-1}` + `aria-hidden="true"` on `.subagent-drawer-backdrop`, one vitest guard, and `gui-95.mjs`. See [[2026-08-04-the-subagent-drawer-is-drivable-without-a-live-turn]]. **The reusable part is the driver, not the fix:** the subagent drawer is reachable in a real window with no live turn, via a `chat:event` push from main.
 - **#91 is CLOSED and landed** (`5e6699b`) — the background-sessions section, plus `src/main/agent-view.ts`, `src/shared/background-session-types.ts`, the `background-sessions:list` channel, `tests/background-sessions.test.tsx` (25 tests) and `gui-91.mjs`. See [[2026-08-04-the-agent-view-costs-a-process-so-the-user-pays-for-it]]. It was the largest of the four and it fit one sitting.
 - **All nine parked owner calls are taken** ([[2026-08-04-the-parked-owner-calls-are-taken]]) under the grant's renewal — *"address all the ready for human tickets and continue the relay"*. **#92 and #86 are closed**; #91 was scoped, retitled and relabelled. **No `src/` change from any of the nine.** Seven produced no code; three died to a measurement rather than a judgement.
@@ -556,12 +606,21 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## Pick up here
 
-**The queue is TWO unblocked `ready-for-agent` tickets** — #96, then #97.
-`ticket-loop` takes **#96** (two off-scale values conform to `DESIGN.md`). Run
-the frontier query anyway before believing this line; it goes stale the moment
-anything is filed or closed, and that is this project's standing lesson (a leg
-once wrote that closing #70 would empty the queue and was wrong, because #71 had
-been unblocked the whole time).
+**The queue is ONE unblocked `ready-for-agent` ticket** — **#97**, measure the
+mint budget. `ticket-loop` takes it. It is **measurement only, no `src/`
+change**, and it will need a **sixth spike harness** in `scripts/` (copy #90 for
+its scrubbing — basename, never an absolute temp path). Run the frontier query
+anyway before believing this line; it goes stale the moment anything is filed or
+closed, and that is this project's standing lesson (a leg once wrote that closing
+#70 would empty the queue and was wrong, because #71 had been unblocked the whole
+time).
+
+**#97 closes the queue.** After it there is no `ready-for-agent` work and no
+`ready-for-human` work, so the relay's designed stop fires and the next move is
+the owner's — file new work, or run `/preset init` / `/preset vibe init` for a
+batch. Note #97 **produces the accent-clause evidence but is deliberately
+forbidden from spending it**: amending `DESIGN.md` to match measured drift is the
+laundering move #92 and #96 both refused.
 
 ```
 gh issue list --state open --label ready-for-agent
@@ -661,6 +720,18 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #96 — binding on any driver measuring an animation, and on the two
+conformed values:**
+
+- **`base.css:92` kills EVERY animation under `prefers-reduced-motion: reduce`** (`animation: none !important` on `*`, `*::before`, `*::after`). Any driver reading `animationDuration` reads **`0s`** under that media state — for the conforming value *and* for the exceptions — so a duration criterion passes for the wrong reason and a "still 1.4s" criterion fails for a reason that is not a regression. Force `no-preference` via `page.emulateMedia` **and read the media state back**: forcing something is not the same as it having taken. `gui-96` fails loudly on that premise rather than measuring nothing.
+- **An "X is unchanged" criterion cannot be measured across the source edit in one run** — and the weaker form that fits in one run ("it computes 400 and its box is H") **passes against any H**. Drive the live element through **both** states in-run instead: force A, reflow, measure, force B, reflow, measure, restore. Non-vacuous in the red run and the green run alike. **Seventh instance** of the vacuity trap after #76, #82, #93, #94, #91, #95 — this is now a project reflex.
+- **`.model-menu-item`'s box does NOT move between weight 400 and 500.** Measured `33.000 × 173.000` device px at both, Δ `0.000` at 1.25 dpr. So the #94 line-box class is absent here **by measurement**. Do not cite #94 as a reason to fear a weight change on this row; cite this measurement.
+- **The two `subagent-pulse 1.4s` sites are ACCEPTED EXCEPTIONS, and `gui-96` reds if you "conform" them.** `agent-map.css` and `rails.css`. The `DESIGN.md` clause governs *transitions and entries*; an infinite ambient loop is neither. This has now been proposed and refuted twice, and criterion 4 is deliberately a **positive** assertion so the third attempt fails loudly.
+- **`gui-96.mjs` is the ONLY guard on all five criteria, in either direction.** Nothing in `tests/` pins a computed weight or an animation duration — jsdom sees neither. Deleting or renaming the driver silently removes every check on both values. Same exposure `gui-94` carries for the command-row font.
+- **One of `gui-96`'s pulse measurements is a PROBE, and the output says so.** `.subagent-row--running .subagent-row-dot` is a live element (the synthetic subagent is genuinely `running`); `.agent-map-halo` is a `<div>` created with that class, which resolves through the real cascade because the rule is a bare single-class selector — but it is **not** the agent map. Keep the disclosure if you copy the technique.
+- **`gui-52` is RED and it is environmental.** It fails on `menu has only 1 entries` / `no CLI-only row` because the CLI returned an **empty** model list — `gui-51`'s documented *"a count of 1 means the fetched list was EMPTY, not that the CLI offers one model"*. Reproduced identically on clean `main` with the work stashed before being called environmental. **Second standing driver red** alongside `gui-75`; both are premise failures, not regressions.
+- **`.claude/settings.json`'s working-tree modification contains a live `ANTHROPIC_API_KEY`.** The file is **tracked** and the committed version has no key, so `git commit -a` or `git add -A` from any session publishes a secret. Every leg must stage **by path**. Pre-existing and not any leg's to fix — flagged for the owner.
 
 **From #95 — binding on any GUI driver, and on the subagent drawer:**
 

@@ -288,13 +288,14 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#93 landed
-  and closed; #94 is open, unblocked and `ready-for-agent`**, with #86 and #91
-  still `ready-for-human` and the second blocked by the first; run the frontier
-  query anyway, it is the authority and this line has been wrong before. No expected driver failure anywhere in the set,
-  **23** assertion drivers plus the observational `gui-scope-zoom-pill` —
-  `gui-75` is focus-dependent and its batch reds are premise failures, green on
-  re-run in the last three batches, see `active-work.md`'s Known issues)
+- `.context/pick-up.md` — current frontier + landmines (currently: **#96 landed
+  and closed; #97 is the ONLY open `ready-for-agent` ticket, unblocked**, and
+  `ready-for-human` is empty, so #97 empties the queue; run the frontier query
+  anyway, it is the authority and this line has been wrong before. **27**
+  assertion drivers plus the observational `gui-scope-zoom-pill`, with **two
+  standing environmental reds** — `gui-75` (focus-dependent) and `gui-52` (the
+  CLI returning an empty model list); both are premise failures, not
+  regressions, and both were reproduced on clean `main` before being called so)
 - `scripts/spike-81-background-tasks.mjs` — the CLI-measurement harness (#81),
   the #27 pattern with the background path actually exercised. Drives SDK
   `query()` with `engine.ts`'s exact options, imports the app's **real**
@@ -366,11 +367,15 @@ tags: [context, overview]
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **As of 2026-08-04 the queue holds ONE
-  `ready-for-agent` ticket: #94** (`.command-row-btn` gets `font: inherit`
-  without shifting vertical metrics, `blocked_by: 0` verified). **#86** and
-  **#91** are both `ready-for-human` and neither is loop work, with #91 blocked
-  by #86.
+  #20 hold the earlier history. **#94** (`e1a2c31`), **#95** (`e9a3c28`) and
+  **#96** (`93ccd7d`, the two off-scale `DESIGN.md` values conformed — the
+  `.model-menu-item` weight rule deleted so the row inherits 400, and
+  `subagent-slide` 180ms → 200ms — with `gui-96` the **only** guard on either,
+  since jsdom sees neither a computed weight nor an animation duration) are
+  **closed**. **As of 2026-08-04 the queue holds ONE `ready-for-agent` ticket:
+  #97** (measure the mint budget — measurement only, no `src/` change,
+  `blocked_by: 0` verified). **`ready-for-human` is EMPTY**, so #97 empties the
+  queue and the next move after it is the owner's.
   Run the frontier query rather than trusting this line
 
 ## Conventions
