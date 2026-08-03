@@ -324,3 +324,4 @@ tags: [context, overview]
 - [[pick-up]] — frontier ticket + landmines
 - [[decisions]] — settled questions
 - [[happy-path]] — golden-path MVD
+- [[flows]] — traced flows, with entry points and key files
