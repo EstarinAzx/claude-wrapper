@@ -7,11 +7,52 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (chain 2, relay leg 3, `ticket-loop`) — **#96 landed as `93ccd7d`: the two off-scale values conform to `DESIGN.md`**_
-_At commit: `93ccd7d` on `main` (unpushed; `main` is **11 ahead of origin** before this leg's `.context` commit). Gate green: typecheck clean, **979 tests across 64 files** (unchanged — no vitest test was added, deliberately), `gui-96` PASS (exit 0), red-verified first_
-_Driver check: **targeted, four drivers.** `gui-96` (new, PASS) plus `gui-51`, `gui-93`, `gui-95` — the ones measuring the two surfaces this touched (model menu, subagent drawer), all exit 0. **`gui-52` exits 1 and is environmental, not a regression** — reproduced identically on clean `main` with the work stashed. Last full batch was 22 green + the environmental `gui-75` red at `3e24a53`._
+_Last updated: 2026-08-04 by Opus 5 (chain 2, relay leg 4, `ticket-loop`) — **#97 landed as `96fb20f`: the mint budget is measured, and the queue is now DRY**_
+_At commit: `96fb20f` on `main` (unpushed; `main` is **14 ahead of origin** including this leg's `.context` commit). Gate green: typecheck clean, **979 tests across 64 files** (unchanged — measurement-only ticket, no `src/` diff at all), harness **15/15 PASS at exit 0**_
+_Driver check: **none run, and that is the correct call.** #97 touched no `src/` file and no CSS, so no driver's subject moved; the new `scripts/spike-97-mint-budget.mjs` is its own instrument and self-calibrates in-run. **29** driver files now sit in `.claude/skills/run-desktop/` (27 assertion + `gui-78-probe`/`gui-79-probe` helpers and the observational `gui-scope-zoom-pill`). The two standing environmental reds (`gui-75`, `gui-52`) are untouched and unretested this leg._
 
 ## Current focus
+
+**Nothing. #97 landed (`96fb20f`) and the tracker is EMPTY — zero open issues in
+either label. The relay's designed stop fired and the next move is the owner's.**
+
+**#97 measured the mint budget and deliberately spent none of it.** `DESIGN.md:7`
+governs — *"Mint accent ≤10% of surface, spent only on: logo mark, assistant
+avatar, send button, list markers, typing dots"* — and had never had matching
+evidence. #92 offered a count of ~45 `--mint` **reference sites**; its own
+Pressure agent refused the number, because a rule painting a 2px marker and a
+rule filling a button are one reference each.
+
+**Both facts come from one mechanism: a token differential.** A declaration
+resolves to an accent token **iff its computed value changes when that token
+changes** — the clause's own notion of "spent on" rather than a proxy, catching
+`var(--mint)`, `var(--color-mint)`, alias chains and `color-mix()` with no colour
+parsing. For pixels, `A = a·M + (1-a)·G` and `B = a·N + (1-a)·G`, so
+`A - B = a·(M - N)` and **the ground cancels exactly**. Two consequences worth
+carrying: the `--disable-gpu`/acrylic trap is neutralised *by construction* (the
+flattened ground is `G`, and `G` cancels), and no tolerance had to be invented —
+a hue cone wide enough to catch a 10%-alpha wash would also swallow the neutrals,
+which are deliberately tinted toward the accent hue.
+
+**Verdict, and it splits:**
+
+- **"spent only on [5 sites]" — VIOLATED.** 52 declarations resolve to an accent
+  token; **38 paint surface in this engine, 8 listed and 30 not.** The remainder
+  is 4 token definitions, 4 `--color-mint-ink` glyph colours, and **6
+  `color-mix()` fallbacks that never paint here**.
+- **"≤10% of surface" — SATISFIED under both readings.** Peak **1.02% ink /
+  1.08% coverage** across four palettes × two states, ~10× under budget.
+
+**Two numbers ship because the clause does not say which it means.** A 10%-alpha
+wash is 100% *coverage* and 10% *ink* of the area it covers; picking one silently
+would be the laundering this ticket exists to avoid.
+
+**`DESIGN.md` was NOT amended and no `src/` file was touched.** The call stays the
+owner's, on #92 — producing the evidence does not license spending it.
+
+See [[2026-08-04-the-ground-cancels-in-a-token-differential]].
+
+## Previously (2026-08-04) — #96, the two off-scale values
 
 **#96 landed (`93ccd7d`). The two authored values that sat off the scales
 `DESIGN.md` names now conform, and the two accepted exceptions are pinned in
@@ -592,8 +633,9 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `93ccd7d` + the `.context` commits, **unpushed**. No open branches — `ticket/96-conform-two-off-scale-values` was squash-merged and deleted.
-- **Queue (`ready-for-agent`): ONE, unblocked** — **#97** (measure the mint budget, **measurement only, no `src/` change**, medium). `blocked_by: 0` verified after #96 closed. **The `ready-for-human` queue is still EMPTY.** After #97 the queue is dry and the next move is the owner's.
+- **In flight:** nothing. `main` = `96fb20f` + this `.context` commit, **unpushed** (14 ahead of origin). No open branches — `ticket/97-measure-mint-budget` was squash-merged and deleted.
+- **Queue: EMPTY, and so is the whole tracker.** `gh issue list --state open` returns **zero** issues in either label — not just `ready-for-agent` dry, but nothing open at all. Verified after #97 closed, not predicted. **The relay chain stopped here rather than spawning a leg 5; an empty queue is its designed stop.** The next move is the owner's: file new work, or run `/preset init` / `/preset vibe init` for a batch.
+- **#97 is CLOSED and landed** (`96fb20f`) — `scripts/spike-97-mint-budget.mjs` + `scripts/spike-97-findings.json`, the **sixth** spike harness and the first that drives the WINDOW rather than the CLI. **No `src/` diff and `DESIGN.md` untouched**, which is AC5 and the whole point. See [[2026-08-04-the-ground-cancels-in-a-token-differential]]. **The reusable part is the instrument:** override the token and diff — the ground cancels, so the acrylic/`--disable-gpu` question cannot move the number and no tolerance has to be invented. **The other reusable part is a bug:** `rule.style` enumerates a var-shorthand's longhands with EMPTY values, so a `value.includes('var(')` filter silently drops every `background:` declaration — it reported 21 declarations, missed four of the five NAMED sites, and read green.
 - **#96 is CLOSED and landed** (`93ccd7d`) — `.model-menu-item`'s `font-weight: 500` rule deleted (row inherits 400) and `subagent-slide` 180ms → 200ms, plus `gui-96.mjs`. **No vitest test, deliberately** — jsdom can see neither value, so the driver is the only guard in either direction. See [[2026-08-04-an-unchanged-box-is-measured-in-run-not-across-the-edit]]. **The reusable part is the instrument:** an "unchanged box" criterion is measured by driving the live element through **both** states in one run, never across the source edit — the weaker form passes against any value.
 - **`.claude/settings.json` carries a working-tree modification holding a live `ANTHROPIC_API_KEY`.** Pre-existing, untouched by this leg and by the previous ones, and **never staged** — the committed version has no key. It is tracked, so a `git commit -a` from any session would publish it. Flagged for the owner; not this leg's to fix.
 - **#95 is CLOSED and landed** (`e9a3c28`) — `tabIndex={-1}` + `aria-hidden="true"` on `.subagent-drawer-backdrop`, one vitest guard, and `gui-95.mjs`. See [[2026-08-04-the-subagent-drawer-is-drivable-without-a-live-turn]]. **The reusable part is the driver, not the fix:** the subagent drawer is reachable in a real window with no live turn, via a `chat:event` push from main.
@@ -606,21 +648,26 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## Pick up here
 
-**The queue is ONE unblocked `ready-for-agent` ticket** — **#97**, measure the
-mint budget. `ticket-loop` takes it. It is **measurement only, no `src/`
-change**, and it will need a **sixth spike harness** in `scripts/` (copy #90 for
-its scrubbing — basename, never an absolute temp path). Run the frontier query
-anyway before believing this line; it goes stale the moment anything is filed or
-closed, and that is this project's standing lesson (a leg once wrote that closing
-#70 would empty the queue and was wrong, because #71 had been unblocked the whole
-time).
+**The tracker is EMPTY — zero open issues, in either label.** Not "the agent
+queue is dry": nothing is open at all. Verified by running the frontier query
+after #97 closed rather than by trusting the prediction, which is this project's
+standing lesson (a leg once wrote that closing #70 would empty the queue and was
+wrong, because #71 had been unblocked all along). **Run it again anyway** — it
+goes stale the moment anything is filed.
 
-**#97 closes the queue.** After it there is no `ready-for-agent` work and no
-`ready-for-human` work, so the relay's designed stop fires and the next move is
-the owner's — file new work, or run `/preset init` / `/preset vibe init` for a
-batch. Note #97 **produces the accent-clause evidence but is deliberately
-forbidden from spending it**: amending `DESIGN.md` to match measured drift is the
-laundering move #92 and #96 both refused.
+**The next move is the owner's.** File new work, or run `/preset init` /
+`/preset vibe init` for a batch. `## Deferred` and `## Open questions` below are
+the standing menus.
+
+**The one thing #97 leaves on the table is a decision, not a task.** The accent
+clause now has its evidence: the **proportion** half holds with ~10× headroom,
+and the **enumeration** half does not hold (30 unlisted surface declarations, 2
+of them on screen in the measured states). So the live question is whether the
+*enumeration* should change — and that is exactly the taste call #92 parked.
+**#97 was forbidden from spending its own evidence and did not**: amending
+`DESIGN.md` to match measured drift is the laundering move #92 and #96 both
+refused, and having the numbers does not make it less so. A leg that wants to act
+on this needs a grant.
 
 ```
 gh issue list --state open --label ready-for-agent
@@ -720,6 +767,22 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #97 — binding on anything that enumerates CSS rules, measures rendered
+pixels, or drives the window:**
+
+- **`rule.style` enumerates a var-shorthand's longhands with EMPTY values, so a `value.includes('var(')` filter silently drops every shorthand.** Chromium has no computed value for `background`; with a `var()` present the longhands hold a pending substitution and serialise as `''`. This dropped **every `background:` declaration in the app** — which is how the logo mark, avatar, send button, welcome mark and typing dots are all painted — reporting 21 declarations, missing **four of the five NAMED sites**, and reading green. **Parse `rule.style.cssText`**, splitting on top-level `;` only (a `color-mix()` value carries commas and parens; a custom property's value carries a colon). Same class as #92's reference count: an instrument that answers a *nearby* question convincingly.
+- **THREE different pixels live in a window driver and conflating two of them fails on a correct capture.** The window is sized in **DIP** (`setContentBounds`), `capturePage()` returns **physical** px (DIP × the display's `scaleFactor`), and `window.innerWidth` is **CSS** px (DIP ÷ the app's **zoom**, which is **1.25** here and which Chromium persists per origin in `userData`, #78). Asserting `innerWidth` against the DIP size reds a perfectly-captured window. State the premise as the trap it exists for: **the capture must equal the window content in device pixels, exactly.**
+- **`nativeImage.toBitmap()` is BGRA, not RGBA** — and nothing tells you if you read it wrong, because a mis-ordered projection still returns non-zero. The guard is a **calibration target**: a known solid-accent element measured inset, which must read `a = 1.0000`. That single number proves channel order, compositing model and capture scale **simultaneously**.
+- **In a token differential the ground cancels exactly**, so the `--disable-gpu`-flattens-acrylic question cannot move the number. `A = a·M + (1-a)·G`, `B = a·N + (1-a)·G`, `A - B = a·(M - N)`. Do not "fix" this by trying to capture with the GPU on; there is nothing to fix.
+- **Overriding `--color-mint-wash` MUST keep its `0.1` alpha.** Override it to an opaque colour and `a` differs between A and B, which breaks the recovery relation silently and inflates that token's reading ~10×. The alpha is fixed at 0.1 in all four palettes by `themes.css`, so the override is `oklch(0 0 0 / 0.1)`.
+- **The build emits a `color-mix()` FALLBACK PAIR, and 6 declarations never paint here.** Lightning CSS writes a plain `background: var(--mint)` fallback plus the real `color-mix(…)` behind `@media (color: color-mix(in lab, red, red))`. Chromium takes the guarded branch — but in any engine without `color-mix` the fallback paints the accent at **FULL opacity** where the author asked for 6%. Count effective declarations, not authored ones, and do not "clean up" the fallback.
+- **`.backend-pill--wisped` is the single largest UNLISTED accent spend on screen** (1483 device px, more than the assistant avatar's 958) **and it is backend-mode-dependent** — on a native-backend machine the selector does not match and the spend is absent. Any accent number measured on this machine carries it; any number measured natively will not.
+- **Cross-frame subtraction is invalid the moment the thing you inject reflows anything.** The typing-dot probe subtracted the workspace frame's ink from the probe frame's and came out **negative**, because appending it moved the scroller. Measure the probe's **own region** instead. `position: fixed` is what makes an injected element safe to compare across frames.
+- **A spike that drives the window must put back what it borrows.** Window bounds are persisted by #79 and the palette by the `theme` key, so a run that ends at 900×600 on Slate silently moves what the next GUI driver measures — `gui-51` compares in **device pixels**. Capture both at start, restore both before close.
+- **`::marker` paints OUTSIDE its originating element's border box** (the marker box sits in the list's padding), so per-element attribution by `getBoundingClientRect` misses ordered-list markers. That is a limit of the *breakdown*, not of the totals, which are whole-frame sums — say which is which.
+- **The accent's share of the window is window-size dependent**, because the accent sites are mostly fixed-size. Workspace ink went **0.38% → 0.88%** from 1440×900 to 900×600. A single-size measurement cannot distinguish a restrained app from a generous viewport; measure a second size or state the limit.
+- **A ticket's stated baseline was stale for the THIRD consecutive ticket** — #97 said 953/63, actual **979/64**. Re-measure, always.
 
 **From #96 — binding on any driver measuring an animation, and on the two
 conformed values:**

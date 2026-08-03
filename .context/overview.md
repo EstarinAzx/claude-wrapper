@@ -288,14 +288,15 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#96 landed
-  and closed; #97 is the ONLY open `ready-for-agent` ticket, unblocked**, and
-  `ready-for-human` is empty, so #97 empties the queue; run the frontier query
-  anyway, it is the authority and this line has been wrong before. **27**
-  assertion drivers plus the observational `gui-scope-zoom-pill`, with **two
-  standing environmental reds** — `gui-75` (focus-dependent) and `gui-52` (the
-  CLI returning an empty model list); both are premise failures, not
-  regressions, and both were reproduced on clean `main` before being called so)
+- `.context/pick-up.md` — current frontier + landmines (currently: **#97 landed
+  and closed, and the TRACKER IS EMPTY — zero open issues in either label**, so
+  the relay chain hit its designed stop and the next move is the owner's; run the
+  frontier query anyway, it is the authority and this line has been wrong before.
+  **29** driver files — 27 assertion drivers, two `gui-7x-probe` helpers and the
+  observational `gui-scope-zoom-pill` — with **two standing environmental reds**,
+  `gui-75` (focus-dependent) and `gui-52` (the CLI returning an empty model
+  list); both are premise failures, not regressions, and both were reproduced on
+  clean `main` before being called so)
 - `scripts/spike-81-background-tasks.mjs` — the CLI-measurement harness (#81),
   the #27 pattern with the background path actually exercised. Drives SDK
   `query()` with `engine.ts`'s exact options, imports the app's **real**
@@ -308,6 +309,16 @@ tags: [context, overview]
   probes SDK candidates by **calling** them against a real session rather than
   matching their names (its own first run got the headline answer wrong that
   way). Re-run it after any CLI upgrade that changes `claude agents --json`
+- `scripts/spike-97-mint-budget.mjs` — the sixth harness (#97) and **the odd one
+  out**: it drives the built WINDOW through playwright-core instead of the CLI,
+  so it imports no app module and needs `npm run build` first. **Copy it for
+  measuring anything rendered.** Its mechanism is a **token differential** —
+  override a design token and diff the frame, so `A - B = a·(M - N)` and the
+  ground cancels exactly, which is what makes it immune to `--disable-gpu`
+  flattening acrylic and what removes any need for a colour tolerance. It
+  self-calibrates in-run (a known solid-accent element must read `a = 1.0000`, a
+  null control must read 0, and a band of known area must be recovered exactly
+  while tripping the fail branch), so a zero from it means something
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -372,10 +383,16 @@ tags: [context, overview]
   `.model-menu-item` weight rule deleted so the row inherits 400, and
   `subagent-slide` 180ms → 200ms — with `gui-96` the **only** guard on either,
   since jsdom sees neither a computed weight nor an animation duration) are
-  **closed**. **As of 2026-08-04 the queue holds ONE `ready-for-agent` ticket:
-  #97** (measure the mint budget — measurement only, no `src/` change,
-  `blocked_by: 0` verified). **`ready-for-human` is EMPTY**, so #97 empties the
-  queue and the next move after it is the owner's.
+  **closed**. **#97** (`96fb20f`, the mint budget measured by a **token
+  differential** — a declaration spends the accent iff its computed value moves
+  when the token moves, and a pixel's accent alpha is recovered from `A - B =
+  a·(M - N)`, in which the ground cancels; **verdict: the enumeration half of
+  `DESIGN.md:7` is VIOLATED at 30 unlisted surface declarations while the ≤10%
+  half is SATISFIED at a peak 1.02% ink / 1.08% coverage** — measurement only, no
+  `src/` diff, and `DESIGN.md` deliberately NOT amended, so the call stays the
+  owner's on #92) is **closed**. **As of 2026-08-04 the TRACKER IS EMPTY — zero
+  open issues in either label**, so the relay chain hit its designed stop and the
+  next move is the owner's.
   Run the frontier query rather than trusting this line
 
 ## Conventions
