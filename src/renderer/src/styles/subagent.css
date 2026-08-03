@@ -121,6 +121,17 @@
   border-radius: 5px;
 }
 
+/* #93 — hairline only: `shared.css` gives this control a `var(--tint-1)` hover
+   fill, so the shared focus wash would replace it.
+   This is the one control in #93's set `gui-93.mjs` cannot Tab to — reaching it
+   needs a real turn that spawns a subagent — so the driver checks it STATICALLY
+   against the built stylesheet and labels it as the weaker check. Renaming this
+   selector or moving the rule silently drops it to no coverage at all. */
+.subagent-drawer-close:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
 .subagent-drawer-empty {
   padding: 24px 16px;
   color: var(--text-faint);

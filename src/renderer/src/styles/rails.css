@@ -419,6 +419,17 @@
   opacity: 1;
 }
 
+/* #93 — hairline only, on the BASE class so `--armed` and `--cancel` are
+   covered by the one rule (both ride `.session-delete` in the markup). It
+   carries a `var(--tint-2)` hover fill, and the armed state is the only red in
+   the rail; a focus wash would sit on top of both. The reveal is `opacity`, not
+   `visibility`, so this control is a real tab stop even while invisible — which
+   is why it needed a ring at all. */
+.session-delete:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
 .session-delete:hover {
   background: var(--tint-2);
   color: var(--text);

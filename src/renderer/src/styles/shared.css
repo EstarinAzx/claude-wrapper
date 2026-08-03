@@ -46,7 +46,13 @@
 .command-row-btn:focus-visible,
 .sidebar-empty-retry:focus-visible,
 .switch-refusal-retry:focus-visible,
-.queued-note-cancel:focus-visible {
+.queued-note-cancel:focus-visible,
+/* #93 — the two genuinely transparent menu rows. They already join the hover
+   wash group below, so this is where they belong: the wash is their ground, not
+   a fill it would replace. Every other control this ticket covered carries an
+   authored fill in some state and takes the hairline ALONE instead. */
+.model-menu-item:focus-visible,
+.command-option:focus-visible {
   outline: none;
   background: var(--tint-3);
   box-shadow: inset 0 0 0 1px var(--tint-6);

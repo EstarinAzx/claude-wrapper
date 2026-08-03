@@ -192,3 +192,11 @@
 .pick-folder-btn:hover {
   background: var(--mint-press);
 }
+
+/* #93 — hairline only; this carries `var(--mint)` like `.send-btn`, and it is
+   the only control on the Welcome screen, so a wash here would be the first
+   thing a keyboard user ever sees the app do to its own accent. */
+.pick-folder-btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}

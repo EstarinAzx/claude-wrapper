@@ -224,3 +224,23 @@
   background: oklch(0.55 0.16 25 / 0.9);
   color: var(--text);
 }
+
+/* #93 — keyboard focus for this file's controls, which authored NONE before.
+   Hairline only, never the shared wash: every selector here either carries a
+   fill in some state (`--wisped` is mint, `--bypass` is the danger fill,
+   `--on` is a mint tint, `.win-btn-close` goes red on hover) or is an icon
+   button where a wash would read as a second hover state. Adding
+   `background: var(--tint-3)` here is exactly the regression this ticket exists
+   to avoid — it would repaint the accent off the two pills that carry the app's
+   loudest state. `.win-btn-close` inherits this through `.win-btn`.
+   This adds no control and no affordance: the titlebar's control count is
+   unchanged, which is a live constraint the grant did not lift. */
+.backend-pill:focus-visible,
+.perm-pill:focus-visible,
+.model-pill:focus-visible,
+.agents-toggle:focus-visible,
+.sidebar-toggle:focus-visible,
+.win-btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}

@@ -198,6 +198,17 @@
   transform: scale(0.92);
 }
 
+/* #93 — hairline only. The send button is the app's primary action and carries
+   `var(--mint)`; the shared focus group would paint `var(--tint-3)` over it, so
+   the one control the user is most likely to reach by keyboard would lose its
+   accent at the moment it is selected. `.attach-btn` is transparent but is an
+   icon button, where a wash is indistinguishable from hover. */
+.send-btn:focus-visible,
+.attach-btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
 .footer-line {
   font-size: var(--fs-micro);
   color: var(--text-faint);
