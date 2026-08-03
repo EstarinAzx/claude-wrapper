@@ -1,0 +1,572 @@
+{
+  "spike": 90,
+  "question": "Are the CLI's background sessions reachable from this app at all?",
+  "measuredAt": "2026-08-03T04:57:44.025Z",
+  "runDirName": "spike-90-ftWRuY",
+  "runDirParent": "OS temp dir (os.tmpdir())",
+  "env": {
+    "backendMode": "wisped",
+    "hostCliUsed": true,
+    "cliVersion": "2.1.220 (Claude Code)",
+    "sdkVersion": "0.3.220",
+    "platform": "win32"
+  },
+  "scrubbing": "Shapes, counts, vocabularies, booleans and timings only. No cwd, name, sessionId, id, pid or socket path from any row, and no value at all from daemon/roster.json, is recorded here.",
+  "q1_sdk": {
+    "exportCount": 29,
+    "namesMatchingListingHint": [
+      "getSubagentMessages",
+      "listSubagents"
+    ],
+    "sessionApi": [
+      "deleteSession",
+      "forkSession",
+      "getSessionInfo",
+      "getSessionMessages",
+      "getSubagentMessages",
+      "importSessionToStore",
+      "listSessions",
+      "listSubagents",
+      "renameSession",
+      "tagSession"
+    ],
+    "exercisedAgainstRealSession": true,
+    "probes": [
+      {
+        "name": "getSubagentMessages",
+        "callable": true,
+        "noArgReturned": "array[0]",
+        "noArgRowCount": 0,
+        "exercisedRowCount": 5,
+        "exercisedReturned": "array",
+        "exercisedRowFields": [
+          "message",
+          "parent_agent_id",
+          "parent_tool_use_id",
+          "session_id",
+          "timestamp",
+          "type",
+          "uuid"
+        ],
+        "exercisedLivenessFields": [],
+        "vacuous": false,
+        "verdict": "session-scoped listing, exercised on 5 real rows, carrying no liveness field"
+      },
+      {
+        "name": "listSubagents",
+        "callable": true,
+        "noArgReturned": "array[0]",
+        "noArgRowCount": 0,
+        "exercisedRowCount": 1,
+        "exercisedReturned": "array",
+        "exercisedRowFields": [
+          "string"
+        ],
+        "exercisedLivenessFields": [],
+        "vacuous": false,
+        "verdict": "session-scoped listing, exercised on 1 real rows, carrying no liveness field"
+      }
+    ],
+    "listSessionsInfoFields": [
+      "createdAt",
+      "customTitle",
+      "cwd",
+      "fileSize",
+      "firstPrompt",
+      "gitBranch",
+      "lastModified",
+      "sessionId",
+      "summary",
+      "tag"
+    ],
+    "listSessionsHasLivenessField": false,
+    "answer": "NO — every name-level candidate is a SUBAGENT helper scoped to one session, and listSessions() (exercised on the real store) returns stored transcripts carrying no state, kind, pid or attach path. The SDK has no background-session listing.",
+    "listSessionsRowCount": 819,
+    "falsePositives": [
+      {
+        "name": "getSubagentMessages",
+        "why": "session-scoped listing, exercised on 5 real rows, carrying no liveness field",
+        "vacuous": false
+      },
+      {
+        "name": "listSubagents",
+        "why": "session-scoped listing, exercised on 1 real rows, carrying no liveness field",
+        "vacuous": false
+      }
+    ]
+  },
+  "q2_subprocess": {
+    "binary": "host claude on PATH",
+    "requiresChildProcess": true,
+    "helpExit": 0,
+    "jsonExit": 0,
+    "jsonAllExit": 0,
+    "jsonParsed": true,
+    "jsonAllParsed": true,
+    "jsonParseFailure": null,
+    "needsTty": false,
+    "answer": "YES"
+  },
+  "q3_payload": {
+    "active": {
+      "total": 6,
+      "excludingSelf": 5,
+      "byKind": {
+        "background": {
+          "rowCount": 5,
+          "fields": {
+            "cwd": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 5,
+              "of": 5
+            },
+            "id": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 5,
+              "of": 5
+            },
+            "kind": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 5,
+              "of": 5
+            },
+            "name": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 5,
+              "of": 5
+            },
+            "pid": {
+              "types": [
+                "absent",
+                "number"
+              ],
+              "presentOn": 1,
+              "of": 5
+            },
+            "sessionId": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 5,
+              "of": 5
+            },
+            "startedAt": {
+              "types": [
+                "number"
+              ],
+              "presentOn": 5,
+              "of": 5
+            },
+            "state": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 5,
+              "of": 5
+            },
+            "status": {
+              "types": [
+                "absent",
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 5
+            }
+          }
+        },
+        "interactive": {
+          "rowCount": 1,
+          "fields": {
+            "cwd": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "kind": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "name": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "pid": {
+              "types": [
+                "number"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "sessionId": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "startedAt": {
+              "types": [
+                "number"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "status": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            }
+          }
+        }
+      },
+      "kindVocabulary": [
+        "background",
+        "interactive"
+      ],
+      "stateVocabulary": [
+        "<absent>",
+        "blocked",
+        "working"
+      ],
+      "statusVocabulary": [
+        "<absent>",
+        "busy",
+        "idle"
+      ],
+      "identity": {
+        "everyRowHasId": false,
+        "rowsWithId": 5,
+        "everyRowHasSessionId": true,
+        "idIsSessionIdPrefix": true,
+        "idLengths": [
+          8
+        ]
+      },
+      "liveness": {
+        "rowsWithPid": 2,
+        "rowsWithStatus": 2,
+        "pidAndStatusCoincide": true,
+        "rowsWithState": 5,
+        "stateIsBackgroundOnly": true,
+        "statesOnRowsWithPid": [
+          "<absent>",
+          "working"
+        ]
+      }
+    },
+    "all": {
+      "total": 18,
+      "excludingSelf": 17,
+      "byKind": {
+        "background": {
+          "rowCount": 17,
+          "fields": {
+            "cwd": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 17,
+              "of": 17
+            },
+            "id": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 17,
+              "of": 17
+            },
+            "kind": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 17,
+              "of": 17
+            },
+            "name": {
+              "types": [
+                "absent",
+                "string"
+              ],
+              "presentOn": 15,
+              "of": 17
+            },
+            "pid": {
+              "types": [
+                "absent",
+                "number"
+              ],
+              "presentOn": 1,
+              "of": 17
+            },
+            "sessionId": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 17,
+              "of": 17
+            },
+            "startedAt": {
+              "types": [
+                "number"
+              ],
+              "presentOn": 17,
+              "of": 17
+            },
+            "state": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 17,
+              "of": 17
+            },
+            "status": {
+              "types": [
+                "absent",
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 17
+            }
+          }
+        },
+        "interactive": {
+          "rowCount": 1,
+          "fields": {
+            "cwd": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "kind": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "name": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "pid": {
+              "types": [
+                "number"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "sessionId": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "startedAt": {
+              "types": [
+                "number"
+              ],
+              "presentOn": 1,
+              "of": 1
+            },
+            "status": {
+              "types": [
+                "string"
+              ],
+              "presentOn": 1,
+              "of": 1
+            }
+          }
+        }
+      },
+      "kindVocabulary": [
+        "background",
+        "interactive"
+      ],
+      "stateVocabulary": [
+        "<absent>",
+        "blocked",
+        "done",
+        "failed",
+        "working"
+      ],
+      "statusVocabulary": [
+        "<absent>",
+        "busy",
+        "idle"
+      ],
+      "identity": {
+        "everyRowHasId": false,
+        "rowsWithId": 17,
+        "everyRowHasSessionId": true,
+        "idIsSessionIdPrefix": true,
+        "idLengths": [
+          8
+        ]
+      },
+      "liveness": {
+        "rowsWithPid": 2,
+        "rowsWithStatus": 2,
+        "pidAndStatusCoincide": true,
+        "rowsWithState": 17,
+        "stateIsBackgroundOnly": true,
+        "statesOnRowsWithPid": [
+          "<absent>",
+          "working"
+        ]
+      },
+      "kindStateCounts": {
+        "background/failed": 1,
+        "background/done": 11,
+        "background/blocked": 4,
+        "interactive/<absent>": 1,
+        "background/working": 1
+      }
+    },
+    "vocabularyIsNotClosed": "These are the values PRESENT ON THIS DISK AT THIS MOMENT. A value is only measured-absent if its path was exercised, and no path here was forced. Treat the set as open and render the raw string (#83 did the same for task_type)."
+  },
+  "q4_channel": {
+    "liveFlagInHelp": false,
+    "helpFlags": [
+      "--add-dir",
+      "--agent",
+      "--all",
+      "--allow-dangerously-skip-permissions",
+      "--cwd",
+      "--dangerously-skip-permissions",
+      "--effort",
+      "--help",
+      "--json",
+      "--mcp-config",
+      "--model",
+      "--permission-mode",
+      "--plugin-dir",
+      "--setting-sources",
+      "--settings",
+      "--strict-mcp-config"
+    ],
+    "onDiskStores": {
+      "sessionsDirExists": true,
+      "sessionsFileCount": 2,
+      "sessionsFileFields": [
+        "cwd",
+        "entrypoint",
+        "jobId",
+        "kind",
+        "name",
+        "nameSource",
+        "peerProtocol",
+        "pid",
+        "procStart",
+        "sessionId",
+        "startedAt",
+        "status",
+        "statusUpdatedAt",
+        "updatedAt",
+        "version"
+      ],
+      "sessionsCoverage": {
+        "storeCount": 2,
+        "listingCount": 6,
+        "storeCoversListing": false,
+        "listingCoversStore": true,
+        "inListingNotInStore": 4
+      },
+      "rosterExists": true,
+      "rosterWorkerCount": 1,
+      "rosterCoverage": {
+        "storeCount": 1,
+        "listingCount": 6,
+        "storeCoversListing": false,
+        "listingCoversStore": true,
+        "inListingNotInStore": 5
+      },
+      "rosterIsSensitive": "roster.json carries rendezvousSock/ptySock, rvAuth/ptyAuth and dispatch.env — attach credentials. Never log, never commit, never surface. (#88 said the same of McpServerStatus.config.env; this is stronger.)"
+    },
+    "answer": "POLL ONLY — no live flag, and no single on-disk store reproduces the listing (the CLI joins several). A watch on those stores is a CHANGE SIGNAL at best, not a substitute for the call."
+  },
+  "q5_cost": {
+    "json": {
+      "reps": 5,
+      "minMs": 855,
+      "medianMs": 951,
+      "maxMs": 958
+    },
+    "jsonAll": {
+      "reps": 5,
+      "minMs": 892,
+      "medianMs": 911,
+      "maxMs": 1001
+    },
+    "note": "Each call is a full CLI process start. There is no warm path — the cost is paid per poll, not per session.",
+    "pollBudget": {
+      "at5s": "19.0% of a core, steady",
+      "at30s": "3.17% of a core, steady",
+      "stalenessWindowIsThePollInterval": true
+    }
+  },
+  "q6_scope": {
+    "parsed": true,
+    "unscopedTotal": 6,
+    "scopedTotal": 3,
+    "scopedExcludingSelf": 2,
+    "everyScopedRowMatchesCwd": true,
+    "unscopedRowsMatchingCwd": 3,
+    "scopedEqualsFilteredUnscoped": true,
+    "scopedKinds": [
+      "background",
+      "interactive"
+    ],
+    "scopedIncludesInteractive": true,
+    "scopedIncludesSelf": true,
+    "scopedRowsUnderButNotAtCwd": 0,
+    "prefixMatchingExercised": false,
+    "prefixMatchingNote": "If prefixMatchingExercised is false, whether --cwd matches by prefix or exactly is UNMEASURED here — no session was running below this directory. Do not read scopedRowsUnderButNotAtCwd: 0 as \"exact-match only\".",
+    "answer": "YES for directory, NO for kind — --cwd filters by directory across BOTH kinds and still includes interactive rows and the caller itself. A background-only list needs a second filter on kind."
+  },
+  "trap_instrumentSeesItself": {
+    "measuringSessionIdKnown": true,
+    "measuringPidKnown": true,
+    "selfPresentInActiveListing": true,
+    "selfRowCount": 1,
+    "selfRowKind": "background",
+    "selfRowState": "working",
+    "selfRowStatus": "busy",
+    "matchedBy": "CLAUDE_CODE_SESSION_ID",
+    "note": "Recorded, never filtered. Every count in payload/scope is given raw AND self-excluded."
+  },
+  "trap_appSeesItself": {
+    "backendMode": "wisped",
+    "ranTurn": true,
+    "turnFailed": false,
+    "sawOwnSessionInListing": true,
+    "ownRowKind": "interactive",
+    "ownRowState": null,
+    "ownRowStatus": null,
+    "listingSizeDuringTurn": 7,
+    "note": "The app registers, as kind \"interactive\". A background-only list drops it for free; a list mirroring the CLI's agent view (which shows both kinds) would show the app's own conversation. cwd cannot exclude it — the app lists the workspace it is open on, which is where its own session lives."
+  }
+}
