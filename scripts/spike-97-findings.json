@@ -1,0 +1,2429 @@
+{
+  "spike": 97,
+  "question": "Does DESIGN.md's accent clause hold — is mint spent only on the five named sites, and is it <=10% of surface?",
+  "measuredAt": "2026-08-03T23:43:18.865Z",
+  "runDirName": "spike-97-V1wfiq",
+  "runDirParent": "OS temp dir (os.tmpdir())",
+  "scrubbing": "Selectors, CSS properties, repo-relative source paths, design-token colours, pixel counts and ratios only. No cwd, no absolute temp path, no session id, no user path.",
+  "env": {
+    "platform": "win32",
+    "electronArgs": [
+      "--no-sandbox",
+      "--disable-gpu"
+    ],
+    "devicePixelRatio": 1.25,
+    "viewportCssPx": {
+      "w": 1152,
+      "h": 720,
+      "dpr": 1.25
+    },
+    "reducedMotionForced": true,
+    "backdrop": "acrylic is FLATTENED by --disable-gpu. Stated rather than corrected: the ground cancels out of every differential, so it cannot move a number here."
+  },
+  "instrument": {
+    "method": "token differential",
+    "definition": "A declaration resolves to an accent token iff its computed value changes when that token changes. A pixel carries accent alpha a iff A - B = a * (M - N), recovered by projection onto M - N.",
+    "whyNotAGrep": "The long name and the short alias are not interchangeable inside a nested [data-theme] opt-in, and color-mix() sites carry no literal token name in their computed value. A grep both misses sites and mis-scopes others; the engine does not.",
+    "whyNotAHueClassifier": "The neutrals are deliberately tinted toward the accent hue (h+30 in Frost), so a hue cone wide enough to catch a 10% wash also catches the neutrals. The differential cancels the ground exactly instead of tolerating it.",
+    "tolerance": {
+      "gate": 0.01,
+      "gateRationale": "byte quantisation gives ~1/|M-N| ~= 0.003 of alpha per pixel; the gate sits ~3x above it",
+      "measuredNoiseFloor": {
+        "inkFraction": 0,
+        "coverageFraction": 0
+      },
+      "calibrationTargets": [
+        {
+          "theme": "frost",
+          "state": "welcome",
+          "selector": ".welcome-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        {
+          "theme": "ember",
+          "state": "welcome",
+          "selector": ".welcome-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        {
+          "theme": "moss",
+          "state": "welcome",
+          "selector": ".welcome-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        {
+          "theme": "slate",
+          "state": "welcome",
+          "selector": ".welcome-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        {
+          "theme": "frost",
+          "state": "workspace-session",
+          "selector": ".logo-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        {
+          "theme": "ember",
+          "state": "workspace-session",
+          "selector": ".logo-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        {
+          "theme": "moss",
+          "state": "workspace-session",
+          "selector": ".logo-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        {
+          "theme": "slate",
+          "state": "workspace-session",
+          "selector": ".logo-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        }
+      ],
+      "nonVacuitySelfTest": {
+        "bandCssPx": {
+          "w": 1152,
+          "h": 86
+        },
+        "bandExpectedDevicePx": 154080,
+        "bandMeasuredInkDevicePx": 154080,
+        "bandMeanAlpha": 1,
+        "relativeError": 0,
+        "frameInkFractionWithBand": 0.12911487754198417,
+        "captureDevicePx": {
+          "w": 1440,
+          "h": 900
+        },
+        "what": "A fixed-position band of known area painted with the real token. Proves the whole-frame sum recovers a known area to within 1%, and that a spend over budget trips the VIOLATED branch — so a SATISFIED result above is distinguishable from a classifier that finds nothing."
+      }
+    },
+    "tokensOverridden": [
+      {
+        "token": "--color-mint",
+        "to": "oklch(0 0 0)",
+        "countedAsSurface": true
+      },
+      {
+        "token": "--color-mint-press",
+        "to": "oklch(0 0 0)",
+        "countedAsSurface": true
+      },
+      {
+        "token": "--color-mint-wash",
+        "to": "oklch(0 0 0 / 0.1)",
+        "countedAsSurface": true
+      },
+      {
+        "token": "--color-mint-ink",
+        "to": "oklch(0 0 0)",
+        "countedAsSurface": false
+      }
+    ],
+    "inkVsCoverage": "ink = sum of per-pixel accent alpha / viewport pixels. coverage = pixels with alpha above the gate / viewport pixels."
+  },
+  "fact1_spendList": {
+    "declarationCount": 52,
+    "tokenDefinitionCount": 4,
+    "inkOnlyCount": 4,
+    "surfacePaintingCount": 44,
+    "effectiveSurfacePaintingCount": 38,
+    "colorMixFallbacksNeverPaintingHere": 6,
+    "sourceAttributionRate": 0.942,
+    "byToken": {
+      "--color-mint": 39,
+      "--color-mint-press": 5,
+      "--color-mint-wash": 3,
+      "--color-mint-ink": 5
+    },
+    "listedCount": 8,
+    "unlistedCount": 30,
+    "bySite": {
+      "logo mark": [
+        ".logo-mark { background }",
+        ".welcome-mark { background }"
+      ],
+      "assistant avatar": [
+        ".avatar { background }"
+      ],
+      "send button": [
+        ".send-btn { background }",
+        ".send-btn { color }",
+        ".send-btn:hover { background }"
+      ],
+      "list markers": [
+        ".assistant-body ul > li::before { color }",
+        ".assistant-body ol > li::marker { color }"
+      ],
+      "typing dots": [
+        ".typing-dot { background }"
+      ]
+    },
+    "declarations": [
+      {
+        "selector": ":root",
+        "property": "--mint",
+        "authored": "var(--color-mint)",
+        "resolved": {
+          "--mint": "oklch(87% .07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": true,
+        "paintsSurface": false,
+        "source": "src/renderer/src/styles/tokens.css:71",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ":root",
+        "property": "--mint-press",
+        "authored": "var(--color-mint-press)",
+        "resolved": {
+          "--mint-press": "oklch(80% .08 182)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-press"
+        ],
+        "isTokenDefinition": true,
+        "paintsSurface": false,
+        "source": "src/renderer/src/styles/tokens.css:71",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ":root",
+        "property": "--mint-ink",
+        "authored": "var(--color-mint-ink)",
+        "resolved": {
+          "--mint-ink": "oklch(25% .02 200)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-ink"
+        ],
+        "isTokenDefinition": true,
+        "paintsSurface": false,
+        "source": "src/renderer/src/styles/tokens.css:71",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ":root",
+        "property": "--mint-wash",
+        "authored": "var(--color-mint-wash)",
+        "resolved": {
+          "--mint-wash": "oklch(87% .07 180 / .1)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-wash"
+        ],
+        "isTokenDefinition": true,
+        "paintsSurface": false,
+        "source": "src/renderer/src/styles/tokens.css:71",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".logo-mark",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/titlebar.css:26",
+        "site": "logo mark",
+        "listed": true,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".backend-pill--wisped",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/titlebar.css:98",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".backend-pill--wisped",
+        "property": "color",
+        "authored": "var(--mint-ink)",
+        "resolved": {
+          "color": "oklch(0.25 0.02 200)",
+          "border-top-color": "oklch(0.25 0.02 200)",
+          "border-right-color": "oklch(0.25 0.02 200)",
+          "border-bottom-color": "oklch(0.25 0.02 200)",
+          "border-left-color": "oklch(0.25 0.02 200)",
+          "outline-color": "oklch(0.25 0.02 200)",
+          "text-decoration-color": "oklch(0.25 0.02 200)",
+          "caret-color": "oklch(0.25 0.02 200)",
+          "column-rule-color": "oklch(0.25 0.02 200)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-ink"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": false,
+        "source": "src/renderer/src/styles/titlebar.css:98",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".agents-toggle--on",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/titlebar.css:187",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": true,
+        "effective": false
+      },
+      {
+        "selector": ".agents-toggle--on",
+        "property": "background",
+        "authored": "color-mix(in oklch, var(--mint) 14%, transparent)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180 / 0.14)"
+        },
+        "media": "(color: color-mix(in lab, red, red))",
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/titlebar.css:187",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": true,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".agents-toggle--on",
+        "property": "color",
+        "authored": "var(--mint)",
+        "resolved": {
+          "color": "oklch(0.87 0.07 180)",
+          "border-top-color": "oklch(0.87 0.07 180)",
+          "border-right-color": "oklch(0.87 0.07 180)",
+          "border-bottom-color": "oklch(0.87 0.07 180)",
+          "border-left-color": "oklch(0.87 0.07 180)",
+          "outline-color": "oklch(0.87 0.07 180)",
+          "text-decoration-color": "oklch(0.87 0.07 180)",
+          "caret-color": "oklch(0.87 0.07 180)",
+          "column-rule-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/titlebar.css:187",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".agents-toggle--on:hover",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/titlebar.css:192",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": true,
+        "effective": false
+      },
+      {
+        "selector": ".agents-toggle--on:hover",
+        "property": "background",
+        "authored": "color-mix(in oklch, var(--mint) 20%, transparent)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180 / 0.2)"
+        },
+        "media": "(color: color-mix(in lab, red, red))",
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/titlebar.css:192",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": true,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".agents-toggle--on:hover",
+        "property": "color",
+        "authored": "var(--mint)",
+        "resolved": {
+          "color": "oklch(0.87 0.07 180)",
+          "border-top-color": "oklch(0.87 0.07 180)",
+          "border-right-color": "oklch(0.87 0.07 180)",
+          "border-bottom-color": "oklch(0.87 0.07 180)",
+          "border-left-color": "oklch(0.87 0.07 180)",
+          "outline-color": "oklch(0.87 0.07 180)",
+          "text-decoration-color": "oklch(0.87 0.07 180)",
+          "caret-color": "oklch(0.87 0.07 180)",
+          "column-rule-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/titlebar.css:192",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".sidebar-resize-handle:hover, .agents-dock-resize-handle:hover",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/rails.css:66",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": true,
+        "effective": false
+      },
+      {
+        "selector": ".sidebar-resize-handle:hover, .agents-dock-resize-handle:hover",
+        "property": "background",
+        "authored": "color-mix(in oklch, var(--mint) 50%, transparent)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180 / 0.5)"
+        },
+        "media": "(color: color-mix(in lab, red, red))",
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/rails.css:66",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": true,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".session-row-btn-active, .session-row-btn-active:hover",
+        "property": "background",
+        "authored": "var(--mint-wash)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180 / 0.1)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-wash"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/rails.css:486",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".session-row-btn-active, .session-row-btn-active:hover",
+        "property": "box-shadow",
+        "authored": "inset 2px 0 0 0 var(--color-mint)",
+        "resolved": {
+          "box-shadow": "oklch(0.87 0.07 180) 2px 0px 0px 0px inset"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/rails.css:486",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".agent-row--running .agent-row-dot, .subagent-row--running .subagent-row-dot",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/rails.css:662",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".appearance-choice[aria-checked=\"true\"], .appearance-choice[aria-selected=\"true\"]",
+        "property": "border-color",
+        "authored": "var(--mint)",
+        "resolved": {
+          "border-top-color": "oklch(0.87 0.07 180)",
+          "border-right-color": "oklch(0.87 0.07 180)",
+          "border-bottom-color": "oklch(0.87 0.07 180)",
+          "border-left-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": null,
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".appearance-choice[aria-checked=\"true\"], .appearance-choice[aria-selected=\"true\"]",
+        "property": "background",
+        "authored": "var(--mint-wash)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180 / 0.1)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-wash"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": null,
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".appearance-choice[aria-checked=\"true\"] .appearance-choice-name, .appearance-choice[aria-selected=\"true\"] .appearance-choice-name",
+        "property": "color",
+        "authored": "var(--mint)",
+        "resolved": {
+          "color": "oklch(0.87 0.07 180)",
+          "border-top-color": "oklch(0.87 0.07 180)",
+          "border-right-color": "oklch(0.87 0.07 180)",
+          "border-bottom-color": "oklch(0.87 0.07 180)",
+          "border-left-color": "oklch(0.87 0.07 180)",
+          "outline-color": "oklch(0.87 0.07 180)",
+          "text-decoration-color": "oklch(0.87 0.07 180)",
+          "caret-color": "oklch(0.87 0.07 180)",
+          "column-rule-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": null,
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".appearance-swatch",
+        "property": "background",
+        "authored": "var(--color-mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/appearance.css:120",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".appearance-swatch",
+        "property": "border",
+        "authored": "1px solid var(--color-mint-press)",
+        "resolved": {
+          "border-top-color": "oklch(0.8 0.08 182)",
+          "border-right-color": "oklch(0.8 0.08 182)",
+          "border-bottom-color": "oklch(0.8 0.08 182)",
+          "border-left-color": "oklch(0.8 0.08 182)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-press"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/appearance.css:120",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".agent-map-node--running .agent-map-glyph",
+        "property": "fill",
+        "authored": "var(--mint)",
+        "resolved": {
+          "fill": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/agent-map.css:37",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".agent-map-halo",
+        "property": "fill",
+        "authored": "var(--mint)",
+        "resolved": {
+          "fill": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/agent-map.css:63",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": true,
+        "effective": false
+      },
+      {
+        "selector": ".agent-map-halo",
+        "property": "fill",
+        "authored": "color-mix(in oklch, var(--mint) 22%, transparent)",
+        "resolved": {
+          "fill": "oklch(0.87 0.07 180 / 0.22)"
+        },
+        "media": "(color: color-mix(in lab, red, red))",
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/agent-map.css:63",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": true,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".agent-map-node:focus-visible .agent-map-glyph",
+        "property": "stroke",
+        "authored": "var(--mint)",
+        "resolved": {
+          "stroke": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/agent-map.css:83",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".agent-map-ring",
+        "property": "stroke",
+        "authored": "var(--mint)",
+        "resolved": {
+          "stroke": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/agent-map.css:88",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".avatar",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/chat.css:86",
+        "site": "assistant avatar",
+        "listed": true,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".typing-dot",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/chat.css:115",
+        "site": "typing dots",
+        "listed": true,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".welcome-mark",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/chat.css:155",
+        "site": "logo mark",
+        "listed": true,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".pick-folder-btn",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/chat.css:177",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".pick-folder-btn",
+        "property": "color",
+        "authored": "var(--mint-ink)",
+        "resolved": {
+          "color": "oklch(0.25 0.02 200)",
+          "border-top-color": "oklch(0.25 0.02 200)",
+          "border-right-color": "oklch(0.25 0.02 200)",
+          "border-bottom-color": "oklch(0.25 0.02 200)",
+          "border-left-color": "oklch(0.25 0.02 200)",
+          "outline-color": "oklch(0.25 0.02 200)",
+          "text-decoration-color": "oklch(0.25 0.02 200)",
+          "caret-color": "oklch(0.25 0.02 200)",
+          "column-rule-color": "oklch(0.25 0.02 200)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-ink"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": false,
+        "source": "src/renderer/src/styles/chat.css:177",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".pick-folder-btn:hover",
+        "property": "background",
+        "authored": "var(--mint-press)",
+        "resolved": {
+          "background-color": "oklch(0.8 0.08 182)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-press"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/chat.css:192",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".send-btn",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/composer.css:173",
+        "site": "send button",
+        "listed": true,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".send-btn",
+        "property": "color",
+        "authored": "var(--mint-ink)",
+        "resolved": {
+          "color": "oklch(0.25 0.02 200)",
+          "border-top-color": "oklch(0.25 0.02 200)",
+          "border-right-color": "oklch(0.25 0.02 200)",
+          "border-bottom-color": "oklch(0.25 0.02 200)",
+          "border-left-color": "oklch(0.25 0.02 200)",
+          "outline-color": "oklch(0.25 0.02 200)",
+          "text-decoration-color": "oklch(0.25 0.02 200)",
+          "caret-color": "oklch(0.25 0.02 200)",
+          "column-rule-color": "oklch(0.25 0.02 200)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-ink"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": false,
+        "source": "src/renderer/src/styles/composer.css:173",
+        "site": "send button",
+        "listed": true,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".send-btn:hover",
+        "property": "background",
+        "authored": "var(--mint-press)",
+        "resolved": {
+          "background-color": "oklch(0.8 0.08 182)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-press"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/composer.css:189",
+        "site": "send button",
+        "listed": true,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".chip-remove:focus-visible",
+        "property": "outline",
+        "authored": "2px solid var(--mint)",
+        "resolved": {
+          "outline-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/composer.css:321",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".tool-card-toggle:focus-visible",
+        "property": "outline",
+        "authored": "2px solid var(--mint)",
+        "resolved": {
+          "outline-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/tool-card.css:77",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".tool-perm-btn:focus-visible",
+        "property": "outline",
+        "authored": "2px solid var(--mint)",
+        "resolved": {
+          "outline-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/tool-card.css:234",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".tool-perm-allow",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/tool-card.css:239",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".tool-perm-allow",
+        "property": "color",
+        "authored": "var(--mint-ink)",
+        "resolved": {
+          "color": "oklch(0.25 0.02 200)",
+          "border-top-color": "oklch(0.25 0.02 200)",
+          "border-right-color": "oklch(0.25 0.02 200)",
+          "border-bottom-color": "oklch(0.25 0.02 200)",
+          "border-left-color": "oklch(0.25 0.02 200)",
+          "outline-color": "oklch(0.25 0.02 200)",
+          "text-decoration-color": "oklch(0.25 0.02 200)",
+          "caret-color": "oklch(0.25 0.02 200)",
+          "column-rule-color": "oklch(0.25 0.02 200)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-ink"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": false,
+        "source": "src/renderer/src/styles/tool-card.css:239",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".tool-perm-allow:hover",
+        "property": "background",
+        "authored": "var(--mint-press)",
+        "resolved": {
+          "background-color": "oklch(0.8 0.08 182)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint-press"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/tool-card.css:245",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".assistant-body ul > li::before",
+        "property": "color",
+        "authored": "var(--mint)",
+        "resolved": {
+          "color": "oklch(0.87 0.07 180)",
+          "border-top-color": "oklch(0.87 0.07 180)",
+          "border-right-color": "oklch(0.87 0.07 180)",
+          "border-bottom-color": "oklch(0.87 0.07 180)",
+          "border-left-color": "oklch(0.87 0.07 180)",
+          "outline-color": "oklch(0.87 0.07 180)",
+          "text-decoration-color": "oklch(0.87 0.07 180)",
+          "caret-color": "oklch(0.87 0.07 180)",
+          "column-rule-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/markdown.css:43",
+        "site": "list markers",
+        "listed": true,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".assistant-body ol > li::marker",
+        "property": "color",
+        "authored": "var(--mint)",
+        "resolved": {
+          "color": "oklch(0.87 0.07 180)",
+          "border-top-color": "oklch(0.87 0.07 180)",
+          "border-right-color": "oklch(0.87 0.07 180)",
+          "border-bottom-color": "oklch(0.87 0.07 180)",
+          "border-left-color": "oklch(0.87 0.07 180)",
+          "outline-color": "oklch(0.87 0.07 180)",
+          "text-decoration-color": "oklch(0.87 0.07 180)",
+          "caret-color": "oklch(0.87 0.07 180)",
+          "column-rule-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/markdown.css:50",
+        "site": "list markers",
+        "listed": true,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".hljs-keyword, .hljs-selector-tag, .hljs-built_in",
+        "property": "color",
+        "authored": "var(--mint)",
+        "resolved": {
+          "color": "oklch(0.87 0.07 180)",
+          "border-top-color": "oklch(0.87 0.07 180)",
+          "border-right-color": "oklch(0.87 0.07 180)",
+          "border-bottom-color": "oklch(0.87 0.07 180)",
+          "border-left-color": "oklch(0.87 0.07 180)",
+          "outline-color": "oklch(0.87 0.07 180)",
+          "text-decoration-color": "oklch(0.87 0.07 180)",
+          "caret-color": "oklch(0.87 0.07 180)",
+          "column-rule-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/markdown.css:84",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".subagent-row",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/subagent.css:5",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": true,
+        "effective": false
+      },
+      {
+        "selector": ".subagent-row",
+        "property": "background",
+        "authored": "color-mix(in oklch, var(--mint) 6%, transparent)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180 / 0.06)"
+        },
+        "media": "(color: color-mix(in lab, red, red))",
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/subagent.css:5",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": true,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".subagent-row:hover",
+        "property": "background",
+        "authored": "var(--mint)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/subagent.css:23",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": true,
+        "effective": false
+      },
+      {
+        "selector": ".subagent-row:hover",
+        "property": "background",
+        "authored": "color-mix(in oklch, var(--mint) 12%, transparent)",
+        "resolved": {
+          "background-color": "oklch(0.87 0.07 180 / 0.12)"
+        },
+        "media": "(color: color-mix(in lab, red, red))",
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/subagent.css:23",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": true,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".subagent-row:focus-visible",
+        "property": "outline",
+        "authored": "2px solid var(--mint)",
+        "resolved": {
+          "outline-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/subagent.css:27",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      },
+      {
+        "selector": ".subagent-row-open",
+        "property": "color",
+        "authored": "var(--mint)",
+        "resolved": {
+          "color": "oklch(0.87 0.07 180)",
+          "border-top-color": "oklch(0.87 0.07 180)",
+          "border-right-color": "oklch(0.87 0.07 180)",
+          "border-bottom-color": "oklch(0.87 0.07 180)",
+          "border-left-color": "oklch(0.87 0.07 180)",
+          "outline-color": "oklch(0.87 0.07 180)",
+          "text-decoration-color": "oklch(0.87 0.07 180)",
+          "caret-color": "oklch(0.87 0.07 180)",
+          "column-rule-color": "oklch(0.87 0.07 180)"
+        },
+        "media": null,
+        "dependsOn": [
+          "--color-mint"
+        ],
+        "isTokenDefinition": false,
+        "paintsSurface": true,
+        "source": "src/renderer/src/styles/subagent.css:51",
+        "site": null,
+        "listed": false,
+        "colorMixSupportBranch": false,
+        "shadowedByColorMixBranch": false,
+        "effective": true
+      }
+    ]
+  },
+  "fact2_proportion": {
+    "cells": [
+      {
+        "theme": "frost",
+        "state": "welcome",
+        "viewportCssPx": {
+          "w": 1152,
+          "h": 720
+        },
+        "captureDevicePx": {
+          "w": 1440,
+          "h": 900
+        },
+        "captureScale": 1.25,
+        "accent": {
+          "mint": "rgb(161, 228, 214)",
+          "mintComputed": "oklch(0.87 0.07 180)",
+          "press": "rgb(129, 207, 193)"
+        },
+        "perToken": {
+          "--color-mint": {
+            "inkFraction": 0.01022597185507344,
+            "inkGatedFraction": 0.010225725398838531,
+            "coverageFraction": 0.01076929012345679,
+            "coveragePixels": 13957,
+            "maxAlpha": 1,
+            "meanResidualOfGated": 0.04
+          },
+          "--color-mint-press": {
+            "inkFraction": 5.8704476433279366e-9,
+            "inkGatedFraction": 0,
+            "coverageFraction": 0,
+            "coveragePixels": 0,
+            "maxAlpha": 0.0076,
+            "meanResidualOfGated": 0
+          },
+          "--color-mint-wash": {
+            "inkFraction": 5.183496525522863e-9,
+            "inkGatedFraction": 0,
+            "coverageFraction": 0,
+            "coveragePixels": 0,
+            "maxAlpha": 0.0067,
+            "meanResidualOfGated": 0
+          }
+        },
+        "totals": {
+          "inkFraction": 0.01022598290901761,
+          "inkPercent": 1.0226,
+          "coverageFraction": 0.01076929012345679,
+          "coveragePercent": 1.0769
+        },
+        "calibration": {
+          "selector": ".welcome-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        "attribution": {
+          "elementsPaintingAccent": 4,
+          "attributedInkPixels": 13252,
+          "measuredInkPixels": 13253,
+          "attributedShare": 0.9999340633513376,
+          "unattributedNote": "Attribution folds each accent pixel into the border box of an element the token differential flagged. `::marker` paints OUTSIDE its originating element (the marker box sits in the list padding), so ordered-list markers land in the unattributed remainder. The remainder is a limit of the breakdown, not of the totals above it — those are whole-frame sums.",
+          "top": [
+            {
+              "element": "button.pick-folder-btn",
+              "site": null,
+              "tokens": [
+                "--color-mint",
+                "--color-mint-press",
+                "--color-mint-wash"
+              ],
+              "inkPixels": 8284,
+              "inkFractionOfViewport": 0.006392129922865956
+            },
+            {
+              "element": "span.welcome-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 2826,
+              "inkFractionOfViewport": 0.0021807981756441063
+            },
+            {
+              "element": "button.backend-pill.backend-pill--wisped",
+              "site": null,
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 1483,
+              "inkFractionOfViewport": 0.0011443126536133255
+            },
+            {
+              "element": "span.logo-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 659,
+              "inkFractionOfViewport": 0.0005087421571427703
+            }
+          ]
+        }
+      },
+      {
+        "theme": "ember",
+        "state": "welcome",
+        "viewportCssPx": {
+          "w": 1152,
+          "h": 720
+        },
+        "captureDevicePx": {
+          "w": 1440,
+          "h": 900
+        },
+        "captureScale": 1.25,
+        "accent": {
+          "mint": "rgb(238, 206, 170)",
+          "mintComputed": "oklch(0.87 0.06 70)",
+          "press": "rgb(218, 183, 140)"
+        },
+        "perToken": {
+          "--color-mint": {
+            "inkFraction": 0.0102331842576676,
+            "inkGatedFraction": 0.010233116369938226,
+            "coverageFraction": 0.010828703703703703,
+            "coveragePixels": 14034,
+            "maxAlpha": 1,
+            "meanResidualOfGated": 0.05
+          },
+          "--color-mint-press": {
+            "inkFraction": 5.820799977618679e-9,
+            "inkGatedFraction": 0,
+            "coverageFraction": 0,
+            "coveragePixels": 0,
+            "maxAlpha": 0.0075,
+            "meanResidualOfGated": 0
+          },
+          "--color-mint-wash": {
+            "inkFraction": 5.136797995057098e-9,
+            "inkGatedFraction": 0,
+            "coverageFraction": 0,
+            "coveragePixels": 0,
+            "maxAlpha": 0.0067,
+            "meanResidualOfGated": 0
+          }
+        },
+        "totals": {
+          "inkFraction": 0.010233195215265573,
+          "inkPercent": 1.0233,
+          "coverageFraction": 0.010828703703703703,
+          "coveragePercent": 1.0829
+        },
+        "calibration": {
+          "selector": ".welcome-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        "attribution": {
+          "elementsPaintingAccent": 4,
+          "attributedInkPixels": 13262,
+          "measuredInkPixels": 13262,
+          "attributedShare": 0.9999833362010633,
+          "unattributedNote": "Attribution folds each accent pixel into the border box of an element the token differential flagged. `::marker` paints OUTSIDE its originating element (the marker box sits in the list padding), so ordered-list markers land in the unattributed remainder. The remainder is a limit of the breakdown, not of the totals above it — those are whole-frame sums.",
+          "top": [
+            {
+              "element": "button.pick-folder-btn",
+              "site": null,
+              "tokens": [
+                "--color-mint",
+                "--color-mint-press",
+                "--color-mint-wash"
+              ],
+              "inkPixels": 8291,
+              "inkFractionOfViewport": 0.006397275961584837
+            },
+            {
+              "element": "span.welcome-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 2826,
+              "inkFractionOfViewport": 0.0021807926678297077
+            },
+            {
+              "element": "button.backend-pill.backend-pill--wisped",
+              "site": null,
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 1486,
+              "inkFractionOfViewport": 0.001146391725026784
+            },
+            {
+              "element": "span.logo-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 659,
+              "inkFractionOfViewport": 0.0005087348597546764
+            }
+          ]
+        }
+      },
+      {
+        "theme": "moss",
+        "state": "welcome",
+        "viewportCssPx": {
+          "w": 1152,
+          "h": 720
+        },
+        "captureDevicePx": {
+          "w": 1440,
+          "h": 900
+        },
+        "captureScale": 1.25,
+        "accent": {
+          "mint": "rgb(198, 221, 177)",
+          "mintComputed": "oklch(0.87 0.065 130)",
+          "press": "rgb(172, 200, 150)"
+        },
+        "perToken": {
+          "--color-mint": {
+            "inkFraction": 0.010225801367969667,
+            "inkGatedFraction": 0.010225520142680621,
+            "coverageFraction": 0.01076929012345679,
+            "coveragePixels": 13957,
+            "maxAlpha": 1,
+            "meanResidualOfGated": 0.04
+          },
+          "--color-mint-press": {
+            "inkFraction": 7.491147374297543e-9,
+            "inkGatedFraction": 0,
+            "coverageFraction": 0,
+            "coveragePixels": 0,
+            "maxAlpha": 0.0097,
+            "meanResidualOfGated": 0
+          },
+          "--color-mint-wash": {
+            "inkFraction": 6.560716842408556e-9,
+            "inkGatedFraction": 0,
+            "coverageFraction": 0,
+            "coveragePixels": 0,
+            "maxAlpha": 0.0085,
+            "meanResidualOfGated": 0
+          }
+        },
+        "totals": {
+          "inkFraction": 0.010225815419833884,
+          "inkPercent": 1.0226,
+          "coverageFraction": 0.01076929012345679,
+          "coveragePercent": 1.0769
+        },
+        "calibration": {
+          "selector": ".welcome-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        "attribution": {
+          "elementsPaintingAccent": 4,
+          "attributedInkPixels": 13252,
+          "measuredInkPixels": 13253,
+          "attributedShare": 0.9999504413254328,
+          "unattributedNote": "Attribution folds each accent pixel into the border box of an element the token differential flagged. `::marker` paints OUTSIDE its originating element (the marker box sits in the list padding), so ordered-list markers land in the unattributed remainder. The remainder is a limit of the breakdown, not of the totals above it — those are whole-frame sums.",
+          "top": [
+            {
+              "element": "button.pick-folder-btn",
+              "site": null,
+              "tokens": [
+                "--color-mint",
+                "--color-mint-press",
+                "--color-mint-wash"
+              ],
+              "inkPixels": 8284,
+              "inkFractionOfViewport": 0.006392001997823913
+            },
+            {
+              "element": "span.welcome-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 2826,
+              "inkFractionOfViewport": 0.0021807984054982546
+            },
+            {
+              "element": "button.backend-pill.backend-pill--wisped",
+              "site": null,
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 1483,
+              "inkFractionOfViewport": 0.0011442655808580494
+            },
+            {
+              "element": "span.logo-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 659,
+              "inkFractionOfViewport": 0.000508749436680515
+            }
+          ]
+        }
+      },
+      {
+        "theme": "slate",
+        "state": "welcome",
+        "viewportCssPx": {
+          "w": 1152,
+          "h": 720
+        },
+        "captureDevicePx": {
+          "w": 1440,
+          "h": 900
+        },
+        "captureScale": 1.25,
+        "accent": {
+          "mint": "rgb(183, 217, 242)",
+          "mintComputed": "oklch(0.87 0.05 240)",
+          "press": "rgb(156, 195, 226)"
+        },
+        "perToken": {
+          "--color-mint": {
+            "inkFraction": 0.010226101419439925,
+            "inkGatedFraction": 0.01022584152640233,
+            "coverageFraction": 0.01076929012345679,
+            "coveragePixels": 13957,
+            "maxAlpha": 1,
+            "meanResidualOfGated": 0.04
+          },
+          "--color-mint-press": {
+            "inkFraction": 6.52317264915741e-9,
+            "inkGatedFraction": 0,
+            "coverageFraction": 0,
+            "coveragePixels": 0,
+            "maxAlpha": 0.0085,
+            "meanResidualOfGated": 0
+          },
+          "--color-mint-wash": {
+            "inkFraction": 5.9169946467335706e-9,
+            "inkGatedFraction": 0,
+            "coverageFraction": 0,
+            "coveragePixels": 0,
+            "maxAlpha": 0.0077,
+            "meanResidualOfGated": 0
+          }
+        },
+        "totals": {
+          "inkFraction": 0.01022611385960722,
+          "inkPercent": 1.0226,
+          "coverageFraction": 0.01076929012345679,
+          "coveragePercent": 1.0769
+        },
+        "calibration": {
+          "selector": ".welcome-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        "attribution": {
+          "elementsPaintingAccent": 4,
+          "attributedInkPixels": 13252,
+          "measuredInkPixels": 13253,
+          "attributedShare": 0.9999212586870275,
+          "unattributedNote": "Attribution folds each accent pixel into the border box of an element the token differential flagged. `::marker` paints OUTSIDE its originating element (the marker box sits in the list padding), so ordered-list markers land in the unattributed remainder. The remainder is a limit of the breakdown, not of the totals above it — those are whole-frame sums.",
+          "top": [
+            {
+              "element": "button.pick-folder-btn",
+              "site": null,
+              "tokens": [
+                "--color-mint",
+                "--color-mint-press",
+                "--color-mint-wash"
+              ],
+              "inkPixels": 8284,
+              "inkFractionOfViewport": 0.00639225462200386
+            },
+            {
+              "element": "span.welcome-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 2826,
+              "inkFractionOfViewport": 0.0021807801074428873
+            },
+            {
+              "element": "button.backend-pill.backend-pill--wisped",
+              "site": null,
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 1483,
+              "inkFractionOfViewport": 0.0011443302337239053
+            },
+            {
+              "element": "span.logo-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 659,
+              "inkFractionOfViewport": 0.0005087488950761955
+            }
+          ]
+        }
+      },
+      {
+        "theme": "frost",
+        "state": "workspace-session",
+        "viewportCssPx": {
+          "w": 1152,
+          "h": 720
+        },
+        "captureDevicePx": {
+          "w": 1440,
+          "h": 900
+        },
+        "captureScale": 1.25,
+        "accent": {
+          "mint": "rgb(161, 228, 214)",
+          "mintComputed": "oklch(0.87 0.07 180)",
+          "press": "rgb(129, 207, 193)"
+        },
+        "perToken": {
+          "--color-mint": {
+            "inkFraction": 0.0037272620903590595,
+            "inkGatedFraction": 0.0037270652609572978,
+            "coverageFraction": 0.004185185185185185,
+            "coveragePixels": 5424,
+            "maxAlpha": 1,
+            "meanResidualOfGated": 0.63
+          },
+          "--color-mint-press": {
+            "inkFraction": 0.00003214861318969625,
+            "inkGatedFraction": 0.000032106419347259825,
+            "coverageFraction": 0.00014583333333333335,
+            "coveragePixels": 189,
+            "maxAlpha": 0.5216,
+            "meanResidualOfGated": 11.64
+          },
+          "--color-mint-wash": {
+            "inkFraction": 0.000028626105949820684,
+            "inkGatedFraction": 0.000028550879754757135,
+            "coverageFraction": 0.0001419753086419753,
+            "coveragePixels": 184,
+            "maxAlpha": 0.4645,
+            "meanResidualOfGated": 8.61
+          }
+        },
+        "totals": {
+          "inkFraction": 0.0037880368094985765,
+          "inkPercent": 0.3788,
+          "coverageFraction": 0.004472993827160494,
+          "coveragePercent": 0.4473
+        },
+        "calibration": {
+          "selector": ".logo-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        "attribution": {
+          "elementsPaintingAccent": 9,
+          "attributedInkPixels": 4666,
+          "measuredInkPixels": 4909,
+          "attributedShare": 0.9504418312270526,
+          "unattributedNote": "Attribution folds each accent pixel into the border box of an element the token differential flagged. `::marker` paints OUTSIDE its originating element (the marker box sits in the list padding), so ordered-list markers land in the unattributed remainder. The remainder is a limit of the breakdown, not of the totals above it — those are whole-frame sums.",
+          "top": [
+            {
+              "element": "button.send-btn",
+              "site": "send button",
+              "tokens": [
+                "--color-mint",
+                "--color-mint-press",
+                "--color-mint-wash"
+              ],
+              "inkPixels": 1524,
+              "inkFractionOfViewport": 0.0011758169692540025
+            },
+            {
+              "element": "button.backend-pill.backend-pill--wisped",
+              "site": null,
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 1483,
+              "inkFractionOfViewport": 0.0011443126536133255
+            },
+            {
+              "element": "span.avatar",
+              "site": "assistant avatar",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 958,
+              "inkFractionOfViewport": 0.0007392099187529738
+            },
+            {
+              "element": "span.logo-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 659,
+              "inkFractionOfViewport": 0.0005087421571427703
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 14,
+              "inkFractionOfViewport": 0.000010567122219521322
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 14,
+              "inkFractionOfViewport": 0.000010567122219521322
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 14,
+              "inkFractionOfViewport": 0.000010567122219521322
+            }
+          ]
+        }
+      },
+      {
+        "theme": "ember",
+        "state": "workspace-session",
+        "viewportCssPx": {
+          "w": 1152,
+          "h": 720
+        },
+        "captureDevicePx": {
+          "w": 1440,
+          "h": 900
+        },
+        "captureScale": 1.25,
+        "accent": {
+          "mint": "rgb(238, 206, 170)",
+          "mintComputed": "oklch(0.87 0.06 70)",
+          "press": "rgb(218, 183, 140)"
+        },
+        "perToken": {
+          "--color-mint": {
+            "inkFraction": 0.0036931422902691156,
+            "inkGatedFraction": 0.003693052191314612,
+            "coverageFraction": 0.004056327160493827,
+            "coveragePixels": 5257,
+            "maxAlpha": 1,
+            "meanResidualOfGated": 0.32
+          },
+          "--color-mint-press": {
+            "inkFraction": 1.7193983596602213e-8,
+            "inkGatedFraction": 9.969749632284957e-9,
+            "coverageFraction": 7.716049382716049e-7,
+            "coveragePixels": 1,
+            "maxAlpha": 0.0129,
+            "meanResidualOfGated": 0.45
+          },
+          "--color-mint-wash": {
+            "inkFraction": 1.5217462605075254e-8,
+            "inkGatedFraction": 8.83866885064989e-9,
+            "coverageFraction": 7.716049382716049e-7,
+            "coveragePixels": 1,
+            "maxAlpha": 0.0115,
+            "meanResidualOfGated": 0.46
+          }
+        },
+        "totals": {
+          "inkFraction": 0.0036931747017153174,
+          "inkPercent": 0.3693,
+          "coverageFraction": 0.00405787037037037,
+          "coveragePercent": 0.4058
+        },
+        "calibration": {
+          "selector": ".logo-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        "attribution": {
+          "elementsPaintingAccent": 9,
+          "attributedInkPixels": 4666,
+          "measuredInkPixels": 4786,
+          "attributedShare": 0.9748546799866045,
+          "unattributedNote": "Attribution folds each accent pixel into the border box of an element the token differential flagged. `::marker` paints OUTSIDE its originating element (the marker box sits in the list padding), so ordered-list markers land in the unattributed remainder. The remainder is a limit of the breakdown, not of the totals above it — those are whole-frame sums.",
+          "top": [
+            {
+              "element": "button.send-btn",
+              "site": "send button",
+              "tokens": [
+                "--color-mint",
+                "--color-mint-press",
+                "--color-mint-wash"
+              ],
+              "inkPixels": 1524,
+              "inkFractionOfViewport": 0.0011758227427195423
+            },
+            {
+              "element": "button.backend-pill.backend-pill--wisped",
+              "site": null,
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 1486,
+              "inkFractionOfViewport": 0.001146391725026784
+            },
+            {
+              "element": "span.avatar",
+              "site": "assistant avatar",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 958,
+              "inkFractionOfViewport": 0.0007392158712300667
+            },
+            {
+              "element": "span.logo-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 659,
+              "inkFractionOfViewport": 0.0005087348597546764
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 13,
+              "inkFractionOfViewport": 0.000009730566465468318
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 13,
+              "inkFractionOfViewport": 0.000009730566465468318
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 13,
+              "inkFractionOfViewport": 0.000009730566465468318
+            }
+          ]
+        }
+      },
+      {
+        "theme": "moss",
+        "state": "workspace-session",
+        "viewportCssPx": {
+          "w": 1152,
+          "h": 720
+        },
+        "captureDevicePx": {
+          "w": 1440,
+          "h": 900
+        },
+        "captureScale": 1.25,
+        "accent": {
+          "mint": "rgb(198, 221, 177)",
+          "mintComputed": "oklch(0.87 0.065 130)",
+          "press": "rgb(172, 200, 150)"
+        },
+        "perToken": {
+          "--color-mint": {
+            "inkFraction": 0.0036717588882394167,
+            "inkGatedFraction": 0.0036716163493942847,
+            "coverageFraction": 0.004023148148148148,
+            "coveragePixels": 5214,
+            "maxAlpha": 1,
+            "meanResidualOfGated": 0.07
+          },
+          "--color-mint-press": {
+            "inkFraction": 1.9356320396674854e-8,
+            "inkGatedFraction": 1.1865173022377313e-8,
+            "coverageFraction": 7.716049382716049e-7,
+            "coveragePixels": 1,
+            "maxAlpha": 0.0154,
+            "meanResidualOfGated": 0.48
+          },
+          "--color-mint-wash": {
+            "inkFraction": 1.697383490459593e-8,
+            "inkGatedFraction": 1.0413118062187374e-8,
+            "coverageFraction": 7.716049382716049e-7,
+            "coveragePixels": 1,
+            "maxAlpha": 0.0135,
+            "meanResidualOfGated": 0.51
+          }
+        },
+        "totals": {
+          "inkFraction": 0.003671795218394718,
+          "inkPercent": 0.3672,
+          "coverageFraction": 0.004024691358024691,
+          "coveragePercent": 0.4025
+        },
+        "calibration": {
+          "selector": ".logo-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        "attribution": {
+          "elementsPaintingAccent": 9,
+          "attributedInkPixels": 4663,
+          "measuredInkPixels": 4759,
+          "attributedShare": 0.9799004609885379,
+          "unattributedNote": "Attribution folds each accent pixel into the border box of an element the token differential flagged. `::marker` paints OUTSIDE its originating element (the marker box sits in the list padding), so ordered-list markers land in the unattributed remainder. The remainder is a limit of the breakdown, not of the totals above it — those are whole-frame sums.",
+          "top": [
+            {
+              "element": "button.send-btn",
+              "site": "send button",
+              "tokens": [
+                "--color-mint",
+                "--color-mint-press",
+                "--color-mint-wash"
+              ],
+              "inkPixels": 1524,
+              "inkFractionOfViewport": 0.0011758271056718918
+            },
+            {
+              "element": "button.backend-pill.backend-pill--wisped",
+              "site": null,
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 1483,
+              "inkFractionOfViewport": 0.0011442655808580494
+            },
+            {
+              "element": "span.avatar",
+              "site": "assistant avatar",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 958,
+              "inkFractionOfViewport": 0.000739227645794062
+            },
+            {
+              "element": "span.logo-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 659,
+              "inkFractionOfViewport": 0.000508749436680515
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 13,
+              "inkFractionOfViewport": 0.000009745502143086474
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 13,
+              "inkFractionOfViewport": 0.000009745502143086474
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 13,
+              "inkFractionOfViewport": 0.000009745502143086474
+            }
+          ]
+        }
+      },
+      {
+        "theme": "slate",
+        "state": "workspace-session",
+        "viewportCssPx": {
+          "w": 1152,
+          "h": 720
+        },
+        "captureDevicePx": {
+          "w": 1440,
+          "h": 900
+        },
+        "captureScale": 1.25,
+        "accent": {
+          "mint": "rgb(183, 217, 242)",
+          "mintComputed": "oklch(0.87 0.05 240)",
+          "press": "rgb(156, 195, 226)"
+        },
+        "perToken": {
+          "--color-mint": {
+            "inkFraction": 0.0036718091949231773,
+            "inkGatedFraction": 0.0036716774683150802,
+            "coverageFraction": 0.004023148148148148,
+            "coveragePixels": 5214,
+            "maxAlpha": 1,
+            "meanResidualOfGated": 0.08
+          },
+          "--color-mint-press": {
+            "inkFraction": 1.8297533291171466e-8,
+            "inkGatedFraction": 1.8297533291171466e-8,
+            "coverageFraction": 0.0000015432098765432098,
+            "coveragePixels": 2,
+            "maxAlpha": 0.0135,
+            "meanResidualOfGated": 0.8
+          },
+          "--color-mint-wash": {
+            "inkFraction": 1.6597530438307005e-8,
+            "inkGatedFraction": 9.477173243924717e-9,
+            "coverageFraction": 7.716049382716049e-7,
+            "coveragePixels": 1,
+            "maxAlpha": 0.0123,
+            "meanResidualOfGated": 1
+          }
+        },
+        "totals": {
+          "inkFraction": 0.0036718440899869064,
+          "inkPercent": 0.3672,
+          "coverageFraction": 0.0040254629629629625,
+          "coveragePercent": 0.4025
+        },
+        "calibration": {
+          "selector": ".logo-mark",
+          "meanAlpha": 1,
+          "samplePixels": 400
+        },
+        "attribution": {
+          "elementsPaintingAccent": 9,
+          "attributedInkPixels": 4663,
+          "measuredInkPixels": 4759,
+          "attributedShare": 0.9798874186875739,
+          "unattributedNote": "Attribution folds each accent pixel into the border box of an element the token differential flagged. `::marker` paints OUTSIDE its originating element (the marker box sits in the list padding), so ordered-list markers land in the unattributed remainder. The remainder is a limit of the breakdown, not of the totals above it — those are whole-frame sums.",
+          "top": [
+            {
+              "element": "button.send-btn",
+              "site": "send button",
+              "tokens": [
+                "--color-mint",
+                "--color-mint-press",
+                "--color-mint-wash"
+              ],
+              "inkPixels": 1524,
+              "inkFractionOfViewport": 0.0011758371967639785
+            },
+            {
+              "element": "button.backend-pill.backend-pill--wisped",
+              "site": null,
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 1483,
+              "inkFractionOfViewport": 0.0011443302337239053
+            },
+            {
+              "element": "span.avatar",
+              "site": "assistant avatar",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 958,
+              "inkFractionOfViewport": 0.0007392129917351679
+            },
+            {
+              "element": "span.logo-mark",
+              "site": "logo mark",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 659,
+              "inkFractionOfViewport": 0.0005087488950761955
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 13,
+              "inkFractionOfViewport": 0.000009749194216213108
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 13,
+              "inkFractionOfViewport": 0.000009749194216213108
+            },
+            {
+              "element": "li::before",
+              "site": "list markers",
+              "tokens": [
+                "--color-mint"
+              ],
+              "inkPixels": 13,
+              "inkFractionOfViewport": 0.000009749194216213108
+            }
+          ]
+        }
+      }
+    ],
+    "perStateSummary": {
+      "welcome": {
+        "inkPercent": [
+          {
+            "theme": "frost",
+            "pct": 1.0226
+          },
+          {
+            "theme": "ember",
+            "pct": 1.0233
+          },
+          {
+            "theme": "moss",
+            "pct": 1.0226
+          },
+          {
+            "theme": "slate",
+            "pct": 1.0226
+          }
+        ],
+        "coveragePercent": [
+          {
+            "theme": "frost",
+            "pct": 1.0769
+          },
+          {
+            "theme": "ember",
+            "pct": 1.0829
+          },
+          {
+            "theme": "moss",
+            "pct": 1.0769
+          },
+          {
+            "theme": "slate",
+            "pct": 1.0769
+          }
+        ]
+      },
+      "workspace-session": {
+        "inkPercent": [
+          {
+            "theme": "frost",
+            "pct": 0.3788
+          },
+          {
+            "theme": "ember",
+            "pct": 0.3693
+          },
+          {
+            "theme": "moss",
+            "pct": 0.3672
+          },
+          {
+            "theme": "slate",
+            "pct": 0.3672
+          }
+        ],
+        "coveragePercent": [
+          {
+            "theme": "frost",
+            "pct": 0.4473
+          },
+          {
+            "theme": "ember",
+            "pct": 0.4058
+          },
+          {
+            "theme": "moss",
+            "pct": 0.4025
+          },
+          {
+            "theme": "slate",
+            "pct": 0.4025
+          }
+        ]
+      }
+    },
+    "nullControl": {
+      "inkFraction": 0,
+      "coverageFraction": 0,
+      "coveragePixels": 0
+    },
+    "typingDotsProbe": {
+      "disclosure": "PROBE, not the app rendering itself. Real `.typing` markup injected into the real chat scroller; the cascade, the sizes and the accent are the app's. Typing dots render only while a turn is in flight with no assistant text yet, so they are in NEITHER measured steady state.",
+      "dotsInkDevicePx": 146,
+      "dotsInkFractionOfViewport": 0.0001130342695640722,
+      "viewportDevicePx": 1296000,
+      "captureDevicePx": {
+        "w": 1440,
+        "h": 900
+      },
+      "note": "motion is frozen, so the dots read at their authored opacity rather than mid-pulse (typing-pulse dips to 0.35). Measured over the probe rect alone, so a reflow elsewhere cannot contaminate it."
+    }
+  },
+  "verdict": {
+    "enumerationHalf": {
+      "clause": "spent only on: logo mark, assistant avatar, send button, list markers, typing dots",
+      "status": "VIOLATED",
+      "surfacePaintingDeclarations": 38,
+      "listedDeclarations": 8,
+      "unlistedDeclarations": 30,
+      "unlistedSelectors": [
+        ".backend-pill--wisped { background }",
+        ".agents-toggle--on { background }",
+        ".agents-toggle--on { color }",
+        ".agents-toggle--on:hover { background }",
+        ".agents-toggle--on:hover { color }",
+        ".sidebar-resize-handle:hover, .agents-dock-resize-handle:hover { background }",
+        ".session-row-btn-active, .session-row-btn-active:hover { background }",
+        ".session-row-btn-active, .session-row-btn-active:hover { box-shadow }",
+        ".agent-row--running .agent-row-dot, .subagent-row--running .subagent-row-dot { background }",
+        ".appearance-choice[aria-checked=\"true\"], .appearance-choice[aria-selected=\"true\"] { border-color }",
+        ".appearance-choice[aria-checked=\"true\"], .appearance-choice[aria-selected=\"true\"] { background }",
+        ".appearance-choice[aria-checked=\"true\"] .appearance-choice-name, .appearance-choice[aria-selected=\"true\"] .appearance-choice-name { color }",
+        ".appearance-swatch { background }",
+        ".appearance-swatch { border }",
+        ".agent-map-node--running .agent-map-glyph { fill }",
+        ".agent-map-halo { fill }",
+        ".agent-map-node:focus-visible .agent-map-glyph { stroke }",
+        ".agent-map-ring { stroke }",
+        ".pick-folder-btn { background }",
+        ".pick-folder-btn:hover { background }",
+        ".chip-remove:focus-visible { outline }",
+        ".tool-card-toggle:focus-visible { outline }",
+        ".tool-perm-btn:focus-visible { outline }",
+        ".tool-perm-allow { background }",
+        ".tool-perm-allow:hover { background }",
+        ".hljs-keyword, .hljs-selector-tag, .hljs-built_in { color }",
+        ".subagent-row { background }",
+        ".subagent-row:hover { background }",
+        ".subagent-row:focus-visible { outline }",
+        ".subagent-row-open { color }"
+      ],
+      "unlistedElementsActuallyOnScreen": [
+        "button.pick-folder-btn",
+        "button.backend-pill.backend-pill--wisped"
+      ],
+      "backendPillIsStateDependent": {
+        "pill": {
+          "className": "backend-pill backend-pill--wisped",
+          "label": "Wisped"
+        },
+        "note": "`.backend-pill--wisped` is the largest unlisted spend measured on screen, and it paints the accent only in the wisped backend mode. On a native-backend machine that selector does not match and this spend is absent. Every other unlisted element measured here is mode-independent."
+      },
+      "reading": "A declaration counts as accent spend iff its computed value moves when an accent token moves. That is the clause's own notion of \"spent on\", measured rather than counted."
+    },
+    "budgetHalf": {
+      "clause": "Mint accent <=10% of surface",
+      "ambiguity": "The clause does not say whether \"of surface\" means the fraction of pixels the accent touches (coverage) or the alpha-weighted pigment on screen (ink). Both are reported; a 10%-alpha wash is 100% coverage and 10% ink of the area it covers.",
+      "maxInkPercentAcrossCells": 1.0233,
+      "maxCoveragePercentAcrossCells": 1.0829,
+      "statusByInk": "SATISFIED",
+      "statusByCoverage": "SATISFIED",
+      "noiseFloor": {
+        "inkFraction": 0,
+        "coverageFraction": 0
+      },
+      "statesMeasured": [
+        "welcome",
+        "workspace-session"
+      ],
+      "statesNotMeasured": "Every transient and hover state. `--color-mint-press` paints only on :hover/:active and reads 0 at rest; typing dots are measured separately as a probe. A state this spike never rendered is not evidence either way.",
+      "windowSizeSensitivity": {
+        "state": "workspace-session",
+        "theme": "frost",
+        "contentBoundsDip": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 600
+        },
+        "viewportCssPx": {
+          "w": 720,
+          "h": 480
+        },
+        "captureDevicePx": {
+          "w": 900,
+          "h": 600
+        },
+        "inkPercent": 0.8832,
+        "coveragePercent": 0.9659,
+        "comparedWith": {
+          "contentBoundsDip": {
+            "width": 1440,
+            "height": 900
+          },
+          "inkPercent": 0.3788
+        },
+        "note": "Measured with --color-mint and --color-mint-wash overridden together, so this is the whole accent surface in one differential rather than the per-token breakdown used above. Smaller window, same fixed-size accent elements, so the share rises; this bounds how much."
+      }
+    }
+  },
+  "doesNotDecide": "This spike produces evidence and spends none of it. DESIGN.md is not edited and no src/ file is touched — amending the governing standard to match measured drift is the laundering move #92 and #96 both refused. The call stays the owner's, on #92."
+}
