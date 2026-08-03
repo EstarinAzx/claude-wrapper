@@ -9,16 +9,35 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Frontier: QUEUE EMPTY
+## Frontier: #93 and #94, both `ready-for-agent`
 
-**No `ready-for-agent` ticket is open.** All three open issues are
-`ready-for-human`:
+**TWO `ready-for-agent` tickets are open and the relay is running on them.**
+An owner grant on 2026-08-04 took five of #92's six calls and made them fileable.
 
-- **#92** — **NEW (2026-08-04)**, `ready-for-agent` **not** set: the GUI
+- **#93** — `ready-for-agent`, **unblocked**: every interactive control wears the
+  app's focus ring instead of Chromium's. **Read its treatment table before
+  touching CSS** — the shared group writes `background: var(--tint-3)` and would
+  destroy the mint fill on `.send-btn` / `.pick-folder-btn` and the danger fill
+  on `.perm-pill--bypass`. Hairline-only for anything carrying a fill.
+- **#94** — `ready-for-agent`, **unblocked**: `.command-row-btn` gets
+  `font: inherit` **without** shifting vertical metrics. Pin the three children's
+  `line-height` first. Do not follow the ADR's stated blast radius; it is wrong.
+
+Both are mutually unblocked and either order works. Then:
+
+- **#92** — `ready-for-human`, the GUI
   conformance audit from an unattended `vibe init` run on "make the gui look
-  professional grade". Findings + **six** owner calls. **No `src/` change and no
-  restyle was attempted** — every remedy measured turned out to be a design
-  call. Also carries a **correction to a live ADR** (see `## Landmines`).
+  professional grade". **Five of its six owner calls were taken** under the
+  2026-08-04 grant (→ #93, #94); **three remain the owner's** and are commented
+  on the issue: the stale accent clause, `.model-menu-item`'s `font-weight: 500`,
+  and what "professional grade" concretely means. Also carries a **correction to
+  a live ADR** (see `## Landmines`).
+
+  **Do not take the three remaining calls.** Pressure refuted the
+  doc-reconciliation ticket *after* the grant and it stayed refuted — amending
+  `DESIGN.md` to mirror the code launders drift, and the ~45-reference figure
+  counts *sites* where the rule is about *surface proportion*. A grant is
+  permission to decide, not permission to decide badly.
 - **#86** — open, `ready-for-human`, **not loop work**: findings + five owner calls.
 - **#91** — open, `ready-for-human`, **blocked by 1** (#86; #90 cleared it).
   The background-sessions *surface*. **Do not build it** — see `## Do not decide these`.

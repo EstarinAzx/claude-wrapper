@@ -5,10 +5,10 @@ partner: opus
 pressure: codex/gpt-5.6-sol
 pressure_via: sonnet
 max_defer: 12
-phase: tickets
+phase: fired
 halted: false
-relay: DECLINED — no `ready-for-agent` ticket exists, so a ticket-loop leg would
-  stop on an empty queue. Not a halt: all four halt gates passed.
+relay: FIRED after the owner's 2026-08-04 grant. The first pass declined it (no
+  `ready-for-agent` ticket existed); the grant made #93 and #94 fileable.
 ---
 
 ## The seed, and how much of it is the owner's
@@ -210,6 +210,32 @@ third exists.
 No `#000`/`#fff`, no `gradient` anywhere in `styles/`. Em-dash hits are in TSX
 **comments**, not user-facing copy. No violation found.
 
+## OWNER GRANT, given live after the first report — real input, not proxied
+
+The owner read the findings and answered verbatim:
+
+> "just whatever it is whats a gap or whatsoever address it and so you relay can
+> be eligible just do it im gonna sleep dont disturb me"
+
+**What it authorises, read strictly:**
+
+1. **Addressing the gaps** this run measured — the six calls below stop being a
+   reason to defer.
+2. **Making the relay eligible** — i.e. `ready-for-agent` tickets are wanted,
+   explicitly.
+3. **Silence** — do not notify.
+
+**What it does NOT authorise**, and this is the whole discipline of an AFK grant:
+it removes *ownership* as a ground for deferring; it does **not** remove the need
+for a **warrant**, and it does not license anything irreversible. Every call
+below still takes the most reversible option and still cites a reason. Nothing
+here touches schema, API, money, deletion, auth or anything published outward.
+
+**Standing constraints NOT lifted, because the grant does not reach them:** no
+new titlebar *control* (the count is unchanged by every ticket — a focus style is
+not a control), no `#000`/`#fff`, no light theme, no lightness/alpha movement in
+a palette, no component-scoped scrollbar rule, no pin retired to fit.
+
 ## Decisions
 
 Three survived attack. Everything else conceded and moved to `## Needs you`.
@@ -243,7 +269,37 @@ Three survived attack. Everything else conceded and moved to `## Needs you`.
   driver failure any more… any red is now a real regression" forecloses landing
   one red, and softening it to pass is foreclosed too.
 
-## Needs you
+## Taken under the 2026-08-04 grant
+
+Five of the six below were resolved after the grant. **The `## Needs you`
+section is history from here on, not a queue** — a new *reason* reopens one of
+these; a re-read does not.
+
+- **Call 1 (focus treatment) → TAKEN, filed as #93.** Warrant: the app already
+  carries three treatments, and the split is readable from the code —
+  wash+hairline for transparent rows on glass (`shared.css:43-53`, whose comment
+  states the translucency rationale), **hairline-only for controls with their own
+  fill** (`rails.css:311`, `:596`), mint outline for card controls. Assigned by
+  **measured background**, not by taste.
+- **Call 6 (`.command-row-btn`) → TAKEN, filed as #94**, with a *better* remedy
+  than the ADR's: pin the three children's `line-height` first, then
+  `font: inherit`, which neutralises the vertical shift Pressure found.
+- **Call 4 (type outliers) → PARTLY WITHDRAWN.** `.subagent-drawer-close`'s
+  `20px` is a **glyph-sizing rule** (`line-height: 1`), not body type — my
+  finding was overreach and Pressure agreed. `.model-menu-item`'s
+  `font-weight: 500` stands as a real outlier, untaken.
+- **Call 2 (accent clause) and Call 3 (motion) → NOT TAKEN, despite the grant.**
+  Pressure refuted the doc-reconciliation ticket: "Updating the governing
+  standard to mirror every current deviation launders drift … Reference counts do
+  not prove intended accent spend." **That corrects my own evidence** — ~45
+  counts *sites*; the rule is about *surface proportion*. The drift is real, the
+  evidence was overstated, and the honest remedy is too large and too
+  taste-laden to take unattended. **A grant is permission to decide, not
+  permission to decide badly.**
+- **Call 5 ("professional grade") → STILL THE OWNER'S.** No instrument available
+  unattended can answer it. The grant cannot manufacture an instrument.
+
+## Needs you (superseded — see `## Taken` above)
 
 Six. **All reversible — none flagged `reversible: NO`, so no halt fired on that
 ground** (count 5, `max_defer` 12). Every one of them is a *remedy* question;
@@ -391,5 +447,23 @@ the *diagnosis* behind each is measured above and is not in doubt.
   queue — Pressure verified that against `active-work.md` and ruled spawning one
   "ceremony". Deviation from the preset's step 6, recorded here rather than done
   quietly.
+- [grant] **Owner grant received live, after reading the first report.** Recorded
+  verbatim in `## OWNER GRANT` above. Six calls revisited; five resolved, one
+  (call 5) untouched because no instrument exists for it.
+- [round 3] Pressure **REFUTED 2 of 3 proposed tickets** — its fourth and fifth
+  correct catches this run. The focus ticket's first draft would have
+  **replaced authored fills on focus** (`background: var(--tint-3)` over the mint
+  on `.send-btn` / `.pick-folder-btn`, the danger fill on `.perm-pill--bypass`),
+  and it omitted `.agents-toggle` and `.session-delete`. Both fixed before
+  filing; the fill rule is now #93's load-bearing acceptance criterion. The
+  doc-reconciliation ticket was killed outright and **stayed** killed — the grant
+  did not make a bad ticket good.
+- [tickets] Filed **#93** (focus ring, `ready-for-agent`) and **#94**
+  (`.command-row-btn`, `ready-for-agent`). Resolutions commented onto **#92**,
+  which stays open as the findings record and the home for the three untaken
+  calls.
+- [fired] Queue eligible: 2 `ready-for-agent`, mutually unblocked, so
+  `ticket-loop` can take them in either order. `/relay N=1 /preset ticket-loop`
+  fired as the last act, per [[relay-spawn-is-last-act]].
 </content>
 </invoke>
