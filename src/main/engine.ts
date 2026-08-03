@@ -231,29 +231,32 @@ const mapResultError = (subtype: string): string => {
   return subtype
 }
 
-export const createEngine = (
-  getCwd: () => string | null,
-  requestPermission: RequestPermissionFn,
-  queryFn: QueryFn = defaultQuery,
-  getEnv: () => NodeJS.ProcessEnv = () => process.env,
+// The engine's out-of-band ports and per-query option getters, named rather
+// than positional: #52, #73 and #83 each added one, and every addition made
+// callers count placeholder slots to reach the new one. All optional — an
+// omitted getter means the SDK default, an omitted port means nobody listens.
+export type EnginePorts = {
+  // options.env REPLACES the child env wholesale (see sdk.d.ts) — the getter
+  // must return the full env resolved for the active backend mode.
+  getEnv?: () => NodeJS.ProcessEnv
   // Extra query options for the active permission mode (permissionMode + the
   // bypass danger flag). Injected like getEnv so the engine stays decoupled
   // from the permission-mode store. Empty by default → SDK default behaviour.
-  getPermissionOptions: () => Record<string, unknown> = () => ({}),
+  getPermissionOptions?: () => Record<string, unknown>
   // Extra query options for the active model (options.model, or {} for the CLI
   // default). Injected like getPermissionOptions — the engine stays decoupled
   // from the model-mode store.
-  getModelOptions: () => Record<string, unknown> = () => ({}),
+  getModelOptions?: () => Record<string, unknown>
   // What model the CLI says it is running (#52). Injected like the getters
   // above, and deliberately NOT an EngineEvent: emit() only reaches
   // activeOnEvent, which is null outside a turn, and the `init` that carries
   // the first model arrives during warmUp(). Routed through an EngineEvent this
   // would be dropped in exactly the case it exists for.
-  onModelReport: (model: string) => void = () => {},
+  onModelReport?: (model: string) => void
   // Which Claude Code binary to spawn (pathToClaudeCodeExecutable, or {} for
   // the SDK's bundled one). Injected like the getters above so the engine does
   // not care how the host install is found — see cli-path.ts.
-  getCliOptions: () => Record<string, unknown> = () => ({}),
+  getCliOptions?: () => Record<string, unknown>
   // The stream died and this engine is now terminal (#73). Injected like
   // onModelReport above, and deliberately NOT an EngineEvent for the SAME
   // reason: emit() only reaches activeOnEvent, which is null outside a turn —
@@ -266,7 +269,7 @@ export const createEngine = (
   //
   // Fires ONLY where the CLI died under us — never for close(), which is main's
   // own teardown on every workspace switch, model pick and permission cycle.
-  onTerminal: () => void = () => {},
+  onTerminal?: () => void
   // The CLI's live background-task set (#83). Third injected port, and the
   // measurement behind it is the sharpest of the three: #81 timed a level event
   // landing 3.3s AFTER `result/success`, by which point finishTurn() has nulled
@@ -278,8 +281,24 @@ export const createEngine = (
   // level, not an edge pair. Fired with [] on close() as well — the level is
   // per-process and the SDK emits nothing at startup, so a set that outlives its
   // engine is a permanently stale indicator.
-  onBackgroundTasks: (tasks: BackgroundTask[]) => void = () => {}
+  onBackgroundTasks?: (tasks: BackgroundTask[]) => void
+}
+
+export const createEngine = (
+  getCwd: () => string | null,
+  requestPermission: RequestPermissionFn,
+  queryFn: QueryFn = defaultQuery,
+  ports: EnginePorts = {}
 ): Engine & { close(): void } => {
+  const {
+    getEnv = () => process.env,
+    getPermissionOptions = () => ({}),
+    getModelOptions = () => ({}),
+    onModelReport = () => {},
+    getCliOptions = () => ({}),
+    onTerminal = () => {},
+    onBackgroundTasks = () => {}
+  } = ports
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
   let consumeStarted = false

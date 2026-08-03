@@ -1364,13 +1364,12 @@ describe('engine session id + resume', () => {
 describe('engine permission options', () => {
   test('spreads injected permission options into query options', async () => {
     const { fn, calls, push } = streamingStub()
-    const engine = createEngine(
-      () => 'D:\\proj',
-      autoAllow(),
-      fn,
-      () => process.env,
-      () => ({ permissionMode: 'bypassPermissions', allowDangerouslySkipPermissions: true })
-    )
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      getPermissionOptions: () => ({
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true
+      })
+    })
     const turn = collect(engine, 'hi')
     await Promise.resolve()
     push(success)
@@ -1397,14 +1396,9 @@ describe('engine permission options', () => {
 describe('engine model options', () => {
   test('spreads injected model options into query options', async () => {
     const { fn, calls, push } = streamingStub()
-    const engine = createEngine(
-      () => 'D:\\proj',
-      autoAllow(),
-      fn,
-      () => process.env,
-      () => ({}),
-      () => ({ model: 'opus' })
-    )
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      getModelOptions: () => ({ model: 'opus' })
+    })
     const turn = collect(engine, 'hi')
     await Promise.resolve()
     push(success)
@@ -1434,15 +1428,7 @@ describe('engine model reporting (#52)', () => {
   }
 
   const engineWith = (fn: QueryFn, onReport: (m: string) => void) =>
-    createEngine(
-      () => 'D:\\proj',
-      autoAllow(),
-      fn,
-      () => process.env,
-      () => ({}),
-      () => ({}),
-      onReport
-    )
+    createEngine(() => 'D:\\proj', autoAllow(), fn, { onModelReport: onReport })
 
   test('reports the model from `init` — before any turn has run', async () => {
     const { fn, push } = streamingStub()
@@ -1550,16 +1536,9 @@ describe('engine model reporting (#52)', () => {
 describe('engine CLI path', () => {
   test('spreads injected CLI options into query options', async () => {
     const { fn, calls, push } = streamingStub()
-    const engine = createEngine(
-      () => 'D:\\proj',
-      autoAllow(),
-      fn,
-      () => process.env,
-      () => ({}),
-      () => ({}),
-      () => {},
-      () => ({ pathToClaudeCodeExecutable: 'C:\\bin\\claude.exe' })
-    )
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      getCliOptions: () => ({ pathToClaudeCodeExecutable: 'C:\\bin\\claude.exe' })
+    })
     const turn = collect(engine, 'hi')
     await Promise.resolve()
     push(success)
@@ -1586,7 +1565,7 @@ describe('engine backend env', () => {
   test('passes the resolved env from getEnv straight into query options.env', async () => {
     const wispedEnv = { PATH: '/bin', ANTHROPIC_BASE_URL: 'http://127.0.0.1:41184' }
     const { fn, calls, push } = streamingStub()
-    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, () => wispedEnv)
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, { getEnv: () => wispedEnv })
     const turn = collect(engine, 'hi')
     await Promise.resolve()
     push(success)
@@ -1597,7 +1576,7 @@ describe('engine backend env', () => {
   test('a native env (wisp vars absent) is passed through unchanged', async () => {
     const nativeEnv = { PATH: '/bin', HOME: '/home' }
     const { fn, calls, push } = streamingStub()
-    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, () => nativeEnv)
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, { getEnv: () => nativeEnv })
     const turn = collect(engine, 'hi')
     await Promise.resolve()
     push(success)
@@ -2099,17 +2078,7 @@ describe('engine — terminal death signal (#73)', () => {
   }
 
   const engineWithTerminal = (fn: QueryFn, onTerminal: () => void) =>
-    createEngine(
-      () => 'D:\proj',
-      autoAllow(),
-      fn,
-      () => process.env,
-      () => ({}),
-      () => ({}),
-      () => {},
-      () => ({}),
-      onTerminal
-    )
+    createEngine(() => 'D:\proj', autoAllow(), fn, { onTerminal })
 
   test('a stream that THROWS after a turn ran fires the signal exactly once', async () => {
     const w = watcher()
@@ -2254,18 +2223,7 @@ describe('engine — background tasks level (#83)', () => {
   }
 
   const engineWithTasks = (fn: QueryFn, onTasks: (t: BackgroundTask[]) => void) =>
-    createEngine(
-      () => 'D:\proj',
-      autoAllow(),
-      fn,
-      () => process.env,
-      () => ({}),
-      () => ({}),
-      () => {},
-      () => ({}),
-      () => {},
-      onTasks
-    )
+    createEngine(() => 'D:\proj', autoAllow(), fn, { onBackgroundTasks: onTasks })
 
   const level = (
     tasks: Array<{ task_id: string; task_type: string; description: string }>

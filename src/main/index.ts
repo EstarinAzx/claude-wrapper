@@ -98,49 +98,69 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
     getSessionCwd,
     ({ toolUseId, signal }) => permissionBroker.request({ toolUseId, signal }),
     undefined,
-    () => getSpawnEnv(process.env),
-    () => toPermissionOptions(getPermissionMode()),
-    () => toModelOptions(getModelMode()),
-    // #52: the CLI is the authority on what it is running. `/model` changes it
-    // without the pill being touched, so the pill has to follow the CLI rather
-    // than only its own last click. Display only — this never becomes
-    // options.model (see model-mode.ts).
-    (model) => {
-      if (!setReportedModel(model)) return
-      for (const win of BrowserWindow.getAllWindows()) {
-        win.webContents.send('model:changed', getDisplayModel())
-      }
-    },
-    () => toCliOptions(hostCli),
-    // #73: the CLI died under us and this engine is terminal. Broadcast like
-    // the model report above — and for the same reason it is not an
-    // EngineEvent: a stream dying BETWEEN turns has no active turn to emit
-    // into, which is precisely when the renderer most needs to know before a
-    // prompt is spent on a dead engine.
-    //
-    // Carries no payload. The error TEXT already travels as an EngineEvent;
-    // all that is missing downstream is which KIND of error it was, and that
-    // is one bit.
-    () => {
-      for (const win of BrowserWindow.getAllWindows()) {
-        win.webContents.send('engine:terminal')
-      }
-    },
-    // #83: the CLI's live background-task set. Third out-of-band port, and the
-    // one with the hardest measurement behind it — #81 timed a level landing
-    // 3.3s past `result`, so an EngineEvent would be dropped in the ordinary
-    // case rather than an edge one.
-    //
-    // Carries the WHOLE set every time, because the CLI's message does. The
-    // renderer replaces its set rather than pairing bookends, so a dropped
-    // message can never wedge a finished task on screen. `[]` also arrives here
-    // from the engine's own close(), which is the per-process reset.
-    (tasks) => {
-      for (const win of BrowserWindow.getAllWindows()) {
-        win.webContents.send('tasks:changed', tasks)
+    {
+      getEnv: () => getSpawnEnv(process.env),
+      getPermissionOptions: () => toPermissionOptions(getPermissionMode()),
+      getModelOptions: () => toModelOptions(getModelMode()),
+      // #52: the CLI is the authority on what it is running. `/model` changes it
+      // without the pill being touched, so the pill has to follow the CLI rather
+      // than only its own last click. Display only — this never becomes
+      // options.model (see model-mode.ts).
+      onModelReport: (model) => {
+        if (!setReportedModel(model)) return
+        for (const win of BrowserWindow.getAllWindows()) {
+          win.webContents.send('model:changed', getDisplayModel())
+        }
+      },
+      getCliOptions: () => toCliOptions(hostCli),
+      // #73: the CLI died under us and this engine is terminal. Broadcast like
+      // the model report above — and for the same reason it is not an
+      // EngineEvent: a stream dying BETWEEN turns has no active turn to emit
+      // into, which is precisely when the renderer most needs to know before a
+      // prompt is spent on a dead engine.
+      //
+      // Carries no payload. The error TEXT already travels as an EngineEvent;
+      // all that is missing downstream is which KIND of error it was, and that
+      // is one bit.
+      onTerminal: () => {
+        for (const win of BrowserWindow.getAllWindows()) {
+          win.webContents.send('engine:terminal')
+        }
+      },
+      // #83: the CLI's live background-task set. Third out-of-band port, and the
+      // one with the hardest measurement behind it — #81 timed a level landing
+      // 3.3s past `result`, so an EngineEvent would be dropped in the ordinary
+      // case rather than an edge one.
+      //
+      // Carries the WHOLE set every time, because the CLI's message does. The
+      // renderer replaces its set rather than pairing bookends, so a dropped
+      // message can never wedge a finished task on screen. `[]` also arrives here
+      // from the engine's own close(), which is the per-process reset.
+      onBackgroundTasks: (tasks) => {
+        for (const win of BrowserWindow.getAllWindows()) {
+          win.webContents.send('tasks:changed', tasks)
+        }
       }
     }
   )
+
+// The one engine-discard funnel outside the switch transaction. Five IPC paths
+// throw the engine away (folder pick, session target, backend flip, permission
+// cycle, model pick) and each must do the same things in the same order: close
+// the engine — which is what fires the per-process background-task reset, see
+// engine.ts — cancel any pending permission requests, and drop the handle so
+// the next send rebuilds lazily. The only thing that differs per path is what
+// the NEXT conversation resumes, so that travels as the argument: an id to
+// keep the conversation, null to start fresh. Hand-copying these lines to each
+// site is the "must join the ok branch by hand" failure class this codebase
+// keeps re-learning; the switch transaction sequences its own teardown through
+// its ports because it validates between the steps.
+const discardEngine = (resume: string | null): void => {
+  engine?.close()
+  permissionBroker.cancelAll()
+  engine = null
+  pendingResume = resume
+}
 
 // The atomic workspace transition (#46), bound to this process's real engine,
 // permission broker and cwd. Reached from the renderer over
@@ -342,11 +362,9 @@ ipcMain.handle('session:pick-folder', async (event) => {
     properties: ['openDirectory']
   })
   if (canceled || filePaths.length === 0) return null
-  engine?.close()
-  permissionBroker.cancelAll()
+  discardEngine(null)
   setSessionCwd(filePaths[0])
   engine = makeEngine()
-  pendingResume = null
   // Eager warm-up (#39): the command list exists before the first send. Inert
   // on failure by the engine's contract — a user who never opens the dock
   // cannot tell this ran.
@@ -507,10 +525,7 @@ ipcMain.on('session:watch', (event, id: unknown) => {
 
 ipcMain.on('chat:target', (event, id: unknown) => {
   if (!isTrustedIpc(event)) return
-  engine?.close()
-  permissionBroker.cancelAll()
-  engine = null
-  pendingResume = typeof id === 'string' && id ? id : null
+  discardEngine(typeof id === 'string' && id ? id : null)
 })
 
 ipcMain.handle('chat:session-id', (event) => {
@@ -526,21 +541,17 @@ ipcMain.handle('backend:mode', (event) => {
 })
 
 // Guarded write: flip the backend the next turn spawns against. Carries only the
-// target mode enum. Reuses the chat:target teardown (close the engine, cancel
-// pending permissions, null the engine) and additionally drops the resume target
-// so the flip lands in a FRESH chat, not a resume of the prior conversation. The
-// lazy chat:send rebuilds the engine with the new mode's spawn env. Locked to
-// native when the launch env carried no wisp routing. Broadcasts the resolved
-// mode back so the pill + renderer re-render.
+// target mode enum. Discards with a null resume — the flip lands in a FRESH
+// chat, not a resume of the prior conversation. The lazy chat:send rebuilds the
+// engine with the new mode's spawn env. Locked to native when the launch env
+// carried no wisp routing. Broadcasts the resolved mode back so the pill +
+// renderer re-render.
 ipcMain.on('backend:set-mode', (event, mode: unknown) => {
   if (!isTrustedIpc(event)) return
   if (mode !== 'native' && mode !== 'wisped') return
   if (mode === 'wisped' && !isWispedAvailable()) return
   setBackendMode(mode)
-  engine?.close()
-  permissionBroker.cancelAll()
-  engine = null
-  pendingResume = null
+  discardEngine(null)
   const win = BrowserWindow.fromWebContents(event.sender)
   win?.webContents.send('backend:changed', {
     mode: getBackendMode(),
@@ -564,11 +575,9 @@ ipcMain.on('permission:set-mode', (event, mode: unknown) => {
   if (!isTrustedIpc(event)) return
   if (mode !== 'bypassPermissions' && mode !== 'acceptEdits' && mode !== 'default') return
   setPermissionMode(mode)
-  const resume = engine?.sessionId() ?? pendingResume
-  engine?.close()
-  permissionBroker.cancelAll()
-  engine = null
-  pendingResume = resume
+  // The resume target is read BEFORE the discard — sessionId() is unreachable
+  // once the handle is dropped, and this is the path that keeps the conversation.
+  discardEngine(engine?.sessionId() ?? pendingResume)
   const win = BrowserWindow.fromWebContents(event.sender)
   win?.webContents.send('permission:changed', getPermissionMode())
 })
@@ -593,11 +602,9 @@ ipcMain.on('model:set', (event, model: unknown) => {
     return
   }
   setModelMode(model)
-  const resume = engine?.sessionId() ?? pendingResume
-  engine?.close()
-  permissionBroker.cancelAll()
-  engine = null
-  pendingResume = resume
+  // Same as permission:set-mode above: resume read before the discard, so the
+  // model pick keeps the conversation.
+  discardEngine(engine?.sessionId() ?? pendingResume)
   const win = BrowserWindow.fromWebContents(event.sender)
   win?.webContents.send('model:changed', getDisplayModel())
 })
