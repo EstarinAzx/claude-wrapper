@@ -7,14 +7,51 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (relay leg 1, `ticket-loop`) — **#93 landed as `07c0068`; #94 is the next unblocked ticket and the queue is NOT dry**_
-_At commit: `07c0068` on `main` (unpushed, with `09ca8fe` and `c7cee33` ahead of origin). Gate green: typecheck clean, **953 tests across 63 files** (baseline unchanged), `gui-93` PASS_
-_Driver check: **partial and deliberate.** This was a CSS-only change adding `:focus-visible` states, so the three surfaces it touched were re-driven — `gui-93` (new, PASS), `gui-72` (titlebar geometry, PASS) and `gui-51` (composer + rails gutters, PASS). The full 23-driver batch was **not** run: nothing at rest changed, and the batch's only known flake (`gui-75`) is focus-dependent, which is exactly what an unattended run reds on. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`._
+_Last updated: 2026-08-04 by Opus 5 (relay leg 2, `ticket-loop`) — **#94 landed as `e1a2c31`; the `ready-for-agent` queue is now DRY and the relay chain stopped itself**_
+_At commit: `e1a2c31` on `main` (unpushed, with `485a814`, `07c0068`, `09ca8fe` and `c7cee33` ahead of origin). Gate green: typecheck clean, **953 tests across 63 files** (baseline unchanged), `gui-94` PASS_
+_Driver check: **partial and deliberate.** A two-declaration CSS change, so only the drivers owning the surfaces it touches were re-run — `gui-94` (new, PASS), `gui-51` (the only other driver naming `.command-list` / the Commands panel, and the device-pixel comparator, PASS) and `gui-93` (owns `.command-option`, the second surface, PASS). The full 24-driver batch was **not** run: nothing outside the Commands dock changed, and the batch's only known flake (`gui-75`) is environmental. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`._
 
 ## Current focus
 
+**#94 landed (`e1a2c31`) — the Commands dock renders in the app's own font, and
+the `ready-for-agent` queue is now empty. The next move is the owner's.**
+
+`.command-row-btn` was the last row button without `font: inherit`, so the dock
+painted its descriptions in Chromium's UA button font — **Arial 13.3333px** here
+— while every sibling row used `--font`. Deferred by #79 (whose contract was zero
+visual change) and flagged ever since.
+
+**`font` is a shorthand, and that is the whole ticket.** It resets `line-height`
+as well as `font-family`, and this subtree had nowhere to absorb it: `rails.css`
+declares zero line-heights, `body` sets `1.6`, a `<button>`'s UA `normal` does not
+inherit. The naive join moved **all three** children — `+5.6px` / `+4.8px` /
+`+5.6px`, a 60px row becoming **76px** — including the two that set their own
+`font-family` and look immune. The ADR predicting one child was wrong by two
+children and 27% of the row.
+
+**The prescribed remedy was the trap, twice.** The ticket said to pin all three
+children to measured pixels. (1) `.command-row-name` and `.command-row-hint`
+render a **second time** in the composer's slash popover, which `font: inherit`
+never reaches but a shared-class pin does — they agree today only because
+`.command-option` sets the `font-family` **longhand**, leaving its line-height at
+the same UA `normal`. (2) 15.2px and 12.8px are **Cascadia Code's** metrics;
+`--mono` is a fallback list, so wherever it resolves to Consolas the pin would
+*introduce* the shift it exists to prevent. What shipped instead is
+`line-height: normal` on the **parent** — one declaration, whole subtree, still
+font-relative — plus a unitless `1.1` on `.command-row-desc` alone, the one child
+whose family actually changes.
+
+**AC3 was vacuous until it was mutated.** "All three children unchanged" passes
+trivially on `main`; it only means something because `font: inherit` was applied
+**alone** first, reddening all three by 5–7× the tolerance. Fourth instance after
+#76, #82 and #93.
+
+See [[2026-08-04-the-font-shorthand-resets-the-line-box]].
+
+## Previously (2026-08-04) — #93, the other half of the owner grant
+
 **#93 landed (`07c0068`) — every interactive control now wears the app's focus
-ring. #94 is open, unblocked and `ready-for-agent`.**
+ring.**
 
 Thirteen controls rendered Chromium's default
 `outline: auto 0.8px rgb(229, 151, 0)` on keyboard focus, including `.send-btn`,
@@ -425,17 +462,17 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `07c0068` + this leg's `.context` commit, **unpushed** (so are `09ca8fe` and `c7cee33`). No open branches — `ticket/93-focus-ring` was squash-merged and deleted.
-- **Queue (`ready-for-agent`): ONE ticket, unblocked.** **#94** — `.command-row-btn` gets `font: inherit` without shifting vertical metrics (`blocked_by: 0`, verified). #93 closed this leg. **#86 and #91 remain `ready-for-human`** and neither is loop work; #91 is still blocked by #86.
-- **#94's ADR is wrong and the ticket says so.** `2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md` states the fix repaints one child. `font: inherit` is a **shorthand that also resets `line-height`**, so all three `.command-row-*` children shift vertical metrics. Pin the children's `line-height` **first**, then add `font: inherit`. Read the ticket body, not the ADR.
+- **In flight:** nothing. `main` = `e1a2c31` + this leg's `.context` commit, **unpushed** (so are `485a814`, `07c0068`, `09ca8fe` and `c7cee33`). No open branches — `ticket/94-command-row-font-inherit` was squash-merged and deleted.
+- **Queue (`ready-for-agent`): DRY.** Live frontier query returns `[]`. #93 and #94 both landed and closed, which spends the 2026-08-04 owner grant in full. The three open issues — **#92, #91, #86 — are all `ready-for-human`** and none is loop work; #91 is still blocked by #86. **The relay chain stopped itself here rather than spawning a leg with nothing to do.**
+- **The tailwind ADR is now AMENDED, not just flagged.** `2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md` carried "adding `font: inherit` would repaint `.command-row-desc`" — one child. #94 measured three, and a 60px row becoming 76px. The amendment is inline in that entry and the lesson is recorded: **the error was not enumerating the shorthand.**
 - **Landed:** **#83** (`ea780a0`) — the background-tasks section, a third injected port, 23 tests, five mutants killed and an ADR. Before it, **#82** (`3f34737`) — the dock's turn-end re-read, `keepStale`, seven tests and an ADR; **#81** (`002e524`), the harness and its ADR with **no `src/` diff, deliberately**, then the seven parked calls taken with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
 - **Parked for the owner: TWO, and they are the older halves — the seven are DONE.** The 2026-08-01 `/preset vibe init` run parked seven calls with no grant; the owner made one live after #81 landed and **all seven were taken** ([[2026-08-01-the-background-agents-seed-decided]]): two authorise work (#82, #83), four closed as **no** (the seed's meaning is the SDK concept; no labelled map; no new top-level surface; non-agent work **yes** but as its own section), one **struck** (map pan-zoom). `.claude/vibe.md`'s `## Needs you` is **history now, not a queue** — its `## Taken` section carries the resolutions. **What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's. **#83 was deliberately routed into the existing Agents dock so it does not pre-empt that second one.**
 - **Blocked:** **#91**, on #86. Its other blocker (#90) closed this leg, so it is one owner call away from being buildable — and that call (owner call 1, where a non-agent panel lives) is unanswered. **Do not take it; it is `ready-for-human` by construction, not by oversight.**
 
 ## Pick up here
 
-**The queue is NOT dry — #94 is open, unblocked and `ready-for-agent`.** Run the
-frontier query first anyway; this line goes stale the moment the owner files
+**The queue is DRY — zero `ready-for-agent` tickets.** Run the frontier query
+anyway before believing that; this line goes stale the moment the owner files
 something, and that is this project's standing lesson (a leg once wrote that
 closing #70 would empty the queue and was wrong, because #71 had been unblocked
 the whole time).
@@ -445,12 +482,20 @@ gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-If it really is empty, **the next move is the owner's** — file new work, or run
+It is empty, so **the next move is the owner's** — file new work, or run
 `/preset init` / `/preset vibe init` to generate a batch. The `## Deferred` list
 below is the standing menu of candidates, and `## Open questions` holds the ones
-that need an answer before they can be specced. **Two owner calls stand and are
-named in [[pick-up]]** (Tailwind's adopt-utilities half, the titlebar's control
-count); do not take either without a grant.
+that need an answer before they can be specced. **Seven owner calls stand and are
+named in [[pick-up]]**: the two older halves (Tailwind's adopt-utilities half,
+the titlebar's control count), #92's three that were refuted *after* the grant
+and stayed refuted (the stale accent clause, `.model-menu-item`'s
+`font-weight: 500`, what "professional grade" means), `.subagent-drawer-backdrop`
+wanting `tabIndex={-1}` (#93, unfiled), and **new from #94: whether 12px is the
+right line box for 11px muted description text** — the geometry #94 preserved is
+*Arial's* metric, an artifact of the bug it fixed, and Segoe's own 14.4px sits
+closer to the app's other micro text (1.3–1.45). Do not take any of them without
+a grant. **The 2026-08-04 grant is fully spent** — it produced #93 and #94, both
+landed. A new *reason* reopens a call; a re-read does not.
 
 **The nearest-to-ready candidate is #91, and it is NOT loop work.** #90 cleared
 one of its two blockers, so it now waits on a single owner call (#86 call 1). Its
@@ -514,6 +559,17 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #94 — binding on the command rows, the `font` shorthand and `gui-94`:**
+
+- **`font: inherit` is a SHORTHAND — it resets `line-height`, and this app has nowhere to absorb that.** `rails.css` declares **zero** line-heights, `body` sets `1.6`, and a `<button>`'s UA `line-height: normal` does not inherit. Adding `font: inherit` to any button whose children do not declare their own line-height moves **every** child, including ones that set their own `font-family` and look immune. Measured on `.command-row-btn`: +5.6px / +4.8px / +5.6px, a 60px row becoming 76px. The shorthand also resets `font-style`, `font-variant`, `font-weight`, `font-stretch` and `font-size` — enumerate them, do not assume; **not enumerating is the exact error that made the tailwind ADR wrong.**
+- **The neutraliser goes on the PARENT, not on the children that visibly moved.** `line-height: normal` on the button fixes the whole subtree in one declaration and stays font-relative. Pinning children to measured px is wrong twice: a px measured against **Cascadia Code** is a shift wherever `--mono` falls back to Consolas, and two of these children are not the dock's to pin (next entry).
+- **`.command-row-name` and `.command-row-hint` are rendered on TWO surfaces.** The Commands dock (`CommandsDock.tsx:68`, inside `.command-row-btn`) and the composer's slash popover (`InputBar.tsx:483`, inside `.command-option`). `font: inherit` on the button never reaches the popover — **a pin on the shared class does.** They agree today only because `.command-option` sets `font-family: inherit`, the **longhand**, so its line-height is still the same UA `normal`. That coincidence is what would let a shared-class pin look green while silently redefining the popover from the dock's measurements. `gui-94` measures both surfaces against one probe for exactly this reason.
+- **Every line-height in this app is unitless — all 19 of them.** A px line-height would be the first, and stops tracking the `--fs-*` token it depends on. `.command-row-desc` needed a pin (its family changes, and `normal` resolves from family metrics: Arial ≈1.09 → Segoe UI Variable Text ≈1.31 grew it 12px → 14.4px) and took `1.1`, which holds the row within 0.1px **and** still tracks `--fs-micro`.
+- **`.command-list`'s height measures nothing.** It is `max-height`-bound and scrolls, so it read **548px in every run** — including the mutation where each row was 27% taller. Assert on the *row*, never the list. A driver that watched the list would have passed the broken build.
+- **The UA button font here is Arial 13.3333px / `normal`**, and `--font` is `"Segoe UI Variable Text"`. Their `normal` line-heights differ by ~19% at the same size. Any "just inherit the font" change involving a `<button>` moves vertical metrics unless something pins them.
+- **Fourth instance of the vacuous no-change criterion** (after #76, #82, #93): #94's AC3 passes trivially on `main`. It means something only because `font: inherit` was applied **alone** first and reddened all three children by 5–7× the tolerance. Mutation-verify a no-change assertion *before* trusting it — this is now a pattern, not an accident.
+- **`gui-94` is the ONLY guard on the command-row font, in either direction.** Nothing in `tests/` and none of the other 24 drivers pins it; jsdom cannot see a computed family or a line box. Deleting or renaming the driver silently removes all coverage.
 
 **From #93 — binding on the focus system and on `gui-93`:**
 
