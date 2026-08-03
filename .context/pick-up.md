@@ -1,7 +1,7 @@
 ---
 type: pick-up
 project: claude-wrapper
-updated: 2026-08-02
+updated: 2026-08-03
 tags: [context, pick-up]
 ---
 
@@ -9,15 +9,17 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## queue empty
+## Frontier: #90
 
-**#89 landed and closed. Nothing is `ready-for-agent`.** The relay chain stopped
-here rather than spawning another leg — the queue going dry is its designed stop.
+**#90 — spike: are the CLI's background sessions reachable from this app at
+all?** `ready-for-agent`, zero blockers, filed 2026-08-03. It is a
+**measurement**, not a build, and its Out of scope names every UI avenue.
 
-- ~~**#89**~~ — closed, `5e41520`. The entrypoint is a launch-env fact; see below.
-- ~~**#88**~~ — closed, `833f969`. MCP health arrives once per turn.
-- ~~**#87**~~ — closed, `75f1db9`. The thinking block arrives empty.
+- **#90** — OPEN, `ready-for-agent`, **take this one**.
+- **#91** — open, `ready-for-human`, blocked by **2** (#90 and #86). The
+  background-sessions *surface*. Do not touch it; see `## Do not decide these`.
 - **#86** — open, `ready-for-human`, **not loop work**: findings + five owner calls.
+- ~~#87 / #88 / #89~~ — closed.
 
 **Run the frontier query anyway** — this line is a snapshot and the owner may
 have filed since. This project's standing lesson is that a leg once wrote that
@@ -34,7 +36,37 @@ If it really is empty, **the next move is the owner's** — file work, or run
 `## Deferred` is the standing candidate menu and `## Open questions` holds what
 needs an answer before it can be specced.
 
-## Landed last leg
+## Landed this leg (2026-08-03) — no ticket, a trace and two filings
+
+No `src/` change. The session answered a question, verified the answer on the
+real window, and filed what the answer exposed.
+
+- **`.context/flows.md` started** (`3447ace`) — first entry is the Agents dock:
+  how it opens, where background tasks render, entry point and key files. A
+  `/trace` on that flow is now a cheap verify instead of a full re-read.
+- **`.claude/skills/run-desktop/gui-agents-dock.mjs`** (`3447ace`) — 13 checks,
+  exit 0, **no CLI turns**. Confirms the `cwd` gate, the single-slot dock swap,
+  the `local_agent` filter, replace-not-append, and that Background rows are
+  non-interactive.
+- **The name collision recorded** (`522957a`) — this app's Agents dock is **not**
+  the CLI's agent view, and the scopes are near-inverses. Read that section
+  before writing "the agents view" anywhere.
+- **#90 and #91 filed** — the gap the collision exposed, split so the measurable
+  half is agent work and the surface stays the owner's.
+
+Two cautions on the driver, both written into `flows.md`:
+
+- Its background half is a **synthetic** `tasks:changed` push from main. That
+  exercises preload → `useChat` → `AgentsDock` with a fake payload; it says
+  **nothing** about whether the CLI emits the level. Do not cite it as
+  end-to-end evidence.
+- **Resizing the window mid-run was tried and abandoned.** The DOM reported
+  `.agents-dock` and both titlebar toggles present while the frame showed
+  neither, microseconds apart, under `--disable-gpu`. **Unresolved** as artifact
+  vs defect. The driver collapses the sessions rail instead. Anyone shooting a
+  wide window settles this first.
+
+## Landed previous leg
 
 **#89 — the entrypoint this app writes is a fact about the launch env.** Landed
 as `5e41520`, ticket closed. The `src/` change is a **comment**; no behaviour
@@ -70,7 +102,28 @@ writes `sdk-ts`" sentence is now false — read the amendment before citing it.
 
 ## Landmines
 
-Full ledger in [[active-work]] — long and load-bearing. New from #89:
+Full ledger in [[active-work]] — long and load-bearing. New 2026-08-03:
+
+- **"The agents view" is AMBIGUOUS in this repo.** This app's Agents dock is an
+  aside listing subagents *inside* one session; the CLI's agent view is a
+  full-terminal list of whole background *sessions* and explicitly does not row
+  subagents. Near-inverses sharing a name. Say which one, every time. Third
+  meaning of "agent" here, beside the two `background-tasks.ts` reconciles.
+- **The wrapper cannot reach the CLI's agent view by construction** — it runs the
+  CLI headless via the SDK, so there is no TUI, no `←` binding, no takeover
+  screen. Anything of that shape must be built, and #91 records why it is blocked.
+- **The sessions rail is the dangerous lookalike.** It has a "This project /
+  All projects" scope control, so it *looks* like a session list already exists.
+  It lists stored transcripts, not live processes: no state, no attach, no
+  dispatch.
+- **A driver that resizes the window revokes what it measures** — see the
+  unresolved paint disagreement above. `gui-agents-dock.mjs` collapses the
+  sessions rail instead. This is #77's lesson recurring.
+- **Element screenshots clip to the viewport.** `el.screenshot()` on a node that
+  sits outside the window returns grey, not the node. It is not a fallback for a
+  too-small window.
+
+New from #89:
 
 - **`entrypoint` is decided by the LAUNCH ENV, never by this app.** Any future
   reasoning of the form "this app writes X" is wrong by construction. Three
@@ -184,9 +237,14 @@ session**; **Chromium persists the zoom factor per origin inside `userData`**.
 
 ## Baseline
 
-`main` = `5e41520` + this leg's `.context` commit, pushed. No open branches.
-Test baseline **953 across 63 files** — unchanged by #87, #88 and #89 (#89's
-`src/` diff is comment-only).
+`main` = `522957a`. **Unpushed** as of this note: `3447ace` (flows + driver),
+`522957a` (the name-collision section), plus this `.context` commit. No open
+branches. Test baseline **953 across 63 files** — unchanged, since 2026-08-03
+touched no `src/`.
+
+**Untracked and deliberately left alone:** `.context/2026-07-23.md` and
+`.context/Untitled.canvas`, both **0 bytes** — Obsidian stubs from opening the
+vault. Not committed, not deleted; the owner's to clear.
 
 **22** assertion drivers plus the observational `gui-scope-zoom-pill`. Last full
 batch run at `3e24a53`: **22 green, `gui-75` red**, and that red is
@@ -209,6 +267,14 @@ reopens one of those calls; a re-read does not.
 dropped** but the adopt-utilities question **stays open**; the titlebar's control
 count **does not change** while the aesthetic question **stays the owner's**.
 
+**#91 is the owner's and is BLOCKED — do not build it.** A background-sessions
+surface is new UI, and #86's constraint that **no new feature may add a titlebar
+control** is live state that survived a grill. Every dock opens from a titlebar
+toggle and there is no router, so a new dock is *unreachable*, and which existing
+dock a non-agent panel joins is owner call 1, unanswered. #90 measures whether
+the data is even reachable and is scoped to change no UI; a leg that finds the
+data reachable **still may not build the panel**.
+
 **The 2026-08-02 vibe run's five calls are the owner's and are OPEN** — #86 holds
 them. Owner call 1 (where does a non-agent panel live?) is still **the gate on
 any MCP UI**. Owner call 2 went moot on #87 for want of a subject. **#89 moved
@@ -220,6 +286,8 @@ de-noise at all is still the owner's.
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
+- [[flows]] — **traced flows.** First entry is the Agents dock, and it carries the
+  agent-view name-collision table. Read it before any ticket naming "agents"
 - [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]] — **#89, this leg; the launch env decides, one record decides a session, and the value set is five**
 - [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]] — **AMENDED by #89; its `sdk-ts` provenance sentence is false, its decision stands**
 - [[2026-08-02-mcp-health-already-arrives-once-per-turn]] — #88
