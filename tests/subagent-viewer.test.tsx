@@ -86,6 +86,34 @@ describe('subagent viewer', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
+  // jsdom cannot press Tab, so this is not the tab-order measurement — that is
+  // `gui-95.mjs`, which walks the real window with real keys. This is the cheap
+  // permanent guard for the attribute the walk depends on, and it is written as
+  // two POSITIVE assertions rather than "the scrim is missing from somewhere":
+  // an absence assertion here would pass just as well against a drawer that
+  // never opened, which is the trap this repo has hit five times.
+  test('the scrim declines the tab stop its close button keeps, and still closes on click', async () => {
+    await startSession()
+    harness.api.currentSessionId.mockResolvedValue('sess-1')
+    harness.api.subagentTranscript.mockResolvedValue([{ role: 'assistant', text: 'hi from sub' }])
+    spawnTask()
+
+    fireEvent.click(document.querySelector('.subagent-row') as Element)
+    await screen.findByText('hi from sub')
+
+    const backdrop = document.querySelector('.subagent-drawer-backdrop') as HTMLElement
+    const close = document.querySelector('.subagent-drawer-close') as HTMLElement
+    expect(backdrop).toBeTruthy()
+    expect(backdrop.tabIndex).toBe(-1)
+    // The drawer is open and something in it IS still keyboard-reachable —
+    // without this line the assertion above measures nothing.
+    expect(close.tabIndex).toBe(0)
+
+    // The stop is removed; the click handler is not.
+    fireEvent.click(backdrop)
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   test('subagent output does not leak: no orphan tool card for a tagged inner tool', async () => {
     await startSession()
     spawnTask()

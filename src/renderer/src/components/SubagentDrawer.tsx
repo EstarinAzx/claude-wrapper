@@ -64,10 +64,18 @@ const SubagentDrawer = ({
       aria-modal="true"
       aria-label={`Subagent ${agentType}`}
     >
+      {/*
+        Decorative scrim: its only job is to swallow a click outside the drawer.
+        Same shape as `.model-backdrop`, the other scrim in this app — out of the
+        tab order, out of the a11y tree. A keyboard user has two real ways out
+        (the close button below, and Escape), so announcing the scrim as a third
+        adds a stop that does nothing anyone can want.
+      */}
       <button
         type="button"
         className="subagent-drawer-backdrop"
-        aria-label="Close subagent"
+        aria-hidden="true"
+        tabIndex={-1}
         onClick={onClose}
       />
       <aside className="subagent-drawer">
