@@ -378,7 +378,8 @@ de-noise at all is still the owner's.
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
 - [[flows]] — **traced flows.** First entry is the Agents dock, and it carries the
   agent-view name-collision table. Read it before any ticket naming "agents"
-- [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]] — **#90, this leg; reachable by subprocess only, ~0.9s a look, poll-only, and the app is in its own list**
+- [[2026-08-03-the-engine-ports-are-named-not-counted]] — **this leg's architecture pass (`c7cee33`); EnginePorts object + the discardEngine funnel, and what was deliberately not touched**
+- [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]] — **#90; reachable by subprocess only, ~0.9s a look, poll-only, and the app is in its own list**
 - [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]] — #89; the launch env decides, one record decides a session, and the value set is five
 - [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]] — **AMENDED by #89; its `sdk-ts` provenance sentence is false, its decision stands**
 - [[2026-08-02-mcp-health-already-arrives-once-per-turn]] — #88
