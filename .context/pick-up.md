@@ -9,17 +9,15 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Frontier: #90
+## Frontier: QUEUE EMPTY
 
-**#90 — spike: are the CLI's background sessions reachable from this app at
-all?** `ready-for-agent`, zero blockers, filed 2026-08-03. It is a
-**measurement**, not a build, and its Out of scope names every UI avenue.
+**No `ready-for-agent` ticket is open.** #90 landed and closed this leg and was
+the only one. The two remaining issues are both `ready-for-human`:
 
-- **#90** — OPEN, `ready-for-agent`, **take this one**.
-- **#91** — open, `ready-for-human`, blocked by **2** (#90 and #86). The
-  background-sessions *surface*. Do not touch it; see `## Do not decide these`.
 - **#86** — open, `ready-for-human`, **not loop work**: findings + five owner calls.
-- ~~#87 / #88 / #89~~ — closed.
+- **#91** — open, `ready-for-human`, **blocked by 1** (#86; #90 cleared this leg).
+  The background-sessions *surface*. **Do not build it** — see `## Do not decide these`.
+- ~~#87 / #88 / #89 / #90~~ — closed.
 
 **Run the frontier query anyway** — this line is a snapshot and the owner may
 have filed since. This project's standing lesson is that a leg once wrote that
@@ -36,37 +34,65 @@ If it really is empty, **the next move is the owner's** — file work, or run
 `## Deferred` is the standing candidate menu and `## Open questions` holds what
 needs an answer before it can be specced.
 
-## Landed this leg (2026-08-03) — no ticket, a trace and two filings
+## Landed this leg (2026-08-03) — #90, measurement only
 
-No `src/` change. The session answered a question, verified the answer on the
-real window, and filed what the answer exposed.
+**The CLI's background sessions ARE reachable — by one route, at one CLI process
+per look.** Landed as `c989fe5`, ticket closed. **No `src/` change**; the
+deliverables are `scripts/spike-90-agent-view.mjs`, evidence in
+`scripts/spike-90-findings.json`, and an ADR. Gate green: typecheck clean,
+**953 tests across 63 files** (baseline unchanged). GUI batch **not** owed — two
+files under `scripts/` and one ADR are neither renderer code nor CSS.
+
+Measured on host CLI **2.1.220 / SDK 0.3.220**, backend `wisped`.
+
+| | question | answer |
+|---|---|---|
+| 1 | SDK exposes them? | **No** — 29 exports, none list background sessions |
+| 2 | `claude agents --json`? | **Yes** — exit 0, parses, no TTY needed |
+| 3 | Payload? | **Two row shapes**; `state` at **four** values, open |
+| 4 | Push or poll? | **Poll only** |
+| 5 | Cost? | median **893ms** (min 846, max 1068, n=5) |
+| 6 | `--cwd` scopes? | by **directory** yes, by **kind** no, and it keeps the caller |
+
+**Three findings the six questions did not ask for:**
+
+- **`sessionId` is the only universal key.** `id` is absent on interactive rows.
+  And `state` (background-only) vs `pid`/`status` (live process) means **no
+  single field describes a row's liveness**.
+- **The app appears in its own listing**, as `kind: "interactive"` — measured by
+  running a real `query()` at `engine.ts`'s options and polling *during* the
+  turn. An SDK-spawned headless CLI does register with the supervisor.
+- **`~/.claude/daemon/roster.json` carries attach credentials** (`rvAuth`,
+  `ptyAuth`, socket paths, `dispatch.env`). Never log, never commit.
+
+**Two corrections the harness made to itself, both worth knowing:** its first run
+answered Q1 **YES** off a name-level regex matching `getSubagentMessages` /
+`listSubagents` — the repo's third meaning of "agent". It now *calls* candidates.
+They then returned `[]`, and an empty array has no fields by construction, so the
+negative was **vacuous** until it was exercised against a real session with
+sidecars on disk. #81's rule, biting inside the instrument.
+
+See [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]].
+
+## Landed previous session (2026-08-03) — no ticket, a trace and two filings
 
 - **`.context/flows.md` started** (`3447ace`) — first entry is the Agents dock:
-  how it opens, where background tasks render, entry point and key files. A
-  `/trace` on that flow is now a cheap verify instead of a full re-read.
+  how it opens, where background tasks render, entry point and key files.
 - **`.claude/skills/run-desktop/gui-agents-dock.mjs`** (`3447ace`) — 13 checks,
-  exit 0, **no CLI turns**. Confirms the `cwd` gate, the single-slot dock swap,
-  the `local_agent` filter, replace-not-append, and that Background rows are
-  non-interactive.
+  exit 0, **no CLI turns**.
 - **The name collision recorded** (`522957a`) — this app's Agents dock is **not**
-  the CLI's agent view, and the scopes are near-inverses. Read that section
-  before writing "the agents view" anywhere.
-- **#90 and #91 filed** — the gap the collision exposed, split so the measurable
-  half is agent work and the surface stays the owner's.
+  the CLI's agent view. Read that section before writing "the agents view".
+- **#90 and #91 filed.** #90 is now closed.
 
-Two cautions on the driver, both written into `flows.md`:
+Two cautions on that driver, both written into `flows.md`:
 
-- Its background half is a **synthetic** `tasks:changed` push from main. That
-  exercises preload → `useChat` → `AgentsDock` with a fake payload; it says
-  **nothing** about whether the CLI emits the level. Do not cite it as
-  end-to-end evidence.
-- **Resizing the window mid-run was tried and abandoned.** The DOM reported
-  `.agents-dock` and both titlebar toggles present while the frame showed
-  neither, microseconds apart, under `--disable-gpu`. **Unresolved** as artifact
-  vs defect. The driver collapses the sessions rail instead. Anyone shooting a
-  wide window settles this first.
+- Its background half is a **synthetic** `tasks:changed` push from main — it says
+  **nothing** about whether the CLI emits the level. Not end-to-end evidence.
+- **Resizing the window mid-run was tried and abandoned.** DOM and frame
+  disagreed microseconds apart under `--disable-gpu`. **Unresolved** as artifact
+  vs defect. Anyone shooting a wide window settles this first.
 
-## Landed previous leg
+## Landed before that
 
 **#89 — the entrypoint this app writes is a fact about the launch env.** Landed
 as `5e41520`, ticket closed. The `src/` change is a **comment**; no behaviour
@@ -102,7 +128,34 @@ writes `sdk-ts`" sentence is now false — read the amendment before citing it.
 
 ## Landmines
 
-Full ledger in [[active-work]] — long and load-bearing. New 2026-08-03:
+Full ledger in [[active-work]] — long and load-bearing. New from #90:
+
+- **`sessionId` is the ONLY universal key in the agent-view payload.** `id` is
+  absent on interactive rows (and is an 8-char `sessionId` prefix where present).
+- **No single field describes a row's liveness.** `state` = supervisor lifecycle,
+  **background rows only**; `pid` + `status` appear together exactly when a live
+  process exists.
+- **`state` is FOUR values here** (`blocked`, `done`, `failed`, **`working`**),
+  against the three the ticket predicted, and **not closed**. Render the raw
+  string — #83's `task_type` rule.
+- **`status` is not closed either, proven live.** The findings file recorded
+  `<null> | busy`; minutes later, same session, an interactive row read
+  **`idle`**. The open-set rule is not a hedge here — it fired within one sitting.
+- **An SDK-spawned CLI REGISTERS with the supervisor, as `kind: "interactive"`.**
+  The app is visible to the agent view and to itself, and `cwd` cannot filter it
+  out.
+- **`~/.claude/daemon/roster.json` holds ATTACH CREDENTIALS** — `rvAuth`,
+  `ptyAuth`, `rendezvousSock`, `ptySock`, `dispatch.env`. Never read it into a
+  log, a findings file or a UI.
+- **The listing is a JOIN.** `~/.claude/sessions/` covered 2 of 6 active rows,
+  `roster.json` 1 of 6. Watching either is a re-poll trigger, not a substitute.
+- **A name-level scan for "agent" here returns SUBAGENT APIs.** #90's own first
+  run got its headline answer wrong that way. **Call the thing before believing
+  its name** — and remember an empty return measures nothing.
+- **`scripts/spike-89-findings.json` leaks the OS username** (absolute temp
+  path). spike-90 records the basename only. Not fixed; not that ticket's file.
+
+Still true from the 2026-08-03 trace:
 
 - **"The agents view" is AMBIGUOUS in this repo.** This app's Agents dock is an
   aside listing subagents *inside* one session; the CLI's agent view is a
@@ -237,10 +290,12 @@ session**; **Chromium persists the zoom factor per origin inside `userData`**.
 
 ## Baseline
 
-`main` = `522957a`. **Unpushed** as of this note: `3447ace` (flows + driver),
-`522957a` (the name-collision section), plus this `.context` commit. No open
-branches. Test baseline **953 across 63 files** — unchanged, since 2026-08-03
-touched no `src/`.
+`main` = `c989fe5`. **Unpushed** as of this note: `3447ace` (flows + driver),
+`522957a` (the name-collision section), `dd435db` (the previous baton),
+`c989fe5` (#90's spike), plus this `.context` commit — **five**. No open
+branches; `ticket/90-agent-view-reachable` was squash-merged and deleted after
+its content was verified byte-identical to `main`. Test baseline **953 across 63
+files** — unchanged, since nothing on 2026-08-03 touched `src/`.
 
 **Untracked and deliberately left alone:** `.context/2026-07-23.md` and
 `.context/Untitled.canvas`, both **0 bytes** — Obsidian stubs from opening the
@@ -252,10 +307,13 @@ batch run at `3e24a53`: **22 green, `gui-75` red**, and that red is
 (`47ad14d`) with the work stashed. **Judge drivers by exit code.**
 
 Spike harnesses in `scripts/`: `spike-81-background-tasks.mjs`,
-`spike-87-thinking.mjs`, `spike-88-mcp-status.mjs`, `spike-89-entrypoint.mjs`.
-All four import the app's real `cli-path.ts` / `backend-mode.ts` rather than
-copying them — follow that when writing the next one, and note #89's finding that
-`session-index.ts` **cannot** be imported the same way.
+`spike-87-thinking.mjs`, `spike-88-mcp-status.mjs`, `spike-89-entrypoint.mjs`,
+`spike-90-agent-view.mjs`. All five import the app's real `cli-path.ts` /
+`backend-mode.ts` rather than copying them — follow that when writing the next
+one, and note #89's finding that `session-index.ts` **cannot** be imported the
+same way. **#90 is the one to copy for scrubbing**: it records the temp dir's
+basename rather than the absolute path, which keeps the OS username out of the
+repo (the other four do not).
 
 ## Do not decide these
 
@@ -267,13 +325,26 @@ reopens one of those calls; a re-read does not.
 dropped** but the adopt-utilities question **stays open**; the titlebar's control
 count **does not change** while the aesthetic question **stays the owner's**.
 
-**#91 is the owner's and is BLOCKED — do not build it.** A background-sessions
-surface is new UI, and #86's constraint that **no new feature may add a titlebar
-control** is live state that survived a grill. Every dock opens from a titlebar
-toggle and there is no router, so a new dock is *unreachable*, and which existing
-dock a non-agent panel joins is owner call 1, unanswered. #90 measures whether
-the data is even reachable and is scoped to change no UI; a leg that finds the
-data reachable **still may not build the panel**.
+**#91 is the owner's and is STILL BLOCKED — do not build it.** A
+background-sessions surface is new UI, and #86's constraint that **no new feature
+may add a titlebar control** is live state that survived a grill. Every dock
+opens from a titlebar toggle and there is no router, so a new dock is
+*unreachable*, and which existing dock a non-agent panel joins is owner call 1,
+unanswered.
+
+**#90 came back reachable and #91 did not move.** Its blocker count went 2 → 1,
+which is exactly the trap: a leg reading "only one blocker left" and taking it
+would be doing the thing #90's Out of scope forbade in advance. The ticket said
+a leg that finds the data reachable **still may not build the panel**, and that
+is what happened.
+
+What #90 *did* change is the price #91 is deciding against, now written on the
+ticket: **~893ms of a fresh CLI process per look, poll-only, staleness equal to
+the poll interval, a `child_process` spawn this app deliberately does not have
+(`cli-path.ts` chose a PATH walk over a `which` shell-out to avoid re-adding
+one), a row shape that is two shapes, and a list that contains the viewer.**
+Peek / reply / attach were out of scope and remain unmeasured — they are the
+larger question.
 
 **The 2026-08-02 vibe run's five calls are the owner's and are OPEN** — #86 holds
 them. Owner call 1 (where does a non-agent panel live?) is still **the gate on
@@ -288,7 +359,8 @@ de-noise at all is still the owner's.
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
 - [[flows]] — **traced flows.** First entry is the Agents dock, and it carries the
   agent-view name-collision table. Read it before any ticket naming "agents"
-- [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]] — **#89, this leg; the launch env decides, one record decides a session, and the value set is five**
+- [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]] — **#90, this leg; reachable by subprocess only, ~0.9s a look, poll-only, and the app is in its own list**
+- [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]] — #89; the launch env decides, one record decides a session, and the value set is five
 - [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]] — **AMENDED by #89; its `sdk-ts` provenance sentence is false, its decision stands**
 - [[2026-08-02-mcp-health-already-arrives-once-per-turn]] — #88
 - [[2026-08-02-the-thinking-block-arrives-empty]] — #87

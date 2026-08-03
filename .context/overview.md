@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-08-01
+updated: 2026-08-03
 tags: [context, overview]
 ---
 
@@ -248,8 +248,8 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **the queue is
-  DRY — #89 landed and closed, and the only open issue is #86, which is
-  `ready-for-human`**; run the frontier query
+  DRY — #90 landed and closed, and the two open issues are #86 and #91, both
+  `ready-for-human`, the second blocked by the first**; run the frontier query
   anyway, it is the authority and this line has been wrong before. No expected driver failure anywhere in the set,
   **22** assertion drivers plus the observational `gui-scope-zoom-pill` —
   `gui-75` is focus-dependent and its batch reds are premise failures, green on
@@ -260,6 +260,12 @@ tags: [context, overview]
   `cli-path.ts` so it cannot drift onto a different binary, dumps JSONL outside
   the repo and evaluates the ticket's three conditions mechanically. ~20s a run;
   re-run it after any CLI upgrade that makes a background-task claim doubtful
+- `scripts/spike-90-agent-view.mjs` — the newest sibling (#90) and the one to
+  copy for **scrubbing** and for **not trusting a name**: it answers six
+  questions mechanically, records only shapes/counts/vocabularies/timings, and
+  probes SDK candidates by **calling** them against a real session rather than
+  matching their names (its own first run got the headline answer wrong that
+  way). Re-run it after any CLI upgrade that changes `claude agents --json`
 - Tracker: **spec #58 (non-lossy tool inspector) delivered and closed** with
   #59 (replay text-block joining), #60 (the store's three silent failures),
   #61 (full output disclosure), #62 (structured input inspector) and #63 (Edit
@@ -305,12 +311,18 @@ tags: [context, overview]
   `entrypoint` this app writes is a fact about the LAUNCH ENV — comment-only
   `src/` diff, and it AMENDS
   [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]]) closed**;
+  **#90 (`c989fe5`, the CLI's background sessions measured REACHABLE but only as
+  a ~893ms subprocess per look, poll-only, with the app appearing in its own
+  listing — measurement only, no `src/` diff; see
+  [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]])
+  closed, and it did NOT unblock #91, which still waits on #86**;
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **The queue is DRY as of 2026-08-02** — the only
-  open issue is **#86**, `ready-for-human` and not loop work.
+  #20 hold the earlier history. **The queue is DRY as of 2026-08-03** — the open
+  issues are **#86** and **#91**, both `ready-for-human` and neither loop work,
+  with #91 blocked by #86.
   Run the frontier query rather than trusting this line
 
 ## Conventions

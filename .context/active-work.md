@@ -1,22 +1,63 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-08-02
+updated: 2026-08-03
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-08-02 by Opus 5 (1M) (auto) — **relay leg 3 landed #89; the queue is DRY and the chain stopped**_
-_At commit: `5e41520` on `main`, pushed. Gate green: typecheck clean, **953 tests across 63 files**, unchanged by this leg — #89's `src/` diff is comment-only_
-_Driver check: **not run this leg, and not implicated.** #89 touched `scripts/`, one main-process comment and one test comment; no renderer code and no CSS, so the GUI batch has nothing to observe. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`. No standing red anywhere else, so any other red is a real regression._
+_Last updated: 2026-08-03 by Opus 5 (1M) (auto) — **relay leg 1 landed #90; the queue is DRY and the chain stopped**_
+_At commit: `c989fe5` on `main`, **unpushed**. Gate green: typecheck clean, **953 tests across 63 files**, unchanged by this leg — #90 has no `src/` diff at all_
+_Driver check: **not run this leg, and not implicated.** #90 added two files under `scripts/` and one ADR; no renderer code, no CSS, no `src/`, so the GUI batch has nothing to observe. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`. No standing red anywhere else, so any other red is a real regression._
 
 ## Current focus
 
-**Nothing. The queue is dry.** #89 landed and closed this leg and was the last
-`ready-for-agent` ticket; #86 remains `ready-for-human` and is not loop work. The
-relay chain stopped rather than spawning a leg 4 — an empty queue is its designed
-stop, with `max_legs: 6` never reached.
+**Nothing. The queue is dry.** #90 landed and closed this leg and was the only
+`ready-for-agent` ticket; #86 and #91 are both `ready-for-human` and neither is
+loop work. The relay chain stopped rather than spawning a leg 2 — an empty queue
+is its designed stop, with `max_legs: 2` never reached.
+
+**#90 answered its question YES and made the answer expensive.** The CLI's
+background sessions **are** reachable from this app — but by exactly one route,
+`claude agents --json`, at **~893ms of a fresh CLI process per look**, with **no
+push channel of any kind**. The SDK has nothing: 29 exports and not one lists
+background sessions, while `listSessions()` (the near-miss that makes the
+sessions rail *look* like this feature) returns the stored-transcript shape with
+no `state`, `kind`, `pid` or attach path.
+
+**Three things the six questions did not ask for, all load-bearing for #91:**
+
+- **The row shape is two shapes wearing one name.** Background rows carry `id` +
+  `state`; interactive rows carry neither, but do carry `pid` + `status`. So
+  **`sessionId` is the only universal key**, and **no single field describes a
+  row's liveness** — `state` is the supervisor's lifecycle and background-only,
+  `pid`/`status` mean "a process is alive right now". The ticket's recorded shape
+  was a background-only sighting.
+- **The app is in its own listing.** Measured, not inferred: a real `query()` at
+  `engine.ts`'s exact options, with the listing polled *while the turn was live*.
+  The app's own session appears, as `kind: "interactive"` — so an SDK-spawned
+  headless CLI does register with the supervisor. A background-only list drops it
+  for free; anything mirroring the CLI's agent view (both kinds) shows the user
+  their own conversation, and `cwd` cannot exclude it.
+- **`~/.claude/daemon/roster.json` carries attach credentials** — `rvAuth`,
+  `ptyAuth`, socket paths, `dispatch.env`. Never log, never commit, never
+  surface. #88 said this of `McpServerStatus.config.env`; this is stronger.
+
+**The state vocabulary is four, not the predicted three** — `blocked`, `done`,
+`failed` and **`working`** — and it is **open**, so render the raw string (#83's
+`task_type` rule again). And the two on-disk stores are **not** a substitute for
+the call: `~/.claude/sessions/` covers 2 of 6 active rows, `roster.json` 1 of 6.
+The CLI **joins** them, so a watch is a re-poll trigger at best.
+
+**No UI was built and #91 did not move.** Its blocker count went 2 → 1, and #86
+is the one that remains. The ticket said in advance that a leg finding the data
+reachable still may not build the panel; it did not. What changed is #91's price
+tag, which is now written on the ticket.
+
+See [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]].
+
+## Previously (the #87/#88/#89 measurement line, complete)
 
 **#89 corrected a load-bearing comment, and the correction is to the REASONING,
 not the decision.** `session-store.ts` justified `includeProgrammatic: true` with
@@ -79,9 +120,51 @@ SPIKE87_ONLY=control-app-options` closes it after a human logs in.
 | ~~#87~~ | ~~spike: does an extended-thinking block ever reach the app?~~ | `75f1db9`, **closed** — measurement only |
 | ~~#88~~ | ~~spike: is MCP server status non-empty, and does it change between turns?~~ | `833f969`, **closed** — measurement only |
 | ~~#89~~ | ~~The session-listing comment claims this app writes `sdk-ts`; there are zero such records~~ | `5e41520`, **closed** — comment-only `src/` diff |
+| ~~#90~~ | ~~spike: are the CLI's background sessions reachable from this app at all?~~ | `c989fe5`, **closed** — measurement only, no `src/` diff |
 | #86 | Three seeded features, three unmeasured premises | open, `ready-for-human` — **not loop work** |
+| #91 | Surface: a background-sessions view in the wrapper | open, `ready-for-human`, **blocked by #86** — **not loop work** |
 
-**Landmines new from #89:**
+**Landmines new from #90:**
+
+- **`sessionId` is the only universal key in the agent-view payload.** `id` is
+  absent on interactive rows, and is an 8-char `sessionId` prefix where present.
+  Keying a list on `id` drops half the rows.
+- **No single field describes a row's liveness.** `state` is the supervisor's
+  lifecycle and appears on **background rows only**; `pid` + `status` appear
+  together exactly when a live process exists. A renderer reaching for one field
+  will be wrong for one of the two kinds.
+- **The `state` vocabulary is FOUR here** — `blocked`, `done`, `failed`,
+  **`working`** — against the three the ticket predicted, and it is **not
+  closed**. #81's rule and #83's `task_type` precedent both apply: render the raw
+  string, never an allow-list.
+- **`status` is not closed either, and it was caught opening.** The findings file
+  recorded `status` as `<null> | busy`; minutes later, in the same session, an
+  interactive row read **`idle`**. This is the open-set rule firing inside one
+  sitting rather than being cited as a caution — treat every vocabulary in this
+  payload as a sample.
+- **An SDK-spawned CLI REGISTERS with the supervisor, as `kind: "interactive"`.**
+  The app is visible to the agent view and to itself. Any surface listing both
+  kinds shows the user their own conversation, and `cwd` cannot filter it out
+  because the app lists the workspace it is open on.
+- **`~/.claude/daemon/roster.json` holds ATTACH CREDENTIALS** — `rvAuth`,
+  `ptyAuth`, `rendezvousSock`, `ptySock`, `dispatch.env`. Nothing may read it
+  into a log, a findings file or a UI.
+- **The agent-view listing is a JOIN the CLI performs.** `~/.claude/sessions/`
+  covered 2 of 6 active rows and `roster.json` 1 of 6. Watching either is a
+  change signal at best — neither reproduces the listing.
+- **A name-level scan for "agent" in this repo returns SUBAGENT APIs.**
+  `getSubagentMessages` / `listSubagents` are about subagents inside one session
+  — the third meaning of the word here. This spike's first run answered its own
+  Q1 wrong on exactly that. **Call the thing before believing its name.**
+- **An empty return measures nothing** — the vacuity rule reached inside the
+  instrument. Both candidates returned `[]` with no session id, and an empty
+  array has no fields by construction, so "carries no liveness field" was
+  vacuous until the probe was exercised against a real session with sidecars.
+- **`scripts/spike-89-findings.json` records an absolute temp path**, leaking the
+  OS username into the repo. spike-90 records the basename only. Not fixed —
+  it is not #90's file.
+
+**Landmines from #89:**
 
 - **`entrypoint` is decided by the LAUNCH ENV, never by this app.** Any claim of
   the form "this app writes X" is wrong by construction. Measured: `cli` in →
@@ -295,11 +378,11 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `5e41520` + this leg's `.context` commit, pushed. No open branches.
-- **Queue (`ready-for-agent`): EMPTY.** #89 was the last open ticket and it closed this leg (after #87 and #88 before it). Nothing is blocked on anything; there is simply nothing filed. #86 is open but `ready-for-human`. The next move is the owner's — see `## Pick up here`.
+- **In flight:** nothing. `main` = `c989fe5` + this leg's `.context` commit, **unpushed** (so are `3447ace`, `522957a`, `dd435db` from the previous session). No open branches — `ticket/90-agent-view-reachable` was squash-merged and deleted after its content was verified byte-identical to `main`.
+- **Queue (`ready-for-agent`): EMPTY.** #90 was the only open agent ticket and it closed this leg. **#91 is open and blocked by #86**; #86 is open and `ready-for-human`. So the two remaining issues are both the owner's, and one of them gates the other. The next move is the owner's — see `## Pick up here`.
 - **Landed:** **#83** (`ea780a0`) — the background-tasks section, a third injected port, 23 tests, five mutants killed and an ADR. Before it, **#82** (`3f34737`) — the dock's turn-end re-read, `keepStale`, seven tests and an ADR; **#81** (`002e524`), the harness and its ADR with **no `src/` diff, deliberately**, then the seven parked calls taken with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
 - **Parked for the owner: TWO, and they are the older halves — the seven are DONE.** The 2026-08-01 `/preset vibe init` run parked seven calls with no grant; the owner made one live after #81 landed and **all seven were taken** ([[2026-08-01-the-background-agents-seed-decided]]): two authorise work (#82, #83), four closed as **no** (the seed's meaning is the SDK concept; no labelled map; no new top-level surface; non-agent work **yes** but as its own section), one **struck** (map pan-zoom). `.claude/vibe.md`'s `## Needs you` is **history now, not a queue** — its `## Taken` section carries the resolutions. **What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's. **#83 was deliberately routed into the existing Agents dock so it does not pre-empt that second one.**
-- **Blocked:** nothing.
+- **Blocked:** **#91**, on #86. Its other blocker (#90) closed this leg, so it is one owner call away from being buildable — and that call (owner call 1, where a non-agent panel lives) is unanswered. **Do not take it; it is `ready-for-human` by construction, not by oversight.**
 
 ## Pick up here
 
@@ -319,6 +402,11 @@ below is the standing menu of candidates, and `## Open questions` holds the ones
 that need an answer before they can be specced. **Two owner calls stand and are
 named in [[pick-up]]** (Tailwind's adopt-utilities half, the titlebar's control
 count); do not take either without a grant.
+
+**The nearest-to-ready candidate is #91, and it is NOT loop work.** #90 cleared
+one of its two blockers, so it now waits on a single owner call (#86 call 1). Its
+price tag is measured and written on the ticket. A leg that reads "only one
+blocker left" and takes it is doing the exact thing #90's Out of scope forbade.
 
 **Do not re-open the seven from `.claude/vibe.md`.** They were all taken on
 2026-08-01 and that file's `## Needs you` is history, not a queue. A new *reason*
