@@ -69,6 +69,7 @@ export const fakeChatApi = (folder = FOLDER) => {
     titleHint: vi.fn<(id: string, cwd: string | null) => Promise<string | null>>()
       .mockResolvedValue(null),
     listSubagents: vi.fn().mockResolvedValue([]),
+    listBackgroundSessions: vi.fn().mockResolvedValue([]),
     subagentTranscript: vi.fn().mockResolvedValue([]),
     switchWorkspace: vi
       .fn<(req: SwitchRequest) => Promise<SwitchResult>>()

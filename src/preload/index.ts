@@ -15,6 +15,7 @@ import type { ModelInfo } from '../shared/model-types'
 import type { SlashCommandInfo } from '../shared/command-types'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { BackgroundTask } from '../shared/background-tasks'
+import type { BackgroundSession } from '../shared/background-session-types'
 import type { SendPayload } from '../shared/attachment-types'
 import type { Candidate } from '../shared/attachment-policy'
 
@@ -40,6 +41,14 @@ const api = {
     parentToolUseId: string
   ): Promise<TranscriptMessage[]> =>
     ipcRenderer.invoke('subagents:transcript', sessionId, parentToolUseId),
+  // #91: the workspace's LIVE BACKGROUND SESSIONS — the CLI's agent view, a
+  // different thing from `listSubagents` above (subagents inside ONE session)
+  // and from `onBackgroundTasks` below (jobs inside ONE session). Pull-only and
+  // deliberately expensive-by-the-call: one CLI process per look, ~893ms (#90).
+  // Nothing may call this on a timer. `null` = the look failed; `[]` = nothing
+  // is running here, which is a real answer.
+  listBackgroundSessions: (): Promise<BackgroundSession[] | null> =>
+    ipcRenderer.invoke('background-sessions:list'),
   switchWorkspace: (req: SwitchRequest): Promise<SwitchResult> =>
     ipcRenderer.invoke('session:switch-workspace', req),
   // Destructive and irreversible (#68). Two outcomes only: a store that no

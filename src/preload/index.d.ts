@@ -13,6 +13,7 @@ import type { Bounds } from '../shared/window-bounds'
 import type { ModelInfo } from '../shared/model-types'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { BackgroundTask } from '../shared/background-tasks'
+import type { BackgroundSession } from '../shared/background-session-types'
 import type { SendPayload } from '../shared/attachment-types'
 import type { Candidate } from '../shared/attachment-policy'
 import type { SlashCommandInfo } from '../shared/command-types'
@@ -33,6 +34,11 @@ export interface WrapperApi {
     sessionId: string,
     parentToolUseId: string
   ) => Promise<TranscriptMessage[]>
+  // #91: LIVE BACKGROUND SESSIONS in the open workspace — the CLI's agent view.
+  // Not `listSubagents` (subagents inside ONE session), not `onBackgroundTasks`
+  // (jobs inside ONE session). One CLI process per call, ~893ms (#90) — never
+  // call it on a timer. `null` = the look failed; `[]` = nothing is running.
+  listBackgroundSessions: () => Promise<BackgroundSession[] | null>
   switchWorkspace: (req: SwitchRequest) => Promise<SwitchResult>
   // Irreversible (#68). `ok` also covers a session the store no longer holds.
   deleteSession: (id: string) => Promise<DeleteStatus>

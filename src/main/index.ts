@@ -43,6 +43,7 @@ import { announceTurn, isLooking, type AnnouncePorts } from './turn-announce'
 import type { DeleteStatus, FolderChoice } from '../shared/session-types'
 import { deleteSession, listSessions, readTranscript, titleHint } from './session-store'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
+import { listBackgroundSessions } from './agent-view'
 import type { PermissionDecision } from '../shared/engine-types'
 
 let engine: ReturnType<typeof createEngine> | null = null
@@ -497,6 +498,23 @@ ipcMain.handle('attachments:pick', async (event): Promise<Candidate[]> => {
 ipcMain.handle('subagents:list', async (event, sessionId: unknown) => {
   if (!isTrustedIpc(event)) return []
   return listSubagents(getSessionCwd(), String(sessionId))
+})
+
+// Read-only: the sessions rail asks for the workspace's LIVE BACKGROUND
+// SESSIONS — the CLI's agent view, not this app's Agents dock and not the
+// background TASKS inside the open session (three meanings, see agent-view.ts).
+//
+// Costs one CLI process per call, ~893ms (#90), so it is `handle` and never a
+// push: main has no timer here and must never grow one. Every call in the app
+// is a user action or a workspace change.
+//
+// `null` is a FAILED look, distinct from `[]` meaning nothing is running — the
+// same nullable contract `session:list` speaks (#60). An untrusted sender gets
+// `null` rather than `[]`, because a refused call has not measured an empty
+// workspace.
+ipcMain.handle('background-sessions:list', async (event) => {
+  if (!isTrustedIpc(event)) return null
+  return listBackgroundSessions(getSessionCwd())
 })
 
 // Read-only: load one subagent's full conversation for the drawer, resolved by

@@ -1,0 +1,356 @@
+// GUI eyeball for #91 — the LIVE BACKGROUND SESSIONS section in the sessions
+// rail: read-only, manually refreshed, workspace-scoped, and above the stored
+// transcripts.
+//
+// Which "agent" this is: the CLI's own **agent view** (`claude agents --json`),
+// listing whole background Claude Code SESSIONS. Not this app's Agents dock
+// (subagents inside the one open session — `gui-agents-dock.mjs`) and not the
+// background TASKS inside the open session. `.context/flows.md` carries the
+// collision table.
+//
+// ── what only this driver can see ─────────────────────────────────────────
+// `tests/background-sessions.test.tsx` covers the parse, the states and the
+// call counts in jsdom. Three things it cannot reach, and this driver exists
+// for them:
+//
+//   1. THE SPAWN ACTUALLY WORKS ON THIS MACHINE. The section's first look runs
+//      a real `claude agents --json --cwd <temp dir>` out of main, through
+//      `cli-path.ts`'s PATH walk. vitest never spawns anything. The temp
+//      workspace guarantees zero rows, so the honest answer is "None running
+//      here" — and "Could not list background sessions." is a real failure of
+//      the whole route, not a cosmetic one.
+//   2. NO TIMER, measured through the real IPC channel rather than a React
+//      mock. The handler is replaced with a counting one AFTER the first look
+//      settles; a quiet counter over 8s is only a measurement because the
+//      refresh click below is shown to move it. An absence that could not have
+//      been observed is this project's most-repeated bug (#76, #82, #93, #94).
+//   3. THE ACCENT BUDGET. `DESIGN.md` spends mint on five named things and this
+//      is none of them. jsdom loads no CSS, so nothing in `tests/` can tell
+//      whether a status list quietly took a colour.
+//
+// Rows are pushed through a scripted handler, like `gui-agents-dock.mjs` does
+// with `tasks:changed`: it measures the RENDERER's draw of a listing. Whether
+// the CLI produces one is #90's separate measurement, and the `kind` filter
+// that drops the app's own session is main's — mutation-verified in vitest,
+// not here.
+//
+// RED-VERIFIED against `main` before the work: `.bg-sessions` is not in the DOM
+// at all, so AC1 and everything downstream of it fail.
+//
+//   node .claude/skills/run-desktop/gui-91.mjs
+//
+// Needs `npm run build` first, plus playwright-core.
+
+import { _electron as electron } from 'playwright-core'
+import path from 'node:path'
+import os from 'node:os'
+import fs from 'node:fs'
+
+const APP_DIR = path.resolve(import.meta.dirname, '../../..')
+const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
+fs.mkdirSync(SHOT_DIR, { recursive: true })
+
+const WORK_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gui91-'))
+
+setTimeout(() => {
+  console.log('TIMEOUT')
+  process.exit(1)
+}, 180000).unref?.()
+
+// The pin from tests/background-sessions.test.tsx, re-asserted in a real window:
+// Permission mode, Backend mode, Commands panel, Appearance panel, Agents panel,
+// Minimize, Maximize, Close. #91 adds a SECTION, so this must not move.
+const TITLEBAR_CONTROLS = 8
+
+const electronBin =
+  process.platform === 'win32'
+    ? path.join(APP_DIR, 'node_modules/electron/dist/electron.exe')
+    : process.platform === 'darwin'
+      ? path.join(APP_DIR, 'node_modules/electron/dist/Electron.app/Contents/MacOS/Electron')
+      : path.join(APP_DIR, 'node_modules/electron/dist/electron')
+
+const app = await electron.launch({
+  executablePath: electronBin,
+  args: ['--no-sandbox', '--disable-gpu', '.'],
+  cwd: APP_DIR,
+  env: process.env,
+  timeout: 30000
+})
+
+await app.evaluate(async ({ dialog }, dir) => {
+  dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [dir] })
+}, WORK_DIR)
+
+const page = await app.firstWindow()
+await page.waitForSelector('[aria-label="Backend mode"]', { timeout: 15000 })
+
+const bad = []
+const notes = []
+
+// Open the temp workspace. DOM-dispatched: Playwright's actionability wait hangs
+// on the intro animation.
+await page.evaluate(() => {
+  const btn = [...document.querySelectorAll('button')].find(
+    (b) =>
+      b.getAttribute('aria-label') === 'Pick a project folder' ||
+      b.textContent?.includes('Pick a project folder')
+  )
+  btn?.click()
+})
+await page.waitForTimeout(3500)
+
+// ── 1. the real spawn ─────────────────────────────────────────────────────
+// One CLI process, ~893ms (#90). Allow generously for a cold start before
+// reading which of the two honest answers the section settled on.
+await page.waitForTimeout(6000)
+
+const REAL = await page.evaluate(() => {
+  const sec = document.querySelector('.bg-sessions')
+  if (!sec) return { missing: true }
+  return {
+    missing: false,
+    text: (sec.querySelector('.bg-sessions-empty')?.textContent || '').trim(),
+    rows: sec.querySelectorAll('.bg-session-row').length
+  }
+})
+
+if (REAL.missing) {
+  bad.push('AC1 .bg-sessions is not in the DOM — the section does not exist')
+} else if (REAL.text === 'Looking…') {
+  bad.push('SPAWN the first look had not settled after 9.5s — NOT MEASURED, not a pass')
+} else if (REAL.text.startsWith('Could not list')) {
+  bad.push(
+    'SPAWN the real `claude agents --json --cwd <temp>` look FAILED — the child_process route is broken on this machine (or no claude on PATH)'
+  )
+} else if (REAL.rows > 0) {
+  // A temp dir cannot own background sessions. Rows here would mean --cwd is
+  // not scoping at all, which is the one thing #90 left partly unmeasured.
+  bad.push(
+    `SCOPE the temp workspace listed ${REAL.rows} background session(s) — --cwd is not scoping the way #90 measured`
+  )
+} else if (REAL.text !== 'None running here') {
+  bad.push(`SPAWN unexpected empty-state copy ${JSON.stringify(REAL.text)}`)
+}
+
+const shotEmpty = path.join(SHOT_DIR, 'gui-91-rail-empty.png')
+await page.screenshot({ path: shotEmpty })
+
+// ── 2. structure, placement and the titlebar pin ──────────────────────────
+const S = await page.evaluate(() => {
+  const sec = document.querySelector('.bg-sessions')
+  if (!sec) return { error: 'no .bg-sessions' }
+  const filter = document.querySelector('.sidebar-filter')
+  const scope = document.querySelector('.session-scope')
+  const after = (a, b) =>
+    !!(a && b && a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+  const cs = getComputedStyle(sec)
+  const rect = sec.getBoundingClientRect()
+  return {
+    label: sec.getAttribute('aria-label'),
+    tag: sec.tagName,
+    heading: (sec.querySelector('.bg-sessions-title')?.textContent || '').trim(),
+    // "Visibly distinct from the stored-transcript groups below it" (AC1): its
+    // own heading, plus a hairline that no other band in the rail's body has.
+    borderBottom: cs.borderBottomWidth,
+    borderColor: cs.borderBottomColor,
+    height: Math.round(rect.height * 100) / 100,
+    railHeight: Math.round(
+      (document.querySelector('.sidebar')?.getBoundingClientRect().height || 0) * 100
+    ) / 100,
+    filterBelow: after(sec, filter),
+    scopeBelow: after(sec, scope),
+    // .session-groups only mounts once the store has rows; a temp workspace has
+    // none, so its absence here is expected and reported rather than asserted.
+    groupsPresent: !!document.querySelector('.session-groups'),
+    groupsBelow: after(sec, document.querySelector('.session-groups')),
+    controls: [...sec.querySelectorAll('button')].map((b) => b.getAttribute('aria-label')),
+    titlebarControls: document.querySelector('.titlebar')?.querySelectorAll('button').length ?? -1
+  }
+})
+
+if (S.error) {
+  bad.push(`AC1 ${S.error}`)
+} else {
+  if (S.label !== 'Background sessions') {
+    bad.push(`AC1 section aria-label is ${JSON.stringify(S.label)}, want "Background sessions"`)
+  }
+  if (S.heading !== 'Background sessions') {
+    bad.push(`AC1 section heading is ${JSON.stringify(S.heading)}`)
+  }
+  if (parseFloat(S.borderBottom) <= 0) {
+    bad.push('AC1 the section has no hairline separating it from the stored list below')
+  }
+  if (!S.filterBelow) bad.push('AC1 .sidebar-filter is not below the section')
+  if (!S.scopeBelow) bad.push('AC1 .session-scope is not below the section')
+  if (S.groupsPresent && !S.groupsBelow) {
+    bad.push('AC1 .session-groups is not below the section')
+  }
+  if (!S.groupsPresent) {
+    notes.push('.session-groups absent — the temp workspace has no stored sessions, so the stored-list ordering was checked against the filter and scope bands only')
+  }
+  // AC7 — nothing here may add a titlebar control.
+  if (S.titlebarControls !== TITLEBAR_CONTROLS) {
+    bad.push(
+      `AC7 titlebar control count is ${S.titlebarControls}, pinned at ${TITLEBAR_CONTROLS}`
+    )
+  }
+  if (S.controls.length !== 1 || S.controls[0] !== 'Refresh background sessions') {
+    bad.push(`AC2 section controls are ${JSON.stringify(S.controls)}, want exactly one refresh`)
+  }
+}
+
+// ── 3. no timer, and rows on demand ───────────────────────────────────────
+// Replace the handler in MAIN, after the real look has already happened, so the
+// count below is of the real IPC channel rather than of a renderer stub.
+const UNPREDICTED_STATE = 'a-state-nobody-predicted'
+await app.evaluate(({ ipcMain }, unpredicted) => {
+  globalThis.__bg91 = {
+    calls: 0,
+    rows: [
+      { sessionId: 'bg-aaaa-1111', name: 'nightly docs sweep', state: 'working', startedAt: 1 },
+      { sessionId: 'bg-bbbb-2222', name: 'flake hunt', state: unpredicted, startedAt: 2 },
+      { sessionId: 'bg-cccc-3333', startedAt: 3 }
+    ]
+  }
+  ipcMain.removeHandler('background-sessions:list')
+  ipcMain.handle('background-sessions:list', async () => {
+    globalThis.__bg91.calls++
+    return globalThis.__bg91.rows
+  })
+}, UNPREDICTED_STATE)
+
+// Eight quiet seconds. Nothing in the app may look during them.
+await page.waitForTimeout(8000)
+const idleCalls = await app.evaluate(() => globalThis.__bg91.calls)
+if (idleCalls !== 0) {
+  bad.push(
+    `AC2 something repopulated the list without being asked: ${idleCalls} look(s) in 8 idle seconds`
+  )
+}
+
+await page.evaluate(() =>
+  document.querySelector('[aria-label="Refresh background sessions"]')?.click()
+)
+await page.waitForTimeout(1500)
+
+const clickedCalls = await app.evaluate(() => globalThis.__bg91.calls)
+if (clickedCalls !== 1) {
+  // If the click did not move the counter, the zero above measured nothing.
+  bad.push(
+    `AC2 the refresh control drove ${clickedCalls} look(s), want exactly 1 — so the idle count above is NOT MEASURED`
+  )
+}
+
+const R = await page.evaluate(() => {
+  const sec = document.querySelector('.bg-sessions')
+  if (!sec) return { error: 'no .bg-sessions' }
+  const rows = [...sec.querySelectorAll('.bg-session-row')]
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:absolute;left:-9999px;top:0'
+  document.body.appendChild(probe)
+  probe.style.color = 'var(--mint)'
+  const MINT = getComputedStyle(probe).color
+  probe.style.fontSize = 'var(--fs-ui)'
+  const FS_UI = getComputedStyle(probe).fontSize
+  probe.style.fontSize = 'var(--fs-micro)'
+  const FS_MICRO = getComputedStyle(probe).fontSize
+  probe.remove()
+
+  const list = sec.querySelector('.bg-session-list')
+  return {
+    count: rows.length,
+    names: rows.map((r) => (r.querySelector('.bg-session-name')?.textContent || '').trim()),
+    states: rows.map((r) => (r.querySelector('.bg-session-state')?.textContent || '').trim()),
+    // AC: read-only. Any control inside a row would be an attach affordance the
+    // ticket puts out of scope, and a tab stop on a rail that has ~100.
+    rowControls: rows.reduce((n, r) => n + r.querySelectorAll('button,a,input,select').length, 0),
+    MINT,
+    FS_UI,
+    FS_MICRO,
+    nameSize: rows[0] ? getComputedStyle(rows[0].querySelector('.bg-session-name')).fontSize : null,
+    stateSize: rows[1]
+      ? getComputedStyle(rows[1].querySelector('.bg-session-state')).fontSize
+      : null,
+    // Every painted colour in the section, so a mint that crept in anywhere —
+    // text, border or background — is caught rather than just the two we thought to look at.
+    paints: [...sec.querySelectorAll('*')].flatMap((el) => {
+      const c = getComputedStyle(el)
+      return [c.color, c.backgroundColor, c.borderBottomColor, c.borderLeftColor, c.fill]
+    }),
+    listScrolls: list ? list.scrollHeight > list.clientHeight + 1 : null,
+    sectionHeight: Math.round(sec.getBoundingClientRect().height * 100) / 100
+  }
+})
+
+if (R.error) {
+  bad.push(`AC2 ${R.error}`)
+} else {
+  if (R.count !== 3) {
+    bad.push(`AC2 refresh rendered ${R.count} rows, want 3 — NOT MEASURED beyond this point`)
+  } else {
+    // AC4 — the raw string, verbatim. An allow-list would render this as blank.
+    if (!R.states.includes(UNPREDICTED_STATE)) {
+      bad.push(
+        `AC4 the unpredicted state ${JSON.stringify(UNPREDICTED_STATE)} did not render raw; states were ${JSON.stringify(R.states)}`
+      )
+    }
+    // AC3 — the nameless row falls back to its sessionId, which is the key.
+    if (!R.names.includes('bg-cccc-3333')) {
+      bad.push(`AC3 the nameless row did not fall back to its sessionId; names were ${JSON.stringify(R.names)}`)
+    }
+    if (R.rowControls !== 0) {
+      bad.push(`READ-ONLY rows carry ${R.rowControls} interactive element(s), want 0`)
+    }
+    if (R.nameSize && R.nameSize !== R.FS_UI) {
+      bad.push(`DESIGN .bg-session-name is ${R.nameSize}, want --fs-ui ${R.FS_UI}`)
+    }
+    if (R.stateSize && R.stateSize !== R.FS_MICRO) {
+      bad.push(`DESIGN .bg-session-state is ${R.stateSize}, want --fs-micro ${R.FS_MICRO}`)
+    }
+    const mintHits = R.paints.filter((c) => c && c === R.MINT).length
+    if (mintHits > 0) {
+      bad.push(
+        `DESIGN the section paints the accent ${mintHits}x (${R.MINT}) — the mint budget is spent on the logo, avatar, send button, list markers and typing dots, and this is none of them`
+      )
+    }
+  }
+}
+
+const shotRows = path.join(SHOT_DIR, 'gui-91-rail-rows.png')
+await page.screenshot({ path: shotRows })
+
+// ── report ────────────────────────────────────────────────────────────────
+console.log('=== #91 background-sessions section in the sessions rail ===')
+console.log(`real look (temp workspace) : ${REAL.missing ? 'SECTION ABSENT' : `${JSON.stringify(REAL.text)}, ${REAL.rows} rows`}`)
+if (!S.error) {
+  console.log(`section                    : <${S.tag.toLowerCase()}> "${S.heading}" (aria-label ${JSON.stringify(S.label)})`)
+  console.log(`hairline                   : ${S.borderBottom} ${S.borderColor}`)
+  console.log(`order                      : filter below ${S.filterBelow}, scope below ${S.scopeBelow}, groups below ${S.groupsBelow} (present ${S.groupsPresent})`)
+  console.log(`titlebar controls          : ${S.titlebarControls} (pinned ${TITLEBAR_CONTROLS})`)
+  console.log(`section controls           : ${JSON.stringify(S.controls)}`)
+}
+console.log(`looks while idle 8s        : ${idleCalls}`)
+console.log(`looks after one refresh    : ${clickedCalls}`)
+if (!R.error) {
+  console.log(`rows rendered              : ${R.count}`)
+  console.log(`  names                    : ${JSON.stringify(R.names)}`)
+  console.log(`  states (raw)             : ${JSON.stringify(R.states)}`)
+  console.log(`  interactive in rows      : ${R.rowControls}`)
+  console.log(`type                       : name ${R.nameSize} (--fs-ui ${R.FS_UI}), state ${R.stateSize} (--fs-micro ${R.FS_MICRO})`)
+  console.log(`accent                     : --mint ${R.MINT}, hits in section ${R.paints.filter((c) => c && c === R.MINT).length}`)
+  console.log(`section height             : ${R.sectionHeight}px of rail ${S.railHeight}px, list scrolls ${R.listScrolls}`)
+}
+console.log('')
+for (const n of notes) console.log(`note: ${n}`)
+console.log(`screenshot (empty, real look): ${shotEmpty}`)
+console.log(`screenshot (rows, scripted)  : ${shotRows}`)
+console.log(bad.length === 0 ? 'PASS' : 'FAIL: ' + bad.join(' | '))
+
+setTimeout(() => process.exit(bad.length === 0 ? 0 : 1), 4000).unref?.()
+await app.close().catch(() => {})
+try {
+  fs.rmSync(WORK_DIR, { recursive: true, force: true })
+} catch {
+  console.log(`(left behind: ${WORK_DIR})`)
+}
+process.exit(bad.length === 0 ? 0 : 1)

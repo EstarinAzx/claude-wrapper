@@ -31,6 +31,8 @@
 .tool-card-result,
 .background-task-desc,
 .background-task-type,
+.bg-session-name,
+.bg-session-state,
 .chip-name {
   white-space: nowrap;
   overflow: hidden;

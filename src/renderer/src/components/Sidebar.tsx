@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DeleteStatus, SessionMeta } from '../../../shared/session-types'
+import type { BackgroundSession } from '../../../shared/background-session-types'
 import { clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH } from '../../../shared/sidebar-width'
 import { groupSessions, type SessionScope } from '../../../shared/session-groups'
 import { needsEnrichment } from '../../../shared/session-titles'
@@ -52,6 +53,29 @@ const Trash = () => (
       fill="none"
       stroke="currentColor"
       strokeWidth="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+// Used twice: the rail head re-lists stored transcripts, the background-sessions
+// head re-runs the CLI look. Same glyph because it is the same verb — extracted
+// so the two cannot drift into different arrows.
+const Refresh = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+    <path
+      d="M11.5 7a4.5 4.5 0 1 1-1.3-3.2"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+    <path
+      d="M11.5 2v2.2H9.3"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
@@ -256,6 +280,19 @@ const Sidebar = ({
   const [armed, setArmed] = useState<string | null>(null)
   const reqIdRef = useRef(0)
 
+  // #91 — the workspace's LIVE BACKGROUND SESSIONS (the CLI's agent view), kept
+  // entirely apart from `sessions` above, which is STORED TRANSCRIPTS. Two
+  // sources, two lifetimes, two states: a background session is a running
+  // process the app does not own, a stored session is a file on disk.
+  //
+  // `null` = the look FAILED, `[]` = nothing is running here — the same nullable
+  // contract the store speaks (#60), for the same reason.
+  const [bgSessions, setBgSessions] = useState<BackgroundSession[] | null>([])
+  // Starts true: the first look is already on its way when this paints, and
+  // rendering "None running here" before anyone has looked would be a lie.
+  const [bgLooking, setBgLooking] = useState(true)
+  const bgReqIdRef = useRef(0)
+
   // Stable, so a row's enrichment effect does not re-run every render.
   const onEnriched = useCallback((id: string, label: string): void => {
     setLabels((prev) => (prev.get(id) === label ? prev : new Map(prev).set(id, label)))
@@ -312,6 +349,18 @@ const Sidebar = ({
     })
   }, [])
 
+  // One CLI process per call, ~893ms (#90). Guarded by the same request-id
+  // pattern as `refresh` so a slow look cannot overwrite a newer one.
+  const refreshBackground = useCallback(() => {
+    const reqId = ++bgReqIdRef.current
+    setBgLooking(true)
+    void window.api.listBackgroundSessions().then((list) => {
+      if (reqId !== bgReqIdRef.current) return
+      setBgSessions(list)
+      setBgLooking(false)
+    })
+  }, [])
+
   const disarm = useCallback(() => setArmed(null), [])
 
   // The second click. Disarms first — the confirmation has been given, so the
@@ -341,6 +390,20 @@ const Sidebar = ({
     return () => window.removeEventListener('focus', refresh)
   }, [refresh])
 
+  // Deliberately NOT joined to the effect above, and deliberately NOT on the
+  // window `focus` listener beside it: those fire on every refocus and on every
+  // `activeId` change, and each firing here is a whole CLI process (#90).
+  //
+  // A workspace change is the one automatic look there is, because the previous
+  // workspace's answer is not merely stale, it is about a different directory.
+  // Everything else is the refresh button. NOTHING here may become a timer —
+  // #90 measured that a 5s poll costs ~19% of a core continuously, and that the
+  // staleness window equals the poll interval, so a self-refreshing list would
+  // claim to be live while being routinely wrong.
+  useEffect(() => {
+    refreshBackground()
+  }, [cwd, refreshBackground])
+
   if (collapsed) {
     return (
       <aside className="sidebar sidebar-collapsed" aria-label="Sessions">
@@ -368,23 +431,7 @@ const Sidebar = ({
             aria-label="Refresh sessions"
             onClick={refresh}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-              <path
-                d="M11.5 7a4.5 4.5 0 1 1-1.3-3.2"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-              <path
-                d="M11.5 2v2.2H9.3"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Refresh />
           </button>
           {/* Deliberately NOT gated on `busy`, unlike "New chat" beside it: a
               switch is a main-process transaction that asks the engine itself
@@ -435,6 +482,73 @@ const Sidebar = ({
           </button>
         </div>
       </div>
+      {/* LIVE BACKGROUND SESSIONS — its own labelled section, above the stored
+          transcripts, and the whole point of the label is that the two are not
+          the same thing (#91). The rail was already the dangerous lookalike:
+          it has a scope control and so LOOKS like it lists running work. It
+          does not — everything below this section is a file on disk. Showing
+          the live ones here, named, resolves that rather than deepening it.
+
+          A section, not a dock: no titlebar toggle, no new control, and there
+          is no router to reach a new dock with anyway.
+
+          Above `.sidebar-filter` on purpose. The filter and the scope chips
+          belong to the stored list and act on nothing here, so they sit with
+          what they govern rather than straddling both. */}
+      <section className="bg-sessions" aria-label="Background sessions">
+        <div className="bg-sessions-head">
+          <h3 className="bg-sessions-title">Background sessions</h3>
+          <button
+            type="button"
+            className="sidebar-toggle"
+            aria-label="Refresh background sessions"
+            // The ONLY thing in this app that repopulates the list, besides
+            // opening a different workspace. Disabled while a look is in flight
+            // so a second click cannot start a second CLI process (#90).
+            disabled={bgLooking}
+            onClick={refreshBackground}
+          >
+            <Refresh />
+          </button>
+        </div>
+        {bgSessions === null ? (
+          // A failed look. No separate Retry control: the refresh button one
+          // line above IS the retry, and a second one would be two affordances
+          // for one action.
+          <div className="bg-sessions-empty" role="status">
+            Could not list background sessions.
+          </div>
+        ) : bgSessions.length === 0 ? (
+          // An empty list after a successful look is a real answer, not an
+          // error — but only once someone has actually looked, which is what
+          // separates these two strings.
+          <div className="bg-sessions-empty">
+            {bgLooking ? 'Looking…' : 'None running here'}
+          </div>
+        ) : (
+          <ul className="bg-session-list">
+            {bgSessions.map((s) => (
+              // Keyed on sessionId: `id` is absent on some rows and is only an
+              // 8-char prefix of this where it exists (#90).
+              //
+              // Read-only rows, deliberately: no attach, no peek, no reply —
+              // those are a separate unmeasured feature. Which also means this
+              // section adds exactly ONE tab stop (its refresh button) to a
+              // rail that already carries ~100.
+              <li key={s.sessionId} className="bg-session-row">
+                <span className="bg-session-name" title={s.name || s.sessionId}>
+                  {s.name || s.sessionId}
+                </span>
+                {/* The raw string from the CLI. Never mapped, never given an
+                    icon per value: four values were measured where three were
+                    predicted and the set is open (#90), so any lookup here
+                    would silently render an unknown state as nothing. */}
+                {s.state ? <span className="bg-session-state">{s.state}</span> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       <div className="sidebar-filter">
         <input
           type="search"

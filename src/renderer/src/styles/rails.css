@@ -244,6 +244,98 @@
   margin-top: 8px;
 }
 
+/* LIVE BACKGROUND SESSIONS (#91). A SECTION inside the rail, never a dock:
+   nothing here opens from a titlebar toggle, and there is no router to reach a
+   new dock with anyway.
+
+   It carries a hairline of its own, unlike the scope chips below it, because
+   this is the one seam in the rail where the SOURCE changes — running processes
+   above, files on disk beneath. The scope chips describe the list they sit on
+   and can spend no border; this describes a boundary and has to.
+
+   Bounded at 40% of the rail so a busy machine cannot push the filter, the
+   scope chips and the stored sessions off the bottom. A proportion rather than
+   a pixel height: no row count is the right one at every window size.
+
+   No accent anywhere in this section. The mint budget is 10% of surface and is
+   already spent on the logo, the avatar, the send button, the list markers and
+   the typing dots — a status list is exactly the kind of surface that would eat
+   it, and `state` is an open vocabulary that could never be coloured honestly. */
+.bg-sessions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 40%;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+/* Same left edge as the rail head, the filter placeholder, the group headings
+   and the row titles. The vertical rhythm is the scope chips', so the two
+   sub-bands of the rail read as one system. */
+.bg-sessions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 6px 8px 2px 16px;
+}
+
+/* The stored list's group-heading treatment, deliberately: both name what the
+   rows beneath them are. NOT letterspaced uppercase — that is the date
+   divider's alone. */
+.bg-sessions-title {
+  margin: 0;
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.bg-sessions-empty {
+  padding: 2px 16px 4px;
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+}
+
+/* 6px gutter plus the row's own 10px inset puts the name on the shared 16px
+   edge, matching .session-groups. */
+.bg-session-list {
+  list-style: none;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 6px;
+}
+
+/* Read-only rows: no button, no hover, no focus ring, no tab stop. Attach,
+   peek and reply are a separate unmeasured feature, and the rail already
+   carries about a hundred real tab stops without this section adding more. */
+.bg-session-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 10px;
+}
+
+.bg-session-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-ui);
+  color: var(--text-muted);
+}
+
+/* The CLI's raw state string. No per-value colour and no icon: four values were
+   measured where three were predicted and the set is OPEN, so any mapping would
+   render an unknown state as nothing at all. */
+.bg-session-state {
+  flex-shrink: 0;
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+}
+
 /* Filter band under the head: a second toolbar row, same hairline language, no
    control chrome of its own. The rail already supplies --surface, so the input
    is bare and the band brightens on focus the way the composer pill does. */
