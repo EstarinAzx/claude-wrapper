@@ -1,288 +1,395 @@
 ---
 target: init
-idea: "Three unspec'd items from active-work.md, in this order: (1) stream extended thinking as a collapsed strip; (2) surface MCP + settings-parse health, which today fail silently; (3) de-noise the sdk-cli rows in the session rail — the rail admits 112 rows to surface the 37 this app wrote, SDKSessionInfo exposes no entrypoint/origin/sessionKind, and #68 was explicitly not the answer to this."
+idea: "do whatever it takes to have its gui look and have like a professional grade ui"
 partner: opus
 pressure: codex/gpt-5.6-sol
 pressure_via: sonnet
 max_defer: 12
-phase: fired
+phase: tickets
 halted: false
+relay: DECLINED — no `ready-for-agent` ticket exists, so a ticket-loop leg would
+  stop on an empty queue. Not a halt: all four halt gates passed.
 ---
 
-## The seed, and exactly how much of it is the owner's
+## The seed, and how much of it is the owner's
 
-**Provenance, stated plainly because it constrains everything below.** The owner
-did not type this prose. They were shown a four-option menu built from
-`active-work.md` and answered **"2 to 4 and i will i invoke vibe to it and after
-relay as i will be sleeping"**, then **"im sleepy continue"** — which moved the
-invocation from their hands to mine.
+The owner typed the idea verbatim and went AFK, invoking
+`/preset pick-up -> rehydrate -> /preset vibe init "<idea>"` in one line. So the
+**subject** (the GUI's quality) and the **route** (vibe init, unattended, ending
+in filed tickets and a relay) are both theirs.
 
-So what the owner's answer authorises, read strictly:
-
-1. **The subjects** — menu options 2, 3 and 4, i.e. de-noising the `sdk-cli`
-   rows, streaming extended thinking as a collapsed strip, and surfacing
-   MCP + settings-parse health.
-2. **The route** — `vibe init`, unattended, ending in filed tickets and a relay.
-
-The **ordering** (3, 4, 2) is *mine*, not theirs — chosen because option 2's
-only non-prospective fix re-scans ~680 JSONLs and its alternative writes new
-per-session metadata, which is halt-shaped. The owner was shown that risk and
-the offer to cut option 2, and declined to cut it by saying "continue". **Scope
-was therefore not narrowed while they slept.**
-
-Everything else — what the thinking strip looks like collapsed, where health
-surfaces, what "de-noised" means as a rule — is **not** in the seed. It comes
+Everything else — what "professional grade" *means* here, which surfaces are
+short of it, and what may change to get there — is not in the seed. It comes
 from the record with a quotable line, or it defers.
 
-## Known hard constraints, already on the record
+## The structural problem this run has to solve first
 
-Carried in so Partner and Pressure argue against measured fact, not vibes:
+"Make the GUI look professional" is, on its face, **the exact shape the record
+says an agent may not decide**. Two prior vibe runs already parked titlebar
+aesthetics and Tailwind's fate as the owner's.
 
-- **Option 2 is blocked on a missing field, not on effort.** `SDKSessionInfo`
-  exposes no `entrypoint` / `origin` / `sessionKind`, so filtering means either
-  re-opening ~680 JSONLs (the scan the SDK reader exists to avoid) or
-  `tagSession` on every session this app creates — which is **prospective only**,
-  so the 112 existing rows stay noisy forever. **#68 was explicitly NOT the
-  answer to this.**
-- **Options 3 and 4 are "found by the brainstorm pair, unspec'd"** — no prior
-  design work, no blocker, no owner decision parked against either.
-- **The Agents dock precedent (#83) governs new surfaces.** A new top-level
-  surface was struck by a prior grant; background tasks joined the existing dock
-  instead. Any new UI here inherits that argument.
-- **The titlebar's control count does not change** and its aesthetic question is
-  the owner's — so nothing here may add a fourth titlebar control.
+**CORRECTION, made mid-run by Partner and verified by me.** An earlier draft of
+this section asserted that
+`2026-07-31-a-theme-is-a-re-hue-not-a-re-design.md` says "no measurement can
+answer a taste call", pressure-tested STANDS — inherited from a prior run's log.
+**That ADR contains zero instances of the word "taste"** (`grep -c -i taste` →
+0). The line it actually carries is "That is eyeballed in a real window, never a
+driver screenshot", which is a claim about **instruments, not about ownership**.
+The paraphrase was stronger than its source and is retired here. It is recorded
+rather than quietly deleted because a later leg reading the prior run's log will
+meet the same false paraphrase.
 
-## Measured this run (recon, read-only — `file:line` on every claim)
+Working thesis, to be warranted by Partner and attacked by Pressure rather than
+assumed: **taste and craft are separable here.**
 
-**This section is the run's most load-bearing output.** All three seeded
-features turned out to rest on a premise nobody had measured. Recording the
-measurements separately from the decisions, because #84's lesson is that *a
-ticket's stated implication can be wrong even when its stated observation is
-right*.
+- **Taste** — which accent, how many titlebar controls, mint vs amber. Owner's.
+  Defers.
+- **Craft measured against a written standard** — `DESIGN.md` exists, the app
+  has a canonical reference image, and the record already contains a worked
+  example of exactly this move: the 2026-07-31 titlebar run took an aesthetic
+  complaint, **measured** it, falsified its stated rationale ("each button eats
+  drag region" — FALSE), and surfaced an unrelated real defect (`.session-title`
+  cannot truncate) that shipped as **#72**.
 
-### Feature A — extended thinking: FEASIBILITY NOT ESTABLISHED
+If the thesis holds, this run files craft defects and defers taste. If Pressure
+kills it, the run halts with a sharp list rather than a fabricated restyle.
 
-- The app handles an **exhaustive** four block types on the live path —
-  `tool_use`, `tool_result`, `text`, `text_delta` (`engine.ts:530-612`,
-  `:441-449`, `:499-510`). Replay adds an open set via `toAttachmentMarker`
-  (`transcript.ts:25-50`).
-- An unrecognised `type` is **dropped silently**: bare `for` + single `if`, no
-  `else`, no default, no throw (`engine.ts:546-570`). There is **no logging
-  anywhere** — `grep -rn "console\." src` returns zero.
-- The app's own block type (`engine.ts:36-42`) declares no `thinking` /
-  `signature` / `data` field, so even an arriving block has nowhere to be read
-  from.
-- The app passes **no** thinking config — neither `thinking` (`sdk.d.ts:1651`)
-  nor `maxThinkingTokens` (`:1666`) is in the options object
-  (`engine.ts:668-682`).
-- Type-level it **is** reachable: `BetaContentBlock` includes
-  `BetaThinkingBlock` and `BetaRedactedThinkingBlock`
-  (`@anthropic-ai/sdk/resources/beta/messages/messages.d.ts:902`).
-- **NOT ESTABLISHED: whether a thinking block actually arrives at runtime.**
-  No test has ever fed one (29 message/block literals in `tests/engine.test.ts`,
-  none of them `thinking`), and the app has **zero instrumentation that could
-  have observed one**. A block could be arriving every turn and the app would
-  look identical.
+## Measured this run (read-only, `file:line` on every claim)
 
-### Feature B — splits cleanly in two, and only one half is buildable
+Recorded separately from the decisions, per #84's lesson that a ticket's stated
+implication can be wrong even when its observation is right.
 
-**MCP half: BUILDABLE, and the app is provably discarding the data.**
-- The `init` system message carries `mcp_servers: { name: string; status: string }[]`
-  (`sdk.d.ts:4421-4424`).
-- `engine.ts:461-465` reads exactly **one** field off that message — `src.model`
-  — discarding `mcp_servers` along with 14 other declared fields. The app's own
-  system-message type (`engine.ts:14`) has three fields.
-- Richer on-demand status exists and is unwired: `Query.mcpServerStatus()`
-  (`sdk.d.ts:2423`) → `McpServerStatus` with
-  `status: 'connected'|'failed'|'needs-auth'|'pending'|'disabled'`, plus `error?`
-  (`sdk.d.ts:1075-1116`). The app's `QueryHandle` declares only four methods
-  (`engine.ts:74-79`).
+### The instrument: DESIGN.md is prescriptive, and it is NEWER than the code it judges
 
-**Settings half: NO ESTABLISHED CHANNEL — the seed's premise is false.**
-- **The app does not read `settings.json`, or any user config, at all.** Zero
-  matches in `src/`. There is no settings parse to surface.
-- `SDKSettingsParseError` is exported (`sdk.d.ts:4384-4397`) but referenced
-  **nowhere else** in the SDK's types, and no emission was found in the shipped
-  `sdk.mjs`. Do not spec against it without a runtime probe.
-- What *does* exist: **four** JSON-parse failures the app already swallows in
-  silence — `useWindowBounds.ts:17-23`, `transcript.ts:138-143`,
-  `session-index.ts:124-128`, `subagent-store.ts:53-54`. None logged, none
-  surfaced. That is a real, different feature from the one seeded.
+`DESIGN.md` does not merely describe taste — it states rules that can be
+*violated*: "All transitions 150ms, entries 200ms, ease-out
+cubic-bezier(0.22, 1, 0.36, 1). **The full set, nothing else**"; a `## Bans in
+force` section; "Mint accent ≤10% of surface"; "Never `#000`/`#fff`"; exactly
+three type sizes and two weights.
 
-### Feature C — the seed's own framing was too narrow
+**Pressure's "stale documentation" objection is testable, and it was tested.**
+`DESIGN.md` last moved **2026-07-31** (`1769aa4`). The two files holding the
+off-spec motion — `agent-map.css`, `subagent.css` — last moved **2026-07-30**
+(`3223127`). The doc is **newer than the deviations**, so they cannot be
+dismissed as the doc having gone stale. (This does not prove the deviations are
+unintended — only that the stale-doc defence does not reach them.)
 
-- `SDKSessionInfo` has **ten** fields (`sdk.d.ts:4327-4368`). **CONFIRMED: no
-  `entrypoint`, no `origin`, no `sessionKind`.** The seed was right here.
-- **But the discriminator exists one layer down, and this repo already wrote it
-  down.** `session-store.ts:34-40` records that the SDK reads `entrypoint` off
-  the transcript against `{sdk-cli, sdk-ts, sdk-py}` and that **this app writes
-  `sdk-ts`** — the 112-row delta being sdk-ts + sdk-cli. Verified against the
-  shipped runtime: `sdk.mjs` contains both the three-member Set and
-  `if(!c.CLAUDE_CODE_ENTRYPOINT)c.CLAUDE_CODE_ENTRYPOINT="sdk-ts"`.
-- **NOT ESTABLISHED (two things, both fatal to specing it tonight):**
-  1. Whether `entrypoint` sits on every JSONL record or only a header record.
-  2. **Whether this app actually stamps `sdk-ts` on this machine.**
-     `resolveSpawnEnv` (`backend-mode.ts:43-55`) spreads `process.env` wholesale
-     and never sets `CLAUDE_CODE_ENTRYPOINT`, so the SDK's `if(!…)` guard only
-     fires when the launch env lacked it — an app launched from inside a Claude
-     Code session would **inherit and propagate the parent's entrypoint**.
+### Motion — five off-scale values against a rule reading "nothing else"
 
-### Feature C — MEASURED ON DISK THIS RUN, and it falsifies the repo's own comment
+| site | value | in DESIGN.md? |
+|---|---|---|
+| `chat.css:121` | `typing-pulse 1.2s ease-in-out` | **yes** — "staggered 1.2s opacity pulse" |
+| `chat.css:125,129` | `animation-delay: 0.15s` / `0.3s` | staggering is documented; `0.15s` is `150ms` in other notation |
+| `agent-map.css:65` | `subagent-pulse 1.4s ease-in-out infinite` | **no** |
+| `rails.css:550` | `subagent-pulse 1.4s ease-in-out infinite` | **no** |
+| `subagent.css:84` | `subagent-slide 180ms var(--ease)` | **no** |
 
-Recon said feature C's premise needed a real transcript to confirm. I read them.
-Counts are `grep -ho '"entrypoint":"[^"]*"'` over `~/.claude/projects`.
+Easing census: the canonical `cubic-bezier(0.22, 1, 0.36, 1)` is authored
+**once**, at `tokens.css:68` as `--ease-snap` (aliased `--ease` at `:104`) —
+so token discipline is good. `ease-in-out` appears 3×, all on infinite pulses,
+where a symmetric easing is arguably deliberate. **Treated as a finding, not a
+defect** — Pressure's "intentional exception" objection reaches these.
 
-**This project's own session directory** (`D---claude-claude-projects-playground-4`):
+### Type — a third weight and a fourth size, each appearing exactly once
 
-| value | records |
-|---|---|
-| `cli` | 32553 |
-| `sdk-cli` | 825 |
-| `claude-vscode` | **15** |
-| `sdk-ts` | **0** |
+DESIGN.md names three sizes (15/13/11) and two weights (400/600).
+- `composer.css:112` — **`font-weight: 500`**, the only 500 in the app (600 ×13, 400 ×2).
+- `subagent.css:117` — **`font-size: 20px`**, a raw literal off the token scale entirely (`--fs-*` used 49×).
+- `markdown.css:68,72` — `1.25em` / `1.1em`; DESIGN.md's Type section is **silent** on markdown heading scale. A gap in the doc, not a violation.
 
-**Two findings, both new, both verified against the shipped runtime:**
+### Focus ring — the strongest finding, and the one that fits the surviving thesis
 
-1. **`src/main/session-store.ts:34-40` states "THIS APP WRITES `sdk-ts`". There
-   is not one `sdk-ts` record in this project's directory.** The mechanism half
-   of that comment is correct — `sdk.mjs` does contain
-   `new Set(["sdk-cli","sdk-ts","sdk-py"])` and does stamp
-   `CLAUDE_CODE_ENTRYPOINT="sdk-ts"` — but the stamp sits behind an
-   `if(!CLAUDE_CODE_ENTRYPOINT)` guard, and `resolveSpawnEnv`
-   (`backend-mode.ts:43-55`) spreads `process.env` wholesale without setting it.
-   So a wrapper launched from inside a Claude Code session **inherits and
-   propagates the parent's entrypoint** instead. Globally `sdk-ts` is
-   vanishingly rare (46 records in a 200-file sample) against 1012 `sdk-cli`.
-   *Scope honestly:* the comment's 560-vs-672 measurement was taken across all
-   projects and mine is one directory, so this does not prove the comment was
-   never true — it proves **it cannot be relied on**, which is enough to stop a
-   filter being built on it.
+- `shared.css:43-53` is an established focus-ring group with a comment naming
+  **drift** as the failure mode it exists to prevent ("the focus ring [was]
+  written out 6 times, so a control added later inherited whichever copy its
+  author happened to be looking at"). It lists **seven** selectors.
+- **Seven** CSS files author `:focus-visible` rules (17 in total).
+  **`titlebar.css` authors zero, and no titlebar selector appears in the shared
+  group** — it is the only component file owning interactive controls with no
+  focus rule at all.
+- The titlebar has **8 real `<button>`s**, all with `aria-label`
+  (`Titlebar.tsx:34,68,84,103,123,202,212,230`).
+- `base.css:7-13` sets only `box-sizing`/`margin`/`padding` — **there is no
+  global `outline: none`.** So these controls are **not** unfocusable; they wear
+  **Chromium's default ring** instead of the app's designed one. Stated honestly:
+  this is a consistency and surface defect, not an accessibility blackout.
+- DESIGN.md already supplies the reason that generalises, in the app's own
+  words, about the sibling case: "never Chromium's default bar, which is opaque
+  Windows chrome and breaks the acrylic."
+- **Nothing pins it.** Zero focus assertions across `tests/` and all 22 drivers.
 
-2. **A fourth entrypoint value exists that nothing documents: `claude-vscode`
-   (15 records).** The SDK's programmatic Set has three members and
-   `grep -c 'claude-vscode' sdk.mjs` returns **0** — so those rows are silently
-   classified *interactive*. Any filter written against a three-value assumption
-   is wrong the first time it meets one.
+### Focus ring — MEASURED IN THE REAL APP, and my first framing was WRONG
 
-**Consequence:** feature C cannot be spec'd as seeded. Its discriminator is not
-merely missing from `SDKSessionInfo` (true, and the seed said so) — the
-underlying field does not reliably carry the value the repo believes it does.
+A throwaway probe (`scripts/probe-focus.mjs`, deleted after reading) launched the
+built app and walked real `Tab` presses — not `el.focus()`, which does not
+reliably match `:focus-visible`. It read the live stylesheet for declared rules
+and `getComputedStyle` at each stop.
 
-### Constraint that binds any new panel here
+**Declared:** 12 `:focus-visible` rule groups exist, in **three mutually
+different treatments** — (a) wash + inset hairline, (b) inset hairline alone,
+(c) `outline: 2px solid var(--mint)` at **three different offsets** (1px, 2px, 3px).
 
-Both MCP health and settings health are **between-turn** signals, and
-`engine.ts:247-281` is explicit that anything landing between turns must NOT be
-an `EngineEvent` — `activeOnEvent` is `null` outside a turn, so the emit reaches
-nobody. They belong on the **injected-port** path (`onModelReport` / `onTerminal`
-/ `onBackgroundTasks`, wired at `index.ts:108-142`). This is the #83 shape.
+**Rendered:** every control the walk reached — the titlebar's five reachable
+buttons **and** the Welcome screen's `pick-folder-btn` — rendered
+`outline: auto 0.8px rgb(229, 151, 0)`, Chromium's default ring, `box-shadow: none`.
+Authored rings on those stops: **zero**.
 
-Titlebar today: **8 buttons max** (2 pills + 3 dock toggles + 3 window controls),
-read off `Titlebar.tsx:173-242`. `tests/titlebar.test.tsx` pins **only** the two
-pills — the count is source-read, not test-pinned.
+**Two corrections to my own earlier framing, both from the instrument:**
+
+1. **"The titlebar is uniquely affected" is FALSE.** `pick-folder-btn` is not in
+   the titlebar. Pressure independently found the same and more —
+   `.model-pill`, `.model-menu-item`, `.command-option`, `.attach-btn`,
+   `.send-btn`, `.sidebar-toggle` also carry no focus rule. The finding is a
+   **systemic gap**, not an odd-one-out.
+2. **"8 titlebar buttons" is only true with a project open.** The walk reached
+   **5**; three dock toggles do not render until a folder is picked.
+
+**And the remedy is NOT available to an agent — Pressure refuted it twice and was
+right both times.** There is no single app ring to "join": three treatments
+exist, and `shared.css:1-16` scopes its groups by its own text to "repeated
+list/menu/dock/card patterns", which does not reach titlebar chrome. Picking a
+treatment for the titlebar **chooses a new titlebar appearance, inside the parked
+owner call**. Diagnosis is agent work; this remedy is the owner's.
+
+### The accent budget — the binding standard has drifted from the code
+
+DESIGN.md: "Mint accent ≤10% of surface, **spent only on**: logo mark, assistant
+avatar, send button, list markers, typing dots." A closed list of five.
+
+Measured: mint is painted in **9 component files, ~45 references** — including
+`agent-map`, `tool-card`, `appearance`, `subagent`, `markdown`, `rails` and
+`titlebar`, none of which is on the list. DESIGN.md last moved **2026-07-31**,
+by which date every one of those surfaces already existed — so the clause was
+**already descriptively false when it was last rewritten**.
+
+The ≤10% half is **not measurable by any instrument available here**: it is a
+proportion of rendered surface, and the record forbids judging appearance off a
+capture ("a capture cannot see the right ~20% of the layout").
+
+**This is the run's most consequential finding.** Partner warranted that
+DESIGN.md **governs** ("The design doc is newer, more specific … so it governs").
+A governing standard whose most objectively-checkable clause no longer describes
+the app means later design work is being decided against a false map. Whether
+the fix is to amend the doc or to pull mint off those surfaces is **squarely a
+design call**.
+
+### `.command-row-btn` — I killed this, then Partner revived it, and Partner is right
+
+**Superseded below. Kept because the wrong reading is the tempting one.**
+
+### `.command-row-btn` — my first reading, and why it was wrong
+
+`.context/active-work.md:818` carries "give `.command-row-btn` its `font:
+inherit`" as an unspec'd candidate, while `:745` calls it "deliberately
+excluded". The contradiction resolves in the CSS, and **against filing it** —
+`rails.css:149-152`: "adding it would repaint `.command-row-desc` … **That is a
+visual change, not a refactor, so it stays out and stays flagged.**"
+
+I concluded the exclusion was reasoned *against ever fixing it*, and dropped it.
+
+**That was wrong, and Partner caught it by reading a third source I had not.**
+`.context/decisions/2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md`
+calls it, in the ADR's own words, "one latent **bug** left **unfixed and
+flagged** rather than smuggled into a refactor". `unfixed and flagged` is a
+**deferral, not a decision against** — and the `deliberately excluded` landmine
+scopes to the **#79 dedup refactor**, whose contract was zero visual change, not
+to eternity. `active-work.md:818` still carries the fix as owed.
+
+**So it is a live, recorded bug whose remedy the record NAMES and whose blast
+radius is already MEASURED** (exactly one child, `.command-row-desc`, moving
+from the UA button font to `--font`). That is the one thing this run found where
+the remedy was decided by the record rather than by me.
+
+**Method note, recorded because it is the reusable lesson:** I killed this after
+reading two sources (`rails.css`, `active-work.md`) that agreed with each other.
+The third source reversed both. Two agreeing sources are not a quorum when a
+third exists.
+
+### Bans — clean
+
+No `#000`/`#fff`, no `gradient` anywhere in `styles/`. Em-dash hits are in TSX
+**comments**, not user-facing copy. No violation found.
 
 ## Decisions
 
-Two survived. Both were attacked and held; three others were attacked, conceded
-and moved to `## Needs you`.
+Three survived attack. Everything else conceded and moved to `## Needs you`.
 
-- **No new feature may add a titlebar control.** Carried as live state, not a
-  spent per-batch call — warrant: "**What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's." @ `.context/active-work.md` · pressure: **STANDS** (attacked on whether "still stands" means binding vs merely unrescinded, and on the appearance-dock counter-precedent; held).
-- **The retroactive route for feature C — re-scanning ~680 session JSONLs to classify existing sessions — is argued against on the record.** Warrant: "JSONLs — precisely the per-file scan the SDK reader exists to avoid." @ `.context/decisions/2026-07-30-the-app-must-be-able-to-list-its-own-sessions.md` · pressure: **STANDS**. Note this is a **negative only** — it rules one route out and selects nothing.
+- **The subject is authorised; the remedies are not.** Warrant: "The UI is the
+  product: the whole reason it exists is to present a Claude Code session as a
+  calm, legible chat instead of terminal scrollback." @ `PRODUCT.md` · pressure:
+  **STANDS**.
+- **`DESIGN.md` is binding, not advisory.** Warrant: "The design doc is newer,
+  more specific, and was rewritten by #69 for this purpose, so it governs" @
+  `.context/active-work.md`, plus `tests/scrollbar.test.ts:5` already enforcing a
+  `DESIGN.md` sentence mechanically · pressure: **STANDS**.
+- **A `ready-for-human` findings ticket is the right container.** Warrant:
+  "**#86** — open, `ready-for-human`, **not loop work**: findings + five owner
+  calls." @ `.context/pick-up.md` · pressure: **STANDS** (attacked as scope creep
+  and as a catch-all; held — it changes no pixel and matches #86 exactly).
 
-**These two compose into a harder constraint than either alone.** Every dock
-opens from a titlebar toggle and the app has no router
-(`App.tsx:45`, `Titlebar.tsx:191-201`). No new toggle is permitted. Therefore a
-new dock is unreachable, and new UI must join an existing dock — but *which* is
-deferred below. **The UI half of all three features is blocked structurally, not
-merely by taste.** That is the single biggest reason nothing user-facing shipped
-tonight.
+**Refuted and dropped, all three correctly:**
+
+- ~~Taste and craft are cleanly separable, so an agent may fix any measured
+  `DESIGN.md` deviation.~~ **REFUTED.** A deviation may be stale documentation,
+  an intentional exception, or an unresolved choice — and *"objective diagnosis
+  does not make the remedy taste-free"*. That sentence governed the whole run.
+- ~~The titlebar uniquely lacks the app's focus ring, so adding it joins an
+  established sibling rule.~~ **REFUTED twice.** The gap is systemic, there is no
+  single ring to join, and `shared.css`'s own text scopes its groups to
+  list/menu/dock/card patterns — so any choice picks a new titlebar appearance
+  inside the parked owner call.
+- ~~An observational conformance driver reports drift without deciding
+  anything.~~ **REFUTED by both agents independently.** "There is no expected
+  driver failure any more… any red is now a real regression" forecloses landing
+  one red, and softening it to pass is foreclosed too.
 
 ## Needs you
 
-Five. **All reversible — none is flagged `reversible: NO`, so no halt was
-triggered on that ground** (count 5, `max_defer` 12).
+Six. **All reversible — none flagged `reversible: NO`, so no halt fired on that
+ground** (count 5, `max_defer` 12). Every one of them is a *remedy* question;
+the *diagnosis* behind each is measured above and is not in doubt.
 
-- [ ] **Where does a non-agent panel live — an existing dock, or a new one?**
-      took: NOTHING FILED that needs a surface. All three features' UI is deferred.
-      alt: join the Agents dock (the background-tasks precedent) · add a dock member (the Appearance precedent)
-      why: Partner searched exhaustively and **corrected its own earlier answer**: there is no general rule. The one "no new top-level surface" call is expressly about background tasks and reasons from their being agent-adjacent. The nearest precedent for *unrelated* content cuts the other way — `2026-07-31-appearance-is-a-dock-not-a-settings-modal.md` records the app adding a dock member **and** a titlebar control for preferences, on anti-*modal* grounds rather than anti-*surface* grounds. One instance each way, decided on different reasoning. Compounded by the titlebar constraint above, which forecloses the second option without a grant.
+- [ ] **Which focus treatment covers the controls that have none — including the titlebar?**
+      took: NOTHING CHANGED. Filed as a finding only.
+      alt: extend `shared.css`'s wash+hairline group · extend the mint-outline
+      treatment · author a third for chrome · decide the gap is acceptable
+      why: measured in the real app — titlebar's 5 reachable buttons and
+      `pick-folder-btn` render Chromium's default ring; Pressure additionally
+      found `.model-pill`, `.model-menu-item`, `.command-option`, `.attach-btn`,
+      `.send-btn`, `.sidebar-toggle` uncovered. **There is no single ring to
+      join**: three treatments exist at three different offsets, and
+      `shared.css:1-16` scopes its groups by its own text to "repeated
+      list/menu/dock/card patterns", which does not reach titlebar chrome. So
+      any choice here **picks a new titlebar appearance, inside the parked
+      titlebar owner call**. Partner searched the whole corpus and found **no
+      accessibility commitment and no focus-indication rule anywhere** — zero
+      `focus-visible` in `tests/` or in all 24 drivers. This measurement is new
+      information the record does not contain.
       reversible: yes
 
-- [ ] **Does a collapsed thinking strip owe the same DOM-exclusion contract as a collapsed tool card?**
-      took: NOTHING BUILT — feature A is blocked on measurement anyway.
-      alt: conditional mount (the tool-card rule) · CSS/`<details>` (cheaper, and legitimate if nothing asserts absence)
-      why: exhaustive search found the conditional-mount rule in exactly four places — the ADR, its index line, one landmine, and the `ToolCard.tsx:222` comment — **all four tool-card result disclosure, all four reasoning from a test that asserts detail is absent from rendered output**. No stated reason generalises to "any collapsed region". Whether thinking text deserves that contract is a new call, and arguably a privacy one.
+- [ ] **DESIGN.md's accent clause is stale — amend the doc, or pull mint back?**
+      took: NOTHING CHANGED.
+      alt: rewrite the clause to describe the app · remove mint from surfaces
+      not on the list · keep the list aspirational and say so
+      why: the doc names a **closed** list of five spends; mint is painted in
+      **9 component files, ~45 references**. Every one of those surfaces existed
+      on 2026-07-31 when the clause was last rewritten, so it was already false
+      when written. Partner warranted that DESIGN.md **governs** — a governing
+      standard that no longer describes the app is the highest-leverage thing
+      here, and which way to reconcile it is a design call. The ≤10% half is
+      **not measurable by any instrument available unattended**.
       reversible: yes
 
-- [ ] **Under a prospective-only fix, existing rows stay noisy permanently. Acceptable?**
-      took: NOTHING FILED.
-      alt: accept a permanent residual · require a route that can also cover existing rows
-      why: Partner DEFERred and flagged this as its nearest miss, correctly — the record accepts today's noise as a reason to **defer the fix**, never as an acceptance criterion **for** one. Treating the first as the second is exactly the manufactured confidence this run exists to prevent.
+- [ ] **Are the five off-spec motion values intentional exceptions?**
+      took: NOTHING CHANGED.
+      alt: conform them to 150/200ms · amend "nothing else" to admit pulses ·
+      document them as exceptions
+      why: `agent-map.css:65` and `rails.css:550` (`subagent-pulse 1.4s
+      ease-in-out`) and `subagent.css:84` (`subagent-slide 180ms`) are outside a
+      rule reading "The full set, nothing else". The doc is **newer** than those
+      files, so "stale doc" does not excuse them — but Pressure's
+      "intentional exception" objection does reach them, since a symmetric
+      easing on an infinite pulse is a defensible choice. Undecidable from the
+      record.
       reversible: yes
 
-- [ ] **Hide, group, or badge the noisy rows?** and **if a filter ships, default on or off?**
-      took: NOTHING FILED.
-      alt: hide (strongest de-noise, hides data the user could previously see) · group · badge in place
-      why: pure taste, no line on record. Kept as one entry because they are one design.
+- [ ] **The two type outliers — conform or document?**
+      took: NOTHING CHANGED.
+      alt: move them onto the scale · widen the documented scale
+      why: `composer.css:112` is the app's only `font-weight: 500` against a doc
+      naming two weights; `subagent.css:117` is a raw `font-size: 20px` off a
+      three-step token scale used 49× elsewhere. Partner **DEFERred on ownership
+      of the type scale specifically** — DESIGN.md documents the values but no
+      line says who may amend them.
       reversible: yes
 
-- [ ] **"Settings-parse health" has no referent — the app reads no settings at all. Re-scope or drop?**
-      took: NOT FILED as seeded.
-      alt: drop the half · re-scope to the **four** parse failures the app genuinely swallows in silence (`useWindowBounds.ts:17-23`, `transcript.ts:138-143`, `session-index.ts:124-128`, `subagent-store.ts:53-54`)
-      why: measured, not assumed — zero matches for `settings.json` in `src/`, and `SDKSettingsParseError` is exported but referenced nowhere in the SDK types with no emission found in `sdk.mjs`. The re-scope is a **different feature** from the one you picked off the menu, so taking it would be substituting my judgement for yours on the thing you actually chose.
+- [ ] **What does "professional grade" mean concretely here?** — the seed's own question.
+      took: NOTHING CHANGED. No restyle attempted.
+      alt: name specific surfaces you find short · accept the record's bar as
+      the definition and audit against it · commission an `impeccable` pass on a
+      named surface
+      why: **this is not answerable by any instrument available to an unattended
+      agent, by this project's own rules.** The record forbids judging
+      appearance off a capture ("a capture cannot see the right ~20% of the
+      layout"), says "No test can say whether a theme looks good", and puts the
+      judgement in "a real window". The closest the record comes to a definition
+      is PRODUCT.md's "Fluent in … VS Code, Linear …; **expects that bar of
+      polish**" — named products, not a criterion. Naming which surfaces miss
+      that bar needs your eyes.
+      reversible: yes
+
+- [ ] **`.command-row-btn`'s `font: inherit` — worth its TRUE cost?**
+      took: NOTHING CHANGED. Deferred rather than filed.
+      alt: take the multi-element vertical shift · leave it flagged · give the
+      three children explicit `line-height`s first, then fix the parent
+      why: I filed this as buildable, then withdrew it. The ADR calls it "one
+      latent **bug** left **unfixed and flagged**", names the remedy, and
+      measures the blast radius as one child. **The ADR's measurement is
+      incomplete**: `font: inherit` is a *shorthand* that resets `line-height`
+      too. `rails.css` has zero `line-height` declarations, `body` sets `1.6`,
+      and a `<button>`'s UA default is `normal` — so all **three** children shift
+      vertical metrics, not one. Correction found by Pressure after I had
+      accepted the ADR's figure. Still a real deferred bug, just dearer than
+      recorded.
       reversible: yes
 
 ## Log
-- [boot] Seeded from the owner's menu pick (2–4) + "continue". Destination
-  detected as **GitHub** (`gh auth status` ✓, `origin` ✓) — not asked. `.context/`
-  and `docs/agents/` both exist, so neither conditional offer is owed.
-- [boot] Pressure resolved to `codex/gpt-5.6-sol` via the **`sonnet`** family
-  (first non-Claude family in live `wisp routing`). Already a family route, so
-  **no `slot` rebind and no restore owed** on any halt path.
-- [round 1] Seven questions. Partner returned four warrants and three DEFERs. All
-  four warrants grepped **by me** with `grep -qF --`, not on Partner's own report
-  that it had checked them — the grep is the mechanism, and an agent grading its
-  own citation is not it. 4/4 passed.
-- [round 1] Pressure **REFUTED three of four**, every one for the same shape:
-  the quote is real but was decided about a narrower case. D4 STANDS.
-- [round 2] Rebuttal, one round as the rules allow. Partner **conceded two
-  against its own earlier position** and — unprompted — reported a
-  *counter*-precedent it had missed: `2026-07-31-appearance-is-a-dock-not-a-settings-modal.md`
-  records the app adding a dock member **and** a titlebar control for unrelated
-  content, on anti-*modal* grounds. That is the opposite of what its round-1
-  answer implied. Q2 came back with a **different** warrant from the live
-  handoff doc; grepped, passed, re-attacked, **STANDS**.
-- [round 2] Verified a Pressure claim rather than taking it: its "no change
-  tonight" attribution actually belongs to that run's *Tailwind* entry, not the
-  titlebar one. Substance held anyway — the next log line reads "Same shape
-  applied to D2's control count" — but the attribution was wrong. **Both agents
-  were checked, not just the friendly one.**
-- [recon] Read-only sweep of `src/` + the shipped SDK. Result: **all three
-  seeded features rest on an unmeasured premise.** See `## Measured this run`.
-- [measure] Took the one measurement recon said it could not: read the
-  transcripts. **Zero `sdk-ts` records in this project's directory**, against a
-  repo comment asserting the app writes them, plus an undocumented fourth value
-  `claude-vscode` the SDK's Set does not contain. Feature C's discriminator does
-  not reliably exist.
-- [hp] **`/hp` SKIPPED deliberately, a documented deviation from `init` step 6.**
-  `.context/happy-path.md` is a live 151-line artifact mapping the app's real
-  golden path. Tonight's output is three measurement spikes, which have no user
-  journey — running `/hp` would have overwritten a true artifact with a
-  fabricated one. Recorded rather than done quietly.
-- [tickets] Filed **#86** (findings + the five owner calls, `ready-for-human`),
-  **#87** (thinking spike), **#88** (MCP status spike), **#89** (entrypoint
-  provenance correction). The last three are `ready-for-agent` and mutually
-  unblocked, so `ticket-loop` can take them in any order.
-- [halt-check] Clear on all four gates: 5 defers < `max_defer` 12; **no entry
+- [boot] Fresh file for a new idea. Prior run (`phase: fired`, the #86–#89
+  measurement batch) was terminal — its relay chain closed on an empty queue —
+  so this is a boot, not a resume. Archived to `.claude/vibe-2026-08-02.md`,
+  matching the five existing dated archives. #86 is still open and that file is
+  its provenance trail, which is why it was moved rather than overwritten.
+- [boot] Frontier verified live, not trusted from prose: `gh issue list --state
+  open --label ready-for-agent` → **empty**; two open issues (#86, #91) both
+  `ready-for-human`. `main` = `f1e9dcc`, **0 ahead of origin**, no open branches.
+- [boot] Destination DETECTED as GitHub (`gh` authed, `origin` →
+  EstarinAzx/claude-wrapper). No AskUserQuestion fired. `.context/` present,
+  `docs/agents/` present → neither conditional offer is owed.
+- [boot] Pressure resolved by rule 3 against live `wisp routing` (first
+  non-Claude family): `sonnet` → `codex/gpt-5.6-sol`. Already a family route, so
+  **no `slot` rebind and no restore owed** on any halt path. Spawned lean
+  (`cavecrew-reviewer` toolset) with a format override — the 2026-07-31 run
+  recorded `general-purpose` overflowing that Target with MCP schemas.
+- [round 1] Partner answered **8 of 8** — 6 warranted, Q3b and part of Q6
+  DEFERred. It also **corrected this file**: my claim that
+  `a-theme-is-a-re-hue-not-a-re-design.md` says "no measurement can answer a
+  taste call" was false (`grep -c -i taste` → 0). Inherited from a prior run's
+  log; retired in `## The structural problem` above rather than deleted.
+- [round 1] Pressure **REFUTED the central thesis** on first contact, correctly,
+  and the sentence that governed the rest of the run came from it: *"objective
+  diagnosis does not make the remedy taste-free."*
+- [probe] Built and drove the **real app** — a throwaway Tab-walk probe reading
+  `getComputedStyle` at each stop, since `el.focus()` does not reliably match
+  `:focus-visible`. It **corrected me twice** (the gap is systemic, not
+  titlebar-only; 5 reachable buttons, not 8). Deleted after reading, per the
+  `gui-72` precedent.
+- [round 2] Partner answered Q9–Q12; **declined a trap** by refusing to cite this
+  very file back at me as a warrant ("reading my own words back as if they were
+  yours"). It **revived** `.command-row-btn` from a third source I had missed,
+  and **killed** my conformance-driver proposal from the record.
+- [round 2] Pressure then **refuted the revived ticket on a CSS fact none of us
+  had measured** — `font: inherit` is a shorthand that resets `line-height`, so
+  the ADR's own stated blast radius is understated. Verified independently
+  before accepting. That correction is the run's most concrete artifact.
+- [measure] Swept the stylesheet against `DESIGN.md`'s checkable clauses: motion
+  inventory, type scale, accent spend list, ban list, and dead rules. **Zero dead
+  CSS across 214 classes** — recorded as a real negative, since the path was
+  exercised.
+- [tickets] Filed **#92** (`ready-for-human`) — the findings, the ADR
+  correction, and six owner calls. **No `ready-for-agent` ticket was filed, and
+  that is the honest result rather than a shortfall**: every remedy measured is a
+  design call, and the record grants no agent authority to make one unprompted
+  (Partner's Q3b, DEFER).
+- [hp] **`/hp` SKIPPED deliberately**, as in both prior runs.
+  `.context/happy-path.md` is a live artifact; this run produced findings, not a
+  user journey. Recorded rather than done quietly.
+- [halt-check] **All four gates passed** — 6 defers < `max_defer` 12; **no entry
   flagged `reversible: NO`**; grill fork taken, not wayfind; `to-tickets`
-  produced three tickets. No `slot` restore owed.
-- [fired] Relay chain re-inited (prior chain was `stop: true`, closed on an empty
-  queue) and **leg 1 spawned and confirmed `working`** as `relay-ticket-loop-leg1`
-  in `claude agents`, `binary: claude-wisp` carried over. `max_legs` raised 3 → 6
-  for three tickets — headroom, not a target. Note `.claude/relay/` is
-  **gitignored**, so the chain state is local machinery and was not committed.
-- [fired] **No feature ticket was filed for any of the three seeded items, and
-  that is the honest result rather than a shortfall.** Two premises were
-  falsified and the third is unmeasurable from the code; the UI half of all
-  three is blocked structurally by the titlebar constraint. Spiking first is the
-  #84→#85 pattern this project has already validated.
+  produced one ticket. No `slot` restore owed.
+- [not-fired] **The relay was DECLINED, not forgotten.** With no
+  `ready-for-agent` ticket, a `ticket-loop` leg stops immediately on an empty
+  queue — Pressure verified that against `active-work.md` and ruled spawning one
+  "ceremony". Deviation from the preset's step 6, recorded here rather than done
+  quietly.
+</content>
+</invoke>

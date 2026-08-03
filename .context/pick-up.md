@@ -1,7 +1,7 @@
 ---
 type: pick-up
 project: claude-wrapper
-updated: 2026-08-03
+updated: 2026-08-04
 tags: [context, pick-up]
 ---
 
@@ -11,13 +11,22 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## Frontier: QUEUE EMPTY
 
-**No `ready-for-agent` ticket is open.** #90 landed and closed this leg and was
-the only one. The two remaining issues are both `ready-for-human`:
+**No `ready-for-agent` ticket is open.** All three open issues are
+`ready-for-human`:
 
+- **#92** — **NEW (2026-08-04)**, `ready-for-agent` **not** set: the GUI
+  conformance audit from an unattended `vibe init` run on "make the gui look
+  professional grade". Findings + **six** owner calls. **No `src/` change and no
+  restyle was attempted** — every remedy measured turned out to be a design
+  call. Also carries a **correction to a live ADR** (see `## Landmines`).
 - **#86** — open, `ready-for-human`, **not loop work**: findings + five owner calls.
-- **#91** — open, `ready-for-human`, **blocked by 1** (#86; #90 cleared this leg).
+- **#91** — open, `ready-for-human`, **blocked by 1** (#86; #90 cleared it).
   The background-sessions *surface*. **Do not build it** — see `## Do not decide these`.
 - ~~#87 / #88 / #89 / #90~~ — closed.
+
+**#92 does not unblock anything and is not loop work.** It is the container for
+what only the owner can decide about the GUI. A leg that reads it as a to-do
+list is doing exactly what its own `## What was deliberately not done` forbids.
 
 **Run the frontier query anyway** — this line is a snapshot and the owner may
 have filed since. This project's standing lesson is that a leg once wrote that
@@ -148,7 +157,41 @@ writes `sdk-ts`" sentence is now false — read the amendment before citing it.
 
 ## Landmines
 
-Full ledger in [[active-work]] — long and load-bearing. New from #90:
+Full ledger in [[active-work]] — long and load-bearing. **New from #92 (the GUI
+audit), and the first one corrects a live ADR:**
+
+- **`2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md`
+  UNDERSTATES `.command-row-btn`'s blast radius.** It says adding `font: inherit`
+  "would repaint `.command-row-desc`" — one child. **`font: inherit` is a
+  SHORTHAND and resets `line-height` too.** `rails.css` has zero `line-height`
+  declarations, `body` sets `1.6`, a `<button>`'s UA default is `normal` — so
+  **all three** `.command-row-*` children shift vertical metrics, including the
+  two that declare their own `font-family`. Read this before citing that ADR.
+- **The app's focus system has systemic gaps and THREE competing treatments.**
+  Measured in the real app: the titlebar's 5 reachable buttons and
+  `pick-folder-btn` render **Chromium's default ring**; `.model-pill`,
+  `.model-menu-item`, `.command-option`, `.attach-btn`, `.send-btn`,
+  `.sidebar-toggle` are uncovered too. **There is no single ring to "join"** —
+  `shared.css:1-16` scopes its groups by its own text to "repeated
+  list/menu/dock/card patterns", which does not reach titlebar chrome. Picking
+  one **chooses a new titlebar appearance, inside the parked owner call.**
+- **`DESIGN.md`'s accent clause is STALE.** It names a *closed* list of five mint
+  spends; mint is painted in **9 files, ~45 refs**. Every one of those surfaces
+  existed when the clause was last rewritten (2026-07-31), so it was already
+  false when written. `DESIGN.md` still **governs** — so design work is being
+  decided against a partly false map until this is reconciled.
+- **There is NO accessibility commitment and no focus-indication rule on
+  record** — zero `focus-visible` in `tests/` or in any of the 24 drivers. The
+  one accessibility clause in the corpus is about **reachability** of a hidden
+  control, not indication. Do not stretch it.
+- **"No measurement can answer a taste call" is a FALSE PARAPHRASE** carried in
+  `.claude/vibe-2026-07-31-*.md` logs. The ADR it is attributed to contains zero
+  instances of "taste". Its real line — "eyeballed in a real window, never a
+  driver screenshot" — is about **instruments, not ownership**.
+- **Two agreeing sources are not a quorum when a third exists.** `.command-row-btn`
+  was killed on two sources, revived by a third, then deferred by a fourth fact.
+
+New from #90:
 
 - **`sessionId` is the ONLY universal key in the agent-view payload.** `id` is
   absent on interactive rows (and is an 8-char `sessionId` prefix where present).
