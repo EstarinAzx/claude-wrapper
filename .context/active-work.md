@@ -7,13 +7,24 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-03 by Opus 5 (1M) (auto) — **relay leg 1 landed #90; the queue is DRY and the chain stopped**_
-_At commit: `c989fe5` on `main`, **unpushed**. Gate green: typecheck clean, **953 tests across 63 files**, unchanged by this leg — #90 has no `src/` diff at all_
+_Last updated: 2026-08-03 (evening) by Fable 5 (auto) — **owner-directed architecture pass landed as `c7cee33`; the queue is still DRY**_
+_At commit: `c7cee33` on `main` (only commit ahead of origin — the earlier five are pushed). Gate green: typecheck clean, **953 tests across 63 files**, re-verified at this commit_
 _Driver check: **not run this leg, and not implicated.** #90 added two files under `scripts/` and one ADR; no renderer code, no CSS, no `src/`, so the GUI batch has nothing to observe. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`. No standing red anywhere else, so any other red is a real regression._
 
 ## Current focus
 
-**Nothing. The queue is dry.** #90 landed and closed this leg and was the only
+**Nothing queued; an owner-directed architecture pass landed off-tracker.**
+`c7cee33` — `createEngine`'s seven positional port/getter slots folded into one
+named `EnginePorts` object (83 three-arg test sites untouched, six
+placeholder-laden ones collapsed), and `index.ts` gained `discardEngine(resume)`,
+the single funnel for the five IPC engine-discard paths. Port semantics
+untouched (`onTerminal` never for `close()`, `onBackgroundTasks` `[]` there,
+reset still in `engine.close()`); the switch transaction keeps its own
+port-sequenced teardown. The next injected port costs one named key.
+Candidates assessed and not taken: `handleMessage` split, titlebar dock-prop
+pair (owner-deferred), Tailwind (owner call), renderer state moves (ledger).
+
+**Before that: the queue went dry.** #90 landed and closed and was the only
 `ready-for-agent` ticket; #86 and #91 are both `ready-for-human` and neither is
 loop work. The relay chain stopped rather than spawning a leg 2 — an empty queue
 is its designed stop, with `max_legs: 2` never reached.

@@ -34,7 +34,27 @@ If it really is empty, **the next move is the owner's** — file work, or run
 `## Deferred` is the standing candidate menu and `## Open questions` holds what
 needs an answer before it can be specced.
 
-## Landed this leg (2026-08-03) — #90, measurement only
+## Landed this leg (2026-08-03, evening) — architecture pass, no ticket
+
+**`createEngine`'s seven port/getter slots are now one named `EnginePorts`
+object** (`c7cee33`) — the three-arg construction (83 test sites) is untouched;
+the six placeholder-laden sites collapsed to named keys. **`index.ts` gained
+`discardEngine(resume)`**, the one funnel for the five IPC discard paths
+(folder pick, `chat:target`, backend flip, permission cycle, model pick); the
+switch transaction's port-sequenced teardown is deliberately NOT routed through
+it. Port semantics untouched: `onTerminal` never fires for `close()`,
+`onBackgroundTasks` fires `[]` there, reset still lives in `engine.close()`.
+Gate green: typecheck clean, **953 tests across 63 files** (baseline
+unchanged), all three files verified 100% CRLF. Owner-directed
+(`/improve-codebase-architecture`), off-tracker by design.
+
+Assessed and deliberately NOT taken: `handleMessage` split (internal to a deep
+module, no interface gain), titlebar dock-prop pair (owner-deferred in
+[[active-work]]), Tailwind (owner call), any renderer state move (ledger
+forbids the specific "tidyings" available there). The next engine port (#86's
+MCP-health seed would be the fourth) now costs one named key, not slot-counting.
+
+## Landed earlier (2026-08-03) — #90, measurement only
 
 **The CLI's background sessions ARE reachable — by one route, at one CLI process
 per look.** Landed as `c989fe5`, ticket closed. **No `src/` change**; the
@@ -290,12 +310,11 @@ session**; **Chromium persists the zoom factor per origin inside `userData`**.
 
 ## Baseline
 
-`main` = `c989fe5`. **Unpushed** as of this note: `3447ace` (flows + driver),
-`522957a` (the name-collision section), `dd435db` (the previous baton),
-`c989fe5` (#90's spike), plus this `.context` commit — **five**. No open
-branches; `ticket/90-agent-view-reachable` was squash-merged and deleted after
-its content was verified byte-identical to `main`. Test baseline **953 across 63
-files** — unchanged, since nothing on 2026-08-03 touched `src/`.
+`main` = `c7cee33` (the ports refactor). **The previous note's five unpushed
+commits are PUSHED** — origin/main sat at `d6164b2` when this leg started, so
+only `c7cee33` plus this `.context` commit are ahead. No open branches. Test
+baseline **953 across 63 files** — unchanged by the refactor, re-verified green
+at `c7cee33` with typecheck clean.
 
 **Untracked and deliberately left alone:** `.context/2026-07-23.md` and
 `.context/Untitled.canvas`, both **0 bytes** — Obsidian stubs from opening the
