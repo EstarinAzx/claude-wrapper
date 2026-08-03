@@ -81,7 +81,7 @@
   background: var(--surface);
   border-left: 1px solid var(--border);
   box-shadow: -12px 0 36px oklch(0 0 0 / 0.35);
-  animation: subagent-slide 180ms var(--ease);
+  animation: subagent-slide 200ms var(--ease);
 }
 
 @keyframes subagent-slide {
