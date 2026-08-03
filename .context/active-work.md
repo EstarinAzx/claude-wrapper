@@ -7,14 +7,44 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (relay leg 2, `ticket-loop`) — **#94 landed as `e1a2c31`; the `ready-for-agent` queue is now DRY and the relay chain stopped itself**_
+_Last updated: 2026-08-04 by Opus 5 (relay leg 2, `ticket-loop`, then a grant-renewal pass) — **#94 landed as `e1a2c31`; then all nine parked owner calls were taken, #92 and #86 closed, and the queue refilled to FOUR unblocked tickets**_
 _At commit: `e1a2c31` on `main` (unpushed, with `485a814`, `07c0068`, `09ca8fe` and `c7cee33` ahead of origin). Gate green: typecheck clean, **953 tests across 63 files** (baseline unchanged), `gui-94` PASS_
 _Driver check: **partial and deliberate.** A two-declaration CSS change, so only the drivers owning the surfaces it touches were re-run — `gui-94` (new, PASS), `gui-51` (the only other driver naming `.command-list` / the Commands panel, and the device-pixel comparator, PASS) and `gui-93` (owns `.command-option`, the second surface, PASS). The full 24-driver batch was **not** run: nothing outside the Commands dock changed, and the batch's only known flake (`gui-75`) is environmental. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`._
 
 ## Current focus
 
-**#94 landed (`e1a2c31`) — the Commands dock renders in the app's own font, and
-the `ready-for-agent` queue is now empty. The next move is the owner's.**
+**All nine parked owner calls are taken; the queue is four unblocked tickets and
+the `ready-for-human` list is empty.**
+
+Owner renewed the grant with *"address all the ready for human tickets and
+continue the relay"*. #92 and #86 are **closed**, #91 scoped and relabelled, and
+**#95 / #96 / #97** filed. **No `src/` change came out of any of the nine** — seven
+produced no code at all.
+
+**The load-bearing one: a non-agent panel is a SECTION in an existing surface,
+never a new dock** (#86.1). Warranted from `active-work.md:469` — *"non-agent work
+yes but as its own section"* — plus #83's shipped instance. This dissolves the
+deadlock #86 documented (no new titlebar control **and** every dock opens from a
+toggle **and** no router → a new dock is unreachable), because **a section needs
+no toggle.** It had gated #91 and any MCP UI since 2026-08-02.
+
+**Three calls died to a measurement, not a judgement**, and every one of those
+built less: #86.2's thinking strip is *empty* rather than blocked (#87 measured
+`thinking: ""` in every config — no content, so no DOM-exclusion contract to owe);
+#86.3/4's rail filter is both unbuildable and unnecessary (#89 measured
+`entrypoint` cannot separate this app's sessions from its own GUI drivers, and
+`Sidebar.tsx:32-33` already defaults to project scope, so the quoted 112-row noise
+is the **opt-in** view); #86.5's re-scope target is not a defect (all four
+"swallowed parses" are documented recovery paths, three with authored comments).
+
+**No Partner/Pressure pair was available** — subagents were off — so warrants were
+grep-verified inline instead. That changed three answers.
+
+See [[2026-08-04-the-parked-owner-calls-are-taken]].
+
+## Previously (2026-08-04) — #94, the last ticket of the previous grant
+
+**#94 landed (`e1a2c31`) — the Commands dock renders in the app's own font.**
 
 `.command-row-btn` was the last row button without `font: inherit`, so the dock
 painted its descriptions in Chromium's UA button font — **Arial 13.3333px** here
@@ -462,8 +492,9 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `e1a2c31` + this leg's `.context` commit, **unpushed** (so are `485a814`, `07c0068`, `09ca8fe` and `c7cee33`). No open branches — `ticket/94-command-row-font-inherit` was squash-merged and deleted.
-- **Queue (`ready-for-agent`): DRY.** Live frontier query returns `[]`. #93 and #94 both landed and closed, which spends the 2026-08-04 owner grant in full. The three open issues — **#92, #91, #86 — are all `ready-for-human`** and none is loop work; #91 is still blocked by #86. **The relay chain stopped itself here rather than spawning a leg with nothing to do.**
+- **In flight:** nothing. `main` = `e1a2c31` + the `.context` commits, **unpushed** (so are `485a814`, `07c0068`, `09ca8fe` and `c7cee33`). No open branches — `ticket/94-command-row-font-inherit` was squash-merged and deleted.
+- **Queue (`ready-for-agent`): FOUR, all unblocked** — **#95** (`.subagent-drawer-backdrop` tab stop), **#96** (two off-scale values conform to `DESIGN.md`), **#97** (measure the mint budget, no `src/` change), **#91** (background-sessions section, read-only). `blocked_by: 0` verified on all four. **The `ready-for-human` queue is EMPTY for the first time since 2026-08-02.**
+- **All nine parked owner calls are taken** ([[2026-08-04-the-parked-owner-calls-are-taken]]) under the grant's renewal — *"address all the ready for human tickets and continue the relay"*. **#92 and #86 are closed**; #91 was scoped, retitled and relabelled. **No `src/` change from any of the nine.** Seven produced no code; three died to a measurement rather than a judgement.
 - **The tailwind ADR is now AMENDED, not just flagged.** `2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md` carried "adding `font: inherit` would repaint `.command-row-desc`" — one child. #94 measured three, and a 60px row becoming 76px. The amendment is inline in that entry and the lesson is recorded: **the error was not enumerating the shorthand.**
 - **Landed:** **#83** (`ea780a0`) — the background-tasks section, a third injected port, 23 tests, five mutants killed and an ADR. Before it, **#82** (`3f34737`) — the dock's turn-end re-read, `keepStale`, seven tests and an ADR; **#81** (`002e524`), the harness and its ADR with **no `src/` diff, deliberately**, then the seven parked calls taken with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
 - **Parked for the owner: TWO, and they are the older halves — the seven are DONE.** The 2026-08-01 `/preset vibe init` run parked seven calls with no grant; the owner made one live after #81 landed and **all seven were taken** ([[2026-08-01-the-background-agents-seed-decided]]): two authorise work (#82, #83), four closed as **no** (the seed's meaning is the SDK concept; no labelled map; no new top-level surface; non-agent work **yes** but as its own section), one **struck** (map pan-zoom). `.claude/vibe.md`'s `## Needs you` is **history now, not a queue** — its `## Taken` section carries the resolutions. **What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's. **#83 was deliberately routed into the existing Agents dock so it does not pre-empt that second one.**
@@ -471,31 +502,43 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## Pick up here
 
-**The queue is DRY — zero `ready-for-agent` tickets.** Run the frontier query
-anyway before believing that; this line goes stale the moment the owner files
-something, and that is this project's standing lesson (a leg once wrote that
-closing #70 would empty the queue and was wrong, because #71 had been unblocked
-the whole time).
+**The queue is FOUR unblocked `ready-for-agent` tickets** — #95, #96, #97, #91,
+oldest-first in that order by number but **#95 is the smallest and #91 the
+largest**. Run the frontier query anyway before believing this line; it goes stale
+the moment anything is filed or closed, and that is this project's standing lesson
+(a leg once wrote that closing #70 would empty the queue and was wrong, because
+#71 had been unblocked the whole time).
 
 ```
 gh issue list --state open --label ready-for-agent
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-It is empty, so **the next move is the owner's** — file new work, or run
+If it goes empty again, **the next move is the owner's** — file new work, or run
 `/preset init` / `/preset vibe init` to generate a batch. The `## Deferred` list
 below is the standing menu of candidates, and `## Open questions` holds the ones
-that need an answer before they can be specced. **Seven owner calls stand and are
-named in [[pick-up]]**: the two older halves (Tailwind's adopt-utilities half,
-the titlebar's control count), #92's three that were refuted *after* the grant
-and stayed refuted (the stale accent clause, `.model-menu-item`'s
-`font-weight: 500`, what "professional grade" means), `.subagent-drawer-backdrop`
-wanting `tabIndex={-1}` (#93, unfiled), and **new from #94: whether 12px is the
-right line box for 11px muted description text** — the geometry #94 preserved is
-*Arial's* metric, an artifact of the bug it fixed, and Segoe's own 14.4px sits
-closer to the app's other micro text (1.3–1.45). Do not take any of them without
-a grant. **The 2026-08-04 grant is fully spent** — it produced #93 and #94, both
-landed. A new *reason* reopens a call; a re-read does not.
+that need an answer before they can be specced.
+
+**Only THREE owner calls still stand**, down from seven — the batch pass took the
+rest ([[2026-08-04-the-parked-owner-calls-are-taken]]):
+
+1. **Tailwind's adopt-utilities half.** Tailwind is not dropped; whether to adopt
+   utilities for new UI stays open, and a *drop* has a measured cascade risk
+   (layer semantics decide the theme override today).
+2. **The titlebar's control count.** #86.1 was decided specifically so nothing
+   pre-empts it, and #91's criterion 7 pins the count.
+3. **Whether 12px is the right line box for 11px muted description text** (from
+   #94). The geometry #94 preserved is *Arial's* metric, an artifact of the bug it
+   fixed; Segoe's own 14.4px sits closer to the app's other micro text (1.3–1.45).
+   Nothing blocks on it.
+
+Plus two **scoping** choices made under the grant that an eyeball may overrule,
+both flagged reversible on their tickets: **which surface #91's section joins**
+(decided: the sessions rail, not the Agents dock), and **the accent clause itself**
+— #97 produces the evidence but deliberately does not spend it.
+
+**Do not take any of these without a grant. A new *reason* reopens a call; a
+re-read does not.**
 
 **The nearest-to-ready candidate is #91, and it is NOT loop work.** #90 cleared
 one of its two blockers, so it now waits on a single owner call (#86 call 1). Its
