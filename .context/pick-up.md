@@ -9,48 +9,46 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Frontier: #93 and #94, both `ready-for-agent`
+## Frontier: #94, `ready-for-agent`, unblocked
 
-**TWO `ready-for-agent` tickets are open and the relay is running on them.**
-An owner grant on 2026-08-04 took five of #92's six calls and made them fileable.
+**One agent ticket is open.** #93 landed and closed this leg; #94 is the
+remaining half of the 2026-08-04 owner grant.
 
-- **#93** — `ready-for-agent`, **unblocked**: every interactive control wears the
-  app's focus ring instead of Chromium's. **Read its treatment table before
-  touching CSS** — the shared group writes `background: var(--tint-3)` and would
-  destroy the mint fill on `.send-btn` / `.pick-folder-btn` and the danger fill
-  on `.perm-pill--bypass`. Hairline-only for anything carrying a fill.
-- **#94** — `ready-for-agent`, **unblocked**: `.command-row-btn` gets
-  `font: inherit` **without** shifting vertical metrics. Pin the three children's
-  `line-height` first. Do not follow the ADR's stated blast radius; it is wrong.
+- **#94** — `ready-for-agent`, **`blocked_by: 0` verified**: `.command-row-btn`
+  gets `font: inherit` **without** shifting vertical metrics.
 
-Both are mutually unblocked and either order works. Then:
+**Read the ticket body, not the ADR it cites.**
+`2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md` says the fix
+"would repaint `.command-row-desc`" — one child. That understates it. **`font:
+inherit` is a shorthand and resets `line-height` too**; `rails.css` has zero
+`line-height` declarations, `body` sets `1.6`, and a `<button>`'s UA default is
+`normal`, so **all three** `.command-row-*` children shift vertical metrics,
+including the two that declare their own `font-family`. **Pin the children's
+`line-height` first, then add `font: inherit`.**
 
-- **#92** — `ready-for-human`, the GUI
-  conformance audit from an unattended `vibe init` run on "make the gui look
-  professional grade". **Five of its six owner calls were taken** under the
-  2026-08-04 grant (→ #93, #94); **three remain the owner's** and are commented
-  on the issue: the stale accent clause, `.model-menu-item`'s `font-weight: 500`,
-  and what "professional grade" concretely means. Also carries a **correction to
-  a live ADR** (see `## Landmines`).
+jsdom is blind to CSS, so #94 needs a driver too, red-verified against `main`
+before the fix — same house rule that shaped `gui-93` (an instrument that cannot
+fail measures nothing). `.command-row-btn` is a sessions/commands **dock row**, so
+`gui-93`'s rail-collapse trick does not apply; the Commands dock opens from a
+titlebar toggle.
 
-  **Do not take the three remaining calls.** Pressure refuted the
-  doc-reconciliation ticket *after* the grant and it stayed refuted — amending
-  `DESIGN.md` to mirror the code launders drift, and the ~45-reference figure
-  counts *sites* where the rule is about *surface proportion*. A grant is
-  permission to decide, not permission to decide badly.
-- **#86** — open, `ready-for-human`, **not loop work**: findings + five owner calls.
-- **#91** — open, `ready-for-human`, **blocked by 1** (#86; #90 cleared it).
-  The background-sessions *surface*. **Do not build it** — see `## Do not decide these`.
-- ~~#87 / #88 / #89 / #90~~ — closed.
+Then, and none of these are loop work:
 
-**#92 does not unblock anything and is not loop work.** It is the container for
-what only the owner can decide about the GUI. A leg that reads it as a to-do
-list is doing exactly what its own `## What was deliberately not done` forbids.
+- **#92** — `ready-for-human`, the GUI conformance audit from an unattended
+  `vibe init` run. Five of its six owner calls were taken under the 2026-08-04
+  grant (→ #93, #94); **three remain the owner's** and are commented on the
+  issue: the stale accent clause, `.model-menu-item`'s `font-weight: 500`, and
+  what "professional grade" concretely means. **Do not take them** — Pressure
+  refuted the doc-reconciliation ticket *after* the grant and it stayed refuted.
+  A grant is permission to decide, not permission to decide badly.
+- **#86** — open, `ready-for-human`: findings + five owner calls.
+- **#91** — open, `ready-for-human`, **blocked by 1** (#86). The
+  background-sessions surface. **Do not build it** — see `## Do not decide these`.
+- ~~#87 / #88 / #89 / #90 / #93~~ — closed.
 
-**Run the frontier query anyway** — this line is a snapshot and the owner may
-have filed since. This project's standing lesson is that a leg once wrote that
-closing #70 would empty the queue and was wrong, because #71 had been unblocked
-all along.
+**Run the frontier query anyway** — this line is a snapshot. This project's
+standing lesson is that a leg once wrote that closing #70 would empty the queue
+and was wrong, because #71 had been unblocked all along.
 
 ```
 gh issue list --state open --label ready-for-agent
@@ -62,393 +60,274 @@ If it really is empty, **the next move is the owner's** — file work, or run
 `## Deferred` is the standing candidate menu and `## Open questions` holds what
 needs an answer before it can be specced.
 
-## Landed this leg (2026-08-03, evening) — architecture pass, no ticket
+## Landed this leg (2026-08-04) — #93, `07c0068`
+
+**Every interactive control wears the app's focus ring.** Thirteen controls
+rendered Chromium's default `outline: auto 0.8px rgb(229, 151, 0)` on keyboard
+focus, including `.send-btn`, both titlebar state pills and the window controls.
+`titlebar.css` authored **zero** `:focus-visible` rules and now authors one. Gate
+green: typecheck clean, **953 tests across 63 files** (baseline unchanged),
+`gui-93` PASS, `gui-72` and `gui-51` re-run green because this touched their
+stylesheets. All six edited files verified 100% CRLF.
+
+**The decision, in one line: the treatment is picked per control by what it
+paints, not applied uniformly.** The `shared.css` focus group sets
+`background: var(--tint-3)` as well as the hairline, so joining it *is* the
+regression — it would have replaced the mint on `.send-btn` / `.pick-folder-btn` /
+`.backend-pill--wisped`, the danger fill on `.perm-pill--bypass` and the red on
+`.win-btn-close`. Fill in any state, or an icon button → **hairline alone**.
+Genuinely transparent menu/list row → the shared group, which took exactly two new
+members.
+
+| file | selectors | treatment |
+|---|---|---|
+| `titlebar.css` | `.backend-pill` `.perm-pill` `.model-pill` `.agents-toggle` `.sidebar-toggle` `.win-btn` | hairline |
+| `composer.css` | `.send-btn` `.attach-btn` | hairline |
+| `chat.css` | `.pick-folder-btn` | hairline |
+| `subagent.css` | `.subagent-drawer-close` | hairline |
+| `rails.css` | `.session-delete` | hairline |
+| `shared.css` | `.model-menu-item` `.command-option` | shared wash+hairline |
+
+**Re-running the enumeration corrected the ticket twice** — its own table said to
+do that rather than trust it. `.session-delete-armed` authors no background (only
+`color`), so one rule on the base class covers armed/cancel/ordinary; and
+`.command-option--active` already paints the same `var(--tint-3)` the shared group
+applies, so the wash replaces nothing.
+
+**The important acceptance criterion passed against the broken build.** Criterion
+2 — *no authored fill replaced on focus* — was green on all 13 controls in the red
+run, because with no focus rule anywhere a background trivially cannot move. It
+was mutation-verified separately (adding `background: var(--tint-3)` to the
+titlebar rule reds seven controls, `.backend-pill` and `.perm-pill` among them),
+then reversed with the same anchored edit, `git diff` empty afterwards.
+
+New driver: **`.claude/skills/run-desktop/gui-93.mjs`**, 13 controls Tab-driven
+per control, one static-checked and labelled as such.
+
+See [[2026-08-04-the-focus-ring-is-picked-per-control-not-applied]].
+
+## Landed before that (2026-08-03) — architecture pass, no ticket
 
 **`createEngine`'s seven port/getter slots are now one named `EnginePorts`
-object** (`c7cee33`) — the three-arg construction (83 test sites) is untouched;
-the six placeholder-laden sites collapsed to named keys. **`index.ts` gained
-`discardEngine(resume)`**, the one funnel for the five IPC discard paths
-(folder pick, `chat:target`, backend flip, permission cycle, model pick); the
-switch transaction's port-sequenced teardown is deliberately NOT routed through
-it. Port semantics untouched: `onTerminal` never fires for `close()`,
+object** (`c7cee33`) — the three-arg construction (83 test sites) untouched.
+**`index.ts` gained `discardEngine(resume)`**, the one funnel for the five IPC
+discard paths. Port semantics untouched: `onTerminal` never fires for `close()`,
 `onBackgroundTasks` fires `[]` there, reset still lives in `engine.close()`.
-Gate green: typecheck clean, **953 tests across 63 files** (baseline
-unchanged), all three files verified 100% CRLF. Owner-directed
-(`/improve-codebase-architecture`), off-tracker by design.
+Owner-directed, off-tracker by design. See
+[[2026-08-03-the-engine-ports-are-named-not-counted]].
 
-Assessed and deliberately NOT taken: `handleMessage` split (internal to a deep
-module, no interface gain), titlebar dock-prop pair (owner-deferred in
-[[active-work]]), Tailwind (owner call), any renderer state move (ledger
-forbids the specific "tidyings" available there). The next engine port (#86's
-MCP-health seed would be the fourth) now costs one named key, not slot-counting.
-
-## Landed earlier (2026-08-03) — #90, measurement only
-
-**The CLI's background sessions ARE reachable — by one route, at one CLI process
-per look.** Landed as `c989fe5`, ticket closed. **No `src/` change**; the
-deliverables are `scripts/spike-90-agent-view.mjs`, evidence in
-`scripts/spike-90-findings.json`, and an ADR. Gate green: typecheck clean,
-**953 tests across 63 files** (baseline unchanged). GUI batch **not** owed — two
-files under `scripts/` and one ADR are neither renderer code nor CSS.
-
-Measured on host CLI **2.1.220 / SDK 0.3.220**, backend `wisped`.
-
-| | question | answer |
-|---|---|---|
-| 1 | SDK exposes them? | **No** — 29 exports, none list background sessions |
-| 2 | `claude agents --json`? | **Yes** — exit 0, parses, no TTY needed |
-| 3 | Payload? | **Two row shapes**; `state` at **four** values, open |
-| 4 | Push or poll? | **Poll only** |
-| 5 | Cost? | median **893ms** (min 846, max 1068, n=5) |
-| 6 | `--cwd` scopes? | by **directory** yes, by **kind** no, and it keeps the caller |
-
-**Three findings the six questions did not ask for:**
-
-- **`sessionId` is the only universal key.** `id` is absent on interactive rows.
-  And `state` (background-only) vs `pid`/`status` (live process) means **no
-  single field describes a row's liveness**.
-- **The app appears in its own listing**, as `kind: "interactive"` — measured by
-  running a real `query()` at `engine.ts`'s options and polling *during* the
-  turn. An SDK-spawned headless CLI does register with the supervisor.
-- **`~/.claude/daemon/roster.json` carries attach credentials** (`rvAuth`,
-  `ptyAuth`, socket paths, `dispatch.env`). Never log, never commit.
-
-**Two corrections the harness made to itself, both worth knowing:** its first run
-answered Q1 **YES** off a name-level regex matching `getSubagentMessages` /
-`listSubagents` — the repo's third meaning of "agent". It now *calls* candidates.
-They then returned `[]`, and an empty array has no fields by construction, so the
-negative was **vacuous** until it was exercised against a real session with
-sidecars on disk. #81's rule, biting inside the instrument.
-
-See [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]].
-
-## Landed previous session (2026-08-03) — no ticket, a trace and two filings
-
-- **`.context/flows.md` started** (`3447ace`) — first entry is the Agents dock:
-  how it opens, where background tasks render, entry point and key files.
-- **`.claude/skills/run-desktop/gui-agents-dock.mjs`** (`3447ace`) — 13 checks,
-  exit 0, **no CLI turns**.
-- **The name collision recorded** (`522957a`) — this app's Agents dock is **not**
-  the CLI's agent view. Read that section before writing "the agents view".
-- **#90 and #91 filed.** #90 is now closed.
-
-Two cautions on that driver, both written into `flows.md`:
-
-- Its background half is a **synthetic** `tasks:changed` push from main — it says
-  **nothing** about whether the CLI emits the level. Not end-to-end evidence.
-- **Resizing the window mid-run was tried and abandoned.** DOM and frame
-  disagreed microseconds apart under `--disable-gpu`. **Unresolved** as artifact
-  vs defect. Anyone shooting a wide window settles this first.
-
-## Landed before that
-
-**#89 — the entrypoint this app writes is a fact about the launch env.** Landed
-as `5e41520`, ticket closed. The `src/` change is a **comment**; no behaviour
-moved and the live pin is untouched. Gate green: typecheck clean, **953 tests
-across 63 files** (baseline unchanged). GUI batch **not** triggered — a
-main-process comment is neither renderer code nor CSS.
-
-Measured on host CLI **2.1.220 / SDK 0.3.220**, backend `wisped`, by
-`scripts/spike-89-entrypoint.mjs` — three configs, one real turn each, evidence
-at `scripts/spike-89-findings.json`.
-
-**The ticket's observation was right and its implication was half wrong** (the
-#84 shape, third time). There really are zero `sdk-ts` records here; that means
-the comment named the wrong member of the set, not that the discriminator is
-missing. The SDK's stamp is inherit-wins
-(`if (!env.CLAUDE_CODE_ENTRYPOINT) env.CLAUDE_CODE_ENTRYPOINT = "sdk-ts"`) and
-`resolveSpawnEnv` spreads `process.env` wholesale, so:
-
-| launch context | wrote | verdict | hidden by `false` |
-|---|---|---|---|
-| terminal Claude Code session | `sdk-cli` | programmatic | yes |
-| outside any session | `sdk-ts` | programmatic | yes |
-| VS Code Claude Code session | `claude-vscode` | **interactive** | **no** |
-
-An inherited value is **transformed, not passed through**, and there is **no
-`sdk-` prefix rule** — the third config exists to test exactly that. The
-conclusion survives and is now measured at the store level: `false` takes the
-listing from **806 rows to 567**, a 239-row delta.
-
-See [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]]. It **amends**
-[[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]], whose "this app
-writes `sdk-ts`" sentence is now false — read the amendment before citing it.
+Before that, **#90** (`c989fe5`) measured the CLI's background sessions
+**reachable — by one route, at ~893ms of a fresh CLI process per look, poll-only**,
+with the app appearing in its own listing and `sessionId` the only universal key.
+No `src/` change. See
+[[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]].
 
 ## Landmines
 
-Full ledger in [[active-work]] — long and load-bearing. **New from #92 (the GUI
-audit), and the first one corrects a live ADR:**
+Full ledger in [[active-work]] — long and load-bearing. **New from #93:**
+
+- **A new control does not "join the focus group" by default — ask what it paints
+  first.** The shared group writes `background: var(--tint-3)`. Adding a control
+  that carries a fill in any state replaces that fill at the moment the user
+  selects it, with every test green. jsdom cannot see it.
+- **`.model-pill` takes hairline-only and breaks the rule's letter on purpose.**
+  The three pills brighten by `filter`, not by a background, so it carries no fill
+  in any state — but washing one of three pills that share a base rule splits the
+  group visually. A tidy-up that "corrects" it into the wash group is a silent
+  regression.
+- **An assertion of the form "X is unchanged" is vacuous in the build where
+  nothing could change it.** #93's most important criterion passed on all 13
+  controls against the broken build. Third instance after #76 and #82, and the
+  first inside a brand-new driver. Mutation-verify absence and no-change
+  assertions *before* trusting them.
+- **`Tab` is not a way out of the composer while the slash popover is open.**
+  `InputBar.onKeyDown` binds `Tab` to `accept(matches[hi])` with
+  `preventDefault()`. `.command-option` is reachable only by `Shift+Tab`.
+- **The sessions rail is 100 real tab stops.** A Tab walk with it expanded never
+  reaches the composer, which reads exactly like a missing control. `gui-93`
+  collapses it first and fails loudly if the collapse did not take.
+- **`el.focus()` does not reliably match `:focus-visible`** — press real keys, or
+  the driver passes against the broken build.
+- **`gui-93` reads its expected ring and wash from a probe element**, never a
+  hardcoded colour. Four palettes ship; a literal would red on three.
+- **`.subagent-drawer-close` is static-checked, not Tab-driven**, and the report
+  says so. Renaming the selector drops it to no coverage, silently.
+- **`.subagent-drawer-backdrop` is a focusable `<button>` with a fill and it still
+  wears Chromium's ring, deliberately** — an inset hairline on a viewport-sized
+  scrim boxes the whole window. The real fix is `tabIndex={-1}` (its sibling
+  `.model-backdrop` already has it), a JSX change removing a tab stop. **Owner's
+  to file.**
+- **`.session-row-btn-active`'s mint left-marker (`box-shadow: inset 2px 0 0 0`)
+  is replaced by the shared focus group on focus.** Pre-existing, untouched, not
+  caught by anything.
+
+**Still live from #92 (the GUI audit):**
 
 - **`2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md`
-  UNDERSTATES `.command-row-btn`'s blast radius.** It says adding `font: inherit`
-  "would repaint `.command-row-desc`" — one child. **`font: inherit` is a
-  SHORTHAND and resets `line-height` too.** `rails.css` has zero `line-height`
-  declarations, `body` sets `1.6`, a `<button>`'s UA default is `normal` — so
-  **all three** `.command-row-*` children shift vertical metrics, including the
-  two that declare their own `font-family`. Read this before citing that ADR.
-- **The app's focus system has systemic gaps and THREE competing treatments.**
-  Measured in the real app: the titlebar's 5 reachable buttons and
-  `pick-folder-btn` render **Chromium's default ring**; `.model-pill`,
-  `.model-menu-item`, `.command-option`, `.attach-btn`, `.send-btn`,
-  `.sidebar-toggle` are uncovered too. **There is no single ring to "join"** —
-  `shared.css:1-16` scopes its groups by its own text to "repeated
-  list/menu/dock/card patterns", which does not reach titlebar chrome. Picking
-  one **chooses a new titlebar appearance, inside the parked owner call.**
+  UNDERSTATES `.command-row-btn`'s blast radius** — this is #94's whole trap, see
+  above.
 - **`DESIGN.md`'s accent clause is STALE.** It names a *closed* list of five mint
-  spends; mint is painted in **9 files, ~45 refs**. Every one of those surfaces
-  existed when the clause was last rewritten (2026-07-31), so it was already
-  false when written. `DESIGN.md` still **governs** — so design work is being
-  decided against a partly false map until this is reconciled.
-- **There is NO accessibility commitment and no focus-indication rule on
-  record** — zero `focus-visible` in `tests/` or in any of the 24 drivers. The
-  one accessibility clause in the corpus is about **reachability** of a hidden
+  spends; mint is painted in **9 files, ~45 refs**. `DESIGN.md` still **governs**,
+  so design work is decided against a partly false map until reconciled. **Not a
+  licence to amend it** — the owner refused that ticket after the grant.
+- **There is NO accessibility commitment on record** beyond what #93 just shipped.
+  The one accessibility clause in the corpus is about **reachability** of a hidden
   control, not indication. Do not stretch it.
 - **"No measurement can answer a taste call" is a FALSE PARAPHRASE** carried in
-  `.claude/vibe-2026-07-31-*.md` logs. The ADR it is attributed to contains zero
-  instances of "taste". Its real line — "eyeballed in a real window, never a
-  driver screenshot" — is about **instruments, not ownership**.
-- **Two agreeing sources are not a quorum when a third exists.** `.command-row-btn`
-  was killed on two sources, revived by a third, then deferred by a fourth fact.
+  `.claude/vibe-2026-07-31-*.md` logs. The real line — "eyeballed in a real
+  window, never a driver screenshot" — is about **instruments, not ownership**.
+- **Two agreeing sources are not a quorum when a third exists.**
 
-New from #90:
+**Still live from #90:** `sessionId` is the only universal key in the agent-view
+payload; **no single field describes a row's liveness**; `state` is four values
+and open, `status` was caught opening inside one sitting; an SDK-spawned CLI
+registers as `kind: "interactive"` so **the app is in its own listing**;
+**`~/.claude/daemon/roster.json` holds attach credentials** — never log, never
+commit; the listing is a **join** the CLI performs; **a name-level scan for
+"agent" here returns SUBAGENT APIs** — call the thing before believing its name;
+an empty return measures nothing.
 
-- **`sessionId` is the ONLY universal key in the agent-view payload.** `id` is
-  absent on interactive rows (and is an 8-char `sessionId` prefix where present).
-- **No single field describes a row's liveness.** `state` = supervisor lifecycle,
-  **background rows only**; `pid` + `status` appear together exactly when a live
-  process exists.
-- **`state` is FOUR values here** (`blocked`, `done`, `failed`, **`working`**),
-  against the three the ticket predicted, and **not closed**. Render the raw
-  string — #83's `task_type` rule.
-- **`status` is not closed either, proven live.** The findings file recorded
-  `<null> | busy`; minutes later, same session, an interactive row read
-  **`idle`**. The open-set rule is not a hedge here — it fired within one sitting.
-- **An SDK-spawned CLI REGISTERS with the supervisor, as `kind: "interactive"`.**
-  The app is visible to the agent view and to itself, and `cwd` cannot filter it
-  out.
-- **`~/.claude/daemon/roster.json` holds ATTACH CREDENTIALS** — `rvAuth`,
-  `ptyAuth`, `rendezvousSock`, `ptySock`, `dispatch.env`. Never read it into a
-  log, a findings file or a UI.
-- **The listing is a JOIN.** `~/.claude/sessions/` covered 2 of 6 active rows,
-  `roster.json` 1 of 6. Watching either is a re-poll trigger, not a substitute.
-- **A name-level scan for "agent" here returns SUBAGENT APIs.** #90's own first
-  run got its headline answer wrong that way. **Call the thing before believing
-  its name** — and remember an empty return measures nothing.
-- **`scripts/spike-89-findings.json` leaks the OS username** (absolute temp
-  path). spike-90 records the basename only. Not fixed; not that ticket's file.
+**Still live from #89:** `entrypoint` is decided by the **launch env**, never by
+this app; **one record decides a whole session** (64KB head/tail windows), so
+counting records is not counting sessions; `sessionKind: daemon|daemon-worker` is
+a second programmatic path; the value set is **five**; `session-index.ts` cannot
+be imported by a spike.
 
-Still true from the 2026-08-03 trace:
+**Still live from #88:** a lever whose own effect is unverifiable cannot test
+anything; **`init` fires per TURN, not per session**; `McpServerStatus.config`
+carries `env`; `disabled` is a status and the common one; cwd selects the project
+MCP scope.
 
-- **"The agents view" is AMBIGUOUS in this repo.** This app's Agents dock is an
-  aside listing subagents *inside* one session; the CLI's agent view is a
-  full-terminal list of whole background *sessions* and explicitly does not row
-  subagents. Near-inverses sharing a name. Say which one, every time. Third
-  meaning of "agent" here, beside the two `background-tasks.ts` reconciles.
-- **The wrapper cannot reach the CLI's agent view by construction** — it runs the
-  CLI headless via the SDK, so there is no TUI, no `←` binding, no takeover
-  screen. Anything of that shape must be built, and #91 records why it is blocked.
-- **The sessions rail is the dangerous lookalike.** It has a "This project /
-  All projects" scope control, so it *looks* like a session list already exists.
-  It lists stored transcripts, not live processes: no state, no attach, no
-  dispatch.
-- **A driver that resizes the window revokes what it measures** — see the
-  unresolved paint disagreement above. `gui-agents-dock.mjs` collapses the
-  sessions rail instead. This is #77's lesson recurring.
-- **Element screenshots clip to the viewport.** `el.screenshot()` on a node that
-  sits outside the window returns grey, not the node. It is not a fallback for a
-  too-small window.
+**Still live from #87:** `result.subtype` is `'success'` on a failed turn —
+`is_error` says so; unsetting `ANTHROPIC_BASE_URL` by hand is **not** native mode
+(import `backend-mode.ts`'s `resolveSpawnEnv`); a type census answers what shapes
+exist, never what belongs to what.
 
-New from #89:
+**Still true from the 2026-08-03 trace:** **"the agents view" is AMBIGUOUS** —
+this app's Agents dock lists subagents inside one session; the CLI's agent view
+lists whole background sessions. Say which one, every time. The **sessions rail is
+the dangerous lookalike**: it lists stored transcripts, not live processes. A
+driver that resizes the window revokes what it measures; element screenshots clip
+to the viewport.
 
-- **`entrypoint` is decided by the LAUNCH ENV, never by this app.** Any future
-  reasoning of the form "this app writes X" is wrong by construction. Three
-  measured values, and one of them (`claude-vscode`) is classified
-  **interactive** — so the app *can* write a non-programmatic transcript.
-- **ONE record decides a whole session.** The SDK reads only a 64KB head window
-  and a 64KB tail window; the verdict is the **first** `entrypoint` in the head,
-  else the **last** in the tail. Everything between is never read. **Counting
-  records is not counting sessions** — which retires #89's own table method. And
-  mixed-value session files exist (three found in a 400-file scan, mixing
-  `claude-vscode` with `cli`), so "the session's entrypoint" is not well defined.
-- **`sessionKind: "daemon" | "daemon-worker"` is a SECOND programmatic path**,
-  independent of `entrypoint`. Any filter reasoning only about `entrypoint`
-  covers one of two branches. Only `"bg"` exists on this disk (38575), so the
-  path is unexercised here — not absent (#81's rule).
-- **The value set is FIVE.** Full sweep, all 1178 JSONL across 139 dirs: `cli`
-  100750, `claude-vscode` 7154, `sdk-cli` 3647, `sdk-ts` 1172, **`claude-desktop`
-  21**. The last was unknown; anything outside the SDK's three-member set is
-  silently **interactive**.
-- **`entrypoint` rides the MESSAGE envelope**, beside `cwd` / `sessionId` /
-  `version` / `gitBranch` / `sessionKind` / `userType`. Metadata records
-  (`last-prompt`, `custom-title`, `agent-name`, `mode`, `permission-mode`,
-  `file-history-snapshot`) carry none — 81 of 113 lines in a live file.
-- **`session-index.ts` cannot be imported by a spike.** It imports
-  `../shared/cwd-key` extensionless, which node's ESM resolver rejects under
-  `--experimental-strip-types`. `cli-path.ts` and `backend-mode.ts` import fine.
-  A spike needing a session's file must enumerate the store itself — and still
-  must never re-derive a store path from cwd.
-- **An agent-run measurement is inside a Claude Code session by construction.**
-  #89's outside-a-session config is a reconstruction by environment, recorded as
-  a `limit` field rather than reported as the real case. Same call #87 made for
-  the native backend.
+**Still true from #85/#84/#83/#82/#81:** a mutant can kill a **bad test** before
+it kills the code; reproduce a red on clean `main` with the work stashed before
+calling it a regression; **judge drivers by exit code**; a field's absence is only
+a measurement if a differently-named field could have been seen; `parent_tool_use_id`
+is on the `assistant` envelope; check whether every path reaches your candidate
+**eagerly**; two ports on one lifecycle hook can want opposite things; a value
+written once per session cannot trigger something that happens once per turn; **an
+assertion that something SURVIVED is vacuous unless the thing it survives is shown
+to have happened**; a level event can land **after** `result`; the `Agent` tool is
+**async**; a negative is only a measurement if the path was exercised.
 
-Still true from #88:
+**Still true:** the composer is never `disabled`; `lastTurn`'s nonce is
+load-bearing; `unqueue` releases the commitment, never the text; a double flush is
+invisible to jsdom; an edge between two samples is not observable by sampling;
+`resume` binds at query **construction** and `warmUp` takes the target; a stream
+dying **between** turns emits nothing; `win.isFocused()` alone is not "someone is
+looking"; **opening a past session CLOSES the engine** (so `listModels()` /
+`listCommands()` answer `[]` — reach them first); a test asserting an **absence**
+is the one most likely to be vacuous; **no expected driver failure**; pins are
+mutation-verified and no pin retirement is authorised; do not add a second busy
+flag; never un-key the composer; anything workspace-scoped must join the `ok`
+branch; main reports `getNormalBounds()`; `tests/scrollbar.test.ts` scans every
+line naming a scrollbar pseudo-element (comments included);
+`tests/multiline-composer.test.tsx` slices raw CSS between literal braces, so
+`.bubble` and `.message-input` stay ungrouped and no CSS comment may contain a
+closing brace; `gui-51` compares in **device** pixels; measure with
+`getBoundingClientRect`; `.titlebar-center` must stay **in flow**; **`src/` is
+CRLF** (and so is `scripts/`) while `.context/*.md` is LF; a new `window.api`
+channel needs **all four** mock sites plus `preload/index.d.ts`; never hardcode a
+model name; **`gh issue close --comment` silently drops the comment if the issue is
+already closed — comment first, then close**; a squash merge leaves the branch
+"not fully merged", so `git branch -D` is correct there.
 
-- **A lever whose own effect is unverifiable cannot test anything.**
-  `toggleMcpServer` returns `void`; `setMcpServers` settled the question because
-  it returns `{added, removed, errors}`. **Prefer the lever that reports itself.**
-- **`init` fires per turn, not per session.**
-- **`McpServerStatus.config` carries `env`** — never log or commit it.
-- **`disabled` is a status and the common one here** (3 of 4 servers).
-- **cwd selects the project MCP scope.**
-
-Still true from #87:
-
-- **`result.subtype` is `'success'` on a failed turn.** `is_error` says so.
-- **Unsetting `ANTHROPIC_BASE_URL` by hand is not native mode.** Import
-  `backend-mode.ts`'s `resolveSpawnEnv`.
-- **A type census answers what shapes exist, never what belongs to what.**
-
-Still true from #86:
-
-- ~~**A comment in this repo can assert a fact the disk does not support**~~ —
-  **discharged for `session-store.ts:34-40` by #89.** The general caution stands;
-  that specific instance is fixed and now carries a findings pointer.
-- **The `entrypoint` value set is larger than the SDK's** — now measured at
-  **five** values against the SDK's three-member set.
-- **The app silently drops every content-block type it does not know**
-  (`engine.ts:546-570`) and there is **no logging anywhere in `src/`**. "We never
-  saw X" is not evidence about X.
-- **`engine.ts:461-465` reads one field off `init` and discards 15.**
-- **Skipping a step beats fabricating its artifact.** Record the deviation.
-
-Still true from #85: **a mutant can kill a BAD TEST before it kills the code**;
-**reproduce a red on clean `main` with the work stashed before calling it a
-regression**; **judge drivers by exit code, never by scraping stdout**; **when a
-guard turns your case away, record before the guard, not after**.
-
-Still true from #84: **a field's absence is only a measurement if a
-differently-named field could have been seen**; **check whether your negative
-path was ever exercised**; **a ticket's stated implication can be wrong even when
-its observation is right** (#89 is now the third instance); **data captured is
-not data recorded**; **`parent_tool_use_id` is on the `assistant` envelope**.
-
-Still true from #83: **check whether every path reaches your candidate EAGERLY**
-(`close()`, not `makeEngine()`); **two ports on one lifecycle hook can want
-opposite things**; **`nonAgentTasks` excludes only `local_agent`**; **render the
-raw `task_type`**; **`.background-tasks` depends on `.agents-dock` being a flex
-column with `min-height: 0`**.
-
-Still true from #82: **a value written once per session cannot trigger something
-that happens once per turn**; **an assertion that something SURVIVED is vacuous
-unless the thing it survives is shown to have happened**; **a refresh must not
-blank what it already has**; **`keepStale` is on the read**.
-
-Still true from #81: **a level event can land AFTER `result`**; **the `Agent`
-tool is ASYNC**; **a NEGATIVE is only a measurement if the path was exercised**;
-**sidecars live at `<projectDir>/<sessionId>/subagents/`** — copy
-`subagentsDir()`, never guess it.
-
-Still true: **the composer is never `disabled`**; **`lastTurn`'s nonce is
-load-bearing**; **`unqueue` releases the commitment, never the text**; **a double
-flush is invisible to jsdom**; **an edge between two samples is not observable by
-sampling**; **`resume` binds at query CONSTRUCTION** and `warmUp` TAKES the
-target; **a stream dying BETWEEN turns emits nothing**; **`win.isFocused()` alone
-is not "someone is looking"**; **opening a past session CLOSES the engine**;
-**a test asserting an ABSENCE is the one most likely to be vacuous**; **no
-expected driver failure**; **pins are mutation-verified and no pin retirement is
-authorised**; **do not add a second busy flag**; **never un-key the composer**;
-**anything workspace-scoped must join the `ok` branch**; **main reports
-`getNormalBounds()`**; `tests/scrollbar.test.ts` scans every line naming a
-scrollbar pseudo-element; `gui-51` compares in **device** pixels; measure with
-`getBoundingClientRect`; `.titlebar-center` must stay IN FLOW; **`src/` is CRLF**
-(and so is `scripts/`) while `.context/*.md` is LF; a new `window.api` channel
-needs **all four** mock sites plus `preload/index.d.ts`; never hardcode a model
-name.
-
-From #78: **Playwright cannot measure a launch**; **`NODE_OPTIONS=--require`
-never reaches Electron**; **`--disable-gpu` is load-bearing in a background
-session**; **Chromium persists the zoom factor per origin inside `userData`**.
+From #78: **Playwright cannot measure a launch**; `NODE_OPTIONS=--require` never
+reaches Electron; `--disable-gpu` is load-bearing in a background session (and
+flattens acrylic); Chromium persists the zoom factor per origin inside `userData`.
 
 ## Baseline
 
-`main` = `c7cee33` (the ports refactor). **The previous note's five unpushed
-commits are PUSHED** — origin/main sat at `d6164b2` when this leg started, so
-only `c7cee33` plus this `.context` commit are ahead. No open branches. Test
-baseline **953 across 63 files** — unchanged by the refactor, re-verified green
-at `c7cee33` with typecheck clean.
+`main` = `07c0068` (#93). **Three commits ahead of origin and unpushed** —
+`c7cee33`, `09ca8fe` and `07c0068`, plus this leg's `.context` commit. No open
+branches; `ticket/93-focus-ring` was squash-merged and deleted. Test baseline
+**953 across 63 files**, re-verified green at `07c0068` with typecheck clean.
 
 **Untracked and deliberately left alone:** `.context/2026-07-23.md` and
 `.context/Untitled.canvas`, both **0 bytes** — Obsidian stubs from opening the
-vault. Not committed, not deleted; the owner's to clear.
+vault. Not committed, not deleted; the owner's to clear. `.claude/settings.json`
+also carries an uncommitted modification that predates this leg and was not
+touched.
 
-**22** assertion drivers plus the observational `gui-scope-zoom-pill`. Last full
-batch run at `3e24a53`: **22 green, `gui-75` red**, and that red is
-**environmental, NOT a regression** — reproduced identically on clean `main`
-(`47ad14d`) with the work stashed. **Judge drivers by exit code.**
+**23** assertion drivers plus the observational `gui-scope-zoom-pill` — `gui-93`
+is new this leg. Last full batch run at `3e24a53`: **22 green, `gui-75` red**, and
+that red is **environmental, NOT a regression** — reproduced identically on clean
+`main` with the work stashed. **Judge drivers by exit code.** This leg ran three
+(`gui-93`, `gui-72`, `gui-51`), all green; the full batch was deliberately not
+run for a CSS-only change that alters nothing at rest.
 
 Spike harnesses in `scripts/`: `spike-81-background-tasks.mjs`,
 `spike-87-thinking.mjs`, `spike-88-mcp-status.mjs`, `spike-89-entrypoint.mjs`,
 `spike-90-agent-view.mjs`. All five import the app's real `cli-path.ts` /
-`backend-mode.ts` rather than copying them — follow that when writing the next
-one, and note #89's finding that `session-index.ts` **cannot** be imported the
-same way. **#90 is the one to copy for scrubbing**: it records the temp dir's
-basename rather than the absolute path, which keeps the OS username out of the
-repo (the other four do not).
+`backend-mode.ts` rather than copying them. **#90 is the one to copy for
+scrubbing** — it records a temp dir's basename rather than the absolute path,
+keeping the OS username out of the repo.
 
 ## Do not decide these
 
 **The seven from `.claude/vibe.md` are DONE** and the 2026-08-01 grant is fully
-spent. That file's `## Needs you` is history, not a queue. A new **reason**
-reopens one of those calls; a re-read does not.
+spent; that file's `## Needs you` is history, not a queue. **The 2026-08-04 grant
+is spent too** — it produced #93 (landed) and #94 (open). A new **reason** reopens
+a call; a re-read does not.
 
-**Two older halves still stand and are still the owner's:** Tailwind is **not
-dropped** but the adopt-utilities question **stays open**; the titlebar's control
-count **does not change** while the aesthetic question **stays the owner's**.
+**Three of #92's calls remain the owner's** and are commented on that issue: the
+stale accent clause, `.model-menu-item`'s `font-weight: 500`, and what
+"professional grade" means. They were refuted **after** the grant and stayed
+refuted.
+
+**Two older halves still stand:** Tailwind is **not dropped** but the
+adopt-utilities question **stays open**; the titlebar's control count **does not
+change** while the aesthetic question stays the owner's. #93 respected the second
+one — it added a focus state to existing controls and no affordance.
 
 **#91 is the owner's and is STILL BLOCKED — do not build it.** A
-background-sessions surface is new UI, and #86's constraint that **no new feature
-may add a titlebar control** is live state that survived a grill. Every dock
-opens from a titlebar toggle and there is no router, so a new dock is
-*unreachable*, and which existing dock a non-agent panel joins is owner call 1,
-unanswered.
-
-**#90 came back reachable and #91 did not move.** Its blocker count went 2 → 1,
-which is exactly the trap: a leg reading "only one blocker left" and taking it
-would be doing the thing #90's Out of scope forbade in advance. The ticket said
-a leg that finds the data reachable **still may not build the panel**, and that
-is what happened.
-
-What #90 *did* change is the price #91 is deciding against, now written on the
-ticket: **~893ms of a fresh CLI process per look, poll-only, staleness equal to
-the poll interval, a `child_process` spawn this app deliberately does not have
-(`cli-path.ts` chose a PATH walk over a `which` shell-out to avoid re-adding
-one), a row shape that is two shapes, and a list that contains the viewer.**
-Peek / reply / attach were out of scope and remain unmeasured — they are the
-larger question.
+background-sessions surface is new UI, and #86's constraint that no new feature
+may add a titlebar control is live. Every dock opens from a titlebar toggle and
+there is no router, so a new dock is *unreachable*; which existing dock a
+non-agent panel joins is owner call 1, unanswered. #90 cleared one of its two
+blockers, which is exactly the trap — a leg reading "only one blocker left" and
+taking it does the thing #90's Out of scope forbade in advance.
 
 **The 2026-08-02 vibe run's five calls are the owner's and are OPEN** — #86 holds
-them. Owner call 1 (where does a non-agent panel live?) is still **the gate on
-any MCP UI**. Owner call 2 went moot on #87 for want of a subject. **#89 moved
-owner call 5's ground**: the `sdk-cli` de-noising half now has a stronger
-negative than it asked for — the wrapper's own sessions and the GUI drivers'
-carry the **same** `entrypoint` value and are not separable by it. Whether to
-de-noise at all is still the owner's.
+them. Owner call 1 is still the gate on any MCP UI. **#89 moved owner call 5's
+ground**: the wrapper's own sessions and the GUI drivers' carry the same
+`entrypoint` value and are not separable by it.
+
+**Newly the owner's, filed by nobody yet:** `.subagent-drawer-backdrop` should
+probably take `tabIndex={-1}` like its `.model-backdrop` sibling, removing a tab
+stop. #93 deliberately left it alone — it is a JSX behaviour change, not a CSS
+one.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[stack]] · [[happy-path]]
 - [[flows]] — **traced flows.** First entry is the Agents dock, and it carries the
   agent-view name-collision table. Read it before any ticket naming "agents"
-- [[2026-08-03-the-engine-ports-are-named-not-counted]] — **this leg's architecture pass (`c7cee33`); EnginePorts object + the discardEngine funnel, and what was deliberately not touched**
-- [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]] — **#90; reachable by subprocess only, ~0.9s a look, poll-only, and the app is in its own list**
-- [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]] — #89; the launch env decides, one record decides a session, and the value set is five
-- [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]] — **AMENDED by #89; its `sdk-ts` provenance sentence is false, its decision stands**
+- [[2026-08-04-the-focus-ring-is-picked-per-control-not-applied]] — **this leg's
+  ticket (#93); why joining the shared focus group IS the regression, why an icon
+  button takes the hairline even when transparent, and why criterion 2 needed a
+  mutation to mean anything**
+- [[2026-08-03-the-engine-ports-are-named-not-counted]] — the architecture pass (`c7cee33`)
+- [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]] — #90
+- [[2026-08-02-the-entrypoint-is-a-fact-about-the-launch-env]] — #89
+- [[2026-07-30-the-app-must-be-able-to-list-its-own-sessions]] — **AMENDED by #89**
 - [[2026-08-02-mcp-health-already-arrives-once-per-turn]] — #88
 - [[2026-08-02-the-thinking-block-arrives-empty]] — #87
 - [[2026-08-01-nesting-happens-in-the-render-not-the-model]] — #85
-- [[2026-08-01-the-spawner-is-one-hop-off-task-started]] — #84; right observation, wrong stated implication
+- [[2026-08-01-the-spawner-is-one-hop-off-task-started]] — #84
 - [[2026-08-01-a-level-is-replaced-not-accumulated]] — #83
 - [[2026-08-01-a-refresh-must-not-blank-what-it-has]] — #82
-- [[2026-07-31-a-driver-establishes-its-premise]] — #65, extended by #74–#81
+- [[2026-07-31-a-driver-establishes-its-premise]] — #65, extended by #74–#81 and #93
+- [[2026-07-30-the-import-order-is-the-cascade]] — where a new CSS rule goes
 - `.claude/vibe.md` — the runs that filed #81 and #86–#89

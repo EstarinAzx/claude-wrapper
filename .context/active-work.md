@@ -1,19 +1,55 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-08-03
+updated: 2026-08-04
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-08-03 (evening) by Fable 5 (auto) — **owner-directed architecture pass landed as `c7cee33`; the queue is still DRY**_
-_At commit: `c7cee33` on `main` (only commit ahead of origin — the earlier five are pushed). Gate green: typecheck clean, **953 tests across 63 files**, re-verified at this commit_
-_Driver check: **not run this leg, and not implicated.** #90 added two files under `scripts/` and one ADR; no renderer code, no CSS, no `src/`, so the GUI batch has nothing to observe. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`. No standing red anywhere else, so any other red is a real regression._
+_Last updated: 2026-08-04 by Opus 5 (relay leg 1, `ticket-loop`) — **#93 landed as `07c0068`; #94 is the next unblocked ticket and the queue is NOT dry**_
+_At commit: `07c0068` on `main` (unpushed, with `09ca8fe` and `c7cee33` ahead of origin). Gate green: typecheck clean, **953 tests across 63 files** (baseline unchanged), `gui-93` PASS_
+_Driver check: **partial and deliberate.** This was a CSS-only change adding `:focus-visible` states, so the three surfaces it touched were re-driven — `gui-93` (new, PASS), `gui-72` (titlebar geometry, PASS) and `gui-51` (composer + rails gutters, PASS). The full 23-driver batch was **not** run: nothing at rest changed, and the batch's only known flake (`gui-75`) is focus-dependent, which is exactly what an unattended run reds on. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`._
 
 ## Current focus
 
-**Nothing queued; an owner-directed architecture pass landed off-tracker.**
+**#93 landed (`07c0068`) — every interactive control now wears the app's focus
+ring. #94 is open, unblocked and `ready-for-agent`.**
+
+Thirteen controls rendered Chromium's default
+`outline: auto 0.8px rgb(229, 151, 0)` on keyboard focus, including `.send-btn`,
+both titlebar state pills and the window controls. `titlebar.css` authored
+**zero** `:focus-visible` rules; it now authors one.
+
+**The obvious fix was the regression, and that is the whole decision.** The
+`shared.css` focus group sets `background: var(--tint-3)` as well as the
+hairline, so adding thirteen selectors to it would have replaced authored fills
+on focus. The rule shipped instead: **a control that authors a background in any
+state — or is an icon button, where a wash reads as a second hover state — gets
+the hairline alone** (`inset 0 0 0 1px var(--tint-6)`, the treatment already at
+`rails.css:311` and `:596`); **only a genuinely transparent menu/list row joins
+the shared wash group**, which took exactly two new members. Six rules across
+five surface files plus two selectors in `shared.css`. No new file, no new token,
+no JSX change, nothing altered at rest, titlebar control count unchanged.
+
+**Re-running the enumeration mechanically corrected the ticket twice** — its own
+table said to do that rather than trust it. `.session-delete-armed` authors no
+background (only `color: var(--danger-text)`; the fill comes from
+`.session-delete:hover`), so one rule on the base class covers armed, cancel and
+ordinary. And `.command-option--active` already paints the same `var(--tint-3)`
+the shared group applies, so routing it into the wash replaces nothing.
+
+**The acceptance criterion the ticket called the important one passed against the
+broken build.** Criterion 2 — *no authored fill is replaced on focus* — was green
+on all 13 controls in the red run, because with no focus rule anywhere a
+background trivially cannot change on focus. It was mutation-verified separately:
+adding `background: var(--tint-3)` to the titlebar rule reds seven controls,
+including `.backend-pill` (mint → wash) and `.perm-pill` (danger fill → wash).
+Reversed with the same anchored edit, `git diff` empty afterwards.
+
+See [[2026-08-04-the-focus-ring-is-picked-per-control-not-applied]].
+
+## Previously (2026-08-03) — an owner-directed architecture pass, off-tracker
 `c7cee33` — `createEngine`'s seven positional port/getter slots folded into one
 named `EnginePorts` object (83 three-arg test sites untouched, six
 placeholder-laden ones collapsed), and `index.ts` gained `discardEngine(resume)`,
@@ -389,18 +425,20 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `c989fe5` + this leg's `.context` commit, **unpushed** (so are `3447ace`, `522957a`, `dd435db` from the previous session). No open branches — `ticket/90-agent-view-reachable` was squash-merged and deleted after its content was verified byte-identical to `main`.
-- **Queue (`ready-for-agent`): EMPTY.** #90 was the only open agent ticket and it closed this leg. **#91 is open and blocked by #86**; #86 is open and `ready-for-human`. So the two remaining issues are both the owner's, and one of them gates the other. The next move is the owner's — see `## Pick up here`.
+- **In flight:** nothing. `main` = `07c0068` + this leg's `.context` commit, **unpushed** (so are `09ca8fe` and `c7cee33`). No open branches — `ticket/93-focus-ring` was squash-merged and deleted.
+- **Queue (`ready-for-agent`): ONE ticket, unblocked.** **#94** — `.command-row-btn` gets `font: inherit` without shifting vertical metrics (`blocked_by: 0`, verified). #93 closed this leg. **#86 and #91 remain `ready-for-human`** and neither is loop work; #91 is still blocked by #86.
+- **#94's ADR is wrong and the ticket says so.** `2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md` states the fix repaints one child. `font: inherit` is a **shorthand that also resets `line-height`**, so all three `.command-row-*` children shift vertical metrics. Pin the children's `line-height` **first**, then add `font: inherit`. Read the ticket body, not the ADR.
 - **Landed:** **#83** (`ea780a0`) — the background-tasks section, a third injected port, 23 tests, five mutants killed and an ADR. Before it, **#82** (`3f34737`) — the dock's turn-end re-read, `keepStale`, seven tests and an ADR; **#81** (`002e524`), the harness and its ADR with **no `src/` diff, deliberately**, then the seven parked calls taken with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
 - **Parked for the owner: TWO, and they are the older halves — the seven are DONE.** The 2026-08-01 `/preset vibe init` run parked seven calls with no grant; the owner made one live after #81 landed and **all seven were taken** ([[2026-08-01-the-background-agents-seed-decided]]): two authorise work (#82, #83), four closed as **no** (the seed's meaning is the SDK concept; no labelled map; no new top-level surface; non-agent work **yes** but as its own section), one **struck** (map pan-zoom). `.claude/vibe.md`'s `## Needs you` is **history now, not a queue** — its `## Taken` section carries the resolutions. **What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's. **#83 was deliberately routed into the existing Agents dock so it does not pre-empt that second one.**
 - **Blocked:** **#91**, on #86. Its other blocker (#90) closed this leg, so it is one owner call away from being buildable — and that call (owner call 1, where a non-agent panel lives) is unanswered. **Do not take it; it is `ready-for-human` by construction, not by oversight.**
 
 ## Pick up here
 
-**The queue is dry.** Run the frontier query first anyway — this line goes stale
-the moment the owner files something, and that is this project's standing lesson
-(a leg once wrote that closing #70 would empty the queue and was wrong, because
-#71 had been unblocked the whole time).
+**The queue is NOT dry — #94 is open, unblocked and `ready-for-agent`.** Run the
+frontier query first anyway; this line goes stale the moment the owner files
+something, and that is this project's standing lesson (a leg once wrote that
+closing #70 would empty the queue and was wrong, because #71 had been unblocked
+the whole time).
 
 ```
 gh issue list --state open --label ready-for-agent
@@ -476,6 +514,20 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #93 — binding on the focus system and on `gui-93`:**
+
+- **A new control does not "join the focus group" by default — ask what it paints first.** The `shared.css` group sets `background: var(--tint-3)` as well as the hairline. Adding a control that carries a fill in any state silently replaces that fill at the moment the user selects it, and no vitest test can see it. Fill in any state (or an icon button) → hairline alone; genuinely transparent menu/list row → the shared group.
+- **`.model-pill` takes hairline-only and does NOT follow the letter of that rule.** The three titlebar pills brighten by `filter: brightness(1.12)` on hover, not by a background, so `.model-pill` carries no fill in any state. It is still hairline-only, because washing one of three pills that share a base rule splits the group visually. A future tidy-up that "corrects" it into the wash group is a regression with every test green.
+- **`.session-delete-armed` authors no background.** Only `color: var(--danger-text)`; the fill comes from `.session-delete:hover`. One rule on the base class covers armed, cancel and ordinary — re-splitting them into three is how they drift apart.
+- **Criterion "X is unchanged" is vacuous in the build where nothing could change it.** #93's most important acceptance criterion — no authored fill replaced on focus — passed on all 13 controls against the *broken* build, because with no focus rule anywhere a background trivially cannot move. It is meaningful only because it was mutation-verified separately. Third instance of this class after #76 and #82, and the first to appear inside a brand-new driver.
+- **`Tab` is not a way out of the composer while the slash popover is open.** `InputBar.onKeyDown` binds `Tab` to `accept(matches[hi])` and calls `preventDefault()`, so a forward Tab takes the completion instead of moving focus. `.command-option` is reachable only backwards — `gui-93` anchors on `.send-btn` and presses `Shift+Tab`. Any future reasoning about keyboard reachability of that popover starts here.
+- **The sessions rail is 100 real tab stops.** A Tab walk with the rail expanded spends its whole budget inside the list and never reaches the composer — which reads exactly like a missing control. `gui-93` collapses the rail before the composer phase and fails loudly if the collapse did not take.
+- **`el.focus()` does not reliably match `:focus-visible`.** A driver that calls it measures a different thing than the user experiences and would pass against the broken build. Press real keys.
+- **`gui-93` reads its expected ring and wash from a PROBE element**, not from a hardcoded colour — a `<div>` given `var(--tint-6)` / `var(--tint-3)`, whatever the engine computes for it. Four palettes ship (#70); a hardcoded expectation reds on three of them.
+- **`.subagent-drawer-close` is STATIC-CHECKED, not driven**, and the driver prints that in its report. Reaching it needs a real turn that spawns a subagent. Renaming that selector or moving its rule drops it to no coverage at all, silently. Precedent for the labelled-weaker-check pattern: `gui-75`.
+- **`.subagent-drawer-backdrop` is a focusable `<button>` with a `oklch(0 0 0 / 0.32)` fill and it was left wearing Chromium's ring, deliberately.** It is a full-viewport scrim, so an inset hairline would draw a 1px box around the whole window — worse than the default. The real fix is `tabIndex={-1}`, which its sibling `.model-backdrop` already carries; that is a JSX change removing a tab stop and is the owner's to file.
+- **`.session-row-btn-active` carries `box-shadow: inset 2px 0 0 0 var(--color-mint)` as a left rail marker, and the shared focus group replaces it on focus.** Pre-existing, untouched by #93, and not caught by anything.
 
 **From #83 — binding on the background-tasks path and on anything built on the
 CLI's level signal:**
@@ -856,6 +908,7 @@ owner decision. See [[2026-08-01-the-spawner-is-one-hop-off-task-started]].
 ## Related
 
 - [[overview]] · [[decisions]] · [[pick-up]] · [[stack]] · [[happy-path]]
+- [[2026-08-04-the-focus-ring-is-picked-per-control-not-applied]] — **#93, shipped; why joining the shared focus group IS the regression, why an icon button takes the hairline even when transparent, why `.model-pill` is the edge that breaks the rule's letter, and why criterion 2 needed a mutation to mean anything**
 - [[2026-08-01-a-level-is-replaced-not-accumulated]] — **#83, shipped; why the port's pin is about timing rather than payload, why the reset lives in `close()` rather than `makeEngine()`, why `onTerminal`'s `close()` rule is deliberately inverted here, and why the level is filtered rather than joined**
 - [[2026-08-01-a-refresh-must-not-blank-what-it-has]] — **#82, shipped; a dependency that could only change once, why the second dep was rejected, and why `keepStale` lives on the read rather than the effect**
 - [[2026-08-01-the-background-agents-seed-decided]] — **all seven parked calls taken under a live grant; two authorise work (#82, #83), four close as no, one is struck, and four are decided against the seed's literal words**

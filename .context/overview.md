@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-08-03
+updated: 2026-08-04
 tags: [context, overview]
 ---
 
@@ -115,7 +115,16 @@ tags: [context, overview]
   `.message-input` must stay ungrouped and no comment may name a scrollbar
   pseudo-element or contain a closing brace; the third (`theme.test.ts`) strips
   comments before parsing, which is why `themes.css` may carry prose the other
-  two could not. See
+  two could not.
+  **Keyboard focus is picked per control, not applied** (#93): the `shared.css`
+  focus group paints `background: var(--tint-3)` as well as its hairline, so it
+  is only for genuinely transparent menu/list rows — anything carrying a fill in
+  any state, and every icon button (where a wash reads as a second hover state),
+  takes the hairline **alone**, `inset 0 0 0 1px var(--tint-6)`. `titlebar.css`
+  authored no `:focus-visible` rule at all until #93 and now owns the six for its
+  own controls. Adding a filled control to the shared group replaces its fill at
+  the moment it is selected, and only `gui-93` can see that. See
+  [[2026-08-04-the-focus-ring-is-picked-per-control-not-applied]],
   [[2026-07-30-the-import-order-is-the-cascade]] and
   [[2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system]].
   `useChat.ts` stores a tool result **complete** on both write paths
@@ -247,11 +256,11 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **the queue is
-  DRY — #90 landed and closed, and the two open issues are #86 and #91, both
-  `ready-for-human`, the second blocked by the first**; run the frontier query
-  anyway, it is the authority and this line has been wrong before. No expected driver failure anywhere in the set,
-  **22** assertion drivers plus the observational `gui-scope-zoom-pill` —
+- `.context/pick-up.md` — current frontier + landmines (currently: **#93 landed
+  and closed; #94 is open, unblocked and `ready-for-agent`**, with #86 and #91
+  still `ready-for-human` and the second blocked by the first; run the frontier
+  query anyway, it is the authority and this line has been wrong before. No expected driver failure anywhere in the set,
+  **23** assertion drivers plus the observational `gui-scope-zoom-pill` —
   `gui-75` is focus-dependent and its batch reds are premise failures, green on
   re-run in the last three batches, see `active-work.md`'s Known issues)
 - `scripts/spike-81-background-tasks.mjs` — the CLI-measurement harness (#81),
@@ -316,13 +325,20 @@ tags: [context, overview]
   listing — measurement only, no `src/` diff; see
   [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]])
   closed, and it did NOT unblock #91, which still waits on #86**;
+  **#93 (`07c0068`, every interactive control wears the app's focus ring instead
+  of Chromium's — six CSS rules, no new token, no JSX change, and the treatment
+  picked per control by what it paints rather than applied uniformly, because the
+  shared focus group would have replaced authored fills; see
+  [[2026-08-04-the-focus-ring-is-picked-per-control-not-applied]]) closed**;
   spec #41 (Resume anything)
   **delivered and closed** with tickets #43–#49; #42 (multiline composer) closed
   standalone; specs #25 (Agents surface), #26 (Attachments) and #36 (slash
   commands) delivered and closed with tickets #27–#40; closed specs #9 / #16 /
-  #20 hold the earlier history. **The queue is DRY as of 2026-08-03** — the open
-  issues are **#86** and **#91**, both `ready-for-human` and neither loop work,
-  with #91 blocked by #86.
+  #20 hold the earlier history. **As of 2026-08-04 the queue holds ONE
+  `ready-for-agent` ticket: #94** (`.command-row-btn` gets `font: inherit`
+  without shifting vertical metrics, `blocked_by: 0` verified). **#86** and
+  **#91** are both `ready-for-human` and neither is loop work, with #91 blocked
+  by #86.
   Run the frontier query rather than trusting this line
 
 ## Conventions
