@@ -26,6 +26,39 @@ tags: [flows]
 - **Not verified:** `mergeAgents` / `buildAgentTree` internals; the disk-read path and `subagent-store.ts`; whether the wide-window paint gap is real.
 - **Updated:** 2026-08-03
 
+### Name collision — this dock is NOT the CLI's "agent view"
+
+Claude Code has its own feature called **agent view**, opened with `←` on an
+empty prompt, `claude agents`, or `/bg`. The names collide and the scopes are
+close to **inverses**, so "the agents view" is ambiguous in any ticket, comment
+or handoff note about this app — say which one.
+
+| | this app's Agents dock | the CLI's agent view |
+|---|---|---|
+| shape | in-flow `<aside>`, chat narrows beside it | takes over the whole terminal |
+| unit | subagents **inside** one open session | whole **background sessions**, each a full conversation |
+| lists subagents? | **yes — that is the point** | **no.** Subagents and teammates a session spawns are explicitly not rows |
+| scope | the one session on screen | all sessions, all projects, unless `--cwd` scopes it |
+| shell jobs | `local_bash` in the Background strip | `!` / `--bg --exec` jobs appear as their own rows |
+
+Two consequences worth carrying:
+
+- **This app has no equivalent of agent view.** Nothing in it lists background
+  *sessions*. Building one is a new top-level surface, so it runs straight into
+  **#86 owner call 1** (where does a non-agent panel live?) — the standing gate
+  on any new panel.
+- **"Agent" now carries a third meaning here.** `background-tasks.ts` already
+  reconciles two CLI vocabularies (the level's `local_agent` discriminant vs
+  `BackgroundTaskSummary`'s friendly `subagent` label); the CLI's session-level
+  "agent" is a third. If a rename in this area is ever proposed, this is the
+  argument for it — and the reason not to reuse the bare word in new code.
+
+Measured against the docs on 2026-08-03 ([interactive-mode](https://code.claude.com/docs/en/interactive-mode),
+[agent-view](https://code.claude.com/docs/en/agent-view)); agent view is
+research preview, v2.1.139+, and this host runs 2.1.220, so it is available
+here. Read from the docs, **not** exercised — nobody has run `claude agents`
+against this machine as part of this note.
+
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[happy-path]]
