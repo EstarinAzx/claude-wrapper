@@ -7,11 +7,51 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (chain 2, relay leg 1, `ticket-loop`) — **#91 landed as `5e6699b`: the app can now list live background Claude Code sessions**_
-_At commit: `5e6699b` on `main` (unpushed; `main` is **8 ahead of origin**, which was already the pre-existing state). Gate green: typecheck clean, **978 tests across 64 files** (baseline was 953/63; +25 in one new file), `gui-91` PASS (exit 0)_
-_Driver check: **partial and deliberate.** `gui-91` (new, PASS) plus a full `npm run build`. The other 24 drivers were **not** re-run: the only shared file this touched is `shared.css`, and the edit there is two selectors **added** to the truncation group — no existing selector's declarations changed. Last full batch was 22 green + the environmental `gui-75` red at `3e24a53`. **If the next leg touches shared CSS or the rail's layout, run the batch.**_
+_Last updated: 2026-08-04 by Opus 5 (chain 2, relay leg 2, `ticket-loop`) — **#95 landed as `e9a3c28`: the subagent scrim is out of the tab order**_
+_At commit: `e9a3c28` on `main` (unpushed; `main` is **9 ahead of origin** — it was 8 before this leg, which was already the pre-existing state). Gate green: typecheck clean, **979 tests across 64 files** (+1), `gui-95` PASS (exit 0), red-verified first_
+_Driver check: **partial and deliberate.** `gui-95` (new, PASS) plus a full `npm run build`. The other 25 drivers were **not** re-run: this touched one component's JSX and added a test file and a driver — **no shared CSS, no rail layout**, which is the condition the previous leg wrote for running the batch. Last full batch was 22 green + the environmental `gui-75` red at `3e24a53`._
 
 ## Current focus
+
+**#95 landed (`e9a3c28`). `.subagent-drawer-backdrop` is out of the tab order,
+and the drawer turned out to be drivable without a live turn.**
+
+Two lines of JSX: `tabIndex={-1}` and `aria-hidden="true"` on the subagent
+drawer's scrim, which is exactly `.model-backdrop`'s shape. The scrim rendered as
+a real `<button>` with no `tabIndex`, so it was a keyboard stop whose only job is
+to swallow an outside click — nothing a keyboard user can want. #93 left it
+alone on purpose (its contract was CSS-only; this is JSX).
+
+**Scope item 2 was a check, not an assumption, and the check came back clear.**
+Nothing depends on the scrim being announced: the drawer carries
+`.subagent-drawer-close` ("Close viewer") as a real reachable affordance plus an
+Escape handler, so a keyboard user already had two ways out. Its now-unreachable
+`aria-label` went with the change — an `aria-hidden` element's label documents an
+affordance no longer offered — and `tabIndex={-1}` is what keeps `aria-hidden`
+off a *focusable* element rather than creating an `aria-hidden-focus` violation.
+
+**The load-bearing finding is about the instrument, not the fix.** The ticket
+predicted — carrying #93's experience forward — that reaching this drawer needs a
+real turn that spawns a subagent, and therefore that any check would be a static
+fallback. **That is false.** `chat:event` is preload-subscribed
+(`preload/index.ts:144`), so main can push the same `Task` tool-use + `subagent`
+presence tick the engine emits and the clickable row grows from them. `gui-95`
+opens the real drawer and presses **real Tab keys**; only the two seed events are
+synthetic. The whole drawer surface is now drivable, and #93's static note on
+`.subagent-drawer-close` can be retired whenever something touches it.
+
+See [[2026-08-04-the-subagent-drawer-is-drivable-without-a-live-turn]].
+
+**Adjacent, found by the walk, NOT fixed and NOT filed:** the drawer has **no
+focus trap** despite `role="dialog" aria-modal="true"` — after the close button,
+Tab continues to the pills, dock toggles, window buttons and composer, all
+*behind* the scrim. Strictly larger than #95, and filing is a scoping call the
+spent grants do not cover. Surfaced for the owner.
+
+**Queue after this: TWO, both unblocked** — #96, #97. `ready-for-human` is still
+empty.
+
+## Previously (2026-08-04) — #91, the largest of the batch
 
 **#91 landed (`5e6699b`). The app can now list live background Claude Code
 sessions — the surface that had been blocked since 2026-08-02.**
@@ -504,8 +544,9 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `5e6699b` + the `.context` commits, **unpushed** — `main` is **8 ahead of origin**, which was already true before this leg. No open branches — `ticket/91-background-sessions-rail` was squash-merged and deleted.
-- **Queue (`ready-for-agent`): THREE, all unblocked** — **#95** (`.subagent-drawer-backdrop` tab stop, tiny), **#96** (two off-scale values conform to `DESIGN.md`, small), **#97** (measure the mint budget, **no `src/` change**, medium). `blocked_by: 0` verified on all three after #91 closed. **The `ready-for-human` queue is still EMPTY.**
+- **In flight:** nothing. `main` = `e9a3c28` + the `.context` commits, **unpushed** — `main` is **9 ahead of origin** (8 before this leg, which was already the pre-existing state). No open branches — `ticket/95-subagent-backdrop-tabstop` was squash-merged and deleted.
+- **Queue (`ready-for-agent`): TWO, both unblocked** — **#96** (two off-scale values conform to `DESIGN.md`, small), **#97** (measure the mint budget, **no `src/` change**, medium). `blocked_by: 0` verified on both after #95 closed. **The `ready-for-human` queue is still EMPTY.**
+- **#95 is CLOSED and landed** (`e9a3c28`) — `tabIndex={-1}` + `aria-hidden="true"` on `.subagent-drawer-backdrop`, one vitest guard, and `gui-95.mjs`. See [[2026-08-04-the-subagent-drawer-is-drivable-without-a-live-turn]]. **The reusable part is the driver, not the fix:** the subagent drawer is reachable in a real window with no live turn, via a `chat:event` push from main.
 - **#91 is CLOSED and landed** (`5e6699b`) — the background-sessions section, plus `src/main/agent-view.ts`, `src/shared/background-session-types.ts`, the `background-sessions:list` channel, `tests/background-sessions.test.tsx` (25 tests) and `gui-91.mjs`. See [[2026-08-04-the-agent-view-costs-a-process-so-the-user-pays-for-it]]. It was the largest of the four and it fit one sitting.
 - **All nine parked owner calls are taken** ([[2026-08-04-the-parked-owner-calls-are-taken]]) under the grant's renewal — *"address all the ready for human tickets and continue the relay"*. **#92 and #86 are closed**; #91 was scoped, retitled and relabelled. **No `src/` change from any of the nine.** Seven produced no code; three died to a measurement rather than a judgement.
 - **The tailwind ADR is now AMENDED, not just flagged.** `2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md` carried "adding `font: inherit` would repaint `.command-row-desc`" — one child. #94 measured three, and a 60px row becoming 76px. The amendment is inline in that entry and the lesson is recorded: **the error was not enumerating the shorthand.**
@@ -515,13 +556,12 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## Pick up here
 
-**The queue is THREE unblocked `ready-for-agent` tickets** — #95, #96, #97,
-oldest-first in that order. `ticket-loop` takes **#95**, which is also the
-smallest of the three (a two-line `tabIndex={-1}`). Run the frontier query anyway
-before believing this line; it goes stale the moment anything is filed or closed,
-and that is this project's standing lesson (a leg once wrote that closing #70
-would empty the queue and was wrong, because #71 had been unblocked the whole
-time).
+**The queue is TWO unblocked `ready-for-agent` tickets** — #96, then #97.
+`ticket-loop` takes **#96** (two off-scale values conform to `DESIGN.md`). Run
+the frontier query anyway before believing this line; it goes stale the moment
+anything is filed or closed, and that is this project's standing lesson (a leg
+once wrote that closing #70 would empty the queue and was wrong, because #71 had
+been unblocked the whole time).
 
 ```
 gh issue list --state open --label ready-for-agent
@@ -554,10 +594,15 @@ both flagged reversible on their tickets: **which surface #91's section joins**
 **Do not take any of these without a grant. A new *reason* reopens a call; a
 re-read does not.**
 
-**The nearest-to-ready candidate is #91, and it is NOT loop work.** #90 cleared
-one of its two blockers, so it now waits on a single owner call (#86 call 1). Its
-price tag is measured and written on the ticket. A leg that reads "only one
-blocker left" and takes it is doing the exact thing #90's Out of scope forbade.
+**#91 is landed and closed** (`5e6699b`) — the line that used to sit here calling
+it the nearest-to-ready candidate is spent. #86 call 1 was taken under the
+renewed grant, which is what unblocked it.
+
+**The nearest unfiled candidate is the subagent drawer's missing focus trap**,
+found by #95's Tab walk: the drawer declares `role="dialog" aria-modal="true"`
+and traps nothing, so Tab leaves it into the controls behind the scrim. It is
+**not filed** — filing is a scoping call and both 2026-08-04 grants are spent.
+A leg that wants it needs a grant, not a re-read.
 
 **Do not re-open the seven from `.claude/vibe.md`.** They were all taken on
 2026-08-01 and that file's `## Needs you` is history, not a queue. A new *reason*
@@ -616,6 +661,15 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #95 — binding on any GUI driver, and on the subagent drawer:**
+
+- **A GUI driver can reach the subagent drawer with NO live turn.** Push `chat:event` from main (`win.webContents.send`) with a `Task` tool-use then a `subagent` presence tick, and `useChat` grows the clickable `.subagent-row`. **#93's "this needs a real turn" note is retired** — it was a reasonable inference from a CSS-only contract, not a measurement. The same trick already existed in `gui-agents-dock.mjs` (`tasks:changed`) and in `tests/subagent-viewer.test.tsx`. Say what is synthetic: the two seed events, and nothing else.
+- **Match CSS classes by whitespace-split TOKEN, never substring.** `gui-95`'s first run silently never broke its cycle because `.subagent-row` is a substring of `subagent-row--running`, so the walk burned its whole 120-stop budget. Every `className.includes('foo')` in a driver is this bug waiting.
+- **`$?` after a pipe is the LAST command's exit code, not the driver's.** `node gui-x.mjs | tail -30; echo $?` reports `tail`'s `0` and reads exactly like a pass. This project's rule is *judge drivers by exit code* — redirect to a file and echo `$?`, or read `PIPESTATUS`.
+- **The subagent drawer has NO focus trap** despite `role="dialog" aria-modal="true"`. Tab walks straight out of it into the pills, dock toggles, window buttons and composer — all behind the scrim. Known, unfixed, unfiled. Any ticket that touches drawer focus inherits this and should not assume the modal contains anything.
+- **Two scrims exist and they must agree**: `.subagent-drawer-backdrop` and `.model-backdrop`. Both are decorative — `aria-hidden="true"` + `tabIndex={-1}`, no label. A third scrim copies that pair, and `tabIndex={-1}` is not optional beside `aria-hidden` (it is what keeps the element off the focusable-and-hidden violation).
+- **`tests/` is LF while `src/` is CRLF.** Both are real and git normalises on add; the warnings on commit are expected. Do not "fix" either.
 
 **From #91 — binding on anything that lists background sessions, spawns a CLI, or touches the rail:**
 
