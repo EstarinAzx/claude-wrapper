@@ -146,13 +146,25 @@
   cursor: pointer;
 }
 
-/* `.command-row-btn` is NOT in this group: it has never carried `font: inherit`,
-   and adding it would repaint `.command-row-desc` — the one child that sets a
-   size but no family — from the UA button font to --font. That is a visual
-   change, not a refactor, so it stays out and stays flagged. */
 .session-row-btn,
-.agent-row-btn {
+.agent-row-btn,
+.command-row-btn {
   font: inherit;
+}
+
+/* `.command-row-btn` joins the group above, but `font` is a SHORTHAND: it resets
+   line-height as well as family. The button wore the UA `normal`; body sets 1.6;
+   nothing under .command-row declares a line-height of its own. So the naive
+   join moves ALL THREE children — measured at +5.6px / +4.8px / +5.6px, a 60px
+   row becoming 76px — including the two that set their own font-family and look
+   safe. Restoring `normal` here neutralises that for the whole subtree in one
+   declaration, and keeps it FONT-RELATIVE: a px pin measured on this machine's
+   Cascadia Code would itself become a shift on a machine that falls back to
+   Consolas. The children are deliberately left alone — `.command-row-name` and
+   `.command-row-hint` are shared with the composer's slash popover, which this
+   ticket must not touch. #94. */
+.command-row-btn {
+  line-height: normal;
 }
 
 /* ── background tasks (#83) ──
@@ -623,7 +635,21 @@
   color: var(--text-faint);
 }
 
+/* The one child that changes: it sets a size but no family, so #94's `font:
+   inherit` repaints it from the UA button font to --font. That is the intended
+   change; the line box moving with it is not. `normal` is resolved from the
+   FAMILY's metrics, so the repaint alone grew this box from 12px to 14.4px
+   (Arial 1.09 → Segoe UI Variable Text 1.31) and the row with it. The ratio
+   holds the row where it was, and unlike a px it still tracks --fs-micro — every
+   other line-height in this app is unitless for the same reason. 1.1 lands
+   0.1px off the 12px it rendered before, an eighth of a device pixel here.
+
+   Whether 12px is the RIGHT box for 11px muted text is a separate, taste
+   question — Segoe's own 14.4px is closer to the app's other micro text. This
+   ticket's contract is a family repaint that moves nothing, so it holds the old
+   geometry and leaves that call open. */
 .command-row-desc {
   font-size: var(--fs-micro);
+  line-height: 1.1;
   color: var(--text-muted);
 }
