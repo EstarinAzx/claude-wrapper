@@ -82,6 +82,17 @@ tags: [context, overview]
   `picked` (which becomes `options.model`) is kept apart from `reported` (what
   the CLI says it is running, display only).
 - `src/preload/` — contextBridge `window.api` (+ `index.d.ts` global type, included by `tsconfig.web.json`)
+- **The sessions rail carries TWO lists from two sources** (#91). Above the
+  hairline, `.bg-sessions`: **live background sessions**, polled from the CLI on
+  demand only — its refresh button and a workspace change, never the window
+  `focus` listener the stored list uses, and never a timer. Below it: the filter,
+  the scope chips and the **stored transcripts**, which are files on disk. The
+  rail was already the dangerous lookalike (it has a scope control, so it *looks*
+  like it lists running work); showing both, labelled, makes the difference
+  visible rather than implied. The background rows are **read-only** — no attach,
+  no peek, no reply — so the section adds exactly one tab stop to a rail that
+  already carries ~100, and **no titlebar control**: it is a section, which needs
+  no toggle, which is what let it ship without a router.
 - `src/renderer/` — React UI (`src/components/` Titlebar / Chat / InputBar).
   `styles.css` is a **26-line entry file**: Tailwind layer setup plus thirteen
   `@import`s. The rules live in `src/renderer/src/styles/` — `tokens` · `themes`
@@ -243,6 +254,27 @@ tags: [context, overview]
 - `src/main/cli-path.ts` — WHICH Claude Code binary runs. The host `claude` on
   PATH when there is one, else the SDK's bundled copy. A PATH walk, never a
   `which` shell-out.
+- `src/main/agent-view.ts` (#91) — the CLI's **agent view**, read on demand:
+  `claude agents --json --cwd <workspace>` behind `background-sessions:list`.
+  This lists whole **live background sessions**, and is the third thing in this
+  repo called "agent" — not the Agents dock (subagents inside the open session)
+  and not `background-tasks.ts` (jobs inside the open session). It is the app's
+  **only `child_process` spawn**, deliberately re-added: `cli-path.ts`'s rule
+  against one is conditioned on *"a question `fs.existsSync` can answer"*, and
+  #90 established this is not one — no SDK route exists, and the two on-disk
+  stores cover 2 of 6 and 1 of 6 active rows because the CLI performs a join.
+  `~/.claude/daemon/roster.json` carries attach credentials and is **never
+  read**. The binary comes from `cli-path.ts` and the env from
+  `backend-mode.ts`'s `getSpawnEnv`, so this listing cannot drift from the CLI
+  it lists and a native-mode app does not shell out through the proxy. `null` is
+  a FAILED look and `[]` an empty workspace, the same nullable contract
+  `session-store.ts` speaks. `parseAgentView` keeps only `kind === 'background'`
+  — which is simultaneously the background-only rule and how the app's own
+  session, which registers as `kind: "interactive"` and which `cwd` cannot
+  exclude, is dropped. Rows are keyed on `sessionId` (`id` is absent on
+  interactive rows), `state` is carried as the RAW string because the set is
+  open, and `pid`/`status` are not carried at all because no single field
+  describes liveness. **Nothing polls it**, at ~893ms of CLI process per look.
 - `tests/` — vitest + testing-library shell tests (jsdom, `vitest.config.ts`)
 - `DESIGN.md` / `PRODUCT.md` — Frost Mono design system + product context (impeccable reads these)
 - `docs/design/frost-mono-reference.png` — canonical visual reference

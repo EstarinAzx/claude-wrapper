@@ -7,40 +7,52 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (relay leg 2, `ticket-loop`, then a grant-renewal pass) — **#94 landed as `e1a2c31`; then all nine parked owner calls were taken, #92 and #86 closed, and the queue refilled to FOUR unblocked tickets**_
-_At commit: `e1a2c31` on `main` (unpushed, with `485a814`, `07c0068`, `09ca8fe` and `c7cee33` ahead of origin). Gate green: typecheck clean, **953 tests across 63 files** (baseline unchanged), `gui-94` PASS_
-_Driver check: **partial and deliberate.** A two-declaration CSS change, so only the drivers owning the surfaces it touches were re-run — `gui-94` (new, PASS), `gui-51` (the only other driver naming `.command-list` / the Commands panel, and the device-pixel comparator, PASS) and `gui-93` (owns `.command-option`, the second surface, PASS). The full 24-driver batch was **not** run: nothing outside the Commands dock changed, and the batch's only known flake (`gui-75`) is environmental. Last full run was 22 green + the environmental `gui-75` red at `3e24a53`._
+_Last updated: 2026-08-04 by Opus 5 (chain 2, relay leg 1, `ticket-loop`) — **#91 landed as `5e6699b`: the app can now list live background Claude Code sessions**_
+_At commit: `5e6699b` on `main` (unpushed; `main` is **8 ahead of origin**, which was already the pre-existing state). Gate green: typecheck clean, **978 tests across 64 files** (baseline was 953/63; +25 in one new file), `gui-91` PASS (exit 0)_
+_Driver check: **partial and deliberate.** `gui-91` (new, PASS) plus a full `npm run build`. The other 24 drivers were **not** re-run: the only shared file this touched is `shared.css`, and the edit there is two selectors **added** to the truncation group — no existing selector's declarations changed. Last full batch was 22 green + the environmental `gui-75` red at `3e24a53`. **If the next leg touches shared CSS or the rail's layout, run the batch.**_
 
 ## Current focus
 
-**All nine parked owner calls are taken; the queue is four unblocked tickets and
-the `ready-for-human` list is empty.**
+**#91 landed (`5e6699b`). The app can now list live background Claude Code
+sessions — the surface that had been blocked since 2026-08-02.**
 
-Owner renewed the grant with *"address all the ready for human tickets and
-continue the relay"*. #92 and #86 are **closed**, #91 scoped and relabelled, and
-**#95 / #96 / #97** filed. **No `src/` change came out of any of the nine** — seven
-produced no code at all.
+A **read-only, manually-refreshed, workspace-scoped** list of the CLI's *agent
+view* rows, as its own labelled **section in the sessions rail**, above the
+stored transcripts. This is #86.1's shape — an existing surface, its own section,
+**no titlebar toggle** — and the titlebar control count is still **8**, now pinned
+in both the suite and `gui-91`.
 
-**The load-bearing one: a non-agent panel is a SECTION in an existing surface,
-never a new dock** (#86.1). Warranted from `active-work.md:469` — *"non-agent work
-yes but as its own section"* — plus #83's shipped instance. This dissolves the
-deadlock #86 documented (no new titlebar control **and** every dock opens from a
-toggle **and** no router → a new dock is unreachable), because **a section needs
-no toggle.** It had gated #91 and any MCP UI since 2026-08-02.
+**Say which "agent" you mean, every time.** This is the CLI's agent view (whole
+background *sessions*). It is not this app's Agents dock (subagents inside the one
+open session) and not `background-tasks.ts` (jobs inside the one open session).
+Three meanings; [[flows]] carries the table and has been **corrected** — its line
+saying this app has no equivalent of agent view is now false and says so.
 
-**Three calls died to a measurement, not a judgement**, and every one of those
-built less: #86.2's thinking strip is *empty* rather than blocked (#87 measured
-`thinking: ""` in every config — no content, so no DOM-exclusion contract to owe);
-#86.3/4's rail filter is both unbuildable and unnecessary (#89 measured
-`entrypoint` cannot separate this app's sessions from its own GUI drivers, and
-`Sidebar.tsx:32-33` already defaults to project scope, so the quoted 112-row noise
-is the **opt-in** view); #86.5's re-scope target is not a defect (all four
-"swallowed parses" are documented recovery paths, three with authored comments).
+**Two things here are architectural, not cosmetic:**
 
-**No Partner/Pressure pair was available** — subagents were off — so warrants were
-grep-verified inline instead. That changed three answers.
+1. **`src/main/agent-view.ts` re-adds a `child_process` spawn.** `cli-path.ts`'s
+   standing rule is not broken but **not met**: it is conditioned on *"a question
+   `fs.existsSync` can answer"*, and #90 established this is not one — no SDK
+   route exists, and the on-disk stores cover 2 of 6 and 1 of 6 active rows
+   because the CLI performs a **join**. Rebuilding that join would also mean
+   reading `daemon/roster.json`, which carries attach credentials. **It is never
+   read.**
+2. **Pull-only is a measurement, not a preference.** 893ms per look, one whole CLI
+   process, no warm path, no push channel. A 5s poll is ~19% of a core *and* the
+   staleness window equals the poll interval — a self-refreshing list would claim
+   to be live while being routinely wrong. The refresh button and a **workspace
+   change** are the only two things that repopulate it; the window-`focus`
+   listener the stored list uses is deliberately **not** wired to it.
 
-See [[2026-08-04-the-parked-owner-calls-are-taken]].
+**The real spawn was exercised and works.** `gui-91` opens a *temp* workspace and
+the genuine `claude agents --json --cwd <temp>` returned an honest empty list —
+which is also the only end-to-end confirmation that `--cwd` scopes at all.
+
+See [[2026-08-04-the-agent-view-costs-a-process-so-the-user-pays-for-it]].
+
+**Queue after this: THREE, all unblocked** — #95, #96, #97. `ready-for-human` is
+still empty. Previous focus (the nine parked owner calls) is in
+[[2026-08-04-the-parked-owner-calls-are-taken]] and the sections below.
 
 ## Previously (2026-08-04) — #94, the last ticket of the previous grant
 
@@ -492,22 +504,24 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `e1a2c31` + the `.context` commits, **unpushed** (so are `485a814`, `07c0068`, `09ca8fe` and `c7cee33`). No open branches — `ticket/94-command-row-font-inherit` was squash-merged and deleted.
-- **Queue (`ready-for-agent`): FOUR, all unblocked** — **#95** (`.subagent-drawer-backdrop` tab stop), **#96** (two off-scale values conform to `DESIGN.md`), **#97** (measure the mint budget, no `src/` change), **#91** (background-sessions section, read-only). `blocked_by: 0` verified on all four. **The `ready-for-human` queue is EMPTY for the first time since 2026-08-02.**
+- **In flight:** nothing. `main` = `5e6699b` + the `.context` commits, **unpushed** — `main` is **8 ahead of origin**, which was already true before this leg. No open branches — `ticket/91-background-sessions-rail` was squash-merged and deleted.
+- **Queue (`ready-for-agent`): THREE, all unblocked** — **#95** (`.subagent-drawer-backdrop` tab stop, tiny), **#96** (two off-scale values conform to `DESIGN.md`, small), **#97** (measure the mint budget, **no `src/` change**, medium). `blocked_by: 0` verified on all three after #91 closed. **The `ready-for-human` queue is still EMPTY.**
+- **#91 is CLOSED and landed** (`5e6699b`) — the background-sessions section, plus `src/main/agent-view.ts`, `src/shared/background-session-types.ts`, the `background-sessions:list` channel, `tests/background-sessions.test.tsx` (25 tests) and `gui-91.mjs`. See [[2026-08-04-the-agent-view-costs-a-process-so-the-user-pays-for-it]]. It was the largest of the four and it fit one sitting.
 - **All nine parked owner calls are taken** ([[2026-08-04-the-parked-owner-calls-are-taken]]) under the grant's renewal — *"address all the ready for human tickets and continue the relay"*. **#92 and #86 are closed**; #91 was scoped, retitled and relabelled. **No `src/` change from any of the nine.** Seven produced no code; three died to a measurement rather than a judgement.
 - **The tailwind ADR is now AMENDED, not just flagged.** `2026-07-30-tailwind-here-is-a-token-system-not-a-utility-system.md` carried "adding `font: inherit` would repaint `.command-row-desc`" — one child. #94 measured three, and a 60px row becoming 76px. The amendment is inline in that entry and the lesson is recorded: **the error was not enumerating the shorthand.**
 - **Landed:** **#83** (`ea780a0`) — the background-tasks section, a third injected port, 23 tests, five mutants killed and an ADR. Before it, **#82** (`3f34737`) — the dock's turn-end re-read, `keepStale`, seven tests and an ADR; **#81** (`002e524`), the harness and its ADR with **no `src/` diff, deliberately**, then the seven parked calls taken with their ADR — **also no `src/` diff**: taking a call decides it, it does not build it.
 - **Parked for the owner: TWO, and they are the older halves — the seven are DONE.** The 2026-08-01 `/preset vibe init` run parked seven calls with no grant; the owner made one live after #81 landed and **all seven were taken** ([[2026-08-01-the-background-agents-seed-decided]]): two authorise work (#82, #83), four closed as **no** (the seed's meaning is the SDK concept; no labelled map; no new top-level surface; non-agent work **yes** but as its own section), one **struck** (map pan-zoom). `.claude/vibe.md`'s `## Needs you` is **history now, not a queue** — its `## Taken` section carries the resolutions. **What still stands are the two older halves:** Tailwind is not dropped but the adopt-utilities question does, and the titlebar's control count does not change while the aesthetic question stays the owner's. **#83 was deliberately routed into the existing Agents dock so it does not pre-empt that second one.**
-- **Blocked:** **#91**, on #86. Its other blocker (#90) closed this leg, so it is one owner call away from being buildable — and that call (owner call 1, where a non-agent panel lives) is unanswered. **Do not take it; it is `ready-for-human` by construction, not by oversight.**
+- **Blocked:** nothing. The whole `ready-for-agent` queue is unblocked.
 
 ## Pick up here
 
-**The queue is FOUR unblocked `ready-for-agent` tickets** — #95, #96, #97, #91,
-oldest-first in that order by number but **#95 is the smallest and #91 the
-largest**. Run the frontier query anyway before believing this line; it goes stale
-the moment anything is filed or closed, and that is this project's standing lesson
-(a leg once wrote that closing #70 would empty the queue and was wrong, because
-#71 had been unblocked the whole time).
+**The queue is THREE unblocked `ready-for-agent` tickets** — #95, #96, #97,
+oldest-first in that order. `ticket-loop` takes **#95**, which is also the
+smallest of the three (a two-line `tabIndex={-1}`). Run the frontier query anyway
+before believing this line; it goes stale the moment anything is filed or closed,
+and that is this project's standing lesson (a leg once wrote that closing #70
+would empty the queue and was wrong, because #71 had been unblocked the whole
+time).
 
 ```
 gh issue list --state open --label ready-for-agent
@@ -602,6 +616,22 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+**From #91 — binding on anything that lists background sessions, spawns a CLI, or touches the rail:**
+
+- **NEVER read `~/.claude/daemon/roster.json`.** It carries `rvAuth` / `ptyAuth`, socket paths and `dispatch.env` — **attach credentials**. Never log, never commit, never surface. Its coverage is 1 of 6 active rows anyway, so it cannot substitute for the CLI call even if you were willing.
+- **The app now spawns a `child_process`, and `cli-path.ts`'s comment still stands.** The rule is conditioned on *"a question `fs.existsSync` can answer"*. A future spawn must clear the same bar — show there is no SDK route and no file that answers it — and get an ADR. Do not read the existing spawn as a licence.
+- **"The agents view" is ambiguous, and the ambiguity is now ON SCREEN.** Live background *sessions* sit directly above stored *transcripts* in the same rail, and the Agents dock lists *subagents inside one session*. Three meanings, two of them now visible in one component. Say which one in every comment, ticket and commit.
+- **Nothing may put this on a timer.** Not main, not the renderer, not a hook. `useEffect` on `[cwd]` and the refresh button are the whole set. Adding it to the rail's window-`focus` listener — which is right there, three lines away, and correct for the cheap disk read beside it — is the obvious mistake: that listener fires on every refocus, at ~893ms of CLI process each.
+- **`sessionId` is the only universal key.** `id` is absent on interactive rows and, where present, is only an 8-char *prefix* of `sessionId`. Never key, match or store on `id`.
+- **`state` and `status` are OPEN vocabularies.** Four `state` values were measured where three were predicted. No allow-list, no per-value colour, no icon, no `switch` with a default that renders nothing. Render the raw string.
+- **Do not invent a unified "is it alive" boolean.** `state` is background-only; `pid` / `status` belong to a live process; the row shape is two shapes. Neither `pid` nor `status` is carried into the app at all, on purpose.
+- **The app is in its own listing**, as `kind: "interactive"`, and **`cwd` cannot exclude it** — it lists the workspace its own session lives in. `kind === 'background'` is what drops it. Anything that widens the filter to mirror the CLI's agent view (which shows both kinds) shows the user their own conversation.
+- **An absence assertion needs surviving rows beside it.** #91's self-exclusion test feeds two background rows *plus* the interactive one, so it cannot pass on an empty list, and the filter was mutation-verified. **Fifth instance** after #76, #82, #93, #94 — this is now a project reflex, not an accident.
+- **Whether `--cwd` matches by prefix or exactly is still UNMEASURED** (#90 could not force it; no session was running below the test directory). The app delegates scoping to the CLI rather than deciding it. Do not write code, tests or docs that assume either answer.
+- **jsdom loads no CSS, so no vitest test can see the accent budget.** `DESIGN.md` spends mint on five named things; a new list is exactly the kind of surface that quietly takes a sixth. `gui-91` resolves `--mint` live and scans every painted colour in the section. Any new surface should do the same.
+- **`gui-91`'s row assertions push a scripted listing through a replaced `ipcMain` handler** (the technique `gui-agents-dock` uses for `tasks:changed`). They measure the **renderer's draw**, not the CLI. The `kind` filter is main's and is covered in vitest only.
+- **A temp workspace is the scoping check.** `gui-91` asserts zero rows there. If that ever returns rows, `--cwd` has stopped scoping — which is a CLI change, not a cosmetic failure.
 
 **From #94 — binding on the command rows, the `font` shorthand and `gui-94`:**
 

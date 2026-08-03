@@ -1,7 +1,7 @@
 ---
 type: flows
 project: claude-wrapper
-updated: 2026-08-03
+updated: 2026-08-04
 tags: [flows]
 ---
 
@@ -43,10 +43,19 @@ or handoff note about this app — say which one.
 
 Two consequences worth carrying:
 
-- **This app has no equivalent of agent view.** Nothing in it lists background
-  *sessions*. Building one is a new top-level surface, so it runs straight into
-  **#86 owner call 1** (where does a non-agent panel live?) — the standing gate
-  on any new panel.
+- ~~**This app has no equivalent of agent view.**~~ **No longer true as of #91
+  (`5e6699b`, 2026-08-04).** The app now lists live background *sessions* — as a
+  **section in the sessions rail**, above the stored transcripts: read-only,
+  workspace-scoped, refreshed only by its own button or a workspace change. It
+  did not need a new top-level surface after all, because #86 owner call 1 was
+  answered "a section in an existing surface", and a section needs no titlebar
+  toggle. See
+  [[2026-08-04-the-agent-view-costs-a-process-so-the-user-pays-for-it]].
+  **The collision it creates is now on screen**, which makes the table above
+  load-bearing rather than merely informative: live background sessions sit
+  directly above stored transcripts in one rail, while the Agents dock lists
+  subagents inside the open session. Three meanings of "agent", two of them
+  visible in the same component.
 - **"Agent" now carries a third meaning here.** `background-tasks.ts` already
   reconciles two CLI vocabularies (the level's `local_agent` discriminant vs
   `BackgroundTaskSummary`'s friendly `subagent` label); the CLI's session-level
@@ -56,12 +65,16 @@ Two consequences worth carrying:
 Measured against the docs on 2026-08-03 ([interactive-mode](https://code.claude.com/docs/en/interactive-mode),
 [agent-view](https://code.claude.com/docs/en/agent-view)); agent view is
 research preview, v2.1.139+, and this host runs 2.1.220, so it is available
-here. Read from the docs, **not** exercised — nobody has run `claude agents`
-against this machine as part of this note.
+here. ~~Read from the docs, **not** exercised.~~ **Exercised since:** #90 ran
+`claude agents --json` against this machine (6 active rows, 18 with `--all`,
+median 893ms per call) and #91 now runs it from main on every look, so the table
+above is measured behaviour rather than documentation.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[happy-path]]
+- [[2026-08-04-the-agent-view-costs-a-process-so-the-user-pays-for-it]] — **#91, the section that closed the "no equivalent" gap**
+- [[2026-08-03-background-sessions-are-reachable-at-one-process-per-look]] — #90, the numbers behind it
 - [[2026-08-01-a-level-is-replaced-not-accumulated]] — #83, the background-tasks level
 - [[2026-08-01-nesting-happens-in-the-render-not-the-model]] — #85, the nest-or-fallback split
 - [[2026-08-01-the-spawner-is-one-hop-off-task-started]] — #84, where the parentage comes from
