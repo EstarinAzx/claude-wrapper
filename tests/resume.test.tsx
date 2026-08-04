@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within, act } from '@testing-library/react'
 import App from '../src/renderer/src/App'
 import { fakeChatApi, FOLDER } from './chat-harness'
 import type { SessionMeta } from '../src/shared/session-types'
@@ -134,6 +134,100 @@ describe('resume — continue a reopened session (#13)', () => {
 
     const row = await screen.findByText('Fresh chat')
     expect((row.closest('button') as HTMLButtonElement).getAttribute('aria-current')).toBe('true')
+  })
+})
+
+describe('stale session continuations (#100)', () => {
+  test('a slower session open cannot overwrite a later one', async () => {
+    harness.api.listSessions.mockResolvedValue([
+      meta('sess-a', 'Slow chat'),
+      meta('sess-b', 'Fast chat')
+    ])
+    let resolveSlow!: (messages: Array<{ role: 'user'; text: string }>) => void
+    let resolveFast!: (messages: Array<{ role: 'user'; text: string }>) => void
+    harness.api.loadTranscript.mockImplementation(
+      (id: string) =>
+        new Promise((resolve) => {
+          if (id === 'sess-a') resolveSlow = resolve
+          else resolveFast = resolve
+        })
+    )
+    await startSession()
+
+    fireEvent.click(await screen.findByText('Slow chat'))
+    fireEvent.click(screen.getByText('Fast chat'))
+    await act(async () => {
+      resolveFast([{ role: 'user', text: 'fast transcript' }])
+    })
+    expect(screen.getByText('fast transcript')).toBeTruthy()
+    await act(async () => {
+      resolveSlow([{ role: 'user', text: 'slow transcript' }])
+    })
+
+    expect(screen.queryByText('slow transcript')).toBeNull()
+    expect(rowButton('Fast chat').getAttribute('aria-current')).toBe('true')
+    expect(harness.api.watchSession).toHaveBeenLastCalledWith('sess-b')
+    expect(harness.api.targetSession).toHaveBeenLastCalledWith('sess-b')
+  })
+
+  test('New chat invalidates an open whose transcript is still loading', async () => {
+    harness.api.listSessions.mockResolvedValue([meta('sess-a', 'Slow chat')])
+    let resolveSlow!: (messages: Array<{ role: 'user'; text: string }>) => void
+    harness.api.loadTranscript.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSlow = resolve
+      })
+    )
+    await startSession()
+
+    fireEvent.click(await screen.findByText('Slow chat'))
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }))
+    await act(async () => {
+      resolveSlow([{ role: 'user', text: 'stale transcript' }])
+    })
+
+    expect(screen.queryByText('stale transcript')).toBeNull()
+    expect(rowButton('Slow chat').getAttribute('aria-current')).toBeNull()
+    expect(harness.api.watchSession).toHaveBeenLastCalledWith(null)
+    expect(harness.api.targetSession).toHaveBeenLastCalledWith(null)
+  })
+
+  test('New chat invalidates a turn-end session id still loading', async () => {
+    harness.api.listSessions.mockResolvedValue([meta('old-id', 'Old chat')])
+    let resolveId!: (id: string | null) => void
+    harness.api.currentSessionId.mockReturnValue(
+      new Promise((resolve) => {
+        resolveId = resolve
+      })
+    )
+    await startSession()
+
+    harness.emit({ type: 'turn-end' })
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }))
+    await act(async () => {
+      resolveId('old-id')
+    })
+
+    expect(rowButton('Old chat').getAttribute('aria-current')).toBeNull()
+  })
+
+  test('New chat invalidates a terminal session id still loading', async () => {
+    harness.api.listSessions.mockResolvedValue([meta('old-id', 'Old chat')])
+    let resolveId!: (id: string | null) => void
+    harness.api.currentSessionId.mockReturnValue(
+      new Promise((resolve) => {
+        resolveId = resolve
+      })
+    )
+    await startSession()
+
+    harness.emitTerminal()
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }))
+    await act(async () => {
+      resolveId('old-id')
+    })
+
+    expect(rowButton('Old chat').getAttribute('aria-current')).toBeNull()
   })
 })
 

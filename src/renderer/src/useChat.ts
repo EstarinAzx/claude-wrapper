@@ -123,6 +123,7 @@ export const useChat = () => {
   // before quiet is never missed.
   const reloadingRef = useRef(false)
   const pendingReloadRef = useRef(false)
+  const paneGenerationRef = useRef(0)
 
   useEffect(() => {
     busyRef.current = busy
@@ -237,8 +238,9 @@ export const useChat = () => {
         assistantIdRef.current = null
         setBusy(false)
         setLastTurn(endedTurn('turn-end'))
+        const generation = paneGenerationRef.current
         void window.api.currentSessionId().then((id) => {
-          if (id) setActiveSessionId(id)
+          if (id && generation === paneGenerationRef.current) setActiveSessionId(id)
         })
       } else if (e.type === 'error') {
         assistantIdRef.current = null
@@ -280,8 +282,9 @@ export const useChat = () => {
   useEffect(() => {
     return window.api.onEngineTerminal(() => {
       setEngineDead(true)
+      const generation = paneGenerationRef.current
       void window.api.currentSessionId().then((id) => {
-        if (id) setActiveSessionId(id)
+        if (id && generation === paneGenerationRef.current) setActiveSessionId(id)
       })
     })
   }, [])
@@ -417,8 +420,10 @@ export const useChat = () => {
   //
   // Adoption is also what makes a session tail-eligible (#57): we are looking
   // at it, not driving it, which is exactly the case live-tail is for.
-  const adoptSession = useCallback(async (id: string | null) => {
+  const adoptSession = useCallback(async (id: string | null): Promise<boolean> => {
+    const generation = ++paneGenerationRef.current
     const transcript = id === null ? [] : await window.api.loadTranscript(id)
+    if (generation !== paneGenerationRef.current) return false
     assistantIdRef.current = null
     setBusy(false)
     busyRef.current = false
@@ -444,6 +449,7 @@ export const useChat = () => {
     // adoption read through `reload` with an authoritative first pass if a
     // missed write is ever actually observed.
     window.api.watchSession(id)
+    return true
   }, [])
 
   // Try the failed read again. The whole adoption is re-run rather than just the
@@ -464,8 +470,7 @@ export const useChat = () => {
       // click was unreachable. Re-adopting it would stomp the live pane with a
       // disk read of a transcript that is still being written.
       if (id === activeSessionId) return
-      await adoptSession(id)
-      window.api.targetSession(id)
+      if (await adoptSession(id)) window.api.targetSession(id)
     },
     [busy, activeSessionId, adoptSession]
   )
@@ -473,6 +478,7 @@ export const useChat = () => {
   // Start a fresh conversation: clear the pane and drop any resume target.
   const newChat = useCallback(() => {
     if (busy) return
+    ++paneGenerationRef.current
     stopTail()
     assistantIdRef.current = null
     setBusy(false)
