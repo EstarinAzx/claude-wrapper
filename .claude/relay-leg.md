@@ -27,23 +27,32 @@ The sleep grant removes **ownership** as a ground for deferring. It does **not**
 remove the need for a warrant, it licenses nothing irreversible, and it does not
 reopen the standing calls in `.context/pick-up.md` or the six owner calls on #115.
 
-## Current queue — TWO OPEN as of 2026-08-05
+## Current queue — ONE READY as of 2026-08-05 (leg 1 closed #116)
 
 Take the lowest-numbered open, unblocked `ready-for-agent` ticket.
 
 Filed by a `/preset vibe init` run on 2026-08-05. Its full record — every
 question, the grepped warrant, the cross-model verdict, and the four refutations
 that changed the work (two of which killed the main thread's *own* findings) — is
-`.claude/vibe.md`. **Read it, and parent spec #115, before starting either ticket.**
+`.claude/vibe.md`. **Read it, and parent spec #115, before starting the ticket.**
 
-| # | subject | blocked by |
+| # | subject | state |
 |---|---|---|
-| **116** | **spike** — is `@` file autocomplete reachable from this app at all? | — |
-| **117** | **spike** — every win32 route to a backdrop that does not flatten on blur, priced | — |
+| ~~116~~ | ~~spike — is `@` file autocomplete reachable from this app at all?~~ | **CLOSED** `bd0fed5` (leg 1) |
+| **117** | **spike** — every win32 route to a backdrop that does not flatten on blur, priced | `ready-for-agent`, unblocked |
+| 118 | build — `@` file references in the composer | **`needs-info` — DO NOT TAKE** |
 
-Neither blocks the other; take them in number order. Parent spec is **#115**.
+Parent spec is **#115**. **#118 was filed by #116 and is blocked on four of the
+six owner calls parked on #115** — it is not a queue item until those are
+answered, and answering them is not a leg's call.
 
-### BOTH ARE SPIKES AND MUST STAY SPIKES
+Two corrections #116 produced that bind anything touching `@`:
+`query.request({subtype:'file_suggestions'})` **is** callable (the spec's
+"no SDK route" came from a bundle grep and is refuted), and `@path` in ordinary
+prompt text is **already resolved** by the CLI — so the send path needs no code
+and must not be rewritten renderer-side.
+
+### #117 IS A SPIKE AND MUST STAY ONE
 
 Harness/sweep, findings, recommendation — **no `src/` diff**, which is part of the
 gate here (`git diff --stat -- src/` empty). Killing their own premise is a
