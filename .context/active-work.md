@@ -1,94 +1,88 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-08-04
+updated: 2026-08-05
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 17 (`relay-leg`)_
-_At commit: `acaaa3a` on `main`, pushed and level with `origin/main`_
+_Last updated: 2026-08-05 by Opus 5 (auto), autonomous `/preset vibe init` run_
+_At commit: uncommitted — `.context/` + `.claude/` only, no `src/` change_
 
 ## Current focus
 
-**None — the tracker queue is EMPTY.** #114 landed and closed as the batch's last
-ticket; `gh issue list --state open` returns **zero issues at all**, none blocked
-and none `ready-for-human`. The relay chain is stopped, not paused.
-
-#114 was a spike and its verdict is **NOT REPRODUCED**: closing a live, warmed,
-never-run engine and constructing another in the same tick killed no host process
-in **76 scored pairs**. No `src/` diff.
+**A fresh two-ticket queue, both spikes.** The owner filed two asks in one
+sentence before going to sleep — `@` file references in the composer, and "an
+option to enable permanent acrylic or something that doesn't flatten when
+unfocused" — and an autonomous grill turned them into **spec #115** with
+**#116** and **#117** under it. Neither is a build ticket, deliberately: in both
+cases the fact that decides the build's shape is unmeasured, and *build only if
+measured* forbids speccing past that.
 
 ## State
 
-- **In flight:** nothing. Squash-merged, branch deleted, main pushed.
-- **Done this session:** #114 as `acaaa3a` — `scripts/spike-114-engine-rebuild.mjs`
-  (three phases: source+SDK facts, a bare-Node pair loop in an uninstrumented
-  child process, and the built app over its own IPC) plus
-  `scripts/spike-114-findings.json`. Nothing under `src/` was touched, which is
-  part of a spike's gate here.
-- **Gate:** typecheck clean; **1044 tests across 70 files** (unchanged); build
-  clean; `git diff --stat -- src/` empty.
-- **Queue:** empty.
-- **Blocked:** nothing.
+- **In flight:** nothing. No `src/` file was touched this session.
+- **Done this session:** filed #115 (spec), #116 (`@` reachability spike), #117
+  (win32 backdrop route sweep). Rewrote `.claude/relay-leg.md` for the new
+  queue. Archived the previous run to `.claude/vibe-98-110.md` and wrote a fresh
+  `.claude/vibe.md`. Appended two MVD sections to `happy-path.md`.
+- **Gate:** not re-run — nothing under `src/`, `tests/` or `package.json` moved.
+  Baseline on `main` remains **1044 tests / 70 files**; read it from `main`.
+- **Queue:** #116 and #117, both `ready-for-agent`, neither blocked.
+- **Blocked:** nothing. Six owner calls are parked on #115 but block no ticket.
 
 ## Pick up here
 
-There is no next ticket. A fresh session should **not** hunt for one — run
-`gh issue list --state open` to confirm the queue is still empty, then wait for
-the owner to file work.
+Take **#116** (lower number, and neither blocks the other). Read the ticket, its
+parent **#115**, and `.claude/vibe.md` — that file holds every question, the
+grepped warrant behind each answer, and the refutations that changed the work.
 
-**One candidate is already written up and deliberately not filed:** #114 measured
-`engine.warmUp()` blocking the calling thread for **~1.2s of straight-line time**,
-attributed to the SDK's `query()` constructor spawning the CLI inline (**1163ms
-and 1168ms** with the engine removed entirely). In the app that thread is
-Electron's main process, and it freezes on every `session:pick-folder` and every
-lazy list rebuild #112 introduced. It is real and reproducible on every run, but
-it is an **SDK cost** — the remedy is a deferred spawn or an off-thread warm-up,
-not a change to `engine.ts` — and filing it is a scoping call the owner has not
-made.
+**#116 and #117 are SPIKES and must stay spikes**: harness/sweep, findings,
+recommendation, `git diff --stat -- src/` empty. Each ends by filing its own
+build ticket with a decided shape, or declining it and saying why. Killing its
+own premise is a successful outcome.
 
 ## Skills for next session
 
-None pending. `superpowers:verification-before-completion` remains the right
-discipline for any future spike: every claim names the run it came from.
+- `superpowers:verification-before-completion` — both tickets are spikes; every
+  claim must name the run it came from.
 
 ## Open questions
 
-None. `ready-for-human` was forbidden for this whole batch while the owner was
-AFK, and no ticket ever needed it — nothing is parked behind that rule.
+Six, all parked on **#115**, all reversible, none blocking a ticket: whether Mica
+actually survives blur · whether the flip is now worth a dependency · the `@`
+trigger-window rule · cursor-insert vs replace · what the `@` list excludes and
+whether it is capped · whether an accepted `@` reference joins the 10-slot
+attachment tray. **A leg that needs one of these should say so on the ticket and
+stop, not guess.**
+
+`ready-for-human` is **allowed** this queue — the owner is asleep, not away, so a
+ticket parked overnight is answered in hours. This differs from the 2026-08-04
+batch on purpose.
 
 ## Recent context
 
-- **A lost target is not a dead process.** Playwright's `Target page, context or
-  browser has been closed` reports *its own connection*, and is equally true of a
-  dead main, a dead renderer, and a main merely wedged — which this exact path
-  does for over a second at a stretch. `spike-105`'s death report printed the exit
-  code to the console and never wrote it to its findings, so the record cannot say
-  which the original sighting was. `spike-114` asks main directly for its own pid
-  on any failure and separates `REPRODUCED` from `DRIVER ARTEFACT`.
-- **`close()` does not kill the CLI child.** It ends stdin and defers any kill by
-  2000ms, then a further 5000ms on win32 before `SIGKILL`. Measured consequence:
-  the app runs with **two overlapping CLI children** for a second or two after
-  every pick. Not a crash mechanism, but nobody had written it down.
-- **A source fact must be readable as a snippet, not just a boolean.** Phase A
-  records the text each fact matched, so a rename shows up as changed text rather
-  than as a silent `false` — #113's landmine applied to a new harness.
-- **An instrument that fails setup will report the failure as the phenomenon**
-  unless the verdict keys on having scored something first. Caught three times in
-  one leg: a failed bundle, a teardown read as a death, and a cleanup EBUSY.
-- **This CLI emits no `init` during warm-up** — only `hook_started`/`hook_response`
-  across 20s — despite `engine.ts`'s comment saying the first model report arrives
-  then. Any future gate on "the engine is live" should use `listModels()`
-  answering non-empty, which is the control protocol responding.
-- `gui-75` and `gui-52` still carry standing environmental reds; reproduce solo on
-  clean `main` before treating either as a regression.
+- **A declared wire type is not a callable route.** `file_suggestions` is
+  declared in `sdk.d.ts` and sits in the `SDKControlRequestInner` union, but that
+  union is **direction-agnostic**. The bundle this app imports (`sdk.mjs`) has
+  **zero** occurrences of it; only `bridge.mjs` implements it, **inbound**. The
+  SDK answers that request, it does not send it.
+- **An absent method name is not an absent route** — #88 records
+  `mcpServerStatus()` implemented over a generic subtype dispatcher. Both spikes
+  must **probe by calling** (#90's lesson).
+- **Nothing in `src/main/` enumerates the open workspace.** `@` is a new
+  main-side surface with a new trust boundary, not a reskin of the `/` popover.
+- **`--disable-gpu` is not why a driver cannot judge acrylic** — `gui-69.mjs`
+  launches *without* it; the reason is DWM compositing. And producing an
+  honestly-unfocused window under automation is itself unsolved (#75).
+- **"Mica doesn't flatten" is not established by the record** — only by the app's
+  own copy and the ADR it came from. Do not assert it.
 
 ## Related
 
 - [[overview]]
 - [[pick-up]]
 - [[decisions]]
-- [[2026-08-04-a-lost-target-is-not-a-dead-process]]
-- [[2026-08-04-the-wait-moved-it-did-not-vanish]]
+- [[happy-path]]
+- [[2026-08-05-a-declared-wire-type-is-not-a-callable-route]]

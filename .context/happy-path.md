@@ -1,7 +1,7 @@
 ---
 type: happy-path
 project: claude-wrapper
-updated: 2026-07-31
+updated: 2026-08-05
 tags: [happy-path, mvd]
 ---
 # Happy Paths (MVD)
@@ -149,3 +149,32 @@ flowchart LR
 ```
 
 Assumptions noted, not drawn: `dir` is deliberately omitted so the SDK enumerates rather than encodes a directory name; deleting the session you are *in* is allowed and drops the pane to a new chat; there is no trash and no undo, which is the whole reason for the second click.
+
+## Point at a file while you type (PRD E, @-mentions)
+- **Idea:** type `@` in the composer and pick a file from the workspace, so the prompt names a real path instead of a description of one.  **Mode:** ux+beat  **Actor:** the developer mid-sentence in the composer  **Goal:** get an exact repo path into the prompt without leaving the keyboard
+- **Updated:** 2026-08-05
+
+```mermaid
+flowchart LR
+  typing([Composer, mid-sentence]) -->|type @ · trigger window opens| probe[Prefix captured]
+  probe -->|suggestions requested for the prefix| list[Matching workspace paths]
+  list -->|arrow keys · same roving idiom as the / popover| picked[One path highlighted]
+  picked -->|Enter or click · path lands at the cursor| composed[Prompt carries a real path]
+  composed -->|Enter · sent as ordinary prompt text| answered([CLI resolves the path and answers])
+```
+
+Assumptions noted, not drawn: **this spine is intent, not a settled build** — the last beat is exactly what spike (a) must confirm, since the wrapper's dumb-pipe rule says the CLI owns resolution and nothing has yet measured that `@path` in sent text is resolved through this app's query shape; where the suggestion list comes from is **open** and is spike (b), because the bundle this app imports (`sdk.mjs`) carries no `file_suggestions` at all and the only implementation in the package answers that request rather than sending it; whether the path inserts at the cursor or replaces the value, what closes the trigger window, what the list excludes, and whether an accepted reference joins the 10-slot attachment tray are all **deferred to the owner** and deliberately not drawn.
+
+## Keep the glass when you look away (PRD E, backdrop)
+- **Idea:** the third asking of a twice-deferred request — a window whose material does not go flat when it loses focus.  **Mode:** ux+beat  **Actor:** the developer with the app beside an editor  **Goal:** decide, on priced evidence, whether the unfocused flip is now worth paying for
+- **Updated:** 2026-08-05
+
+```mermaid
+flowchart LR
+  ask([Third asking]) -->|sweep Electron 43.2.0's own surface| api[win32 routes enumerated]
+  api -->|price the two named native routes against this Electron| priced[Costs and risks written down]
+  priced -->|capture acrylic and mica, focused and unfocused| shots[Screenshots for a human]
+  shots -->|findings filed, nothing adopted| verdict([Owner judges: worth a dependency?])
+```
+
+Assumptions noted, not drawn: this path **ends at a judgement, not at a shipped material**, because the ADR that deferred this names the owner as the one who decides whether the flip is worth a dependency; `visualEffectState` is a real stay-active flag but is `@platform darwin`, so it does not serve this window; no ADR is reversed, no third Backdrop value is added and no dependency is installed by the spike; whether Mica itself survives blur is **not asserted anywhere** — twice refuted for lack of an observation, and a driver capture is not evidence either way, so it is the owner's to eyeball.

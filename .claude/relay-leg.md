@@ -10,281 +10,83 @@ Each leg = exactly ONE ticket end to end, then the relay machinery hands off to
 a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides.
 
-## THE `ready-for-human` LABEL IS FORBIDDEN THIS QUEUE — read this first
+## `ready-for-human` IS ALLOWED THIS QUEUE — read this first
 
-The owner left on **2026-08-04** with this instruction, verbatim:
+This differs from the previous batch, deliberately. On **2026-08-04** the owner
+was *away from home* and forbade the label outright. On **2026-08-05** they said
+only:
 
-> "never tag anything ready for human as i will be away from home whatever it is
-> you need from me i wont be there to answer so i give you the drivers seat."
+> "i will be sleeping now"
 
-**This overrides every `ready-for-human` relabel named further down this file
-(steps 2 and 5) and in `/preset ticket-loop`.** Where those say "relabel
-`ready-for-human`", do this instead:
+Asleep is not away. They are back in the morning, so a ticket parked for them
+overnight is answered in hours, not never — which is exactly what the label is
+for. **If a leg genuinely sticks: label it `ready-for-human`, comment with where
+and why, and STOP the relay** rather than spawning a leg that re-picks it.
 
-- Push the branch as-is, comment on the ticket with exactly where and why it
-  stuck, and **leave it `ready-for-agent`**.
-- Then **stop the relay** rather than spawning a leg that would pick the same
-  stuck ticket again. A stuck ticket the next leg would re-pick is an infinite
-  loop, which is the only reason the relabel existed.
-- Say plainly in the comment that the label was withheld under the owner's
-  instruction, so a cold reader does not read the missing label as an oversight.
+The sleep grant removes **ownership** as a ground for deferring. It does **not**
+remove the need for a warrant, it licenses nothing irreversible, and it does not
+reopen the standing calls in `.context/pick-up.md` or the six owner calls on #115.
 
-The grant removes **ownership** as a ground for deferring. It does **not** remove
-the need for a warrant, and it licenses nothing irreversible. It also does not
-reopen the standing calls in `.context/pick-up.md`.
-
-## Current queue — THIRTEEN OPEN as of 2026-08-04
+## Current queue — TWO OPEN as of 2026-08-05
 
 Take the lowest-numbered open, unblocked `ready-for-agent` ticket.
 
-Filed by a `/preset vibe init` run on 2026-08-04; its full record — every
-question, the grepped warrant, the cross-model verdict, and the nine refutations
-that changed the work — is `.claude/vibe.md`. **Read it before starting any
-ticket in this batch.**
+Filed by a `/preset vibe init` run on 2026-08-05. Its full record — every
+question, the grepped warrant, the cross-model verdict, and the four refutations
+that changed the work (two of which killed the main thread's *own* findings) — is
+`.claude/vibe.md`. **Read it, and parent spec #115, before starting either ticket.**
 
 | # | subject | blocked by |
 |---|---|---|
-| **98** | the subagent viewer becomes a **centred popup**, not a right-edge drawer | — |
-| **99** | that viewer takes focus on open, traps it, gives it back on close | 98 |
-| **100** | two unguarded async continuations in `useChat` apply after their target moved | — |
-| **101** | `listSubagents` contradicts its own docstring: unreadable store reads as "no agents" | — |
-| **102** | the viewer reads the transcript once, so a running agent is frozen | 99 |
-| **103** | the composer's `Escape` does not stop propagation, so one press dismisses two things | 99 |
-| **104** | a subagent open when a turn SUCCEEDS is never drained; its terminal event reaches nobody | — |
-| **105** | **spike** — does picking a model empty the model menu and slash commands until the next send? | — |
-| **106** | a clipboard image that fails to read is rejected with a self-contradictory message | — |
-| **107** | **the rail can delete the session a turn is streaming into** — data loss, first turn only | — |
-| **108** | **spike** — can a second send, or a hung interrupt, strand the turn lifecycle? | — |
-| **109** | `switchWorkspace` checks `isBusy` before an await, so a send during resolve tears down a live turn | — |
-| **110** | the window's last move or resize is dropped if you close inside the 250ms debounce | — |
+| **116** | **spike** — is `@` file autocomplete reachable from this app at all? | — |
+| **117** | **spike** — every win32 route to a backdrop that does not flatten on blur, priced | — |
 
-#98, #99 and #102 all touch `SubagentDrawer.tsx`, which is why they are chained
-rather than merely ordered — the chain is what keeps each rebase trivial.
+Neither blocks the other; take them in number order. Parent spec is **#115**.
 
-**#98–#103 came from the grill; #104–#106 came from a cross-model bug hunt and
-were each re-verified by hand before filing.** Three notes that bind:
+### BOTH ARE SPIKES AND MUST STAY SPIKES
 
-- **#105 is a SPIKE and must stay one.** It ends in a harness, findings and a
-  recommendation — **no `src/` diff**. Its premise may well be wrong: the
-  `commands:list` comment calls the empty answer "the dock's honest empty state",
-  and `gui-52` is a standing environmental red for an empty CLI model list, so an
-  empty list in this sandbox is indistinguishable from a null engine. Killing its
-  own premise is a successful outcome.
-- **#104 forbids the obvious shortcut.** Do **not** call `drainSubagents()` on
-  the success branch: it emits `failed`, which for an async agent is a lie about
-  one that is still running. The correct fix is #83's port precedent.
-- **A finding was killed by this very file** and must not be re-filed: the
-  `void shell.openExternal(url)` unhandled-rejection theory. The probe recorded
-  further down says this app keeps `--unhandled-rejections=warn` and that
-  `shell.openExternal` on an unregistered scheme does not even reject. A
-  cross-model verifier **confirmed** the finding on a fresh code-read and was
-  overruled: its own correction conceded the crash claim was "overstated" and
-  depended on Electron's escalation policy, which this repo has already probed.
-  **A live probe in the record beats a fresh code-read.**
-- **#107 is the one to take first if you are choosing by consequence** — it
-  destroys a transcript that is being written, by an ordinary sequence, and it
-  is the only data-loss defect in the batch.
-- **#105 and #108 are SPIKES and must stay spikes** — harness, findings,
-  recommendation, **no `src/` diff**. Both have plainly-confirmed mechanisms and
-  genuinely open reachability, which is the exact shape this repo has three
-  precedents for. Killing their own premise is a successful outcome.
+Harness/sweep, findings, recommendation — **no `src/` diff**, which is part of the
+gate here (`git diff --stat -- src/` empty). Killing their own premise is a
+successful outcome. Each ends by filing its own build ticket with a decided
+shape, or declining it and saying why. **Do not build the feature in the spike
+leg** — the record's rule is *build only if measured* and #78 is the precedent
+that measured and then built nothing.
 
-**#98 and #99 rest on a contradiction surfaced deliberately.** Two ADRs
-previously reasoned *against* a centred modal. **Neither is superseded and
-neither gets a banner** — one decides where Appearance lives, the other how
-deletion confirms, and a centred transcript viewer overturns neither *decision*.
-The owner's instruction overrides only the **rationale** they shared. #98's ADR
-must say that, and must record the glass-ban question as **unresolved** rather
-than quietly settle it.
+### The four landmines this run produced
 
-**Run the frontier query anyway; it is the authority over this table.** If it
-returns a different ticket, work that one. If it comes back empty the queue is
-drained: rewrite `pick-up.md` to "queue empty", commit `.context/` on main,
-signal the relay stop, spawn nothing.
+- **Probe by CALLING, never by matching names.** #90's harness got its headline
+  answer wrong that way, and #115's own grill made the same error twice — once
+  concluding from a wire union's membership (that union is direction-agnostic),
+  once from the absence of a method name on `Query` (#88 records a generic
+  subtype dispatcher behind those methods). Both were only corrected by reading
+  the runtime bundle. An absent name is not an absent route.
+- **Do not assert what Mica does on blur.** Twice refuted during the grill. The
+  app's own copy claims it and the ADR the copy came from says *"always-on,
+  stable"* — neither is an observation, and four legs on this record (#78, #89,
+  #94, #111) are decision-document platform claims that measurement later
+  contradicted. It is parked as an owner call on #115.
+- **A driver capture is not evidence about acrylic appearance**, and the reason
+  is DWM compositing over a wallpaper — **not** `--disable-gpu`. `gui-69.mjs`
+  launches *without* that flag on purpose. #115's grill got this wrong first.
+- **Producing an honestly-unfocused window under automation is itself unsolved
+  here.** #75 measured that `win.blur()` moves `isFocused()` not at all and that
+  a minimised window still reports itself focused; only `hide()` moved both, and
+  `hide()` removes the window being photographed. #117's S4 is best-effort and
+  must say so rather than implying a capture shows the flip.
 
-**What #80 settled, because the next composer ticket inherits it.** The
-type-while-busy queue is a **flag on the draft**, not a stored payload — so
-cardinality is one by construction, what fires is whatever is in the box when the
-turn ends, cancelling is lossless, and `<InputBar key={cwd}>` resets it for free.
-The flush condition is **positive** (`turn-end` with a live engine, decided by
-the twelve-row table in `src/shared/queued-send.ts`); every other row
-**unqueues**, releasing the commitment and never the text. Do **not** add a
-second busy flag — `lastTurn` records how a turn *ended*, which is a different
-question — and **never un-key the composer**.
+### Six owner calls that must NOT be decided in a leg
 
-**#79's headline is about SIGNALS, and it is the counterpart to #78's.** #78
-measured the launch artifact and **declined** the `win.show()` gate; #79
-**built** it, for bounds only, and the two are consistent rather than a
-flip-flop. #78 declined it *as the ADR specified it* — "gate on the renderer's
-first preference push" is a race between two independent messages and misses a
-third preference (`data-theme`) that crosses no boundary at all. Bounds are
-**one named message with one meaning**, so "ready" is a fact and the protocol
-#78 priced collapses to a `let` and a timeout. **When a readiness gate looks
-expensive, check whether the expense is in the waiting or in defining what
-"ready" means.**
-
-Measured A/B on one build (`gui-79.mjs`, five runs; the probe defeats the gate
-by showing on `ready-to-show`, the line the app used to run): gated is **0ms
-visible at the wrong bounds across 5 runs of 5**, ungated is **0–49ms on 4 runs
-of 5** with an on-screen move+resize, at a cost of 7–45ms later appearance.
-**The ungated artifact being INTERMITTENT is what settled it** — a window that
-lands somewhere different depending on machine load is worse than one that
-reliably takes a twentieth of a second longer to appear.
-
-**Two traps from #79 that bite any ticket, including #80:**
-
-- **A zero-arg `vi.fn()` mock makes its own `mock.calls[0][0]` a TYPE error.**
-  `vitest` infers an empty argument tuple, so a test reaching for the callback
-  the code was handed does not typecheck — **while `npm test` passes, because
-  `vitest run` does not typecheck.** Only `npm run typecheck` catches it. Type a
-  mock with the real signature: a loosely typed mock is not neutral, it is wrong
-  in a direction.
-- **An instrument can report a gate's SUCCESS as the artifact it measures.**
-  `boundsChangesWhileVisible` compared each visible sample against the previous
-  sample regardless of *that* sample's visibility, so a window shown
-  already-correct scored 1 for doing exactly its job.
-
-**The launch path changed in #79, so anything touching it must keep both
-conditions**: the window is shown once Chromium has something to paint AND the
-renderer has pushed its bounds (or a 1500ms timeout fired). `bounds:set` must
-keep releasing that gate on a `null` or invalid payload too, or every first-ever
-launch waits out the timeout.
-
-**Four instrument traps from #78, still binding on anything that measures a
-launch:**
-
-- **Playwright cannot measure a launch at all.** Under `_electron.launch()` this
-  window never emits `ready-to-show`, so it is never shown, never painted, and
-  `getEntriesByType('paint')` is empty. Fine for the DOM-driving drivers; fatal
-  for paint/visibility/timing. `gui-78` and `gui-79` spawn Electron directly
-  with a probe as the **entry point**, which hooks and then `require`s
-  `out/main/index.js`.
-- **`NODE_OPTIONS=--require` never reaches Electron** and
-  **`context.addInitScript()` is too late** (launch resolves at ~380ms with the
-  window already loading).
-- **`--disable-gpu` is load-bearing in this background session** — with GPU
-  compositing on the app's window never paints at all, while a standalone
-  `BrowserWindow` with identical options does. It flattens acrylic, so no
-  material is judged visually in that run.
-- **Chromium's persisted per-origin zoom makes an un-isolated launch an
-  inherited pass.** Fresh `userData` via `app.setPath` before `ready`; and a
-  premise guard must read the first **painted** frame's dpr, never
-  `getZoomFactor()` at construction, which reads 1.0 on a warm profile too and
-  can therefore never fail.
-
-Everything before this batch is delivered and closed: spec #64 (#65 `f0dfc68` ·
-#68 `70c904f` · #66 `a7c0470` · #67 `e16ace6` · #69 `add4e5b` · #70 `1769aa4`),
-then #71 `b6e8911`, #72 `9fecc10`, #73 `6b4a831` and #74 `07544e8` standalone.
-
-**#77's lesson is about setup order rather than about CSS, and it still binds.** A driver's own setup can revoke the capability it is about to
-measure: `openSession` calls `targetSession`, which **closes the engine**, so
-`listModels()` and `listCommands()` answer `[]` **by contract** afterwards —
-measured in screen order, `gui-51` read a 1-row model picker and two command
-surfaces that never mounted, indistinguishable from a dead CLI. **Order setup
-steps by what each one takes away, not by what it needs.** Two corollaries that
-transfer: **an empty list beside a static row looks populated** (reason about
-what the list was supposed to *add*, never `querySelectorAll(...).length`), and
-**a surface that passes only on the machine that wrote it is inherited, not
-established** — `.session-groups` had been overflowing purely because this store
-holds ~490 sessions.
-
-Before that, #76 produced the rule that **destruction is quiet**, so an
-assertion phrased as an absence can measure nothing: assert what went on living,
-not what failed to appear.
-
-**`gui-75` is focus-dependent and has now gone red in TWO consecutive batch runs
-while passing solo both times.** A batch that reds only there is a green batch —
-re-run it alone before believing the red or writing anything down.
-
-**Run the frontier query anyway — do not trust this paragraph.** Leg 5 wrote
-that closing #70 would empty the queue and was wrong: #71 was `ready-for-agent`
-and unblocked the whole time, merely outside the batch. **The frontier query in
-step 1 is always the authority, including over this sentence.** If it returns a
-ticket, work it; the prose here is a summary that goes stale the moment the
-owner files something.
-
-**#75–#80 came from an autonomous `/preset vibe` run, and two things about it bind
-this leg.** First, its record is `.claude/vibe.md` — every question, the agent
-that answered it, the grepped warrant, and the cross-model verdict. **Read it
-before starting any ticket in this batch**; the two earlier runs are archived
-beside it as `.claude/vibe-2026-07-31-titlebar.md` and
-`.claude/vibe-2026-07-31-production-ready.md`.
-
-Second, **the "seven parked owner calls" rule is SPENT.** The owner granted full
-autonomy on 2026-07-31 (quoted verbatim at the top of `.claude/vibe.md`) and all
-seven were resolved in that run. What the grant did **not** change: an answer
-still comes from a warrant or it is marked as a chosen design.
-
-**Corrected 2026-08-04 — "there is no longer a do-not-decide list" was true when
-written and is now false.** `.context/pick-up.md` carries a short standing list
-again (Tailwind's adopt-utilities half, the titlebar's control count, the 11px
-line box, and the accent clause's enumeration). **`pick-up.md` is authoritative
-over this paragraph.** The 2026-08-04 grant does not reopen them either: they sit
-outside that seed, and a broader grant is not a new reason. Two of the seven were deliberately settled only by
-**half** — Tailwind is not dropped but the adopt-utilities question stays open,
-and the titlebar's control count does not change while the aesthetic question
-stays the owner's. **Do not close either remaining half**; the record argues
-against it in those words.
-
-**That run killed three tickets by probing them, and the corpses matter more than
-the survivors — do not re-file them.** Unhandled promise rejections in main do
-**not** crash this app (probed: Electron 43 / Node 24 keeps
-`--unhandled-rejections=warn`, and `shell.openExternal` on an unregistered scheme
-does not even reject), so the five `void`-ed promises are fine. Every `catch` in
-`src/` is deliberate and carries a comment naming its contract. `void
-watchSession(...)` is already `try`/`catch`'d. And a **main-side preference store
-is forbidden in those words** by
-[[2026-07-31-a-preference-lives-where-it-is-read]] — "No preferences file, no
-main-side store" — so a `userData` JSON is a reversal that must say so out loud,
-not a gap-fill.
-
-**The run also falsified the premise it was handed, which is the recurring
-lesson here.** The standing complaint was that the titlebar's buttons were
-eating the drag region. Measured: false — the no-drag width is *constant* at
-344.3css and does not grow with content, and the widest uninterrupted grab strip
-is still 182css at the narrowest width tested. The real defect was unrelated and
-found only because the probe ran. **Measure the stated cause before speccing a
-fix for it**, exactly as #71 did with the scrollbar gutter.
-
-**What leg 7 settled, because it is the kind of thing that recurs.** #71 was a
-measurement ticket whose own diagnosis was flagged unconfirmed, and the
-measurement changed the answer: the "three surfaces disagree" symptom was the
-*instrument*, not the app — `offsetWidth - clientWidth` rounds both operands to
-whole CSS pixels, so one true gutter surfaced as three numbers. **When two
-instruments disagree, suspect the instrument first**, and prefer removing the
-rounding over widening a tolerance to cover it.
-
-**Four of spec #64's five ADRs now carry an amendment written after a probe
-measured their stated premise.** Two because it was false (#68's Windows handle,
-#70's `color-mix()`), two because it held and is now measured rather than cited
-(#69's `setBackgroundMaterial`, #70's unlayered-beats-layered override, which
-also recorded a limit the ADR had not stated). **Read an ADR's amendment before
-citing it.**
-
-Two traps the shipped Appearance panel imposes on any future control in it:
-
-- **No `<input>` and no `<select>`** — a dock-wide pin asserts the panel renders
-  neither. And **no second `role="radio"` group**: #69's pin reads every radio in
-  the panel as a backdrop, which is why #70's picker is a listbox. Read the
-  neighbouring pins before choosing a role.
-- **A preference with both a REPORT and an EFFECT can self-heal in the report
-  while staying broken in the effect — and if the effect is REACTIVE, the
-  obvious pin on the effect self-heals too.** `useZoom`, `useBackdrop` and
-  `useTheme` all depend on a lazy `useState(readStored)` initialiser. For
-  `data-theme` only a pin on the FIRST value written catches the mutation; an
-  after-the-fact `getAttribute` passes.
+Parked on #115: whether Mica survives blur · whether the flip is now worth a
+dependency · the `@` trigger-window rule · cursor-insert vs replace · what the
+`@` list excludes and whether it is capped · whether an accepted `@` reference
+joins the 10-slot attachment tray. A leg that needs one of these answers should
+say so on the ticket and stop, not guess.
 
 **When a new batch exists, read its parent spec and every
 `.context/decisions/` entry the tickets name before writing code.** The bodies
 in this project are adversarially reviewed to remove the ambiguity that stalls
 unattended agents, so a step that looks under-specified usually means you have
 not read far enough.
-
-Every ticket body carries its own contract, out-of-scope list, required test
-coverage and sharpest-failure-mode note. **Read the whole ticket and its parent
-spec before writing code** — the bodies were adversarially reviewed specifically
-to remove the ambiguity that stalls unattended agents, so a step that looks
-under-specified probably means you have not read far enough.
 
 ## Boot (once per leg)
 
@@ -309,9 +111,9 @@ under-specified probably means you have not read far enough.
 2. **Idempotency guard.** A branch or PR named `ticket/<id>-*` already exists →
    never restart from scratch: unfinished and yours → resume it; finished and
    green but unmerged → land it and jump to step 6. Genuine collision or
-   confusion → comment on the ticket, **leave it `ready-for-agent`** (the label
-   is forbidden this queue — see the top of this file), jump to step 6, and stop
-   the relay rather than spawning a leg that would re-pick it.
+   confusion → comment on the ticket, **label it `ready-for-human`** (allowed
+   this queue — see the top of this file), jump to step 6, and stop the relay
+   rather than spawning a leg that would re-pick it.
 3. **Branch.** `ticket/<id>-<slug>` off main.
 4. **Work.** You own the whole ticket: read it plus its parent spec plus any
    `.context/decisions/` it names, then architecture, implementation, tests and
@@ -343,8 +145,8 @@ under-specified probably means you have not read far enough.
      sha, anything a cold reader needs to continue.
    - **Not green after honest effort, or ticket ambiguous/destructive** → stop
      coding, push the branch as-is, comment exactly where and why it stuck, and
-     **leave it `ready-for-agent`** — the label is forbidden this queue, see the
-     top of this file. Ticket stays open; its dependents stay blocked. Then
+     **label it `ready-for-human`** — allowed this queue, see the top of this
+     file. Ticket stays open; its dependents stay blocked. Then
      **stop the relay**: the next leg would otherwise re-pick the same stuck
      ticket forever.
 6. **Gateless wrap-up — always on main.**

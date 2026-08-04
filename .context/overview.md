@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-08-04
+updated: 2026-08-05
 tags: [context, overview]
 ---
 
@@ -390,11 +390,11 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#112 landed
-  and closed, and TWO tickets are open — #113 and the newly filed #114, both
-  `ready-for-agent` and unblocked, with #113 the next one; #114 is a SPIKE filed
-  from #112's own re-run**; run the
-  frontier query anyway, it is the authority and this line has been wrong before.
+- `.context/pick-up.md` — current frontier + landmines (currently: **the #98–#114
+  batch is fully drained, and a NEW batch of three is open — spec #115 with
+  spikes #116 and #117 under it, all `ready-for-agent`, neither slice blocked,
+  #116 next. BOTH SLICES ARE SPIKES and must stay spikes — no `src/` diff**; run
+  the frontier query anyway, it is the authority and this line has been wrong before.
   **31 `gui-*.mjs`** — 30 assertion drivers plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`), with **two standing
@@ -652,12 +652,16 @@ tags: [context, overview]
   resume mutation leaving every non-empty pin green exactly as the ticket warned;
   see [[2026-08-04-the-wait-moved-it-did-not-vanish]] and the same leg's
   [[2026-08-04-a-green-suite-does-not-prove-a-sound-toolchain]]) is **closed**.
-  **As of 2026-08-04 TWO issues are open — #113 and #114, both
-  `ready-for-agent`**, neither blocked; #113 is the next unblocked one. #113 was
-  filed by #108's measurement and **#114 is a SPIKE filed from #112's own required
-  re-run** — Electron's main process vanished in 2 of 6 post-fix harness runs
-  (0 of 2 pre-fix), always at the same iteration, with no exception and no stderr,
-  and did not recur across the four later runs including a nine-iteration one.
+  **#113** (`dadacbe`) and **#114** (`acaaa3a`, a spike, NOT REPRODUCED over 76
+  scored pairs) closed, draining the #98–#114 batch entirely.
+  **As of 2026-08-05 THREE issues are open — spec #115 with slices #116 and
+  #117, all `ready-for-agent`**, neither slice blocked; #116 is next. They were
+  filed by an autonomous `/preset vibe init` run from two asks the owner left
+  before sleeping (`@` file references in the composer; a backdrop that does not
+  flatten when unfocused), and **both slices are SPIKES with no `src/` diff** —
+  in each case the fact deciding the build's shape is unmeasured, so *build only
+  if measured* forbids speccing the build. Six owner calls are parked on #115.
+  See [[2026-08-05-a-declared-wire-type-is-not-a-callable-route]].
   Run the frontier query rather than trusting this line
 
 ## Conventions
