@@ -74,6 +74,21 @@ tags: [context, overview]
   main pass through, so the reset is structural rather than hand-copied to each
   call site. Its branch sits **before** the fallthrough to `handleTaskMessage`,
   which is what keeps the mutation-verified `local_agent` guard untouched.
+  Its **fourth** injected port is `onSubagent` (#104), broadcast as
+  `subagent:changed`, and it exists for the same reason as the other three: a
+  subagent's terminal edge **can** land after `result/success`, where
+  `finishTurn()` has already nulled `activeOnEvent`. Measured as a **race**
+  rather than a rule — three runs gave LATE 14519ms, early 1699ms, LATE 13126ms
+  on one prompt and one binary, because the `Agent` tool is async and the parent
+  turn and its subagent settle independently — so the finding is
+  **reachability**, which one observation settles. `emitSubagent` routes
+  **every** subagent edge through the port when one is supplied, never just the
+  terminal ones, or one agent's lifecycle would be read off two channels. The
+  success branch must still **never** call `drainSubagents()`: it emits
+  `failed`, and an agent still open at `result/success` may go on to complete.
+  Both failure branches keep draining and are now pinned **with the port wired**,
+  because every older drain test builds the engine portless. See
+  [[2026-08-04-a-late-subagent-edge-is-a-race-and-reachability-is-the-finding]].
   `transcript.ts` parses the
   native JSONL to the replay list and owns `sanitizeUserText`, the one place CLI
   markup is turned into readable text — anchored on the message's leading tag,
@@ -298,10 +313,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#98 landed
-  and closed, and TWELVE tickets are open — #99–#110, all `ready-for-agent`, with
-  #99 the next unblocked one**; run the frontier query anyway, it is the authority
-  and this line has been wrong before.
+- `.context/pick-up.md` — current frontier + landmines (currently: **#104 landed
+  and closed, and SEVEN tickets are open — #105–#111, all `ready-for-agent`, with
+  #105 the next unblocked one and a SPIKE**; run the frontier query anyway, it is
+  the authority and this line has been wrong before.
   **30** driver files — 28 assertion drivers, two `gui-7x-probe` helpers and the
   observational `gui-scope-zoom-pill` — with **two standing environmental reds**,
   `gui-75` (focus-dependent) and `gui-52` (the CLI returning an empty model
@@ -319,6 +334,17 @@ tags: [context, overview]
   probes SDK candidates by **calling** them against a real session rather than
   matching their names (its own first run got the headline answer wrong that
   way). Re-run it after any CLI upgrade that changes `claude agents --json`
+- `scripts/spike-104-late-subagent.mjs` — the newest harness (#104) and **the one
+  to copy for anything INTERMITTENT**. It drives real turns through the SDK with
+  `engine.ts`'s query shape, and its mechanism is repetition: a single-shot
+  instrument cannot measure a race, and this one's first version printed
+  `AUTHORISED TO BUILD: false` on the run after it had already proven the defect.
+  It now runs several turns against one query, stops at the first late ordering,
+  reports how many turns that took, and states in its own output that an
+  all-early run does **not** refute the finding. Two of its review-caught bugs
+  transfer to any harness: a `null` status classified as terminal (matching
+  `engine.ts`, an absent status is a progress tick), and a filter on a field that
+  was never recorded, which made its own predicate unconditionally true
 - `scripts/spike-97-mint-budget.mjs` — the sixth harness (#97) and **the odd one
   out**: it drives the built WINDOW through playwright-core instead of the CLI,
   so it imports no app module and needs `npm run build` first. **Copy it for
@@ -408,9 +434,14 @@ tags: [context, overview]
   kept, and **neither anti-modal ADR superseded** while the glass-ban question is
   recorded **unresolved**; see
   [[2026-08-04-the-viewer-is-centred-and-the-glass-ban-is-left-unresolved]]) is
-  **closed**. **As of 2026-08-04 TWELVE issues are open — #99–#110, all
-  `ready-for-agent`**, filed by a `/preset vibe init` run; #99 is the next
-  unblocked one and only #102 is blocked.
+  **closed**. **#104** (`795be69`, a subagent's terminal status delivered through
+  its own injected `onSubagent` port after the late ordering was measured
+  **reachable but intermittent** — LATE 14519ms, early 1699ms, LATE 13126ms across
+  three runs — with `drainSubagents()` still forbidden on the success branch; see
+  [[2026-08-04-a-late-subagent-edge-is-a-race-and-reachability-is-the-finding]])
+  is **closed**. **As of 2026-08-04 SEVEN issues are open — #105–#111, all
+  `ready-for-agent`**, none blocked; #105 is the next unblocked one and is a
+  **spike**. #111 was filed by #104's own review.
   Run the frontier query rather than trusting this line
 
 ## Conventions
