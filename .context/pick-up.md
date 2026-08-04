@@ -9,33 +9,34 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Landed this leg (2026-08-04) — #107, `7e62f9e`
+## Landed this leg (2026-08-04) — #108, `aa8e683`, **spike, no `src/` diff**
 
-**The rail can no longer delete the session a turn is streaming into.** The
-refusal is decided in main now, in `src/main/delete-guard.ts` —
-`guardedDelete(ports, id)` over `isBusy` / `runningId` / `remove`, bound in the
-`session:delete` handler. Only the running id is refused; a foreign session
-stays deletable mid-turn.
+Two claims confirmed by reading; measuring their reachability split them in
+opposite directions.
 
-The rail's `disabled={active && busy}` compares against the renderer's
-`activeSessionId`, written only at `turn-end` — so through the whole first turn
-of a fresh conversation the renderer holds null, the row is not `active`, and its
-trash button unlinks a `.jsonl` the CLI is still appending to. Main has held that
-id since `init`, so the two sources cannot disagree: the renderer has no opinion
-to disagree with. `index.ts`'s "second busy source" comment is rewritten rather
-than deleted.
+**Claim 1 — consequence REAL, user path NOT reachable.** A second `chat:send`
+under a live turn is answered on the **second** caller's `onEvent` with a
+turn-terminal `error`, and the renderer clears `busy` **518ms** later while main
+still holds `turnResolve` — witnessed by main refusing a real composer send
+moments after, not by anything rendered. The send slot then reads **"Send"**, so
+there is no Stop for a turn that is still running. But no input device can
+produce that second send: only a **same-task** dispatch reaches main twice, and
+the realistic back-to-back-macrotask case is refused by the **emptied draft**,
+not the busy flag. Filed as **#113** on that warrant — the composer is held shut
+by a UI convenience, `chat:send` has no check at all, and it holds only while
+`useChat.send` stays the single caller of `sendPrompt`.
 
-`App.deleteSession` now asks main which row is on screen when the renderer has
-nothing — `turn-aborted` and `error` clear `busy` without reading the id back, so
-that state outlives the turn.
+**Claim 2 — mechanism real, hang NOT observed. Half closed.** 6/6 driven
+interrupts answered at **4–29ms**, mid-text and mid-tool-call, none refused.
+Closed on #78's precedent; #73's `onTerminal` already covers a dying stream. Not
+filed.
 
-Premise reproduced first; guard mutation-verified twice. `tests/sidebar.test.tsx`
-untouched (AC4 literally). Gate green: typecheck clean, **1009 tests / 66 files**
-(998 + 11), build clean.
+Gate green: typecheck clean, **1009 tests / 66 files** (unchanged — a spike adds
+no app tests), build clean, `git diff --stat -- src/` empty.
 
 ## Frontier: FIVE OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
 
-**Next unblocked, lowest-numbered: #108.** Live `blocked_by` is 0 for all five.
+**Next unblocked, lowest-numbered: #109.** Live `blocked_by` is 0 for all five.
 Run the query anyway — it is the authority over this table, and this line has
 been wrong before.
 
@@ -46,82 +47,58 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 
 | # | subject | blocked by |
 |---|---|---|
-| **108** | **spike** — second send / hung interrupt lifecycle | — |
 | **109** | send during workspace resolve tears down live turn | — |
 | **110** | close inside debounce drops final window bounds | — |
 | **111** | close between turns strands an open subagent row | — |
 | **112** | pill click empties the model menu and slash commands | — |
+| **113** | a second `chat:send` tells the renderer the live turn ended | — |
+
+**The batch has no spikes left** — #109–#113 are all ordinary fixes, so premise
+reproduction and mutation evidence apply again.
 
 `ready-for-human` is forbidden while owner is AFK. Stuck ticket keeps
 `ready-for-agent`, gets a precise comment, and stops the relay.
 
-## What #108 requires
+## What #109 requires
 
-**A SPIKE, and it must stay one** — harness in `scripts/`, scrubbed findings
-JSON in the `spike-97-findings.json` shape, a ticket comment stating
-reachability per claim, and **no `src/` diff**. Two mechanisms are confirmed by
-reading; neither's reachability is established.
+`switchWorkspace` checks `isBusy` before an `await`, so a send landing during the
+resolve tears down a live turn. Reproduce the premise first — the last five legs
+all did, and three of them found the stated premise needed correcting.
 
-**Claim 1 — the overlap rejection clears busy on a live turn.** `engine.ts`'s
-`if (turnResolve !== null)` emits `{ type: 'error' }` to the **second** call's
-`onEvent`, and the renderer treats every `error` as turn-terminal
-(`setBusy(false)`) while the first turn still holds `turnResolve`. `chat:send`
-in main has no busy guard. Open because `useChat.send`'s own guard reads `busy`
-from React state, so a true double-submit inside one render tick reads `false`
-twice — and #80's queue may already close it in practice.
+Two facts from #108 bear directly on it:
 
-**Claim 2 — Stop has no local completion path.** `interrupt()` sets
-`interrupting = true` and calls `currentQuery?.interrupt?.().catch(() => {})`.
-Nothing else. The turn completes locally only when a `result` arrives and
-`finishTurn()` runs; if the CLI never sends one, `turnResolve` never resolves
-and the UI is stuck busy with no way out but a restart.
-
-## #108 landmines
-
-- **Instrument main to COUNT sends.** Do not infer claim 1 from the UI —
-  `useChat.send`'s busy guard swallows a second send without a trace, so one
-  send and two are indistinguishable from the DOM. #80's `gui-80.mjs` already
-  solved this exact problem: a **second `ipcMain.on('chat:send')` listener added
-  in main** beside the real one (`on` appends where `handle` would throw). Copy
-  it.
-- **The composer is never `disabled`** — standing landmine. Do not "fix" claim 1
-  by disabling it.
-- **Do not add a second busy flag.** `lastTurn` records how a turn *ended*,
-  which is a different question. Explicit standing rule.
-- **Do not pre-empt either remedy.** Claim 1's fix must not make the renderer
-  ignore `error` events generally (that hides real turn failures); claim 2's
-  must not resolve the turn optimistically on Stop (`turn-aborted` has a real
-  meaning, and faking it makes a still-running CLI invisible). Both are
-  follow-up tickets.
-- **`result.subtype` is `'success'` even on a failed turn** — `is_error` is the
-  field that says so. A naive instrument reports a clean zero indistinguishable
-  from a real negative.
-- **A turn dying BETWEEN turns emits nothing.**
-- Drive the **mid-tool-call** Stop case; it is the one most likely to differ.
-- #104 (subagents undrained on the success branch) is related but separate and
-  already has a decided remedy — do not merge them.
-- Killing either premise is a **successful outcome** (#78, #84, #105 are the
-  precedents).
+- **`chat:send` has no busy guard of any kind**, asserted mechanically. Any
+  reasoning about "the app refuses sends while busy" is about `useChat.send`'s
+  React-state read and nothing else.
+- **After an overlap error the renderer reports idle while main still holds the
+  turn.** That state is reachable, and any logic reading `busy` from the renderer
+  will be told the wrong thing in it.
 
 ## Still-live batch landmines
 
-- **`gui-52`'s red is DOUBTFUL, and chasing it is out of scope.** Recorded
-  across `.context/` as *"the CLI returning an empty model list"*, but #105
-  measured the CLI returning **15 models** here, and `chat:target` is a fourth
-  `discardEngine` caller (#77's *"by contract"* note). `gui-52` was **not** run
-  — a hypothesis, filed in #112's out-of-scope.
+- **Ask the process that holds the fact.** #108's four instrument bugs were all
+  the same mistake — measuring a proxy for a fact another process owns. `busy` in
+  the renderer, characters in the pane, and a case name all stood in for
+  something main knew directly.
+- **A pane that stopped growing is NOT an idle engine** — measured 116 → 116 on a
+  turn the engine then refused a send for. Growth is sound as a positive, useless
+  as a negative.
+- **Re-check a premise at the moment it matters**, not before a settle: an
+  interrupt issued after its turn's own result produced a latency of **-821ms**.
+  The quiet version of that bug is a small positive number.
+- **`gui-52`'s red is DOUBTFUL, and chasing it is out of scope** — #105 measured
+  the CLI returning **15 models**. Filed in #112's out-of-scope; `gui-52` was not
+  run.
 - `gui-75` still has a standing environmental red (focus-dependent); reproduce
   solo before treating it as a regression.
 - Never hardcode a model name. Never read `~/.claude/daemon/roster.json`.
 - Absence assertions need a surviving positive control and mutation evidence.
-- **A single sample cannot measure an asynchronous event** (#104, then #105).
-  Poll and report the delay as a number.
-- **A stub that fails everything measures less than one that fails
-  selectively** (#106) — install the failure by name so the control still runs
-  through the real code.
-- **A mocked refusal asserts the harness** (#107) — bind the real decision
-  behind the seam when the decision is what the test is about.
-- Ticket baselines are stale: #108 says 979 tests, `main` is at **1009**.
+- **A single sample cannot measure an asynchronous event** (#104, #105).
+- **A stub that fails everything measures less than one that fails selectively**
+  (#106).
+- **A mocked refusal asserts the harness** (#107) — bind the real decision behind
+  the seam when the decision is what the test is about.
+- Ticket baselines are stale: they say 979, `main` is at **1009**.
 - Squash-merged ticket branches need `git branch -D`.
 
 ## Do not decide these
@@ -136,11 +113,11 @@ AFK grant does not reopen standing calls outside this seed:
 
 ## Baseline
 
-`main` = `7e62f9e`, pushed and level with `origin/main`; no ticket branch.
+`main` = `aa8e683`, pushed and level with `origin/main`; no ticket branch.
 Typecheck clean, **1009 tests / 66 files**, build clean.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]]
-- [[2026-08-04-a-refusal-belongs-where-the-fact-lives]]
+- [[2026-08-04-the-composer-is-held-shut-by-a-draft-clear-not-a-guard]]
 - `.claude/vibe.md` — run that filed #98–#110

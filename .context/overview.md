@@ -334,9 +334,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#107 landed
-  and closed, and FIVE tickets are open — #108–#112, all `ready-for-agent`, with
-  #108 the next unblocked one and the batch's remaining spike**; run the
+- `.context/pick-up.md` — current frontier + landmines (currently: **#108 landed
+  and closed, and FIVE tickets are open — #109–#113, all `ready-for-agent`, with
+  #109 the next unblocked one; #113 was filed by #108's own measurement and the
+  batch has no spikes left**; run the
   frontier query anyway, it is the authority and this line has been wrong before.
   **30** driver files — 28 assertion drivers, two `gui-7x-probe` helpers and the
   observational `gui-scope-zoom-pill` — with **two standing environmental reds**,
@@ -383,6 +384,18 @@ tags: [context, overview]
   prompt is ever sent, which is the experiment rather than an economy. Re-run it
   after #112 lands — its phase-C AFTER counts turning non-zero is the fix's
   end-to-end evidence
+- `scripts/spike-108-turn-lifecycle.mjs` — the newest harness (#108) and **the one
+  to copy when a claim has a CONSEQUENCE and a REACHABILITY that can fail
+  separately**. Three phases: source facts as a drift alarm (asserted, never
+  cited), the SDK alone for the interrupt question, and the built app over its own
+  IPC for the send question — the last split again into *can a user do this* and
+  *what happens when it is done*, because fusing them can only answer the
+  conjunction. It counts sends at the IPC boundary with a second
+  `ipcMain.on('chat:send')` listener in main (gui-80's instrument), and its
+  witness for "the turn is still live" is **main's own overlap refusal** rather
+  than anything rendered. `SPIKE108_PHASES=A` re-runs the drift alarm alone in a
+  second; `B` and `C` cost real CLI turns. Re-run phase C2 after #113 lands — it
+  is that fix's end-to-end evidence
 - `scripts/spike-97-mint-budget.mjs` — the sixth harness (#97) and **the odd one
   out**: it drives the built WINDOW through playwright-core instead of the CLI,
   so it imports no app module and needs `npm run build` first. **Copy it for
@@ -503,10 +516,22 @@ tags: [context, overview]
   since `turn-aborted` and `error` clear `busy` without reading the id back; the
   rail's control is untouched and `tests/sidebar.test.tsx` needed no edit; see
   [[2026-08-04-a-refusal-belongs-where-the-fact-lives]]) is **closed**.
-  **As of 2026-08-04 FIVE issues are open — #108–#112, all
-  `ready-for-agent`**, none blocked; #108 is the next unblocked one and the
-  batch's remaining spike. #111 was
-  filed by #104's own review and #112 by #105's measurement.
+  **#108** (`aa8e683`, a **spike** — two claims that came apart in opposite
+  directions: a second `chat:send` under a live turn really does tell the renderer
+  the turn ended, measured at **518ms** with main **still holding `turnResolve`**,
+  witnessed by main refusing a real composer send moments later rather than by
+  anything rendered; but **no input device can produce that second send** — only a
+  same-task double dispatch does, and the realistic case is refused by the
+  **emptied draft** rather than by the busy flag, so the composer is held shut by
+  a UI convenience while `chat:send` has no check at all, filed as **#113** on
+  that warrant; the hung-interrupt half is **closed on the measurement**, 6/6
+  driven interrupts answered at 4–29ms, on #78's precedent; **no `src/` diff**;
+  see [[2026-08-04-the-composer-is-held-shut-by-a-draft-clear-not-a-guard]]) is
+  **closed**.
+  **As of 2026-08-04 FIVE issues are open — #109–#113, all
+  `ready-for-agent`**, none blocked; #109 is the next unblocked one and the batch
+  has no spikes left. #111 was
+  filed by #104's own review, #112 by #105's measurement and #113 by #108's.
   Run the frontier query rather than trusting this line
 
 ## Conventions
