@@ -9,21 +9,23 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Landed this leg (2026-08-04) — #100, `be4e5e7`
+## Landed this leg (2026-08-04) — #101, `752a9a5`
 
-**Delayed session work can no longer move the pane backwards.** One monotonic
-pane generation in `useChat` fences transcript adoption and both independent
-`currentSessionId` continuations. `openSession` targets main only if its adoption
-committed, so pane, active row, watch and engine stay on the latest user action.
+**An unreadable subagent store no longer claims that no agents exist.**
+`listSubagents` preserves `resolveSessionDir(...).status === 'unavailable'` as
+`null`; an ordinary missing session and a missing `subagents/` directory remain
+`[]`. `readSubagentTranscript` keeps its separate lenient contract unchanged.
 
-Gate green: typecheck clean, **986 tests / 64 files** (+4), build clean. Four
-explicit out-of-order tests were mutation-verified, including the engine target
-separately from pane state.
+Gate green: typecheck clean, **987 tests / 64 files** (+1), build clean. The root
+failure test was red first (`expected null, received []`) and mutation-verified
+by making the root readable; exact unreadable and empty Agents-dock copy is
+pinned.
 
-## Frontier: TEN OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
+## Frontier: NINE OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
 
-**Next unblocked, lowest-numbered: #101** — `listSubagents` reports an unreadable
-store root as “no agents.” Live `blocked_by` is 0. Run the query anyway.
+**Next unblocked, lowest-numbered: #102** — the open subagent viewer freezes its
+transcript at the first disk read. Live `blocked_by` is 0; #99 is closed. Run the
+query anyway.
 
 ```text
 gh issue list --state open --label ready-for-agent
@@ -32,8 +34,7 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 
 | # | subject | blocked by |
 |---|---|---|
-| **101** | unreadable subagent store collapses to “no agents” | — |
-| **102** | open viewer freezes its transcript at first disk read | — |
+| **102** | open viewer freezes its transcript at first disk read | — (#99 closed) |
 | **103** | composer Escape can dismiss two things | — |
 | **104** | successful turn never drains a still-open subagent | — |
 | **105** | **spike** — model pick may empty models/commands | — |
@@ -44,39 +45,44 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 | **110** | close inside debounce drops final window bounds | — |
 
 `ready-for-human` is forbidden while owner is AFK. Stuck ticket keeps
-`ready-for-agent`, gets precise comment, and stops relay.
+`ready-for-agent`, gets a precise comment, and stops the relay.
 
-## What #101 requires
+## What #102 requires
 
-Read full ticket. `subagent-store.ts`'s docstring is correct; code is wrong.
-Prefer distinguishing `unavailable` at `listSubagents` call site so shared
-`readSubagentTranscript` leniency stays untouched.
+Read the full ticket. Reuse the trigger `AgentsDock` already uses: pass
+`lastTurn` from `App` to `SubagentDrawer`, and re-read on its turn-end nonce.
+This is a disk refresh after a turn, not streaming.
 
 Required tests:
 
-1. Store-root enumeration failure returns `null`.
-2. Readable root with no target session returns `[]`.
-3. Agents dock shows exact unreadable copy for `null` and exact empty copy for
-   `[]`.
-4. Existing non-ENOENT subagent-directory failure pin stays green.
-5. Make root readable and watch criterion 1 red.
+1. Open the viewer and resolve a short transcript; assert it.
+2. Emit `turn-end`, resolve a distinct longer transcript, and assert the new
+   message appears while the original remains established.
+3. Emit an ordinary streaming event and assert `subagentTranscript` call count
+   does not increase.
+4. Existing first-open argument pin remains green.
+5. Remove the turn trigger and watch criterion 2 red.
 
-## Landmines from #100
+Preserve the effect cleanup/async guard. A late result from the previous read
+must not overwrite the newer one. No timer, spinner, refresh affordance,
+per-event disk read, streaming path, or visual change.
 
-- Controlled promise resolution must use async `act()`. `waitFor` on absence can
-  pass before a stale microtask runs; the first four tests did exactly that.
-- Guarding only pane writes is incomplete. A stale `openSession` can still call
-  `targetSession(old)` unless adoption reports whether it committed.
-- `adoptSession` keeps transcript-read then watch-install order deliberately.
-- Same-id `openSession` early return and single `busy` source remain load-bearing.
+## Landmines from #101
+
+- `fakeIo({})` means the store root itself cannot enumerate; it does **not** mean
+  a readable store containing no session. Seed some sibling/session file when a
+  test needs the readable-miss branch.
+- `null` means unreadable and `[]` means none spawned. Do not collapse them in a
+  new call site.
+- Exact dock copy is now pinned in both states.
 
 ## Still-live batch landmines
 
 - #105 and #108 are spikes: harness + findings + recommendation, no `src/` diff.
-- #107 remains only data-loss ticket, but queue order is lowest-numbered.
+- #107 remains the only data-loss ticket, but queue order is lowest-numbered.
 - `gui-75` and `gui-52` have standing environmental reds; reproduce solo before
   treating either as a regression.
-- Never hardcode model name. Never read `~/.claude/daemon/roster.json`.
+- Never hardcode a model name. Never read `~/.claude/daemon/roster.json`.
 - Absence assertions need a surviving positive control and mutation evidence.
 - Squash-merged ticket branches need `git branch -D`.
 
@@ -86,14 +92,14 @@ AFK grant does not reopen standing calls outside this seed:
 
 1. Tailwind adopt-utilities half.
 2. Titlebar control count, pinned at 8.
-3. Whether 12px is right line box for 11px muted descriptions.
-4. Whether accent clause enumeration changes after #97.
-5. Whether glass ban reaches a `var(--surface)` pane.
+3. Whether 12px is the right line box for 11px muted descriptions.
+4. Whether the accent clause enumeration changes after #97.
+5. Whether the glass ban reaches a `var(--surface)` pane.
 
 ## Baseline
 
-`main` = `be4e5e7`, pushed and level with `origin/main`; no ticket branch.
-Typecheck clean, **986 tests / 64 files**, build clean.
+`main` = `752a9a5`, pushed and level with `origin/main`; no ticket branch.
+Typecheck clean, **987 tests / 64 files**, build clean.
 
 ## Related
 
