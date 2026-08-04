@@ -390,10 +390,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **the #98–#114
-  batch is fully drained, and a NEW batch of three is open — spec #115 with
-  spikes #116 and #117 under it, all `ready-for-agent`, neither slice blocked,
-  #116 next. BOTH SLICES ARE SPIKES and must stay spikes — no `src/` diff**; run
+- `.context/pick-up.md` — current frontier + landmines (currently: **#116 is
+  delivered and closed, leaving #117 as the only `ready-for-agent` ticket — a
+  SPIKE that must stay one, no `src/` diff. #118 was filed BY #116 and is
+  `needs-info`, blocked on four owner calls parked on #115; do not take it**; run
   the frontier query anyway, it is the authority and this line has been wrong before.
   **31 `gui-*.mjs`** — 30 assertion drivers plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
@@ -474,6 +474,23 @@ tags: [context, overview]
   debounce fired before the close, since that run never entered the window the
   ticket is about. Re-run it after any Electron upgrade that could change when a
   `webContents` stops accepting sends
+- `scripts/spike-116-at-mentions.mjs` — the newest harness (#116) and **the one to
+  copy when your instrument's own denial might not be enforced**. Its first
+  version printed a confident `YES` having denied tools through `canUseTool` —
+  which the ambient `permissions.defaultMode: bypassPermissions` meant the SDK
+  never consulted, so "answered without tools" meant "answered using tools the
+  harness never saw". It now denies with `disallowedTools` (removed from the
+  model's context), keeps `canUseTool` as a **recorder**, and reports **both**
+  witnesses per arm — consultations AND `tool_use` blocks seen in the stream —
+  with `toolRemovalHeld` gating the verdict so a surviving tool makes a run
+  unscored rather than quietly wrong. Also carries the **bogus-subtype negative
+  control** every control-protocol probe here now needs (`Unsupported control
+  request subtype: …`), without which a `success` is indistinguishable from a
+  dispatcher that swallows anything. Three questions: `@` resolution (three arms,
+  run-random sentinel), the `file_suggestions` route (probed by CALLING, both
+  binaries, two workspaces), and the cost of enumerating the workspace in-process.
+  `SPIKE116_PHASES=0,2` re-runs the zero-turn half. Needs
+  `node --experimental-strip-types`
 - `scripts/spike-97-mint-budget.mjs` — the sixth harness (#97) and **the odd one
   out**: it drives the built WINDOW through playwright-core instead of the CLI,
   so it imports no app module and needs `npm run build` first. **Copy it for
@@ -654,14 +671,22 @@ tags: [context, overview]
   [[2026-08-04-a-green-suite-does-not-prove-a-sound-toolchain]]) is **closed**.
   **#113** (`dadacbe`) and **#114** (`acaaa3a`, a spike, NOT REPRODUCED over 76
   scored pairs) closed, draining the #98–#114 batch entirely.
-  **As of 2026-08-05 THREE issues are open — spec #115 with slices #116 and
-  #117, all `ready-for-agent`**, neither slice blocked; #116 is next. They were
-  filed by an autonomous `/preset vibe init` run from two asks the owner left
-  before sleeping (`@` file references in the composer; a backdrop that does not
-  flatten when unfocused), and **both slices are SPIKES with no `src/` diff** —
-  in each case the fact deciding the build's shape is unmeasured, so *build only
-  if measured* forbids speccing the build. Six owner calls are parked on #115.
-  See [[2026-08-05-a-declared-wire-type-is-not-a-callable-route]].
+  **#116** (`bd0fed5`, a **spike**, no `src/` diff — `@path` in ordinary prompt
+  text measured **already resolved** by the CLI through this app's own option
+  shape, so the send half of the feature ships today with no code; the
+  `file_suggestions` route measured **reachable by CALLING** — refuting #115's
+  standing "the SDK cannot send it", which came from a bundle grep and was the
+  absent-method error one level down — but **not a picker**, an empty query
+  returning the workspace top level while 18/18 non-empty prefixes returned zero
+  in-workspace matches on both binaries; an in-process walk priced at **3ms/356
+  files** against a second `child_process` spawn; build filed as **#118**; see
+  [[2026-08-05-a-denial-the-runtime-never-consults-is-not-a-denial]]) is
+  **closed**.
+  **As of 2026-08-05 THREE issues are open — spec #115, spike #117
+  (`ready-for-agent`, unblocked, and the only ready ticket), and build #118
+  (`needs-info`)**. #118 was filed by #116 and waits on four of the six owner
+  calls parked on #115; answering them flips it to `ready-for-agent` with no
+  other change. #117 is a **SPIKE with no `src/` diff**.
   Run the frontier query rather than trusting this line
 
 ## Conventions

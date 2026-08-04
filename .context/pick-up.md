@@ -9,75 +9,76 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Target: #116, then #117 — both SPIKES
+## Target: #117 — a SPIKE, and the only ready ticket
 
-`gh issue list --state open` should return **three**: spec **#115** and its two
-slices, **#116** and **#117**, all `ready-for-agent`, neither slice blocked.
+`gh issue list --state open` should return **three**: spec **#115**, spike
+**#117** (`ready-for-agent`, unblocked), and the new build ticket **#118**
+(`needs-info`, blocked on four owner calls — do **not** take it).
 
 Run the query anyway — it is the authority over this file, and this line has been
-wrong before (leg 5 wrote that the queue would be empty and #71 was unblocked the
-whole time).
+wrong before (leg 5 of a previous chain wrote that the queue would be empty while
+#71 was unblocked the whole time).
 
 ```text
 gh issue list --state open
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-Take **#116** first — lower number; neither blocks the other.
+## #117 is a spike and must stay one
 
-**Read `.claude/vibe.md` before starting either.** It holds every question, the
-grepped warrant behind each answer, and the four refutations that changed the
-work — two of which killed the main thread's own findings.
+Sweep every win32 route to a backdrop that does not flatten on blur, **priced**.
+Adopt nothing. Reverse no ADR. **`git diff --stat -- src/` empty is part of the
+gate.** It ends by filing its own build ticket with a decided shape, or by
+declining it and saying why. Killing its own premise is a successful outcome
+(#78 measured and built nothing).
 
-## These are spikes and must stay spikes
+`.claude/vibe.md` holds the grill record behind #115–#117. Read it and #117
+before starting.
 
-Harness/sweep, findings, recommendation. **`git diff --stat -- src/` empty** is
-part of the gate here. Each spike ends by filing its own build ticket with a
-decided shape, or by declining it and saying why. **Do not build the feature in
-the spike leg** — the record's rule is *build only if measured*, and #78 is the
-precedent that measured and then built nothing.
+## Landed this leg (2026-08-05)
 
-## Landed this session (2026-08-05) — no commit to `src/`
+**#116 closed — `bd0fed5`**, spike, no `src/` diff. Gate green: typecheck,
+**1044/70** (baseline unchanged), build. Filed **#118**. Posted a correction
+comment on **#115**.
 
-Spec **#115** plus spikes **#116** / **#117**, filed by an autonomous
-`/preset vibe init` run. `.claude/relay-leg.md` rewritten for this queue; the
-previous run archived to `.claude/vibe-98-110.md`; two MVD sections appended to
-`happy-path.md`. Gate not re-run — nothing under `src/`, `tests/` or
-`package.json` moved.
+## New landmines from this leg
 
-## New landmines from this run
+- **`canUseTool` is NOT a control surface** — it is a request the ambient
+  permission mode may never make. `settingSources` defaults to loading **all**
+  filesystem settings, and this machine's `permissions.defaultMode` is
+  `bypassPermissions`, so a harness denying tools through `canUseTool` denies
+  **nothing** and reports "answered without tools" when tools were used. Deny
+  with `disallowedTools`; count `tool_use` blocks in the stream as a second,
+  independent witness. Arm A of `spike-116` is the evidence: **1 consultation,
+  3 blocks**.
+- **A bundle grep is still reading names.** #115's standing "the SDK cannot send
+  `file_suggestions`" came from zero occurrences in `sdk.mjs` and is **refuted** —
+  every named control method wraps a generic `request({subtype})` dispatcher.
+  Probe by CALLING, and pair it with a **bogus-subtype negative control**, or a
+  `success` proves nothing.
+- **`@path` already resolves** through this app's option shape. Do not build a
+  renderer-side expansion; #118's first required test is that sent text stays
+  byte-identical.
+- **The CLI's `file_suggestions` is not a picker** — empty query returns the
+  workspace top level, 18/18 non-empty prefixes returned zero in-workspace
+  matches, on both binaries.
+- **An out-of-workspace suggestion leak was observed once and NOT reproduced**
+  (4 rounds × 7 probes, after excluding binary, `options.env`, handle age and
+  probe order). Unexplained, **not refuted** — treat workspace scoping as the
+  app's job.
+- Harness scripts import `.ts` from `src/`, so they need
+  `node --experimental-strip-types` on this Node (22.17). Use `fileURLToPath`,
+  never `URL.pathname` — this repo's path contains a space.
 
-- **A declared wire type is not a callable route.** `file_suggestions` is
-  declared at `sdk.d.ts:3041` and is in the `SDKControlRequestInner` union at
-  `:3729` — but that union is **direction-agnostic** (it also holds
-  `SDKControlPermissionRequest`, which travels CLI→SDK). The bundle this app
-  imports (`sdk.mjs`) contains **zero** occurrences of it; only `bridge.mjs`
-  (the `./bridge` export, not loaded here) implements it, **inbound**.
-- **An absent method name is not an absent route** — #88 records
-  `mcpServerStatus()` implemented over a generic subtype dispatcher. **Probe by
-  CALLING**, never by matching names (#90).
-- **Nothing in `src/main/` enumerates the open workspace.** `pick-folder` and
-  `attachments:pick` are dialogs; the only `readdir` walks `~/.claude/projects`.
-- **`--disable-gpu` is NOT why a driver cannot judge acrylic** — `gui-69.mjs:9-11`
-  launches *without* it on purpose; the reason is **DWM compositing over a
-  wallpaper**. And an honestly-unfocused window under automation is itself
-  unsolved: `win.blur()` moves `isFocused()` not at all, and a minimised window
-  still reports itself focused (#75).
-- **"Mica doesn't flatten" is NOT established** — only the app's own copy and the
-  ADR it was derived from say so, and neither is an observation. Assert nothing.
-- **Electron is `43.2.0`**, the same major the 2026-07-23 ADR spoke about,
-  so that ADR has not aged out. `visualEffectState` exists but is `@platform
-  darwin`; win32 has no stay-active flag.
-
-## Still-live landmines from the previous batch
+## Still-live landmines from earlier legs
 
 - **A lost target is not a dead process** (#114) — write the exit code into
   committed findings, never only to the console.
 - **This CLI emits no `init` during warm-up** (#114). Gate "the engine is live"
-  on `listModels()` answering non-empty.
+  on `listModels()`/`supportedCommands()` answering non-empty.
 - **An instrument that fails its own setup reports that as the phenomenon**
-  (#114, three times in one leg) unless the verdict requires a scored
-  observation first.
+  unless the verdict requires a scored observation first (#114, three times in
+  one leg — and once more this leg).
 - **A green suite is evidence about the code only if the runner is sound**
   (#112's leg) — `git stash push -u && npm test` first.
 - **A spike harness must be taught the fix, or it reports the fix as its own
@@ -91,11 +92,11 @@ previous run archived to `.claude/vibe-98-110.md`; two MVD sections appended to
 
 ## Do not decide these
 
-Six owner calls are parked on **#115** and were deliberately not taken: whether
-Mica survives blur · whether the flip is now worth a dependency · the `@`
-trigger-window rule · cursor-insert vs replace · what the `@` list excludes and
-whether it is capped · whether an accepted `@` reference joins the attachment
-tray. A leg needing one of these should say so on the ticket and stop.
+Six owner calls parked on **#115**, none taken. Four now block **#118**: the `@`
+trigger window · cursor-insert vs replace · list exclusions and cap · attachment
+tray membership. Two are #117's context: whether Mica survives blur · whether the
+flip is worth a dependency. A leg needing one should say so on the ticket and
+stop.
 
 The five standing calls from the previous batch also remain closed: the Tailwind
 adopt-utilities half · titlebar control count · the 12px line box for 11px muted
@@ -103,17 +104,15 @@ descriptions · the accent clause enumeration after #97 · whether the glass ban
 reaches a `var(--surface)` pane.
 
 **`ready-for-human` is ALLOWED this queue** — the owner is asleep, not away.
-This differs from the 2026-08-04 batch on purpose.
 
 ## Baseline
 
-`main` = `3ecdb9e`, level with `origin/main` before this session's `.context/` +
-`.claude/` commit; no ticket branch. Typecheck / tests / build unchanged from
-that commit — this session touched no `src/`.
+`main` = `bd0fed5`, level with `origin/main` before this leg's `.context/`
+commit; no ticket branch. Typecheck / tests / build green at that commit; no
+`src/` change this leg.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[happy-path]]
-- [[2026-08-05-a-declared-wire-type-is-not-a-callable-route]]
+- [[2026-08-05-a-denial-the-runtime-never-consults-is-not-a-denial]]
 - `.claude/vibe.md` — the run that filed #115–#117
-- `.claude/vibe-98-110.md` — the previous run, archived

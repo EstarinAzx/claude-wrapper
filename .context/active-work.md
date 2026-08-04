@@ -7,82 +7,73 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-05 by Opus 5 (auto), autonomous `/preset vibe init` run_
-_At commit: uncommitted — `.context/` + `.claude/` only, no `src/` change_
+_Last updated: 2026-08-05 by Opus 5 (auto), relay leg 1 (`/relay N=1 .claude/relay-leg.md`)_
+_At commit: `bd0fed5`_
 
 ## Current focus
 
-**A fresh two-ticket queue, both spikes.** The owner filed two asks in one
-sentence before going to sleep — `@` file references in the composer, and "an
-option to enable permanent acrylic or something that doesn't flatten when
-unfocused" — and an autonomous grill turned them into **spec #115** with
-**#116** and **#117** under it. Neither is a build ticket, deliberately: in both
-cases the fact that decides the build's shape is unmeasured, and *build only if
-measured* forbids speccing past that.
+**#116 is delivered and closed; #117 is the whole remaining queue.** #116 was a
+spike and stayed one — harness, findings, recommendation, no `src/` diff. Its
+follow-up build is filed as **#118**, deliberately `needs-info` rather than
+`ready-for-agent`: four of its behaviours are owner calls parked on #115.
 
 ## State
 
-- **In flight:** nothing. No `src/` file was touched this session.
-- **Done this session:** filed #115 (spec), #116 (`@` reachability spike), #117
-  (win32 backdrop route sweep). Rewrote `.claude/relay-leg.md` for the new
-  queue. Archived the previous run to `.claude/vibe-98-110.md` and wrote a fresh
-  `.claude/vibe.md`. Appended two MVD sections to `happy-path.md`.
-- **Gate:** not re-run — nothing under `src/`, `tests/` or `package.json` moved.
-  Baseline on `main` remains **1044 tests / 70 files**; read it from `main`.
-- **Queue:** #116 and #117, both `ready-for-agent`, neither blocked.
-- **Blocked:** nothing. Six owner calls are parked on #115 but block no ticket.
+- **In flight:** nothing.
+- **Done this leg:** #116 closed (`bd0fed5`) — `scripts/spike-116-at-mentions.mjs`
+  + `spike-116-findings.json`. Filed **#118**. Posted a correction comment to
+  **#115** (its "no SDK route to ask" conclusion is refuted).
+- **Gate:** typecheck clean, **1044 tests / 70 files** (the `main` baseline,
+  unchanged — nothing under `src/` or `tests/` moved), build clean.
+- **Queue:** **#117** only (`ready-for-agent`, unblocked). #118 is `needs-info`.
+- **Blocked:** #118, on four owner calls. Nothing blocks #117.
 
 ## Pick up here
 
-Take **#116** (lower number, and neither blocks the other). Read the ticket, its
-parent **#115**, and `.claude/vibe.md` — that file holds every question, the
-grepped warrant behind each answer, and the refutations that changed the work.
+Take **#117** — the win32 backdrop route sweep. It is a **spike and must stay
+one**: sweep, findings, priced routes, `git diff --stat -- src/` empty. It
+adopts nothing and reverses no ADR.
 
-**#116 and #117 are SPIKES and must stay spikes**: harness/sweep, findings,
-recommendation, `git diff --stat -- src/` empty. Each ends by filing its own
-build ticket with a decided shape, or declining it and saying why. Killing its
-own premise is a successful outcome.
+Run the frontier query rather than trusting this line.
 
 ## Skills for next session
 
-- `superpowers:verification-before-completion` — both tickets are spikes; every
-  claim must name the run it came from.
+- `superpowers:verification-before-completion` — #117 is a spike; every claim
+  must name the run it came from.
 
 ## Open questions
 
-Six, all parked on **#115**, all reversible, none blocking a ticket: whether Mica
-actually survives blur · whether the flip is now worth a dependency · the `@`
-trigger-window rule · cursor-insert vs replace · what the `@` list excludes and
-whether it is capped · whether an accepted `@` reference joins the 10-slot
-attachment tray. **A leg that needs one of these should say so on the ticket and
-stop, not guess.**
+Six parked on **#115**, none blocking #117. Four are `@`-shaped and now have a
+ticket waiting on them (**#118**): trigger window · cursor-insert vs replace ·
+exclusions and cap · attachment-tray membership. Answering those four flips #118
+to `ready-for-agent` with no other change. The two backdrop calls — whether Mica
+survives blur, and whether the flip is worth a dependency — are #117's context
+and remain the owner's.
 
-`ready-for-human` is **allowed** this queue — the owner is asleep, not away, so a
-ticket parked overnight is answered in hours. This differs from the 2026-08-04
-batch on purpose.
+`ready-for-human` is **allowed** this queue (the owner is asleep, not away).
 
 ## Recent context
 
-- **A declared wire type is not a callable route.** `file_suggestions` is
-  declared in `sdk.d.ts` and sits in the `SDKControlRequestInner` union, but that
-  union is **direction-agnostic**. The bundle this app imports (`sdk.mjs`) has
-  **zero** occurrences of it; only `bridge.mjs` implements it, **inbound**. The
-  SDK answers that request, it does not send it.
-- **An absent method name is not an absent route** — #88 records
-  `mcpServerStatus()` implemented over a generic subtype dispatcher. Both spikes
-  must **probe by calling** (#90's lesson).
-- **Nothing in `src/main/` enumerates the open workspace.** `@` is a new
-  main-side surface with a new trust boundary, not a reskin of the `/` popover.
-- **`--disable-gpu` is not why a driver cannot judge acrylic** — `gui-69.mjs`
-  launches *without* it; the reason is DWM compositing. And producing an
-  honestly-unfocused window under automation is itself unsolved (#75).
-- **"Mica doesn't flatten" is not established by the record** — only by the app's
-  own copy and the ADR it came from. Do not assert it.
+- **The `@` send path already works.** Measured, not assumed: `@path` in ordinary
+  prompt text is resolved by the CLI through this app's exact `query()` options
+  shape. #118 is therefore typing assistance only, and its sharpest pin is that
+  sent text stays byte-identical.
+- **#115's "no SDK route to ask" is refuted** — `query.request({subtype:
+  'file_suggestions'})` is accepted. The bundle grep was reading names one level
+  below the method list. Correction posted on #115.
+- **But the route is not a picker** — empty query returns the workspace top
+  level; 18/18 non-empty prefixes returned zero in-workspace matches.
+- **`canUseTool` is not a control surface.** It is a request the ambient
+  permission mode may never make — this machine's `defaultMode` is
+  `bypassPermissions`, so a harness denying through it denied nothing. Use
+  `disallowedTools`, and count `tool_use` blocks as a second witness.
+- **An out-of-workspace suggestion leak was seen once and not reproduced.**
+  Recorded as unexplained, not refuted.
 
 ## Related
 
 - [[overview]]
 - [[pick-up]]
 - [[decisions]]
-- [[happy-path]]
+- [[2026-08-05-a-denial-the-runtime-never-consults-is-not-a-denial]]
 - [[2026-08-05-a-declared-wire-type-is-not-a-callable-route]]
