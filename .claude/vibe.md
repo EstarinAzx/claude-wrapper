@@ -10,8 +10,12 @@ pressure: anthropic/claude-opus-5
 pressure_via: opus        # direct family route, no slot rebind, no restore owed
 excluded: sonnet (codex/gpt-5.6-sol) — quota exhausted, owner-stated
 max_defer: 12
-phase: spec
+phase: fired
 halted: false
+relay: FIRED — 2 `ready-for-agent` spikes (#116, #117) under spec #115, body
+  `.claude/relay-leg.md`, rewritten first because its previous text announced a
+  thirteen-ticket queue and forbade `ready-for-human` under an AFK grant that
+  does not apply tonight (asleep, not away).
 ---
 
 ## The seed, split into what it authorises
@@ -259,3 +263,8 @@ auth, secrets or anything published outward. `max_defer: 12` — **no halt**.
 - [boot] Pre-grill recon found the acrylic ask twice-rejected on the record
   (`.context/decisions.md:58` and `:105`) and `AppearanceDock.tsx:84-88` naming
   the exact request. Handed to Partner as a hydration pointer, not as an answer.
+- [fired] Halt check passed: 6 defer entries against `max_defer: 12`, **zero**
+  flagged `reversible: NO`, grill fork taken (not wayfind), `to-tickets`
+  produced spec #115 + slices #116/#117. No slot rebind was used
+  (`pressure_via: opus` is a direct family route), so no route restore was owed
+  on this or any halt path.
