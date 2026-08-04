@@ -313,9 +313,9 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#104 landed
-  and closed, and SEVEN tickets are open — #105–#111, all `ready-for-agent`, with
-  #105 the next unblocked one and a SPIKE**; run the frontier query anyway, it is
+- `.context/pick-up.md` — current frontier + landmines (currently: **#105 landed
+  and closed, and SEVEN tickets are open — #106–#112, all `ready-for-agent`, with
+  #106 the next unblocked one**; run the frontier query anyway, it is
   the authority and this line has been wrong before.
   **30** driver files — 28 assertion drivers, two `gui-7x-probe` helpers and the
   observational `gui-scope-zoom-pill` — with **two standing environmental reds**,
@@ -345,6 +345,23 @@ tags: [context, overview]
   transfer to any harness: a `null` status classified as terminal (matching
   `engine.ts`, an absent status is a progress tick), and a filter on a field that
   was never recorded, which made its own predicate unconditionally true
+- `scripts/spike-105-model-pick-channels.mjs` — the newest harness (#105) and
+  **the one to copy when an empty result has more than one possible cause**. Its
+  design is a cause-separation rather than a measurement: three phases, each
+  killing one candidate explanation, because `gui-52`'s standing red made "the
+  CLI has no models" and "the engine is null" produce the same empty array.
+  Phase A asks the CLI directly with no Electron in the picture (the app's real
+  `cli-path.ts` / `backend-mode.ts`, `engine.ts`'s option shape) and got **119
+  commands / 15 models**, which kills the confound at the source; phase B asserts
+  `src/main/index.ts`'s handler bodies mechanically so the harness fails loudly
+  when the code moves under it; phase C drives the **built app over its own IPC**
+  through playwright-core. Its independent witness is the **process tree** — the
+  SDK's query is a child of Electron's main process, so engine teardown has an
+  OS-level signature that knows nothing about arrays. Costs **zero CLI turns**:
+  every read is `supportedModels()`/`supportedCommands()` on a warm query and no
+  prompt is ever sent, which is the experiment rather than an economy. Re-run it
+  after #112 lands — its phase-C AFTER counts turning non-zero is the fix's
+  end-to-end evidence
 - `scripts/spike-97-mint-budget.mjs` — the sixth harness (#97) and **the odd one
   out**: it drives the built WINDOW through playwright-core instead of the CLI,
   so it imports no app module and needs `npm run build` first. **Copy it for
@@ -439,9 +456,19 @@ tags: [context, overview]
   **reachable but intermittent** — LATE 14519ms, early 1699ms, LATE 13126ms across
   three runs — with `drainSubagents()` still forbidden on the success branch; see
   [[2026-08-04-a-late-subagent-edge-is-a-race-and-reachability-is-the-finding]])
-  is **closed**. **As of 2026-08-04 SEVEN issues are open — #105–#111, all
-  `ready-for-agent`**, none blocked; #105 is the next unblocked one and is a
-  **spike**. #111 was filed by #104's own review.
+  is **closed**. **#105** (`0aae906`, a **spike** — picking a model, flipping
+  permission or flipping backend leaves **both** live read channels empty until
+  the next send, measured **15 → 0 models and 119 → 0 commands across 6/6 warmed
+  runs** of the built app driven over its own IPC with no prompt sent; the
+  ticket's stated confound measured **FALSE** — the CLI itself answers 119
+  commands and 15 models here — and the emptiness **attributed** to the nulled
+  handle by an OS-level witness, the SDK's query being a child process of main,
+  which was seen still alive while the app answered `[]`; remedy priced at a
+  **median 1539ms per pill click** and filed as #112, **no `src/` diff**; see
+  [[2026-08-04-an-empty-list-is-attributed-not-observed]]) is **closed**.
+  **As of 2026-08-04 SEVEN issues are open — #106–#112, all
+  `ready-for-agent`**, none blocked; #106 is the next unblocked one. #111 was
+  filed by #104's own review and #112 by #105's measurement.
   Run the frontier query rather than trusting this line
 
 ## Conventions
