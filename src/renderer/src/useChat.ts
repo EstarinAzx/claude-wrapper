@@ -125,9 +125,23 @@ export const useChat = () => {
   const pendingReloadRef = useRef(false)
   const paneGenerationRef = useRef(0)
 
-  useEffect(() => {
-    busyRef.current = busy
-  }, [busy])
+  // `busy` and its ref move TOGETHER, always, through here.
+  //
+  // The ref is not a second flag — it is the same fact, read from the places
+  // React's committed state cannot answer: the event handlers' stale closures
+  // (#57) and, since #113, a second commit inside ONE task, where the state is
+  // still whatever the last render saw.
+  //
+  // It used to be synced by an effect, which is one tick too late in BOTH
+  // directions. Going up, that tick is the whole of #113's defect. Going down it
+  // is worse and less obvious: #80's queued flush runs from InputBar's effect,
+  // and a child's effects run before its parent's — so a ref synced in App would
+  // still read `true` when the flush asks, and the queued prompt would be
+  // refused by the guard meant for a double send. A pin caught exactly that.
+  const markBusy = useCallback((next: boolean): void => {
+    busyRef.current = next
+    setBusy(next)
+  }, [])
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
@@ -240,7 +254,7 @@ export const useChat = () => {
         setMessages((prev) => [...prev, { id: uid(), role: 'notice', text: e.text }])
       } else if (e.type === 'turn-end') {
         assistantIdRef.current = null
-        setBusy(false)
+        markBusy(false)
         setLastTurn(endedTurn('turn-end'))
         const generation = paneGenerationRef.current
         void window.api.currentSessionId().then((id) => {
@@ -256,7 +270,7 @@ export const useChat = () => {
           ),
           { id: uid(), role: 'error', text: e.message }
         ])
-        setBusy(false)
+        markBusy(false)
         setLastTurn(endedTurn('error'))
       } else if (e.type === 'turn-aborted') {
         assistantIdRef.current = null
@@ -268,7 +282,7 @@ export const useChat = () => {
           ),
           { id: uid(), role: 'notice', text: 'Stopped' }
         ])
-        setBusy(false)
+        markBusy(false)
         setLastTurn(endedTurn('turn-aborted'))
       }
     })
@@ -391,7 +405,23 @@ export const useChat = () => {
   const send = useCallback(
     (raw: string, attachments: Attachment[] = []) => {
       const text = raw.trim()
-      if ((!text && attachments.length === 0) || busy) return
+      // #113 — THE ANSWER TO THE ORPHAN BUBBLE, and the reason it reads the ref
+      // as well as the state. The bubble is appended below BEFORE `sendPrompt`,
+      // so a send main will refuse would leave a user message with no reply. Of
+      // the two answers the ticket allows, this is "stop appending until the
+      // send is accepted", decided locally: the renderer already knows it has a
+      // send in flight, so it needs nothing back from main to know this second
+      // one is not going anywhere.
+      //
+      // `busy` alone cannot see it. Two commits inside ONE task both read the
+      // state as it was at render — false — which is the only dispatch that
+      // reaches main at all (#108 measured every other one refused by the
+      // emptied draft). `markBusy` writes the ref synchronously, so the second
+      // commit reads what the first one did rather than what React last
+      // rendered. This is NOT a second busy flag: it is the same `busyRef` the
+      // event handlers already read for their own stale-closure reason, and
+      // every write to either goes through `markBusy`, so they cannot disagree.
+      if ((!text && attachments.length === 0) || busy || busyRef.current) return
       // From here on we are driving this session, not watching it.
       stopTail()
       assistantIdRef.current = null
@@ -401,7 +431,7 @@ export const useChat = () => {
       const message: Extract<ChatMessage, { role: 'user' }> = { id: uid(), role: 'user', text }
       if (attachments.length) message.attachments = attachments
       setMessages((prev) => [...prev, message])
-      setBusy(true)
+      markBusy(true)
       window.api.sendPrompt({ text, attachments })
     },
     [busy, stopTail]
@@ -432,8 +462,7 @@ export const useChat = () => {
     const transcript = id === null ? [] : await window.api.loadTranscript(id)
     if (generation !== paneGenerationRef.current) return false
     assistantIdRef.current = null
-    setBusy(false)
-    busyRef.current = false
+    markBusy(false)
     // Every adoption path arrives on a rebuilt or freshly-targeted engine — the
     // workspace transaction rebuilds it, `targetSession` closes and nulls it so
     // the next send builds one. Either way the dead engine this flag described
@@ -488,7 +517,7 @@ export const useChat = () => {
     ++paneGenerationRef.current
     stopTail()
     assistantIdRef.current = null
-    setBusy(false)
+    markBusy(false)
     setFailedTranscript(null)
     setEngineDead(false)
     setMessages([])

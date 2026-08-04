@@ -1,7 +1,7 @@
 {
   "spike": 108,
   "question": "Can a second send, or a hung interrupt, strand the turn lifecycle? Both mechanisms are confirmed by reading; this measures reachability.",
-  "measuredAt": "2026-08-04T04:59:27.485Z",
+  "measuredAt": "2026-08-04T06:49:07.779Z",
   "environment": {
     "backendMode": "wisped",
     "hostCliUsed": true,
@@ -15,7 +15,7 @@
     "repeats": 3
   },
   "phaseA_sourceFacts": {
-    "chatSendGuardsBusy": false,
+    "chatSendGuardsBusy": true,
     "overlapRejectionExists": true,
     "overlapUsesOnEventParam": true,
     "rendererClearsBusyOnError": true,
@@ -27,7 +27,7 @@
   },
   "claim1_secondSend": {
     "skipped": false,
-    "secondSendReachedMainFromAUserPath": true,
+    "secondSendReachedMainFromAUserPath": false,
     "reachableWithoutSyntheticDispatch": false,
     "paths": [
       {
@@ -37,8 +37,8 @@
         "busyBefore": false,
         "drafted": true,
         "settled": true,
-        "sendsAdded": 2,
-        "refusedBy": "nothing — both commits sent",
+        "sendsAdded": 1,
+        "refusedBy": "renderer busy ref or emptied draft (indistinguishable from outside)",
         "composerAfter": {
           "queued": false,
           "valueEmpty": true
@@ -67,8 +67,8 @@
         "busyBefore": false,
         "drafted": true,
         "settled": true,
-        "sendsAdded": 2,
-        "refusedBy": "nothing — both commits sent",
+        "sendsAdded": 1,
+        "refusedBy": "renderer busy ref or emptied draft (indistinguishable from outside)",
         "composerAfter": {
           "queued": false,
           "valueEmpty": true
@@ -87,163 +87,53 @@
     "consequence": {
       "recovery": {
         "sendsAdded": 1,
-        "rejectedAgain": true,
+        "rejectedAgain": false,
         "startedATurn": false,
-        "measuresPersistence": true
+        "measuresPersistence": false
       },
       "drove": true,
       "sendsAdded": 1,
-      "clearedAtMs": 518,
+      "clearedAtMs": 4589,
       "busyClearedWhileTurnLive": true,
-      "overlapErrorShown": true,
-      "assistantCharsAtClear": 174,
-      "assistantCharsLater": 821,
+      "overlapErrorShown": false,
+      "assistantCharsAtClear": 772,
+      "assistantCharsLater": 868,
       "paneGrewAfterClear": true,
-      "turnStillLiveAfterClear": true,
+      "turnStillLiveAfterClear": false,
       "sendLabelAfterClear": "Send",
-      "busyLater": false
+      "busyLater": false,
+      "survivedMs": 4589,
+      "windowHeld": true
     },
-    "consequenceReal": true,
+    "consequenceReal": false,
     "consequenceWitnessed": true,
-    "verdict": "TWO ANSWERS. The CONSEQUENCE is real and witnessed: a second send under a live turn is answered with a turn-terminal error on the second caller, the renderer clears busy while main still holds turnResolve, and the send slot goes back to Send with no Stop on screen for a turn that is still running. The wrong state also does not clear itself — a real prompt sent from the composer right afterwards is refused with the same overlap error, which is simultaneously the proof the turn was still live. The USER PATH is not established: only a same-task double dispatch produces two sends, and no input device delivers two events in one task — the case that models real input timing produced one. So the defect is latent, and what holds it shut is React committing between two discrete events rather than any guard: chat:send in main has none at all."
+    "consequenceRefusedByGuard": true,
+    "verdict": "CLOSED BY #113, MEASURED HERE. chat:send now guards on the engine’s own isBusy() before the second onEvent is ever constructed. The probe reached main (so the instrument ran) and NO overlap error was ever rendered — pre-fix that bubble was on screen 518ms after the probe, and it was what cleared busy on a live turn. Read the clear carefully: busy DID go false, at 4589ms, and that is the turn's own end rather than the probe — no overlap error accompanied it and the retry immediately after was accepted rather than refused, so main was no longer holding turnResolve. That is the difference this run measures: 518ms and turn-terminal, versus the turn's whole remaining life and nothing. What it does NOT re-measure is the original defect, which stands in the pre-fix findings; re-confirming it would mean reverting the guard. The user-path answer is unchanged and was never the point — but note C1 now records ONE send for same-task and enter+click where it recorded two, because the renderer stopped issuing a second commit it would only have orphaned a bubble for."
   },
   "claim2_hungInterrupt": {
-    "skipped": false,
-    "runs": 6,
-    "driven": 6,
+    "skipped": true,
+    "runs": 0,
+    "driven": 0,
     "discardedTurnAlreadyFinished": 0,
-    "answered": 6,
+    "answered": 0,
     "hung": 0,
     "hangObserved": false,
     "interruptRejectedEver": false,
     "interruptMissingEver": false,
-    "latencyMs": {
-      "min": 4,
-      "median": 11,
-      "max": 29
-    },
+    "latencyMs": null,
     "byCase": {
       "text": {
-        "driven": 3,
-        "answered": 3,
+        "driven": 0,
+        "answered": 0,
         "hung": 0
       },
       "tool": {
-        "driven": 3,
-        "answered": 3,
+        "driven": 0,
+        "answered": 0,
         "hung": 0
       }
     },
-    "runs_detail": [
-      {
-        "case": "text",
-        "repeat": 1,
-        "drove": true,
-        "notDrivenReason": null,
-        "droveOn": "assistant text",
-        "interruptedAtMs": 10461,
-        "interruptRejected": false,
-        "interruptMissing": false,
-        "resultOutcome": "result",
-        "result": {
-          "ms": 10465,
-          "subtype": "error_during_execution",
-          "isError": true
-        },
-        "interruptToResultMs": 4,
-        "messagesAfterInterrupt": 3
-      },
-      {
-        "case": "text",
-        "repeat": 2,
-        "drove": true,
-        "notDrivenReason": null,
-        "droveOn": "assistant text",
-        "interruptedAtMs": 9908,
-        "interruptRejected": false,
-        "interruptMissing": false,
-        "resultOutcome": "result",
-        "result": {
-          "ms": 9912,
-          "subtype": "error_during_execution",
-          "isError": true
-        },
-        "interruptToResultMs": 4,
-        "messagesAfterInterrupt": 3
-      },
-      {
-        "case": "text",
-        "repeat": 3,
-        "drove": true,
-        "notDrivenReason": null,
-        "droveOn": "assistant text",
-        "interruptedAtMs": 10535,
-        "interruptRejected": false,
-        "interruptMissing": false,
-        "resultOutcome": "result",
-        "result": {
-          "ms": 10540,
-          "subtype": "error_during_execution",
-          "isError": true
-        },
-        "interruptToResultMs": 5,
-        "messagesAfterInterrupt": 3
-      },
-      {
-        "case": "tool",
-        "repeat": 1,
-        "drove": true,
-        "notDrivenReason": null,
-        "droveOn": "tool_use block",
-        "interruptedAtMs": 11074,
-        "interruptRejected": false,
-        "interruptMissing": false,
-        "resultOutcome": "result",
-        "result": {
-          "ms": 11103,
-          "subtype": "error_during_execution",
-          "isError": true
-        },
-        "interruptToResultMs": 29,
-        "messagesAfterInterrupt": 2
-      },
-      {
-        "case": "tool",
-        "repeat": 2,
-        "drove": true,
-        "notDrivenReason": null,
-        "droveOn": "tool_use block",
-        "interruptedAtMs": 7998,
-        "interruptRejected": false,
-        "interruptMissing": false,
-        "resultOutcome": "result",
-        "result": {
-          "ms": 8010,
-          "subtype": "error_during_execution",
-          "isError": true
-        },
-        "interruptToResultMs": 12,
-        "messagesAfterInterrupt": 2
-      },
-      {
-        "case": "tool",
-        "repeat": 3,
-        "drove": true,
-        "notDrivenReason": null,
-        "droveOn": "tool_use block",
-        "interruptedAtMs": 7968,
-        "interruptRejected": false,
-        "interruptMissing": false,
-        "resultOutcome": "result",
-        "result": {
-          "ms": 7979,
-          "subtype": "error_during_execution",
-          "isError": true
-        },
-        "interruptToResultMs": 11,
-        "messagesAfterInterrupt": 2
-      }
-    ],
+    "runs_detail": [],
     "verdict": "MECHANISM REAL, HANG NOT OBSERVED. interrupt() completes nothing locally, so a CLI that accepts an interrupt and never returns a result would leave the UI busy with no way out. It did not happen: every driven interrupt was answered. An all-answered run does not prove it cannot happen — it bounds the exposure at this sample size. Two things a reader should carry: `driven` excludes any repeat whose turn produced its result before the interrupt was issued, so the latencies below are interrupts and not manners; and the subtype following an interrupt is NOT a reliable abort marker — both error_during_execution and success have been observed after a genuine one across runs of this harness, which is why engine.ts keying on its own `interrupting` flag rather than on the subtype is the correct reading."
   },
   "harnessFailures": [],

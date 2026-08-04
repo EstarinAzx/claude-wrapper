@@ -101,6 +101,15 @@ const REPEATS = Number(process.env['SPIKE108_REPEATS'] ?? 3)
 // as `skipped` rather than as a negative result.
 const PHASES = (process.env['SPIKE108_PHASES'] ?? 'ABC').toUpperCase()
 
+// How long C2 watches for the probe's consequence, and the yardstick it is
+// judged against. 518ms is the PRE-FIX clear, measured by this harness before
+// #113 and recorded in the committed findings — the probe's error bubble was on
+// screen by then. It is a fixed historical number, not a threshold to tune: a
+// post-fix run that cannot outlive it by a wide margin has not measured
+// anything, which is what `windowHeld` refuses.
+const C2_WINDOW_MS = 20000
+const PREFIX_CLEAR_MS = 518
+
 const fails = []
 const fail = (message) => {
   fails.push(message)
@@ -168,7 +177,13 @@ const sourceFacts = {
     runTurnBody !== null &&
     /if \(turnResolve !== null\)\s*\{\s*onEvent\(\{ type: 'error'/.test(runTurnBody),
   // Claim 1's third link: the renderer treats every error as turn-terminal.
-  rendererClearsBusyOnError: errorBranch !== null && /setBusy\(false\)/.test(errorBranch),
+  // Matches `markBusy` too — #113 routed every busy write through one helper so
+  // the ref and the state cannot disagree. Reading only `setBusy` here would
+  // have reported "the renderer no longer clears busy on error", which is false:
+  // it still does, through a differently-named call. A source fact that tracks a
+  // spelling rather than a behaviour reports a rename as a fix.
+  rendererClearsBusyOnError:
+    errorBranch !== null && /(setBusy|markBusy)\(false\)/.test(errorBranch),
   // Claim 2: interrupt sets a flag, calls the SDK, and completes nothing locally.
   interruptSetsFlag: interruptBody !== null && /interrupting = true/.test(interruptBody),
   interruptCallsSdk: interruptBody !== null && /currentQuery\?\.interrupt\?\.\(\)/.test(interruptBody),
@@ -805,9 +820,23 @@ if (PHASES.includes('C')) {
     // absent (with an emptied composer) means the first submit's own draft clear
     // did — which is a UI convenience, not a guard, and that distinction is the
     // whole difference between "protected" and "not yet broken".
+    //
+    // #113 made this a THREE-way choice and the note can no longer separate the
+    // last two. `useChat.send` now also refuses on a synchronously-written busy
+    // ref, which sits BELOW submit's two returns: it raises no note and appends
+    // no bubble, exactly like the emptied draft. From outside the app the two
+    // are indistinguishable, so the label says so rather than keeping the old
+    // answer — which was correct only while the ref guard did not exist, and
+    // would now be a measured-looking claim that is simply false.
     const after = await composerState()
     const refusedBy =
-      added > 1 ? 'nothing — both commits sent' : after.queued ? 'busy flag (queued note raised)' : 'emptied draft (no queued note)'
+      added > 1
+        ? 'nothing — both commits sent'
+        : after.queued
+          ? 'busy flag (queued note raised)'
+          : sourceFacts.chatSendGuardsBusy && sameTask
+            ? 'renderer busy ref or emptied draft (indistinguishable from outside)'
+            : 'emptied draft (no queued note)'
     console.log(`  ${key.padEnd(14)} ${added} send(s) reached main — refused by: ${refusedBy}`)
     return {
       key,
@@ -920,7 +949,7 @@ if (PHASES.includes('C')) {
       let clearedAtMs = null
       let atClear = null
       const t0 = Date.now()
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < C2_WINDOW_MS / 500; i++) {
         await page.waitForTimeout(500)
         const state = await composerState()
         const busy = await isBusy()
@@ -994,6 +1023,14 @@ if (PHASES.includes('C')) {
         drove: true,
         sendsAdded: sendsAfter - sendsBefore,
         clearedAtMs,
+        // NAMED FOR THE PRE-FIX WORLD, AND IT DOES NOT MEASURE ITS OWN NAME.
+        // This is `busy went false`, nothing more — the loop breaks on the
+        // turn's ordinary end just as readily as on the probe's error, so in a
+        // FIXED app it is true for the most boring reason there is. Whether the
+        // turn was still live is `turnStillLiveAfterClear`, which is a separate
+        // measurement (main refusing the retry). Read the two together or not at
+        // all; #79 recorded the same trap in the other direction, an instrument
+        // scoring a gate's success as the artifact it was hunting.
         busyClearedWhileTurnLive: atClear !== null && atClear.busy === false,
         overlapErrorShown: atClear !== null && atClear.overlapErrors > before.overlapErrors,
         assistantCharsAtClear: atClear?.assistantChars ?? null,
@@ -1010,12 +1047,23 @@ if (PHASES.includes('C')) {
         // The second-order consequence: with busy false the send slot is Send
         // again, so the user may now start a turn on top of a live one.
         sendLabelAfterClear: atClear?.sendLabel ?? null,
-        busyLater
+        busyLater,
+        // How long the probe rode a live turn with NOTHING turn-terminal
+        // arriving. Pre-fix this was 518ms and ended in the overlap error; with
+        // #113's guard the same probe buys the turn's whole remaining life, so
+        // the clear that ends this window is the turn's own end.
+        survivedMs: clearedAtMs ?? C2_WINDOW_MS,
+        // REFUSES a run that did not hold its premise. A turn that died right
+        // after the probe would show no clear "caused by" the probe and no
+        // overlap error — indistinguishable from a working guard — so a window
+        // shorter than the pre-fix failure is scored as nothing, not as a fix.
+        windowHeld: (clearedAtMs ?? C2_WINDOW_MS) >= PREFIX_CLEAR_MS * 3
       }
       console.log(
         `  probe: ${c2.sendsAdded} send(s) added, busy cleared ${c2.busyClearedWhileTurnLive}` +
           ` at ${c2.clearedAtMs}ms, overlap error ${c2.overlapErrorShown},` +
-          ` turn still live after clear ${c2.turnStillLiveAfterClear}` +
+          ` turn still live after clear ${c2.turnStillLiveAfterClear},` +
+          ` survived ${c2.survivedMs}ms (window held ${c2.windowHeld})` +
           ` (pane ${c2.assistantCharsAtClear} → ${c2.assistantCharsLater} chars),` +
           ` send slot ${JSON.stringify(c2.sendLabelAfterClear)}`
       )
@@ -1057,7 +1105,28 @@ const claim1 = {
     c2.drove === true && c2.busyClearedWhileTurnLive === true && c2.overlapErrorShown === true,
   // Witnessed by main refusing the retry — the fact in dispute reported from
   // inside the process that holds it — with pane growth as corroboration.
-  consequenceWitnessed: c2.turnStillLiveAfterClear === true || c2.paneGrewAfterClear === true
+  consequenceWitnessed: c2.turnStillLiveAfterClear === true || c2.paneGrewAfterClear === true,
+  // #113's evidence, and the reason this is a separate answer rather than the
+  // absence of the two above. A harness that only knows how to confirm its own
+  // premise reports a FIXED app exactly as it reports one it failed to drive —
+  // both are "not confirmed" — which is the trap #112's phase B fell into.
+  //
+  // So the fixed state is asserted POSITIVELY and requires all four: the guard
+  // is in the source, the probe's send really did reach main (so the instrument
+  // ran), and neither consequence followed it. Drop any one and this stays
+  // false.
+  // Deliberately NOT `busyClearedWhileTurnLive === false`. Busy still clears in
+  // a fixed app — when the turn ends, which is its job. What must never happen
+  // again is the probe causing it, and the marker for that is the overlap error
+  // the second caller's onEvent rendered. So: the guard is in the source, the
+  // probe really reached main, no overlap error was ever shown, and the turn
+  // outlived the probe by a wide multiple of the pre-fix failure latency.
+  consequenceRefusedByGuard:
+    c2.drove === true &&
+    sourceFacts.chatSendGuardsBusy === true &&
+    c2.sendsAdded === 1 &&
+    c2.overlapErrorShown === false &&
+    c2.windowHeld === true
 }
 
 const findings = {
@@ -1080,8 +1149,9 @@ const findings = {
   },
   claim1_secondSend: {
     ...claim1,
-    verdict:
-      'TWO ANSWERS. The CONSEQUENCE is real and witnessed: a second send under a live turn is answered with a turn-terminal error on the second caller, the renderer clears busy while main still holds turnResolve, and the send slot goes back to Send with no Stop on screen for a turn that is still running. The wrong state also does not clear itself — a real prompt sent from the composer right afterwards is refused with the same overlap error, which is simultaneously the proof the turn was still live. The USER PATH is not established: only a same-task double dispatch produces two sends, and no input device delivers two events in one task — the case that models real input timing produced one. So the defect is latent, and what holds it shut is React committing between two discrete events rather than any guard: chat:send in main has none at all.'
+    verdict: claim1.consequenceRefusedByGuard
+      ? `CLOSED BY #113, MEASURED HERE. chat:send now guards on the engine’s own isBusy() before the second onEvent is ever constructed. The probe reached main (so the instrument ran) and NO overlap error was ever rendered — pre-fix that bubble was on screen 518ms after the probe, and it was what cleared busy on a live turn. Read the clear carefully: busy DID go false, at ${c2.survivedMs}ms, and that is the turn's own end rather than the probe — no overlap error accompanied it and the retry immediately after was accepted rather than refused, so main was no longer holding turnResolve. That is the difference this run measures: 518ms and turn-terminal, versus the turn's whole remaining life and nothing. What it does NOT re-measure is the original defect, which stands in the pre-fix findings; re-confirming it would mean reverting the guard. The user-path answer is unchanged and was never the point — but note C1 now records ONE send for same-task and enter+click where it recorded two, because the renderer stopped issuing a second commit it would only have orphaned a bubble for.`
+      : 'TWO ANSWERS. The CONSEQUENCE is real and witnessed: a second send under a live turn is answered with a turn-terminal error on the second caller, the renderer clears busy while main still holds turnResolve, and the send slot goes back to Send with no Stop on screen for a turn that is still running. The wrong state also does not clear itself — a real prompt sent from the composer right afterwards is refused with the same overlap error, which is simultaneously the proof the turn was still live. The USER PATH is not established: only a same-task double dispatch produces two sends, and no input device delivers two events in one task — the case that models real input timing produced one. So the defect is latent, and what holds it shut is React committing between two discrete events rather than any guard: chat:send in main has none at all.'
   },
   claim2_hungInterrupt: {
     ...claim2,
@@ -1098,6 +1168,7 @@ writeFileSync(findingsPath, JSON.stringify(findings, null, 2) + '\n')
 console.log('\n--- finding ---')
 console.log(`claim 1 · consequence real (busy cleared on a live turn) : ${claim1.consequenceReal}`)
 console.log(`claim 1 · witnessed: the turn was still live afterwards : ${claim1.consequenceWitnessed}`)
+console.log(`claim 1 · REFUSED by #113's guard (probe reached main)   : ${claim1.consequenceRefusedByGuard}`)
 console.log(`claim 1 · a user path put 2 sends into main              : ${claim1.secondSendReachedMainFromAUserPath}`)
 console.log(`claim 1 · ... without synthetic same-task dispatch       : ${claim1.reachableWithoutSyntheticDispatch}`)
 for (const row of c1) {

@@ -44,6 +44,7 @@ import { announceTurn, isLooking, type AnnouncePorts } from './turn-announce'
 import type { DeleteStatus, FolderChoice } from '../shared/session-types'
 import { deleteSession, listSessions, readTranscript, titleHint } from './session-store'
 import { guardedDelete } from './delete-guard'
+import { guardedSend } from './send-guard'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
 import { listBackgroundSessions } from './agent-view'
 import { ensureListEngine, type ListEnginePorts } from './list-engine'
@@ -720,20 +721,35 @@ ipcMain.on('chat:send', (event, payload: unknown) => {
   if (!engine) {
     engine = makeEngine()
   }
-  // Bound once per turn, not once per event: this callback runs on every text
-  // delta. The ports still read focus LIVE — `isFocused` closes over the window
-  // rather than over a value — so hoisting costs the announcement nothing.
-  const announce = win ? announcePorts(win) : null
-  void engine.runTurn(
-    normalizeSendPayload(payload),
-    (e) => {
-      win?.webContents.send('chat:event', e)
-      // #75: the same event stream, read for a second question — did this turn
-      // just end while nobody was looking? Main answers it locally; no channel
-      // is added and the renderer is never consulted about window focus.
-      if (announce) announceTurn(announce, e)
+  const live = engine
+  // #113: refused HERE, before `startTurn` builds the callback below. `runTurn`
+  // rejects a second turn too, but it can only do so by CALLING that callback —
+  // which forwards to the renderer, which reads any error as turn-terminal and
+  // stops calling itself busy while the first turn is still streaming.
+  guardedSend(
+    {
+      isBusy: () => live.isBusy(),
+      startTurn: (sendPayload) => {
+        // Bound once per turn, not once per event: this callback runs on every
+        // text delta. The ports still read focus LIVE — `isFocused` closes over
+        // the window rather than over a value — so hoisting costs the
+        // announcement nothing.
+        const announce = win ? announcePorts(win) : null
+        void live.runTurn(
+          sendPayload,
+          (e) => {
+            win?.webContents.send('chat:event', e)
+            // #75: the same event stream, read for a second question — did this
+            // turn just end while nobody was looking? Main answers it locally;
+            // no channel is added and the renderer is never consulted about
+            // window focus.
+            if (announce) announceTurn(announce, e)
+          },
+          pendingResume ?? undefined
+        )
+      }
     },
-    pendingResume ?? undefined
+    normalizeSendPayload(payload)
   )
 })
 
