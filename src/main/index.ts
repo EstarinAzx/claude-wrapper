@@ -30,6 +30,7 @@ import {
   type Candidate
 } from '../shared/attachment-policy'
 import { isTrustedRendererUrl } from './navigation'
+import { makeBoundsReporter } from './bounds-reporter'
 import { createPermissionBroker } from './permission-broker'
 import { getSessionCwd, setSessionCwd } from './session'
 import { resetSessionIndex, resolveResumeTarget } from './session-index'
@@ -224,11 +225,6 @@ let releaseShowGate: (() => void) | null = null
 // push lands 300-400ms after construction, so this is roughly 4x headroom.
 const BOUNDS_GATE_TIMEOUT_MS = 1500
 
-// Long enough that a drag reports once when it settles rather than on every
-// pixel, short enough that closing the window straight after moving it still
-// stores the new position.
-const BOUNDS_REPORT_DEBOUNCE_MS = 250
-
 const createWindow = (): void => {
   const win = new BrowserWindow({
     width: 1100,
@@ -288,26 +284,20 @@ const createWindow = (): void => {
   const gateTimer = setTimeout(releaseShowGate, BOUNDS_GATE_TIMEOUT_MS)
   win.once('show', () => clearTimeout(gateTimer))
 
-  // #79 — bounds change in MAIN, so main is what reports them. Debounced: the
-  // obvious version writes localStorage on every pixel of a drag.
-  //
-  // `getNormalBounds()` rather than `getBounds()` on purpose — it answers with
-  // the RESTORED rectangle while the window is maximised, so maximising never
-  // overwrites the remembered size with a full-screen one. Restoring the
-  // maximised STATE is deliberately out of scope for #79; this is what keeps
-  // that omission from corrupting what is in scope.
-  let reportTimer: NodeJS.Timeout | null = null
-  const reportBounds = (): void => {
-    if (reportTimer) clearTimeout(reportTimer)
-    reportTimer = setTimeout(() => {
-      if (win.isDestroyed()) return
-      win.webContents.send('bounds:changed', win.getNormalBounds())
-    }, BOUNDS_REPORT_DEBOUNCE_MS)
-  }
-  win.on('resize', reportBounds)
-  win.on('move', reportBounds)
+  // #79 — bounds change in MAIN, so main is what reports them; debounced,
+  // because the obvious version writes localStorage on every pixel of a drag.
+  // The debounce, the `getNormalBounds()` choice and #110's flush all live in
+  // `bounds-reporter.ts`, which is where they can be unit-tested.
+  const boundsReporter = makeBoundsReporter(win, (bounds) =>
+    win.webContents.send('bounds:changed', bounds)
+  )
+  win.on('resize', boundsReporter.report)
+  win.on('move', boundsReporter.report)
+  // #110 — `close`, not `closed`. A report still owed at this moment has no
+  // later to run in, and by `closed` the `webContents` is gone to send through.
+  win.on('close', boundsReporter.flush)
   win.on('closed', () => {
-    if (reportTimer) clearTimeout(reportTimer)
+    boundsReporter.cancel()
     clearTimeout(gateTimer)
     releaseShowGate = null
   })
