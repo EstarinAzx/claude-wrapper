@@ -7,63 +7,72 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 5 (`relay-leg`)_
-_At commit: `b9ca7f0` on `main`, pushed and level with `origin/main`_
+_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 6 (`relay-leg`)_
+_At commit: `333bded` on `main`, pushed and level with `origin/main`_
 
 ## Current focus
 
-**#102 landed and closed.** An open subagent viewer now re-reads its disk
-transcript when `lastTurn.nonce` changes instead of freezing at its opening
-snapshot. Next frontier is **#103**: the composer's slash-popover Escape handler
-prevents the default but does not stop propagation, so one key can dismiss both
-the popover and viewer.
+**#103 landed and closed.** The composer's popover-open Escape branch now stops
+propagation, preserving the stated one-Escape/one-dismissal invariant. Next
+frontier is **#104**: measure whether a subagent terminal message really arrives
+after `result/success`; only build the out-of-band status port if it does.
 
 ## State
 
 - **In flight:** nothing. Ticket branch was squash-merged and deleted; only this
   `.context/` handoff is pending.
-- **Done this session:** #102 as `b9ca7f0`. `App` passes `lastTurn` to
-  `SubagentDrawer`; its existing guarded read effect also keys on the nonce.
-- **Gate:** typecheck clean; **988 tests across 64 files** green (+1); build clean.
-- **Mutation evidence:** removing `lastTurn?.nonce` left `finished snapshot`
-  absent. The restored dependency passed. An ordinary `text-delta` leaves
-  `subagentTranscript` at one call.
-- **Queue:** eight open, #103 through #110, all `ready-for-agent`; none
-  `ready-for-human`. Live blocker count for #103 is 0.
+- **Done this session:** #103 as `333bded`. `InputBar` adds one
+  `stopPropagation()` inside only its popover-open Escape branch.
+- **Gate:** typecheck clean; **990 tests across 64 files** green (+2); build clean.
+- **Mutation evidence:** deleting `stopPropagation()` closes the viewer and reds
+  the positive collision test. With no popover, composer Escape still reaches
+  and closes the viewer.
+- **Queue:** seven open, #104 through #110, all `ready-for-agent`; none
+  `ready-for-human`. Live blocker count for every ticket is 0.
 - **Blocked:** nothing.
 
 ## Pick up here
 
-Take **#103** after re-running the frontier query. Read the whole ticket. Measure
-its post-#99 reachability in-run: open the slash popover, mouse-open the viewer,
-then press Escape and record whether both still dismiss.
+Take **#104** after re-running the frontier query. Read the whole ticket. First
+extend the spike-harness pattern to measure whether a real subagent terminal
+message lands after `result/success`, and by how much. Record the result before
+changing production code.
 
-TDD the one-line production fix in `InputBar.tsx`: while a popover is open,
-Escape dismisses it and calls `stopPropagation()`. Pin both surfaces positively
-and prove Escape with no popover still reaches the existing outer handler. Do
-not change `SubagentDrawer`, `Sidebar`, or surrounding key handling.
+If no late message arrives, close #104 with evidence and build nothing. If it
+does, TDD a dedicated `EnginePorts` callback following #83's
+`onBackgroundTasks` precedent. The callback must bypass `emit`, whose
+`activeOnEvent` is null between turns. Never call `drainSubagents()` on success:
+it reports a still-running async agent as failed.
 
 ## Skills for next session
 
-- `superpowers:test-driven-development` — add both Escape propagation pins red
-  before the one-line production change.
-- `run` — drive the built app for ticket-required reachability measurement.
+- `superpowers:systematic-debugging` — measure the claimed late-message ordering
+  before accepting the proposed cause.
+- `superpowers:test-driven-development` — port wiring and ordering pins must go
+  red before implementation if measurement authorizes the build.
 - `superpowers:verification-before-completion` — full test/typecheck/build gate
   before landing.
 
 ## Open questions
 
-None for #103. `ready-for-human` remains forbidden while owner is AFK.
+None for #104. Its measurement decides whether code is warranted.
+`ready-for-human` remains forbidden while owner is AFK.
 
 ## Recent context
 
-- The first #102 test passed vacuously: its first `turn-end` also moved
-  `activeSessionId` from null to `sess-1`, already rerunning the effect. The real
-  pin establishes turn one before opening and tests turn two.
-- #102 preserved the existing effect cleanup flag, so a late previous read
-  cannot overwrite the newer transcript.
-- No durable decision was appended; #102 extends the established `LastTurn`
-  trigger without changing its contract.
+- Post-#99, #103's prescribed physical sequence no longer double-dismisses:
+  both surfaces are mounted, focus sits on the viewer Close button, and Escape
+  closes only the viewer while the popover remains. This was measured in the
+  built Electron window and recorded on the ticket.
+- The latent propagation bug remained test-reachable by dispatching Escape at
+  the composer. Both surfaces were asserted open first; the fix is still one
+  line and preserves no-popover propagation.
+- #104's closest measurement is #81's 3.3-second late **task-level** event. That
+  does not prove the separate `subagent` event follows the same timing.
+- A successful turn must not drain subagents as failed. #104's remedy, if
+  authorized, is an out-of-band status port modeled on #83.
+- No durable decision was appended for #103; it enforces an invariant already
+  stated in `Sidebar` rather than choosing new behavior.
 
 ## Related
 

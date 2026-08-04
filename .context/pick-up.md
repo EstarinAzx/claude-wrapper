@@ -9,23 +9,28 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Landed this leg (2026-08-04) — #102, `b9ca7f0`
+## Landed this leg (2026-08-04) — #103, `333bded`
 
-**The open subagent viewer no longer freezes at its first disk read.** `App`
-passes the established `lastTurn` signal into `SubagentDrawer`; its guarded
-transcript effect re-runs on the nonce. Ordinary stream events trigger no disk
-read, and the existing cleanup still blocks stale async responses.
+**One composer Escape now dismisses one surface.** `InputBar` calls
+`stopPropagation()` only when its slash popover is open. Positive tests prove
+the popover closes while the viewer stays open, and prove a composer Escape
+with no popover still reaches and closes the viewer.
 
-Gate green: typecheck clean, **988 tests / 64 files** (+1), build clean. The
-second-turn refresh test was red first and mutation-verified by removing the
-nonce dependency. Its first version exposed a test trap: turn one also changes
-`sessionId`, so the test must establish that turn before opening the viewer.
+Gate green: typecheck clean, **990 tests / 64 files** (+2), build clean. Removing
+`stopPropagation()` mutation-reds the collision test because the dialog
+vanishes.
 
-## Frontier: EIGHT OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
+Real-window reachability after #99 was measured and recorded on #103: opening
+the popover, then mouse-opening the viewer, leaves both mounted but moves focus
+to `.subagent-drawer-close`. A physical Escape therefore closes only the viewer
+and leaves the popover mounted. The easy user route is gone; the latent event
+contract is now pinned anyway.
 
-**Next unblocked, lowest-numbered: #103** — the composer handles Escape inside
-its slash popover without stopping propagation, so one press can also close the
-viewer. Live `blocked_by` is 0. Run the query anyway.
+## Frontier: SEVEN OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
+
+**Next unblocked, lowest-numbered: #104** — a successful turn nulls
+`activeOnEvent` while an async subagent can still be running, so its later
+terminal status may reach nobody. Live `blocked_by` is 0. Run the query anyway.
 
 ```text
 gh issue list --state open --label ready-for-agent
@@ -34,8 +39,7 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 
 | # | subject | blocked by |
 |---|---|---|
-| **103** | composer Escape can dismiss two things | — |
-| **104** | successful turn never drains a still-open subagent | — |
+| **104** | successful turn may lose late subagent terminal status | — |
 | **105** | **spike** — model pick may empty models/commands | — |
 | **106** | failed clipboard-image read gets contradictory copy | — |
 | **107** | rail can delete session receiving first streaming turn | — |
@@ -46,32 +50,37 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 `ready-for-human` is forbidden while owner is AFK. Stuck ticket keeps
 `ready-for-agent`, gets a precise comment, and stops the relay.
 
-## What #103 requires
+## What #104 requires
 
-Read the full ticket. First measure reachability after #99: open the slash
-popover, mouse-open the viewer, press Escape, and record whether both dismiss.
-Land the fix regardless of that verdict: add `e.stopPropagation()` beside
-`preventDefault()` only in `InputBar`'s popover-open Escape branch.
+Read the full ticket. Measure before building: extend
+`scripts/spike-81-background-tasks.mjs`'s harness pattern, using #90's scrubbing
+rules, to observe whether a real `subagent` terminal message lands after
+`result/success` and how late.
 
-Required tests:
+- Record timing on #104 and in `.context/`, whichever way it comes out.
+- If no terminal message lands late, close with evidence and make no `src/`
+  change.
+- If it does, add a dedicated injected `EnginePorts` callback following #83's
+  `onBackgroundTasks` precedent. It must not route through `emit`.
+- Drive `taskStarted()` → `success` → late terminal notification, assert the
+  turn listener has already finished before the late push, then assert status
+  reaches `done`.
+- Positively pin that success never emits `subagent: 'failed'` for an agent still
+  running. Existing failure-branch drain tests stay untouched.
+- Mutation-verify both ordering/status tests.
 
-1. Establish popover and viewer both open; fire Escape at composer; assert the
-   popover closes and viewer remains open.
-2. With no popover open, assert Escape still reaches the existing outer handler.
-3. Remove `stopPropagation()` and watch criterion 1 red.
-4. Do not touch `SubagentDrawer`, `Sidebar`, or nearby key handling.
+## #104 landmines
 
-Record the reachability result on #103 whichever way it comes out.
-
-## Landmines from #102
-
-- A first `turn-end` also writes `activeSessionId`; a refresh test that starts
-  there can pass through the old `[sessionId]` dependency and prove no nonce
-  behavior. Establish turn one before opening, then test turn two.
-- `SubagentDrawer`'s `live` cleanup is load-bearing against older reads applying
-  after newer ones. Do not weaken it in adjacent work.
-- The viewer refresh keys on `lastTurn?.nonce`; ordinary stream events must not
-  read disk.
+- #81 measured a task **level** arriving 3.3s after success. `subagent` terminal
+  status travels a different path; do not treat that as this ticket's answer.
+- `emit` calls `activeOnEvent?.(event)`. A new port routed through it inherits
+  the exact between-turn drop.
+- `drainSubagents()` emits `failed`; calling it on success lies about async agents
+  that remain live and later succeed. This shortcut is explicitly forbidden.
+- `mergeAgents` deliberately lets live state beat disk. Do not invert it to hide
+  stale status.
+- `result.subtype === 'success'` can accompany `is_error`; do not reinterpret
+  that discriminator while here.
 
 ## Still-live batch landmines
 
@@ -95,8 +104,8 @@ AFK grant does not reopen standing calls outside this seed:
 
 ## Baseline
 
-`main` = `b9ca7f0`, pushed and level with `origin/main`; no ticket branch.
-Typecheck clean, **988 tests / 64 files**, build clean.
+`main` = `333bded`, pushed and level with `origin/main`; no ticket branch.
+Typecheck clean, **990 tests / 64 files**, build clean.
 
 ## Related
 
