@@ -27,24 +27,39 @@ The sleep grant removes **ownership** as a ground for deferring. It does **not**
 remove the need for a warrant, it licenses nothing irreversible, and it does not
 reopen the standing calls in `.context/pick-up.md` or the six owner calls on #115.
 
-## Current queue — ONE READY as of 2026-08-05 (leg 1 closed #116)
+## Current queue — EMPTY as of 2026-08-05 (the 2026-08-05 chain is COMPLETE)
 
-Take the lowest-numbered open, unblocked `ready-for-agent` ticket.
+Take the lowest-numbered open, unblocked `ready-for-agent` ticket. **As of the
+end of leg 2 there is none**, and the chain stopped rather than spawning a leg
+with nothing to take. Run the frontier query anyway — this table is a snapshot
+and the tracker is the authority.
 
-Filed by a `/preset vibe init` run on 2026-08-05. Its full record — every
-question, the grepped warrant, the cross-model verdict, and the four refutations
-that changed the work (two of which killed the main thread's *own* findings) — is
-`.claude/vibe.md`. **Read it, and parent spec #115, before starting the ticket.**
+The batch was filed by a `/preset vibe init` run on 2026-08-05. Its full record —
+every question, the grepped warrant, the cross-model verdict, and the four
+refutations that changed the work (two of which killed the main thread's *own*
+findings) — is `.claude/vibe.md`.
 
 | # | subject | state |
 |---|---|---|
 | ~~116~~ | ~~spike — is `@` file autocomplete reachable from this app at all?~~ | **CLOSED** `bd0fed5` (leg 1) |
-| **117** | **spike** — every win32 route to a backdrop that does not flatten on blur, priced | `ready-for-agent`, unblocked |
-| 118 | build — `@` file references in the composer | **`needs-info` — DO NOT TAKE** |
+| ~~117~~ | ~~spike — every win32 route to a backdrop that does not flatten on blur, priced~~ | **CLOSED** `50b6a8d` (leg 2) |
+| 115 | Spec (parent) — both slices delivered | **`ready-for-human`** — six owner calls |
+| 118 | build — `@` file references in the composer | **`needs-info`** — blocked on four of those six |
 
-Parent spec is **#115**. **#118 was filed by #116 and is blocked on four of the
-six owner calls parked on #115** — it is not a queue item until those are
-answered, and answering them is not a leg's call.
+**Both spikes stayed spikes.** Neither touched `src/`; #116 filed #118, #117
+declined to file a build ticket and said why (#78's precedent — it measured and
+built nothing). Everything remaining across the tracker is the owner's.
+
+**#115 was moved from `ready-for-agent` to `ready-for-human` by leg 2**, and that
+is load-bearing for any future chain: left `ready-for-agent` it is the
+lowest-numbered open unblocked issue, so the frontier query returns it and the
+next leg would either re-derive the delivered spikes or take an owner call. A
+delivered spec whose remainder is decisions is not an agent ticket.
+
+**When the queue refills** (answering four of #115's six calls flips #118 to
+`ready-for-agent` with no other change), re-run
+`/relay N=1 read and follow .claude/relay-leg.md` — the state file carries
+`stop: true` and will re-init rather than resume.
 
 Two corrections #116 produced that bind anything touching `@`:
 `query.request({subtype:'file_suggestions'})` **is** callable (the spec's
@@ -52,16 +67,38 @@ Two corrections #116 produced that bind anything touching `@`:
 prompt text is **already resolved** by the CLI — so the send path needs no code
 and must not be rewritten renderer-side.
 
-### #117 IS A SPIKE AND MUST STAY ONE
+### A spike must stay a spike
 
 Harness/sweep, findings, recommendation — **no `src/` diff**, which is part of the
-gate here (`git diff --stat -- src/` empty). Killing their own premise is a
-successful outcome. Each ends by filing its own build ticket with a decided
-shape, or declining it and saying why. **Do not build the feature in the spike
-leg** — the record's rule is *build only if measured* and #78 is the precedent
-that measured and then built nothing.
+gate (`git diff --stat -- src/` empty). Killing its own premise is a successful
+outcome. Each ends by filing its own build ticket with a decided shape, or
+declining it and saying why. **Do not build the feature in the spike leg** — the
+record's rule is *build only if measured* and #78 is the precedent that measured
+and then built nothing. Both #116 and #117 held this line.
 
-### The four landmines this run produced
+### What #117 added to the landmine list
+
+- **A callable route is not an effective one.** On win32, `setVibrancy` and the
+  `visualEffectState` constructor option are both *accepted* — bogus values
+  included — and both do **nothing**. A diff adding either produces no error, no
+  warning and no effect: alive in review, dead at runtime. "It did not throw" is
+  not a measurement of effect.
+- **`setBackgroundMaterial` has NO runtime whitelist** — any string is accepted;
+  only a non-string throws. `src/shared/backdrop.ts`'s compare-never-coerce guard
+  is the **only** whitelist in the system. Do not "simplify" it.
+- **A second window taking focus** produces an honestly-unfocused, still-visible,
+  un-minimised window with a real blur event. `blur()` is inert exactly as #75
+  recorded — this is the rung #75 was missing, and the way to drive any
+  focus-dependent capture.
+- **A richness score is not an occlusion control.** #117's first capture run
+  scored 595–1256 distinct colours on four photographs of a *terminal* on top of
+  the app, and passed its blankness check. Use a painted positive control.
+- **`page.screenshot()` cannot show a DWM backdrop at all** — the window is
+  transparent over a material drawn behind it. Only a desktop capture can.
+- **Node 22 refuses to spawn a `.cmd`** (`EINVAL`, CVE-2024-27980 mitigation), so
+  `spawnSync('npm', …)` fails here. Hit the registry with `fetch`.
+
+### The four landmines the 2026-08-05 grill produced
 
 - **Probe by CALLING, never by matching names.** #90's harness got its headline
   answer wrong that way, and #115's own grill made the same error twice — once
@@ -77,11 +114,12 @@ that measured and then built nothing.
 - **A driver capture is not evidence about acrylic appearance**, and the reason
   is DWM compositing over a wallpaper — **not** `--disable-gpu`. `gui-69.mjs`
   launches *without* that flag on purpose. #115's grill got this wrong first.
-- **Producing an honestly-unfocused window under automation is itself unsolved
-  here.** #75 measured that `win.blur()` moves `isFocused()` not at all and that
-  a minimised window still reports itself focused; only `hide()` moved both, and
-  `hide()` removes the window being photographed. #117's S4 is best-effort and
-  must say so rather than implying a capture shows the flip.
+- ~~**Producing an honestly-unfocused window under automation is itself unsolved
+  here.**~~ **SOLVED by #117** — a second window taking focus does it, and #75's
+  measurement of `blur()` as inert is confirmed rather than overturned. The
+  remaining half of this landmine stands: a capture must never imply it shows the
+  flip. #117's S4 says what its images do and do not show, and reports a pixel
+  delta whose own control arm is unstable rather than a conclusion.
 
 ### Six owner calls that must NOT be decided in a leg
 
