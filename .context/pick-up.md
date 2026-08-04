@@ -9,30 +9,26 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Landed this leg (2026-08-04) — #112, `e05f400`
+## Landed this leg (2026-08-04) — #113, `dadacbe`
 
-`model:set`, `permission:set-mode` and `backend:set-mode` call `discardEngine`
-and rebuild nothing, while `commands:list` and `model:list` were answered
-straight off that handle — so both went empty and stayed empty until the next
-send. Rebuilt **lazily at the two READ handlers** (`ensureListEngine`, the new
-`src/main/list-engine.ts`), with `discardEngine` and all three writers untouched
-and `pendingResume` threaded **into** `warmUp`.
+`chat:send` carried **no busy check at all**, so a second send under a live turn
+reached `runTurn`'s overlap branch, which answers on the **second** caller's
+`onEvent` — a fresh closure in `index.ts` forwarding to the same renderer, which
+treats every `error` as turn-terminal. The engine's own refusal was delivered as
+"your turn ended": 518ms, first turn still streaming, send slot back to "Send".
 
-Before/after **re-measured on this machine minutes apart** rather than compared
-against the committed #105 artifact: pre-fix 6/6 emptied at 0–1ms per read;
-post-fix 0/6, answering 15 models / 119 commands. The backend flip answers
-**15 → 5** — the smaller, mode-aware list — which is the no-cache contract
-demonstrated rather than cited.
+Refused now in `src/main/send-guard.ts`, **before the call site builds that
+closure**, on `delete-guard.ts`'s precedent. The orphan-bubble wrinkle is
+answered by never creating one: `useChat.send` declines to issue a second commit
+at all. That forced every write to `busy` through one `markBusy` helper — see the
+landmine below, it is the most transferable thing in this leg.
 
-Gate green: typecheck clean, **1034 tests / 68 files** (1026 + 8), build clean.
+Gate green: typecheck clean, **1044 tests / 70 files** (1034 + 10), build clean.
 
-**Also filed #114**, a spike, from that same required re-run (see below).
+## Frontier: ONE OPEN — #114, the last ticket
 
-## Frontier: TWO OPEN, BOTH `ready-for-agent`
-
-**Next unblocked, lowest-numbered: #113.** Live `blocked_by` is 0 for both.
-Run the query anyway — it is the authority over this table, and this line has
-been wrong before.
+Live `blocked_by` is 0. Run the query anyway — it is the authority over this
+table, and this line has been wrong before.
 
 ```text
 gh issue list --state open --label ready-for-agent
@@ -41,47 +37,13 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 
 | # | subject | blocked by |
 |---|---|---|
-| **113** | a second `chat:send` under a live turn tells the renderer the turn ended | — |
 | **114** | **spike** — does closing a live warmed engine and rebuilding it kill main? | — |
+
+**When #114 closes the queue is empty.** At that point: rewrite this file to
+"queue empty", commit `.context/` on main, signal the relay stop, spawn nothing.
 
 `ready-for-human` is forbidden while owner is AFK. Stuck ticket keeps
 `ready-for-agent`, gets a precise comment, and stops the relay.
-
-## What #113 requires
-
-`chat:send` has **no busy check at all**. A second send under a live turn reaches
-`runTurn`'s overlap branch, which answers on the **second** caller's `onEvent` —
-a fresh closure forwarding to the same renderer — and the renderer treats every
-`error` as turn-terminal, so `setBusy(false)` fires at **518ms** while the first
-turn is still streaming. The send slot reads "Send" again, so there is no Stop on
-screen for a turn that is still running, and the user's obvious recovery (type
-the prompt again) reproduces the same error.
-
-**The realistic case is refused by the emptied draft, not by a guard.**
-`InputBar.submit` clears `value` on the first commit, so a second Enter returns on
-`!text.trim()` before the busy branch is consulted — measured, with the queued
-note absent in that run, which is how it is known. Only a same-task double
-dispatch reaches main, and nothing but `useChat.send` calls `sendPrompt` today.
-
-**Fix it in main, where the fact lives** — before a second `onEvent` is attached.
-`switch-workspace.ts` and `delete-guard.ts` are the precedent for the shape.
-
-**The wrinkle the ticket demands an answer to:** `useChat.send` appends the user's
-bubble **before** calling `sendPrompt`, so a silent main-side refusal orphans that
-bubble. Either the refusal reports something the renderer can act on, or the
-renderer stops appending until the send is accepted — **pick one deliberately and
-say which**; the ticket rejects letting it fall out.
-
-Required coverage: (1) no turn-terminal event and `busy` stays true; (2) the
-first turn still finishes with its `turn-end`; (3) the orphan bubble answered;
-(4) **a test that the second send never reached `runTurn`** — a status-only
-assertion passes with the guard deleted; (5) re-run
-`scripts/spike-108-turn-lifecycle.mjs` phase C2 (`SPIKE108_PHASES=A` re-runs the
-drift alarm alone in a second; B and C cost real CLI turns).
-
-Out of scope, all decided upstream: making the renderer ignore `error` generally,
-disabling the composer while a turn runs (#80 built the queue instead), and any
-second busy flag.
 
 ## What #114 is, and what it is not
 
@@ -95,44 +57,55 @@ correct. It did **not** recur across the four later runs, one of which did
 
 The structural difference #112 introduced is real: `pickFolder` now closes a
 **live, warmed, never-run** query and constructs another in the same tick, every
-time, where before the writer had already torn it down. That path is not new (two
-consecutive folder picks did it already) but it went from rare to routine.
+time, where before the writer had already torn it down.
 
-**Its premise may well die under measurement, and that is a success.** Both
-mechanism and reachability are open and can fail separately — #108's shape.
+**A third sighting arrived this leg, on a different harness.** One
+`SPIKE108_PHASES=AC` run died with `electronApplication.evaluate: Resulting
+promise was garbage collected` mid-C1 and passed on re-run — no exception, no
+stderr, no reproduction. Carry it as an observation, not as a confirmation:
+"main went away quietly" is all the two share, and folding them together before
+measuring is exactly the premise this spike exists to test.
+
+**It is a SPIKE and must stay one** — harness, findings, recommendation, **no
+`src/` diff** (`git diff --stat -- src/` empty is part of its gate). Its premise
+may well die under measurement, and that is a success.
 
 ## Still-live batch landmines
 
+- **A ref synced by an effect is late in BOTH directions** (#113). `busyRef`
+  mirrored `busy` from a `useEffect`. Late upward is #113's whole defect. Late
+  downward broke #80's queued flush — **a child's effects run before its
+  parent's**, so InputBar asked while App's ref still read `true`. Every write
+  now goes through one `markBusy`. **A mirror maintained by an effect is a
+  mirror plus a window**; anything that reads inside the window disagrees exactly
+  when it matters.
+- **An instrument can be named for the world before the fix** (#113).
+  `busyClearedWhileTurnLive` computes `busy went false` and nothing more — in a
+  fixed app it is true because the turn ended. A verdict keyed on it scored a
+  working guard as a failure. Read it beside `turnStillLiveAfterClear`, never
+  alone.
+- **Wire the fake to the defect, or the test passes with the guard deleted**
+  (#113). The renderer tests only became evidence once the harness answered a
+  second send the way main was *measured* to answer it.
+- **A source fact that tracks a spelling reports a rename as a fix** (#113).
 - **A fix can move a cost instead of removing one** (#112). The first list read
-  after a pill click is now a **median ~5.5s** where it was 0–1ms and wrong
-  (1ms on a live engine). Almost all of it is `supportedCommands`, not query
-  construction. A third consumer of a list read inherits that wait.
+  after a pill click is now a **median ~5.5s** where it was 0–1ms and wrong. A
+  third consumer of a list read inherits that wait.
 - **A spike harness must be taught the fix, or it reports the fix as its own
-  failure** (#112). Phase B read only the writers, so a fixed app printed
-  `PREMISE: NOT CONFIRMED`. It now reads the READ handlers too.
+  failure** (#112). Applied three times this leg.
 - **A green suite is evidence about the code only if the runner is sound**
-  (#112's leg). `npm test` died with `SyntaxError: Unexpected token ')'` and no
-  file name; the cause was **one flipped byte** in
-  `node_modules/@vitest/mocker/dist/chunk-hoistMocks.js` — untracked, untouched,
-  with its original `mtime`. **`git stash push -u && npm test` on the clean tree**
-  separated "my change" from "this machine" in a minute; do that FIRST next time.
-  Reproducing the **recorded** baseline afterwards is what proves a repair, which
-  is why the exact counts in these files matter.
-- **Prefer a demonstration to a citation** (#112). The no-cache contract was
-  proven by the backend flip returning the *smaller* list (15 → 5), not by
-  quoting the handler comment.
-- **A gate can be a comment's belief, compiled** (#111). A justifying comment must
-  be re-derived against its dependencies, because the code agrees with it
-  perfectly.
+  (#112's leg). `git stash push -u && npm test` on the clean tree separates "my
+  change" from "this machine" in a minute; do that FIRST.
+- **Prefer a demonstration to a citation** (#112).
+- **A gate can be a comment's belief, compiled** (#111).
 - **A passing mutation proves the code, not the test** (#111). When a mutation
   survives, the next move is a **compound** mutation removing the reason it did.
 - **A message that is never SENT leaves no artifact** (#110) — assert on the port.
-- **A remedy crossing a process boundary needs a witness on each side** (#110).
 - **A "before" run needs a positive control** (#110), or "nothing changed" is
   trivially true; and an instrument should **refuse** runs that missed the window.
 - **Ordering a check before a mutation is necessary and not sufficient** (#109).
-- **A "tear down, then report X" mutation passes a status-only assertion** (#109).
-  Assert port by port that nothing was reached — #113 names the same trap.
+- **A "tear down, then report X" mutation passes a status-only assertion** (#109,
+  #113). Assert port by port that nothing was reached.
 - **Ask the process that holds the fact** (#108).
 - **An empty list is ATTRIBUTED, not observed** (#105).
 - **`gui-52`'s red is DOUBTFUL** — #105 measured the CLI returning 15 models /
@@ -142,8 +115,8 @@ mechanism and reachability are open and can fail separately — #108's shape.
 - Never hardcode a model name. Never read `~/.claude/daemon/roster.json`.
 - Absence assertions need a surviving positive control and mutation evidence.
 - **A single sample cannot measure an asynchronous event** (#104, #105).
-- Ticket baselines are stale for the sixth consecutive ticket: read the count from
-  `main`, which is at **1034/68**.
+- Ticket baselines are stale for the seventh consecutive ticket: read the count
+  from `main`, which is at **1044/70**.
 - Squash-merged ticket branches need `git branch -D`.
 
 ## Do not decide these
@@ -158,12 +131,12 @@ AFK grant does not reopen standing calls outside this seed:
 
 ## Baseline
 
-`main` = `e05f400`, pushed and level with `origin/main`; no ticket branch.
-Typecheck clean, **1034 tests / 68 files**, build clean.
+`main` = `dadacbe`, pushed and level with `origin/main`; no ticket branch.
+Typecheck clean, **1044 tests / 70 files**, build clean.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]]
-- [[2026-08-04-the-wait-moved-it-did-not-vanish]]
-- [[2026-08-04-a-green-suite-does-not-prove-a-sound-toolchain]]
+- [[2026-08-04-a-ref-synced-by-an-effect-is-late-in-both-directions]]
+- [[2026-08-04-the-composer-is-held-shut-by-a-draft-clear-not-a-guard]]
 - `.claude/vibe.md` — run that filed #98–#110
