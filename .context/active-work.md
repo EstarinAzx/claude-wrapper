@@ -7,79 +7,77 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (chain 3, relay leg 2, `relay-leg`)_
-_At commit: `790fc34` on `main`, pushed and level with `origin/main`_
+_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 3 (`relay-leg`)_
+_At commit: `be4e5e7` on `main`, pushed and level with `origin/main`_
 
 ## Current focus
 
-**#99 landed and closed.** The centred subagent viewer now tells the truth about
-`aria-modal="true"`: focus moves inside before paint, real forward and reverse
-Tab navigation cannot reach controls behind the scrim, and every close path gives
-focus back to the control that opened it. Next frontier is **#100**, the two stale
-async continuations in `useChat`.
+**#100 landed and closed.** `useChat` now rejects every delayed transcript or
+session-id answer whose pane generation is stale. Next frontier is **#101**: the
+subagent store flattens a failed store-root enumeration to `[]`, contradicting
+its own `null`-means-unreadable contract and making the Agents dock lie that no
+agents exist.
 
 ## State
 
-- **In flight:** nothing. No ticket branch remains; working tree contains only
-  this pending `.context/` wrap-up.
-- **Done this session:** #99 as `790fc34`. `SubagentDrawer` captures the prior
-  `activeElement` in `useLayoutEffect`, focuses the existing Close button, traps
-  Tab on the dialog root, and restores only a still-connected opener on unmount.
-  Button, Escape, and scrim exits all share that one cleanup.
-- **Gate:** typecheck clean; **982 tests across 64 files** green (+3 from the
-  979 baseline); build clean; `gui-95`, `gui-93`, and `gui-96` all green.
-  `gui-95` measures one real-key stop in each direction, both contained.
-- **Mutation evidence:** deleting restore made all three exit rows red. Removing
-  the root handler made both walks escape at stop 1 and reached the hidden
-  composer at forward stop 13.
-- **Queue:** eleven open, #100 through #110, all `ready-for-agent`; none
-  `ready-for-human`; every live API blocker count is 0. Closing #99 unblocked
-  #102. Lowest-numbered frontier is #100.
+- **In flight:** nothing. Ticket branch was squash-merged and deleted; working
+  tree contains only this pending `.context/` wrap-up.
+- **Done this session:** #100 as `be4e5e7`. One monotonic pane generation is
+  bumped by adoption and New chat; delayed transcript loads, turn-end id reads,
+  and terminal id reads compare it before writing. `openSession` retargets the
+  engine only when adoption committed.
+- **Gate:** typecheck clean; **986 tests across 64 files** green (+4 from the 982
+  baseline); build clean. Four explicit out-of-order tests cover slow A after
+  fast B, slow A after New chat, turn-end id after New chat, and terminal id
+  after New chat.
+- **Mutation evidence:** removing the adoption guard reds both transcript races;
+  removing the `openSession` boolean check independently leaves the pane on B
+  but retargets the engine to A; removing either id guard reds its matching test.
+- **Queue:** ten open, #101 through #110, all `ready-for-agent`; none
+  `ready-for-human`. Live blocker count for #101 is 0.
 - **Blocked:** nothing.
 
 ## Pick up here
 
-Take **#100** after re-running the frontier query. It requires one generation
-counter in `useChat`, explicitly resolved out-of-order promises, and four
-mutation-verified tests: two `openSession` races plus stale `currentSessionId`
-continuations from `turn-end` and `onEngineTerminal`. Keep its deliberately
-ordered transcript-read then watch-install sequence, the same-id early return,
-and the one `busy` source.
+Take **#101** after re-running the frontier query. Read the whole ticket before
+editing. Keep `readSubagentTranscript` lenient and distinguish statuses at the
+`listSubagents` call site if that avoids widening the shared helper's contract.
+Required coverage is both store outcomes (`unavailable` → `null`, readable but
+missing session → `[]`) plus exact Agents-dock unreadable and empty copy. Preserve
+the existing non-ENOENT subagent-directory `null` pin. Mutation-verify the root
+failure case.
 
 Run:
 
 ```text
 gh issue list --state open --label ready-for-agent
-gh api repos/EstarinAzx/claude-wrapper/issues/100 --jq '.issue_dependencies_summary.blocked_by'
+gh api repos/EstarinAzx/claude-wrapper/issues/101 --jq '.issue_dependencies_summary.blocked_by'
 ```
 
 ## Skills for next session
 
-- `superpowers:systematic-debugging` for the two reproduced stale-continuation races.
-- `superpowers:test-driven-development` for explicit out-of-order red/green tests.
-- `superpowers:verification-before-completion` before landing.
+- `superpowers:test-driven-development` — write the two store outcomes and dock
+  copy assertions red before changing the status mapping.
+- `superpowers:verification-before-completion` — full test/typecheck/build gate
+  before landing.
 
 ## Open questions
 
-None for #100. `ready-for-human` remains forbidden while the owner is AFK.
+None for #101. `ready-for-human` remains forbidden while the owner is AFK.
 
 ## Recent context
 
-- Component-local ownership beat App-level opener refs: mount/unmount already is
-  the viewer's entire lifetime, so every exit shares one restore path.
-- `gui-95` now cycles on its own first stop. The old `.subagent-row` cycle break
-  became unreachable under a correct trap and would have burned 120 presses.
-- `gui-93` still prints a stale static note claiming the viewer needs a real turn.
-  Its assertions are green, but #95 proved the surface is drivable synthetically.
-  Do not fold that unrelated prose cleanup into #100.
-- No CSS, scrim attribute, Escape propagation, focus-ring, package, or visual
-  change landed in #99.
+- Tests resolving controlled promises must wrap the resolver in async `act()`;
+  a first version used `waitFor` on absence and all four checks passed before the
+  stale continuation ran.
+- Returning whether adoption committed is what guards the engine side effect;
+  guarding only `adoptSession` state still lets stale `openSession` retarget main.
+- #101's trigger is specifically store-root enumeration failure. An individual
+  bad project directory is skipped and cannot produce `unavailable`.
+- No API, preload, CSS, package, or design change landed in #100.
 
 ## Related
 
 - [[overview]]
 - [[pick-up]]
 - [[decisions]]
-- [[2026-08-04-focus-belongs-to-the-modal-lifetime]]
-- [[2026-08-04-the-viewer-is-centred-and-the-glass-ban-is-left-unresolved]]
-- [[2026-08-04-the-subagent-drawer-is-drivable-without-a-live-turn]]
