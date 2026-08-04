@@ -8,23 +8,84 @@ Loop body for:
 
 Each leg = exactly ONE ticket end to end, then the relay machinery hands off to
 a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
-below auto-decides. Ambiguity is never a question — it is a `ready-for-human`
-relabel plus a comment.
+below auto-decides.
 
-## Current queue — EMPTY as of 2026-08-01
+## THE `ready-for-human` LABEL IS FORBIDDEN THIS QUEUE — read this first
+
+The owner left on **2026-08-04** with this instruction, verbatim:
+
+> "never tag anything ready for human as i will be away from home whatever it is
+> you need from me i wont be there to answer so i give you the drivers seat."
+
+**This overrides every `ready-for-human` relabel named further down this file
+(steps 2 and 5) and in `/preset ticket-loop`.** Where those say "relabel
+`ready-for-human`", do this instead:
+
+- Push the branch as-is, comment on the ticket with exactly where and why it
+  stuck, and **leave it `ready-for-agent`**.
+- Then **stop the relay** rather than spawning a leg that would pick the same
+  stuck ticket again. A stuck ticket the next leg would re-pick is an infinite
+  loop, which is the only reason the relabel existed.
+- Say plainly in the comment that the label was withheld under the owner's
+  instruction, so a cold reader does not read the missing label as an oversight.
+
+The grant removes **ownership** as a ground for deferring. It does **not** remove
+the need for a warrant, and it licenses nothing irreversible. It also does not
+reopen the standing calls in `.context/pick-up.md`.
+
+## Current queue — NINE OPEN as of 2026-08-04
 
 Take the lowest-numbered open, unblocked `ready-for-agent` ticket.
 
-**The 2026-07-31 vibe batch is fully delivered: #75 (`9905e1d`), #76
-(`c9114a5`), #77 (`88c1e3f`), #78 (`51ea6d5`), #79 (`03ab834`) and #80
-(`1855910`).** The relay chain closed at leg 6 on the body's own done-signal
-rather than on `max_legs`, and `gh issue list --state open` returns **nothing at
-all** — no tickets, no specs, no `ready-for-human` leftovers.
+Filed by a `/preset vibe init` run on 2026-08-04; its full record — every
+question, the grepped warrant, the cross-model verdict, and the nine refutations
+that changed the work — is `.claude/vibe.md`. **Read it before starting any
+ticket in this batch.**
 
-**Run the frontier query anyway; it is the authority over this paragraph.** If
-it returns a ticket, work it. If it comes back empty the queue is drained:
-rewrite `pick-up.md` to "queue empty", commit `.context/` on main, signal the
-relay stop, spawn nothing.
+| # | subject | blocked by |
+|---|---|---|
+| **98** | the subagent viewer becomes a **centred popup**, not a right-edge drawer | — |
+| **99** | that viewer takes focus on open, traps it, gives it back on close | 98 |
+| **100** | two unguarded async continuations in `useChat` apply after their target moved | — |
+| **101** | `listSubagents` contradicts its own docstring: unreadable store reads as "no agents" | — |
+| **102** | the viewer reads the transcript once, so a running agent is frozen | 99 |
+| **103** | the composer's `Escape` does not stop propagation, so one press dismisses two things | 99 |
+| **104** | a subagent open when a turn SUCCEEDS is never drained; its terminal event reaches nobody | — |
+| **105** | **spike** — does picking a model empty the model menu and slash commands until the next send? | — |
+| **106** | a clipboard image that fails to read is rejected with a self-contradictory message | — |
+
+#98, #99 and #102 all touch `SubagentDrawer.tsx`, which is why they are chained
+rather than merely ordered — the chain is what keeps each rebase trivial.
+
+**#98–#103 came from the grill; #104–#106 came from a cross-model bug hunt and
+were each re-verified by hand before filing.** Three notes that bind:
+
+- **#105 is a SPIKE and must stay one.** It ends in a harness, findings and a
+  recommendation — **no `src/` diff**. Its premise may well be wrong: the
+  `commands:list` comment calls the empty answer "the dock's honest empty state",
+  and `gui-52` is a standing environmental red for an empty CLI model list, so an
+  empty list in this sandbox is indistinguishable from a null engine. Killing its
+  own premise is a successful outcome.
+- **#104 forbids the obvious shortcut.** Do **not** call `drainSubagents()` on
+  the success branch: it emits `failed`, which for an async agent is a lie about
+  one that is still running. The correct fix is #83's port precedent.
+- **A fourth finding was killed by this very file** and must not be re-filed:
+  the `void shell.openExternal(url)` unhandled-rejection theory. The probe
+  recorded further down says this app keeps `--unhandled-rejections=warn` and
+  that `shell.openExternal` on an unregistered scheme does not even reject.
+
+**#98 and #99 rest on a contradiction surfaced deliberately.** Two ADRs
+previously reasoned *against* a centred modal. **Neither is superseded and
+neither gets a banner** — one decides where Appearance lives, the other how
+deletion confirms, and a centred transcript viewer overturns neither *decision*.
+The owner's instruction overrides only the **rationale** they shared. #98's ADR
+must say that, and must record the glass-ban question as **unresolved** rather
+than quietly settle it.
+
+**Run the frontier query anyway; it is the authority over this table.** If it
+returns a different ticket, work that one. If it comes back empty the queue is
+drained: rewrite `pick-up.md` to "queue empty", commit `.context/` on main,
+signal the relay stop, spawn nothing.
 
 **What #80 settled, because the next composer ticket inherits it.** The
 type-while-busy queue is a **flag on the draft**, not a stored payload — so
@@ -136,9 +197,15 @@ beside it as `.claude/vibe-2026-07-31-titlebar.md` and
 
 Second, **the "seven parked owner calls" rule is SPENT.** The owner granted full
 autonomy on 2026-07-31 (quoted verbatim at the top of `.claude/vibe.md`) and all
-seven were resolved in that run. There is no longer a do-not-decide list. What
-the grant did **not** change: an answer still comes from a warrant or it is
-marked as a chosen design. Two of the seven were deliberately settled only by
+seven were resolved in that run. What the grant did **not** change: an answer
+still comes from a warrant or it is marked as a chosen design.
+
+**Corrected 2026-08-04 — "there is no longer a do-not-decide list" was true when
+written and is now false.** `.context/pick-up.md` carries a short standing list
+again (Tailwind's adopt-utilities half, the titlebar's control count, the 11px
+line box, and the accent clause's enumeration). **`pick-up.md` is authoritative
+over this paragraph.** The 2026-08-04 grant does not reopen them either: they sit
+outside that seed, and a broader grant is not a new reason. Two of the seven were deliberately settled only by
 **half** — Tailwind is not dropped but the adopt-utilities question stays open,
 and the titlebar's control count does not change while the aesthetic question
 stays the owner's. **Do not close either remaining half**; the record argues
@@ -227,7 +294,9 @@ under-specified probably means you have not read far enough.
 2. **Idempotency guard.** A branch or PR named `ticket/<id>-*` already exists →
    never restart from scratch: unfinished and yours → resume it; finished and
    green but unmerged → land it and jump to step 6. Genuine collision or
-   confusion → comment on the ticket, relabel `ready-for-human`, jump to step 6.
+   confusion → comment on the ticket, **leave it `ready-for-agent`** (the label
+   is forbidden this queue — see the top of this file), jump to step 6, and stop
+   the relay rather than spawning a leg that would re-pick it.
 3. **Branch.** `ticket/<id>-<slug>` off main.
 4. **Work.** You own the whole ticket: read it plus its parent spec plus any
    `.context/decisions/` it names, then architecture, implementation, tests and
@@ -258,8 +327,11 @@ under-specified probably means you have not read far enough.
      the branch, close the ticket with a breadcrumb comment: what landed, commit
      sha, anything a cold reader needs to continue.
    - **Not green after honest effort, or ticket ambiguous/destructive** → stop
-     coding, push the branch as-is, comment exactly where and why it stuck,
-     relabel `ready-for-human`. Ticket stays open; its dependents stay blocked.
+     coding, push the branch as-is, comment exactly where and why it stuck, and
+     **leave it `ready-for-agent`** — the label is forbidden this queue, see the
+     top of this file. Ticket stays open; its dependents stay blocked. Then
+     **stop the relay**: the next leg would otherwise re-pick the same stuck
+     ticket forever.
 6. **Gateless wrap-up — always on main.**
    - `git switch main` (already there if merged).
    - The wrap-up eyeball gate is skipped: auto-go, unattended.

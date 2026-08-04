@@ -9,10 +9,13 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Frontier: THE TRACKER IS EMPTY
+## Frontier: NINE OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
 
-**Zero open issues, in either label.** Not "the agent queue is dry" — nothing is
-open at all. Verified with the frontier query after #97 closed, not predicted.
+The tracker was empty after #97. A `/preset vibe init` run on **2026-08-04**
+filled it. Run the frontier query anyway — this table goes stale the moment
+anything moves, and this project's standing lesson is that a leg once wrote that
+closing #70 would empty the queue and was wrong, because #71 had been unblocked
+all along.
 
 ```
 gh issue list --state open --label ready-for-agent
@@ -20,18 +23,55 @@ gh issue list --state open --label ready-for-human
 gh issue list --state open
 ```
 
-All three returned nothing. **Run them again anyway** — this table goes stale the
-moment anything is filed, and this project's standing lesson is that a leg once
-wrote that closing #70 would empty the queue and was wrong, because #71 had been
-unblocked all along.
+**Take the lowest-numbered unblocked ticket.** Three of the six are chained,
+because three of them touch `SubagentDrawer.tsx` and a relay works one at a time:
 
-**The relay chain stopped here rather than spawning a leg 5.** An empty queue is
-`ticket-loop`'s designed stop; `max_legs: 8` was never reached.
+| # | subject | blocked by |
+|---|---|---|
+| **98** | the subagent viewer becomes a **centred popup**, not a right-edge drawer | — |
+| **99** | that viewer takes focus on open, traps it, gives it back on close | 98 |
+| **100** | two unguarded async continuations in `useChat` apply after their target moved | — |
+| **101** | `listSubagents` contradicts its own docstring: unreadable store reads as "no agents" | — |
+| **102** | the viewer reads the transcript once, so a running agent is frozen | 99 |
+| **103** | the composer's `Escape` does not stop propagation, so one press dismisses two things | 99 |
+| **104** | a subagent open when a turn SUCCEEDS is never drained; its terminal event reaches nobody | — |
+| **105** | **spike** — does picking a model empty the model menu and slash commands until the next send? | — |
+| **106** | a clipboard image that fails to read is rejected with a self-contradictory message | — |
 
-**The next move is the owner's** — file new work, or run `/preset init` /
-`/preset vibe init` for a batch. `## Deferred` in [[active-work]] is the standing
-menu; `## Open questions` holds the ones needing an answer before they can be
-specced.
+**#98–#103 came from the grill. #104–#106 came from a cross-model bug hunt**
+(finders and verifiers on `codex/gpt-5.6-sol` and `xai/grok-4.5` as well as
+Opus), and **each was re-verified by hand against the source before filing** —
+the hunt's own verifier for that batch had crashed, so no model signed off on
+them.
+
+**Two things the hunt produced that are NOT tickets, and should not become
+tickets by accident:**
+
+- **The `shell.openExternal` unhandled-rejection theory is a corpse.**
+  `.claude/relay-leg.md` records the earlier probe: this app keeps
+  `--unhandled-rejections=warn`, and `shell.openExternal` on an unregistered
+  scheme does not even reject. It was found again and killed by the record.
+- **The `ipc` boundary and `engine` lifecycle dimensions were never hunted.**
+  Both finders overflowed `codex/gpt-5.6-sol`'s context ("Prompt is too long"),
+  and the re-run stalled and returned nothing. **This is an open gap, not a clean
+  sweep** — the batch is what was found, not what a full audit would find. Worth
+  a fresh pass on a larger-context model.
+
+**`ready-for-human` is forbidden until the owner is back.** The 2026-08-04 seed
+said so in as many words — "never tag anything ready for human … i give you the
+drivers seat". A finding either carries a decided remedy or is not filed. If you
+hit something you genuinely cannot decide, **halt and say so in a ticket comment**
+— do not relabel.
+
+**#98 and #99 rest on a contradiction that was surfaced deliberately, not
+missed.** Two ADRs previously reasoned *against* a centred modal
+([[2026-07-31-appearance-is-a-dock-not-a-settings-modal]] and
+[[2026-07-31-deleting-a-session-is-scoped-confirmed-and-singular]]). **Neither is
+superseded and neither gets a banner** — one decides where Appearance lives, the
+other how deletion confirms, and a centred transcript viewer overturns neither.
+What the owner's instruction overrides is the *rationale* they shared. #98's ADR
+must say that, and must record the glass-ban question as **unresolved** rather
+than settle it.
 
 ~~#86 … #97~~ — all closed.
 
@@ -181,10 +221,17 @@ cannot measure a launch**; `--disable-gpu` is load-bearing in a background sessi
 
 ## Baseline
 
-`main` = `96fb20f` (#97) plus this `.context` commit. **Unpushed, 14 ahead of
-origin.** No open branches. Test baseline **979 across 64 files — unchanged by
-#97**, which is measurement-only and added no `src/` diff at all. Typecheck
-clean.
+`main` = `d2c9e0f`. **Unpushed — 17 ahead of origin**, not the 14 this note
+carried before; re-counted live on 2026-08-04, so do not trust a remembered
+figure here. No open branches. Test baseline **979 across 64 files**, typecheck
+clean, `npm run build` clean — all three re-run on 2026-08-04 rather than
+inherited.
+
+**`gui-95` and `gui-96` were both driven on clean `main` that day and are ALL
+GREEN**, and `gui-95`'s walk is **16 stops**. That number matters: #99 adds a
+focus trap, which makes the walk's cycle-break condition (focus returning to the
+`.subagent-row` anchor) unreachable, so the driver must break on revisiting its
+own first stop instead or it will burn all 120 presses.
 
 **The working tree is now CLEAN** apart from `.context/2026-07-23.md` and
 `.context/Untitled.canvas`, both **0 bytes** — Obsidian stubs, the owner's to
@@ -208,8 +255,23 @@ the one to copy for measuring anything rendered.**
 
 ## Do not decide these
 
-**Both 2026-08-04 grants are spent.** A new **reason** reopens a call; a re-read
-does not.
+**A THIRD grant landed 2026-08-04, and it is broader than the first two.** The
+owner went away and said, verbatim: *"never tag anything ready for human as i
+will be away from home whatever it is you need from me i wont be there to answer
+so i give you the drivers seat."*
+
+Read strictly, as an AFK grant must be:
+
+- It removes **ownership** as a ground for deferring, and it forbids the
+  `ready-for-human` label outright.
+- It does **not** remove the need for a **warrant**. Every call still cites a
+  reason and still takes the most reversible option.
+- It does **not** license anything irreversible, and nothing filed under it
+  touches schema, API, money, deletion, auth or anything published outward.
+- It does **not** reopen the standing calls below. They are outside the seed
+  (which was the subagent viewer and app-wide bug hunting), and dragging them in
+  would be scope creep wearing a grant as a hat. **A new reason reopens a call;
+  a broader grant does not.**
 
 **Only THREE owner calls still stand:**
 
