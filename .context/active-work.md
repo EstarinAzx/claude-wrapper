@@ -7,89 +7,91 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 13 (`relay-leg`)_
-_At commit: `86bab34` on `main`, pushed and level with `origin/main`_
+_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 14 (`relay-leg`)_
+_At commit: `d572bb4` on `main`, pushed and level with `origin/main`_
 
 ## Current focus
 
-**#110 landed and closed.** The window's bounds report was debounced 250ms and
-the `closed` handler cancelled the pending timer, so any move or resize inside
-that window was discarded and the next launch came back at the previous
-position. Fixed by flushing on **`close`** (not `closed` — by then the
-`webContents` is gone), with the debounce extracted to
-`src/main/bounds-reporter.ts` so a test can reach it. Next frontier is **#111**.
+**#111 landed and closed.** `close()` gated `drainSubagents()` on `turnResolve`,
+so an engine torn down **between** turns left every open subagent pulsing
+"running…" forever — and the CLI process is gone by then, so #104's `onSubagent`
+terminal edge could never arrive either. The drain moved above the block to match
+`onBackgroundTasks([])` one line up, which was already unconditional for exactly
+the same reason. Next frontier is **#112**.
 
 ## State
 
 - **In flight:** nothing. Squash-merged and the branch deleted; only this
   `.context/` handoff is pending.
-- **Done this session:** #110 as `86bab34` — new `src/main/bounds-reporter.ts`,
-  13 tests in `tests/bounds-reporter.test.ts`, `index.ts` wiring reduced to four
-  listeners, and a new GUI driver pair (`gui-110.mjs` + `gui-110-probe.cjs`).
-- **Gate:** typecheck clean; **1024 tests across 67 files** green (1011 + 13);
-  build clean; `gui-110` PASS (and red-verified against `main` first).
-- **Queue:** three open, #111 through #113, all `ready-for-agent`; none
-  `ready-for-human`. Every one has live `blocked_by` 0.
+- **Done this session:** #111 as `d572bb4` — one moved line in
+  `src/main/engine.ts`, a corrected `drainSubagents` docstring, and 2 tests in
+  `tests/engine.test.ts`. No new file, no new port, no GUI driver.
+- **Gate:** typecheck clean; **1026 tests across 67 files** green (1024 + 2);
+  build clean.
+- **Queue:** two open, #112 and #113, both `ready-for-agent`; none
+  `ready-for-human`. Both have live `blocked_by` 0.
 - **Blocked:** nothing.
 
 ## Pick up here
 
-Take **#111** after re-running the frontier query. `drainSubagents()` in
-`engine.ts`'s `close()` is gated on `if (turnResolve)`, so an engine torn down
-**between** turns strands an open subagent row on "running…" forever — and the
-CLI process is gone, so #104's `onSubagent` terminal edge can never arrive
-either. The remedy is to move the drain above that block, matching
-`onBackgroundTasks([])` one line up, which is already unconditional for exactly
-this reason.
+Take **#112** after re-running the frontier query. It is the remedy #105 priced
+and declined to build: picking a model, flipping permission or flipping backend
+nulls the query handle, and both live read channels answer `[]` until the next
+send — measured **15 → 0 models and 119 → 0 commands across 6/6 warmed runs** of
+the built app driven over its own IPC. The emptiness was **attributed** rather
+than observed, by an OS-level witness (the SDK's query is a child process of
+main, seen still alive while the app answered `[]`), and the remedy was priced at
+a **median 1539ms per pill click**.
 
-It is an ordinary fix with a reproducible premise, so reproduce, then guard, then
-mutation-verify. The ticket names the check that stops it being a one-liner:
-prove an unconditional call cannot double-emit when a turn **is** in flight
-(`drainSubagents` clears the set, so the second call should be a no-op — assert
-it), and keep the existing `'a closed query drains a still-running agent'` test
-green **untouched**.
+Two things that bind before writing code:
+
+- **`gui-52`'s standing red is DOUBTFUL and chasing it is out of scope** — #105
+  measured the CLI itself returning 15 models and 119 commands here, which kills
+  the "the CLI has no models" confound at the source. It is already named in
+  #112's out-of-scope list.
+- **`scripts/spike-105-model-pick-channels.mjs` is this ticket's end-to-end
+  evidence.** Re-run it after the fix: its phase-C AFTER counts turning non-zero
+  is what closes the loop, and phase B asserts `src/main/index.ts`'s handler
+  bodies mechanically, so it fails loudly if the code moved underneath it.
 
 ## Skills for next session
 
-- `superpowers:test-driven-development` — #111 is a real fix with a reproducible
-  premise, so red-green applies.
+- `superpowers:test-driven-development` — #112 has a reproducible premise that
+  was already measured, so red-green applies.
 - `superpowers:verification-before-completion` — the gate is the full
   test/typecheck/build run.
 
 ## Open questions
 
-None for #111. `ready-for-human` remains forbidden while the owner is AFK.
+None for #112. `ready-for-human` remains forbidden while the owner is AFK.
 
 ## Recent context
 
-- **A message that is never sent leaves no artifact**, so a state-shaped test
-  cannot see it. #110 survived #79's own exhaustive GUI driver for exactly that
-  reason. Where the defect is a missing send, assert on the port.
-- **A remedy that crosses a process boundary needs a witness on each side.**
-  Flushing on `close` puts the message in flight during teardown, and
-  `window-all-closed` quits the app — so main's send and the renderer's write
-  are two facts owned by two processes. `gui-110` reports them apart. Measured:
-  the race does not eat the write, but a single pass/fail could not have said so.
-- **A "before" run needs a positive control**, or "the old value is still there"
-  is trivially true. `gui-110`'s launch 1 proves the ordinary debounced store
-  works before launch 2 concludes anything from storage not changing.
-- **An instrument must refuse runs that missed the window.** `gui-110` fails
-  loudly if the debounce fired before the close, rather than scoring that run as
-  either a reproduction or a fix.
-- **Second consecutive leg where a comment claimed more than the code did.**
-  #109's was true of the ordering and read as the guarantee; #110's was simply
-  false ("short enough that closing the window straight after moving it still
-  stores the new position"). Both corrected in the same change as the fix.
-- A deliberately-unused interface member can be the thing that makes a test able
-  to fail — `ReportableWindow.getBounds` exists so choosing the wrong read is
-  expressible.
-- `gui-75` and `gui-52` still carry standing environmental reds; `gui-52`'s is
-  additionally doubtful since #105 measured the CLI returning 15 models.
-- Ticket baselines remain stale: #111 says 995/64, `main` is now at **1024/67**.
+- **A gate can be a comment's belief, compiled.** #111's `if (turnResolve)` was
+  exactly the code its own docstring implied ("only called on the failure paths";
+  "a successful turn has already drained them"). Both halves were falsified by
+  #104 landing afterwards. Fourth consecutive leg where a comment claimed more
+  than the code delivered, and the first where the comment **caused** the defect
+  rather than overstating a correct one — an overclaiming comment is found by
+  testing the code, but a justifying one has to be re-derived against its
+  dependencies, because the code agrees with it perfectly.
+- **A passing mutation proves the code, not the test.** The ticket's own
+  "check before assuming it is a one-liner" (an unconditional drain must not
+  double-emit mid-turn) came back GREEN — genuinely robust, and evidence about
+  the *test* only after a **compound** mutation that also dropped
+  `subagentParents.clear()` reddened it. When a mutation survives, the next move
+  is a compound mutation removing the reason it survived.
+- **Ticket baselines are stale for the fifth consecutive ticket** — #111 said
+  995/64, `main` was at 1024/67 and is now **1026/67**. #112's own baseline will
+  be stale too; read it from `main`, not from the ticket.
+- `gui-75` and `gui-52` still carry standing environmental reds; reproduce solo
+  on clean `main` before treating either as a regression.
+- Ports keep earning their keep: this is the third defect in four legs whose only
+  possible witness was an injected port rather than any readable state.
 
 ## Related
 
 - [[overview]]
 - [[pick-up]]
 - [[decisions]]
-- [[2026-08-04-a-scheduled-report-is-not-a-sent-one]]
+- [[2026-08-04-the-gate-was-the-comments-belief-compiled]]

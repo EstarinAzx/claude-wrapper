@@ -128,6 +128,18 @@ tags: [context, overview]
   Both failure branches keep draining and are now pinned **with the port wired**,
   because every older drain test builds the engine portless. See
   [[2026-08-04-a-late-subagent-edge-is-a-race-and-reachability-is-the-finding]].
+  `close()` drains **unconditionally** (#111), on the `onBackgroundTasks([])`
+  side of the three-way split rather than `onTerminal`'s: it used to be gated on
+  a turn being in flight, which stranded exactly the agents a successful turn
+  leaves open on purpose — the CLI process is gone, so the terminal edge above
+  can never arrive. Safe before the `turnResolve` block because
+  `drainSubagents()` clears `subagentParents`, making the stream teardown's own
+  drain a no-op rather than a second `failed`; that clear is the mechanism, and
+  it is asserted rather than reasoned. The gate was the drain's **own docstring
+  compiled** — it claimed the drain was "only called on the failure paths" and
+  that "a successful turn has already drained them", and #104 falsified both
+  after the fact. See
+  [[2026-08-04-the-gate-was-the-comments-belief-compiled]].
   `transcript.ts` parses the
   native JSONL to the replay list and owns `sanitizeUserText`, the one place CLI
   markup is turned into readable text — anchored on the message's leading tag,
@@ -363,10 +375,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#110 landed
-  and closed, and THREE tickets are open — #111–#113, all `ready-for-agent`, with
-  #111 the next unblocked one; the batch has no spikes left, so premise
-  reproduction and mutation evidence apply to every remaining one**; run the
+- `.context/pick-up.md` — current frontier + landmines (currently: **#111 landed
+  and closed, and TWO tickets are open — #112 and #113, both `ready-for-agent`,
+  with #112 the next unblocked one; the batch has no spikes left, so premise
+  reproduction and mutation evidence apply to both**; run the
   frontier query anyway, it is the authority and this line has been wrong before.
   **31 `gui-*.mjs`** — 30 assertion drivers plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
@@ -598,11 +610,21 @@ tags: [context, overview]
   safe — measured zero sends / stale rectangle before, one send at 66–69ms /
   the moved rectangle after; mutation-verified three ways; see
   [[2026-08-04-a-scheduled-report-is-not-a-sent-one]]) is **closed**.
-  **As of 2026-08-04 THREE issues are open — #111–#113, all
-  `ready-for-agent`**, none blocked; #111 is the next unblocked one and the batch
-  has no spikes left. #111 was
-  filed by #104's own review, #112 by #105's measurement and #113 by #108's.
-  Run the frontier query rather than trusting this line
+  **#111** (`d572bb4`, an engine closed **between** turns no longer strands an
+  open subagent on "running…" — `drainSubagents()` was gated on `turnResolve`
+  while `onBackgroundTasks([])` one line up was already unconditional for the
+  same reason, and the CLI process being gone means #104's terminal edge can
+  never arrive either, so nothing was going to flip that row; the gate turned out
+  to be the drain's **own docstring compiled** — "only called on the failure
+  paths", "a successful turn has already drained them", both falsified by #104
+  landing afterwards — and the exactly-once check the ticket demanded survived a
+  double-drain mutation, which proves the code robust and the **test** nothing at
+  all until a compound mutation dropping `subagentParents.clear()` reds it; see
+  [[2026-08-04-the-gate-was-the-comments-belief-compiled]]) is **closed**.
+  **As of 2026-08-04 TWO issues are open — #112 and #113, both
+  `ready-for-agent`**, neither blocked; #112 is the next unblocked one and the
+  batch has no spikes left. #112 was filed by #105's measurement and #113 by
+  #108's. Run the frontier query rather than trusting this line
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
