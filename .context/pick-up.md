@@ -106,10 +106,15 @@ element through both states in-run; **`.model-menu-item`'s box does NOT move
 between 400 and 500**; **the two `subagent-pulse 1.4s` sites are accepted
 exceptions** and `gui-96` reds if you conform them; **`gui-96.mjs` is the ONLY
 guard on both values**; **`gui-52` is RED and environmental** (empty CLI model
-list); **`.claude/settings.json` holds a live `ANTHROPIC_API_KEY` in the working
-tree** — the file is **tracked** and the committed version has no key, so
-`git add -A` / `git commit -a` **publishes a secret**. **Stage by path, always.**
-Pre-existing; flagged for the owner, not a leg's to fix.
+list); **~~`.claude/settings.json` holds a live `ANTHROPIC_API_KEY` in a TRACKED
+file~~ — RESOLVED 2026-08-04 (`d6ec749`).** It is now untracked and
+gitignored, so `git add -A` no longer picks it up (verified). **Staging by path
+is still the right habit, but it is no longer the only thing standing between
+this repo and a published key.** Note for anyone hitting this pattern again:
+a `.gitignore` entry alone would **not** have fixed it — gitignore does not
+apply to already-tracked files, and `git rm --cached` is the half that
+untracks. The key value was confirmed absent from **all** commits across all
+refs before the change, so no rotation was needed.
 
 **Still live from #95:** a GUI driver can reach the **subagent drawer with NO
 live turn** (push `chat:event` from main — a `Task` tool-use then a `subagent`
@@ -181,10 +186,10 @@ origin.** No open branches. Test baseline **979 across 64 files — unchanged by
 #97**, which is measurement-only and added no `src/` diff at all. Typecheck
 clean.
 
-**Untracked and deliberately left alone:** `.context/2026-07-23.md` and
+**The working tree is now CLEAN** apart from `.context/2026-07-23.md` and
 `.context/Untitled.canvas`, both **0 bytes** — Obsidian stubs, the owner's to
-clear, and the only two `.context` lint issues. **`.claude/settings.json` carries
-an uncommitted modification holding a live API key** — see the landmine above.
+clear, and the only two `.context` lint issues. `.claude/settings.json` no longer
+shows as a modification: it was untracked and gitignored in `d6ec749`.
 
 **29 driver files** in `.claude/skills/run-desktop/` (27 assertion drivers, two
 `gui-7x-probe` helpers, plus the observational `gui-scope-zoom-pill`). **#97 ran
