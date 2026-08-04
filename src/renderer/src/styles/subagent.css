@@ -1,4 +1,6 @@
-/* The subagent row under a Task card, and the read-only drawer it opens. */
+/* The subagent row under a Task card, and the read-only popup it opens.
+   The `.subagent-drawer*` class names are kept deliberately (#98): seven files
+   select on them and no warrant requires a rename. */
 
 /* ── subagent row (under a Task card) ── */
 
@@ -54,12 +56,22 @@
   font-weight: 600;
 }
 
-/* ── subagent drawer (read-only slide-over) ── */
+/* ── subagent viewer (read-only centred popup) ── */
 
+/* #98 — the root is the centring container. The 24px gutter is CHOSEN, not
+   derived: "center" is the one geometric thing the owner's instruction
+   constrains, so it is symmetric, and there is deliberately no titlebar
+   clearance — this scrim already paints over the titlebar (z-20 against a
+   `position: relative` titlebar under ancestors that create no stacking
+   context), so there is nothing to clear. */
 .subagent-drawer-root {
   position: fixed;
   inset: 0;
   z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
 }
 
 .subagent-drawer-backdrop {
@@ -70,27 +82,49 @@
   cursor: default;
 }
 
+/* #98 — 820 = 760 + 48 + 2 + 10, every term read from a file: `.chat-column`
+   max-width (chat.css:13), `.chat` horizontal padding 24 each side (chat.css:9),
+   this pane's own hairline (it counts, because base.css sets `box-sizing:
+   border-box` on `*`), and the authored 10px gutter of the app's overflow bar
+   (base.css:62-65). That leaves 770 inside `.chat`: overflowing, the bar spends
+   10 and the column gets exactly 760; not overflowing, 770 is free but
+   `max-width` still renders the column at 760 and the spare falls to its
+   `margin: 0 auto`. The column measures 760 in BOTH scroll states — 760, 808
+   and 810 were each tried and each wrong for a different reason, so do not
+   simplify this back.
+   The surface, hairline, radius and shadow are the app's existing floating-card
+   idiom (`.model-menu`, `.command-popover` in composer.css), joined rather than
+   invented. `overflow: hidden` clips the head's hairline to the radius; the
+   inner `.chat` keeps its own `min-height: 0` scroll. */
 .subagent-drawer {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(560px, 82vw);
+  position: relative;
+  width: min(820px, 100%);
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border-left: 1px solid var(--border);
-  box-shadow: -12px 0 36px oklch(0 0 0 / 0.35);
+  border: 1px solid var(--border);
+  border-radius: var(--r-mark);
+  box-shadow: 0 8px 28px oklch(0 0 0 / 0.35);
+  overflow: hidden;
   animation: subagent-slide 200ms var(--ease);
 }
 
+/* #98 — the entry is a Y rise, not an X slide: DESIGN.md's only documented
+   entry is "200ms fade + 4px rise, opacity/transform only", and a centred pane
+   arriving sideways is incoherent as well as off-spec. The keyframe's NAME,
+   duration and easing are unchanged — `gui-96.mjs` uses the name as its
+   premise, and asserts statically that this body rises on Y and no longer
+   moves on X. (Said that way on purpose: the literal function name is kept out
+   of this comment so no source-level check can ever match the prose instead of
+   the rule.) */
 @keyframes subagent-slide {
   from {
-    transform: translateX(24px);
+    transform: translateY(4px);
     opacity: 0.4;
   }
   to {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
   }
 }

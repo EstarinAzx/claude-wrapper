@@ -48,6 +48,11 @@
 //
 // RED-VERIFIED against main before the fix: criteria 1, 2 and 3 fail (weight
 // 500, one grep hit, 180ms) while 4 and 5 pass, and the run exits 1.
+//
+// #98 ADDED CRITERION 6 to the source phase. It converted the drawer to a
+// centred popup and turned the entry into a Y rise while KEEPING the keyframe
+// name, so nothing here could see the axis change: the premise and criterion 3
+// stay green whichever way the pane moves. Criterion 6 is the only pin on it.
 
 import { _electron as electron } from 'playwright-core'
 import path from 'node:path'
@@ -303,6 +308,44 @@ walk(STYLE_DIR)
 check('criterion 2: zero `font-weight: 500` in src/renderer/src/styles/ (SOURCE grep)', hits.length === 0, {
   hits
 })
+
+// ---- phase 5: #98's axis pin, added to this driver's SOURCE phase ---------
+// #98 turned the entry from an X slide into a Y rise while KEEPING the keyframe
+// name, so criterion 3 above (200ms) and the premise (`animationName ===
+// 'subagent-slide'`) both stay green no matter which axis the body moves. That
+// leaves the axis itself uncovered: a later edit could reinstate the X slide
+// with every check in this file passing. This is the only pin on it.
+//
+// The body is extracted by COUNTING BRACES, not by a lazy regex. `@keyframes`
+// bodies nest (`from { … } to { … }`), so `\{([\s\S]*?)\}` stops at the end of
+// the `from` block — which would read the first stop only and never see an X
+// translate reinstated in `to`. That is the vacuous version of this check.
+const keyframeBody = (source, name) => {
+  const head = new RegExp(`@keyframes\\s+${name}\\s*\\{`).exec(source)
+  if (!head) return null
+  let depth = 1
+  let i = head.index + head[0].length
+  const start = i
+  for (; i < source.length && depth > 0; i++) {
+    if (source[i] === '{') depth++
+    else if (source[i] === '}') depth--
+  }
+  return depth === 0 ? source.slice(start, i - 1) : null
+}
+
+const subagentCss = fs.readFileSync(path.join(STYLE_DIR, 'subagent.css'), 'utf8')
+const slideBody = keyframeBody(subagentCss, 'subagent-slide')
+check(
+  'criterion 6 (#98): the `subagent-slide` body rises on Y and never translates on X (SOURCE)',
+  slideBody !== null && slideBody.includes('translateY') && !slideBody.includes('translateX'),
+  {
+    found: slideBody !== null,
+    hasY: slideBody?.includes('translateY') ?? null,
+    hasX: slideBody?.includes('translateX') ?? null,
+    stops: slideBody ? (slideBody.match(/\{/g) || []).length : null,
+    hint: 'stops should be 2 (from + to) — a 1 here means the body was truncated at the first close brace'
+  }
+)
 
 console.log(`screenshots: ${menuShot} | ${drawerShot}`)
 console.log(fails.length === 0 ? 'ALL GREEN' : `RED: ${fails.join(' | ')}`)
