@@ -1,0 +1,3824 @@
+{
+  "spike": 117,
+  "ticket": "https://github.com/EstarinAzx/claude-wrapper/issues/117",
+  "generatedBy": "scripts/spike-117-backdrop-routes.mjs",
+  "phasesRun": [
+    "0",
+    "1",
+    "2",
+    "3"
+  ],
+  "phasesRunNote": "Sections belonging to phases NOT listed in phasesRun were carried over from an earlier run of this script and are not necessarily contemporaneous with the rest. The committed artifact was produced by a single run of all four phases.",
+  "platform": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "node": "v22.17.0"
+  },
+  "s1_static": {
+    "what": "Every member of BaseWindow / BrowserWindow / App and their constructor options in the INSTALLED electron.d.ts, with the platform scope of each hit. Static: this half owns the search space and the @platform tags, which the runtime does not carry.",
+    "dts": "node_modules/electron/electron.d.ts",
+    "electronVersion": "43.2.0",
+    "declaredMaterialUnion": "'auto' | 'none' | 'mica' | 'acrylic' | 'tabbed'",
+    "surfaces": {
+      "BaseWindow": {
+        "parsed": true,
+        "declLines": [
+          2113,
+          3765
+        ],
+        "totalMembers": 334,
+        "allMemberNames": [
+          "on",
+          "isAlwaysOnTop",
+          "off",
+          "isAlwaysOnTop",
+          "once",
+          "isAlwaysOnTop",
+          "addListener",
+          "isAlwaysOnTop",
+          "removeListener",
+          "isAlwaysOnTop",
+          "on",
+          "command",
+          "off",
+          "command",
+          "once",
+          "command",
+          "addListener",
+          "command",
+          "removeListener",
+          "command",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "rotation",
+          "off",
+          "rotation",
+          "once",
+          "rotation",
+          "addListener",
+          "rotation",
+          "removeListener",
+          "rotation",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "direction",
+          "off",
+          "direction",
+          "once",
+          "direction",
+          "addListener",
+          "direction",
+          "removeListener",
+          "direction",
+          "on",
+          "point",
+          "off",
+          "point",
+          "once",
+          "point",
+          "addListener",
+          "point",
+          "removeListener",
+          "point",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "newBounds",
+          "off",
+          "newBounds",
+          "once",
+          "newBounds",
+          "addListener",
+          "newBounds",
+          "removeListener",
+          "newBounds",
+          "on",
+          "newBounds",
+          "details",
+          "off",
+          "newBounds",
+          "details",
+          "once",
+          "newBounds",
+          "details",
+          "addListener",
+          "newBounds",
+          "details",
+          "removeListener",
+          "newBounds",
+          "details",
+          "constructor",
+          "addTabbedWindow",
+          "blur",
+          "center",
+          "close",
+          "closeFilePreview",
+          "destroy",
+          "flashFrame",
+          "focus",
+          "getAccentColor",
+          "getBackgroundColor",
+          "getBounds",
+          "getChildWindows",
+          "getContentBounds",
+          "getContentSize",
+          "getContentView",
+          "getMaximumSize",
+          "getMediaSourceId",
+          "getMinimumSize",
+          "getNativeWindowHandle",
+          "getNormalBounds",
+          "getOpacity",
+          "getParentWindow",
+          "getPosition",
+          "getRepresentedFilename",
+          "getSize",
+          "getTitle",
+          "getWindowButtonPosition",
+          "hasShadow",
+          "hide",
+          "hookWindowMessage",
+          "invalidateShadow",
+          "isAlwaysOnTop",
+          "isClosable",
+          "isContentProtected",
+          "isDestroyed",
+          "isDocumentEdited",
+          "isEnabled",
+          "isFocusable",
+          "isFocused",
+          "isFullScreen",
+          "isFullScreenable",
+          "isHiddenInMissionControl",
+          "isKiosk",
+          "isMaximizable",
+          "isMaximized",
+          "isMenuBarAutoHide",
+          "isMenuBarVisible",
+          "isMinimizable",
+          "isMinimized",
+          "isModal",
+          "isMovable",
+          "isNormal",
+          "isResizable",
+          "isSimpleFullScreen",
+          "isSnapped",
+          "isTabletMode",
+          "isVisible",
+          "isVisibleOnAllWorkspaces",
+          "isWindowMessageHooked",
+          "maximize",
+          "mergeAllWindows",
+          "minimize",
+          "moveAbove",
+          "moveTabToNewWindow",
+          "moveTop",
+          "previewFile",
+          "removeMenu",
+          "restore",
+          "selectNextTab",
+          "selectPreviousTab",
+          "setAccentColor",
+          "setAlwaysOnTop",
+          "setAppDetails",
+          "setAspectRatio",
+          "setAutoHideCursor",
+          "setAutoHideMenuBar",
+          "setBackgroundColor",
+          "setBackgroundMaterial",
+          "setBounds",
+          "setClosable",
+          "setContentBounds",
+          "setContentProtection",
+          "setContentSize",
+          "setContentView",
+          "setDocumentEdited",
+          "setEnabled",
+          "setFocusable",
+          "setFullScreen",
+          "setFullScreenable",
+          "setHasShadow",
+          "setHiddenInMissionControl",
+          "setIcon",
+          "setIgnoreMouseEvents",
+          "setKiosk",
+          "setMaximizable",
+          "setMaximumSize",
+          "setMenu",
+          "setMenuBarVisibility",
+          "setMinimizable",
+          "setMinimumSize",
+          "setMovable",
+          "setOpacity",
+          "setOverlayIcon",
+          "setParentWindow",
+          "setPosition",
+          "setProgressBar",
+          "setRepresentedFilename",
+          "setResizable",
+          "setShape",
+          "setSheetOffset",
+          "setSimpleFullScreen",
+          "setSize",
+          "setSkipTaskbar",
+          "setThumbarButtons",
+          "setThumbnailClip",
+          "setThumbnailToolTip",
+          "setTitle",
+          "setTitleBarOverlay",
+          "setTouchBar",
+          "setVibrancy",
+          "setVisibleOnAllWorkspaces",
+          "setWindowButtonPosition",
+          "setWindowButtonVisibility",
+          "show",
+          "showAllTabs",
+          "showInactive",
+          "toggleTabBar",
+          "unhookAllWindowMessages",
+          "unhookWindowMessage",
+          "unmaximize",
+          "accessibleTitle",
+          "autoHideMenuBar",
+          "closable",
+          "contentView",
+          "documentEdited",
+          "excludedFromShownWindowsMenu",
+          "focusable",
+          "fullScreen",
+          "fullScreenable",
+          "id",
+          "kiosk",
+          "maximizable",
+          "menuBarVisible",
+          "minimizable",
+          "movable",
+          "representedFilename",
+          "resizable",
+          "shadow",
+          "simpleFullScreen",
+          "snapped",
+          "tabbingIdentifier",
+          "title",
+          "visibleOnAllWorkspaces"
+        ],
+        "hits": [
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2171,
+            "decl": "on(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": "Emitted when the window loses focus."
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2172,
+            "decl": "off(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2173,
+            "decl": "once(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2174,
+            "decl": "addListener(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2175,
+            "decl": "removeListener(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2217,
+            "decl": "on(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": "Emitted when the window gains focus."
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2218,
+            "decl": "off(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2219,
+            "decl": "once(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2220,
+            "decl": "addListener(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2221,
+            "decl": "removeListener(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "addTabbedWindow",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "material"
+            ],
+            "line": 2710,
+            "decl": "addTabbedWindow(baseWindow: BaseWindow): void;",
+            "doc": "Adds a window as a tab on this window, after the tab for the window instance. @platform darwin"
+          },
+          {
+            "name": "blur",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2714,
+            "decl": "blur(): void;",
+            "doc": "Removes focus from the window."
+          },
+          {
+            "name": "focus",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2744,
+            "decl": "focus(): void;",
+            "doc": "Focuses on the window."
+          },
+          {
+            "name": "getAccentColor",
+            "kind": "method",
+            "platform": "win32",
+            "matched": [
+              "activity"
+            ],
+            "line": 2757,
+            "decl": "getAccentColor(): (string) | (boolean);",
+            "doc": "the system accent color and highlighting of active window border in Hex RGB format. If a color has been set for the window that differs from the system accent color, the window accent color will be returned. Otherwise, a boolean will be returned, with `true` indicating that the window uses the global system accent color, and `false` indicating that accent color highlighting is disabled for this window. @platform win32"
+          },
+          {
+            "name": "getBackgroundColor",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "material"
+            ],
+            "line": 2766,
+            "decl": "getBackgroundColor(): string;",
+            "doc": "Gets the background color of the window in Hex (`#RRGGBB`) format. See Setting `backgroundColor`. > [!NOTE] The alpha value is _not_ returned alongside the red, green, and blue values."
+          },
+          {
+            "name": "getOpacity",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "material"
+            ],
+            "line": 2834,
+            "decl": "getOpacity(): number;",
+            "doc": "between 0.0 (fully transparent) and 1.0 (fully opaque). On Linux, always returns 1."
+          },
+          {
+            "name": "invalidateShadow",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "material"
+            ],
+            "line": 2895,
+            "decl": "invalidateShadow(): void;",
+            "doc": "Invalidates the window shadow so that it is recomputed based on the current window shape. `BaseWindow`s that are transparent can sometimes leave behind visual artifacts on macOS. This method can be used to clear these artifacts when, for example, performing an animation. @platform darwin"
+          },
+          {
+            "name": "isFocusable",
+            "kind": "method",
+            "platform": "darwin,win32",
+            "matched": [
+              "activity"
+            ],
+            "line": 2933,
+            "decl": "isFocusable(): boolean;",
+            "doc": "Whether the window can be focused. @platform darwin,win32"
+          },
+          {
+            "name": "isFocused",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 2937,
+            "decl": "isFocused(): boolean;",
+            "doc": "Whether the window is focused."
+          },
+          {
+            "name": "maximize",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 3064,
+            "decl": "maximize(): void;",
+            "doc": "Maximizes the window. This will also show (but not focus) the window if it isn't being displayed already."
+          },
+          {
+            "name": "moveTop",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 3093,
+            "decl": "moveTop(): void;",
+            "doc": "Moves window to top(z-order) regardless of focus"
+          },
+          {
+            "name": "setAccentColor",
+            "kind": "method",
+            "platform": "win32",
+            "matched": [
+              "activity"
+            ],
+            "line": 3144,
+            "decl": "setAccentColor(accentColor: (boolean) | (string) | (null)): void;",
+            "doc": "Sets the system accent color and highlighting of active window border. The `accentColor` parameter accepts the following values: * **Color string** - Like `true`, but sets a custom accent color using standard CSS color formats (Hex, RGB, RGBA, HSL, HSLA, or named colors). Alpha values in RGBA/HSLA formats are ignored and the color is treated as fully opaque. * **`true`** - Enable accent color highlighting for the window with the system accent color regardless of whether accent colors are enabled for windows in System `Settings.` * **`false`** - Disable accent color highlighting for the window "
+          },
+          {
+            "name": "setAlwaysOnTop",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 3150,
+            "decl": "setAlwaysOnTop(flag: boolean, level?: 'normal' | 'floating' | 'torn-off-menu' | 'modal-panel' | 'main-menu' | 'status' | 'pop-up-menu' | 'screen-saver' | 'dock', relativeLevel?: number): void;",
+            "doc": "Sets whether the window should show always on top of other windows. After setting this, the window is still a normal window, not a toolbox window which can not be focused on."
+          },
+          {
+            "name": "setBackgroundColor",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "material"
+            ],
+            "line": 3225,
+            "decl": "setBackgroundColor(backgroundColor: string): void;",
+            "doc": "Examples of valid `backgroundColor` values: * Hex * #fff (shorthand RGB) * #ffff (shorthand ARGB) * #ffffff (RGB) * #ffffffff (ARGB) * RGB * `rgb\\(([\\d]+),\\s*([\\d]+),\\s*([\\d]+)\\)` * e.g. rgb(255, 255, 255) * RGBA * `rgba\\(([\\d]+),\\s*([\\d]+),\\s*([\\d]+),\\s*([\\d.]+)\\)` * e.g. rgba(255, 255, 255, 1.0) * HSL * `hsl\\((-?[\\d.]+),\\s*([\\d.]+)%,\\s*([\\d.]+)%\\)` * e.g. hsl(200, 20%, 50%) * HSLA * `hsla\\((-?[\\d.]+),\\s*([\\d.]+)%,\\s*([\\d.]+)%,\\s*([\\d.]+)\\)` * e.g. hsla(200, 20%, 50%, 0.5) * Color name * Options are listed in SkParseColor.cpp * Similar to CSS Color Module Level 3 keywords, but case-sensitive."
+          },
+          {
+            "name": "setBackgroundMaterial",
+            "kind": "method",
+            "platform": "win32",
+            "matched": [
+              "material"
+            ],
+            "line": 3236,
+            "decl": "setBackgroundMaterial(material: 'auto' | 'none' | 'mica' | 'acrylic' | 'tabbed'): void;",
+            "doc": "This method sets the browser window's system-drawn background material, including behind the non-client area. See the Windows documentation for more details. > [!NOTE] This method is only supported on Windows 11 22H2 and up. @platform win32"
+          },
+          {
+            "name": "setFocusable",
+            "kind": "method",
+            "platform": "darwin,win32",
+            "matched": [
+              "activity"
+            ],
+            "line": 3295,
+            "decl": "setFocusable(focusable: boolean): void;",
+            "doc": "Changes whether the window can be focused. On macOS it does not remove the focus from the window. @platform darwin,win32"
+          },
+          {
+            "name": "setIgnoreMouseEvents",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 3332,
+            "decl": "setIgnoreMouseEvents(ignore: boolean, options?: IgnoreMouseEventsOptions): void;",
+            "doc": "Makes the window ignore all mouse events. All mouse events happened in this window will be passed to the window below this window, but if this window has focus, it will still receive keyboard events."
+          },
+          {
+            "name": "setOpacity",
+            "kind": "method",
+            "platform": "win32,darwin",
+            "matched": [
+              "material"
+            ],
+            "line": 3384,
+            "decl": "setOpacity(opacity: number): void;",
+            "doc": "Sets the opacity of the window. On Linux, does nothing. Out of bound number values are clamped to the [0, 1] range. @platform win32,darwin"
+          },
+          {
+            "name": "setVibrancy",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "material"
+            ],
+            "line": 3550,
+            "decl": "setVibrancy(type: (('titlebar' | 'selection' | 'menu' | 'popover' | 'sidebar' | 'header' | 'sheet' | 'window' | 'hud' | 'fullscreen-ui' | 'tooltip' | 'content' | 'under-window' | 'under-page')) | (null)): void;",
+            "doc": "Adds a vibrancy effect to the window. Passing `null` or an empty string will remove the vibrancy effect on the window. @platform darwin"
+          },
+          {
+            "name": "show",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 3575,
+            "decl": "show(): void;",
+            "doc": "Shows and gives focus to the window."
+          },
+          {
+            "name": "showInactive",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 3585,
+            "decl": "showInactive(): void;",
+            "doc": "Shows the window but doesn't focus on it."
+          },
+          {
+            "name": "focusable",
+            "kind": "property",
+            "platform": "win32,darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 3660,
+            "decl": "focusable: boolean;",
+            "doc": "A `boolean` property that determines whether the window is focusable. @platform win32,darwin"
+          }
+        ]
+      },
+      "BrowserWindow": {
+        "parsed": true,
+        "declLines": [
+          4140,
+          6585
+        ],
+        "totalMembers": 565,
+        "allMemberNames": [
+          "on",
+          "isAlwaysOnTop",
+          "off",
+          "isAlwaysOnTop",
+          "once",
+          "isAlwaysOnTop",
+          "addListener",
+          "isAlwaysOnTop",
+          "removeListener",
+          "isAlwaysOnTop",
+          "on",
+          "isAlwaysOnTop",
+          "off",
+          "isAlwaysOnTop",
+          "once",
+          "isAlwaysOnTop",
+          "addListener",
+          "isAlwaysOnTop",
+          "removeListener",
+          "isAlwaysOnTop",
+          "on",
+          "command",
+          "off",
+          "command",
+          "once",
+          "command",
+          "addListener",
+          "command",
+          "removeListener",
+          "command",
+          "on",
+          "command",
+          "off",
+          "command",
+          "once",
+          "command",
+          "addListener",
+          "command",
+          "removeListener",
+          "command",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "title",
+          "explicitSet",
+          "off",
+          "title",
+          "explicitSet",
+          "once",
+          "title",
+          "explicitSet",
+          "addListener",
+          "title",
+          "explicitSet",
+          "removeListener",
+          "title",
+          "explicitSet",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "rotation",
+          "off",
+          "rotation",
+          "once",
+          "rotation",
+          "addListener",
+          "rotation",
+          "removeListener",
+          "rotation",
+          "on",
+          "rotation",
+          "off",
+          "rotation",
+          "once",
+          "rotation",
+          "addListener",
+          "rotation",
+          "removeListener",
+          "rotation",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "direction",
+          "off",
+          "direction",
+          "once",
+          "direction",
+          "addListener",
+          "direction",
+          "removeListener",
+          "direction",
+          "on",
+          "direction",
+          "off",
+          "direction",
+          "once",
+          "direction",
+          "addListener",
+          "direction",
+          "removeListener",
+          "direction",
+          "on",
+          "point",
+          "off",
+          "point",
+          "once",
+          "point",
+          "addListener",
+          "point",
+          "removeListener",
+          "point",
+          "on",
+          "point",
+          "off",
+          "point",
+          "once",
+          "point",
+          "addListener",
+          "point",
+          "removeListener",
+          "point",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "newBounds",
+          "off",
+          "newBounds",
+          "once",
+          "newBounds",
+          "addListener",
+          "newBounds",
+          "removeListener",
+          "newBounds",
+          "on",
+          "newBounds",
+          "off",
+          "newBounds",
+          "once",
+          "newBounds",
+          "addListener",
+          "newBounds",
+          "removeListener",
+          "newBounds",
+          "on",
+          "newBounds",
+          "details",
+          "off",
+          "newBounds",
+          "details",
+          "once",
+          "newBounds",
+          "details",
+          "addListener",
+          "newBounds",
+          "details",
+          "removeListener",
+          "newBounds",
+          "details",
+          "on",
+          "newBounds",
+          "details",
+          "off",
+          "newBounds",
+          "details",
+          "once",
+          "newBounds",
+          "details",
+          "addListener",
+          "newBounds",
+          "details",
+          "removeListener",
+          "newBounds",
+          "details",
+          "constructor",
+          "addBrowserView",
+          "addTabbedWindow",
+          "blur",
+          "blurWebView",
+          "capturePage",
+          "center",
+          "close",
+          "closeFilePreview",
+          "destroy",
+          "flashFrame",
+          "focus",
+          "focusOnWebView",
+          "getAccentColor",
+          "getBackgroundColor",
+          "getBounds",
+          "getBrowserView",
+          "getBrowserViews",
+          "getChildWindows",
+          "getContentBounds",
+          "getContentSize",
+          "getMaximumSize",
+          "getMediaSourceId",
+          "getMinimumSize",
+          "getNativeWindowHandle",
+          "getNormalBounds",
+          "getOpacity",
+          "getParentWindow",
+          "getPosition",
+          "getRepresentedFilename",
+          "getSize",
+          "getTitle",
+          "getWindowButtonPosition",
+          "hasShadow",
+          "hide",
+          "hookWindowMessage",
+          "invalidateShadow",
+          "isAlwaysOnTop",
+          "isClosable",
+          "isContentProtected",
+          "isDestroyed",
+          "isDocumentEdited",
+          "isEnabled",
+          "isFocusable",
+          "isFocused",
+          "isFullScreen",
+          "isFullScreenable",
+          "isHiddenInMissionControl",
+          "isKiosk",
+          "isMaximizable",
+          "isMaximized",
+          "isMenuBarAutoHide",
+          "isMenuBarVisible",
+          "isMinimizable",
+          "isMinimized",
+          "isModal",
+          "isMovable",
+          "isNormal",
+          "isResizable",
+          "isSimpleFullScreen",
+          "isSnapped",
+          "isTabletMode",
+          "isVisible",
+          "isVisibleOnAllWorkspaces",
+          "isWindowMessageHooked",
+          "loadFile",
+          "loadURL",
+          "maximize",
+          "mergeAllWindows",
+          "minimize",
+          "moveAbove",
+          "moveTabToNewWindow",
+          "moveTop",
+          "previewFile",
+          "reload",
+          "removeBrowserView",
+          "removeMenu",
+          "restore",
+          "selectNextTab",
+          "selectPreviousTab",
+          "setAccentColor",
+          "setAlwaysOnTop",
+          "setAppDetails",
+          "setAspectRatio",
+          "setAutoHideCursor",
+          "setAutoHideMenuBar",
+          "setBackgroundColor",
+          "setBackgroundMaterial",
+          "setBounds",
+          "setBrowserView",
+          "setClosable",
+          "setContentBounds",
+          "setContentProtection",
+          "setContentSize",
+          "setDocumentEdited",
+          "setEnabled",
+          "setFocusable",
+          "setFullScreen",
+          "setFullScreenable",
+          "setHasShadow",
+          "setHiddenInMissionControl",
+          "setIcon",
+          "setIgnoreMouseEvents",
+          "setKiosk",
+          "setMaximizable",
+          "setMaximumSize",
+          "setMenu",
+          "setMenuBarVisibility",
+          "setMinimizable",
+          "setMinimumSize",
+          "setMovable",
+          "setOpacity",
+          "setOverlayIcon",
+          "setParentWindow",
+          "setPosition",
+          "setProgressBar",
+          "setRepresentedFilename",
+          "setResizable",
+          "setShape",
+          "setSheetOffset",
+          "setSimpleFullScreen",
+          "setSize",
+          "setSkipTaskbar",
+          "setThumbarButtons",
+          "setThumbnailClip",
+          "setThumbnailToolTip",
+          "setTitle",
+          "setTitleBarOverlay",
+          "setTopBrowserView",
+          "setTouchBar",
+          "setVibrancy",
+          "setVisibleOnAllWorkspaces",
+          "setWindowButtonPosition",
+          "setWindowButtonVisibility",
+          "show",
+          "showAllTabs",
+          "showDefinitionForSelection",
+          "showInactive",
+          "toggleTabBar",
+          "unhookAllWindowMessages",
+          "unhookWindowMessage",
+          "unmaximize",
+          "accessibleTitle",
+          "autoHideMenuBar",
+          "closable",
+          "documentEdited",
+          "excludedFromShownWindowsMenu",
+          "focusable",
+          "fullScreen",
+          "fullScreenable",
+          "id",
+          "kiosk",
+          "maximizable",
+          "menuBarVisible",
+          "minimizable",
+          "movable",
+          "representedFilename",
+          "resizable",
+          "shadow",
+          "simpleFullScreen",
+          "snapped",
+          "tabbingIdentifier",
+          "title",
+          "visibleOnAllWorkspaces",
+          "webContents"
+        ],
+        "hits": [
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4249,
+            "decl": "on(event: 'blur', listener: () => void): this;",
+            "doc": "Emitted when the window loses focus."
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4250,
+            "decl": "off(event: 'blur', listener: () => void): this;",
+            "doc": null
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4251,
+            "decl": "once(event: 'blur', listener: () => void): this;",
+            "doc": null
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4252,
+            "decl": "addListener(event: 'blur', listener: () => void): this;",
+            "doc": null
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4253,
+            "decl": "removeListener(event: 'blur', listener: () => void): this;",
+            "doc": null
+          },
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4257,
+            "decl": "on(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": "Emitted when the window loses focus."
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4258,
+            "decl": "off(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4259,
+            "decl": "once(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4260,
+            "decl": "addListener(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4261,
+            "decl": "removeListener(event: 'blur', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4349,
+            "decl": "on(event: 'focus', listener: () => void): this;",
+            "doc": "Emitted when the window gains focus."
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4350,
+            "decl": "off(event: 'focus', listener: () => void): this;",
+            "doc": null
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4351,
+            "decl": "once(event: 'focus', listener: () => void): this;",
+            "doc": null
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4352,
+            "decl": "addListener(event: 'focus', listener: () => void): this;",
+            "doc": null
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4353,
+            "decl": "removeListener(event: 'focus', listener: () => void): this;",
+            "doc": null
+          },
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4357,
+            "decl": "on(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": "Emitted when the window gains focus."
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4358,
+            "decl": "off(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4359,
+            "decl": "once(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4360,
+            "decl": "addListener(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 4361,
+            "decl": "removeListener(event: 'focus', listener: (event: Event) => void): this;",
+            "doc": null
+          },
+          {
+            "name": "addTabbedWindow",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "material"
+            ],
+            "line": 5399,
+            "decl": "addTabbedWindow(browserWindow: BrowserWindow): void;",
+            "doc": "Adds a window as a tab on this window, after the tab for the window instance. @platform darwin"
+          },
+          {
+            "name": "blur",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 5405,
+            "decl": "blur(): void;",
+            "doc": "Removes focus from the window. Not supported on Wayland (Linux)."
+          },
+          {
+            "name": "blurWebView",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 5406,
+            "decl": "blurWebView(): void;",
+            "doc": null
+          },
+          {
+            "name": "focus",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 5451,
+            "decl": "focus(): void;",
+            "doc": "Focuses on the window. On Wayland (Linux), the desktop environment may show a notification or flash the app icon if the window or app is not already focused."
+          },
+          {
+            "name": "focusOnWebView",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 5452,
+            "decl": "focusOnWebView(): void;",
+            "doc": null
+          },
+          {
+            "name": "getAccentColor",
+            "kind": "method",
+            "platform": "win32",
+            "matched": [
+              "activity"
+            ],
+            "line": 5465,
+            "decl": "getAccentColor(): (string) | (boolean);",
+            "doc": "the system accent color and highlighting of active window border in Hex RGB format. If a color has been set for the window that differs from the system accent color, the window accent color will be returned. Otherwise, a boolean will be returned, with `true` indicating that the window uses the global system accent color, and `false` indicating that accent color highlighting is disabled for this window. @platform win32"
+          },
+          {
+            "name": "getBackgroundColor",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "material"
+            ],
+            "line": 5474,
+            "decl": "getBackgroundColor(): string;",
+            "doc": "Gets the background color of the window in Hex (`#RRGGBB`) format. See Setting `backgroundColor`. > [!NOTE] The alpha value is _not_ returned alongside the red, green, and blue values."
+          },
+          {
+            "name": "getOpacity",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "material"
+            ],
+            "line": 5561,
+            "decl": "getOpacity(): number;",
+            "doc": "between 0.0 (fully transparent) and 1.0 (fully opaque). On Linux, always returns 1."
+          },
+          {
+            "name": "invalidateShadow",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "material"
+            ],
+            "line": 5622,
+            "decl": "invalidateShadow(): void;",
+            "doc": "Invalidates the window shadow so that it is recomputed based on the current window shape. `BrowserWindows` that are transparent can sometimes leave behind visual artifacts on macOS. This method can be used to clear these artifacts when, for example, performing an animation. @platform darwin"
+          },
+          {
+            "name": "isFocusable",
+            "kind": "method",
+            "platform": "darwin,win32",
+            "matched": [
+              "activity"
+            ],
+            "line": 5660,
+            "decl": "isFocusable(): boolean;",
+            "doc": "Whether the window can be focused. @platform darwin,win32"
+          },
+          {
+            "name": "isFocused",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 5664,
+            "decl": "isFocused(): boolean;",
+            "doc": "Whether the window is focused."
+          },
+          {
+            "name": "maximize",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 5823,
+            "decl": "maximize(): void;",
+            "doc": "Maximizes the window. This will also show (but not focus) the window if it isn't being displayed already."
+          },
+          {
+            "name": "moveTop",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 5854,
+            "decl": "moveTop(): void;",
+            "doc": "Moves window to top(z-order) regardless of focus. Not supported on Wayland (Linux)."
+          },
+          {
+            "name": "setAccentColor",
+            "kind": "method",
+            "platform": "win32",
+            "matched": [
+              "activity"
+            ],
+            "line": 5917,
+            "decl": "setAccentColor(accentColor: (boolean) | (string) | (null)): void;",
+            "doc": "Sets the system accent color and highlighting of active window border. The `accentColor` parameter accepts the following values: * **Color string** - Like `true`, but sets a custom accent color using standard CSS color formats (Hex, RGB, RGBA, HSL, HSLA, or named colors). Alpha values in RGBA/HSLA formats are ignored and the color is treated as fully opaque. * **`true`** - Enable accent color highlighting for the window with the system accent color regardless of whether accent colors are enabled for windows in System `Settings.` * **`false`** - Disable accent color highlighting for the window "
+          },
+          {
+            "name": "setAlwaysOnTop",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 5923,
+            "decl": "setAlwaysOnTop(flag: boolean, level?: 'normal' | 'floating' | 'torn-off-menu' | 'modal-panel' | 'main-menu' | 'status' | 'pop-up-menu' | 'screen-saver' | 'dock', relativeLevel?: number): void;",
+            "doc": "Sets whether the window should show always on top of other windows. After setting this, the window is still a normal window, not a toolbox window which can not be focused on."
+          },
+          {
+            "name": "setBackgroundColor",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "material"
+            ],
+            "line": 5998,
+            "decl": "setBackgroundColor(backgroundColor: string): void;",
+            "doc": "Examples of valid `backgroundColor` values: * Hex * #fff (shorthand RGB) * #ffff (shorthand ARGB) * #ffffff (RGB) * #ffffffff (ARGB) * RGB * `rgb\\(([\\d]+),\\s*([\\d]+),\\s*([\\d]+)\\)` * e.g. rgb(255, 255, 255) * RGBA * `rgba\\(([\\d]+),\\s*([\\d]+),\\s*([\\d]+),\\s*([\\d.]+)\\)` * e.g. rgba(255, 255, 255, 1.0) * HSL * `hsl\\((-?[\\d.]+),\\s*([\\d.]+)%,\\s*([\\d.]+)%\\)` * e.g. hsl(200, 20%, 50%) * HSLA * `hsla\\((-?[\\d.]+),\\s*([\\d.]+)%,\\s*([\\d.]+)%,\\s*([\\d.]+)\\)` * e.g. hsla(200, 20%, 50%, 0.5) * Color name * Options are listed in SkParseColor.cpp * Similar to CSS Color Module Level 3 keywords, but case-sensitive."
+          },
+          {
+            "name": "setBackgroundMaterial",
+            "kind": "method",
+            "platform": "win32",
+            "matched": [
+              "material"
+            ],
+            "line": 6009,
+            "decl": "setBackgroundMaterial(material: 'auto' | 'none' | 'mica' | 'acrylic' | 'tabbed'): void;",
+            "doc": "This method sets the browser window's system-drawn background material, including behind the non-client area. See the Windows documentation for more details. > [!NOTE] This method is only supported on Windows 11 22H2 and up. @platform win32"
+          },
+          {
+            "name": "setFocusable",
+            "kind": "method",
+            "platform": "darwin,win32",
+            "matched": [
+              "activity"
+            ],
+            "line": 6085,
+            "decl": "setFocusable(focusable: boolean): void;",
+            "doc": "Changes whether the window can be focused. On macOS it does not remove the focus from the window. @platform darwin,win32"
+          },
+          {
+            "name": "setIgnoreMouseEvents",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 6122,
+            "decl": "setIgnoreMouseEvents(ignore: boolean, options?: IgnoreMouseEventsOptions): void;",
+            "doc": "Makes the window ignore all mouse events. All mouse events happened in this window will be passed to the window below this window, but if this window has focus, it will still receive keyboard events."
+          },
+          {
+            "name": "setOpacity",
+            "kind": "method",
+            "platform": "win32,darwin",
+            "matched": [
+              "material"
+            ],
+            "line": 6174,
+            "decl": "setOpacity(opacity: number): void;",
+            "doc": "Sets the opacity of the window. On Linux, does nothing. Out of bound number values are clamped to the [0, 1] range. @platform win32,darwin"
+          },
+          {
+            "name": "setVibrancy",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "material"
+            ],
+            "line": 6358,
+            "decl": "setVibrancy(type: (('titlebar' | 'selection' | 'menu' | 'popover' | 'sidebar' | 'header' | 'sheet' | 'window' | 'hud' | 'fullscreen-ui' | 'tooltip' | 'content' | 'under-window' | 'under-page')) | (null), options?: VibrancyOptions): void;",
+            "doc": "Adds a vibrancy effect to the browser window. Passing `null` or an empty string will remove the vibrancy effect on the window. The `animationDuration` parameter only animates fading in or fading out the vibrancy effect. Animating between different types of vibrancy is not supported. @platform darwin"
+          },
+          {
+            "name": "show",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 6383,
+            "decl": "show(): void;",
+            "doc": "Shows and gives focus to the window."
+          },
+          {
+            "name": "showInactive",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 6401,
+            "decl": "showInactive(): void;",
+            "doc": "Shows the window but doesn't focus on it. Not supported on Wayland (Linux)."
+          },
+          {
+            "name": "focusable",
+            "kind": "property",
+            "platform": "win32,darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 6472,
+            "decl": "focusable: boolean;",
+            "doc": "A `boolean` property that determines whether the window is focusable. @platform win32,darwin"
+          }
+        ]
+      },
+      "App": {
+        "parsed": true,
+        "declLines": [
+          48,
+          1997
+        ],
+        "totalMembers": 436,
+        "allMemberNames": [
+          "on",
+          "accessibilitySupportEnabled",
+          "off",
+          "accessibilitySupportEnabled",
+          "once",
+          "accessibilitySupportEnabled",
+          "addListener",
+          "accessibilitySupportEnabled",
+          "removeListener",
+          "accessibilitySupportEnabled",
+          "on",
+          "hasVisibleWindows",
+          "off",
+          "hasVisibleWindows",
+          "once",
+          "hasVisibleWindows",
+          "addListener",
+          "hasVisibleWindows",
+          "removeListener",
+          "hasVisibleWindows",
+          "on",
+          "type",
+          "userInfo",
+          "off",
+          "type",
+          "userInfo",
+          "once",
+          "type",
+          "userInfo",
+          "addListener",
+          "type",
+          "userInfo",
+          "removeListener",
+          "type",
+          "userInfo",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "window",
+          "off",
+          "window",
+          "once",
+          "window",
+          "addListener",
+          "window",
+          "removeListener",
+          "window",
+          "on",
+          "window",
+          "off",
+          "window",
+          "once",
+          "window",
+          "addListener",
+          "window",
+          "removeListener",
+          "window",
+          "on",
+          "window",
+          "off",
+          "window",
+          "once",
+          "window",
+          "addListener",
+          "window",
+          "removeListener",
+          "window",
+          "on",
+          "webContents",
+          "url",
+          "error",
+          "certificate",
+          "callback",
+          "isMainFrame",
+          "off",
+          "webContents",
+          "url",
+          "error",
+          "certificate",
+          "callback",
+          "isMainFrame",
+          "once",
+          "webContents",
+          "url",
+          "error",
+          "certificate",
+          "callback",
+          "isMainFrame",
+          "addListener",
+          "webContents",
+          "url",
+          "error",
+          "certificate",
+          "callback",
+          "isMainFrame",
+          "removeListener",
+          "webContents",
+          "url",
+          "error",
+          "certificate",
+          "callback",
+          "isMainFrame",
+          "on",
+          "details",
+          "off",
+          "details",
+          "once",
+          "details",
+          "addListener",
+          "details",
+          "removeListener",
+          "details",
+          "on",
+          "type",
+          "userInfo",
+          "details",
+          "off",
+          "type",
+          "userInfo",
+          "details",
+          "once",
+          "type",
+          "userInfo",
+          "details",
+          "addListener",
+          "type",
+          "userInfo",
+          "details",
+          "removeListener",
+          "type",
+          "userInfo",
+          "details",
+          "on",
+          "type",
+          "error",
+          "off",
+          "type",
+          "error",
+          "once",
+          "type",
+          "error",
+          "addListener",
+          "type",
+          "error",
+          "removeListener",
+          "type",
+          "error",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "webContents",
+          "authenticationResponseDetails",
+          "authInfo",
+          "callback",
+          "off",
+          "webContents",
+          "authenticationResponseDetails",
+          "authInfo",
+          "callback",
+          "once",
+          "webContents",
+          "authenticationResponseDetails",
+          "authInfo",
+          "callback",
+          "addListener",
+          "webContents",
+          "authenticationResponseDetails",
+          "authInfo",
+          "callback",
+          "removeListener",
+          "webContents",
+          "authenticationResponseDetails",
+          "authInfo",
+          "callback",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "path",
+          "off",
+          "path",
+          "once",
+          "path",
+          "addListener",
+          "path",
+          "removeListener",
+          "path",
+          "on",
+          "url",
+          "off",
+          "url",
+          "once",
+          "url",
+          "addListener",
+          "url",
+          "removeListener",
+          "url",
+          "on",
+          "exitCode",
+          "off",
+          "exitCode",
+          "once",
+          "exitCode",
+          "addListener",
+          "exitCode",
+          "removeListener",
+          "exitCode",
+          "on",
+          "launchInfo",
+          "off",
+          "launchInfo",
+          "once",
+          "launchInfo",
+          "addListener",
+          "launchInfo",
+          "removeListener",
+          "launchInfo",
+          "on",
+          "webContents",
+          "details",
+          "off",
+          "webContents",
+          "details",
+          "once",
+          "webContents",
+          "details",
+          "addListener",
+          "webContents",
+          "details",
+          "removeListener",
+          "webContents",
+          "details",
+          "on",
+          "argv",
+          "workingDirectory",
+          "additionalData",
+          "off",
+          "argv",
+          "workingDirectory",
+          "additionalData",
+          "once",
+          "argv",
+          "workingDirectory",
+          "additionalData",
+          "addListener",
+          "argv",
+          "workingDirectory",
+          "additionalData",
+          "removeListener",
+          "argv",
+          "workingDirectory",
+          "additionalData",
+          "on",
+          "webContents",
+          "url",
+          "certificateList",
+          "callback",
+          "off",
+          "webContents",
+          "url",
+          "certificateList",
+          "callback",
+          "once",
+          "webContents",
+          "url",
+          "certificateList",
+          "callback",
+          "addListener",
+          "webContents",
+          "url",
+          "certificateList",
+          "callback",
+          "removeListener",
+          "webContents",
+          "url",
+          "certificateList",
+          "callback",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "type",
+          "userInfo",
+          "off",
+          "type",
+          "userInfo",
+          "once",
+          "type",
+          "userInfo",
+          "addListener",
+          "type",
+          "userInfo",
+          "removeListener",
+          "type",
+          "userInfo",
+          "on",
+          "webContents",
+          "off",
+          "webContents",
+          "once",
+          "webContents",
+          "addListener",
+          "webContents",
+          "removeListener",
+          "webContents",
+          "on",
+          "type",
+          "off",
+          "type",
+          "once",
+          "type",
+          "addListener",
+          "type",
+          "removeListener",
+          "type",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "on",
+          "off",
+          "once",
+          "addListener",
+          "removeListener",
+          "addRecentDocument",
+          "clearRecentDocuments",
+          "configureHostResolver",
+          "configureWebAuthn",
+          "disableDomainBlockingFor3DAPIs",
+          "disableHardwareAcceleration",
+          "enableSandbox",
+          "exit",
+          "focus",
+          "getAccessibilitySupportFeatures",
+          "getApplicationInfoForProtocol",
+          "getApplicationNameForProtocol",
+          "getAppMetrics",
+          "getAppPath",
+          "getBadgeCount",
+          "getCurrentActivityType",
+          "getFileIcon",
+          "getGPUFeatureStatus",
+          "getGPUInfo",
+          "getJumpListSettings",
+          "getLocale",
+          "getLocaleCountryCode",
+          "getLoginItemSettings",
+          "getName",
+          "getPath",
+          "getPreferredSystemLanguages",
+          "getRecentDocuments",
+          "getSystemLocale",
+          "getVersion",
+          "hasSingleInstanceLock",
+          "hide",
+          "importCertificate",
+          "invalidateCurrentActivity",
+          "isAccessibilitySupportEnabled",
+          "isActive",
+          "isDefaultProtocolClient",
+          "isEmojiPanelSupported",
+          "isHardwareAccelerationEnabled",
+          "isHidden",
+          "isInApplicationsFolder",
+          "isReady",
+          "isSecureKeyboardEntryEnabled",
+          "isUnityRunning",
+          "moveToApplicationsFolder",
+          "quit",
+          "relaunch",
+          "releaseSingleInstanceLock",
+          "removeAsDefaultProtocolClient",
+          "requestSingleInstanceLock",
+          "resignCurrentActivity",
+          "resolveProxy",
+          "setAboutPanelOptions",
+          "setAccessibilitySupportEnabled",
+          "setAccessibilitySupportFeatures",
+          "setActivationPolicy",
+          "setAppLogsPath",
+          "setAppUserModelId",
+          "setAsDefaultProtocolClient",
+          "setBadgeCount",
+          "setClientCertRequestPasswordHandler",
+          "setDesktopName",
+          "setJumpList",
+          "setLoginItemSettings",
+          "setName",
+          "setPath",
+          "setProxy",
+          "setSecureKeyboardEntryEnabled",
+          "setToastActivatorCLSID",
+          "setUserActivity",
+          "setUserTasks",
+          "show",
+          "showAboutPanel",
+          "showEmojiPanel",
+          "startAccessingSecurityScopedResource",
+          "updateCurrentActivity",
+          "whenReady",
+          "accessibilitySupportEnabled",
+          "applicationMenu",
+          "badgeCount",
+          "commandLine",
+          "dock",
+          "isPackaged",
+          "name",
+          "runningUnderARM64Translation",
+          "toastActivatorCLSID",
+          "userAgentFallback"
+        ],
+        "hits": [
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 210,
+            "decl": "on(event: 'browser-window-blur', listener: (event: Event,",
+            "doc": "Emitted when a browserWindow gets blurred."
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 212,
+            "decl": "off(event: 'browser-window-blur', listener: (event: Event,",
+            "doc": null
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 214,
+            "decl": "once(event: 'browser-window-blur', listener: (event: Event,",
+            "doc": null
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 216,
+            "decl": "addListener(event: 'browser-window-blur', listener: (event: Event,",
+            "doc": null
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 218,
+            "decl": "removeListener(event: 'browser-window-blur', listener: (event: Event,",
+            "doc": null
+          },
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 236,
+            "decl": "on(event: 'browser-window-focus', listener: (event: Event,",
+            "doc": "Emitted when a browserWindow gets focused."
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 238,
+            "decl": "off(event: 'browser-window-focus', listener: (event: Event,",
+            "doc": null
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 240,
+            "decl": "once(event: 'browser-window-focus', listener: (event: Event,",
+            "doc": null
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 242,
+            "decl": "addListener(event: 'browser-window-focus', listener: (event: Event,",
+            "doc": null
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 244,
+            "decl": "removeListener(event: 'browser-window-focus', listener: (event: Event,",
+            "doc": null
+          },
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 460,
+            "decl": "on(event: 'did-become-active', listener: (event: Event) => void): this;",
+            "doc": "Emitted when the application becomes active. This differs from the `activate` event in that `did-become-active` is emitted every time the app becomes active, not only when Dock icon is clicked or application is re-launched. It is also emitted when a user switches to the app via the macOS App Switcher. @platform darwin"
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 464,
+            "decl": "off(event: 'did-become-active', listener: (event: Event) => void): this;",
+            "doc": "@platform darwin"
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 468,
+            "decl": "once(event: 'did-become-active', listener: (event: Event) => void): this;",
+            "doc": "@platform darwin"
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 472,
+            "decl": "addListener(event: 'did-become-active', listener: (event: Event) => void): this;",
+            "doc": "@platform darwin"
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 476,
+            "decl": "removeListener(event: 'did-become-active', listener: (event: Event) => void): this;",
+            "doc": "@platform darwin"
+          },
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 484,
+            "decl": "on(event: 'did-resign-active', listener: (event: Event) => void): this;",
+            "doc": "Emitted when the app is no longer active and doesn’t have focus. This can be triggered, for example, by clicking on another application or by using the macOS App Switcher to switch to another application. @platform darwin"
+          },
+          {
+            "name": "off",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 488,
+            "decl": "off(event: 'did-resign-active', listener: (event: Event) => void): this;",
+            "doc": "@platform darwin"
+          },
+          {
+            "name": "once",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 492,
+            "decl": "once(event: 'did-resign-active', listener: (event: Event) => void): this;",
+            "doc": "@platform darwin"
+          },
+          {
+            "name": "addListener",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 496,
+            "decl": "addListener(event: 'did-resign-active', listener: (event: Event) => void): this;",
+            "doc": "@platform darwin"
+          },
+          {
+            "name": "removeListener",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 500,
+            "decl": "removeListener(event: 'did-resign-active', listener: (event: Event) => void): this;",
+            "doc": "@platform darwin"
+          },
+          {
+            "name": "on",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 737,
+            "decl": "on(event: 'second-instance', listener: (event: Event,",
+            "doc": "This event will be emitted inside the primary instance of your application when a second instance has been executed and calls `app.requestSingleInstanceLock()`. `argv` is an Array of the second instance's command line arguments, and `workingDirectory` is its current working directory. Usually applications respond to this by making their primary window focused and non-minimized. > [!NOTE] `argv` will not be exactly the same list of arguments as those passed to the second instance. The order might change and additional arguments might be appended. If you need to maintain the exact same arguments"
+          },
+          {
+            "name": "focus",
+            "kind": "method",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 1102,
+            "decl": "focus(options?: FocusOptions): void;",
+            "doc": "On macOS, makes the application the active app. On Windows, focuses on the application's first window. On Linux, either focuses on the first visible window (X11) or requests focus but may instead show a notification or flash the app icon (Wayland). You should seek to use the `steal` option as sparingly as possible."
+          },
+          {
+            "name": "isActive",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 1413,
+            "decl": "isActive(): boolean;",
+            "doc": "`true` if the application is active (i.e. focused). @platform darwin"
+          },
+          {
+            "name": "resignCurrentActivity",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 1573,
+            "decl": "resignCurrentActivity(): void;",
+            "doc": "Marks the current Handoff user activity as inactive without invalidating it. @platform darwin"
+          },
+          {
+            "name": "setActivationPolicy",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 1640,
+            "decl": "setActivationPolicy(policy: 'regular' | 'accessory' | 'prohibited'): void;",
+            "doc": "Sets the activation policy for a given app. Activation policy types: * 'regular' - The application is an ordinary app that appears in the Dock and may have a user interface. * 'accessory' - The application doesn’t appear in the Dock and doesn’t have a menu bar, but it may be activated programmatically or by clicking on one of its windows. * 'prohibited' - The application doesn’t appear in the Dock and may not create windows or be activated. @platform darwin"
+          },
+          {
+            "name": "show",
+            "kind": "method",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 1861,
+            "decl": "show(): void;",
+            "doc": "Shows application windows after they were hidden. Does not automatically focus them. @platform darwin"
+          }
+        ]
+      },
+      "BaseWindowConstructorOptions": {
+        "parsed": true,
+        "declLines": [
+          3767,
+          4062
+        ],
+        "totalMembers": 50,
+        "allMemberNames": [
+          "accentColor",
+          "acceptFirstMouse",
+          "alwaysOnTop",
+          "autoHideMenuBar",
+          "backgroundColor",
+          "backgroundMaterial",
+          "center",
+          "closable",
+          "darkTheme",
+          "disableAutoHideCursor",
+          "enableLargerThanScreen",
+          "focusable",
+          "frame",
+          "fullscreen",
+          "fullscreenable",
+          "hasShadow",
+          "height",
+          "hiddenInMissionControl",
+          "icon",
+          "kiosk",
+          "maxHeight",
+          "maximizable",
+          "maxWidth",
+          "minHeight",
+          "minimizable",
+          "minWidth",
+          "modal",
+          "movable",
+          "opacity",
+          "parent",
+          "resizable",
+          "roundedCorners",
+          "show",
+          "simpleFullscreen",
+          "skipTaskbar",
+          "tabbingIdentifier",
+          "thickFrame",
+          "title",
+          "titleBarOverlay",
+          "titleBarStyle",
+          "trafficLightPosition",
+          "transparent",
+          "type",
+          "useContentSize",
+          "vibrancy",
+          "visualEffectState",
+          "width",
+          "x",
+          "y",
+          "zoomToPageWidth"
+        ],
+        "hits": [
+          {
+            "name": "acceptFirstMouse",
+            "kind": "property",
+            "platform": "darwin",
+            "matched": [
+              "activity"
+            ],
+            "line": 3785,
+            "decl": "acceptFirstMouse?: boolean;",
+            "doc": "Whether clicking an inactive window will also click through to the web contents. Default is `false` on macOS. This option is not configurable on other platforms. @platform darwin"
+          },
+          {
+            "name": "backgroundColor",
+            "kind": "property",
+            "platform": null,
+            "matched": [
+              "material"
+            ],
+            "line": 3803,
+            "decl": "backgroundColor?: string;",
+            "doc": "The window's background color in Hex, RGB, RGBA, HSL, HSLA or named CSS color format. Alpha in #AARRGGBB format is supported if `transparent` is set to `true`. Default is `#FFF` (white). See win.setBackgroundColor for more information."
+          },
+          {
+            "name": "backgroundMaterial",
+            "kind": "property",
+            "platform": "win32",
+            "matched": [
+              "material"
+            ],
+            "line": 3811,
+            "decl": "backgroundMaterial?: ('auto' | 'none' | 'mica' | 'acrylic' | 'tabbed');",
+            "doc": "Set the window's system-drawn background material, including behind the non-client area. Can be `auto`, `none`, `mica`, `acrylic` or `tabbed`. See win.setBackgroundMaterial for more information. @platform win32"
+          },
+          {
+            "name": "focusable",
+            "kind": "property",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 3844,
+            "decl": "focusable?: boolean;",
+            "doc": "Whether the window can be focused. Default is `true`. On Windows setting `focusable: false` also implies setting `skipTaskbar: true`. On Linux setting `focusable: false` makes the window stop interacting with wm, so the window will always stay on top in all workspaces."
+          },
+          {
+            "name": "opacity",
+            "kind": "property",
+            "platform": "darwin,win32",
+            "matched": [
+              "material"
+            ],
+            "line": 3931,
+            "decl": "opacity?: number;",
+            "doc": "Set the initial opacity of the window, between 0.0 (fully transparent) and 1.0 (fully opaque). This is only implemented on Windows and macOS. @platform darwin,win32"
+          },
+          {
+            "name": "transparent",
+            "kind": "property",
+            "platform": null,
+            "matched": [
+              "material"
+            ],
+            "line": 4011,
+            "decl": "transparent?: boolean;",
+            "doc": "Makes the window transparent. Default is `false`. On Windows, does not work unless the window is frameless. When you add a `View` to a `BaseWindow`, you'll need to call `view.setBackgroundColor` with a transparent background color on that view to make its background transparent as well."
+          },
+          {
+            "name": "vibrancy",
+            "kind": "property",
+            "platform": "darwin",
+            "matched": [
+              "material"
+            ],
+            "line": 4030,
+            "decl": "vibrancy?: ('appearance-based' | 'titlebar' | 'selection' | 'menu' | 'popover' | 'sidebar' | 'header' | 'sheet' | 'window' | 'hud' | 'fullscreen-ui' | 'tooltip' | 'content' | 'under-window' | 'under-page');",
+            "doc": "Add a type of vibrancy effect to the window, only on macOS. Can be `appearance-based`, `titlebar`, `selection`, `menu`, `popover`, `sidebar`, `header`, `sheet`, `window`, `hud`, `fullscreen-ui`, `tooltip`, `content`, `under-window`, or `under-page`. @platform darwin"
+          },
+          {
+            "name": "visualEffectState",
+            "kind": "property",
+            "platform": "darwin",
+            "matched": [
+              "material",
+              "activity"
+            ],
+            "line": 4037,
+            "decl": "visualEffectState?: ('followWindow' | 'active' | 'inactive');",
+            "doc": "Specify how the material appearance should reflect window activity state on macOS. Must be used with the `vibrancy` property. Possible values are: @platform darwin"
+          }
+        ]
+      },
+      "BrowserWindowConstructorOptions": {
+        "parsed": true,
+        "declLines": [
+          6587,
+          6602
+        ],
+        "totalMembers": 2,
+        "allMemberNames": [
+          "paintWhenInitiallyHidden",
+          "webPreferences"
+        ],
+        "hits": [
+          {
+            "name": "paintWhenInitiallyHidden",
+            "kind": "property",
+            "platform": null,
+            "matched": [
+              "activity"
+            ],
+            "line": 6597,
+            "decl": "paintWhenInitiallyHidden?: boolean;",
+            "doc": "Whether the renderer should be active when `show` is `false` and it has just been created.  In order for `document.visibilityState` to work correctly on first load with `show: false` you should set this to `false`.  Setting this to `false` will cause the `ready-to-show` event to not fire.  Default is `true`."
+          }
+        ]
+      }
+    },
+    "absenceCounts": {
+      "SetWindowCompositionAttribute": 0,
+      "stayActive": 0,
+      "acrylicOpacity": 0,
+      "ACCENT_ENABLE_ACRYLICBLURBEHIND": 0,
+      "DwmEnableBlurBehindWindow": 0,
+      "persistent": 17
+    },
+    "absenceNote": "Counts are whole-file, case-insensitive, over electron.d.ts. A zero means the symbol is not in the declarations at all — it does NOT mean the underlying Win32 API is unreachable, only that Electron does not surface it."
+  },
+  "s1_runtime": {
+    "what": "The same surface MEASURED by calling, inside a real Electron main process. Every acceptance test is paired with a deliberately bogus argument; without that control an accepted value proves nothing about a whitelist.",
+    "launchedWith": [
+      "--no-sandbox",
+      "."
+    ],
+    "disableGpu": false,
+    "disableGpuNote": "Deliberately absent — the recorded trap (gui-69.mjs:9-11) is that --disable-gpu flattens acrylic. Nothing in this phase reads pixels, but the launch conditions are stated so no later reader has to guess.",
+    "appWindow": {
+      "id": 1,
+      "bounds": {
+        "x": 730,
+        "y": 306,
+        "width": 1100,
+        "height": 780
+      },
+      "url": "file:///D:/.claude/claude%20projects/playground/4/out/renderer/index.html"
+    },
+    "browserWindowPrototypeChain": [
+      {
+        "ctor": "BrowserWindow",
+        "members": [
+          "_init",
+          "addBrowserView",
+          "blurWebView",
+          "capturePage",
+          "closeDevTools",
+          "constructor",
+          "focusOnWebView",
+          "getBackgroundThrottling",
+          "getBrowserView",
+          "getBrowserViews",
+          "getURL",
+          "inspectElement",
+          "inspectServiceWorker",
+          "inspectSharedWorker",
+          "isDevToolsFocused",
+          "isDevToolsOpened",
+          "loadFile",
+          "loadURL",
+          "openDevTools",
+          "reload",
+          "removeBrowserView",
+          "send",
+          "setBackgroundThrottling",
+          "setBrowserView",
+          "setTopBrowserView",
+          "showDefinitionForSelection",
+          "toggleDevTools",
+          "webContents"
+        ]
+      },
+      {
+        "ctor": "BaseWindow",
+        "members": [
+          "_init",
+          "_refreshTouchBarItem",
+          "_setEscapeTouchBarItem",
+          "_setTouchBarItems",
+          "accessibleTitle",
+          "autoHideMenuBar",
+          "blur",
+          "center",
+          "closable",
+          "close",
+          "closeFilePreview",
+          "constructor",
+          "contentView",
+          "destroy",
+          "documentEdited",
+          "flashFrame",
+          "focus",
+          "focusable",
+          "fullScreen",
+          "fullScreenable",
+          "getAccentColor",
+          "getBackgroundColor",
+          "getBounds",
+          "getChildWindows",
+          "getContentBounds",
+          "getContentSize",
+          "getContentView",
+          "getMaximumSize",
+          "getMediaSourceId",
+          "getMinimumSize",
+          "getNativeWindowHandle",
+          "getNormalBounds",
+          "getOpacity",
+          "getParentWindow",
+          "getPosition",
+          "getRepresentedFilename",
+          "getSize",
+          "getTitle",
+          "hasShadow",
+          "hide",
+          "hookWindowMessage",
+          "id",
+          "isAlwaysOnTop",
+          "isClosable",
+          "isContentProtected",
+          "isDestroyed",
+          "isDocumentEdited",
+          "isEnabled",
+          "isFocusable",
+          "isFocused",
+          "isFullScreen",
+          "isFullScreenable",
+          "isKiosk",
+          "isMaximizable",
+          "isMaximized",
+          "isMenuBarAutoHide",
+          "isMenuBarVisible",
+          "isMinimizable",
+          "isMinimized",
+          "isModal",
+          "isMovable",
+          "isNormal",
+          "isResizable",
+          "isSimpleFullScreen",
+          "isSnapped",
+          "isTabletMode",
+          "isVisible",
+          "isVisibleOnAllWorkspaces",
+          "isWindowMessageHooked",
+          "kiosk",
+          "maximizable",
+          "maximize",
+          "menuBarVisible",
+          "minimizable",
+          "minimize",
+          "movable",
+          "moveAbove",
+          "moveTop",
+          "previewFile",
+          "removeMenu",
+          "representedFilename",
+          "resizable",
+          "restore",
+          "setAccentColor",
+          "setAlwaysOnTop",
+          "setAppDetails",
+          "setAspectRatio",
+          "setAutoHideMenuBar",
+          "setBackgroundColor",
+          "setBackgroundMaterial",
+          "setBounds",
+          "setClosable",
+          "setContentBounds",
+          "setContentProtection",
+          "setContentSize",
+          "setContentView",
+          "setDocumentEdited",
+          "setEnabled",
+          "setFocusable",
+          "setFullScreen",
+          "setFullScreenable",
+          "setHasShadow",
+          "setIcon",
+          "setIgnoreMouseEvents",
+          "setKiosk",
+          "setMaximizable",
+          "setMaximumSize",
+          "setMenu",
+          "setMenuBarVisibility",
+          "setMinimizable",
+          "setMinimumSize",
+          "setMovable",
+          "setOpacity",
+          "setOverlayIcon",
+          "setParentWindow",
+          "setPosition",
+          "setProgressBar",
+          "setRepresentedFilename",
+          "setResizable",
+          "setShape",
+          "setSheetOffset",
+          "setSimpleFullScreen",
+          "setSize",
+          "setSkipTaskbar",
+          "setThumbarButtons",
+          "setThumbnailClip",
+          "setThumbnailToolTip",
+          "setTitle",
+          "setTitleBarOverlay",
+          "setTouchBar",
+          "setVibrancy",
+          "setVisibleOnAllWorkspaces",
+          "shadow",
+          "show",
+          "showInactive",
+          "simpleFullScreen",
+          "snapped",
+          "title",
+          "unhookAllWindowMessages",
+          "unhookWindowMessage",
+          "unmaximize",
+          "visibleOnAllWorkspaces"
+        ]
+      },
+      {
+        "ctor": "EventEmitter",
+        "members": [
+          "_events",
+          "_eventsCount",
+          "_maxListeners",
+          "addListener",
+          "constructor",
+          "emit",
+          "eventNames",
+          "getMaxListeners",
+          "listenerCount",
+          "listeners",
+          "off",
+          "on",
+          "once",
+          "prependListener",
+          "prependOnceListener",
+          "rawListeners",
+          "removeAllListeners",
+          "removeListener",
+          "setMaxListeners"
+        ]
+      }
+    ],
+    "appMembers": [
+      "_clientCertRequestPasswordHandler",
+      "_events",
+      "_eventsCount",
+      "accessibilitySupportEnabled",
+      "addRecentDocument",
+      "applicationMenu",
+      "badgeCount",
+      "clearRecentDocuments",
+      "commandLine",
+      "configureHostResolver",
+      "disableDomainBlockingFor3DAPIs",
+      "disableHardwareAcceleration",
+      "enableSandbox",
+      "exit",
+      "focus",
+      "getAccessibilitySupportFeatures",
+      "getAppMetrics",
+      "getAppPath",
+      "getApplicationInfoForProtocol",
+      "getApplicationNameForProtocol",
+      "getBadgeCount",
+      "getFileIcon",
+      "getGPUFeatureStatus",
+      "getGPUInfo",
+      "getJumpListSettings",
+      "getLocale",
+      "getLocaleCountryCode",
+      "getLoginItemSettings",
+      "getName",
+      "getPath",
+      "getPreferredSystemLanguages",
+      "getRecentDocuments",
+      "getSystemLocale",
+      "getVersion",
+      "hasSingleInstanceLock",
+      "isAccessibilitySupportEnabled",
+      "isDefaultProtocolClient",
+      "isEmojiPanelSupported",
+      "isHardwareAccelerationEnabled",
+      "isPackaged",
+      "isReady",
+      "name",
+      "quit",
+      "relaunch",
+      "releaseSingleInstanceLock",
+      "removeAsDefaultProtocolClient",
+      "requestSingleInstanceLock",
+      "resolveProxy",
+      "runningUnderARM64Translation",
+      "setAboutPanelOptions",
+      "setAccessibilitySupportEnabled",
+      "setAccessibilitySupportFeatures",
+      "setAppLogsPath",
+      "setAppPath",
+      "setAppUserModelId",
+      "setAsDefaultProtocolClient",
+      "setBadgeCount",
+      "setClientCertRequestPasswordHandler",
+      "setDesktopName",
+      "setJumpList",
+      "setLoginItemSettings",
+      "setName",
+      "setPath",
+      "setProxy",
+      "setToastActivatorCLSID",
+      "setUserTasks",
+      "setVersion",
+      "showAboutPanel",
+      "showEmojiPanel",
+      "toastActivatorCLSID",
+      "userAgentFallback",
+      "whenReady"
+    ],
+    "setBackgroundMaterial": {
+      "exists": true,
+      "calls": {
+        "auto": {
+          "threw": false,
+          "returned": "(undefined)"
+        },
+        "none": {
+          "threw": false,
+          "returned": "(undefined)"
+        },
+        "mica": {
+          "threw": false,
+          "returned": "(undefined)"
+        },
+        "acrylic": {
+          "threw": false,
+          "returned": "(undefined)"
+        },
+        "tabbed": {
+          "threw": false,
+          "returned": "(undefined)"
+        },
+        "__bogus__": {
+          "threw": false,
+          "returned": "(undefined)"
+        },
+        "__empty__": {
+          "threw": false,
+          "returned": "(undefined)"
+        },
+        "__number__": {
+          "threw": true,
+          "error": "Error processing argument at index 0, conversion failure from "
+        },
+        "__persistent__": {
+          "threw": false,
+          "returned": "(undefined)"
+        }
+      }
+    },
+    "readBack": {
+      "getBackgroundMaterial": "undefined",
+      "getVibrancy": "undefined",
+      "getBackgroundColor": "function",
+      "backgroundMaterialProperty": false
+    },
+    "setVibrancy": {
+      "exists": true,
+      "calls": {
+        "under-window": {
+          "threw": false,
+          "returned": "(undefined)"
+        },
+        "__bogus__": {
+          "threw": false,
+          "returned": "(undefined)"
+        },
+        "null": {
+          "threw": false,
+          "returned": "(undefined)"
+        }
+      }
+    },
+    "constructorOptions": {
+      "visualEffectState:active": {
+        "threw": false,
+        "created": true
+      },
+      "visualEffectState+vibrancy": {
+        "threw": false,
+        "created": true
+      },
+      "visualEffectState:__bogus__": {
+        "threw": false,
+        "created": true
+      },
+      "backgroundMaterial:acrylic": {
+        "threw": false,
+        "created": true
+      },
+      "backgroundMaterial:__bogus__": {
+        "threw": false,
+        "created": true
+      }
+    },
+    "focus": {
+      "drivable": true,
+      "activationLadder": [
+        {
+          "tag": "show()+focus()",
+          "isFocused": true,
+          "isVisible": true,
+          "isMinimized": false,
+          "webContentsFocused": true,
+          "focusedWindowId": 1,
+          "targetId": 1,
+          "blurEvents": 0,
+          "focusEvents": 1
+        }
+      ],
+      "focusedBaselineVia": "show()+focus()",
+      "unfocusSteps": [
+        {
+          "tag": "after target.blur()",
+          "isFocused": true,
+          "isVisible": true,
+          "isMinimized": false,
+          "webContentsFocused": true,
+          "focusedWindowId": 1,
+          "targetId": 1,
+          "blurEvents": 0,
+          "focusEvents": 1
+        },
+        {
+          "tag": "after a SECOND window took focus",
+          "isFocused": false,
+          "isVisible": true,
+          "isMinimized": false,
+          "webContentsFocused": false,
+          "focusedWindowId": 8,
+          "targetId": 1,
+          "blurEvents": 1,
+          "focusEvents": 1
+        }
+      ],
+      "honestlyUnfocusedVia": "after a SECOND window took focus",
+      "targetBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1083,
+        "height": 715
+      },
+      "scaleFactor": 1,
+      "note": "A FOCUSED baseline must be scored first: without it, isFocused()===false is indistinguishable from a window that never took focus, and calling that \"unfocused\" would photograph a setup failure. A window is honestly unfocused only when isFocused() is false while isVisible() is true and isMinimized() is false — the combination #75 could not produce by blur(), minimize() or hide()."
+    }
+  },
+  "s4": {
+    "what": "Best-effort captures of the window in both focus states, for the owner to judge in one place.",
+    "webContentsCaptureIsUseless": true,
+    "webContentsCaptureNote": "page.screenshot() captures the web contents, and this window's contents are transparent over a DWM-drawn backdrop. Such a capture cannot show acrylic or mica at all — not badly, but not at all. This is why no shot under .claude/skills/run-desktop/ is evidence about appearance.",
+    "focusedBaselineProducible": true,
+    "focusedBaselineVia": "show()+focus()",
+    "honestlyUnfocusedWindowProducible": true,
+    "honestlyUnfocusedVia": "after a SECOND window took focus",
+    "captures": [
+      {
+        "round": 1,
+        "material": "acrylic",
+        "requestedFocused": true,
+        "measured": {
+          "isFocused": true,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": "scripts/spike-117-shots/spike-117-acrylic-focused.png",
+        "capture": {
+          "ok": true,
+          "bytes": 19230
+        },
+        "distinctColorsSampled": 97,
+        "looksBlank": false
+      },
+      {
+        "round": 1,
+        "material": "acrylic",
+        "requestedFocused": false,
+        "measured": {
+          "isFocused": false,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": "scripts/spike-117-shots/spike-117-acrylic-unfocused.png",
+        "capture": {
+          "ok": true,
+          "bytes": 19234
+        },
+        "distinctColorsSampled": 97,
+        "looksBlank": false
+      },
+      {
+        "round": 1,
+        "material": "mica",
+        "requestedFocused": true,
+        "measured": {
+          "isFocused": true,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": "scripts/spike-117-shots/spike-117-mica-focused.png",
+        "capture": {
+          "ok": true,
+          "bytes": 29317
+        },
+        "distinctColorsSampled": 101,
+        "looksBlank": false
+      },
+      {
+        "round": 1,
+        "material": "mica",
+        "requestedFocused": false,
+        "measured": {
+          "isFocused": false,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": "scripts/spike-117-shots/spike-117-mica-unfocused.png",
+        "capture": {
+          "ok": true,
+          "bytes": 19323
+        },
+        "distinctColorsSampled": 95,
+        "looksBlank": false
+      },
+      {
+        "round": 2,
+        "material": "acrylic",
+        "requestedFocused": true,
+        "measured": {
+          "isFocused": true,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": null,
+        "capture": {
+          "ok": true,
+          "bytes": 105149
+        },
+        "distinctColorsSampled": 434,
+        "looksBlank": false,
+        "fileNote": "deleted after its delta was scored — rounds 2+ exist to test reproducibility, not to be looked at"
+      },
+      {
+        "round": 2,
+        "material": "acrylic",
+        "requestedFocused": false,
+        "measured": {
+          "isFocused": false,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": null,
+        "capture": {
+          "ok": true,
+          "bytes": 19234
+        },
+        "distinctColorsSampled": 97,
+        "looksBlank": false,
+        "fileNote": "deleted after its delta was scored — rounds 2+ exist to test reproducibility, not to be looked at"
+      },
+      {
+        "round": 2,
+        "material": "mica",
+        "requestedFocused": true,
+        "measured": {
+          "isFocused": true,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": null,
+        "capture": {
+          "ok": true,
+          "bytes": 19321
+        },
+        "distinctColorsSampled": 95,
+        "looksBlank": false,
+        "fileNote": "deleted after its delta was scored — rounds 2+ exist to test reproducibility, not to be looked at"
+      },
+      {
+        "round": 2,
+        "material": "mica",
+        "requestedFocused": false,
+        "measured": {
+          "isFocused": false,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": null,
+        "capture": {
+          "ok": true,
+          "bytes": 19323
+        },
+        "distinctColorsSampled": 95,
+        "looksBlank": false,
+        "fileNote": "deleted after its delta was scored — rounds 2+ exist to test reproducibility, not to be looked at"
+      },
+      {
+        "round": 3,
+        "material": "acrylic",
+        "requestedFocused": true,
+        "measured": {
+          "isFocused": true,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": null,
+        "capture": {
+          "ok": true,
+          "bytes": 105149
+        },
+        "distinctColorsSampled": 434,
+        "looksBlank": false,
+        "fileNote": "deleted after its delta was scored — rounds 2+ exist to test reproducibility, not to be looked at"
+      },
+      {
+        "round": 3,
+        "material": "acrylic",
+        "requestedFocused": false,
+        "measured": {
+          "isFocused": false,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": null,
+        "capture": {
+          "ok": true,
+          "bytes": 19234
+        },
+        "distinctColorsSampled": 97,
+        "looksBlank": false,
+        "fileNote": "deleted after its delta was scored — rounds 2+ exist to test reproducibility, not to be looked at"
+      },
+      {
+        "round": 3,
+        "material": "mica",
+        "requestedFocused": true,
+        "measured": {
+          "isFocused": true,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": null,
+        "capture": {
+          "ok": true,
+          "bytes": 29317
+        },
+        "distinctColorsSampled": 101,
+        "looksBlank": false,
+        "fileNote": "deleted after its delta was scored — rounds 2+ exist to test reproducibility, not to be looked at"
+      },
+      {
+        "round": 3,
+        "material": "mica",
+        "requestedFocused": false,
+        "measured": {
+          "isFocused": false,
+          "isVisible": true,
+          "isMinimized": false,
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1083,
+            "height": 715
+          }
+        },
+        "focusHonest": true,
+        "cornersFound": 4,
+        "unoccluded": true,
+        "usable": true,
+        "file": null,
+        "capture": {
+          "ok": true,
+          "bytes": 19323
+        },
+        "distinctColorsSampled": 95,
+        "looksBlank": false,
+        "fileNote": "deleted after its delta was scored — rounds 2+ exist to test reproducibility, not to be looked at"
+      }
+    ],
+    "allUsable": true,
+    "rounds": 3,
+    "focusedVsUnfocusedDelta": [
+      {
+        "round": 1,
+        "material": "acrylic",
+        "comparable": true,
+        "meanChannelDelta": 0,
+        "fractionMovedOver8": 0,
+        "pixelsSampled": 12240
+      },
+      {
+        "round": 1,
+        "material": "mica",
+        "comparable": true,
+        "meanChannelDelta": 0.165,
+        "fractionMovedOver8": 0,
+        "pixelsSampled": 12240
+      },
+      {
+        "round": 2,
+        "material": "acrylic",
+        "comparable": true,
+        "meanChannelDelta": 6.425,
+        "fractionMovedOver8": 0.3783,
+        "pixelsSampled": 12240
+      },
+      {
+        "round": 2,
+        "material": "mica",
+        "comparable": true,
+        "meanChannelDelta": 0,
+        "fractionMovedOver8": 0,
+        "pixelsSampled": 12240
+      },
+      {
+        "round": 3,
+        "material": "acrylic",
+        "comparable": true,
+        "meanChannelDelta": 6.425,
+        "fractionMovedOver8": 0.3783,
+        "pixelsSampled": 12240
+      },
+      {
+        "round": 3,
+        "material": "mica",
+        "comparable": true,
+        "meanChannelDelta": 0.165,
+        "fractionMovedOver8": 0,
+        "pixelsSampled": 12240
+      }
+    ],
+    "deltaConfounds": [
+      "n=1 machine, one wallpaper, one theme, one window position, one ~1.4s settle after the focus change.",
+      "DWM animates material transitions; a capture taken during that transition is neither end state.",
+      "What sits BEHIND the window is what acrylic blurs, and it is whatever the desktop happened to hold.",
+      "The window was always-on-top for every capture. That is constant across the pair, so it cannot produce a delta, but it is not the z-order a user has.",
+      "This delta is reported so it is not silently inferred from the colour counts. It does NOT settle whether mica survives blur — that stays an owner call on #115."
+    ],
+    "readThisBeforeTheImages": [
+      "These are DESKTOP captures of the window rectangle, not web-contents captures — that is the only kind that can show a DWM backdrop at all.",
+      "Each row records the focus state MEASURED at capture time. A row with focusHonest:false did not photograph the state it was asked for and must not be read as if it did.",
+      "cornersFound is an occlusion control: the renderer painted magenta squares into its four corners for a throwaway pass, and 4 means the app's own pixels reached all four corners of the grabbed rectangle. The first run of this phase scored 595-1256 distinct colours on four photographs of a TERMINAL sitting on top of the app, so a richness score alone is not a control. Only rows with usable:true are evidence of anything.",
+      "A row with looksBlank:true sampled <=2 distinct colours, which is what a locked session or an unpainted window returns. It is a failed capture, not a flat backdrop.",
+      "The window was pinned always-on-top for the captures and released afterwards. That changes z-order, not material and not focus, and each row's measured focus state is recorded after the pin.",
+      "What these images CANNOT settle: whether mica survives blur. That is an owner call parked on #115, and a pair of PNGs taken ~1.4s after a focus change, on one machine, over one wallpaper, is not the observation that settles it."
+    ]
+  },
+  "s2_s3_published": {
+    "what": "S2 and S3, priced from published registry and API metadata. NOTHING WAS INSTALLED — the ticket forbids pricing from a working tree, and package.json is unchanged. Every row carries the exact command that produced it so the price can be re-checked rather than believed.",
+    "collectedOn": "2026-08-05",
+    "collectedOnNote": "Hand-stamped, not read from a clock: this file is committed and a re-run must not produce a spurious diff. Re-running the commands below is how a later reader checks whether any of it has moved.",
+    "queries": [
+      {
+        "label": "npm:electron-acrylic-window",
+        "cmd": "GET https://registry.npmjs.org/electron-acrylic-window",
+        "ok": true,
+        "value": {
+          "latest": "0.5.11",
+          "latestPublished": "2021-12-09T08:26:24.100Z",
+          "firstPublished": "2020-04-05T02:41:29.874Z",
+          "versionCount": 36,
+          "license": "MIT",
+          "deprecated": null,
+          "dependencies": {
+            "@seorii/win32-displayconfig": "^0.1.1",
+            "bindings": "^1.5.0",
+            "node-addon-api": "^4.2.0",
+            "node-gyp": "^8.4.1"
+          },
+          "peerDependencies": null,
+          "engines": {
+            "node": ">=8.0.0"
+          },
+          "os": null,
+          "gypfile": true,
+          "repository": "git+https://github.com/Seo-Rii/electron-acrylic-window.git"
+        }
+      },
+      {
+        "label": "npm:koffi",
+        "cmd": "GET https://registry.npmjs.org/koffi",
+        "ok": true,
+        "value": {
+          "latest": "3.1.4",
+          "latestPublished": "2026-07-30T23:11:03.362Z",
+          "firstPublished": "2022-02-23T15:43:18.127Z",
+          "versionCount": 277,
+          "license": "MIT",
+          "deprecated": null,
+          "dependencies": null,
+          "peerDependencies": null,
+          "engines": null,
+          "os": null,
+          "gypfile": null,
+          "repository": "git+https://github.com/Koromix/koffi.git"
+        }
+      },
+      {
+        "label": "npm:mica-electron",
+        "cmd": "GET https://registry.npmjs.org/mica-electron",
+        "ok": true,
+        "value": {
+          "latest": "1.5.17",
+          "latestPublished": "2026-02-23T08:14:39.541Z",
+          "firstPublished": "2022-09-09T19:17:41.504Z",
+          "versionCount": 63,
+          "license": "Apache-2.0",
+          "deprecated": null,
+          "dependencies": null,
+          "peerDependencies": null,
+          "engines": null,
+          "os": null,
+          "gypfile": null,
+          "repository": "git+https://github.com/GregVido/mica-electron.git"
+        }
+      },
+      {
+        "label": "npm:electron",
+        "cmd": "GET https://registry.npmjs.org/electron",
+        "ok": true,
+        "value": {
+          "latest": "43.2.0",
+          "latestPublished": "2026-07-21T18:51:06.112Z",
+          "firstPublished": "2012-05-18T23:11:55.741Z",
+          "versionCount": 1758,
+          "license": "MIT",
+          "deprecated": null,
+          "dependencies": {
+            "@types/node": "^24.9.0",
+            "@electron/get": "^5.0.0",
+            "@electron-internal/extract-zip": "^1.0.1"
+          },
+          "peerDependencies": null,
+          "engines": {
+            "node": ">= 22.12.0"
+          },
+          "os": null,
+          "gypfile": null,
+          "repository": "git+https://github.com/electron/electron.git"
+        }
+      },
+      {
+        "label": "gh:Seo-Rii/electron-acrylic-window",
+        "cmd": "gh api repos/Seo-Rii/electron-acrylic-window",
+        "ok": true,
+        "value": {
+          "archived": true,
+          "stars": 284,
+          "openIssues": 20,
+          "lastPush": "2024-02-09T14:47:40Z",
+          "license": "MIT"
+        }
+      },
+      {
+        "label": "gh:GregVido/mica-electron",
+        "cmd": "gh api repos/GregVido/mica-electron",
+        "ok": true,
+        "value": {
+          "archived": false,
+          "stars": 155,
+          "openIssues": 14,
+          "lastPush": "2026-02-23T08:10:25Z",
+          "license": "Apache-2.0"
+        }
+      },
+      {
+        "label": "gh:Koromix/koffi",
+        "cmd": "gh api repos/Koromix/koffi",
+        "ok": true,
+        "value": {
+          "archived": false,
+          "stars": 411,
+          "openIssues": 28,
+          "lastPush": "2026-05-20T14:12:17Z",
+          "license": "MIT"
+        }
+      },
+      {
+        "label": "issues:electron-acrylic-window(open)",
+        "cmd": "gh api search/issues?q=repo:Seo-Rii/electron-acrylic-window+is:issue+is:open&per_page=100",
+        "ok": true,
+        "value": {
+          "totalCount": 13,
+          "items": [
+            "open #99 2023-01-03 @seorii/win32-displayconfig",
+            "open #92 2022-06-21 yarn add electron-acrylic-window fails",
+            "open #86 2022-02-21 Window gets shrunk to the minimum size when dragging.",
+            "open #85 2022-02-17 Error when Compiling (Windows 11)",
+            "open #84 2022-02-11 Intermittent error when building on windows in Github actions",
+            "open #82 2022-01-08 The transparent effect is apply to title bar when mainWindow show after apply the effect",
+            "open #78 2021-12-28 Enable the custom refresh rate on Windows 11",
+            "open #70 2021-09-18 Regarding bugs related to window drag delay",
+            "open #56 2021-05-18 Option for having round corners",
+            "open #54 2021-03-18 theme not working",
+            "open #47 2021-01-08 Hanging on `electron .`",
+            "open #28 2020-09-20 Window border overlapping other screen",
+            "open #16 2020-08-17 Frame on Windows For Native Menu"
+          ]
+        }
+      },
+      {
+        "label": "issues:mica-electron(open)",
+        "cmd": "gh api search/issues?q=repo:GregVido/mica-electron+is:issue+is:open&per_page=100",
+        "ok": true,
+        "value": {
+          "totalCount": 14,
+          "items": [
+            "open #43 2024-09-20 enable webPreferences { experimentalFeatures:true} not working",
+            "open #40 2024-07-09 windows 10 error",
+            "open #39 2024-05-27 When minimizing and maximizing right afterwards the app is blank",
+            "open #38 2024-05-18 Error \"Mica-Electron work only on Windows 11.\"",
+            "open #37 2024-03-23 Shows old windows style title bar when maximized",
+            "open #36 2024-02-23 \"hidden\" in titleBarStyle disables maximize/minimize/etc animations",
+            "open #32 2024-02-15 frame: false doesn't remove the titlebar's background color",
+            "open #29 2023-10-11 Mica is not working properly on Electron v27.0.0",
+            "open #28 2023-09-30 [BUG] Rendering lags badly while resizing Acrylic window",
+            "open #26 2023-09-25 [Question] How to remove the shadow",
+            "open #25 2023-09-24 [BUG] MicaBrowserWindow dose not work properly when 'Display > Scale' is enabled.",
+            "open #24 2023-09-14 [Feature Request] Windows Accents",
+            "open #6 2022-11-08 I want to help beginners in installing this module",
+            "open #5 2022-10-24 Not run, need basic example"
+          ]
+        }
+      },
+      {
+        "label": "issues:koffi+electron",
+        "cmd": "gh api search/issues?q=repo:Koromix/koffi+electron&per_page=100",
+        "ok": true,
+        "value": {
+          "totalCount": 41,
+          "items": [
+            "open #238 2025-07-15 How to write to arbitrary memory based on pointer adress",
+            "closed #270 2026-07-09 Windows on ARM64 pre-built binary?",
+            "open #200 2024-10-12 How do I get elements from structs and how do I pass string[] to char**",
+            "open #7 2022-10-28 [koffi] Code execution stops when calling DLL methods using Koffi",
+            "closed #264 2026-04-13 Regression: native crash on Windows ia32 with cdecl function + multiple string args (Node 24 / koffi 2.15.5+)",
+            "closed #222 2025-01-25 native koffi module",
+            "closed #233 2025-05-08 I need help using it with electron-forge and Vite",
+            "closed #212 2024-12-10 decode structure data is incorrect",
+            "closed #224 2025-02-13 electron-forge example fails with `Cannot find the native Koffi module; did you bundle it correctly?`",
+            "closed #225 2025-02-17 failure to load on new glibc 2.41 (on arch linux but maybe on other distros, too)",
+            "closed #208 2024-11-26 can not find librbary",
+            "closed #199 2024-10-11 about webpack error",
+            "closed #198 2024-09-24 The requested array space is too large",
+            "closed #203 2024-11-07 \"Failed to load share library\" on a windows 10 electron app",
+            "closed #78 2023-09-06 [feat] Add a version without path of node directly listed",
+            "closed #165 2024-06-07 Novice Question。How to call this windows api: AccSetRunningUtilityState",
+            "closed #179 2024-08-12 Process Exits Without Error Information When Calling DLL Function Using KOFFI",
+            "closed #160 2024-05-18 electron throw an exception \"an object could not be cloned.\" when using number array",
+            "closed #137 2024-02-20 How to define (or export) koffi aliases and pointers when they are shared by multiple files? ",
+            "closed #154 2024-04-16 koffi : The C++ \"try...catch\" block cannot work as expect on Win32",
+            "closed #164 2024-06-01 SHAppBarMessage ABM_QUERYPOS returning strange results",
+            "closed #152 2024-04-10 `load` causes the program to be busy waiting.",
+            "closed #123 2024-01-09 could i ask a question",
+            "closed #128 2024-01-19 Crashes without error when executing user32.SetWindowLongPtrW() with a WindowProc Callback",
+            "closed #76 2023-09-04 %1 不是有效的 Win32 应用程序",
+            "closed #107 2023-11-16 error reported mac system",
+            "closed #83 2023-09-12 Crash when calling a function in a DLL",
+            "closed #124 2024-01-10 Koffi requires a webpack config workaround when using yarn workspaces",
+            "closed #72 2023-08-25 npm install koffi occure error",
+            "closed #30 2023-03-21 [koffi] Cannot build electron application when using koffi",
+            "closed #5 2023-04-26 Cannot install electron application when require koffi module, But local testing was successful",
+            "closed #21 2023-05-17 The specified module could not be found",
+            "closed #73 2023-08-27 [BUG?] Prebuilt binaries may still not working",
+            "closed #14 2023-06-19 [koffi]  ctrl+c not working when use koffi + npm run dev + electron + vite + typescript",
+            "closed #10 2023-07-06 callback exception",
+            "closed #3 2023-06-02 [koffi] DLL error when making require(\"koffi\")",
+            "closed #56 2023-07-26 [Feature Request] Support changing search path of koffi.node",
+            "closed #48 2022-12-20 [How to] Access a JS callback method from the native code using an Asynchronous JS FFI function.",
+            "closed #36 2023-02-25 [koffi] Support multiplatform + arch at runtime",
+            "closed #42 2023-01-29 [koffi] FATAL ERROR: Error::ThrowAsJavaScriptException napi_throw",
+            "closed #12 2023-07-04 The output parameter structure is passed into the buffer"
+          ]
+        }
+      },
+      {
+        "label": "issues:electron+backgroundMaterial",
+        "cmd": "gh api search/issues?q=repo:electron/electron+backgroundMaterial+in:title&per_page=100",
+        "ok": true,
+        "value": {
+          "totalCount": 16,
+          "items": [
+            "open #41073 2024-01-22 [Bug]: `backgroundMaterial` causes a black screen when maximized",
+            "closed #48440 2025-10-02 Acrylic backgroundMaterial doesn't work on Windows 10",
+            "closed #48031 2025-08-10 Windows backgroundMaterial doesn't work",
+            "closed #42393 2024-06-07 [Bug]: Maximized window with the \"backgroundMaterial\" property",
+            "closed #47366 2025-06-04 WCO Maximise/Restore button issues when backgroundMaterial used",
+            "closed #46657 2025-04-16 fix: `backgroundMaterial` on initial activate",
+            "closed #43196 2024-08-04 [Bug]: Maximizing a window with `backgroundMaterial:` turns it black and removes the rounded corners",
+            "closed #47236 2025-05-22 fix: `backgroundMaterial` on initial activate (35-x-y)",
+            "closed #39959 2023-09-23 [Bug]: set \"transparent\" to true and \"titleBarStyle” to \"hidden\", a title bar is shown when window loses focus, \"backgroundMaterial\" not work until resizing the window.",
+            "closed #46792 2025-04-25 fix: `backgroundMaterial` on initial activate (36-x-y)",
+            "closed #41072 2024-01-22 [Bug]: `backgroundMaterial` effect does not work on first page load",
+            "closed #46452 2025-04-02 fix: `backgroundMaterial` visibility on first window draw",
+            "closed #38466 2023-05-26 'backgroundMaterial' is not work in frameless window",
+            "closed #41742 2024-03-29 [Bug]: backgroundMaterial and app.disableHardwareAcceleration() conflict with each other",
+            "closed #42331 2024-05-31 [Bug]: Window with specific effect didn't appear when using 'backgroundMaterial' Option in BrowserWindow()",
+            "closed #40285 2023-10-20 [Bug]: The `backgroundMaterial` property cannot function properly when `frame: false`"
+          ]
+        }
+      },
+      {
+        "label": "issues:electron+visualEffectState",
+        "cmd": "gh api search/issues?q=repo:electron/electron+visualEffectState&per_page=100",
+        "ok": true,
+        "value": {
+          "totalCount": 10,
+          "items": [
+            "open #25513 2020-09-17 change the \"visualEffectState\" option at runtime",
+            "open #26350 2020-11-05 setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true }) api cause app dismiss in macOS dock",
+            "closed #46164 2025-03-20 Maintain vibrancy effect in inactive Electron windows (Safari-style)",
+            "closed #42784 2024-07-05 [Bug]: Setting up a MessageChannel between two renderers not working",
+            "closed #30993 2021-09-15 [Bug]: Transparent backgrounds rendering white on Browser Windows",
+            "closed #30044 2021-07-07 [Feature Request]: Allow vibrancy of both parent and child windows at the same time",
+            "closed #25106 2020-08-24 feat: make BrowserWindow vibrancy visual effect state customizable",
+            "closed #12445 2018-03-27 BrowserWindow alwaysOnTop don't work in linux",
+            "closed #26642 2020-11-23 Electron 11.0.2 vibrancy error",
+            "closed #25083 2020-08-21 feat: make BrowserWindow vibrancy visual effect state customizable"
+          ]
+        }
+      }
+    ]
+  }
+}
