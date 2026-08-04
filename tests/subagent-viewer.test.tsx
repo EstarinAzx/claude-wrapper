@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react'
 import App from '../src/renderer/src/App'
 import { fakeChatApi } from './chat-harness'
 
@@ -120,6 +120,39 @@ describe('subagent viewer', () => {
     const root = screen.getByRole('dialog', { name: 'Subagent Explore' })
     expect(root.contains(document.activeElement)).toBe(true)
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close viewer' }))
+  })
+
+  test('one composer Escape dismisses its open popover but keeps the viewer open', async () => {
+    harness.api.listCommands.mockResolvedValue([
+      { name: 'context', description: 'Show context usage', argumentHint: '' }
+    ])
+    await startSession()
+    harness.api.currentSessionId.mockResolvedValue('sess-1')
+    harness.api.subagentTranscript.mockResolvedValue([{ role: 'assistant', text: 'hi from sub' }])
+    spawnTask()
+
+    const composer = screen.getByPlaceholderText('Message Claude…')
+    fireEvent.change(composer, { target: { value: '/' } })
+    await act(async () => {})
+    expect(screen.getByRole('listbox', { name: 'Command suggestions' })).toBeTruthy()
+
+    fireEvent.click(document.querySelector('.subagent-row') as Element)
+    await screen.findByText('hi from sub')
+    expect(screen.getByRole('dialog', { name: 'Subagent Explore' })).toBeTruthy()
+
+    fireEvent.keyDown(composer, { key: 'Escape' })
+
+    expect(screen.queryByRole('listbox', { name: 'Command suggestions' })).toBeNull()
+    expect(screen.getByRole('dialog', { name: 'Subagent Explore' })).toBeTruthy()
+  })
+
+  test('composer Escape still reaches the viewer when no popover is open', async () => {
+    await startSession()
+    await openViewer()
+
+    fireEvent.keyDown(screen.getByPlaceholderText('Message Claude…'), { key: 'Escape' })
+
+    expect(screen.queryByRole('dialog', { name: 'Subagent Explore' })).toBeNull()
   })
 
   test.each([

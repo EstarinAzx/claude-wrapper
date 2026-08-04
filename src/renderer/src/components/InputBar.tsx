@@ -345,6 +345,7 @@ const InputBar = ({
       }
       if (e.key === 'Escape') {
         e.preventDefault()
+        e.stopPropagation()
         setDismissed(true)
         return
       }
