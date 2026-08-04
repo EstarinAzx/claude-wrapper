@@ -378,6 +378,7 @@ const App = () => {
               parentToolUseId={openSubagent.parentToolUseId}
               agentType={openSubagent.agentType}
               sessionId={activeSessionId}
+              lastTurn={lastTurn}
               onClose={() => setOpenSubagent(null)}
             />
           ) : null}

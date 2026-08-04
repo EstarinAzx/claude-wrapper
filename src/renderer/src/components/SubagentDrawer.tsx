@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { LastTurn } from '../../../shared/queued-send'
 import Chat from './Chat'
 import { toChatMessage, type ChatMessage } from '../useChat'
 
@@ -17,6 +18,7 @@ interface SubagentDrawerProps {
   // opens. Absent (a fresh live turn that has not ended yet) falls back to the
   // engine, which does have an id mid-turn.
   sessionId?: string | null
+  lastTurn: LastTurn | null
   onClose: () => void
 }
 
@@ -29,6 +31,7 @@ const SubagentDrawer = ({
   parentToolUseId,
   agentType,
   sessionId,
+  lastTurn,
   onClose
 }: SubagentDrawerProps) => {
   const [messages, setMessages] = useState<ChatMessage[] | null>(null)
@@ -83,7 +86,7 @@ const SubagentDrawer = ({
     return () => {
       live = false
     }
-  }, [parentToolUseId, sessionId])
+  }, [parentToolUseId, sessionId, lastTurn?.nonce])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {

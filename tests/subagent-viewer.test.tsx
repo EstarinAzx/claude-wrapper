@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
 import App from '../src/renderer/src/App'
 import { fakeChatApi } from './chat-harness'
 
@@ -82,6 +82,35 @@ describe('subagent viewer', () => {
     expect(await screen.findByText('found the config')).toBeTruthy()
     expect(screen.getByRole('dialog', { name: 'Subagent Explore' })).toBeTruthy()
     expect(harness.api.subagentTranscript).toHaveBeenCalledWith('sess-1', 'task-1')
+  })
+
+  test('refreshes after turn-end without reading on ordinary stream events', async () => {
+    harness.api.currentSessionId.mockResolvedValue('sess-1')
+    await startSession()
+    harness.emit({ type: 'turn-end' })
+    await waitFor(() => expect(harness.api.currentSessionId).toHaveBeenCalledTimes(1))
+
+    harness.api.subagentTranscript
+      .mockResolvedValueOnce([{ role: 'assistant', text: 'opening snapshot' }])
+      .mockResolvedValueOnce([
+        { role: 'assistant', text: 'opening snapshot' },
+        { role: 'assistant', text: 'finished snapshot' }
+      ])
+    spawnTask()
+
+    fireEvent.click(document.querySelector('.subagent-row') as Element)
+
+    expect(await screen.findByText('opening snapshot')).toBeTruthy()
+    expect(harness.api.subagentTranscript).toHaveBeenCalledTimes(1)
+
+    harness.emit({ type: 'text-delta', text: 'still streaming' })
+    expect(harness.api.subagentTranscript).toHaveBeenCalledTimes(1)
+
+    harness.emit({ type: 'turn-end' })
+
+    expect(await screen.findByText('finished snapshot')).toBeTruthy()
+    expect(screen.getByText('opening snapshot')).toBeTruthy()
+    await waitFor(() => expect(harness.api.subagentTranscript).toHaveBeenCalledTimes(2))
   })
 
   test('opening the viewer moves focus inside it', async () => {
