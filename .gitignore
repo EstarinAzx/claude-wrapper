@@ -4,3 +4,10 @@ dist/
 *.log
 .claude/relay/
 .obsidian/
+
+# Local Claude Code settings. Carries the machine's gateway env — including a
+# live ANTHROPIC_API_KEY — so it is deliberately not shared. Untracked as of
+# 2026-08-04; the only thing the repo lost with it was
+# `worktree.bgIsolation: "none"`, which a fresh clone now has to set itself.
+.claude/settings.json
+.claude/settings.local.json
