@@ -95,8 +95,10 @@ export const listSubagents = async (
   io: StoreIo = nodeIo
 ): Promise<SubagentInfo[] | null> => {
   if (!sessionId) return []
-  const dir = await resolveSubagentsDir(cwd, sessionId, io)
-  return dir === null ? [] : listSubagentsIn(dir, io)
+  const found = await resolveSessionDir(sessionId, cwd, io)
+  if (found.status === 'unavailable') return null
+  if (found.status !== 'ok') return []
+  return listSubagentsIn(subagentsDir(found.dir, sessionId), io)
 }
 
 const listSubagentsIn = async (

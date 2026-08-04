@@ -154,7 +154,15 @@ describe('listSubagents', () => {
   })
 
   test('no subagents dir → [] (lenient)', async () => {
-    expect(await listSubagents('D:\\proj', 's1', fakeIo({}))).toEqual([])
+    const io = fakeIo({
+      [`${slash(homedir())}/.claude/projects/D--proj/s1.jsonl`]: '{}'
+    })
+
+    expect(await listSubagents('D:\\proj', 's1', io)).toEqual([])
+  })
+
+  test('unreadable store root → null', async () => {
+    expect(await listSubagents('D:\\proj', 's1', fakeIo({}))).toBeNull()
   })
 
   // Cross-feature edge with #68. Deleting a session removes <projectDir>/<id>/
@@ -165,9 +173,8 @@ describe('listSubagents', () => {
   // this one is simply absent. That has to answer the LENIENT [], which is what
   // makes the dock say "No agents in this session." rather than flip to
   // "Could not read this session's agents" and imply a breakage. Distinct from
-  // the empty-store case above, where the root itself refuses to enumerate and
-  // arrives at [] by a different route — so that test cannot stand in for this
-  // one if the two answers are ever pulled apart.
+  // the unreadable-store case above, where the root itself refuses to enumerate
+  // and answers null — so that test cannot stand in for this ordinary miss.
   test('a session deleted out from under an open dock lists as [], not unreadable', async () => {
     const io = fakeIo({
       [`${slash(homedir())}/.claude/projects/D--proj/survivor.jsonl`]: '{}'

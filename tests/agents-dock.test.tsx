@@ -191,7 +191,7 @@ describe('agents dock — empty states are distinct facts', () => {
     fireEvent.click(await screen.findByText('past work'))
     openDock()
 
-    expect(await screen.findByText(/Could not read this session/)).toBeTruthy()
+    expect(await screen.findByText('Could not read this session’s agents.')).toBeTruthy()
     expect(screen.queryByText('No agents in this session.')).toBeNull()
   })
 
