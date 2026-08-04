@@ -1,0 +1,217 @@
+{
+  "spike": 114,
+  "question": "does closing a live, warmed engine and rebuilding it in the same tick kill the main process?",
+  "sdkVersion": "0.3.220",
+  "platform": "win32",
+  "phases": "ABC",
+  "phaseA_source": {
+    "app": {
+      "discardClosesThenNulls": true,
+      "pickPairIsSynchronous": true,
+      "listReadRebuildsLazily": true,
+      "ensureRebuildsAndWarms": true,
+      "engineCloseIsSynchronous": true,
+      "snippets": {
+        "discardEngine": "const discardEngine = (resume: string | null): void => { engine?.close() permissionBroker.cancelAll() engine = null pendingResume = resume } // The atomic workspace transition (#46), bound to this process's real engine, // permission broker and cwd. Reached from the renderer over // `session:switch-wo",
+        "engineClose": "const close = (): void => { terminalError = 'query closed' queue?.end() currentQuery?.close?.() currentQuery = null queue = null consumeStarted = false // The background level is per-process, and this process is going away. Every // rebuild path in main — workspace switch, model pick, permission cycle, // backend flip, targeting another session — calls close() before it dr"
+      }
+    },
+    "sdk": {
+      "located": true,
+      "endsStdinFirst": true,
+      "killIsDeferred": true,
+      "win32DelayedKillMs": {
+        "outer": 2000,
+        "inner": 5000,
+        "totalToSigkill": 7000
+      },
+      "stdinHasErrorListener": true,
+      "stderrHasErrorListener": true,
+      "childHasErrorListener": true,
+      "installsProcessExitHook": true,
+      "snippet": "close(){if(this.spawnAbort(this.abortController.signal.aborted?new It(\"Claude Code process aborted by user\"):Error(\"Query closed before spawn\")),this.processStdin)this.processStdin.end(),this.processStdin=void 0;if(this.abortHandler)this.abortController.signal.removeEventListener(\"abort\",this.abortHandler),this.abortHandler=void 0;let e=this.process?.exitCode??null,t=this.process?.signalCode??null,r=!this.exitEventDelivered&&(e!==null&&e>=0||t!==null),n;if(r){if(this.exitEventDelivered=!0,n=this.abortController.signal.aborted?new It(\"Claude Code process aborted by user\"):this.getProcessExitError(e,t),n&&!this.exitError)this.exitError=n}let o=this.exitListeners;this.exitListeners=[];for(let{callback:a,handler:c}of o)if(this.process?.off(\"exit\",c),r)try{a(n)}catch(u){Nt(`[ProcessTransport] onExit callback threw during close(): ${Ui(u)}`)}let i=()=>{if(this.abortController.signal.aborted)th"
+    }
+  },
+  "phaseB_bareNode": {
+    "ran": true,
+    "bare": {
+      "hostSurvived": true,
+      "diedWhileScoring": false,
+      "exitCode": 0,
+      "exitSignal": null,
+      "iterationsRequested": 8,
+      "iterationsCompleted": 8,
+      "iterationsScored": 8,
+      "iterationsUnscored": 0,
+      "pairMs": {
+        "min": 1083,
+        "median": 1115,
+        "max": 1133
+      },
+      "closeMs": {
+        "min": 0,
+        "median": 0,
+        "max": 1
+      },
+      "makeMs": {
+        "min": 0,
+        "median": 0,
+        "max": 0
+      },
+      "warmMs": {
+        "min": 1083,
+        "median": 1115,
+        "max": 1133
+      },
+      "cliRightAfterPair": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "cliAlive1200msAfterClose": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "cliAtEnd": 2,
+      "sdkQueryConstructMs": 1163,
+      "stderrTail": "licit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:12380) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:12380) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:12380) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:12380) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n"
+    },
+    "withRead": {
+      "hostSurvived": true,
+      "diedWhileScoring": false,
+      "exitCode": 0,
+      "exitSignal": null,
+      "iterationsRequested": 8,
+      "iterationsCompleted": 8,
+      "iterationsScored": 8,
+      "iterationsUnscored": 0,
+      "pairMs": {
+        "min": 1072,
+        "median": 1195,
+        "max": 1591
+      },
+      "closeMs": {
+        "min": 0,
+        "median": 0,
+        "max": 2
+      },
+      "makeMs": {
+        "min": 0,
+        "median": 0,
+        "max": 1
+      },
+      "warmMs": {
+        "min": 1072,
+        "median": 1193,
+        "max": 1590
+      },
+      "cliRightAfterPair": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "cliAlive1200msAfterClose": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "cliAtEnd": 2,
+      "sdkQueryConstructMs": 1168,
+      "stderrTail": "licit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:45048) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:45048) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:45048) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:45048) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n"
+    }
+  },
+  "phaseC_app": {
+    "ran": true,
+    "mainSurvived": true,
+    "diedWhileScoring": false,
+    "mainExit": null,
+    "iterationsRequested": 12,
+    "iterationsCompleted": 12,
+    "iterationsScored": 11,
+    "iterationsUnscored": 1,
+    "diedAtIteration": null,
+    "postMortem": null,
+    "pickMs": {
+      "min": 5896,
+      "median": 6248,
+      "max": 7605
+    },
+    "cliCounts": [
+      {
+        "before": 0,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      },
+      {
+        "before": 1,
+        "after": 1
+      }
+    ],
+    "stderrTail": " canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:28640) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:28640) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:28640) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:28640) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:28640) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\n(node:28640) [CLAUDE_SDK_CAN_USE_TOOL_SHADOWED] Warning: canUseTool will not be invoked: permissionMode 'bypassPermissions' auto-approves every tool call (except explicit deny rules) before the callback is consulted. To gate every tool call, use a PreToolUse hook instead.\nDebugger ending on ws://127.0.0.1:62729/f1d52be4-d5e3-4f3a-bf8e-4dccfb02e42d\r\nFor help, see: https://nodejs.org/learn/getting-started/debugging\r\n"
+  },
+  "totalScoredPairs": 27,
+  "reproduced": false,
+  "driverLostLiveApp": false,
+  "verdict": "NOT REPRODUCED in 27 scored close/rebuild pairs — the premise is unsupported by this run, and remains unreproduced rather than disproved",
+  "fails": []
+}
