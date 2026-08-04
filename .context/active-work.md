@@ -7,11 +7,57 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (chain 2, relay leg 4, `ticket-loop`) — **#97 landed as `96fb20f`: the mint budget is measured, and the queue is now DRY**_
-_At commit: `96fb20f` on `main` (unpushed; `main` is **14 ahead of origin** including this leg's `.context` commit). Gate green: typecheck clean, **979 tests across 64 files** (unchanged — measurement-only ticket, no `src/` diff at all), harness **15/15 PASS at exit 0**_
-_Driver check: **none run, and that is the correct call.** #97 touched no `src/` file and no CSS, so no driver's subject moved; the new `scripts/spike-97-mint-budget.mjs` is its own instrument and self-calibrates in-run. **29** driver files now sit in `.claude/skills/run-desktop/` (27 assertion + `gui-78-probe`/`gui-79-probe` helpers and the observational `gui-scope-zoom-pill`). The two standing environmental reds (`gui-75`, `gui-52`) are untouched and unretested this leg._
+_Last updated: 2026-08-04 by Opus 5 (chain 3, relay leg 1, `relay-leg`) — **#98 landed as `f1813bc`: the subagent transcript viewer is a centred popup**_
+_At commit: `f1813bc` on `main`, **PUSHED — `main` is level with origin for the first time in this batch** (the 19-commit backlog `pick-up.md` recorded is cleared). Gate green: typecheck clean, **979 tests across 64 files** (unchanged — the diff is CSS, and jsdom sees no geometry), `npm run build` clean_
+_Driver check: **`gui-98` (new) red-verified then GREEN, `gui-96` GREEN with a new criterion 6, `gui-95` GREEN and untouched** (16 stops, close at stop 6 — the recorded baseline exactly). **30** driver files now sit in `.claude/skills/run-desktop/` (28 assertion + `gui-78-probe`/`gui-79-probe` helpers and the observational `gui-scope-zoom-pill`). The two standing environmental reds (`gui-75`, `gui-52`) were not run this leg — nothing in the diff moves their subjects._
 
 ## Current focus
+
+**#98 landed (`f1813bc`) and closed. The subagent transcript viewer opens as a
+centred popup instead of a right-edge drawer.** Next unblocked ticket is **#99**
+(the focus trio for that same viewer), which this ticket unblocked. Eleven others
+are open behind it.
+
+**Placement was the owner's own decision**, verbatim — *"make the subagents chat
+view a center pop up not a side panel one"* — so this was execution, not design.
+`src/renderer/src/styles/subagent.css` is the **only `src/` file touched**: no
+JSX, no class rename (seven files select on `.subagent-drawer*`), no keyframe
+rename (`gui-96` uses the name as its premise), no new token.
+
+**The pane is 820px, and every term is read from a file**: `760`
+(`.chat-column` max-width) `+ 48` (`.chat` padding) `+ 2` (its own hairline, which
+counts because `box-sizing: border-box` is set on `*`) `+ 10` (the authored
+overflow-bar gutter). That leaves 770 inside `.chat`, so the column measures
+**exactly 760 in BOTH scroll states** — overflowing, the bar spends its width; not
+overflowing, `max-width` caps it and the spare falls to `margin: 0 auto`. **760,
+808 and 810 were each proposed and each wrong**; do not simplify it back.
+
+The root centres with a **chosen, not derived**, symmetric `padding: 24px` and no
+titlebar clearance (this scrim already paints over the titlebar). The entry
+becomes a **4px Y rise** per `DESIGN.md`'s only documented entry, with name,
+duration and easing unchanged. The pane joins the existing
+`.model-menu`/`.command-popover` floating-card idiom, so no appearance is
+invented, and adds **no `backdrop-filter`, no blur, no ply beyond
+`var(--surface)`**.
+
+**Neither anti-modal ADR is superseded and neither gets a banner.** One decides
+where Appearance lives, the other how deletion confirms; this overturns only the
+**rationale they shared**. **The glass-ban question is recorded UNRESOLVED on
+purpose** — read literally it already condemned the drawer that shipped on `main`,
+and this work does not have to settle it, changing no layer, material or opacity.
+
+**The transferable finding is a vacuity the red run caught in the new driver
+itself.** `gui-98`'s criterion 2 was written with a bare `.chat-column` and
+**passed at 760 against the 560px edge-pinned drawer** — the app's own chat is
+still mounted behind the scrim, so `querySelector` returned the **background**
+column, which is ~760 at any comfortable window size no matter what the popup
+does. #95's lesson was match class *tokens* not substrings; this is the same
+failure one level up: **the right class on the wrong element**. Any driver
+measuring an overlay in this app is measuring against a live lookalike.
+
+See [[2026-08-04-the-viewer-is-centred-and-the-glass-ban-is-left-unresolved]].
+
+## Previously (2026-08-04) — #97, the mint budget measured
 
 **Nothing. #97 landed (`96fb20f`) and the tracker is EMPTY — zero open issues in
 either label. The relay's designed stop fired and the next move is the owner's.**
@@ -633,8 +679,10 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## State
 
-- **In flight:** nothing. `main` = `96fb20f` + this `.context` commit, **unpushed** (14 ahead of origin). No open branches — `ticket/97-measure-mint-budget` was squash-merged and deleted.
-- **Queue: EMPTY, and so is the whole tracker.** `gh issue list --state open` returns **zero** issues in either label — not just `ready-for-agent` dry, but nothing open at all. Verified after #97 closed, not predicted. **The relay chain stopped here rather than spawning a leg 5; an empty queue is its designed stop.** The next move is the owner's: file new work, or run `/preset init` / `/preset vibe init` for a batch.
+- **In flight:** nothing. `main` = `f1813bc` + this `.context` commit, **PUSHED and level with origin**. No open branches — `ticket/98-centred-subagent-popup` was squash-merged and deleted.
+- **Queue: TWELVE open, all `ready-for-agent`, none `ready-for-human`.** #99–#110, filed by a `/preset vibe init` run on 2026-08-04 (record: `.claude/vibe.md`). **Next unblocked, lowest-numbered: #99** — the viewer's focus trio, which #98 unblocked. Only **#102** is blocked (by #99). **`ready-for-human` is FORBIDDEN this queue** — the owner is AFK and said so verbatim; a stuck ticket gets a comment, keeps `ready-for-agent`, and **stops the relay** rather than being relabelled.
+- **#103 reports `blocked_by: 0` from the API although every queue table lists it as chained behind #99** — the native dependency link was never created. The API is authoritative per the body, so **#103 is pickable now**. If the chain was intended, add the link rather than assuming it.
+- **#98 is CLOSED and landed** (`f1813bc`) — `subagent.css` only, plus `gui-98.mjs` (new), criterion 6 in `gui-96.mjs`, an ADR, and two `happy-path.md` node labels. See [[2026-08-04-the-viewer-is-centred-and-the-glass-ban-is-left-unresolved]]. **The reusable part is the instrument, twice over:** a bare class selector resolves to the app's own chat **behind the scrim**, so an overlay driver must scope every in-pane selector; and reaching the chat inside this viewer needs **two IPC stubs, not the one the ticket prescribed**, because the component resolves a session id first and short-circuits on null.
 - **#97 is CLOSED and landed** (`96fb20f`) — `scripts/spike-97-mint-budget.mjs` + `scripts/spike-97-findings.json`, the **sixth** spike harness and the first that drives the WINDOW rather than the CLI. **No `src/` diff and `DESIGN.md` untouched**, which is AC5 and the whole point. See [[2026-08-04-the-ground-cancels-in-a-token-differential]]. **The reusable part is the instrument:** override the token and diff — the ground cancels, so the acrylic/`--disable-gpu` question cannot move the number and no tolerance has to be invented. **The other reusable part is a bug:** `rule.style` enumerates a var-shorthand's longhands with EMPTY values, so a `value.includes('var(')` filter silently drops every `background:` declaration — it reported 21 declarations, missed four of the five NAMED sites, and read green.
 - **#96 is CLOSED and landed** (`93ccd7d`) — `.model-menu-item`'s `font-weight: 500` rule deleted (row inherits 400) and `subagent-slide` 180ms → 200ms, plus `gui-96.mjs`. **No vitest test, deliberately** — jsdom can see neither value, so the driver is the only guard in either direction. See [[2026-08-04-an-unchanged-box-is-measured-in-run-not-across-the-edit]]. **The reusable part is the instrument:** an "unchanged box" criterion is measured by driving the live element through **both** states in one run, never across the source edit — the weaker form passes against any value.
 - **`.claude/settings.json` is now UNTRACKED and gitignored** (`d6ec749`), at the owner's instruction. It holds this machine's gateway env including a live `ANTHROPIC_API_KEY`, and it had been a **tracked** path carrying that key only in the working tree — so any `git add -A` / `git commit -a` would have published it, which is why every leg of the relay chain staged by path. **A `.gitignore` entry alone would not have fixed it** (gitignore does not apply to already-tracked files); `git rm --cached` is the half that untracks, and the working file was left in place. **No rotation needed:** the key value was verified absent from every commit across all refs, and the file's sole historical version is clean — the `-S ANTHROPIC_API_KEY` hits in history are the identifier in prose and in `backend-mode.ts`, never the value. **Cost, stated:** `worktree.bgIsolation: "none"` left the repo with it, so a fresh clone must set that itself.
@@ -648,16 +696,34 @@ See [[2026-08-01-a-queued-prompt-is-a-flag-on-the-draft]].
 
 ## Pick up here
 
-**The tracker is EMPTY — zero open issues, in either label.** Not "the agent
-queue is dry": nothing is open at all. Verified by running the frontier query
-after #97 closed rather than by trusting the prediction, which is this project's
-standing lesson (a leg once wrote that closing #70 would empty the queue and was
-wrong, because #71 had been unblocked all along). **Run it again anyway** — it
-goes stale the moment anything is filed.
+**Twelve tickets are open, all `ready-for-agent`. The next unblocked,
+lowest-numbered one is #99** — the subagent viewer's focus trio (take focus on
+open, trap `Tab`/`Shift+Tab`, restore on close), which #98 unblocked by landing.
+Verified with the frontier query **after** #98 closed, not predicted — but run it
+again anyway, because this project's standing lesson is that a leg once wrote
+that closing #70 would empty the queue and was wrong.
 
-**The next move is the owner's.** File new work, or run `/preset init` /
-`/preset vibe init` for a batch. `## Deferred` and `## Open questions` below are
-the standing menus.
+**#99 inherits three measured things from #98 and #95, all of which change how it
+is built:**
+
+- **`gui-95`'s walk is 16 stops and terminates by seeing focus return to the
+  `.subagent-row` anchor.** A focus trap makes that return impossible, so the
+  walk would cycle inside the pane and burn its full 120-press budget. The
+  cycle-break must move to "focus is back on the walk's own first stop".
+- **The app has NO precedent for what a modal owes.** Five `.focus()` call sites
+  in the renderer (three composer refocus, two roving-ring) and **not one** moves
+  focus on open or restores it on close. Every part of the trio needs its own
+  warrant; none is an existing pattern being extended.
+- **The restore half is fixing a PRE-EXISTING strand, not a regression the trap
+  creates.** `gui-95` reaches `.subagent-drawer-close` at stop 6 today, and
+  activating it unmounts the node focus sits on. Initial focus makes the strand
+  guaranteed rather than incidental — a reason to fix it in the same ticket.
+
+**And two from #98 that any driver on this surface needs:** scope every in-pane
+selector to `.subagent-drawer` (a bare `.chat-column` reads the app's own chat
+behind the scrim and passes against anything), and stub **both**
+`subagents:transcript` and `chat:session-id` to reach the chat inside the viewer
+at all.
 
 **The one thing #97 leaves on the table is a decision, not a task.** The accent
 clause now has its evidence: the **proportion** half holds with ~10× headroom,
@@ -704,11 +770,11 @@ re-read does not.**
 it the nearest-to-ready candidate is spent. #86 call 1 was taken under the
 renewed grant, which is what unblocked it.
 
-**The nearest unfiled candidate is the subagent drawer's missing focus trap**,
-found by #95's Tab walk: the drawer declares `role="dialog" aria-modal="true"`
-and traps nothing, so Tab leaves it into the controls behind the scrim. It is
-**not filed** — filing is a scoping call and both 2026-08-04 grants are spent.
-A leg that wants it needs a grant, not a re-read.
+**The subagent viewer's missing focus trap is now FILED as #99** and is the next
+ticket. Found by #95's Tab walk — the viewer declares `role="dialog"
+aria-modal="true"` and traps nothing, so Tab leaves it into the controls behind
+the scrim. The line that used to sit here calling it unfiled-for-want-of-a-grant
+is spent: the 2026-08-04 AFK grant filed it, and #98 unblocked it.
 
 **Do not re-open the seven from `.claude/vibe.md`.** They were all taken on
 2026-08-01 and that file's `## Needs you` is history, not a queue. A new *reason*
@@ -767,6 +833,13 @@ lessons that keep recurring across unrelated tickets.
 - **The platform may already have solved the thing you are about to gate (#78).** Before building state management, check whether the platform is already holding the state.
 
 ## Landmines (carried forward)
+
+- **A DRIVER MEASURING AN OVERLAY IN THIS APP IS MEASURING AGAINST A LIVE LOOKALIKE.** The workspace chat stays mounted behind the scrim, so a bare `.chat-column` / `.chat` resolves to the **background** one — first in document order — and reads ~760 at any comfortable window size regardless of what the overlay does. `gui-98`'s criterion 2 was written that way and **passed against the 560px edge-pinned drawer**; only the red run exposed it. **Scope every in-pane selector to `.subagent-drawer`.** #95's rule was match class *tokens* not substrings; this is the same failure one level up — **the right class on the wrong element**.
+- **Reaching the chat INSIDE the subagent viewer needs TWO IPC stubs, not one.** The prescribed `subagents:transcript` stub is **never reached** on its own: `SubagentDrawer` resolves a session id first, and both `sessionId` (from `activeSessionId`, which `useChat` writes only in its `turn-end` branch) and the `currentSessionId()` fallback (→ `engine.sessionId()`, null until `turnEverRun`, `engine.ts:443`) are **null** under a synthetic `chat:event` push, so it short-circuits at `if (!sid) setMessages([])` and renders `.subagent-drawer-empty` — which mounts neither `.chat` nor `.chat-column`. Stub `chat:session-id` too, and report the pre-stub value rather than assuming it.
+- **The window size a GUI driver INHERITS is routinely too small for what it measures.** #79 persists bounds, and the size inherited on 2026-08-04 was **900×600 DIP = 720 CSS px at 1.25 zoom** — under the 868 the 820px popup needs, so `gui-98`'s column assertion would have failed for a purely environmental reason. **Set the bounds, read the resulting CSS width back as a premise, and restore** past the 250ms persist debounce. This is the borrow-and-return rule with a premise attached.
+- **A finished CSS animation LEAVES `getAnimations()`** when it has no fill mode, so "nothing is running" is also exactly what an element carrying **no animation at all** reports — a vacuous premise on its own. Pair it with the computed `animationName`. And do **not** assert the in-flight sample: a slow frame reds a correct build for a timing reason, so log it as an observation.
+- **A lazy regex cannot read a `@keyframes` body.** `@keyframes` bodies nest (`from { … } to { … }`), so `\{([\s\S]*?)\}` stops at the end of the **first stop** — mutation-checked, an X translate reinstated in `to` is caught by brace-counting and **missed** by the lazy form, while the check still reads green. `gui-96`'s criterion 6 counts braces and reports the stop count so a truncation is visible.
+- **At 1.25 page zoom the overflow bar spends 9.6 CSS px, not the authored 10.** The 820px popup's column still reads exactly 760 because `770 - 9.6 = 760.4` and `max-width` caps it, so the derivation carries ~0.4px of slack here and is exact at zoom 1. A narrower pane spends the slack and the reading drops below 760.
 
 **From #97 — binding on anything that enumerates CSS rules, measures rendered
 pixels, or drives the window:**

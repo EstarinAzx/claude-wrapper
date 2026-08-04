@@ -104,6 +104,16 @@ tags: [context, overview]
   `tokens` and before `base` — a theme block landing before the tokens it
   overrides is the silent restyle the cascade rule exists to prevent, and
   `tests/theme.test.ts` pins the position.
+  `subagent` (#98) owns the transcript viewer, which is a **centred popup**, not
+  the right-edge drawer its `.subagent-drawer*` class names still say — the names
+  are kept deliberately, because seven files select on them. Its root centres with
+  a chosen 24px gutter and its pane is **820px**, derived term-by-term
+  (`760 + 48 + 2 + 10`) so the reused `.chat-column` lands at its documented 760
+  in **both** scroll states. Placement was the owner's instruction; the entry is
+  `DESIGN.md`'s 4px Y rise; and it adds **no `backdrop-filter`, blur or ply beyond
+  `var(--surface)`**, which is what keeps the unresolved glass-ban question
+  harmless. See
+  [[2026-08-04-the-viewer-is-centred-and-the-glass-ban-is-left-unresolved]].
   `appearance` (#66) sits after `rails` because the Appearance dock JOINS the
   dock-shell groups that file owns (it carries `.agents-dock`) and its one
   override — dropping the inherited resize grip — has to come after them. It
@@ -288,11 +298,11 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#97 landed
-  and closed, and the TRACKER IS EMPTY — zero open issues in either label**, so
-  the relay chain hit its designed stop and the next move is the owner's; run the
-  frontier query anyway, it is the authority and this line has been wrong before.
-  **29** driver files — 27 assertion drivers, two `gui-7x-probe` helpers and the
+- `.context/pick-up.md` — current frontier + landmines (currently: **#98 landed
+  and closed, and TWELVE tickets are open — #99–#110, all `ready-for-agent`, with
+  #99 the next unblocked one**; run the frontier query anyway, it is the authority
+  and this line has been wrong before.
+  **30** driver files — 28 assertion drivers, two `gui-7x-probe` helpers and the
   observational `gui-scope-zoom-pill` — with **two standing environmental reds**,
   `gui-75` (focus-dependent) and `gui-52` (the CLI returning an empty model
   list); both are premise failures, not regressions, and both were reproduced on
@@ -390,9 +400,17 @@ tags: [context, overview]
   `DESIGN.md:7` is VIOLATED at 30 unlisted surface declarations while the ≤10%
   half is SATISFIED at a peak 1.02% ink / 1.08% coverage** — measurement only, no
   `src/` diff, and `DESIGN.md` deliberately NOT amended, so the call stays the
-  owner's on #92) is **closed**. **As of 2026-08-04 the TRACKER IS EMPTY — zero
-  open issues in either label**, so the relay chain hit its designed stop and the
-  next move is the owner's.
+  owner's on #92) is **closed**. **#98** (`f1813bc`, the subagent transcript
+  viewer converts from a right-edge drawer to a **centred popup** — owner-decided
+  placement, `subagent.css` the only `src/` file touched, an 820px pane derived
+  term-by-term so `.chat-column` measures 760 in **both** scroll states, the entry
+  turned from an X slide into `DESIGN.md`'s 4px Y rise with the keyframe name
+  kept, and **neither anti-modal ADR superseded** while the glass-ban question is
+  recorded **unresolved**; see
+  [[2026-08-04-the-viewer-is-centred-and-the-glass-ban-is-left-unresolved]]) is
+  **closed**. **As of 2026-08-04 TWELVE issues are open — #99–#110, all
+  `ready-for-agent`**, filed by a `/preset vibe init` run; #99 is the next
+  unblocked one and only #102 is blocked.
   Run the frontier query rather than trusting this line
 
 ## Conventions

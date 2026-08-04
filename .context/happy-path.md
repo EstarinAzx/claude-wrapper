@@ -33,7 +33,7 @@ flowchart LR
   dock -->|task_started · row per agent| rows[Rows: type · description · running]
   rows -->|task_progress · every tick| live[Tokens · tool_uses · elapsed · last tool]
   live -->|click Map| map[SVG fan: session node → agent nodes]
-  map -->|click a node · subagents:transcript| drawer[Drawer: that agent's conversation]
+  map -->|click a node · subagents:transcript| drawer[Popup: that agent's conversation]
   drawer -->|Esc · task_updated completed| settled([Dock shows finished agents, chat still visible])
 ```
 
@@ -47,7 +47,7 @@ Assumptions noted, not drawn: the spike that proves this CLI build emits `task_*
 flowchart LR
   pick([Click a session in the sidebar]) -->|transcript replays| replay[Chat shows past turn + Task cards]
   replay -->|click Agents · subagents:list reads meta sidecars| hydrated[Rows: type · description · model · depth]
-  hydrated -->|click a row · reads agent-id.jsonl| drawer([Drawer: that agent's conversation])
+  hydrated -->|click a row · reads agent-id.jsonl| drawer([Popup: that agent's conversation])
 ```
 
 Assumption noted, not drawn: disk rows carry no token numbers — usage lives only in live `task_progress`.
