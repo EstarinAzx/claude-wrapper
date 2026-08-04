@@ -78,8 +78,24 @@ tags: [context, overview]
   releasing only on a valid payload would make every first-ever launch wait out
   the timeout. An untrusted sender does neither. The gate's release hook is a
   module-level `let` because this app has exactly one window. Main also reports
-  bounds back on `move`/`resize`, debounced 250ms, using
-  **`getNormalBounds()`** so maximising never overwrites the remembered size.
+  bounds back on `move`/`resize`, and `bounds-reporter.ts` (#110) owns that whole
+  half: the 250ms debounce, the **`getNormalBounds()`** read (so maximising never
+  overwrites the remembered size), and the **flush on `close`**. `index.ts` keeps
+  only the wiring — `move`/`resize` → `report`, `close` → `flush`, `closed` →
+  `cancel`. The flush is on `close` rather than `closed` because by `closed` the
+  `webContents` is gone; the old `closed` handler CANCELLED the pending timer, so
+  a move or resize inside the debounce was silently discarded and the next launch
+  came back at the previous position. It sends only when a report is OWED — a
+  pending timer is the sole evidence of that, which is why the timer is nulled
+  inside its own callback, and a flush after the debounce has already fired must
+  stay silent. `ReportableWindow` carries a `getBounds` nothing calls,
+  deliberately: choosing between the two reads IS the contract, and an interface
+  offering only the correct one would make the maximised-window test unable to
+  fail. Sending during teardown races the renderer's destruction
+  (`window-all-closed` quits the app) — measured as survivable, never assumed,
+  and `gui-110` keeps main's send and the renderer's write as two separate
+  numbers because only the renderer owns the second. See
+  [[2026-08-04-a-scheduled-report-is-not-a-sent-one]].
   Its `warmUp` port TAKES
   the resume target (#73) — `resume` binds when the query is CONSTRUCTED and
   `ensureQuery` returns early ever after, so a bare `warmUp()` leaves the
@@ -347,13 +363,15 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#109 landed
-  and closed, and FOUR tickets are open — #110–#113, all `ready-for-agent`, with
-  #110 the next unblocked one; the batch has no spikes left, so premise
+- `.context/pick-up.md` — current frontier + landmines (currently: **#110 landed
+  and closed, and THREE tickets are open — #111–#113, all `ready-for-agent`, with
+  #111 the next unblocked one; the batch has no spikes left, so premise
   reproduction and mutation evidence apply to every remaining one**; run the
   frontier query anyway, it is the authority and this line has been wrong before.
-  **30** driver files — 28 assertion drivers, two `gui-7x-probe` helpers and the
-  observational `gui-scope-zoom-pill` — with **two standing environmental reds**,
+  **31 `gui-*.mjs`** — 30 assertion drivers plus the observational
+  `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
+  `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`), with **two standing
+  environmental reds**,
   `gui-75` (focus-dependent) and `gui-52` (the CLI returning an empty model
   list); both are premise failures, not regressions, and both were reproduced on
   clean `main` before being called so)
@@ -409,6 +427,20 @@ tags: [context, overview]
   than anything rendered. `SPIKE108_PHASES=A` re-runs the drift alarm alone in a
   second; `B` and `C` cost real CLI turns. Re-run phase C2 after #113 lands — it
   is that fix's end-to-end evidence
+- `.claude/skills/run-desktop/gui-110.mjs` — the newest GUI driver (#110) and
+  **the one to copy when a remedy can fail in two places that different processes
+  own**. Three launches against one profile, in `gui-79`'s probe-as-entry-point
+  shape, and its first launch is a **positive control** — it moves and waits past
+  the debounce, so the ordinary store path is proven *before* anything is
+  concluded from storage not changing, without which "the old value is still
+  there" is trivially true. It reports two witnesses APART: whether main SENT
+  `bounds:changed` during the close (main's own fact, seen by wrapping
+  `webContents.send`) and whether the value LANDED (the next launch's `bounds:set`
+  mount push — what the renderer read out of localStorage before this launch's
+  own reporting could rewrite it). It also **refuses to score** a run where the
+  debounce fired before the close, since that run never entered the window the
+  ticket is about. Re-run it after any Electron upgrade that could change when a
+  `webContents` stops accepting sends
 - `scripts/spike-97-mint-budget.mjs` — the sixth harness (#97) and **the odd one
   out**: it drives the built WINDOW through playwright-core instead of the CLI,
   so it imports no app module and needs `npm run build` first. **Copy it for
@@ -555,8 +587,19 @@ tags: [context, overview]
   caught only by the port-by-port no-mutation checks; see
   [[2026-08-04-a-check-that-ran-early-is-not-a-check-that-still-holds]]) is
   **closed**.
-  **As of 2026-08-04 FOUR issues are open — #110–#113, all
-  `ready-for-agent`**, none blocked; #110 is the next unblocked one and the batch
+  **#110** (`86bab34`, the window's last move or resize survives a close inside
+  the 250ms report debounce — the `closed` handler CANCELLED the pending push and
+  main holds that rectangle until the message lands, so a cancelled report was a
+  lost one; flushed on **`close` rather than `closed`**, with the debounce moved
+  into `bounds-reporter.ts` because a message that is never sent leaves no trace
+  any state-shaped test could read, which is how it survived #79's own driver;
+  the flush races the renderer's teardown and `gui-110` reports main's send and
+  the renderer's write as two separate numbers rather than assuming the race is
+  safe — measured zero sends / stale rectangle before, one send at 66–69ms /
+  the moved rectangle after; mutation-verified three ways; see
+  [[2026-08-04-a-scheduled-report-is-not-a-sent-one]]) is **closed**.
+  **As of 2026-08-04 THREE issues are open — #111–#113, all
+  `ready-for-agent`**, none blocked; #111 is the next unblocked one and the batch
   has no spikes left. #111 was
   filed by #104's own review, #112 by #105's measurement and #113 by #108's.
   Run the frontier query rather than trusting this line

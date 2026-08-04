@@ -9,27 +9,33 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Landed this leg (2026-08-04) — #109, `74cbecf`
+## Landed this leg (2026-08-04) — #110, `86bab34`
 
-`switchWorkspace` read `isBusy()` before awaiting `resolveTarget` and mutated on
-the far side, so a turn starting in the gap was torn down by `closeEngine()`
-while the switch still returned `ok`. Fixed with **one extra `isBusy()` read**
-after the resolve; pre-await checks byte-identical, no lock/queue/flag.
+The bounds report was debounced 250ms and the `closed` handler **cancelled** the
+pending timer, so a move or resize followed by a close inside that window was
+discarded and the next launch came back at the previous position. Fixed by
+flushing on **`close`** — not `closed`, where the `webContents` is already gone —
+with the debounce, the `getNormalBounds()` read and the flush extracted to
+`src/main/bounds-reporter.ts` so vitest can reach them.
 
-**The premise reproduced, and the measurement cut both ways.** Cold resolve is
-**18.2ms median** (7 paired runs, 160 project dirs / 918 transcripts); warm is
-**0.0ms**. So the window is far too narrow for two *human* actions to collide in
-— but **cold is the ordinary path**, because `session:list` calls
-`resetSessionIndex()` and that same listing renders the row you click to get
-here. The window exists only because the rail's own refresh drops the index. The
-plausible path is a #80 queued send flushing from its `turn-end` effect (one
-machine-timed side); recorded as **plausible, not measured**.
+**The extraction is the point, not tidiness.** A message that is never sent
+leaves no trace in main, in the renderer or on disk, which is how this survived
+#79's own exhaustive driver. Every assertion is on the send port's call count and
+payload.
 
-Gate green: typecheck clean, **1011 tests / 66 files** (1009 + 2), build clean.
+**The teardown race was measured, not assumed.** `window-all-closed` quits this
+app, so a send from `close` is in flight while the renderer is being destroyed —
+main's send and the renderer's `localStorage` write are two facts owned by two
+processes. `gui-110` reports them apart: **0 sends / stale rectangle** before,
+**1 send at 66–69ms / the moved rectangle** after. The race does not eat the
+write here, but a single pass/fail could not have said which half failed.
 
-## Frontier: FOUR OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
+Gate green: typecheck clean, **1024 tests / 67 files** (1011 + 13), build clean,
+`gui-110` PASS after being red-verified on clean `main`.
 
-**Next unblocked, lowest-numbered: #110.** Live `blocked_by` is 0 for all four.
+## Frontier: THREE OPEN, ALL `ready-for-agent`
+
+**Next unblocked, lowest-numbered: #111.** Live `blocked_by` is 0 for all three.
 Run the query anyway — it is the authority over this table, and this line has
 been wrong before.
 
@@ -40,47 +46,68 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 
 | # | subject | blocked by |
 |---|---|---|
-| **110** | close inside debounce drops final window bounds | — |
-| **111** | close between turns strands an open subagent row | — |
+| **111** | engine closed between turns strands an open subagent | — |
 | **112** | pill click empties the model menu and slash commands | — |
 | **113** | a second `chat:send` tells the renderer the live turn ended | — |
 
-**No spikes left in the batch** — #110–#113 are all ordinary fixes, so premise
+**No spikes left in the batch** — #111–#113 are all ordinary fixes, so premise
 reproduction and mutation evidence apply to every one.
 
 `ready-for-human` is forbidden while owner is AFK. Stuck ticket keeps
 `ready-for-agent`, gets a precise comment, and stops the relay.
 
-## What #110 requires
+## What #111 requires
 
-`reportBounds` debounces the `bounds:changed` push by 250ms
-(`src/main/index.ts:293-300`) and the `closed` handler **clears** the pending
-timer (`:304`), so a move or resize followed by a close inside that window is
-silently discarded. **Flush instead of cancel**, on `close` (not `closed` — the
-`webContents` is gone by then, and that distinction is the whole fix), sending
-`win.getNormalBounds()` so a maximised window never persists its transient
-rectangle. Leave the `closed` clear as belt-and-braces.
+`src/main/engine.ts`, `close()`:
 
-Three landmines the ticket names, all still live:
+```ts
+onBackgroundTasks([])          // unconditional — the per-process reset
+if (turnResolve) {
+  drainSubagents()             // <-- gated, and that is the defect
+  emit({ type: 'error', message: 'query closed' })
+  finishTurn()
+}
+```
 
-- **Do not touch #79's show-gate half.** `bounds:set` must keep releasing the
-  gate on a `null` or invalid payload, or every first-ever launch waits out the
-  1500ms timeout.
-- **The `:222-224` comment currently asserts the behaviour this ticket adds**
-  ("the debounce is short enough that closing the window straight after moving it
-  still stores the new position"). Fix it in the same change — #109 was a whole
-  ticket about a comment that was true of the ordering and false of the
-  guarantee, and this one is plainly false as written.
-- **Criterion 2 is the trap**: the flush must not double-send when the debounce
-  had already fired.
+Close the engine **between** turns with a subagent still open and nothing flips
+that row to `failed`; the CLI process is gone, so #104's `onSubagent` terminal
+edge can never arrive either. The row pulses "running…" until New chat. Remedy:
+move `drainSubagents()` above the `if`, matching `onBackgroundTasks([])` one line
+up, which is already unconditional for exactly this reason.
+
+Reachable through any of the six engine-discard paths `close()` funnels — the
+easy one is: run a turn that spawns a subagent, let the turn end while the agent
+is still working (the `Agent` tool is async; #104 measured an agent still open at
+`result/success` in 2 of 3 runs), then pick a different model.
+
+Three things the ticket names, all still live:
+
+- **It is not automatically a one-liner.** Prove an unconditional call cannot
+  double-emit when a turn *is* in flight — `drainSubagents` clears
+  `subagentParents`/`taskToParent`, so the second call should be a no-op, and the
+  ticket wants that **asserted** rather than reasoned.
+- **The existing `'a closed query drains a still-running agent'` test must stay
+  green and untouched.**
+- **`onTerminal` must NOT fire for `close()`** — main's teardown is not a stream
+  death. That asymmetry with `onBackgroundTasks` is deliberate and documented;
+  do not "make them consistent". And do not touch the success branch of the
+  `result` handler: #104 forbids `drainSubagents()` there, mutation-verified by
+  seven tests.
 
 ## Still-live batch landmines
 
+- **A message that is never SENT leaves no artifact** (#110) — no state-shaped
+  test can see it, so assert on the port.
+- **A remedy crossing a process boundary needs a witness on each side** (#110).
+  Main can be right and the renderer still lose the value.
+- **A "before" run needs a positive control** (#110), or "nothing changed" is
+  trivially true; and an instrument should **refuse** runs that missed the
+  window it was aimed at.
 - **Ordering a check before a mutation is necessary and not sufficient** (#109).
   An `await` between them means the answer must be re-read on the far side.
 - **A "tear down, then report X" mutation passes a status-only assertion**
   (#109). Where the contract is "a rejection is a no-op", assert port by port
-  that nothing was reached — the status alone ships the destructive version.
+  that nothing was reached.
 - **Ask the process that holds the fact** (#108). Four instrument bugs there were
   all the same mistake — measuring a proxy for a fact another process owns.
 - **A pane that stopped growing is NOT an idle engine** — growth is sound as a
@@ -97,7 +124,7 @@ Three landmines the ticket names, all still live:
   (#106).
 - **A mocked refusal asserts the harness** (#107) — bind the real decision behind
   the seam when the decision is what the test is about.
-- Ticket baselines are stale: they say 979/64, `main` is at **1011/66**.
+- Ticket baselines are stale: #111 says 995/64, `main` is at **1024/67**.
 - Squash-merged ticket branches need `git branch -D`.
 
 ## Do not decide these
@@ -112,11 +139,11 @@ AFK grant does not reopen standing calls outside this seed:
 
 ## Baseline
 
-`main` = `74cbecf`, pushed and level with `origin/main`; no ticket branch.
-Typecheck clean, **1011 tests / 66 files**, build clean.
+`main` = `86bab34`, pushed and level with `origin/main`; no ticket branch.
+Typecheck clean, **1024 tests / 67 files**, build clean.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]]
-- [[2026-08-04-a-check-that-ran-early-is-not-a-check-that-still-holds]]
+- [[2026-08-04-a-scheduled-report-is-not-a-sent-one]]
 - `.claude/vibe.md` — run that filed #98–#110
