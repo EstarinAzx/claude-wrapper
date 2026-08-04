@@ -7,91 +7,91 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 14 (`relay-leg`)_
-_At commit: `d572bb4` on `main`, pushed and level with `origin/main`_
+_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 15 (`relay-leg`)_
+_At commit: `e05f400` on `main`, pushed and level with `origin/main`_
 
 ## Current focus
 
-**#111 landed and closed.** `close()` gated `drainSubagents()` on `turnResolve`,
-so an engine torn down **between** turns left every open subagent pulsing
-"running…" forever — and the CLI process is gone by then, so #104's `onSubagent`
-terminal edge could never arrive either. The drain moved above the block to match
-`onBackgroundTasks([])` one line up, which was already unconditional for exactly
-the same reason. Next frontier is **#112**.
+**#112 landed and closed.** Three writers discarded the engine and rebuilt
+nothing while `commands:list` and `model:list` read straight off that handle, so
+both went empty and stayed empty until the next send. Rebuilt **lazily at the two
+read handlers** through a new `src/main/list-engine.ts`; `discardEngine` and all
+three writers are untouched. Next frontier is **#113**.
 
 ## State
 
 - **In flight:** nothing. Squash-merged and the branch deleted; only this
   `.context/` handoff is pending.
-- **Done this session:** #111 as `d572bb4` — one moved line in
-  `src/main/engine.ts`, a corrected `drainSubagents` docstring, and 2 tests in
-  `tests/engine.test.ts`. No new file, no new port, no GUI driver.
-- **Gate:** typecheck clean; **1026 tests across 67 files** green (1024 + 2);
-  build clean.
-- **Queue:** two open, #112 and #113, both `ready-for-agent`; none
-  `ready-for-human`. Both have live `blocked_by` 0.
+- **Done this session:** #112 as `e05f400` — new `src/main/list-engine.ts` and
+  `tests/list-engine.test.ts`, two read handlers rewired in `src/main/index.ts`,
+  and `scripts/spike-105-model-pick-channels.mjs` taught the read side. Also
+  filed **#114**, a spike, from that harness re-run.
+- **Gate:** typecheck clean; **1034 tests across 68 files** (1026 + 8); build
+  clean.
+- **Queue:** two open, **#113** and **#114**, both `ready-for-agent`, both with
+  live `blocked_by` 0; none `ready-for-human`.
 - **Blocked:** nothing.
 
 ## Pick up here
 
-Take **#112** after re-running the frontier query. It is the remedy #105 priced
-and declined to build: picking a model, flipping permission or flipping backend
-nulls the query handle, and both live read channels answer `[]` until the next
-send — measured **15 → 0 models and 119 → 0 commands across 6/6 warmed runs** of
-the built app driven over its own IPC. The emptiness was **attributed** rather
-than observed, by an OS-level witness (the SDK's query is a child process of
-main, seen still alive while the app answered `[]`), and the remedy was priced at
-a **median 1539ms per pill click**.
+Take **#113** after re-running the frontier query. It is what #108 measured and
+declined to build: a second `chat:send` under a live turn tells the renderer the
+turn ended — 518ms, with main still holding `turnResolve` — while `chat:send`
+itself carries no busy check at all and the realistic case is refused only by the
+**emptied draft**, a UI convenience standing in for a guard.
 
-Two things that bind before writing code:
-
-- **`gui-52`'s standing red is DOUBTFUL and chasing it is out of scope** — #105
-  measured the CLI itself returning 15 models and 119 commands here, which kills
-  the "the CLI has no models" confound at the source. It is already named in
-  #112's out-of-scope list.
-- **`scripts/spike-105-model-pick-channels.mjs` is this ticket's end-to-end
-  evidence.** Re-run it after the fix: its phase-C AFTER counts turning non-zero
-  is what closes the loop, and phase B asserts `src/main/index.ts`'s handler
-  bodies mechanically, so it fails loudly if the code moved underneath it.
+**#114 is the newer and the odder one, and it is not urgent.** A spike asking
+whether closing a live warmed engine and immediately rebuilding it can kill the
+main process. Filed from an observation, not from reading code: Electron main
+vanished in **2 of 6** post-fix harness runs (0 of 2 pre-fix), both times at the
+same iteration's `pickFolder`, with **no exception and no stderr**, and did not
+recur across four later runs including one of nine iterations that sailed past
+the same point. Its premise may well die under measurement, which is a success.
 
 ## Skills for next session
 
-- `superpowers:test-driven-development` — #112 has a reproducible premise that
-  was already measured, so red-green applies.
+- `superpowers:test-driven-development` — #113's premise is measured and
+  reproducible, so red-green applies.
 - `superpowers:verification-before-completion` — the gate is the full
   test/typecheck/build run.
 
 ## Open questions
 
-None for #112. `ready-for-human` remains forbidden while the owner is AFK.
+None for #113. `ready-for-human` remains forbidden while the owner is AFK.
 
 ## Recent context
 
-- **A gate can be a comment's belief, compiled.** #111's `if (turnResolve)` was
-  exactly the code its own docstring implied ("only called on the failure paths";
-  "a successful turn has already drained them"). Both halves were falsified by
-  #104 landing afterwards. Fourth consecutive leg where a comment claimed more
-  than the code delivered, and the first where the comment **caused** the defect
-  rather than overstating a correct one — an overclaiming comment is found by
-  testing the code, but a justifying one has to be re-derived against its
-  dependencies, because the code agrees with it perfectly.
-- **A passing mutation proves the code, not the test.** The ticket's own
-  "check before assuming it is a one-liner" (an unconditional drain must not
-  double-emit mid-turn) came back GREEN — genuinely robust, and evidence about
-  the *test* only after a **compound** mutation that also dropped
-  `subagentParents.clear()` reddened it. When a mutation survives, the next move
-  is a compound mutation removing the reason it survived.
-- **Ticket baselines are stale for the fifth consecutive ticket** — #111 said
-  995/64, `main` was at 1024/67 and is now **1026/67**. #112's own baseline will
-  be stale too; read it from `main`, not from the ticket.
-- `gui-75` and `gui-52` still carry standing environmental reds; reproduce solo
-  on clean `main` before treating either as a regression.
-- Ports keep earning their keep: this is the third defect in four legs whose only
-  possible witness was an injected port rather than any readable state.
+- **A fix can move a cost instead of removing one.** #112's first list read after
+  a pill click went from **0–1ms and wrong** to a **median ~5.5s and right**
+  (1ms on a live engine). The wait moved off the click and onto the menu open, and
+  off every user onto the one who opens a menu — the trade the ticket chose, but a
+  reader of the diff alone would see a bug removed and no cost at all. Nearly all
+  of it is `supportedCommands`, not query construction.
+- **A spike harness must be taught the fix, or it reports the fix as its own
+  failure.** Phase B only read the writers, so a correctly fixed app printed
+  `PREMISE: NOT CONFIRMED` — indistinguishable from a spike that measured nothing.
+  It now reads the READ handlers too and names which state it is in.
+- **A green suite is evidence about the code only if the runner is sound.**
+  `npm test` died mid-leg with `SyntaxError: Unexpected token ')'` and no file
+  name; the cause was one flipped byte in `node_modules/@vitest/mocker`. What
+  separated "my change" from "this machine" in a minute was
+  `git stash push -u && npm test` on the clean tree. Reproducing the **recorded**
+  baseline (1026/67) afterwards is what proved the repair.
+- **The before/after was re-measured here, not compared to a committed artifact.**
+  The pre-fix build was stashed, rebuilt and re-run minutes before the post-fix
+  one, so both share a machine, a CLI and an hour.
+- **Prefer a demonstration to a citation.** The no-cache contract was proven by
+  the backend flip answering **15 → 5** — the smaller, mode-aware list — rather
+  than by quoting the handler's comment.
+- Ticket baselines were stale for the sixth consecutive ticket; read the count
+  from `main`, not from the ticket.
+- `gui-75` and `gui-52` still carry standing environmental reds; reproduce solo on
+  clean `main` before treating either as a regression.
 
 ## Related
 
 - [[overview]]
 - [[pick-up]]
 - [[decisions]]
-- [[2026-08-04-the-gate-was-the-comments-belief-compiled]]
+- [[2026-08-04-the-wait-moved-it-did-not-vanish]]
+- [[2026-08-04-a-green-suite-does-not-prove-a-sound-toolchain]]

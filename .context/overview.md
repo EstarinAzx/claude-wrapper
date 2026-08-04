@@ -55,6 +55,21 @@ tags: [context, overview]
   tests assert **port by port** that nothing was reached, never only the status:
   a version that tore down and then reported `busy` passes a status-only suite.
   See [[2026-08-04-a-check-that-ran-early-is-not-a-check-that-still-holds]].
+  `list-engine.ts` (#112) is the READ side of that same handle: `ensureListEngine`
+  returns a live engine to `commands:list` and `model:list`, rebuilding it when a
+  pill click discarded it. Lazy **here** rather than eager in `discardEngine`,
+  which is measured at a median 6138ms per click and would be paid by every user
+  including the one who never opens a menu; a cache is forbidden by both handlers'
+  own contract and is *wrong* across a backend flip, which the run demonstrates —
+  `wisped -> native` answers **15 → 5** models, the mode-aware list. It threads
+  `pendingResume` **into** `warmUp` because `resume` binds at query CONSTRUCTION
+  (#73), and its `set` port is separate from `make` precisely so that omitting the
+  install is visible: a rebuild that never installs answers the current read
+  correctly and spawns a second process on the next. `discardEngine` and all three
+  writers are deliberately untouched. **The cost moved rather than vanished** —
+  the first list read after a writer went from 0–1ms and empty to a median
+  ~5.5s and correct (1ms on a live engine), nearly all of it `supportedCommands`.
+  See [[2026-08-04-the-wait-moved-it-did-not-vanish]].
   `turn-announce.ts` (#75) is the same shape for the turn-end announcement —
   `turn-announce.ts` (#75) is the same shape for the turn-end announcement —
   `announceTurn(ports, event)` over `isFocused` / `notify` / `flash`, so the
@@ -375,10 +390,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#111 landed
-  and closed, and TWO tickets are open — #112 and #113, both `ready-for-agent`,
-  with #112 the next unblocked one; the batch has no spikes left, so premise
-  reproduction and mutation evidence apply to both**; run the
+- `.context/pick-up.md` — current frontier + landmines (currently: **#112 landed
+  and closed, and TWO tickets are open — #113 and the newly filed #114, both
+  `ready-for-agent` and unblocked, with #113 the next one; #114 is a SPIKE filed
+  from #112's own re-run**; run the
   frontier query anyway, it is the authority and this line has been wrong before.
   **31 `gui-*.mjs`** — 30 assertion drivers plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
@@ -424,9 +439,15 @@ tags: [context, overview]
   SDK's query is a child of Electron's main process, so engine teardown has an
   OS-level signature that knows nothing about arrays. Costs **zero CLI turns**:
   every read is `supportedModels()`/`supportedCommands()` on a warm query and no
-  prompt is ever sent, which is the experiment rather than an economy. Re-run it
-  after #112 lands — its phase-C AFTER counts turning non-zero is the fix's
-  end-to-end evidence
+  prompt is ever sent, which is the experiment rather than an economy. **Re-run
+  post-#112 and now the drift alarm for it**: phase B reads the two READ handlers
+  for `ensureListEngine(` as well as the writers, because the remedy is on the
+  read side and without that a fixed app printed `PREMISE: NOT CONFIRMED` and read
+  as a spike that measured nothing — **any harness whose premise a later ticket
+  fixes needs this, or its success is indistinguishable from its failure**. It
+  also times the first read after a writer (the cost that moved onto the menu
+  open) and keeps main's stderr + exit code, reporting an app death as an unscored
+  run rather than throwing
 - `scripts/spike-108-turn-lifecycle.mjs` — the newest harness (#108) and **the one
   to copy when a claim has a CONSEQUENCE and a REACHABILITY that can fail
   separately**. Three phases: source facts as a drift alarm (asserted, never
@@ -621,10 +642,23 @@ tags: [context, overview]
   double-drain mutation, which proves the code robust and the **test** nothing at
   all until a compound mutation dropping `subagentParents.clear()` reds it; see
   [[2026-08-04-the-gate-was-the-comments-belief-compiled]]) is **closed**.
-  **As of 2026-08-04 TWO issues are open — #112 and #113, both
-  `ready-for-agent`**, neither blocked; #112 is the next unblocked one and the
-  batch has no spikes left. #112 was filed by #105's measurement and #113 by
-  #108's. Run the frontier query rather than trusting this line
+  **#112** (`e05f400`, the model menu and slash commands no longer go empty after
+  a pill click — rebuilt **lazily at the two READ handlers** through the new
+  `list-engine.ts`, with `discardEngine` and all three writers untouched and
+  `pendingResume` threaded into `warmUp`; before/after **re-measured on one
+  machine minutes apart**, 6/6 emptied pre-fix at 0–1ms per read against 0/6 and
+  ~5.5s post-fix, and the backend flip's **15 → 5** is the no-cache contract
+  demonstrated rather than cited; three mutations, three distinct reds, with the
+  resume mutation leaving every non-empty pin green exactly as the ticket warned;
+  see [[2026-08-04-the-wait-moved-it-did-not-vanish]] and the same leg's
+  [[2026-08-04-a-green-suite-does-not-prove-a-sound-toolchain]]) is **closed**.
+  **As of 2026-08-04 TWO issues are open — #113 and #114, both
+  `ready-for-agent`**, neither blocked; #113 is the next unblocked one. #113 was
+  filed by #108's measurement and **#114 is a SPIKE filed from #112's own required
+  re-run** — Electron's main process vanished in 2 of 6 post-fix harness runs
+  (0 of 2 pre-fix), always at the same iteration, with no exception and no stderr,
+  and did not recur across the four later runs including a nine-iteration one.
+  Run the frontier query rather than trusting this line
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
