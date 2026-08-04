@@ -1,7 +1,7 @@
 {
   "spike": 105,
   "question": "Does picking a model leave the model menu and slash commands empty until the next send?",
-  "measuredAt": "2026-08-04T03:12:15.489Z",
+  "measuredAt": "2026-08-04T06:14:25.802Z",
   "environment": {
     "backendMode": "wisped",
     "hostCliUsed": true,
@@ -14,7 +14,7 @@
     "commands": {
       "ok": true,
       "count": 119,
-      "ms": 1535,
+      "ms": 5341,
       "rowKeys": [
         "argumentHint",
         "description",
@@ -24,7 +24,7 @@
     "models": {
       "ok": true,
       "count": 15,
-      "ms": 1,
+      "ms": 0,
       "rowKeys": [
         "description",
         "displayName",
@@ -66,24 +66,42 @@
         "warms": false,
         "resumeIsSessionId": false
       }
-    }
+    },
+    "readers": {
+      "commands": {
+        "located": true,
+        "rebuildsLazily": true
+      },
+      "models": {
+        "located": true,
+        "rebuildsLazily": true
+      }
+    },
+    "readersRebuildLazily": true
   },
   "phaseC_app": {
     "repeats": 2,
     "rewarmMs": {
       "samples": 6,
-      "min": 1237,
-      "median": 1539,
-      "max": 3074,
+      "min": 5586,
+      "median": 6138,
+      "max": 10042,
       "note": "Time from pickFolder() to the first non-empty channel. This IS the price of \"rebuild and warm inside discardEngine\", per pill click."
     },
+    "firstReadAfterWriterMs": {
+      "samples": 6,
+      "beforeMedian": 1,
+      "afterMedian": 5754,
+      "afterMax": 6369
+    },
+    "appDied": null,
     "perWriter": {
       "model": {
         "runs": 2,
         "warmedRuns": 2,
-        "modelsEmptiedRuns": 2,
-        "commandsEmptiedRuns": 2,
-        "tornDownRuns": 2,
+        "modelsEmptiedRuns": 0,
+        "commandsEmptiedRuns": 0,
+        "tornDownRuns": 0,
         "emptyWhileCliAliveRuns": 0,
         "labelSurvivedRuns": 2,
         "source": {
@@ -97,10 +115,10 @@
       "permission": {
         "runs": 2,
         "warmedRuns": 2,
-        "modelsEmptiedRuns": 2,
-        "commandsEmptiedRuns": 2,
-        "tornDownRuns": 2,
-        "emptyWhileCliAliveRuns": 1,
+        "modelsEmptiedRuns": 0,
+        "commandsEmptiedRuns": 0,
+        "tornDownRuns": 0,
+        "emptyWhileCliAliveRuns": 0,
         "labelSurvivedRuns": 2,
         "source": {
           "located": true,
@@ -113,10 +131,10 @@
       "backend": {
         "runs": 2,
         "warmedRuns": 2,
-        "modelsEmptiedRuns": 2,
-        "commandsEmptiedRuns": 2,
-        "tornDownRuns": 2,
-        "emptyWhileCliAliveRuns": 1,
+        "modelsEmptiedRuns": 0,
+        "commandsEmptiedRuns": 0,
+        "tornDownRuns": 0,
+        "emptyWhileCliAliveRuns": 0,
         "labelSurvivedRuns": 2,
         "source": {
           "located": true,
@@ -132,138 +150,150 @@
         "repeat": 1,
         "writer": "model",
         "applied": "picked a model from the list",
-        "warmMs": 3074,
+        "warmMs": 6113,
         "before": {
+          "ms": 1,
           "modelCount": 15,
           "currentReported": false,
           "commandCount": 119,
           "cliProcs": 1
         },
         "after": {
-          "modelCount": 0,
+          "ms": 6369,
+          "modelCount": 15,
           "currentReported": true,
-          "commandCount": 0,
-          "cliProcs": 0
+          "commandCount": 119,
+          "cliProcs": 1
         },
-        "modelsEmptied": true,
-        "commandsEmptied": true,
-        "teardownMs": 600,
-        "procWitness": "engine torn down",
+        "modelsEmptied": false,
+        "commandsEmptied": false,
+        "teardownMs": null,
+        "procWitness": "engine survived 8s",
         "emptyWhileCliAlive": false
       },
       {
         "repeat": 1,
         "writer": "permission",
         "applied": "permission bypassPermissions -> default",
-        "warmMs": 1521,
+        "warmMs": 6163,
         "before": {
+          "ms": 1,
           "modelCount": 15,
           "currentReported": true,
           "commandCount": 119,
           "cliProcs": 1
         },
         "after": {
-          "modelCount": 0,
+          "ms": 6364,
+          "modelCount": 15,
           "currentReported": true,
-          "commandCount": 0,
+          "commandCount": 119,
           "cliProcs": 1
         },
-        "modelsEmptied": true,
-        "commandsEmptied": true,
-        "teardownMs": 1406,
-        "procWitness": "engine torn down",
-        "emptyWhileCliAlive": true
+        "modelsEmptied": false,
+        "commandsEmptied": false,
+        "teardownMs": null,
+        "procWitness": "engine survived 8s",
+        "emptyWhileCliAlive": false
       },
       {
         "repeat": 1,
         "writer": "backend",
         "applied": "backend wisped -> native",
-        "warmMs": 1590,
+        "warmMs": 5817,
         "before": {
+          "ms": 1,
           "modelCount": 15,
           "currentReported": true,
           "commandCount": 119,
           "cliProcs": 1
         },
         "after": {
-          "modelCount": 0,
+          "ms": 5509,
+          "modelCount": 5,
           "currentReported": true,
-          "commandCount": 0,
+          "commandCount": 119,
           "cliProcs": 1
         },
-        "modelsEmptied": true,
-        "commandsEmptied": true,
-        "teardownMs": 1456,
-        "procWitness": "engine torn down",
-        "emptyWhileCliAlive": true
+        "modelsEmptied": false,
+        "commandsEmptied": false,
+        "teardownMs": null,
+        "procWitness": "engine survived 8s",
+        "emptyWhileCliAlive": false
       },
       {
         "repeat": 2,
         "writer": "model",
         "applied": "picked a model from the list",
-        "warmMs": 1556,
+        "warmMs": 5586,
         "before": {
+          "ms": 1,
           "modelCount": 15,
           "currentReported": true,
           "commandCount": 119,
           "cliProcs": 1
         },
         "after": {
-          "modelCount": 0,
+          "ms": 5678,
+          "modelCount": 15,
           "currentReported": true,
-          "commandCount": 0,
-          "cliProcs": 0
+          "commandCount": 119,
+          "cliProcs": 1
         },
-        "modelsEmptied": true,
-        "commandsEmptied": true,
-        "teardownMs": 600,
-        "procWitness": "engine torn down",
+        "modelsEmptied": false,
+        "commandsEmptied": false,
+        "teardownMs": null,
+        "procWitness": "engine survived 8s",
         "emptyWhileCliAlive": false
       },
       {
         "repeat": 2,
         "writer": "permission",
         "applied": "permission default -> acceptEdits",
-        "warmMs": 1511,
+        "warmMs": 6259,
         "before": {
+          "ms": 1,
           "modelCount": 15,
           "currentReported": true,
           "commandCount": 119,
           "cliProcs": 1
         },
         "after": {
-          "modelCount": 0,
+          "ms": 5767,
+          "modelCount": 15,
           "currentReported": true,
-          "commandCount": 0,
-          "cliProcs": 0
+          "commandCount": 119,
+          "cliProcs": 1
         },
-        "modelsEmptied": true,
-        "commandsEmptied": true,
-        "teardownMs": 600,
-        "procWitness": "engine torn down",
+        "modelsEmptied": false,
+        "commandsEmptied": false,
+        "teardownMs": null,
+        "procWitness": "engine survived 8s",
         "emptyWhileCliAlive": false
       },
       {
         "repeat": 2,
         "writer": "backend",
         "applied": "backend wisped -> native",
-        "warmMs": 1237,
+        "warmMs": 10042,
         "before": {
+          "ms": 1,
           "modelCount": 15,
           "currentReported": true,
           "commandCount": 119,
           "cliProcs": 1
         },
         "after": {
-          "modelCount": 0,
+          "ms": 5740,
+          "modelCount": 5,
           "currentReported": true,
-          "commandCount": 0,
-          "cliProcs": 0
+          "commandCount": 119,
+          "cliProcs": 1
         },
-        "modelsEmptied": true,
-        "commandsEmptied": true,
-        "teardownMs": 600,
-        "procWitness": "engine torn down",
+        "modelsEmptied": false,
+        "commandsEmptied": false,
+        "teardownMs": null,
+        "procWitness": "engine survived 8s",
         "emptyWhileCliAlive": false
       }
     ]
@@ -271,12 +301,12 @@
   "conditions": {
     "cliOffersCommands": true,
     "cliOffersModels": true,
-    "everyWriterEmptiesCommands": true,
-    "someWriterLeavesChannelsIntact": false,
-    "labelSurvivesTheEmptyList": true,
-    "emptinessAttributedToNulledHandle": true
+    "everyWriterEmptiesCommands": false,
+    "someWriterLeavesChannelsIntact": true,
+    "labelSurvivesTheEmptyList": false,
+    "emptinessAttributedToNulledHandle": false
   },
-  "premise": "CONFIRMED. All three writers empty both live read channels, with no prompt sent, in an environment where the CLI demonstrably offers both.",
+  "premise": "NOT REPRODUCIBLE, AND EXPLAINED: the read handlers rebuild the engine lazily (#112 landed), so the channels answer across a writer. This is the post-fix state, not a failed measurement — revert that fix and phase B flips readersRebuildLazily to false and this line back to CONFIRMED.",
   "recommendation": "Recorded in the ticket comment. This spike changes no src/ file by design.",
   "scrubbing": "Counts, timings, booleans, row-key vocabularies and process names only. No cwd, session id, model id, command name, process path or OS username."
 }

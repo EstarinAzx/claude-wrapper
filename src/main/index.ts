@@ -46,6 +46,7 @@ import { deleteSession, listSessions, readTranscript, titleHint } from './sessio
 import { guardedDelete } from './delete-guard'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
 import { listBackgroundSessions } from './agent-view'
+import { ensureListEngine, type ListEnginePorts } from './list-engine'
 import type { PermissionDecision } from '../shared/engine-types'
 
 let engine: ReturnType<typeof createEngine> | null = null
@@ -387,12 +388,34 @@ ipcMain.handle('session:choose-folder', async (event): Promise<FolderChoice> => 
   return { status: 'selected', cwd: filePaths[0] }
 })
 
+// #112 — the two LIST reads below are the only consumers that need a live query
+// without a send, so they are the ones that pay for rebuilding it. Bound here
+// rather than inside `ensureListEngine` because everything it reads is this
+// module's state; the function itself is in `list-engine.ts` so the resume
+// threading can be pinned, which vitest cannot do through this entry.
+//
+// `discardEngine` above is deliberately unchanged: it stays the cheap discard,
+// and this is the lazy rebuild.
+const listEnginePorts: ListEnginePorts<ReturnType<typeof createEngine>> = {
+  live: () => engine,
+  make: makeEngine,
+  set: (rebuilt) => {
+    engine = rebuilt
+  },
+  // The resume target travels INTO the warm-up, exactly as it does in the switch
+  // transaction: it binds when the query is constructed, and the warm-up is the
+  // construction.
+  warmUp: (rebuilt, resume) => rebuilt.warmUp(resume),
+  resume: () => pendingResume
+}
+
 // Live read of the CLI's command list for the Commands dock. No cache anywhere
 // — the SDK's supportedCommands() tracks the CLI's own commands_changed pushes.
-// [] with no engine or no live query: the dock's honest empty state.
+// The engine is rebuilt here when a pill click discarded it (#112); [] still
+// means the query answered nothing, which is the dock's honest empty state.
 ipcMain.handle('commands:list', async (event) => {
   if (!isTrustedIpc(event)) return []
-  return engine?.listCommands() ?? []
+  return ensureListEngine(listEnginePorts).listCommands()
 })
 
 ipcMain.handle('session:list', async (event) => {
@@ -617,7 +640,10 @@ ipcMain.on('permission:set-mode', (event, mode: unknown) => {
 // knows whether it is wisped, so the list is mode-aware for free.
 ipcMain.handle('model:list', async (event) => {
   if (!isTrustedIpc(event)) return { models: [], current: null }
-  return { models: (await engine?.listModels()) ?? [], current: getDisplayModel() }
+  // Rebuilt lazily when a pill click discarded the handle (#112) — the same
+  // treatment as commands:list, and for the same reason: `current` comes from
+  // model-mode.ts, so an empty list here was invisible behind a correct pill.
+  return { models: await ensureListEngine(listEnginePorts).listModels(), current: getDisplayModel() }
 })
 
 // Guarded write: pick the model the next turn runs against (a model id, or null

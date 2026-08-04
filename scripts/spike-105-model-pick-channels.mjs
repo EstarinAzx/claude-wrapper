@@ -246,6 +246,29 @@ if (!pickRebuilds) {
 }
 console.log(`  session:pick-folder  rebuilds+warms: ${pickRebuilds}`)
 
+// The READ side, added when #112 landed. The remedy is here rather than in the
+// writers, so phase B could not otherwise see it: without this check a fixed app
+// reports "premise NOT CONFIRMED" and reads as a spike that measured nothing.
+// It is also the drift alarm — revert the fix and this flips back.
+const READERS = [
+  { key: 'commands', channel: 'commands:list' },
+  { key: 'models', channel: 'model:list' }
+]
+const readerFacts = {}
+for (const r of READERS) {
+  const body = handlerBody(r.channel)
+  if (body === null) {
+    fail(`could not locate the ${r.channel} handler in src/main/index.ts — this harness is out of date`)
+    readerFacts[r.key] = { located: false }
+    continue
+  }
+  readerFacts[r.key] = { located: true, rebuildsLazily: /ensureListEngine\(/.test(body) }
+  console.log(
+    `  ${r.channel.padEnd(20)} rebuilds lazily: ${readerFacts[r.key].rebuildsLazily}`
+  )
+}
+const readersRebuild = READERS.every((r) => readerFacts[r.key]?.rebuildsLazily === true)
+
 const discardIdx = mainSrc.search(/const discardEngine = /)
 const discardBody = discardIdx < 0 ? '' : mainSrc.slice(discardIdx, discardIdx + 400)
 const discardNulls = /engine = null/.test(discardBody)
@@ -276,6 +299,20 @@ const app = await electron.launch({
   env: process.env,
   timeout: 30000
 })
+// If main dies mid-run, every later page.evaluate fails with "Target page,
+// context or browser has been closed" — which says WHEN and never WHY. Keep the
+// last of its stderr and the exit code, so a vanished app is diagnosable rather
+// than guessed at.
+const appStderr = []
+app.process().stderr?.on('data', (b) => {
+  appStderr.push(String(b))
+  if (appStderr.length > 40) appStderr.shift()
+})
+let appExit = null
+app.process().on('exit', (code, signal) => {
+  appExit = { code, signal }
+})
+
 const page = await app.firstWindow()
 await page.waitForSelector('.titlebar, .app', { timeout: 30000 }).catch(() => {})
 
@@ -351,13 +388,22 @@ const cliDescendants = () => {
 }
 
 // --- the two read channels, exactly as the renderer asks for them ------------
+//
+// TIMED, because once the read rebuilds the engine lazily (#112) the wait moves
+// INTO this call: the AFTER read below is the first menu open after a pill
+// click, so its own duration is what the user now waits for. Inferring it from
+// `rewarm()` would be a different entry point measured at a different moment.
+// Both channels are asked CONCURRENTLY on purpose — that is how the renderer
+// asks, and it is also the case where a rebuild could be started twice.
 const readChannels = () =>
   page.evaluate(async () => {
+    const t = Date.now()
     const [models, commands] = await Promise.all([
       window.api.listModels(),
       window.api.listCommands()
     ])
     return {
+      ms: Date.now() - t,
       modelCount: Array.isArray(models?.models) ? models.models.length : -1,
       // The pill's LABEL comes from main's model-mode store, not the engine, so
       // it can stay correct while the list it opens is empty. Recorded as a
@@ -395,9 +441,24 @@ const firstModelId = () =>
 const runs = []
 const rewarmTimings = []
 
+// A run the app did not survive is reported, not thrown away and not silently
+// scored: the measurements already taken are still real, and the death itself
+// is a finding.
+const reportAppDeath = (where, err) => {
+  console.log(`\n  !! the app died during ${where}`)
+  console.log(`     exit: ${appExit === null ? 'still registered as running' : JSON.stringify(appExit)}`)
+  console.log(`     error: ${err instanceof Error ? err.message.split('\n')[0] : String(err)}`)
+  const tail = appStderr.join('').trim()
+  console.log(tail.length > 0 ? `     main stderr tail:\n${tail.slice(-2000)}` : '     main stderr: (empty)')
+}
+
+let died = null
+let label = 'launch'
+
+try {
 for (let repeat = 1; repeat <= REPEATS; repeat++) {
   for (const w of WRITERS) {
-    const label = `repeat ${repeat} / ${w.key}`
+    label = `repeat ${repeat} / ${w.key}`
     const warm = await rewarm()
     rewarmTimings.push(warm.ms)
     const before = await readChannels()
@@ -490,6 +551,7 @@ for (let repeat = 1; repeat <= REPEATS; repeat++) {
       `  ${label.padEnd(22)} models ${entry.before.modelCount}->${entry.after.modelCount}` +
         `  commands ${entry.before.commandCount}->${entry.after.commandCount}` +
         `  cli procs ${entry.before.cliProcs}->${entry.after.cliProcs}` +
+        `  read ${entry.before.ms}->${entry.after.ms}ms` +
         `  [${entry.procWitness}${entry.teardownMs === null ? '' : ` @${entry.teardownMs}ms`}]` +
         `${entry.emptyWhileCliAlive ? '  <- empty while the CLI was still alive' : ''}`
     )
@@ -501,6 +563,10 @@ for (let repeat = 1; repeat <= REPEATS; repeat++) {
       await sleep(300)
     }
   }
+}
+} catch (err) {
+  died = { at: label }
+  reportAppDeath(label, err)
 }
 
 await app.close().catch(() => {})
@@ -572,7 +638,9 @@ const findings = {
     discardEngineNullsHandle: discardNulls,
     discardEngineRebuilds: discardRebuilds,
     pickFolderRebuildsAndWarms: pickRebuilds,
-    writers: sourceFacts
+    writers: sourceFacts,
+    readers: readerFacts,
+    readersRebuildLazily: readersRebuild
   },
   phaseC_app: {
     repeats: REPEATS,
@@ -583,6 +651,21 @@ const findings = {
       max: rewarmTimings.length ? Math.max(...rewarmTimings) : null,
       note: 'Time from pickFolder() to the first non-empty channel. This IS the price of "rebuild and warm inside discardEngine", per pill click.'
     },
+    // The counterpart price, once the rebuild is lazy (#112): what the FIRST
+    // list read after a writer costs, which is the menu open the user is
+    // waiting on. Paired with the BEFORE read from the same run, which is the
+    // same call against a live engine — so the pair prices the rebuild itself
+    // rather than the IPC round trip.
+    firstReadAfterWriterMs: {
+      samples: runs.length,
+      beforeMedian: median(runs.map((r) => r.before.ms)),
+      afterMedian: median(runs.map((r) => r.after.ms)),
+      afterMax: runs.length ? Math.max(...runs.map((r) => r.after.ms)) : null
+    },
+    // Non-null when the app did not survive the run. The completed measurements
+    // above still stand — this says the run was cut short and where, so a reader
+    // never mistakes 5 runs for 6.
+    appDied: died,
     perWriter,
     runs
   },
@@ -598,7 +681,9 @@ const findings = {
   },
   premise: everyWriterEmpties
     ? 'CONFIRMED. All three writers empty both live read channels, with no prompt sent, in an environment where the CLI demonstrably offers both.'
-    : 'NOT CONFIRMED as stated — see perWriter.',
+    : readersRebuild
+      ? 'NOT REPRODUCIBLE, AND EXPLAINED: the read handlers rebuild the engine lazily (#112 landed), so the channels answer across a writer. This is the post-fix state, not a failed measurement — revert that fix and phase B flips readersRebuildLazily to false and this line back to CONFIRMED.'
+      : 'NOT CONFIRMED as stated — see perWriter.',
   recommendation:
     'Recorded in the ticket comment. This spike changes no src/ file by design.',
   scrubbing:
@@ -619,6 +704,11 @@ for (const w of WRITERS) {
 }
 console.log(
   `rebuild+warm price    : min ${findings.phaseC_app.rewarmMs.min}ms / median ${findings.phaseC_app.rewarmMs.median}ms / max ${findings.phaseC_app.rewarmMs.max}ms per pill click`
+)
+console.log(
+  `first read after write: median ${findings.phaseC_app.firstReadAfterWriterMs.afterMedian}ms ` +
+    `(max ${findings.phaseC_app.firstReadAfterWriterMs.afterMax}ms), ` +
+    `against ${findings.phaseC_app.firstReadAfterWriterMs.beforeMedian}ms on a live engine`
 )
 console.log(`PREMISE               : ${findings.premise}`)
 console.log(`findings              : scripts/spike-105-findings.json`)
