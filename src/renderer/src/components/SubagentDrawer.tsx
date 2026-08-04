@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Chat from './Chat'
 import { toChatMessage, type ChatMessage } from '../useChat'
+
+const TAB_STOP =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 interface SubagentDrawerProps {
   // The Task tool_use id the subagent was spawned under — the id the live card
@@ -29,6 +32,39 @@ const SubagentDrawer = ({
   onClose
 }: SubagentDrawerProps) => {
   const [messages, setMessages] = useState<ChatMessage[] | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  const trapFocus = (e: React.KeyboardEvent<HTMLDivElement>): void => {
+    if (e.key !== 'Tab') return
+    const root = rootRef.current
+    if (!root) return
+    const stops = [...root.querySelectorAll<HTMLElement>(TAB_STOP)].filter(
+      (el) => el.tabIndex >= 0 && !el.hidden
+    )
+    if (stops.length === 0) {
+      e.preventDefault()
+      root.focus()
+      return
+    }
+    const first = stops[0]
+    const last = stops[stops.length - 1]
+    const active = document.activeElement
+    const leavesRoot = e.shiftKey
+      ? active === first || !root.contains(active)
+      : active === last || !root.contains(active)
+    if (!leavesRoot) return
+    e.preventDefault()
+    ;(e.shiftKey ? last : first).focus()
+  }
+
+  useLayoutEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    closeRef.current?.focus()
+    return () => {
+      if (previous?.isConnected) previous.focus()
+    }
+  }, [])
 
   useEffect(() => {
     let live = true
@@ -59,10 +95,13 @@ const SubagentDrawer = ({
 
   return (
     <div
+      ref={rootRef}
       className="subagent-drawer-root"
       role="dialog"
       aria-modal="true"
       aria-label={`Subagent ${agentType}`}
+      tabIndex={-1}
+      onKeyDown={trapFocus}
     >
       {/*
         Decorative scrim: its only job is to swallow a click outside the drawer.
@@ -82,6 +121,7 @@ const SubagentDrawer = ({
         <header className="subagent-drawer-head">
           <span className="subagent-drawer-title">{agentType}</span>
           <button
+            ref={closeRef}
             type="button"
             className="subagent-drawer-close"
             aria-label="Close viewer"

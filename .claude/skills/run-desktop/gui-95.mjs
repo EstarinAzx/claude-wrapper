@@ -39,13 +39,12 @@
 //      collapse is verified, or the walk spends its budget inside the list and a
 //      present control reads as absent.
 //
-// `el.focus()` does not prove tab-order membership, so nothing is asserted from
-// a programmatic focus. The anchor is focused programmatically to start the walk
-// near the drawer — it is `.subagent-row`, the control that OPENED the drawer,
-// and it is never one of the elements asserted on.
+// `el.focus()` does not prove tab-order membership, so every asserted move below
+// is a real key press. Opening the viewer must put focus inside it; that initial
+// stop is also the cycle marker for both walks.
 //
-// RED-VERIFIED against main before the fix: the walk reaches
-// `.subagent-drawer-backdrop` at stop #1 and the run exits 1.
+// RED-VERIFIED for #99 with initial focus already live but the trap removed:
+// both walks escape at stop 1, the composer is forward stop 13, and exit is 1.
 
 import { _electron as electron } from 'playwright-core'
 import path from 'node:path'
@@ -60,9 +59,11 @@ fs.mkdirSync(SHOT_DIR, { recursive: true })
 // keeps the OS username out of anything that lands in the repo.
 const WORK_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gui95-'))
 
+const ROOT = '.subagent-drawer-root'
 const BACKDROP = '.subagent-drawer-backdrop'
 const CLOSE = '.subagent-drawer-close'
 const ROW = '.subagent-row'
+const COMPOSER = '.message-input'
 const PARENT_TOOL_USE_ID = 'gui95-task'
 
 const fails = []
@@ -185,72 +186,103 @@ check('premise: drawer open, scrim on screen, close button present',
 const shot = path.join(SHOT_DIR, 'gui-95-drawer-open.png')
 await page.screenshot({ path: shot })
 
-// ---- phase 5: the real Tab walk ------------------------------------------
-// Anchored on the row that opened the drawer (programmatic focus, never
-// asserted). Every stop after that is a REAL Tab press. The walk records the
-// whole cycle and stops when focus returns to the anchor, so neither assertion
-// depends on guessing how many stops the drawer is away.
-const walk = await page.evaluate(
-  async (anchorSel) => {
-    const describe = (el) =>
-      el
-        ? {
-            tag: el.tagName,
-            cls: typeof el.className === 'string' ? el.className : '',
-            label: el.getAttribute?.('aria-label') ?? null
-          }
-        : null
-    const anchor = document.querySelector(anchorSel)
-    anchor?.focus()
-    return { start: describe(document.activeElement) }
-  },
-  ROW
-)
+// ---- phase 5: real forward + reverse Tab walks ---------------------------
+// The component owns initial focus. Remember that exact DOM node in-page so each
+// walk stops only when its OWN first stop recurs; the old anchor outside the
+// viewer becomes unreachable once the trap works.
+const firstStop = await page.evaluate((rootSel) => {
+  const root = document.querySelector(rootSel)
+  const el = document.activeElement
+  window.__gui95CycleStart = el
+  return {
+    tag: el?.tagName ?? null,
+    cls: typeof el?.className === 'string' ? el.className : '',
+    label: el?.getAttribute?.('aria-label') ?? null,
+    insideRoot: !!root && el instanceof HTMLElement && root.contains(el)
+  }
+}, ROOT)
+
+check('criterion 4: opening moves focus inside the viewer', firstStop.insideRoot, firstStop)
 
 // Class matching is by whitespace-split TOKEN, never substring: `.subagent-row`
-// is a substring of `subagent-row--running`, and a substring test here silently
-// broke the cycle break on the first run of this driver.
+// is a substring of `subagent-row--running`, which broke this driver once.
 const wears = (s, sel) => s.cls.split(/\s+/).includes(sel.slice(1))
-
-const stops = []
 const MAX = 120
-for (let i = 0; i < MAX; i++) {
-  await page.keyboard.press('Tab')
-  const stop = await page.evaluate(() => {
-    const el = document.activeElement
-    if (!el) return null
-    return {
-      tag: el.tagName,
-      cls: typeof el.className === 'string' ? el.className : '',
-      label: el.getAttribute?.('aria-label') ?? null
-    }
-  })
-  if (!stop) break
-  stops.push(stop)
-  // Full cycle — focus is back on the anchor, so every stop has been seen and a
-  // second lap would only repeat them.
-  if (wears(stop, ROW)) break
+const walk = async (key) => {
+  const stops = []
+  for (let i = 0; i < MAX; i++) {
+    await page.keyboard.press(key)
+    const stop = await page.evaluate((rootSel) => {
+      const root = document.querySelector(rootSel)
+      const el = document.activeElement
+      if (!el) return null
+      return {
+        tag: el.tagName,
+        cls: typeof el.className === 'string' ? el.className : '',
+        label: el.getAttribute?.('aria-label') ?? null,
+        insideRoot: !!root && root.contains(el),
+        sameAsFirst: el === window.__gui95CycleStart
+      }
+    }, ROOT)
+    if (!stop) break
+    stops.push(stop)
+    if (stop.sameAsFirst) break
+  }
+  return stops
 }
 
-const hit = (sel) => stops.some((s) => wears(s, sel))
-const stopOf = (sel) => stops.findIndex((s) => wears(s, sel)) + 1 || null
-
-console.log(`--- tab walk: ${stops.length} stops from ${JSON.stringify(walk.start?.cls)} ---`)
-for (const [i, s] of stops.entries()) {
-  console.log(`  ${String(i + 1).padStart(3)}  ${s.tag.padEnd(8)} ${s.cls || '(no class)'}${s.label ? `  [${s.label}]` : ''}`)
+const forward = await walk('Tab')
+const reverse = await walk('Shift+Tab')
+const hit = (stops, sel) => stops.some((s) => wears(s, sel))
+const stopOf = (stops, sel) => stops.findIndex((s) => wears(s, sel)) + 1 || null
+const printWalk = (label, stops) => {
+  console.log(`--- ${label}: ${stops.length} stops from ${JSON.stringify(firstStop.cls)} ---`)
+  for (const [i, s] of stops.entries()) {
+    console.log(`  ${String(i + 1).padStart(3)}  ${s.tag.padEnd(8)} ${s.cls || '(no class)'}${s.label ? `  [${s.label}]` : ''}${s.insideRoot ? '' : '  OUTSIDE'}`)
+  }
 }
+printWalk('forward tab walk', forward)
+printWalk('reverse tab walk', reverse)
 
 // Criterion 1 — the scrim is never landed on.
-check(`criterion 1: forward Tab never lands on ${BACKDROP}`, !hit(BACKDROP), {
-  stops: stops.length,
-  backdropStop: stopOf(BACKDROP)
+check(`criterion 1: forward Tab never lands on ${BACKDROP}`, !hit(forward, BACKDROP), {
+  stops: forward.length,
+  backdropStop: stopOf(forward, BACKDROP)
 })
 
 // Criterion 3 — and the guard that makes criterion 1 mean anything. Same walk,
 // same keys: if the drawer were shut this fails and the run is red.
-check(`criterion 3: the same walk DOES reach ${CLOSE}`, hit(CLOSE), {
-  closeStop: stopOf(CLOSE)
+check(`criterion 3: the same walk DOES reach ${CLOSE}`, hit(forward, CLOSE), {
+  closeStop: stopOf(forward, CLOSE)
 })
+
+check(
+  'criterion 5: every forward Tab stop stays inside the viewer',
+  forward.length > 0 && forward.every((s) => s.insideRoot) && forward.at(-1)?.sameAsFirst,
+  {
+    stops: forward.length,
+    escapedAt: forward.findIndex((s) => !s.insideRoot) + 1 || null,
+    completedCycle: forward.at(-1)?.sameAsFirst ?? false
+  }
+)
+
+// Positive over the established walk: an unopened viewer produces zero stops
+// and fails rather than vacuously claiming the hidden composer was unreachable.
+check(
+  'criterion 6: the contained walk never reaches the composer textarea',
+  forward.length > 0 && !hit(forward, COMPOSER),
+  { stops: forward.length, composerStop: stopOf(forward, COMPOSER) }
+)
+
+check(
+  'criterion 7: every reverse Tab stop stays inside the viewer',
+  reverse.length > 0 && reverse.every((s) => s.insideRoot) && reverse.at(-1)?.sameAsFirst,
+  {
+    stops: reverse.length,
+    escapedAt: reverse.findIndex((s) => !s.insideRoot) + 1 || null,
+    completedCycle: reverse.at(-1)?.sameAsFirst ?? false
+  }
+)
 
 // ---- phase 6: the click still closes it ----------------------------------
 // The stop is removed; the handler is not.

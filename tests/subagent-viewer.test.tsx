@@ -38,6 +38,17 @@ const spawnTask = (parentToolUseId = 'task-1', agentType = 'Explore') => {
   harness.emit({ type: 'subagent', parentToolUseId, status: 'running' })
 }
 
+const openViewer = async () => {
+  harness.api.currentSessionId.mockResolvedValue('sess-1')
+  harness.api.subagentTranscript.mockResolvedValue([{ role: 'assistant', text: 'hi from sub' }])
+  spawnTask()
+  const opener = document.querySelector('.subagent-row') as HTMLButtonElement
+  opener.focus()
+  fireEvent.click(opener)
+  await screen.findByText('hi from sub')
+  return opener
+}
+
 describe('subagent viewer', () => {
   test('a subagent event grows a working-list row on its Task card', async () => {
     await startSession()
@@ -73,17 +84,31 @@ describe('subagent viewer', () => {
     expect(harness.api.subagentTranscript).toHaveBeenCalledWith('sess-1', 'task-1')
   })
 
-  test('the drawer closes via its close button', async () => {
+  test('opening the viewer moves focus inside it', async () => {
     await startSession()
-    harness.api.currentSessionId.mockResolvedValue('sess-1')
-    harness.api.subagentTranscript.mockResolvedValue([{ role: 'assistant', text: 'hi from sub' }])
-    spawnTask()
+    await openViewer()
 
-    fireEvent.click(document.querySelector('.subagent-row') as Element)
-    await screen.findByText('hi from sub')
+    const root = screen.getByRole('dialog', { name: 'Subagent Explore' })
+    expect(root.contains(document.activeElement)).toBe(true)
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close viewer' }))
+  })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close viewer' }))
+  test.each([
+    ['close button', () => fireEvent.click(screen.getByRole('button', { name: 'Close viewer' }))],
+    ['Escape', () => fireEvent.keyDown(window, { key: 'Escape' })],
+    [
+      'scrim click',
+      () => fireEvent.click(document.querySelector('.subagent-drawer-backdrop') as Element)
+    ]
+  ])('restores the opener after %s', async (_name, close) => {
+    await startSession()
+    const opener = await openViewer()
+    screen.getByRole('button', { name: 'Close viewer' }).focus()
+
+    close()
+
     expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.activeElement).toBe(opener)
   })
 
   // jsdom cannot press Tab, so this is not the tab-order measurement — that is
