@@ -33,7 +33,7 @@ The grant removes **ownership** as a ground for deferring. It does **not** remov
 the need for a warrant, and it licenses nothing irreversible. It also does not
 reopen the standing calls in `.context/pick-up.md`.
 
-## Current queue — NINE OPEN as of 2026-08-04
+## Current queue — THIRTEEN OPEN as of 2026-08-04
 
 Take the lowest-numbered open, unblocked `ready-for-agent` ticket.
 
@@ -53,6 +53,10 @@ ticket in this batch.**
 | **104** | a subagent open when a turn SUCCEEDS is never drained; its terminal event reaches nobody | — |
 | **105** | **spike** — does picking a model empty the model menu and slash commands until the next send? | — |
 | **106** | a clipboard image that fails to read is rejected with a self-contradictory message | — |
+| **107** | **the rail can delete the session a turn is streaming into** — data loss, first turn only | — |
+| **108** | **spike** — can a second send, or a hung interrupt, strand the turn lifecycle? | — |
+| **109** | `switchWorkspace` checks `isBusy` before an await, so a send during resolve tears down a live turn | — |
+| **110** | the window's last move or resize is dropped if you close inside the 250ms debounce | — |
 
 #98, #99 and #102 all touch `SubagentDrawer.tsx`, which is why they are chained
 rather than merely ordered — the chain is what keeps each rebase trivial.
@@ -69,10 +73,21 @@ were each re-verified by hand before filing.** Three notes that bind:
 - **#104 forbids the obvious shortcut.** Do **not** call `drainSubagents()` on
   the success branch: it emits `failed`, which for an async agent is a lie about
   one that is still running. The correct fix is #83's port precedent.
-- **A fourth finding was killed by this very file** and must not be re-filed:
-  the `void shell.openExternal(url)` unhandled-rejection theory. The probe
-  recorded further down says this app keeps `--unhandled-rejections=warn` and
-  that `shell.openExternal` on an unregistered scheme does not even reject.
+- **A finding was killed by this very file** and must not be re-filed: the
+  `void shell.openExternal(url)` unhandled-rejection theory. The probe recorded
+  further down says this app keeps `--unhandled-rejections=warn` and that
+  `shell.openExternal` on an unregistered scheme does not even reject. A
+  cross-model verifier **confirmed** the finding on a fresh code-read and was
+  overruled: its own correction conceded the crash claim was "overstated" and
+  depended on Electron's escalation policy, which this repo has already probed.
+  **A live probe in the record beats a fresh code-read.**
+- **#107 is the one to take first if you are choosing by consequence** — it
+  destroys a transcript that is being written, by an ordinary sequence, and it
+  is the only data-loss defect in the batch.
+- **#105 and #108 are SPIKES and must stay spikes** — harness, findings,
+  recommendation, **no `src/` diff**. Both have plainly-confirmed mechanisms and
+  genuinely open reachability, which is the exact shape this repo has three
+  precedents for. Killing their own premise is a successful outcome.
 
 **#98 and #99 rest on a contradiction surfaced deliberately.** Two ADRs
 previously reasoned *against* a centred modal. **Neither is superseded and

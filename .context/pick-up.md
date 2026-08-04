@@ -9,7 +9,7 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Frontier: NINE OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
+## Frontier: THIRTEEN OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
 
 The tracker was empty after #97. A `/preset vibe init` run on **2026-08-04**
 filled it. Run the frontier query anyway — this table goes stale the moment
@@ -37,6 +37,18 @@ because three of them touch `SubagentDrawer.tsx` and a relay works one at a time
 | **104** | a subagent open when a turn SUCCEEDS is never drained; its terminal event reaches nobody | — |
 | **105** | **spike** — does picking a model empty the model menu and slash commands until the next send? | — |
 | **106** | a clipboard image that fails to read is rejected with a self-contradictory message | — |
+| **107** | **the rail can delete the session a turn is streaming into** — data loss, first turn only | — |
+| **108** | **spike** — can a second send, or a hung interrupt, strand the turn lifecycle? | — |
+| **109** | `switchWorkspace` checks `isBusy` before an await, so a send during resolve tears down a live turn | — |
+| **110** | the window's last move or resize is dropped if you close inside the 250ms debounce | — |
+
+**#107 is the one to take first if you are choosing by consequence.** It
+destroys a transcript that is being written, and it is reachable by an ordinary
+sequence: New chat, send a first prompt, alt-tab away and back, delete the row
+that appears. The renderer has no `activeSessionId` until `turn-end`, so the
+streaming session's row is not "active" and its delete button is live. Main
+declines to re-check on purpose, which is exactly the reasoning the ticket
+overturns.
 
 **#98–#103 came from the grill. #104–#106 came from a cross-model bug hunt**
 (finders and verifiers on `codex/gpt-5.6-sol` and `xai/grok-4.5` as well as
@@ -51,11 +63,12 @@ tickets by accident:**
   `.claude/relay-leg.md` records the earlier probe: this app keeps
   `--unhandled-rejections=warn`, and `shell.openExternal` on an unregistered
   scheme does not even reject. It was found again and killed by the record.
-- **The `ipc` boundary and `engine` lifecycle dimensions were never hunted.**
-  Both finders overflowed `codex/gpt-5.6-sol`'s context ("Prompt is too long"),
-  and the re-run stalled and returned nothing. **This is an open gap, not a clean
-  sweep** — the batch is what was found, not what a full audit would find. Worth
-  a fresh pass on a larger-context model.
+- **The `ipc` and `engine` dimensions overflowed on the first pass and were
+  re-run — that gap is now CLOSED**, and the re-run produced #107–#110. Both
+  finders had died on `codex/gpt-5.6-sol` with "Prompt is too long"; re-running
+  them on Opus and Grok worked. **If you fan out over this codebase again, give
+  the reading budget an explicit cap in the prompt** — that is what overflowed,
+  not the task.
 
 **`ready-for-human` is forbidden until the owner is back.** The 2026-08-04 seed
 said so in as many words — "never tag anything ready for human … i give you the

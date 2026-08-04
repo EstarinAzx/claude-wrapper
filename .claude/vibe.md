@@ -14,7 +14,7 @@ second_eyes: xai/grok-4.5 (via haiku) — granted explicitly by the seed
 max_defer: 12
 phase: fired
 halted: false
-relay: FIRED — 9 `ready-for-agent` tickets (#98–#106), body
+relay: FIRED — 13 `ready-for-agent` tickets (#98–#110), body
   `.claude/relay-leg.md`, which was updated first because its own text told legs
   to relabel `ready-for-human` on a stuck ticket, and the owner forbade that.
 ---
@@ -413,14 +413,31 @@ that ran, I hand-verified the four orphaned `error-paths` findings myself.
   settle it** — `gui-52` is a standing environmental red for an empty CLI model
   list, so an empty list here is indistinguishable from a null engine. Filing a
   fix would have been guessing with a straight face.
-- [gap] **Two dimensions were never hunted, and are still not.** The `ipc`
-  boundary and `engine` lifecycle finders overflowed the first time and the
-  re-run stalled. **Recorded as an open gap rather than quietly dropped**, and
-  carried into `pick-up.md` so the next session can close it. The batch that
-  shipped is what was actually found, not what a full sweep would have found.
-- [gap] The gap workflow's single journalled result was `null`. **Checked rather
-  than assumed** — the diagnostics warn that a cached or completed agent may
-  still have returned nothing, and this one had.
+- [gap] **I called the re-run dead, and I was wrong.** Its agent files had not
+  been written to for fifteen minutes and its one journalled result was `null`,
+  so I recorded the `ipc` and `engine` dimensions as permanently unhunted and
+  moved on. **It was simply slow** — it finished at 810s with all three agents
+  green and returned the most serious finding of the whole run. The lesson is
+  narrow and worth keeping: **a quiet workflow is not a dead one**, and a
+  half-written journal says nothing about the agents still running behind it.
+  The premature conclusion is left here rather than edited out, because the next
+  reader will be tempted to make the same call.
+- [gap] **All four orphaned findings came back CONFIRMED**, which vindicates
+  re-running rather than trusting the "REFUTED with an empty reason" my own
+  triage had produced. Two of the four I had already hand-verified and filed
+  (#104, #105); one is #106; and one is the corpse below.
+- [gap] **The verifier confirmed the `shell.openExternal` finding and is
+  overruled anyway.** Its own correction concedes the crash claim "is
+  overstated" and depends on Electron's escalation policy — and this project
+  already *probed* that policy and recorded the answer: `--unhandled-rejections=warn`,
+  and the call does not even reject on an unregistered scheme. **A live probe in
+  the record beats a fresh code-read**, so it stays unfiled.
+- [gap] The two recovered dimensions produced **six more findings**, of which the
+  sharpest is a **data-loss** bug (#107) that no earlier dimension had touched:
+  the rail can delete the transcript a turn is actively writing, during that
+  session's first turn, because the renderer does not learn its own session id
+  until `turn-end` and main deliberately delegates the busy refusal to a control
+  that is therefore not disabled.
 
 ### Firing
 
