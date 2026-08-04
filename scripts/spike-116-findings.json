@@ -1,0 +1,960 @@
+{
+  "spike": 116,
+  "question": "Is `@` file autocomplete reachable from this app at all?",
+  "measuredAt": "2026-08-04T14:00:49.924Z",
+  "phasesRun": [
+    "0",
+    "1",
+    "2",
+    "3"
+  ],
+  "runDirName": "spike-116-zmLT75",
+  "runDirParent": "OS temp dir (os.tmpdir())",
+  "env": {
+    "backendMode": "wisped",
+    "hostCliUsed": true,
+    "cliVersion": "2.1.221 (Claude Code)",
+    "sdkVersion": "0.3.220",
+    "electronVersion": "43.2.0",
+    "platform": "win32",
+    "node": "v22.17.0"
+  },
+  "scrubbing": "Counts, classifications, shapes and timings. A suggestion path is recorded verbatim ONLY when it is inside the workspace (this public repo); anything absolute or ../-escaping is reduced to its class, segment count and extension. No home directory, username or absolute path is written here.",
+  "q0_sourceFacts": {
+    "note": "Every entry records the TEXT it matched, not a boolean (#113/#114). A zero count with an empty `matched` is a measured absence; an unreadable file says so.",
+    "sdkVersion": "0.3.220",
+    "exportsDot": {
+      "types": "./sdk.d.ts",
+      "default": "./sdk.mjs"
+    },
+    "exportsBridge": {
+      "types": "./bridge.d.ts",
+      "default": "./bridge.mjs"
+    },
+    "sdkMjs_file_suggestions": {
+      "readable": true,
+      "bytes": 1232893,
+      "count": 0,
+      "matched": []
+    },
+    "bridgeMjs_file_suggestions": {
+      "readable": true,
+      "bytes": 1303872,
+      "count": 3,
+      "matched": [
+        "file_suggestions",
+        "file_suggestions",
+        "file_suggestions"
+      ]
+    },
+    "declaration": {
+      "readable": true,
+      "hits": [
+        {
+          "line": 3041,
+          "text": "declare type SDKControlFileSuggestionsRequest = {"
+        },
+        {
+          "line": 3042,
+          "text": "subtype: 'file_suggestions';"
+        },
+        {
+          "line": 3043,
+          "text": "query: string;"
+        },
+        {
+          "line": 3729,
+          "text": "declare type SDKControlRequestInner = SDKControlInterruptRequest | SDKControlPermissionRequest | SDKControlInitializeRequest | SDKControlSetPermissionModeRequest | SDKControlSetModelRequest | SDKControlSetMaxThinkingTokensRequest | SDKContr"
+        }
+      ]
+    },
+    "settingsHooks": {
+      "readable": true,
+      "hits": [
+        {
+          "line": 4983,
+          "text": "fileSuggestion?: {"
+        },
+        {
+          "line": 4990,
+          "text": "respectGitignore?: boolean;"
+        }
+      ]
+    },
+    "mainEnumeratesWorkspace": {
+      "count": 7,
+      "hits": [
+        {
+          "file": "src/main/session-index.ts",
+          "matched": "readdir"
+        },
+        {
+          "file": "src/main/session-index.ts",
+          "matched": "readdir"
+        },
+        {
+          "file": "src/main/session-index.ts",
+          "matched": "readdir"
+        },
+        {
+          "file": "src/main/session-index.ts",
+          "matched": "readdir"
+        },
+        {
+          "file": "src/main/session-index.ts",
+          "matched": "readdir"
+        },
+        {
+          "file": "src/main/session-index.ts",
+          "matched": "readdir"
+        },
+        {
+          "file": "src/main/subagent-store.ts",
+          "matched": "readdir"
+        }
+      ]
+    }
+  },
+  "q2_autocompleteRoute": {
+    "ranAt": "2026-08-04T14:00:49.925Z",
+    "warm": {
+      "supportedCommandsCount": 121
+    },
+    "runtimeSurface": {
+      "callableCount": 72,
+      "namedFileSuggestionCaller": [],
+      "nameLevelCandidates": [
+        "hasBidirectionalNeeds",
+        "readFile",
+        "rewindFiles"
+      ],
+      "hasGenericDispatcher": true,
+      "note": "Every named control method on this object is a wrapper over request({subtype}). That is why an absent name (#88) proves nothing and why the probe below calls the dispatcher directly."
+    },
+    "negativeControl": {
+      "refused": true,
+      "refusalText": "Unsupported control request subtype: spike116_definitely_not_a_real_subtype",
+      "verdict": "The CLI refuses unknown subtypes by name, so a success below is a real accept."
+    },
+    "repo": {
+      "workspace": "the repo itself",
+      "probes": [
+        {
+          "query": "",
+          "ok": true,
+          "total": 15,
+          "byClass": {
+            "in-workspace": 15
+          },
+          "inWorkspace": 15,
+          "outsideWorkspace": 0,
+          "rowFields": [
+            "path"
+          ],
+          "sample": [
+            {
+              "class": "in-workspace",
+              "path": ".claude\\"
+            },
+            {
+              "class": "in-workspace",
+              "path": ".context\\"
+            },
+            {
+              "class": "in-workspace",
+              "path": ".git\\"
+            },
+            {
+              "class": "in-workspace",
+              "path": ".gitignore"
+            },
+            {
+              "class": "in-workspace",
+              "path": "CLAUDE.md"
+            }
+          ],
+          "ms": 32
+        },
+        {
+          "query": "p",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "pack",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 6
+        },
+        {
+          "query": "package",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "package.json",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "src",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 0
+        },
+        {
+          "query": "src\\",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "scripts",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 4
+        },
+        {
+          "query": "CLAUDE",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "engine",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        }
+      ]
+    },
+    "freshWorkspace": {
+      "workspace": "a fresh temp dir holding exactly 3 files and 1 nested dir",
+      "fileCount": 3,
+      "binary": "host (the app's own choice — cli-path.ts)",
+      "probes": [
+        {
+          "query": "",
+          "ok": true,
+          "total": 3,
+          "byClass": {
+            "in-workspace": 3
+          },
+          "inWorkspace": 3,
+          "outsideWorkspace": 0,
+          "rowFields": [
+            "path"
+          ],
+          "sample": [
+            {
+              "class": "in-workspace",
+              "path": "alpha.txt"
+            },
+            {
+              "class": "in-workspace",
+              "path": "beta.md"
+            },
+            {
+              "class": "in-workspace",
+              "path": "nested\\"
+            }
+          ],
+          "ms": 17
+        },
+        {
+          "query": "a",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 25
+        },
+        {
+          "query": "al",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 2
+        },
+        {
+          "query": "alpha",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 7
+        },
+        {
+          "query": "alpha.txt",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "beta",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "nested",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "nested\\",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "gamma",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 9
+        },
+        {
+          "query": "@alpha",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 6
+        }
+      ]
+    },
+    "bundledBinaryInSameWorkspace": {
+      "workspace": "the same fresh temp dir as freshWorkspace above",
+      "binary": "SDK-bundled (pathToClaudeCodeExecutable omitted)",
+      "onlyDifference": "pathToClaudeCodeExecutable — cwd, env and probe set are identical",
+      "probes": [
+        {
+          "query": "",
+          "ok": true,
+          "total": 3,
+          "byClass": {
+            "in-workspace": 3
+          },
+          "inWorkspace": 3,
+          "outsideWorkspace": 0,
+          "rowFields": [
+            "path"
+          ],
+          "sample": [
+            {
+              "class": "in-workspace",
+              "path": "alpha.txt"
+            },
+            {
+              "class": "in-workspace",
+              "path": "beta.md"
+            },
+            {
+              "class": "in-workspace",
+              "path": "nested\\"
+            }
+          ],
+          "ms": 18
+        },
+        {
+          "query": "a",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 22
+        },
+        {
+          "query": "al",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 6
+        },
+        {
+          "query": "alpha",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "alpha.txt",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 0
+        },
+        {
+          "query": "beta",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "nested",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 1
+        },
+        {
+          "query": "nested\\",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 0
+        },
+        {
+          "query": "gamma",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 0
+        },
+        {
+          "query": "@alpha",
+          "ok": true,
+          "total": 0,
+          "byClass": {},
+          "inWorkspace": 0,
+          "outsideWorkspace": 0,
+          "rowFields": [],
+          "sample": [],
+          "ms": 5
+        }
+      ]
+    },
+    "outOfWorkspaceSuggestions": {
+      "rounds": 4,
+      "probes": [
+        "g",
+        "gamma",
+        "a",
+        "al",
+        ".\\a",
+        "src",
+        "e"
+      ],
+      "observations": [
+        {
+          "round": 1,
+          "totalSuggestions": 0,
+          "outsideWorkspace": 0,
+          "byQuery": [
+            {
+              "query": "g",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "gamma",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "a",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "al",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": ".\\a",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "src",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "e",
+              "total": 0,
+              "outside": 0
+            }
+          ]
+        },
+        {
+          "round": 2,
+          "totalSuggestions": 0,
+          "outsideWorkspace": 0,
+          "byQuery": [
+            {
+              "query": "g",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "gamma",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "a",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "al",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": ".\\a",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "src",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "e",
+              "total": 0,
+              "outside": 0
+            }
+          ]
+        },
+        {
+          "round": 3,
+          "totalSuggestions": 0,
+          "outsideWorkspace": 0,
+          "byQuery": [
+            {
+              "query": "g",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "gamma",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "a",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "al",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": ".\\a",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "src",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "e",
+              "total": 0,
+              "outside": 0
+            }
+          ]
+        },
+        {
+          "round": 4,
+          "totalSuggestions": 0,
+          "outsideWorkspace": 0,
+          "byQuery": [
+            {
+              "query": "g",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "gamma",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "a",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "al",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": ".\\a",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "src",
+              "total": 0,
+              "outside": 0
+            },
+            {
+              "query": "e",
+              "total": 0,
+              "outside": 0
+            }
+          ]
+        }
+      ],
+      "firstLeakAtRound": null,
+      "priorObservation": {
+        "provenance": "Exploratory probing on 2026-08-05 that preceded this harness — not a scored run of this file. Recorded because it happened and could not be reproduced below.",
+        "workspace": "a fresh temp dir holding exactly 3 files, the same shape as freshWorkspace",
+        "queriesThatAnswered": [
+          "g",
+          "gamma",
+          ".\\a"
+        ],
+        "whatCameBack": {
+          "g": "15 suggestions, none in the workspace — entries under the user home ~/.claude tree, plus a `..\\..\\..\\..\\..\\..\\`-escaping path into an unrelated directory",
+          "gamma": "3 suggestions, all `..\\..\\..\\..\\..\\..\\`-escaping paths into an unrelated directory",
+          ".\\a": "15 suggestions, none in the workspace"
+        },
+        "sameRunNegatives": [
+          "a",
+          "al",
+          "alpha",
+          "alpha.txt",
+          "beta",
+          "nested"
+        ],
+        "note": "Workspace files did NOT match while out-of-workspace paths did, in the same run on the same handle — so this was not simply \"the index is warm now\".",
+        "variablesSinceControlledAndEXCLUDED": [
+          "the CLI binary (host vs SDK-bundled — binariesAgree above)",
+          "options.env (omitted vs resolveSpawnEnv output — both scoped)",
+          "handle age (a fresh handle per round below)",
+          "probe order"
+        ]
+      },
+      "verdict": "NOT REPRODUCED in 4 rounds x 7 probes, after excluding binary, env, handle age and probe order as causes. This is the WEAK outcome and it is NOT a refutation: priorObservation below records the behaviour actually being seen, and an intermittent hazard that did not fire is not an absent one. The mechanism is UNKNOWN. A build must scope suggestions to the workspace itself rather than trust the CLI's answer to be scoped."
+    },
+    "summary": {
+      "hostBinary_theOneTheAppSpawns": {
+        "scoredProbes": 20,
+        "threw": 0,
+        "emptyQueryProbes": 2,
+        "emptyQueryAnswered": 2,
+        "nonEmptyProbes": 18,
+        "nonEmptyAnswered": 0,
+        "nonEmptyWithAnyInWorkspaceHit": 0,
+        "nonEmptyReturningPathsOutsideTheWorkspace": 0
+      },
+      "bundledBinary_notWhatTheAppSpawns": {
+        "scoredProbes": 10,
+        "threw": 0,
+        "emptyQueryProbes": 1,
+        "emptyQueryAnswered": 1,
+        "nonEmptyProbes": 9,
+        "nonEmptyAnswered": 0,
+        "nonEmptyWithAnyInWorkspaceHit": 0,
+        "nonEmptyReturningPathsOutsideTheWorkspace": 0
+      },
+      "everyProbeThrew": false,
+      "binariesAgree": true
+    },
+    "answer": "YES, BUT NOT AS A WORKSPACE FILE PICKER — the route is reachable (the CLI accepts the subtype and refuses a bogus one) and an EMPTY query returns the workspace's own top level, but 18/18 non-empty prefixes returned ZERO in-workspace matches across two different workspaces, and 0 returned paths from OUTSIDE the workspace. The SDK-bundled binary answers the same way, so this is not an artefact of which CLI the app spawns."
+  },
+  "q1_resolution": {
+    "sentinelShape": "SPIKE116-<16 hex>, random per run",
+    "workspace": "a fresh temp dir holding exactly one file, notes.txt",
+    "positiveControlHeld": true,
+    "toolRemovalHeld": true,
+    "removedTools": [
+      "Read",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Task",
+      "Agent",
+      "NotebookRead",
+      "NotebookEdit",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "WebSearch",
+      "BashOutput",
+      "SlashCommand"
+    ],
+    "instrumentNote": "Arms B and C add disallowedTools; nothing else departs from engine.ts's option shape. canUseTool is a recorder here, not the denial — see the header. Both witnesses are reported per arm: canUseTool consultations (toolAttemptCount) AND tool_use blocks seen in the stream (toolUseBlockCount), because the ambient permission mode can make the first zero while the second is not.",
+    "armA": {
+      "label": "A-positive-control",
+      "promptShape": "What is the token on the first line of notes.txt? Reply with only that token and nothing else.",
+      "toolsRemoved": false,
+      "disallowedTools": [],
+      "toolAttempts": [
+        {
+          "name": "Read",
+          "keys": [
+            "file_path",
+            "limit"
+          ]
+        }
+      ],
+      "toolUseBlocks": [
+        "Glob",
+        "Read",
+        "Read"
+      ],
+      "ranTurn": true,
+      "turnIsError": false,
+      "answeredSentinel": true,
+      "sentinelInStreamBeforeAnswer": true,
+      "error": null,
+      "resultSubtype": "success",
+      "answerLength": 51,
+      "toolAttemptCount": 1,
+      "toolNamesAttempted": [
+        "Read"
+      ],
+      "toolUseBlockCount": 3,
+      "toolUseNames": [
+        "Glob",
+        "Read"
+      ],
+      "unremovedToolsUsed": []
+    },
+    "armB": {
+      "label": "B-at-mention-tools-removed",
+      "promptShape": "What is the token on the first line of @notes.txt? Reply with only that token and nothing else.",
+      "toolsRemoved": true,
+      "disallowedTools": [
+        "Read",
+        "Bash",
+        "Glob",
+        "Grep",
+        "Task",
+        "Agent",
+        "NotebookRead",
+        "NotebookEdit",
+        "Edit",
+        "Write",
+        "WebFetch",
+        "WebSearch",
+        "BashOutput",
+        "SlashCommand"
+      ],
+      "toolAttempts": [],
+      "toolUseBlocks": [],
+      "ranTurn": true,
+      "turnIsError": false,
+      "answeredSentinel": true,
+      "sentinelInStreamBeforeAnswer": true,
+      "error": null,
+      "resultSubtype": "success",
+      "answerLength": 51,
+      "toolAttemptCount": 0,
+      "toolNamesAttempted": [],
+      "toolUseBlockCount": 0,
+      "toolUseNames": [],
+      "unremovedToolsUsed": []
+    },
+    "armC": {
+      "label": "C-negative-control-tools-removed",
+      "promptShape": "What is the token on the first line of notes.txt? Reply with only that token and nothing else.",
+      "toolsRemoved": true,
+      "disallowedTools": [
+        "Read",
+        "Bash",
+        "Glob",
+        "Grep",
+        "Task",
+        "Agent",
+        "NotebookRead",
+        "NotebookEdit",
+        "Edit",
+        "Write",
+        "WebFetch",
+        "WebSearch",
+        "BashOutput",
+        "SlashCommand"
+      ],
+      "toolAttempts": [],
+      "toolUseBlocks": [],
+      "ranTurn": true,
+      "turnIsError": false,
+      "answeredSentinel": false,
+      "sentinelInStreamBeforeAnswer": false,
+      "error": null,
+      "resultSubtype": "success",
+      "answerLength": 233,
+      "toolAttemptCount": 0,
+      "toolNamesAttempted": [],
+      "toolUseBlockCount": 0,
+      "toolUseNames": [],
+      "unremovedToolsUsed": []
+    },
+    "answer": "YES — with every file-reading tool removed from the model's context, the `@notes.txt` arm answered the run-random sentinel (0 tool_use blocks) and the identical prompt WITHOUT `@` did not (0 tool_use blocks). The content reached the model out of band, which is the CLI resolving the mention."
+  },
+  "q3_cost": {
+    "note": "In-process walks need no child_process. The git route buys .gitignore semantics and costs a spawn — the app has exactly one today (#90), and adding a second is an architectural call rather than a detail.",
+    "inProcessWalk_pruned": {
+      "prunes": [
+        "node_modules",
+        ".git",
+        "out",
+        "dist"
+      ],
+      "files": 356,
+      "dirs": 22,
+      "medianMs": 3,
+      "minMs": 3,
+      "maxMs": 3
+    },
+    "inProcessWalk_unpruned": {
+      "files": 18349,
+      "dirs": 1860,
+      "medianMs": 192,
+      "minMs": 183,
+      "maxMs": 207
+    },
+    "gitLsFiles": {
+      "requiresChildProcess": true,
+      "exitStatus": 0,
+      "fileCount": 345,
+      "medianMs": 27,
+      "minMs": 27,
+      "maxMs": 29
+    },
+    "referencePoints": {
+      "slashPopoverPerKeystroke_warmQuery_ms": 1,
+      "slashPopoverAfterEngineRebuild_ms": 5500,
+      "agentViewSubprocessPerLook_ms": 893,
+      "source": "#112 (both list numbers) and #90 (the spawn), read off this record rather than re-measured here"
+    }
+  },
+  "whatANegativeRunProves": {
+    "q2": "A zero from Q2 is a measurement ONLY IF negativeControl.refused is true — otherwise the dispatcher accepts anything and a success means nothing. An empty suggestion list for a prefix is a measurement only for prefixes that name something present in that workspace, which is why the probe set is chosen against the workspace it is asked about.",
+    "q1": "A NO from Q1 is a measurement ONLY IF positiveControlHeld is true. If arm A could not answer with tools available, arms B and C measure a broken instrument (#114 hit this three times in one leg). A YES additionally requires (a) toolRemovalHeld — no removed tool actually ran — and (b) arm C to have FAILED, since otherwise the file arrived by a route that never needed the mention. The first version of this harness satisfied neither and printed a confident YES anyway; the denial was canUseTool, which the ambient permission mode never consulted.",
+    "q3": "These timings are one machine, one repo, warm cache. They bound the ORDER of the cost, not its value on a user's disk, and a cold first walk is not measured here.",
+    "general": "Every answer above names the run it came from via measuredAt + runDirName. A rename in the SDK shows up as changed text in q0_sourceFacts rather than as a silent false."
+  }
+}
