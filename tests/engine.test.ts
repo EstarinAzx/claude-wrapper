@@ -1185,6 +1185,62 @@ describe('engine task messages', () => {
     })
   })
 
+  // #111. The turn above is in flight; this one is NOT. A successful turn leaves
+  // a running agent open on purpose (#104 — it may still complete), so between
+  // turns is exactly where an open agent lives, and close() is where its CLI
+  // process dies. Only the port can see this: emit() reaches activeOnEvent,
+  // which finishTurn() already nulled.
+  test('a query closed BETWEEN turns drains an agent the successful turn left open', async () => {
+    const { fn, push } = streamingStub()
+    const portEvents: EngineEvent[] = []
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      onSubagent: (event: EngineEvent) => portEvents.push(event)
+    })
+    const turn = engine.runTurn(p('hi'), () => {})
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push(success)
+    await turn
+    expect(engine.isBusy()).toBe(false)
+    expect(subagentEvents(portEvents).filter((e) => e.status === 'failed')).toEqual([])
+
+    engine.close()
+
+    expect(subagentEvents(portEvents).at(-1)).toEqual({
+      type: 'subagent',
+      parentToolUseId: AGENT_TU,
+      status: 'failed'
+    })
+  })
+
+  // #111. The drain moved out of the `if (turnResolve)` block, so the in-flight
+  // close now reaches it on the way past rather than inside. The stream's own
+  // teardown drains too, so the set being cleared is what keeps this one event —
+  // asserted rather than reasoned, and the stub is closed here to make the
+  // second drain site actually run.
+  test('closing during a turn fails one agent exactly once', async () => {
+    const { fn, push, close } = streamingStub()
+    const portEvents: EngineEvent[] = []
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      onSubagent: (event: EngineEvent) => portEvents.push(event)
+    })
+    const turn = engine.runTurn(p('hi'), () => {})
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    await new Promise((r) => setTimeout(r, 10))
+
+    engine.close()
+    await turn
+    close()
+    await new Promise((r) => setTimeout(r, 10))
+
+    expect(subagentEvents(portEvents).filter((e) => e.status === 'failed')).toEqual([
+      { type: 'subagent', parentToolUseId: AGENT_TU, status: 'failed' }
+    ])
+  })
+
   test('absent usage stays absent — no key is invented as a zero', async () => {
     const { fn, push } = streamingStub()
     const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)

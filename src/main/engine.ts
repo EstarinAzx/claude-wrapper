@@ -374,8 +374,15 @@ export const createEngine = (
 
   // A turn that aborts/errors/closes may leave subagents whose Task tool_result
   // never arrived — flip each still-open one to failed so its row stops pulsing
-  // "running…". Only called on the failure paths; a successful turn has already
-  // drained them via the Task tool_results.
+  // "running…".
+  //
+  // #111 corrected what this used to claim ("only called on the failure paths; a
+  // successful turn has already drained them"). Neither half held: close() calls
+  // it on EVERY teardown, failure or not, and a successful turn deliberately
+  // leaves a running agent open (#104 — the Agent tool is async, so it may still
+  // complete and send its own terminal edge). That belief is why the close()
+  // call was gated on a turn being in flight, which stranded exactly the agents
+  // this sentence assumed were already gone.
   const drainSubagents = (): void => {
     for (const id of subagentParents) {
       emitSubagent({ type: 'subagent', parentToolUseId: id, status: 'failed' })
@@ -917,8 +924,15 @@ export const createEngine = (
     // this codebase keeps re-learning. Unlike onTerminal, firing on close() is
     // the point rather than the bug: nothing is running once the CLI is gone.
     onBackgroundTasks([])
+    // #111. The same fact about the same teardown, so it is unconditional for
+    // the same reason. Gated on turnResolve it only ran when a turn was in
+    // flight, and an agent left open by a SUCCESSFUL turn (#104 leaves it open
+    // on purpose — it may still complete) was stranded pulsing "running…": the
+    // CLI process is gone, so its terminal edge can never arrive either. Safe to
+    // run before the block below because drainSubagents() clears the set, so the
+    // stream teardown's own drain is a no-op rather than a second `failed`.
+    drainSubagents()
     if (turnResolve) {
-      drainSubagents()
       emit({ type: 'error', message: 'query closed' })
       finishTurn()
     }
