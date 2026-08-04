@@ -7,99 +7,88 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 16 (`relay-leg`)_
-_At commit: `dadacbe` on `main`, pushed and level with `origin/main`_
+_Last updated: 2026-08-04 by Opus 5 (auto), chain 3 relay leg 17 (`relay-leg`)_
+_At commit: `acaaa3a` on `main`, pushed and level with `origin/main`_
 
 ## Current focus
 
-**#113 landed and closed.** `chat:send` had no busy check at all, so a second
-send under a live turn was answered by `runTurn`'s overlap branch on the
-**second** caller's `onEvent` — and the renderer reads every `error` as
-turn-terminal, so it stopped calling itself busy while the first turn was still
-streaming. Refused in main now, before that closure is ever built. Next frontier
-is **#114**, the last open ticket.
+**None — the tracker queue is EMPTY.** #114 landed and closed as the batch's last
+ticket; `gh issue list --state open` returns **zero issues at all**, none blocked
+and none `ready-for-human`. The relay chain is stopped, not paused.
+
+#114 was a spike and its verdict is **NOT REPRODUCED**: closing a live, warmed,
+never-run engine and constructing another in the same tick killed no host process
+in **76 scored pairs**. No `src/` diff.
 
 ## State
 
-- **In flight:** nothing. Squash-merged and the branch deleted; only this
-  `.context/` handoff is pending.
-- **Done this session:** #113 as `dadacbe` — new `src/main/send-guard.ts`,
-  `tests/send-guard.test.ts` and `tests/double-send.test.tsx`, the `chat:send`
-  handler rewired in `src/main/index.ts`, `useChat.ts`'s busy writes routed
-  through one `markBusy` helper, and `scripts/spike-108-turn-lifecycle.mjs`
-  taught the fix in three places.
-- **Gate:** typecheck clean; **1044 tests across 70 files** (1034 + 10); build
-  clean.
-- **Queue:** one open, **#114**, `ready-for-agent`, live `blocked_by` 0; none
-  `ready-for-human`.
+- **In flight:** nothing. Squash-merged, branch deleted, main pushed.
+- **Done this session:** #114 as `acaaa3a` — `scripts/spike-114-engine-rebuild.mjs`
+  (three phases: source+SDK facts, a bare-Node pair loop in an uninstrumented
+  child process, and the built app over its own IPC) plus
+  `scripts/spike-114-findings.json`. Nothing under `src/` was touched, which is
+  part of a spike's gate here.
+- **Gate:** typecheck clean; **1044 tests across 70 files** (unchanged); build
+  clean; `git diff --stat -- src/` empty.
+- **Queue:** empty.
 - **Blocked:** nothing.
 
 ## Pick up here
 
-Take **#114** after re-running the frontier query. It is a spike, and the only
-ticket left: does closing a live warmed engine and immediately rebuilding it
-kill the main process? Filed from an observation during #112's re-run rather
-than from reading code — Electron main vanished in **2 of 6** post-fix harness
-runs (0 of 2 pre-fix), both at the same iteration's `pickFolder`, with no
-exception and no stderr, and did not recur across four later runs including one
-of nine iterations that sailed past the same point.
+There is no next ticket. A fresh session should **not** hunt for one — run
+`gh issue list --state open` to confirm the queue is still empty, then wait for
+the owner to file work.
 
-**A third sighting landed this leg, unlooked-for.** One
-`SPIKE108_PHASES=AC` run died with `electronApplication.evaluate: Resulting
-promise was garbage collected` mid-C1 and passed on re-run. Same shape: no
-exception, no stderr, and it did not reproduce. That is a different harness on a
-different path, which is worth carrying into #114 — the two observations share
-"main went away quietly" and little else, and treating them as the same
-phenomenon before measuring is the premise the spike exists to test.
-
-**Its premise may well die under measurement, and that is a success.** Both
-mechanism and reachability are open and can fail separately — #108's shape.
+**One candidate is already written up and deliberately not filed:** #114 measured
+`engine.warmUp()` blocking the calling thread for **~1.2s of straight-line time**,
+attributed to the SDK's `query()` constructor spawning the CLI inline (**1163ms
+and 1168ms** with the engine removed entirely). In the app that thread is
+Electron's main process, and it freezes on every `session:pick-folder` and every
+lazy list rebuild #112 introduced. It is real and reproducible on every run, but
+it is an **SDK cost** — the remedy is a deferred spawn or an off-thread warm-up,
+not a change to `engine.ts` — and filing it is a scoping call the owner has not
+made.
 
 ## Skills for next session
 
-- `superpowers:verification-before-completion` — a spike's output is findings,
-  so the discipline is that every claim names the run it came from.
-- **No `src/` diff.** #114 is a spike and must stay one; `git diff --stat --
-  src/` empty is part of its gate.
+None pending. `superpowers:verification-before-completion` remains the right
+discipline for any future spike: every claim names the run it came from.
 
 ## Open questions
 
-None for #114. `ready-for-human` remains forbidden while the owner is AFK.
+None. `ready-for-human` was forbidden for this whole batch while the owner was
+AFK, and no ticket ever needed it — nothing is parked behind that rule.
 
 ## Recent context
 
-- **A ref synced by an effect is late in BOTH directions.** `busyRef` mirrored
-  `busy` from a `useEffect`. Late upward is the whole of #113. Late downward
-  broke #80's queued flush — **InputBar's effect runs before App's**, so the ref
-  still read `true` when the flush asked, and four `queued-composer` pins caught
-  it. Every write now goes through one `markBusy`, which removes the window
-  rather than shrinking it.
-- **An instrument can be named for the world before the fix.** #108's
-  `busyClearedWhileTurnLive` computes `busy went false` and does not measure its
-  own name — the poll loop breaks on the turn's ordinary end just as readily as
-  on the probe's error, so in a fixed app it is true for the most boring reason
-  there is. A verdict keyed on it scored a working guard as a failure. The
-  discriminating fact was the **overlap error's absence**, corroborated by the
-  retry afterwards being **accepted rather than refused**.
-- **Wire the fake to the defect, or the test passes with the guard deleted.**
-  The renderer tests only became evidence once the harness answered a second
-  send the way main was measured to answer it. Before that, "busy stayed true"
-  was true because the fake said nothing at all.
-- **A source fact that tracks a spelling reports a rename as a fix** (#113).
-  Phase A's `rendererClearsBusyOnError` matched `/setBusy\(false\)/`; renaming to
-  `markBusy` would have printed "the renderer no longer clears busy on error".
-- **A refusal has to happen before the callback is attached** (#113). `runTurn`
-  already rejected a second turn — by calling the second caller's `onEvent`,
-  which is the defect. The engine cannot fix this itself.
-- Ticket baselines were stale for the seventh consecutive ticket; read the count
-  from `main`, not from the ticket.
-- `gui-75` and `gui-52` still carry standing environmental reds; reproduce solo
-  on clean `main` before treating either as a regression.
+- **A lost target is not a dead process.** Playwright's `Target page, context or
+  browser has been closed` reports *its own connection*, and is equally true of a
+  dead main, a dead renderer, and a main merely wedged — which this exact path
+  does for over a second at a stretch. `spike-105`'s death report printed the exit
+  code to the console and never wrote it to its findings, so the record cannot say
+  which the original sighting was. `spike-114` asks main directly for its own pid
+  on any failure and separates `REPRODUCED` from `DRIVER ARTEFACT`.
+- **`close()` does not kill the CLI child.** It ends stdin and defers any kill by
+  2000ms, then a further 5000ms on win32 before `SIGKILL`. Measured consequence:
+  the app runs with **two overlapping CLI children** for a second or two after
+  every pick. Not a crash mechanism, but nobody had written it down.
+- **A source fact must be readable as a snippet, not just a boolean.** Phase A
+  records the text each fact matched, so a rename shows up as changed text rather
+  than as a silent `false` — #113's landmine applied to a new harness.
+- **An instrument that fails setup will report the failure as the phenomenon**
+  unless the verdict keys on having scored something first. Caught three times in
+  one leg: a failed bundle, a teardown read as a death, and a cleanup EBUSY.
+- **This CLI emits no `init` during warm-up** — only `hook_started`/`hook_response`
+  across 20s — despite `engine.ts`'s comment saying the first model report arrives
+  then. Any future gate on "the engine is live" should use `listModels()`
+  answering non-empty, which is the control protocol responding.
+- `gui-75` and `gui-52` still carry standing environmental reds; reproduce solo on
+  clean `main` before treating either as a regression.
 
 ## Related
 
 - [[overview]]
 - [[pick-up]]
 - [[decisions]]
-- [[2026-08-04-a-ref-synced-by-an-effect-is-late-in-both-directions]]
+- [[2026-08-04-a-lost-target-is-not-a-dead-process]]
 - [[2026-08-04-the-wait-moved-it-did-not-vanish]]

@@ -9,119 +9,99 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Landed this leg (2026-08-04) — #113, `dadacbe`
+## QUEUE EMPTY — the batch is drained and the relay is stopped
 
-`chat:send` carried **no busy check at all**, so a second send under a live turn
-reached `runTurn`'s overlap branch, which answers on the **second** caller's
-`onEvent` — a fresh closure in `index.ts` forwarding to the same renderer, which
-treats every `error` as turn-terminal. The engine's own refusal was delivered as
-"your turn ended": 518ms, first turn still streaming, send slot back to "Send".
+`gh issue list --state open` returns **zero issues**. Nothing open, nothing
+blocked, nothing `ready-for-human`, no leftovers. The relay chain
+(`.claude/relay/relay-leg.md`) is stopped at leg 17 and spawned no successor.
 
-Refused now in `src/main/send-guard.ts`, **before the call site builds that
-closure**, on `delete-guard.ts`'s precedent. The orphan-bubble wrinkle is
-answered by never creating one: `useChat.send` declines to issue a second commit
-at all. That forced every write to `busy` through one `markBusy` helper — see the
-landmine below, it is the most transferable thing in this leg.
-
-Gate green: typecheck clean, **1044 tests / 70 files** (1034 + 10), build clean.
-
-## Frontier: ONE OPEN — #114, the last ticket
-
-Live `blocked_by` is 0. Run the query anyway — it is the authority over this
-table, and this line has been wrong before.
+Run the query anyway — it is the authority over this file, and this line has
+been wrong before (leg 5 wrote that the queue would be empty and #71 was
+unblocked the whole time, merely outside the batch).
 
 ```text
-gh issue list --state open --label ready-for-agent
+gh issue list --state open
 gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summary.blocked_by'
 ```
 
-| # | subject | blocked by |
-|---|---|---|
-| **114** | **spike** — does closing a live warmed engine and rebuilding it kill main? | — |
+If it returns a ticket, work it and restart the relay with
+`/relay N=1 read and follow .claude/relay-leg.md`. If it returns nothing, there
+is no work to pick up; wait for the owner to file some.
 
-**When #114 closes the queue is empty.** At that point: rewrite this file to
-"queue empty", commit `.context/` on main, signal the relay stop, spawn nothing.
+## Landed this leg (2026-08-04) — #114, `acaaa3a`
 
-`ready-for-human` is forbidden while owner is AFK. Stuck ticket keeps
-`ready-for-agent`, gets a precise comment, and stops the relay.
+A spike, and the last ticket of the #98–#114 batch. **NOT REPRODUCED**: closing
+a live, warmed, never-run engine and constructing another in the same tick killed
+no host process in **76 scored pairs** — 52 in bare Node, 24 in the built app
+over `session:pick-folder`, across three runs. No `src/` diff, which is part of a
+spike's gate here.
 
-## What #114 is, and what it is not
+Two of the ticket's three questions were answered by **moving** the question:
 
-A spike, filed from an observation during #112's re-run, **not** from reading
-code: Electron's main process vanished in **2 of 6** post-fix harness runs
-(**0 of 2** pre-fix), both times at the sixth iteration's `pickFolder`, with no
-exception and no stderr beyond SDK warnings, and every completed measurement
-correct. It did **not** recur across the four later runs, one of which did
-**nine** iterations and sailed straight past that point — which kills
-"cumulative engine builds" as the explanation.
+- **`close()` never kills the CLI child.** It ends stdin and defers any kill by
+  2000ms, then 5000ms more on win32 before `SIGKILL`. So the "same tick" contains
+  no kill at all. Measured: the app runs with **two overlapping CLI children** for
+  a second or two after every pick.
+- **The pair costs a stall, not a death.** `close()` 0ms, `makeEngine()` 0ms,
+  `warmUp()` **~1.2s of straight-line blocking**, attributed to the SDK's
+  `query()` constructor (1163ms and 1168ms with the engine removed).
 
-The structural difference #112 introduced is real: `pickFolder` now closes a
-**live, warmed, never-run** query and constructs another in the same tick, every
-time, where before the writer had already torn it down.
+Gate green: typecheck clean, **1044 tests / 70 files** (unchanged), build clean.
 
-**A third sighting arrived this leg, on a different harness.** One
-`SPIKE108_PHASES=AC` run died with `electronApplication.evaluate: Resulting
-promise was garbage collected` mid-C1 and passed on re-run — no exception, no
-stderr, no reproduction. Carry it as an observation, not as a confirmation:
-"main went away quietly" is all the two share, and folding them together before
-measuring is exactly the premise this spike exists to test.
+## The one thing written up and deliberately NOT filed
 
-**It is a SPIKE and must stay one** — harness, findings, recommendation, **no
-`src/` diff** (`git diff --stat -- src/` empty is part of its gate). Its premise
-may well die under measurement, and that is a success.
+The ~1.2s main-thread stall above. Real, reproducible on every run, and unrelated
+to the crash question — but it is an **SDK cost**, so the remedy is a deferred
+spawn or an off-thread warm-up rather than an `engine.ts` change. Filing it is a
+scoping call the owner has not made, and the AFK grant is spent with the batch.
 
-## Still-live batch landmines
+## Still-live landmines
 
-- **A ref synced by an effect is late in BOTH directions** (#113). `busyRef`
-  mirrored `busy` from a `useEffect`. Late upward is #113's whole defect. Late
-  downward broke #80's queued flush — **a child's effects run before its
-  parent's**, so InputBar asked while App's ref still read `true`. Every write
-  now goes through one `markBusy`. **A mirror maintained by an effect is a
-  mirror plus a window**; anything that reads inside the window disagrees exactly
-  when it matters.
-- **An instrument can be named for the world before the fix** (#113).
-  `busyClearedWhileTurnLive` computes `busy went false` and nothing more — in a
-  fixed app it is true because the turn ended. A verdict keyed on it scored a
-  working guard as a failure. Read it beside `turnStillLiveAfterClear`, never
-  alone.
+- **A lost target is not a dead process** (#114). Playwright's `Target page,
+  context or browser has been closed` reports its own connection. Any future
+  harness reporting an app death must **write the exit code into its committed
+  findings**, not print it — `spike-105` printed it, and the record therefore
+  cannot say what the sighting behind #114 actually was.
+- **This CLI emits no `init` during warm-up** (#114) — only `hook_started` /
+  `hook_response` across 20s, despite `engine.ts`'s comment. Gate "the engine is
+  live" on `listModels()` answering non-empty.
+- **An instrument that fails its own setup will report that as the phenomenon**
+  (#114, three times in one leg) unless the verdict requires a scored observation
+  first.
+- **A ref synced by an effect is late in BOTH directions** (#113); every write to
+  `busy` goes through one `markBusy`.
+- **An instrument can be named for the world before the fix** (#113). Read
+  `busyClearedWhileTurnLive` beside `turnStillLiveAfterClear`, never alone.
 - **Wire the fake to the defect, or the test passes with the guard deleted**
-  (#113). The renderer tests only became evidence once the harness answered a
-  second send the way main was *measured* to answer it.
-- **A source fact that tracks a spelling reports a rename as a fix** (#113).
+  (#113). **A source fact that tracks a spelling reports a rename as a fix** (#113).
 - **A fix can move a cost instead of removing one** (#112). The first list read
-  after a pill click is now a **median ~5.5s** where it was 0–1ms and wrong. A
-  third consumer of a list read inherits that wait.
+  after a pill click is a **median ~5.5s**; #114 measured the whole pick-plus-read
+  round trip at a median 6.2s and found ~1.2s of it is main blocking.
 - **A spike harness must be taught the fix, or it reports the fix as its own
-  failure** (#112). Applied three times this leg.
-- **A green suite is evidence about the code only if the runner is sound**
-  (#112's leg). `git stash push -u && npm test` on the clean tree separates "my
-  change" from "this machine" in a minute; do that FIRST.
-- **Prefer a demonstration to a citation** (#112).
-- **A gate can be a comment's belief, compiled** (#111).
-- **A passing mutation proves the code, not the test** (#111). When a mutation
-  survives, the next move is a **compound** mutation removing the reason it did.
+  failure** (#112). **A green suite is evidence about the code only if the runner
+  is sound** (#112's leg) — `git stash push -u && npm test` first.
+- **A gate can be a comment's belief, compiled** (#111). **A passing mutation
+  proves the code, not the test** (#111).
 - **A message that is never SENT leaves no artifact** (#110) — assert on the port.
-- **A "before" run needs a positive control** (#110), or "nothing changed" is
-  trivially true; and an instrument should **refuse** runs that missed the window.
+  **A "before" run needs a positive control** (#110).
 - **Ordering a check before a mutation is necessary and not sufficient** (#109).
-- **A "tear down, then report X" mutation passes a status-only assertion** (#109,
-  #113). Assert port by port that nothing was reached.
-- **Ask the process that holds the fact** (#108).
-- **An empty list is ATTRIBUTED, not observed** (#105).
+- **A "tear down, then report X" mutation passes a status-only assertion**
+  (#109, #113). Assert port by port that nothing was reached.
+- **Ask the process that holds the fact** (#108). **An empty list is ATTRIBUTED,
+  not observed** (#105). **A single sample cannot measure an asynchronous event**
+  (#104, #105).
 - **`gui-52`'s red is DOUBTFUL** — #105 measured the CLI returning 15 models /
-  119 commands, and #112's phase A reconfirmed it twice.
-- `gui-75` still has a standing environmental red (focus-dependent); reproduce
-  solo before treating it as a regression.
+  119 commands, and #112's phase A reconfirmed it twice. `gui-75` is
+  focus-dependent; reproduce solo before believing either red.
 - Never hardcode a model name. Never read `~/.claude/daemon/roster.json`.
 - Absence assertions need a surviving positive control and mutation evidence.
-- **A single sample cannot measure an asynchronous event** (#104, #105).
-- Ticket baselines are stale for the seventh consecutive ticket: read the count
-  from `main`, which is at **1044/70**.
+- Test baseline on `main` is **1044/70**; ticket bodies have been stale about this
+  for eight consecutive tickets, so read it from `main`.
 - Squash-merged ticket branches need `git branch -D`.
 
 ## Do not decide these
 
-AFK grant does not reopen standing calls outside this seed:
+The AFK grant expired with the batch and never reopened these:
 
 1. Tailwind adopt-utilities half.
 2. Titlebar control count, pinned at 8.
@@ -131,12 +111,12 @@ AFK grant does not reopen standing calls outside this seed:
 
 ## Baseline
 
-`main` = `dadacbe`, pushed and level with `origin/main`; no ticket branch.
+`main` = `acaaa3a`, pushed and level with `origin/main`; no ticket branch.
 Typecheck clean, **1044 tests / 70 files**, build clean.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]]
+- [[2026-08-04-a-lost-target-is-not-a-dead-process]]
 - [[2026-08-04-a-ref-synced-by-an-effect-is-late-in-both-directions]]
-- [[2026-08-04-the-composer-is-held-shut-by-a-draft-clear-not-a-guard]]
 - `.claude/vibe.md` — run that filed #98–#110
