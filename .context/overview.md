@@ -218,6 +218,17 @@ tags: [context, overview]
   while the level only re-fires on a membership CHANGE. `local_agent` rows are
   dropped from it (`nonAgentTasks`) — the Agent tool is async, so a subagent is
   in the level beside its own agent row.
+  `InputBar.tsx` owns the **read-failure vocabulary its policy does not have**
+  (#106): `readAsBase64` resolves to `null`, never `''`, because an empty string
+  is a value of the success type and collides with "this candidate carries no
+  bytes" — which is how a file that had moved, been deleted or been locked used
+  to reach `judgeAttachment`'s catch-all and get told its own media type was
+  unsupported. The composer folds only readable candidates through
+  `admitAttachments` and pushes `COULD_NOT_READ` rejections itself, so an
+  unreadable file spends no slot from the count budget. `Candidate` must not be
+  widened to carry this — a read failure is a property of the **attempt**, not
+  of the candidate, and the policy's contract is *given a candidate, judge what
+  it is*. See [[2026-08-04-a-failure-flattened-into-a-value-is-judged-as-one]].
   `InputBar.tsx` is **never disabled while a turn runs** (#80) — the field, the
   paperclip and the paste handler all stay live, and `useChat.send` remains the
   one place that refuses a send while busy. Enter during a turn COMMITS the
@@ -313,10 +324,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#105 landed
-  and closed, and SEVEN tickets are open — #106–#112, all `ready-for-agent`, with
-  #106 the next unblocked one**; run the frontier query anyway, it is
-  the authority and this line has been wrong before.
+- `.context/pick-up.md` — current frontier + landmines (currently: **#106 landed
+  and closed, and SIX tickets are open — #107–#112, all `ready-for-agent`, with
+  #107 the next unblocked one and the batch's only data-loss defect**; run the
+  frontier query anyway, it is the authority and this line has been wrong before.
   **30** driver files — 28 assertion drivers, two `gui-7x-probe` helpers and the
   observational `gui-scope-zoom-pill` — with **two standing environmental reds**,
   `gui-75` (focus-dependent) and `gui-52` (the CLI returning an empty model
@@ -466,8 +477,17 @@ tags: [context, overview]
   which was seen still alive while the app answered `[]`; remedy priced at a
   **median 1539ms per pill click** and filed as #112, **no `src/` diff**; see
   [[2026-08-04-an-empty-list-is-attributed-not-observed]]) is **closed**.
-  **As of 2026-08-04 SEVEN issues are open — #106–#112, all
-  `ready-for-agent`**, none blocked; #106 is the next unblocked one. #111 was
+  **#106** (`88ddf19`, a clipboard image that fails to read is refused for the
+  reason it actually failed instead of being blamed for its media type — the
+  read resolves to `null` rather than `''`, and the composer pushes its own
+  rejection because a read failure is a property of the attempt, not of the
+  candidate, so `attachment-policy.ts` is untouched; premise reproduced first and
+  mutation-verified twice, since the fix's two halves fail differently; see
+  [[2026-08-04-a-failure-flattened-into-a-value-is-judged-as-one]]) is
+  **closed**.
+  **As of 2026-08-04 SIX issues are open — #107–#112, all
+  `ready-for-agent`**, none blocked; #107 is the next unblocked one and the only
+  data-loss defect in the batch. #111 was
   filed by #104's own review and #112 by #105's measurement.
   Run the frontier query rather than trusting this line
 
