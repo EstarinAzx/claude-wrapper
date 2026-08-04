@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { describe, test, expect, beforeEach, afterEach } from 'vitest'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   render,
   screen,
@@ -26,6 +26,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
 })
 
 const startSession = async (): Promise<void> => {
@@ -231,6 +232,97 @@ describe('the policy module refusing inline', () => {
 
     await waitFor(() => expect(chips()).toHaveLength(1))
     expect(rejects()).toHaveLength(0)
+  })
+})
+
+// A file copied in Explorer and then moved, deleted or locked arrives as a paste
+// whose FileReader fires `onerror`. jsdom's own reader always succeeds, so the
+// failure has to be installed — selected by name, so one paste can carry both a
+// readable and an unreadable file and the readable one is still really read.
+const failReadsFor = (names: string[]): void => {
+  const Real = window.FileReader
+  class SelectivelyFailingReader {
+    onload: (() => void) | null = null
+    onerror: (() => void) | null = null
+    result: string | null = null
+    error: DOMException | null = null
+    readAsDataURL(file: File): void {
+      if (names.includes(file.name)) {
+        this.error = new DOMException('could not be read', 'NotReadableError')
+        setTimeout(() => this.onerror?.(), 0)
+        return
+      }
+      const real = new Real()
+      real.onload = (): void => {
+        this.result = real.result as string
+        this.onload?.()
+      }
+      real.onerror = (): void => {
+        this.error = real.error
+        this.onerror?.()
+      }
+      real.readAsDataURL(file)
+    }
+  }
+  vi.stubGlobal('FileReader', SelectivelyFailingReader)
+}
+
+// The two sentences that must never be confused for one another. The second is
+// the policy's catch-all, and AC1's real half is about it: a build that showed
+// BOTH would pass an assertion that only looked for the first.
+const COULD_NOT_READ = "Couldn't be read — it may have been moved, deleted or locked"
+const EMBEDDABLE_SENTENCE = "can't be embedded — only PNG, JPEG, GIF and WebP images can"
+
+describe('a clipboard image that cannot be read', () => {
+  test('is refused for the reason it actually failed, not as a wrong media type', async () => {
+    await startSession()
+    failReadsFor(['gone.png'])
+
+    paste([imageFile('gone.png', 'image/png', PNG)])
+
+    await waitFor(() => expect(rejects()).toHaveLength(1))
+    const text = rejects()[0]?.textContent ?? ''
+    expect(text).toContain('gone.png')
+    expect(text).toContain(COULD_NOT_READ)
+    // The half that matters: the sentence naming PNG as both the rejected type
+    // and an accepted one must be GONE, not merely joined by a better one.
+    expect(text).not.toContain(EMBEDDABLE_SENTENCE)
+    expect(chips()).toHaveLength(0)
+  })
+
+  test('an unreadable sibling costs the readable one nothing', async () => {
+    await startSession()
+    failReadsFor(['gone.png'])
+
+    paste([imageFile('gone.png', 'image/png', PNG), imageFile('shot.png', 'image/png', PNG)])
+
+    await waitFor(() => expect(chips()).toHaveLength(1))
+    expect(screen.getByText('shot.png')).toBeTruthy()
+    const thumb = document.querySelector('.attachment-chip .chip-thumb') as HTMLImageElement
+    expect(thumb.src).toBe(`data:image/png;base64,${b64(PNG)}`)
+    expect(rejects()).toHaveLength(1)
+    expect(rejects()[0]?.textContent).toContain('gone.png')
+
+    send('this one')
+
+    expect(harness.prompts).toEqual([
+      { text: 'this one', attachments: [{ kind: 'image', mediaType: 'image/png', data: b64(PNG) }] }
+    ])
+  })
+
+  // The regression this change is most likely to cause: routing every unreadable
+  // candidate away from the policy must not take the genuinely non-embeddable
+  // ones with it.
+  test('a genuinely non-embeddable type still gets the embeddable-types message', async () => {
+    await startSession()
+
+    paste([new File([new Uint8Array([1, 2, 3])], 'bundle.zip', { type: 'application/zip' })])
+
+    await waitFor(() => expect(rejects()).toHaveLength(1))
+    const text = rejects()[0]?.textContent ?? ''
+    expect(text).toContain('bundle.zip')
+    expect(text).toContain(`application/zip ${EMBEDDABLE_SENTENCE}`)
+    expect(text).not.toContain(COULD_NOT_READ)
   })
 })
 

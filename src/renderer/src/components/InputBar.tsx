@@ -120,6 +120,14 @@ const readAsBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file)
   })
 
+// The composer's own refusal, not the policy's (#106). A clipboard file that has
+// moved, been deleted or been locked since it was copied fails to read, and the
+// policy cannot describe that: `judgeAttachment` is given a candidate and judges
+// what it IS, so a read failure flattened to `''` falls out of the embed branch
+// and lands in the catch-all, which names the media type as both the rejected
+// kind and an accepted one. The composer is what knows the read failed.
+const COULD_NOT_READ = "Couldn't be read — it may have been moved, deleted or locked"
+
 const InputBar = ({
   busy,
   model,
@@ -221,19 +229,28 @@ const InputBar = ({
     if (files.length === 0) return
     e.preventDefault()
     void Promise.all(
-      files.map(
-        async (file): Promise<Candidate> => ({
-          name: file.name || 'pasted image',
-          mediaType: file.type,
-          data: await readAsBase64(file).catch(() => '')
-        })
+      files.map(async (file) => ({
+        name: file.name || 'pasted image',
+        mediaType: file.type,
+        // `null`, never `''`: an empty string is indistinguishable from "this
+        // type carries no bytes" once it reaches the policy, and the policy has
+        // no vocabulary for a read that failed.
+        data: await readAsBase64(file).catch(() => null)
+      }))
+    ).then((read) => {
+      // An unreadable file never reaches the policy, so it also never spends a
+      // slot from the count budget — it was refused before it could be judged.
+      const candidates: Candidate[] = read.flatMap(({ name, mediaType, data }) =>
+        data === null ? [] : [{ name, mediaType, data }]
       )
-    ).then((candidates) => {
+      const unreadable: Rejection[] = read.flatMap(({ name, data }) =>
+        data === null ? [{ name, reason: COULD_NOT_READ }] : []
+      )
       setTray((prev) => {
         const { accepted, rejected } = admitAttachments(prev.items.length, candidates)
         return {
           items: [...prev.items, ...accepted.map((a) => ({ id: chipId(), ...a }))],
-          rejections: rejected
+          rejections: [...unreadable, ...rejected]
         }
       })
     })
