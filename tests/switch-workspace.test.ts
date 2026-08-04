@@ -186,6 +186,68 @@ describe('switchWorkspace — every rejection mutates nothing', () => {
   })
 })
 
+// #109. The pre-await `isBusy()` read is a TOCTOU, not a gate: `resolveTarget`
+// enumerates the session store, and `chat:send` carries no busy guard of its own
+// (asserted by #108), so a turn can begin inside that await. The window is small
+// but it is not zero — measured at a median 18.2ms cold against a 918-transcript
+// store, versus 0.0ms warm. Cold is the ORDINARY case rather than the edge one:
+// `session:list` calls `resetSessionIndex()`, and that same listing is what
+// renders the row the user clicks to get here.
+describe('switchWorkspace — the busy check is re-read after the await (#109)', () => {
+  test('a turn that starts during the resolve is refused, and nothing is torn down', async () => {
+    let busy = false
+    const p = ports({
+      isBusy: () => busy,
+      resolveTarget: async (): Promise<ResumeTarget> => {
+        p.calls.push('resolveTarget')
+        // The turn arrives while main is enumerating the store.
+        busy = true
+        return { status: 'ok', dir: 'D:/store/known' }
+      }
+    })
+
+    const result = await switchWorkspace(p, { cwd: FOLDER, resumeId: KNOWN })
+
+    expect(result).toEqual({ status: 'busy' })
+    // The status alone is not the contract: a version that closed the engine and
+    // THEN reported busy would satisfy it while destroying the turn. What makes
+    // a rejection a no-op is that no mutation ran at all.
+    expect(p.calls).not.toContain('closeEngine')
+    expect(p.calls).not.toContain('cancelPermissions')
+    expect(p.calls).not.toContain('setCwd')
+    expect(p.calls).not.toContain('rebuildEngine')
+    expect(p.calls).toEqual(['resolveTarget'])
+    expect(p.state).toEqual({ cwd: 'D:/projects/before', resume: 'prior-session' })
+  })
+
+  test('the ordinary path is unaffected: idle before and after, full order still runs', async () => {
+    let reads = 0
+    const p = ports({
+      isBusy: () => {
+        reads++
+        return false
+      }
+    })
+
+    const result = await switchWorkspace(p, { cwd: FOLDER, resumeId: KNOWN })
+
+    expect(result).toEqual({ status: 'ok' })
+    expect(p.calls).toEqual([
+      'resolveTarget',
+      'closeEngine',
+      'cancelPermissions',
+      'setCwd',
+      'rebuildEngine',
+      'setResume',
+      'warmUp'
+    ])
+    expect(p.state).toEqual({ cwd: FOLDER, resume: KNOWN })
+    // Two reads on the resume path — the guard is reached on the ok path too,
+    // rather than sitting behind a branch only the failing case takes.
+    expect(reads).toBe(2)
+  })
+})
+
 describe('switchWorkspace — precedence is deterministic', () => {
   test('busy beats a blank cwd', async () => {
     const p = ports({ isBusy: () => true })

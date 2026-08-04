@@ -37,7 +37,9 @@ export const switchWorkspace = async (
 ): Promise<SwitchResult> => {
   // Precedence is fixed so overlapping invalid input is deterministic:
   // busy → missing-cwd → not-found. Every check runs BEFORE the first
-  // mutation, which is what makes a rejection a no-op.
+  // mutation, which is what makes a rejection a no-op. That ordering was never
+  // the whole guarantee, though — see the second busy read below, which exists
+  // because a check running early is not the same as its ANSWER still holding.
   if (ports.isBusy()) return { status: 'busy' }
   if (!cwd || !cwd.trim()) return { status: 'missing-cwd' }
   if (resumeId !== null) {
@@ -49,6 +51,16 @@ export const switchWorkspace = async (
     // is already visible.
     if (target.status === 'unavailable') return { status: 'not-found' }
     if (target.status !== 'ok') return { status: target.status }
+    // Read busy AGAIN, and do not delete this as redundant (#109): the read
+    // above is stale by the time the mutations below run. `resolveTarget`
+    // enumerates the session store, and `chat:send` has no busy guard of its
+    // own, so a turn can begin inside that await — after which the first read
+    // says idle and `closeEngine()` tears down a turn the user just started.
+    // The window is small but real: a median 18.2ms cold against a
+    // 918-transcript store, versus 0.0ms warm. Cold is the ordinary case, not
+    // the edge one, because `session:list` drops the index and that same
+    // listing renders the row clicked to get here.
+    if (ports.isBusy()) return { status: 'busy' }
   }
 
   ports.closeEngine()
