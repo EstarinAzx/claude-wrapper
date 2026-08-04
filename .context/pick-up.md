@@ -9,23 +9,23 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Landed this leg (2026-08-04) — #101, `752a9a5`
+## Landed this leg (2026-08-04) — #102, `b9ca7f0`
 
-**An unreadable subagent store no longer claims that no agents exist.**
-`listSubagents` preserves `resolveSessionDir(...).status === 'unavailable'` as
-`null`; an ordinary missing session and a missing `subagents/` directory remain
-`[]`. `readSubagentTranscript` keeps its separate lenient contract unchanged.
+**The open subagent viewer no longer freezes at its first disk read.** `App`
+passes the established `lastTurn` signal into `SubagentDrawer`; its guarded
+transcript effect re-runs on the nonce. Ordinary stream events trigger no disk
+read, and the existing cleanup still blocks stale async responses.
 
-Gate green: typecheck clean, **987 tests / 64 files** (+1), build clean. The root
-failure test was red first (`expected null, received []`) and mutation-verified
-by making the root readable; exact unreadable and empty Agents-dock copy is
-pinned.
+Gate green: typecheck clean, **988 tests / 64 files** (+1), build clean. The
+second-turn refresh test was red first and mutation-verified by removing the
+nonce dependency. Its first version exposed a test trap: turn one also changes
+`sessionId`, so the test must establish that turn before opening the viewer.
 
-## Frontier: NINE OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
+## Frontier: EIGHT OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
 
-**Next unblocked, lowest-numbered: #102** — the open subagent viewer freezes its
-transcript at the first disk read. Live `blocked_by` is 0; #99 is closed. Run the
-query anyway.
+**Next unblocked, lowest-numbered: #103** — the composer handles Escape inside
+its slash popover without stopping propagation, so one press can also close the
+viewer. Live `blocked_by` is 0. Run the query anyway.
 
 ```text
 gh issue list --state open --label ready-for-agent
@@ -34,7 +34,6 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 
 | # | subject | blocked by |
 |---|---|---|
-| **102** | open viewer freezes its transcript at first disk read | — (#99 closed) |
 | **103** | composer Escape can dismiss two things | — |
 | **104** | successful turn never drains a still-open subagent | — |
 | **105** | **spike** — model pick may empty models/commands | — |
@@ -47,34 +46,32 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 `ready-for-human` is forbidden while owner is AFK. Stuck ticket keeps
 `ready-for-agent`, gets a precise comment, and stops the relay.
 
-## What #102 requires
+## What #103 requires
 
-Read the full ticket. Reuse the trigger `AgentsDock` already uses: pass
-`lastTurn` from `App` to `SubagentDrawer`, and re-read on its turn-end nonce.
-This is a disk refresh after a turn, not streaming.
+Read the full ticket. First measure reachability after #99: open the slash
+popover, mouse-open the viewer, press Escape, and record whether both dismiss.
+Land the fix regardless of that verdict: add `e.stopPropagation()` beside
+`preventDefault()` only in `InputBar`'s popover-open Escape branch.
 
 Required tests:
 
-1. Open the viewer and resolve a short transcript; assert it.
-2. Emit `turn-end`, resolve a distinct longer transcript, and assert the new
-   message appears while the original remains established.
-3. Emit an ordinary streaming event and assert `subagentTranscript` call count
-   does not increase.
-4. Existing first-open argument pin remains green.
-5. Remove the turn trigger and watch criterion 2 red.
+1. Establish popover and viewer both open; fire Escape at composer; assert the
+   popover closes and viewer remains open.
+2. With no popover open, assert Escape still reaches the existing outer handler.
+3. Remove `stopPropagation()` and watch criterion 1 red.
+4. Do not touch `SubagentDrawer`, `Sidebar`, or nearby key handling.
 
-Preserve the effect cleanup/async guard. A late result from the previous read
-must not overwrite the newer one. No timer, spinner, refresh affordance,
-per-event disk read, streaming path, or visual change.
+Record the reachability result on #103 whichever way it comes out.
 
-## Landmines from #101
+## Landmines from #102
 
-- `fakeIo({})` means the store root itself cannot enumerate; it does **not** mean
-  a readable store containing no session. Seed some sibling/session file when a
-  test needs the readable-miss branch.
-- `null` means unreadable and `[]` means none spawned. Do not collapse them in a
-  new call site.
-- Exact dock copy is now pinned in both states.
+- A first `turn-end` also writes `activeSessionId`; a refresh test that starts
+  there can pass through the old `[sessionId]` dependency and prove no nonce
+  behavior. Establish turn one before opening, then test turn two.
+- `SubagentDrawer`'s `live` cleanup is load-bearing against older reads applying
+  after newer ones. Do not weaken it in adjacent work.
+- The viewer refresh keys on `lastTurn?.nonce`; ordinary stream events must not
+  read disk.
 
 ## Still-live batch landmines
 
@@ -98,8 +95,8 @@ AFK grant does not reopen standing calls outside this seed:
 
 ## Baseline
 
-`main` = `752a9a5`, pushed and level with `origin/main`; no ticket branch.
-Typecheck clean, **987 tests / 64 files**, build clean.
+`main` = `b9ca7f0`, pushed and level with `origin/main`; no ticket branch.
+Typecheck clean, **988 tests / 64 files**, build clean.
 
 ## Related
 
