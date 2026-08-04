@@ -42,6 +42,7 @@ import {
 import { announceTurn, isLooking, type AnnouncePorts } from './turn-announce'
 import type { DeleteStatus, FolderChoice } from '../shared/session-types'
 import { deleteSession, listSessions, readTranscript, titleHint } from './session-store'
+import { guardedDelete } from './delete-guard'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
 import { listBackgroundSessions } from './agent-view'
 import type { PermissionDecision } from '../shared/engine-types'
@@ -452,13 +453,28 @@ ipcMain.handle('session:title-hint', async (event, id: unknown, cwd: unknown) =>
 // validates it is a UUID before touching disk; this is the boundary's own check,
 // not a second opinion on that.
 //
-// Carries NO busy check. Refusing the in-flight session is the rail's disabled
-// control (only the ACTIVE session's transcript is being appended to), and
-// re-deciding it here would be a second busy source that could only disagree.
+// Carries the busy check, and this is NOT the "second busy source" an earlier
+// version of this comment rejected (#107). That reasoning assumed the rail's
+// `disabled={active && busy}` already covered the in-flight session — but
+// `active` compares against the renderer's `activeSessionId`, which is written
+// only at turn-end. Through the whole FIRST turn of a fresh conversation the
+// renderer holds null, the row is an ordinary non-active one, and its trash
+// button is live; the delete then unlinks a transcript the CLI is appending to
+// and everything written before it is gone. Main has held that id since `init`,
+// so it is the only place the decision can be made at all, and the two cannot
+// disagree. The rail's control stays a visible affordance, not the authority.
+// Deleting a FOREIGN session mid-turn stays allowed — see delete-guard.ts.
 ipcMain.handle('session:delete', async (event, id: unknown): Promise<DeleteStatus> => {
   if (!isTrustedIpc(event)) return 'failed'
   if (typeof id !== 'string' || !id) return 'failed'
-  return deleteSession(id)
+  return guardedDelete(
+    {
+      isBusy: () => engine?.isBusy() ?? false,
+      runningId: () => engine?.sessionId() ?? null,
+      remove: deleteSession
+    },
+    id
+  )
 })
 
 // File picker returns policy Candidates rather than bare paths: an embeddable

@@ -156,6 +156,17 @@ const App = () => {
   // path. Here it is wanted for exactly what it does: the resume target points
   // at a transcript that no longer exists, and `targetSession(null)` is what
   // drops it. It also stops the tail on a file that has just been unlinked.
+  //
+  // Which row counts as "the one on screen" is asked of MAIN when the renderer
+  // has nothing (#107). `activeSessionId` is written only at turn-end, and
+  // `turn-aborted` and `error` clear `busy` without ever reading it back — so
+  // the conversation in the pane can be one whose id lives only in main. A
+  // plain `id === activeSessionId` is false there, and the app is left pointed
+  // at a transcript it has just destroyed. Main is asked SECOND rather than
+  // instead: the local value is the same id once it exists, and reading it
+  // costs no IPC on the ordinary path. Never the reverse — writing main's id
+  // into `activeSessionId` early is the bug class this closes, not a shortcut
+  // through it.
   const deleteSession = async (id: string): Promise<DeleteStatus> => {
     setRefusal(null)
     const status = await window.api.deleteSession(id)
@@ -163,7 +174,7 @@ const App = () => {
       setRefusal(DELETE_FAILURE)
       return status
     }
-    if (id === activeSessionId) newChat()
+    if (id === (activeSessionId ?? (await window.api.currentSessionId()))) newChat()
     return status
   }
 
