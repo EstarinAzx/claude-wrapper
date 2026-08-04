@@ -31,6 +31,16 @@ tags: [context, overview]
   `dir` re-enters the realpath→encode branch this codebase removed — and a
   throw is classified by re-resolving the id against the store, never by
   reading the SDK's error text (`not-found` → `ok`, `unavailable` → `failed`).
+  `delete-guard.ts` (#107) is the busy refusal in front of it — `guardedDelete`
+  over `isBusy` / `runningId` / `remove`, refusing **only** the id the engine is
+  streaming into, because the rail's `disabled={active && busy}` compares against
+  the renderer's `activeSessionId` and that is written only at `turn-end`, so
+  through a fresh conversation's FIRST turn the renderer holds null and the live
+  session's trash button is enabled. It is not a second busy source: main has held
+  the id since `init` and the renderer has no opinion to disagree with. Its tests
+  assert the store was never REACHED, never only the status — a guard answering
+  `'failed'` after unlinking would pass a status-only suite while destroying the
+  transcript. See [[2026-08-04-a-refusal-belongs-where-the-fact-lives]].
   `switch-workspace.ts` owns the atomic workspace transition as a function over
   injected ports (the entry module is untestable under vitest);
   `turn-announce.ts` (#75) is the same shape for the turn-end announcement —
@@ -324,9 +334,9 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#106 landed
-  and closed, and SIX tickets are open — #107–#112, all `ready-for-agent`, with
-  #107 the next unblocked one and the batch's only data-loss defect**; run the
+- `.context/pick-up.md` — current frontier + landmines (currently: **#107 landed
+  and closed, and FIVE tickets are open — #108–#112, all `ready-for-agent`, with
+  #108 the next unblocked one and the batch's remaining spike**; run the
   frontier query anyway, it is the authority and this line has been wrong before.
   **30** driver files — 28 assertion drivers, two `gui-7x-probe` helpers and the
   observational `gui-scope-zoom-pill` — with **two standing environmental reds**,
@@ -485,9 +495,17 @@ tags: [context, overview]
   mutation-verified twice, since the fix's two halves fail differently; see
   [[2026-08-04-a-failure-flattened-into-a-value-is-judged-as-one]]) is
   **closed**.
-  **As of 2026-08-04 SIX issues are open — #107–#112, all
-  `ready-for-agent`**, none blocked; #107 is the next unblocked one and the only
-  data-loss defect in the batch. #111 was
+  **#107** (`7e62f9e`, the rail can no longer delete the session a turn is
+  streaming into — the batch's only data-loss defect, whose window is a fresh
+  conversation's first turn, when the renderer's `activeSessionId` is still null
+  and the row is therefore not `active`; the refusal moves to main in
+  `delete-guard.ts` and the pane reset asks main when the renderer has nothing,
+  since `turn-aborted` and `error` clear `busy` without reading the id back; the
+  rail's control is untouched and `tests/sidebar.test.tsx` needed no edit; see
+  [[2026-08-04-a-refusal-belongs-where-the-fact-lives]]) is **closed**.
+  **As of 2026-08-04 FIVE issues are open — #108–#112, all
+  `ready-for-agent`**, none blocked; #108 is the next unblocked one and the
+  batch's remaining spike. #111 was
   filed by #104's own review and #112 by #105's measurement.
   Run the frontier query rather than trusting this line
 
