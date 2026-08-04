@@ -278,6 +278,23 @@ describe('agents dock — live rows', () => {
     expect(screen.queryByText('running…')).toBeNull()
   })
 
+  test('a terminal status arriving through the between-turn port settles the row', async () => {
+    const lateEvent = (
+      over: Record<string, unknown> = {}
+    ): Extract<EngineEvent, { type: 'subagent' }> =>
+      liveEvent(over) as Extract<EngineEvent, { type: 'subagent' }>
+    await startSession()
+    openDock()
+    harness.emitSubagent(lateEvent())
+    expect(await screen.findByText('running…')).toBeTruthy()
+    harness.emit({ type: 'turn-end' })
+
+    harness.emitSubagent(lateEvent({ status: 'done', toolUses: 3 }))
+
+    expect(await screen.findByText('done')).toBeTruthy()
+    expect(screen.queryByText('running…')).toBeNull()
+  })
+
   test('a genuine zero tool count is shown, not swallowed as missing data', async () => {
     await startSession()
     openDock()

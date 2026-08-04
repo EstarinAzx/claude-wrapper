@@ -51,6 +51,7 @@ export const fakeChatApi = (folder = FOLDER) => {
   const sessionChangedListeners = new Set<(id: string) => void>()
   const terminalListeners = new Set<() => void>()
   const taskListeners = new Set<(t: BackgroundTask[]) => void>()
+  const subagentListeners = new Set<(e: Extract<EngineEvent, { type: 'subagent' }>) => void>()
   const api = {
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
@@ -112,6 +113,12 @@ export const fakeChatApi = (folder = FOLDER) => {
     onBackgroundTasks: (cb: (tasks: BackgroundTask[]) => void): (() => void) => {
       taskListeners.add(cb)
       return () => taskListeners.delete(cb)
+    },
+    onSubagent: (
+      cb: (event: Extract<EngineEvent, { type: 'subagent' }>) => void
+    ): (() => void) => {
+      subagentListeners.add(cb)
+      return () => subagentListeners.delete(cb)
     },
     onBackendChanged: (cb: (info: BackendInfo) => void): (() => void) => {
       backendListeners.add(cb)
@@ -179,6 +186,11 @@ export const fakeChatApi = (folder = FOLDER) => {
       taskListeners.forEach((l) => l(tasks))
     })
   }
+  const emitSubagent = (event: Extract<EngineEvent, { type: 'subagent' }>): void => {
+    act(() => {
+      subagentListeners.forEach((listener) => listener(event))
+    })
+  }
   const waitForPermission = (toolUseId: string): Promise<PermissionDecision> =>
     broker.request({ toolUseId, signal: new AbortController().signal })
   return {
@@ -192,6 +204,7 @@ export const fakeChatApi = (folder = FOLDER) => {
     emitSessionChanged,
     emitTerminal,
     emitBackgroundTasks,
+    emitSubagent,
     waitForPermission
   }
 }

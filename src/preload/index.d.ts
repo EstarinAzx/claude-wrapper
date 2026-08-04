@@ -70,6 +70,7 @@ export interface WrapperApi {
   // #83 — REPLACE semantics: every payload is the full live set, and `[]` on an
   // engine rebuild is the per-process reset, not "nothing happened".
   onBackgroundTasks: (cb: (tasks: BackgroundTask[]) => void) => () => void
+  onSubagent: (cb: (event: Extract<EngineEvent, { type: 'subagent' }>) => void) => () => void
   onChatEvent: (cb: (e: EngineEvent) => void) => () => void
 }
 

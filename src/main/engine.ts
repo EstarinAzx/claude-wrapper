@@ -282,6 +282,11 @@ export type EnginePorts = {
   // per-process and the SDK emits nothing at startup, so a set that outlives its
   // engine is a permanently stale indicator.
   onBackgroundTasks?: (tasks: BackgroundTask[]) => void
+  // Subagent lifecycle edges (#104). A real terminal edge can land after
+  // result/success, when activeOnEvent is null, so this port owns every subagent
+  // edge when supplied. Omitted keeps the legacy EngineEvent path for callers
+  // that do not need between-turn delivery.
+  onSubagent?: (event: SubagentEvent) => void
 }
 
 export const createEngine = (
@@ -297,7 +302,8 @@ export const createEngine = (
     onModelReport = () => {},
     getCliOptions = () => ({}),
     onTerminal = () => {},
-    onBackgroundTasks = () => {}
+    onBackgroundTasks = () => {},
+    onSubagent
   } = ports
   let queue: ReturnType<typeof createMessageQueue> | null = null
   let currentQuery: QueryHandle | null = null
@@ -340,6 +346,10 @@ export const createEngine = (
   const emit = (e: EngineEvent): void => {
     activeOnEvent?.(e)
   }
+  const emitSubagent = (event: SubagentEvent): void => {
+    if (onSubagent) onSubagent(event)
+    else emit(event)
+  }
 
   // Last model this engine reported, so an unchanged model is not re-announced
   // once per assistant message. Engine-scoped on purpose: a rebuilt engine
@@ -368,7 +378,7 @@ export const createEngine = (
   // drained them via the Task tool_results.
   const drainSubagents = (): void => {
     for (const id of subagentParents) {
-      emit({ type: 'subagent', parentToolUseId: id, status: 'failed' })
+      emitSubagent({ type: 'subagent', parentToolUseId: id, status: 'failed' })
     }
     subagentParents.clear()
     taskToParent.clear()
@@ -398,7 +408,7 @@ export const createEngine = (
       if (parent === undefined || taskId === undefined) return
       taskToParent.set(taskId, parent)
       subagentParents.add(parent)
-      emit(subagentEvent(parent, 'running', src))
+      emitSubagent(subagentEvent(parent, 'running', src))
       return
     }
 
@@ -409,17 +419,17 @@ export const createEngine = (
     if (parent === undefined) return
 
     if (subtype === 'task_progress') {
-      emit(subagentEvent(parent, 'running', src))
+      emitSubagent(subagentEvent(parent, 'running', src))
     } else if (subtype === 'task_notification' || subtype === 'task_updated') {
       const patch = src.patch as Record<string, unknown> | undefined
       const status = str(src.status) ?? str(patch?.status)
       if (status === undefined || NON_TERMINAL.has(status)) {
-        emit(subagentEvent(parent, 'running', src))
+        emitSubagent(subagentEvent(parent, 'running', src))
         return
       }
       subagentParents.delete(parent)
       taskToParent.delete(taskId)
-      emit(subagentEvent(parent, status === 'completed' ? 'done' : 'failed', src))
+      emitSubagent(subagentEvent(parent, status === 'completed' ? 'done' : 'failed', src))
     }
   }
 
@@ -469,7 +479,7 @@ export const createEngine = (
 
       if (!subagentParents.has(parent)) {
         subagentParents.add(parent)
-        emit({ type: 'subagent', parentToolUseId: parent, status: 'running' })
+        emitSubagent({ type: 'subagent', parentToolUseId: parent, status: 'running' })
       }
       return
     }
@@ -620,7 +630,7 @@ export const createEngine = (
             // event to done/failed so the working-list stops showing "running".
             if (subagentParents.has(toolUseId)) {
               subagentParents.delete(toolUseId)
-              emit({
+              emitSubagent({
                 type: 'subagent',
                 parentToolUseId: toolUseId,
                 status: isError ? 'failed' : 'done'

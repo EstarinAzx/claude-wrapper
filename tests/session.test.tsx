@@ -44,7 +44,8 @@ beforeEach(() => {
     respondToPermission: vi.fn(),
     onChatEvent: vi.fn().mockReturnValue(() => {}),
     onEngineTerminal: vi.fn().mockReturnValue(() => {}),
-    onBackgroundTasks: vi.fn().mockReturnValue(() => {})
+    onBackgroundTasks: vi.fn().mockReturnValue(() => {}),
+    onSubagent: vi.fn().mockReturnValue(() => {})
   }
 })
 

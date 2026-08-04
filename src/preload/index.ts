@@ -141,6 +141,18 @@ const api = {
       ipcRenderer.removeListener('tasks:changed', listener)
     }
   },
+  onSubagent: (
+    cb: (event: Extract<EngineEvent, { type: 'subagent' }>) => void
+  ): (() => void) => {
+    const listener = (
+      _e: Electron.IpcRendererEvent,
+      event: Extract<EngineEvent, { type: 'subagent' }>
+    ): void => cb(event)
+    ipcRenderer.on('subagent:changed', listener)
+    return () => {
+      ipcRenderer.removeListener('subagent:changed', listener)
+    }
+  },
   onChatEvent: (cb: (e: EngineEvent) => void): (() => void) => {
     const listener = (_e: Electron.IpcRendererEvent, ev: EngineEvent): void => cb(ev)
     ipcRenderer.on('chat:event', listener)

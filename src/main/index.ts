@@ -141,6 +141,11 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
         for (const win of BrowserWindow.getAllWindows()) {
           win.webContents.send('tasks:changed', tasks)
         }
+      },
+      onSubagent: (event) => {
+        for (const win of BrowserWindow.getAllWindows()) {
+          win.webContents.send('subagent:changed', event)
+        }
       }
     }
   )

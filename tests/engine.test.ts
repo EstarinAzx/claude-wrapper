@@ -911,6 +911,113 @@ describe('engine task messages', () => {
     expect(subagentEvents(await turn).at(-1)?.status).toBe('failed')
   })
 
+  test('a terminal task message reaches its port after the turn listener has finished', async () => {
+    const { fn, push } = streamingStub()
+    let turnFinished = false
+    const portEvents: Array<{ event: EngineEvent; turnFinished: boolean }> = []
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      onSubagent: (event: EngineEvent) => portEvents.push({ event, turnFinished })
+    })
+    const events: EngineEvent[] = []
+    const turn = engine.runTurn(p('hi'), (event) => events.push(event))
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push(success)
+    await turn
+    turnFinished = true
+    expect(events.at(-1)).toEqual({ type: 'turn-end' })
+
+    push(taskNotification())
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(portEvents.at(-1)).toEqual({
+      turnFinished: true,
+      event: expect.objectContaining({
+        type: 'subagent',
+        parentToolUseId: AGENT_TU,
+        status: 'done'
+      })
+    })
+  })
+
+  test('success leaves a running agent open for its real terminal status', async () => {
+    const { fn, push } = streamingStub()
+    const portEvents: EngineEvent[] = []
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      onSubagent: (event: EngineEvent) => portEvents.push(event)
+    })
+    const events: EngineEvent[] = []
+    const turn = engine.runTurn(p('hi'), (event) => events.push(event))
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push(success)
+    await turn
+
+    expect(subagentEvents(portEvents)).toContainEqual(
+      expect.objectContaining({ status: 'running' })
+    )
+    expect(subagentEvents([...events, ...portEvents]).filter((event) => event.status === 'failed')).toEqual([])
+    push(taskNotification())
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(subagentEvents(portEvents).at(-1)?.status).toBe('done')
+  })
+
+  // The failure branches keep draining WITH the port wired, which is the
+  // configuration main actually builds. The drain tests above run portless, so
+  // they cover the legacy delivery path and cannot see a routing regression here.
+  test('an aborted turn still drains its agent when the port is wired', async () => {
+    const base = streamingStub()
+    const fn: QueryFn = (args) =>
+      Object.assign(base.fn(args), { interrupt: async (): Promise<void> => {} })
+    const portEvents: EngineEvent[] = []
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      onSubagent: (event: EngineEvent) => portEvents.push(event)
+    })
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    base.push(init)
+    base.push(taskStarted())
+    engine.interrupt()
+    base.push({
+      type: 'result',
+      subtype: 'error_during_execution',
+      session_id: 'sess-1',
+      is_error: true
+    })
+    await turn
+    expect(subagentEvents(portEvents).at(-1)).toEqual({
+      type: 'subagent',
+      parentToolUseId: AGENT_TU,
+      status: 'failed'
+    })
+  })
+
+  test('a failed turn still drains its agent when the port is wired', async () => {
+    const { fn, push } = streamingStub()
+    const portEvents: EngineEvent[] = []
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      onSubagent: (event: EngineEvent) => portEvents.push(event)
+    })
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(init)
+    push(taskStarted())
+    push({
+      type: 'result',
+      subtype: 'error_during_execution',
+      session_id: 'sess-1',
+      is_error: true
+    })
+    await turn
+    expect(subagentEvents(portEvents).at(-1)).toEqual({
+      type: 'subagent',
+      parentToolUseId: AGENT_TU,
+      status: 'failed'
+    })
+  })
+
   test("task_updated's terminal patch settles the agent, keyed by task_id alone", async () => {
     const { fn, push } = streamingStub()
     const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)

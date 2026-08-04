@@ -133,6 +133,34 @@ export const useChat = () => {
   }, [messages])
 
   useEffect(() => {
+    const handleSubagent = (e: Extract<EngineEvent, { type: 'subagent' }>): void => {
+      // Stamp the parent Task card with its subagent's live status. Keyed by
+      // parentToolUseId (== the Task card's toolUseId); the card renders a
+      // clickable subagent row from this field.
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.role === 'tool' && m.toolUseId === e.parentToolUseId
+            ? { ...m, subagent: e.status }
+            : m
+        )
+      )
+      // Upsert into the live-agents list. Only defined event fields are written
+      // — omission means "this tick said nothing", not "clear the prior value".
+      setLiveAgents((prev) => {
+        const idx = prev.findIndex((a) => a.parentToolUseId === e.parentToolUseId)
+        const patch: LiveAgent = { parentToolUseId: e.parentToolUseId, status: e.status }
+        if (e.taskId !== undefined) patch.taskId = e.taskId
+        if (e.agentType !== undefined) patch.agentType = e.agentType
+        if (e.description !== undefined) patch.description = e.description
+        if (e.totalTokens !== undefined) patch.totalTokens = e.totalTokens
+        if (e.toolUses !== undefined) patch.toolUses = e.toolUses
+        if (e.durationMs !== undefined) patch.durationMs = e.durationMs
+        if (e.lastToolName !== undefined) patch.lastToolName = e.lastToolName
+        if (idx === -1) return [...prev, patch]
+        return prev.map((a, i) => (i === idx ? { ...a, ...patch } : a))
+      })
+    }
+    const unsubSubagent = window.api.onSubagent(handleSubagent)
     const unsub = window.api.onChatEvent((e: EngineEvent) => {
       if (e.type === 'text-delta') {
         if (assistantIdRef.current === null) {
@@ -202,31 +230,7 @@ export const useChat = () => {
           )
         )
       } else if (e.type === 'subagent') {
-        // Stamp the parent Task card with its subagent's live status. Keyed by
-        // parentToolUseId (== the Task card's toolUseId); the card renders a
-        // clickable subagent row from this field.
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.role === 'tool' && m.toolUseId === e.parentToolUseId
-              ? { ...m, subagent: e.status }
-              : m
-          )
-        )
-        // Upsert into the live-agents list. Only defined event fields are written
-        // — omission means "this tick said nothing", not "clear the prior value".
-        setLiveAgents((prev) => {
-          const idx = prev.findIndex((a) => a.parentToolUseId === e.parentToolUseId)
-          const patch: LiveAgent = { parentToolUseId: e.parentToolUseId, status: e.status }
-          if (e.taskId !== undefined) patch.taskId = e.taskId
-          if (e.agentType !== undefined) patch.agentType = e.agentType
-          if (e.description !== undefined) patch.description = e.description
-          if (e.totalTokens !== undefined) patch.totalTokens = e.totalTokens
-          if (e.toolUses !== undefined) patch.toolUses = e.toolUses
-          if (e.durationMs !== undefined) patch.durationMs = e.durationMs
-          if (e.lastToolName !== undefined) patch.lastToolName = e.lastToolName
-          if (idx === -1) return [...prev, patch]
-          return prev.map((a, i) => (i === idx ? { ...a, ...patch } : a))
-        })
+        handleSubagent(e)
       } else if (e.type === 'command-output') {
         // A later delta must start a fresh assistant bubble, never append here.
         assistantIdRef.current = null
@@ -268,7 +272,10 @@ export const useChat = () => {
         setLastTurn(endedTurn('turn-aborted'))
       }
     })
-    return unsub
+    return () => {
+      unsubSubagent()
+      unsub()
+    }
   }, [])
 
   // The engine died (#73). Two things happen, and the second is the one that is

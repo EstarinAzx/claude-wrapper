@@ -1,0 +1,64 @@
+{
+  "spike": 104,
+  "question": "Can a subagent terminal message arrive after result/success?",
+  "measuredAt": "2026-08-04T02:56:24.661Z",
+  "environment": {
+    "backendMode": "wisped",
+    "hostCliUsed": true,
+    "cliVersion": "2.1.221 (Claude Code)",
+    "sdkVersion": "0.3.220",
+    "platform": "win32"
+  },
+  "turnsRun": 1,
+  "turnsMeasured": 1,
+  "lateTurns": 1,
+  "turns": [
+    {
+      "turn": 1,
+      "resultOutcome": "result",
+      "terminalOutcome": "terminal",
+      "localAgentCount": 1,
+      "taskStarted": {
+        "seq": 21,
+        "ms": 5246
+      },
+      "result": {
+        "seq": 38,
+        "ms": 9002,
+        "subtype": "success",
+        "isError": false,
+        "openLocalAgents": 1
+      },
+      "terminal": {
+        "seq": 44,
+        "ms": 22128,
+        "subtype": "task_updated",
+        "status": "completed"
+      },
+      "resultToTerminalMs": 13126,
+      "terminalAfterResult": true
+    }
+  ],
+  "messageCount": 45,
+  "systemSubtypes": {
+    "background_tasks_changed": 2,
+    "hook_response": 7,
+    "hook_started": 7,
+    "init": 1,
+    "status": 2,
+    "task_notification": 1,
+    "task_progress": 1,
+    "task_started": 2,
+    "task_updated": 1
+  },
+  "conditions": {
+    "localAgentStarted": true,
+    "resultSucceeded": true,
+    "terminalArrived": true,
+    "lateOrderingReachable": true,
+    "openAgentAtResult": true
+  },
+  "authorised": true,
+  "ordering": "INTERMITTENT, and that is the finding. The Agent tool is async, so the two orderings race; a turn where the parent keeps working long enough sees the terminal edge first. One observation of the late ordering establishes reachability, which is what the remedy needs. An all-early run does NOT refute it.",
+  "scrubbing": "Raw messages remain in the OS temp directory. This file contains no cwd, session id, task id, tool-use id, prompt-derived name, message body or file content."
+}
