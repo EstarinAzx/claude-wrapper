@@ -9,34 +9,27 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Landed this leg (2026-08-04) — #108, `aa8e683`, **spike, no `src/` diff**
+## Landed this leg (2026-08-04) — #109, `74cbecf`
 
-Two claims confirmed by reading; measuring their reachability split them in
-opposite directions.
+`switchWorkspace` read `isBusy()` before awaiting `resolveTarget` and mutated on
+the far side, so a turn starting in the gap was torn down by `closeEngine()`
+while the switch still returned `ok`. Fixed with **one extra `isBusy()` read**
+after the resolve; pre-await checks byte-identical, no lock/queue/flag.
 
-**Claim 1 — consequence REAL, user path NOT reachable.** A second `chat:send`
-under a live turn is answered on the **second** caller's `onEvent` with a
-turn-terminal `error`, and the renderer clears `busy` **518ms** later while main
-still holds `turnResolve` — witnessed by main refusing a real composer send
-moments after, not by anything rendered. The send slot then reads **"Send"**, so
-there is no Stop for a turn that is still running. But no input device can
-produce that second send: only a **same-task** dispatch reaches main twice, and
-the realistic back-to-back-macrotask case is refused by the **emptied draft**,
-not the busy flag. Filed as **#113** on that warrant — the composer is held shut
-by a UI convenience, `chat:send` has no check at all, and it holds only while
-`useChat.send` stays the single caller of `sendPrompt`.
+**The premise reproduced, and the measurement cut both ways.** Cold resolve is
+**18.2ms median** (7 paired runs, 160 project dirs / 918 transcripts); warm is
+**0.0ms**. So the window is far too narrow for two *human* actions to collide in
+— but **cold is the ordinary path**, because `session:list` calls
+`resetSessionIndex()` and that same listing renders the row you click to get
+here. The window exists only because the rail's own refresh drops the index. The
+plausible path is a #80 queued send flushing from its `turn-end` effect (one
+machine-timed side); recorded as **plausible, not measured**.
 
-**Claim 2 — mechanism real, hang NOT observed. Half closed.** 6/6 driven
-interrupts answered at **4–29ms**, mid-text and mid-tool-call, none refused.
-Closed on #78's precedent; #73's `onTerminal` already covers a dying stream. Not
-filed.
+Gate green: typecheck clean, **1011 tests / 66 files** (1009 + 2), build clean.
 
-Gate green: typecheck clean, **1009 tests / 66 files** (unchanged — a spike adds
-no app tests), build clean, `git diff --stat -- src/` empty.
+## Frontier: FOUR OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
 
-## Frontier: FIVE OPEN, ALL `ready-for-agent`, NONE `ready-for-human`
-
-**Next unblocked, lowest-numbered: #109.** Live `blocked_by` is 0 for all five.
+**Next unblocked, lowest-numbered: #110.** Live `blocked_by` is 0 for all four.
 Run the query anyway — it is the authority over this table, and this line has
 been wrong before.
 
@@ -47,48 +40,54 @@ gh api repos/EstarinAzx/claude-wrapper/issues/<n> --jq '.issue_dependencies_summ
 
 | # | subject | blocked by |
 |---|---|---|
-| **109** | send during workspace resolve tears down live turn | — |
 | **110** | close inside debounce drops final window bounds | — |
 | **111** | close between turns strands an open subagent row | — |
 | **112** | pill click empties the model menu and slash commands | — |
 | **113** | a second `chat:send` tells the renderer the live turn ended | — |
 
-**The batch has no spikes left** — #109–#113 are all ordinary fixes, so premise
-reproduction and mutation evidence apply again.
+**No spikes left in the batch** — #110–#113 are all ordinary fixes, so premise
+reproduction and mutation evidence apply to every one.
 
 `ready-for-human` is forbidden while owner is AFK. Stuck ticket keeps
 `ready-for-agent`, gets a precise comment, and stops the relay.
 
-## What #109 requires
+## What #110 requires
 
-`switchWorkspace` checks `isBusy` before an `await`, so a send landing during the
-resolve tears down a live turn. Reproduce the premise first — the last five legs
-all did, and three of them found the stated premise needed correcting.
+`reportBounds` debounces the `bounds:changed` push by 250ms
+(`src/main/index.ts:293-300`) and the `closed` handler **clears** the pending
+timer (`:304`), so a move or resize followed by a close inside that window is
+silently discarded. **Flush instead of cancel**, on `close` (not `closed` — the
+`webContents` is gone by then, and that distinction is the whole fix), sending
+`win.getNormalBounds()` so a maximised window never persists its transient
+rectangle. Leave the `closed` clear as belt-and-braces.
 
-Two facts from #108 bear directly on it:
+Three landmines the ticket names, all still live:
 
-- **`chat:send` has no busy guard of any kind**, asserted mechanically. Any
-  reasoning about "the app refuses sends while busy" is about `useChat.send`'s
-  React-state read and nothing else.
-- **After an overlap error the renderer reports idle while main still holds the
-  turn.** That state is reachable, and any logic reading `busy` from the renderer
-  will be told the wrong thing in it.
+- **Do not touch #79's show-gate half.** `bounds:set` must keep releasing the
+  gate on a `null` or invalid payload, or every first-ever launch waits out the
+  1500ms timeout.
+- **The `:222-224` comment currently asserts the behaviour this ticket adds**
+  ("the debounce is short enough that closing the window straight after moving it
+  still stores the new position"). Fix it in the same change — #109 was a whole
+  ticket about a comment that was true of the ordering and false of the
+  guarantee, and this one is plainly false as written.
+- **Criterion 2 is the trap**: the flush must not double-send when the debounce
+  had already fired.
 
 ## Still-live batch landmines
 
-- **Ask the process that holds the fact.** #108's four instrument bugs were all
-  the same mistake — measuring a proxy for a fact another process owns. `busy` in
-  the renderer, characters in the pane, and a case name all stood in for
-  something main knew directly.
-- **A pane that stopped growing is NOT an idle engine** — measured 116 → 116 on a
-  turn the engine then refused a send for. Growth is sound as a positive, useless
-  as a negative.
-- **Re-check a premise at the moment it matters**, not before a settle: an
-  interrupt issued after its turn's own result produced a latency of **-821ms**.
-  The quiet version of that bug is a small positive number.
+- **Ordering a check before a mutation is necessary and not sufficient** (#109).
+  An `await` between them means the answer must be re-read on the far side.
+- **A "tear down, then report X" mutation passes a status-only assertion**
+  (#109). Where the contract is "a rejection is a no-op", assert port by port
+  that nothing was reached — the status alone ships the destructive version.
+- **Ask the process that holds the fact** (#108). Four instrument bugs there were
+  all the same mistake — measuring a proxy for a fact another process owns.
+- **A pane that stopped growing is NOT an idle engine** — growth is sound as a
+  positive, useless as a negative.
+- **Re-check a premise at the moment it matters**, not before a settle.
 - **`gui-52`'s red is DOUBTFUL, and chasing it is out of scope** — #105 measured
-  the CLI returning **15 models**. Filed in #112's out-of-scope; `gui-52` was not
-  run.
+  the CLI returning **15 models**. Filed in #112's out-of-scope.
 - `gui-75` still has a standing environmental red (focus-dependent); reproduce
   solo before treating it as a regression.
 - Never hardcode a model name. Never read `~/.claude/daemon/roster.json`.
@@ -98,7 +97,7 @@ Two facts from #108 bear directly on it:
   (#106).
 - **A mocked refusal asserts the harness** (#107) — bind the real decision behind
   the seam when the decision is what the test is about.
-- Ticket baselines are stale: they say 979, `main` is at **1009**.
+- Ticket baselines are stale: they say 979/64, `main` is at **1011/66**.
 - Squash-merged ticket branches need `git branch -D`.
 
 ## Do not decide these
@@ -113,11 +112,11 @@ AFK grant does not reopen standing calls outside this seed:
 
 ## Baseline
 
-`main` = `aa8e683`, pushed and level with `origin/main`; no ticket branch.
-Typecheck clean, **1009 tests / 66 files**, build clean.
+`main` = `74cbecf`, pushed and level with `origin/main`; no ticket branch.
+Typecheck clean, **1011 tests / 66 files**, build clean.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]]
-- [[2026-08-04-the-composer-is-held-shut-by-a-draft-clear-not-a-guard]]
+- [[2026-08-04-a-check-that-ran-early-is-not-a-check-that-still-holds]]
 - `.claude/vibe.md` — run that filed #98–#110

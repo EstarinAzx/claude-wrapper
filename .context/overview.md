@@ -42,7 +42,20 @@ tags: [context, overview]
   `'failed'` after unlinking would pass a status-only suite while destroying the
   transcript. See [[2026-08-04-a-refusal-belongs-where-the-fact-lives]].
   `switch-workspace.ts` owns the atomic workspace transition as a function over
-  injected ports (the entry module is untestable under vitest);
+  injected ports (the entry module is untestable under vitest). It reads
+  `isBusy()` **TWICE** on the resume path (#109), and the second read is not
+  redundant: `resolveTarget` awaits, `chat:send` carries no busy guard of its
+  own, and a turn beginning inside that await was torn down by `closeEngine()`
+  while the switch still returned `ok`. Ordering every check before the first
+  mutation — which the function's own comment promises, and always delivered —
+  is necessary and **not sufficient** once an await separates the check from the
+  mutation. The window is ~18ms and exists only because `session:list` calls
+  `resetSessionIndex()`, so the listing that renders the row you click is what
+  makes the resolve cold (18.2ms cold vs 0.0ms warm, measured). Its rejection
+  tests assert **port by port** that nothing was reached, never only the status:
+  a version that tore down and then reported `busy` passes a status-only suite.
+  See [[2026-08-04-a-check-that-ran-early-is-not-a-check-that-still-holds]].
+  `turn-announce.ts` (#75) is the same shape for the turn-end announcement —
   `turn-announce.ts` (#75) is the same shape for the turn-end announcement —
   `announceTurn(ports, event)` over `isFocused` / `notify` / `flash`, so the
   call COUNT and ARGUMENTS are assertable without a window — and it also owns
@@ -334,10 +347,10 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#108 landed
-  and closed, and FIVE tickets are open — #109–#113, all `ready-for-agent`, with
-  #109 the next unblocked one; #113 was filed by #108's own measurement and the
-  batch has no spikes left**; run the
+- `.context/pick-up.md` — current frontier + landmines (currently: **#109 landed
+  and closed, and FOUR tickets are open — #110–#113, all `ready-for-agent`, with
+  #110 the next unblocked one; the batch has no spikes left, so premise
+  reproduction and mutation evidence apply to every remaining one**; run the
   frontier query anyway, it is the authority and this line has been wrong before.
   **30** driver files — 28 assertion drivers, two `gui-7x-probe` helpers and the
   observational `gui-scope-zoom-pill` — with **two standing environmental reds**,
@@ -528,8 +541,22 @@ tags: [context, overview]
   driven interrupts answered at 4–29ms, on #78's precedent; **no `src/` diff**;
   see [[2026-08-04-the-composer-is-held-shut-by-a-draft-clear-not-a-guard]]) is
   **closed**.
-  **As of 2026-08-04 FIVE issues are open — #109–#113, all
-  `ready-for-agent`**, none blocked; #109 is the next unblocked one and the batch
+  **#109** (`74cbecf`, `switchWorkspace`'s busy check was a TOCTOU rather than a
+  gate — read before `await resolveTarget(...)` and acted on after it, so a turn
+  starting in the gap was torn down by `closeEngine()` while the switch still
+  returned `ok`; remedied by **one extra `isBusy()` read** with the pre-await
+  checks byte-identical and no lock, queue or `switching` flag; the premise
+  reproduced and the framing corrected — the window measures **18.2ms cold vs
+  0.0ms warm** and therefore cannot be hit by two *human* actions, yet cold is
+  the **ordinary** path because `session:list` drops the index and that same
+  listing renders the row clicked to get here, so the rail's own refresh is what
+  opens the gap; mutation-verified twice, the second mutation showing that a
+  "tear down, then report busy" version **passes the status assertion** and is
+  caught only by the port-by-port no-mutation checks; see
+  [[2026-08-04-a-check-that-ran-early-is-not-a-check-that-still-holds]]) is
+  **closed**.
+  **As of 2026-08-04 FOUR issues are open — #110–#113, all
+  `ready-for-agent`**, none blocked; #110 is the next unblocked one and the batch
   has no spikes left. #111 was
   filed by #104's own review, #112 by #105's measurement and #113 by #108's.
   Run the frontier query rather than trusting this line
