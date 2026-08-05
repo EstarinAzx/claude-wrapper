@@ -9,7 +9,7 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Next: #124 — four unblocked tickets left
+## Next: #125 — three unblocked tickets left
 
 Confirm rather than trust this line — it has been wrong before:
 
@@ -17,7 +17,7 @@ Confirm rather than trust this line — it has been wrong before:
 gh issue list --state open --label ready-for-agent
 ```
 
-**#124–#127 are unblocked and independent.** #128 (the 1.0.0 bump) waits on all
+**#125–#127 are unblocked and independent.** #128 (the 1.0.0 bump) waits on all
 of them and is last by the owner's explicit instruction — **it still wears
 `ready-for-agent`, so the frontier query returns it.** The ordering lives in the
 ticket body and in `.claude/relay-leg.md`, not in a label. Spec **#120** is the
@@ -30,60 +30,76 @@ chain continue. A call you cannot make goes in `.claude/vibe.md` under
 
 ## Landed last leg
 
-**#123 — reuse a past user message in the composer.** `f649f1d` on `main`,
-squash-merged, branch deleted, ticket closed. A user message carries a
-`Reuse this message` control that refills the composer with its exact text; the
-message itself is untouched in the pane and on disk. It routes through the
-**existing `pendingInsert` channel** the commands dock uses — not a second one —
-which is what makes #80's queued-send commitment correct with no new logic.
-**Text only**, decided and stated. New files: `tests/reuse-message.test.tsx` (19
-tests), `.claude/skills/run-desktop/gui-123.mjs`, `scripts/gui-123-shots/`.
+**#124 — a five-position effort control, sourced from the CLI.** `39c2896` on
+`main`, squash-merged, branch deleted, ticket closed. The composer footer
+carries a reasoning-effort range beside the model pill; its positions are the
+levels the CLI advertises for the current model, read off `supportedEffortLevels`
+on the rows `model:list` already returns. Changing it discards the engine and
+resumes the conversation, because `effort` rides `Options` and binds at query
+construction. New files: `src/shared/effort.ts`, `src/main/effort-mode.ts`,
+`tests/effort.test.ts` (24), `tests/effort-mode.test.ts` (26),
+`tests/effort-control.test.tsx` (19), `.claude/skills/run-desktop/gui-124.mjs`,
+`scripts/gui-124-shots/`.
 
 ## Baseline — READ IT, do not trust it
 
-`main` = `f649f1d`. typecheck clean, build clean, **1164 tests / 77 files**
-(was `1145 / 76` before #123). Every remaining slice adds tests, so read the
+`main` = `39c2896`. typecheck clean, build clean, **1226 tests / 80 files**
+(was `1164 / 77` before #124). Every remaining slice adds tests, so read the
 current number off `main` at the start of your leg.
 
-## What #123 measured that the next legs need
+**`origin/main` is 5 commits behind `main`.** This chain has landed every leg
+locally and pushed none — legs 1–4 all did. Nothing is lost, but the tracker's
+commit references do not resolve on GitHub. Left as-is deliberately: pushing is
+outward-facing and the owner has not asked for it. Worth raising when they are
+back.
 
-- **A value read behind a transition is not a settled one.** `gui-123`'s first
-  run reported "tabbing lands on an invisible control" off a computed
-  `opacity: 0.585` — that was the 150ms reveal mid-flight, not a defect. It now
-  records the value **on landing** beside the settled one, so an animating rule
-  (`0.17 → 1`) is distinguishable from one that never applies (`0 → 0`). Its
-  hover phase had a settle wait and passed while its keyboard phase did not.
-  **Binds #125 and #126**, both visual, both likely to read computed styles.
-- **A GUI driver can cost ZERO CLI turns.** Remove main's `chat:send` listener
-  with `ipcMain.removeAllListeners` before typing: the renderer still appends
-  the user bubble, and no engine turn starts. **Read the count back** —
-  `{before: 1, after: 0}` — because a send that quietly still fired would empty
-  the composer under later assertions and read as a product failure.
-- **`display: none` is not the same hiding as `opacity: 0`.** The first removes
-  the tab stop with the pixels. A control meant to be keyboard reachable while
-  invisible must stay laid out, and the driver asserts the computed `display`
-  for exactly that reason.
-- **`pendingInsert` is the composer's one insert channel** and now has two
-  callers. Its nonce is load-bearing in both.
+## What #124 measured that the next legs need
+
+- **ESM freezes every JS seam a driver might patch.** `sdk.query` cannot be
+  monkey-patched — the SDK ships as ESM and `require()` yields a **frozen
+  namespace**, so the assignment silently no-ops — and `child_process.spawn`
+  cannot either, because the SDK binds it with an ESM import at link time. The
+  route that works is the **OS**: read the command line of the child process
+  (`Win32_Process`, walking descendants of the Electron main pid). `--effort` is
+  a real CLI flag, so the value is visible in argv.
+- **ANY PROBE THAT INSTALLS SOMETHING MUST READ THE INSTALLATION BACK.** The
+  frozen-namespace assignment fails silently, and the driver's own empty capture
+  array would have read as "the value never arrived" — a false RED about the
+  product, produced by a broken instrument.
+- **`getComputedStyle(el, '::-webkit-slider-runnable-track')` DOES NOT read that
+  pseudo-element in Chromium.** It returns the element's own style. Scored as
+  "the track paints nothing" on the first run. **Binds #126** if it reads any
+  pseudo-element style.
+- **`locator.screenshot()` has the zoom/clip defect too.** At this app's live
+  **1.25** factor it cropped a flat patch of the wash — 1 distinct colour, read
+  as "nothing paints"; at zoom 1 the same sample reads 26. Normalise with
+  `webContents.setZoomFactor(1)` before any pixel measurement. **Binds #125 and
+  #126.**
+- **A PIXEL PROBE NEEDS A POSITIVE CONTROL.** `gui-124` samples `.send-btn`
+  (authored mint fill) beside its target, so a broken instrument reports
+  UNSCORED instead of refuting. Copy this for #126.
+- **A control with a null state and an ordered scale needs a STOP for the null.**
+  Five bare stops left `low` unreachable by one gesture. The suite caught it.
+- **`ConvertTo-Json` over `Win32_Process` is not safe** — a live command line
+  carried a raw control character and took the probe down mid-run. Read
+  tab-delimited lines with `[\x00-\x1F]` stripped.
+- **Never `git checkout <file>` to undo a mutation on uncommitted work.** It
+  reverts to HEAD and drops every edit since the branch point.
 
 ## Landmines this batch will hit
 
-- **The chat pane now carries TWO controls with the same treatment** — #122's
-  copy button on fenced blocks and #123's reuse button on user rows. Both take
-  the #93 hairline ring alone because both wash on hover. A third gets the same
-  or it will look like a different kind of control.
+- **The composer footer now carries a THIRD control** (`.effort-range`), joining
+  #122's copy button and #123's reuse button in taking the #93 hairline alone.
+  Verified under a real Tab: 2 hops from the composer, `:focus-visible` matches,
+  ring is `inset 0 0 0 1px var(--tint-6)`.
 - **`/rewind` and `/bg` are NOT CLI commands here.** Measured: 121 advertised
   commands, neither present. `/bg` is one of three ways to OPEN the CLI's agent
-  view — a terminal takeover — which is why it "doesn't work". Do not build a UI
-  wrapper for either; **#127 measures whether any other route exists** and
-  #123's warrant note now points at it.
-- **`/effort` IS advertised**, and the model list carries `supportedEffortLevels`.
-  The slider's five positions come from the SDK's `EffortLevel` type, which
-  excludes `ultracode` and `auto` — those are in the command's argument hint but
-  are not points on the scale. Do not invent slider positions for them.
-- **`effort` rides `Options`, so it binds at query CONSTRUCTION.** A setter that
-  only stores the value will appear to work and change nothing. Follow
-  `model:set` exactly, including reading the resume target BEFORE the discard.
+  view — a terminal takeover. Do not build a UI wrapper for either; **#127
+  measures whether any other route exists**.
+- **`effort` and `model` both ride `Options`, so both bind at query
+  CONSTRUCTION.** A setter that only stores changes nothing. `model:set`,
+  `permission:set-mode` and now `effort:set` all read the resume target BEFORE
+  the discard; `effort-mode.ts` ports that transaction so it is testable.
 - **Acrylic on the subagent pane REDS `gui-98` criterion 5**, which greps
   `subagent.css` for zero `backdrop-filter`. Replace that criterion with a
   **positive** pin — a deviation with no positive pin gets quietly conformed
@@ -97,67 +113,64 @@ current number off `main` at the start of your leg.
   live-tail reload, so the pane is a projection of the CLI's file.
 - **`capturePage` takes window DIP; `getBoundingClientRect()` gives the ZOOMED
   page's CSS pixels.** Scale by `webContents.getZoomFactor()` or the shot lands
-  up and left. `page.screenshot({clip})` has the same defect. **Binds #125 and
-  #126.** Hover states cannot be eyeballed either — `--tint-2` is 6% alpha;
-  assert them with `getComputedStyle`.
+  up and left. **Binds #125 and #126.** Hover states cannot be eyeballed either
+  — `--tint-2` is 6% alpha; assert them with `getComputedStyle`.
+- **No GUI driver can see a DWM backdrop** — `page.screenshot()` cannot show it
+  and `--disable-gpu` flattens acrylic. #125 pins the declaration as text.
 
 ## Stylesheet rules that bind more than one slice
 
-- **Stylesheets are read as raw TEXT by SIX tests now** — `scrollbar.test.ts`,
+- **Stylesheets are read as raw TEXT by SIX tests** — `scrollbar.test.ts`,
   `theme.test.ts`, `multiline-composer.test.tsx`, `markdown-tables.test.tsx`,
-  `code-copy.test.tsx` and #123's `reuse-message.test.tsx`. No comment may
-  contain a closing brace; no scrollbar rule may be component-scoped; **and
-  `base.css` warns that even NAMING the scrollbar pseudo-element in a comment
-  trips the scan.** `.bubble` and `.message-input` stay ungrouped — and
-  `.bubble {` must stay the **first** literal match of that string in
-  `chat.css`, which `reuse-message.test.tsx` now pins, because
-  `multiline-composer` slices from exactly it.
+  `code-copy.test.tsx` and `reuse-message.test.tsx`. No comment may contain a
+  closing brace; no scrollbar rule may be component-scoped; **and `base.css`
+  warns that even NAMING the scrollbar pseudo-element in a comment trips the
+  scan.** `.bubble` and `.message-input` stay ungrouped — and `.bubble {` must
+  stay the **first** literal match of that string in `chat.css`.
+  `scrollbar.test.ts` only inspects lines containing `::-webkit-scrollbar`, so
+  #124's `::-webkit-slider-*` rules are outside it.
 - **`markdown.css` may only author DESCENDANT rules** — react-markdown owns the
-  markup. `chat.css` has no such restriction: #123's rules are top-level,
-  because `Chat.tsx` owns that markup itself.
+  markup. `chat.css` and `composer.css` have no such restriction.
 - **The `@import` order in `styles.css` IS the cascade.** Add rules inside a
   file; never reorder the imports.
 - **Focus rings are picked per control, not applied.** Anything that paints a
-  fill in any state takes the hairline alone. #122's and #123's controls both
-  follow this, and both rings are verified against the **built** stylesheet
-  under a real Tab focus rather than only as stylesheet text.
-- **jsdom loads no CSS.** A raw-text pin proves a rule was written, never that
-  it works. Three routes exist now: #121's (render measured markup in a real
+  fill in any state takes the hairline alone. A range's track is an authored
+  fill, which is why `.effort-range` takes it.
+- **jsdom loads no CSS.** A raw-text pin proves a rule was written, never that it
+  works. Four routes exist now: #121's (render measured markup in a real
   Electron window and read computed layout), #122's (drive the real app and read
-  `getComputedStyle` off the focused control) and #123's (read the same value
-  twice around a transition).
+  `getComputedStyle` off the focused control), #123's (read the same value twice
+  around a transition) and #124's (**sample the element's own pixels at zoom 1,
+  behind a positive control**).
 
 ## Process landmines from this batch
 
-- **Unscored is not refuted.** #122's spike scored its preferred clipboard route
-  DEAD on run 1 because two probe buttons overlapped and the click was refused —
-  the handler never ran, and a bare `.catch(() => {})` hid it. #123's driver hit
-  the same family from a different direction: a real product behaviour reported
-  as broken because the instrument read it too early.
+- **Unscored is not refuted**, and #124 hit it three times in one driver — a
+  frozen-namespace patch, a pseudo-element computed style, and a zoomed
+  screenshot clip. All three produced a confident false RED before the controls
+  went in.
 - **Measure before you ask an agent.** The single most valuable act of the
-  planning session was a zero-turn `supportedCommands()` probe that main ran
-  itself. It killed two asks and sized a third.
+  planning session was a zero-turn `supportedCommands()` probe.
 - **Probe by CALLING, never by grepping a bundle or reading a `.d.ts`** — a
   declared wire type is not a callable route (#115); a callable route is not an
   effective one (#117). #127 lives or dies on this.
-- **A negative claim needs a negative-shaped warrant.**
-- **A driver never seen failing proves nothing** — and its red path must fail
-  *cleanly*. `gui-123` was verified red twice with distinct messages: control
-  removed (stops at phase 2, summary printed, no leaked process) and reveal rule
-  removed (reds hover and keyboard, `onLand: 0`).
-- **An absence must be counted, not assumed.** #123's "the click reaches main by
-  no route" pin counts `targetSession` calls **before** the click, because
-  adopting the session had already made one — a bare `not.toHaveBeenCalled()`
-  was false for a reason with nothing to do with the feature.
+- **A negative claim needs a negative-shaped warrant.** #124's "Default sends no
+  effort" is scored on the ABSENCE of `--effort` in a freshly spawned process's
+  argv, not on a different value.
+- **A driver never seen failing proves nothing — and its red path must fail
+  CLEANLY.** `gui-124`'s first red verification died on a JSON parse error
+  instead of reporting the finding, which would have hidden a real regression
+  behind an UNSCORED line.
+- **An absence must be counted, not assumed.**
 - **Every control-protocol probe needs a bogus-subtype negative control.**
 
 ## Still-live landmines from earlier legs
 
 - **`canUseTool` is NOT a control surface** (#116) — deny with `disallowedTools`.
 - **`setBackgroundMaterial` has NO runtime whitelist** — `src/shared/backdrop.ts`'s
-  compare-never-coerce guard is the only one.
-- **No GUI driver can see a DWM backdrop** — `page.screenshot()` cannot show it
-  and `--disable-gpu` flattens acrylic. Pin the declaration as text.
+  compare-never-coerce guard is the only one. `src/shared/effort.ts` is the same
+  pattern, except it REJECTS rather than defaulting: there is no safe default
+  effort to fall back to.
 - **An event handler in main must not be able to throw** — Electron turns it
   into a modal error dialog over the app.
 - **A green suite is evidence about the code only if the runner is sound** —
@@ -170,9 +183,10 @@ current number off `main` at the start of your leg.
 - **Node 22 refuses to spawn a `.cmd`** (`EINVAL`, CVE-2024-27980 mitigation).
   Electron's own `electron.exe` under `node_modules/electron/dist/` is a real
   exe and spawns fine.
-- **The repo is CRLF throughout, with no `.gitattributes`.** Both of #123's new
-  files were written LF and needed converting. Check every new file.
-- Never hardcode a model name. Never read `~/.claude/daemon/roster.json`.
+- **The repo is CRLF throughout, with no `.gitattributes`.** All five of #124's
+  new files were written LF and needed converting. Check every new file.
+- Never hardcode a model name — and now, never hardcode an effort level list
+  either. Never read `~/.claude/daemon/roster.json`.
 - Absence assertions need a surviving positive control and mutation evidence.
 - **Squash-merged ticket branches need `git branch -D`.**
 
@@ -185,12 +199,20 @@ pane. The other four are untouched: the Tailwind adopt-utilities half, the
 titlebar control count, the 12px line box for 11px muted descriptions, and the
 accent clause enumeration after #97.
 
-Four open owner-calls live in `.claude/vibe.md` under `## Needs you`. **#123
-added none and resolved none by decision** — it *shipped* the fourth (refill
-rather than a true edit) with the reversible default the ticket already named,
-and the record now carries why a true edit is impossible rather than merely
-unchosen. The count stands at four for the owner to revisit.
+Four open owner-calls live in `.claude/vibe.md` under `## Needs you`. **#124
+added none and resolved none by decision** — it *shipped* the second (five
+positions, no `ultracode`/`auto`) exactly as the ticket specified, with the
+record now carrying the SDK citation that makes it a measurement rather than a
+taste call. The count stands at four for the owner to revisit.
+
+**One thing #124 decided that the owner may want to revisit:** the effort range
+has **six stops for five levels** — stop 0 is `Default`, the absence of a level.
+It is not a sixth level and not `ultracode`/`auto` smuggled in; it exists because
+five bare stops left `low` unreachable by one gesture. Reversible, stated in the
+ticket comment, and recorded here rather than added to the owner-call queue,
+because the ticket's own "five positions" wording is about the LEVELS.
 
 ## Related
 
 - [[overview]] · [[active-work]] · [[decisions]] · [[happy-path]]
+- [[2026-08-05-esm-freezes-every-js-seam-so-measure-the-process]]

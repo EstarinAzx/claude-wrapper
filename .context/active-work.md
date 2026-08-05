@@ -7,29 +7,30 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-05 by Opus 5, relay chain 3 leg 3, owner away_
-_At commit: `f649f1d` on `main`_
+_Last updated: 2026-08-05 by Opus 5, relay chain 3 leg 4, owner away_
+_At commit: `39c2896` on `main`_
 
 ## Current focus
 
-**Spec #120's batch is draining. #121, #122 and #123 have landed; four unblocked
-slices remain.** Nothing is in flight — the leg that delivered #123 closed it and
+**Spec #120's batch is draining. #121-#124 have landed; three unblocked slices
+remain.** Nothing is in flight — the leg that delivered #124 closed it and
 handed off.
 
 ## State
 
 - **In flight:** nothing. No ticket branch exists;
-  `ticket/123-reuse-past-message` was squash-merged and deleted.
+  `ticket/124-effort-control` was squash-merged and deleted.
 - **Closed 2026-08-05:** **#121** — markdown tables render (`ef6ef22`) ·
   **#122** — code blocks carry a copy button (`a359f9f`) · **#123** — reuse a
-  past user message (`f649f1d`).
-- **Queue:** **#124–#127 unblocked and independent**, takeable in any order.
+  past user message (`f649f1d`) · **#124** — a five-position effort control
+  (`39c2896`).
+- **Queue:** **#125–#127 unblocked and independent**, takeable in any order.
   **#128 (the 1.0.0 bump) is last by the owner's own instruction** and waits on
   the other four. It still wears `ready-for-agent`, so the frontier query
   returns it — the ordering constraint lives in the ticket body and in
   `.claude/relay-leg.md`, not in a label.
-- **Gate on `main`:** typecheck clean, build clean, **1164 tests / 77 files**.
-  This replaces the `1145 / 76` line. Every remaining slice adds tests —
+- **Gate on `main`:** typecheck clean, build clean, **1226 tests / 80 files**.
+  This replaces the `1164 / 77` line. Every remaining slice adds tests —
   **read the number off `main`, never off this file.**
 
 ## The slices
@@ -39,7 +40,7 @@ handed off.
 | #121 | Markdown tables render | CSS only — GFM already emits `<table>` | **closed `ef6ef22`** |
 | #122 | Code blocks carry a copy button | `components` override + a **measured** clipboard route | **closed `a359f9f`** |
 | #123 | Reuse a past user message in the composer | Refill through the existing `pendingInsert` channel | **closed `f649f1d`** |
-| #124 | A five-position effort control | CLI-sourced levels, engine rebuild | open |
+| #124 | A five-position effort control | CLI-sourced levels, engine rebuild | **closed `39c2896`** |
 | #125 | The subagent viewer takes the window material | CSS + pin + DESIGN.md + ADR | open |
 | #126 | The subagent map earns its place | Visual pass inside the pinned encoding | open |
 | #127 | spike — three routes nobody has called | Probe by calling, build nothing | open |
@@ -47,8 +48,8 @@ handed off.
 
 ## Pick up here
 
-Take any of #124–#127. `/preset ticket-loop` picks the lowest unblocked id, so
-**#124** by default.
+Take any of #125-#127. `/preset ticket-loop` picks the lowest unblocked id, so
+**#125** by default.
 
 ## Skills for next session
 
@@ -115,6 +116,22 @@ none blocking. **#123 resolved one of them by shipping it** and added none:
   call — `EffortLevel = 'low'|'medium'|'high'|'xhigh'|'max'`, and `effort` rides
   `Options`, so it binds at query CONSTRUCTION and changing it must rebuild the
   engine exactly as `model:set` does.
+
+- **#124's control is CLI-sourced and the proof is the CLI's own argv.**
+  `gui-124.mjs` reads `--effort <level>` off the command line of the child
+  process the rebuilt engine spawned. Both JS seams are dead ends: the SDK is
+  ESM, so `require()` hands back a **frozen namespace** (`sdk.query = fn`
+  silently no-ops), and `child_process.spawn` is bound by an ESM import at link
+  time. Full reasoning in
+  [[2026-08-05-esm-freezes-every-js-seam-so-measure-the-process]].
+- **The effort scale has SIX stops for FIVE levels.** Stop 0 is `Default` — the
+  absence of a level, not a sixth level. Five bare stops left `low` unreachable
+  by one gesture, because an unset pick parks the thumb at position 0 and a
+  range fires no change event when the thumb is already there.
+- **The ticket's own count was wrong and the code follows the measurement.** No
+  CLI row reports `supportsEffort: false`; 14 of 15 carry the fields and all say
+  true, while `haiku` **omits** them. Absent means "the CLI did not say" → the
+  full scale; `false` → no control at all.
 
 ## Related
 

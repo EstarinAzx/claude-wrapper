@@ -407,12 +407,12 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **spec #120's
-  batch is draining — #121, #122 and #123 are closed, leaving #124–#127
+  batch is draining — #121-#124 are closed, leaving #125-#127
   unblocked and independent, with #128 (the 1.0.0 bump) last by the owner's own
   instruction. `ready-for-human` is BANNED for this batch; use `needs-info` + a
   comment + a PushNotification**; run the frontier query anyway, it is the
   authority and this line has been wrong before.
-  **35 `gui-*.mjs`** — 34 assertion drivers plus the observational
+  **36 `gui-*.mjs`** — 35 assertion drivers plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`), with **two standing
   environmental reds**,
@@ -714,12 +714,15 @@ tags: [context, overview]
   files** against a second `child_process` spawn; build filed as **#118**; see
   [[2026-08-05-a-denial-the-runtime-never-consults-is-not-a-denial]]) is
   **closed**.
-  **As of 2026-08-05 THREE issues are open — spec #115, spike #117
-  (`ready-for-agent`, unblocked, and the only ready ticket), and build #118
-  (`needs-info`)**. #118 was filed by #116 and waits on four of the six owner
+  **That paragraph is HISTORY — its "THREE issues are open" line has been false
+  since spec #120 opened.** It described the #98-#118 era: spec #115, spike #117
+  and build #118 (`needs-info`). #118 was filed by #116 and waits on four of the six owner
   calls parked on #115; answering them flips it to `ready-for-agent` with no
-  other change. #117 is a **SPIKE with no `src/` diff**.
-  Run the frontier query rather than trusting this line
+  other change. #117 was a **SPIKE with no `src/` diff**.
+  **As of 2026-08-05 chain 3 is draining spec #120: #121-#124 closed, with
+  #125, #126 and #127 open, unblocked and independent, and #128 (the 1.0.0
+  bump) open but last by the owner's instruction.**
+  Run the frontier query rather than trusting any line in this file
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first

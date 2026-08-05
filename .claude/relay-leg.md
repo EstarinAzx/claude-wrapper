@@ -10,7 +10,7 @@ Each leg = exactly ONE ticket end to end, then the relay machinery hands off to
 a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides.
 
-**Rewritten 2026-08-05 for the #120 batch.** Everything this file said before is
+**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 4.** Everything this file said before is
 gone: it described the completed #115–#119 chain, announced an empty queue, and
 told legs that `ready-for-human` was allowed. All three are now false.
 
@@ -46,7 +46,7 @@ self-contained; read #120 only if you want the why.
 | ~~#121~~ | ~~markdown tables render~~ | **CLOSED** `ef6ef22` — leg 1 |
 | ~~#122~~ | ~~code-block copy button~~ | **CLOSED** `a359f9f` — leg 2. Route measured: `navigator.clipboard`, effective on `file://`. Established the repo's first `components` override; the wrapper was **not** extended to `<table>` |
 | ~~#123~~ | ~~reuse a past user message~~ | **CLOSED** `f649f1d` — leg 3. Refill through the **existing `pendingInsert` channel**, text only; `pendingInsert` now has two callers and its nonce is load-bearing for both |
-| #124 | five-position effort control | CLI-sourced levels; must rebuild the engine |
+| ~~#124~~ | ~~five-position effort control~~ | **CLOSED** `39c2896` — leg 4. Levels measured off the REAL CLI; the range carries **six stops for five levels** (stop 0 = Default, the absence of a level) because five bare stops left `low` unreachable by one gesture |
 | #125 | subagent viewer takes the window material | + positive pin + DESIGN.md + ADR |
 | #126 | subagent map visual pass | inside the pinned encoding |
 | #127 | spike — three routes nobody has called | **no `src/` diff** |
@@ -70,8 +70,8 @@ above. In short: read `.context/pick-up.md` → pick ONE ticket → branch
 `/preset wrap-up` with `.context/` committed on **main only**.
 
 **Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`. The
-baseline was **1122 / 74** before this batch and is **1164 tests / 77 files**
-after #123 — read the current number off `main` rather than trusting any of
+baseline was **1122 / 74** before this batch and is **1226 tests / 80 files**
+after #124 — read the current number off `main` rather than trusting any of
 these, because every slice adds tests.
 
 ## Landmines that bind more than one slice
@@ -137,6 +137,27 @@ these, because every slice adds tests.
 - **An event handler in main must not be able to throw** — Electron turns it
   into a modal error dialog over the app.
 - Squash-merged ticket branches need `git branch -D`.
+- **ESM FREEZES EVERY JS SEAM A DRIVER MIGHT PATCH.** #124: `sdk.query` cannot
+  be monkey-patched (the SDK ships as ESM; `require()` yields a **frozen
+  namespace** and the assignment silently no-ops) and `child_process.spawn`
+  cannot either (bound by an ESM import at link time). The route that works is
+  the OS: read the child process's command line via `Win32_Process`, walking
+  descendants of the Electron main pid. `--effort` is a real CLI flag, so the
+  value is visible in argv. **Any probe that installs something must read the
+  installation back** — the silent no-op otherwise reads as a product failure.
+- **THREE MORE INSTRUMENT TRAPS, all from #124, all producing confident false
+  REDS before their controls went in.**
+  `getComputedStyle(el, '::-webkit-slider-runnable-track')` does **not** read
+  that pseudo-element in Chromium — it returns the element's own style.
+  `locator.screenshot()` inherits the zoom/clip defect, and at this app's live
+  **1.25** factor it cropped a flat patch of the wash (1 distinct colour vs 26
+  at zoom 1). And `ConvertTo-Json` over `Win32_Process` dies on a raw control
+  character in a live command line. **A pixel probe needs a positive control** —
+  `gui-124` samples `.send-btn` beside its target so a broken instrument reports
+  UNSCORED instead of refuting. **Binds #125 and #126.**
+- **A control with a null state and an ordered scale needs a STOP for the null.**
+- **Never `git checkout <file>` to undo a mutation on uncommitted work** — it
+  reverts to HEAD and drops every edit since the branch point.
 
 ## Owner calls — recorded, and none of them block you
 
@@ -147,15 +168,21 @@ leg to stall on:
 
 1. Whether the acrylic exception reaches panes beyond the subagent viewer —
    #125 says **that pane only**. Do not generalise it.
-2. Whether `ultracode` / `auto` should be reachable — #124 ships **five
-   positions**. Do not invent a sixth.
+2. Whether `ultracode` / `auto` should be reachable — **now shipped** as five
+   positions (`39c2896`), with the SDK citation that makes it a measurement
+   rather than a taste call: `ultracode` is a session settings FLAG
+   (`sdk.d.ts:6319`), not a point on the scale. Still listed, because the owner
+   may want a separate affordance for it. **NOTE:** the range has six STOPS for
+   those five levels — stop 0 is `Default`, the absence of a level, added
+   because five bare stops left `low` unreachable by one gesture. That is not
+   the invented sixth position this call forbids.
 3. What "background a session" should mean — #127 **measures, builds nothing**.
 4. #123 ships as **refill, not a true edit** — **now shipped that way**
    (`f649f1d`), with the record carrying why a true edit is *impossible* rather
    than merely unchosen. Still listed, because the owner asked for the edit by
    name and may want to revisit what the app should do instead.
 
-**Neither #122 nor #123 added any of these, and neither resolved one by
+**None of #122, #123 or #124 added any of these, and none resolved one by
 decision.** The count stands at four.
 
 If you hit a genuinely new call the record cannot settle, take the most
