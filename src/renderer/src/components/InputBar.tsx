@@ -8,6 +8,7 @@ import type { Attachment } from '../../../shared/attachment-types'
 import { modelLabel, type ModelOption } from '../../../shared/model-types'
 import type { SlashCommandInfo } from '../../../shared/command-types'
 import { decideQueue, type LastTurn } from '../../../shared/queued-send'
+import { applyAtAccept, findAtQuery, matchFiles } from '../../../shared/file-refs'
 
 interface InputBarProps {
   busy: boolean
@@ -154,6 +155,15 @@ const InputBar = ({
   // mid-sentence never triggers; the first space means arguments, so the
   // popover gets out of the way. null list = not fetched (popover closed).
   const [cmdList, setCmdList] = useState<SlashCommandInfo[] | null>(null)
+  // The workspace's referenceable files (#118). null = not fetched. Shared
+  // highlight/dismissed state with the `/` popover below, because the two
+  // windows are mutually exclusive by construction and one of them is always
+  // the one being driven.
+  const [fileList, setFileList] = useState<string[] | null>(null)
+  // Where the caret is, which is what decides whether an `@` window is open —
+  // unlike `/`, the trigger is a property of where the user is typing rather
+  // than of the value as a whole.
+  const [caret, setCaret] = useState(0)
   const [highlight, setHighlight] = useState(0)
   const [dismissed, setDismissed] = useState(false)
   // Tray and rejections move together: one paste both admits and refuses items,
@@ -203,8 +213,42 @@ const InputBar = ({
     }
   }, [triggering, value])
 
+  // The `@` window (#118). `/` takes precedence: the two are mutually exclusive
+  // by construction — a value that starts with `/` and holds no whitespace
+  // cannot contain an `@` preceded by whitespace or by the start of the input —
+  // but the precedence is written down rather than relied on.
+  const atQuery = triggering ? null : findAtQuery(value, caret)
+  const atOpen = atQuery !== null
+
+  // Fetched once per WINDOW OPEN, not per keystroke, and that difference from
+  // `/` above is deliberate rather than an oversight. `/`'s list comes from the
+  // engine, which may not be warm yet, so a fetch landing [] must not wedge the
+  // popover shut for the rest of the window. This list comes from the
+  // filesystem, is query-independent (main returns everything that survives its
+  // boundary; the ranking and the cap are the renderer's), and an empty answer
+  // means "no workspace open", which is a real answer rather than a cold start.
+  //
+  // ponytail: no cache across windows either. #116 measured the pruned walk at
+  // 3ms/356 files, so one walk per `@` typed is well inside budget. If a
+  // monorepo ever makes that false, the ceiling to raise is in
+  // `workspace-files.ts` and the fix is a cache with an invalidation story, not
+  // a bigger number here.
+  useEffect(() => {
+    if (!atOpen) {
+      setFileList(null)
+      return
+    }
+    let live = true
+    void window.api.listWorkspaceFiles().then((files) => {
+      if (live) setFileList(files)
+    })
+    return () => {
+      live = false
+    }
+  }, [atOpen])
+
   const prefix = value.slice(1).toLowerCase()
-  const matches =
+  const cmdMatches =
     triggering && !dismissed && cmdList !== null
       ? cmdList.filter(
           (c) =>
@@ -212,13 +256,47 @@ const InputBar = ({
             (c.aliases ?? []).some((a) => a.toLowerCase().startsWith(prefix))
         )
       : []
-  const popoverOpen = matches.length > 0
-  const hi = Math.min(highlight, matches.length - 1)
+  const fileMatches =
+    atQuery && !dismissed && fileList !== null ? matchFiles(fileList, atQuery.query) : []
 
-  const accept = (c: SlashCommandInfo): void => {
+  const openList: 'command' | 'file' | null =
+    cmdMatches.length > 0 ? 'command' : fileMatches.length > 0 ? 'file' : null
+  const rowCount = openList === 'command' ? cmdMatches.length : fileMatches.length
+  const popoverOpen = openList !== null
+  const hi = Math.min(highlight, rowCount - 1)
+
+  // Set by an accept, applied after the controlled value has committed. A
+  // mid-string insert has to put the caret back where the user was typing, and
+  // React has already reset it to the end of the new value by then.
+  const pendingCaret = useRef<number | null>(null)
+  useEffect(() => {
+    const next = pendingCaret.current
+    if (next === null) return
+    pendingCaret.current = null
+    inputRef.current?.setSelectionRange(next, next)
+    setCaret(next)
+  }, [value])
+
+  const acceptCommand = (c: SlashCommandInfo): void => {
     // Insert, never send — the trailing space also closes the trigger window.
     setValue(`/${c.name} `)
     inputRef.current?.focus()
+  }
+
+  // Replaces ONLY the `@token` being typed, never the whole value — the owner
+  // call taken on #115, warranted by A4b: `/` replaces everything because a
+  // slash command IS the whole first token, and an `@` reference is one token
+  // inside a sentence.
+  const acceptFile = (path: string): void => {
+    const next = applyAtAccept(value, caret, path)
+    pendingCaret.current = next.caret
+    setValue(next.value)
+    inputRef.current?.focus()
+  }
+
+  const acceptHighlighted = (): void => {
+    if (openList === 'command') acceptCommand(cmdMatches[hi])
+    else if (openList === 'file') acceptFile(fileMatches[hi])
   }
 
   // Only file data is intercepted; a text paste falls through to the input
@@ -347,17 +425,17 @@ const InputBar = ({
     if (popoverOpen) {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
-        setHighlight((hi + 1) % matches.length)
+        setHighlight((hi + 1) % rowCount)
         return
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault()
-        setHighlight((hi - 1 + matches.length) % matches.length)
+        setHighlight((hi - 1 + rowCount) % rowCount)
         return
       }
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault()
-        accept(matches[hi])
+        acceptHighlighted()
         return
       }
       if (e.key === 'Escape') {
@@ -478,16 +556,60 @@ const InputBar = ({
              `useChat.send`, which is the one place that reads busy. */
           onChange={(e) => {
             setValue(e.target.value)
+            // Read off the element rather than off the new value's length: a
+            // mid-string edit leaves the caret where the edit happened, and the
+            // `@` window is decided by where the caret is.
+            setCaret(e.target.selectionStart ?? e.target.value.length)
             // Typing re-arms a dismissed popover and re-anchors the highlight.
             setDismissed(false)
             setHighlight(0)
           }}
+          // Caret moves with no edit — a click or an arrow key — open and close
+          // the `@` window just as typing does. Without this, moving back into a
+          // half-typed reference leaves the popover shut.
+          //
+          // Read off the REF, never off the event target. React's `onSelect` is
+          // a synthetic event whose target is not reliably this textarea, so
+          // `e.target.selectionStart` can be undefined — and a `?? 0` fallback
+          // then reports the caret at the start of the value, which closes the
+          // window on the very gesture that should keep it open. Measured in a
+          // real window by `gui-118.mjs`: the popover opened under jsdom and was
+          // shut in Chromium, with every assertion in the vitest suite green.
+          onSelect={() => {
+            const el = inputRef.current
+            if (el) setCaret(el.selectionStart ?? el.value.length)
+          }}
           onKeyDown={onKeyDown}
           onPaste={onPaste}
         />
-        {popoverOpen ? (
+        {/* Its own class and its own accessible name, not a variant of the
+            command popover's: the GUI drivers select by class, and a bare shared
+            selector matches whichever list renders first — the
+            `.tool-card-toggle` and `.switch-refusal-retry` failure, both silent
+            and both green. */}
+        {openList === 'file' ? (
+          <div className="file-popover" role="listbox" aria-label="File suggestions">
+            {fileMatches.map((p, i) => (
+              <button
+                key={p}
+                type="button"
+                role="option"
+                aria-selected={i === hi}
+                className={`file-option${i === hi ? ' file-option--active' : ''}`}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => acceptFile(p)}
+              >
+                <span className="file-row-name">{p.slice(p.lastIndexOf('/') + 1)}</span>
+                {p.includes('/') ? (
+                  <span className="file-row-path">{p.slice(0, p.lastIndexOf('/'))}</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {openList === 'command' ? (
           <div className="command-popover" role="listbox" aria-label="Command suggestions">
-            {matches.map((c, i) => (
+            {cmdMatches.map((c, i) => (
               <button
                 key={c.name}
                 type="button"
@@ -496,7 +618,7 @@ const InputBar = ({
                 className={`command-option${i === hi ? ' command-option--active' : ''}`}
                 // preventDefault keeps focus in the input through a mouse pick.
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => accept(c)}
+                onClick={() => acceptCommand(c)}
               >
                 <span className="command-row-name">/{c.name}</span>
                 {c.argumentHint ? (

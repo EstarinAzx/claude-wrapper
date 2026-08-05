@@ -69,7 +69,8 @@
    their anchoring and their ceiling differ. */
 
 .model-menu,
-.command-popover {
+.command-popover,
+.file-popover {
   position: absolute;
   bottom: calc(100% + 6px);
   z-index: 11;
@@ -89,14 +90,16 @@
   max-height: 280px;
 }
 
-.command-popover {
+.command-popover,
+.file-popover {
   left: 0;
   right: 0;
   max-height: 260px;
 }
 
 .model-menu-item,
-.command-option {
+.command-option,
+.file-option {
   padding: 6px 10px;
   border: 0;
   border-radius: 5px;
@@ -120,6 +123,36 @@
 
 .command-option-desc {
   color: var(--text-muted);
+}
+
+/* The `@` file popover (#118). Same card as the command list — it is the same
+   affordance in the same place — but its own selectors, because the GUI drivers
+   pick rows by class and a shared one matches whichever list rendered first.
+   The row reads filename-first with the directory trailing quietly after it:
+   what disambiguates two `index.ts`es is the path, but what the user is looking
+   for is the name. */
+.file-option {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.file-option--active {
+  background: var(--tint-3);
+}
+
+.file-row-name {
+  flex-shrink: 0;
+}
+
+.file-row-path {
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
 }
 
 .attach-btn {

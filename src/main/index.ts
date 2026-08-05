@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Notification, screen, shell } from 'electron'
 import { basename, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { readFile, stat } from 'node:fs/promises'
+import { readdir, readFile, realpath, stat } from 'node:fs/promises'
 import { createEngine } from './engine'
 import {
   initBackendMode,
@@ -46,6 +46,7 @@ import { deleteSession, listSessions, readTranscript, titleHint } from './sessio
 import { guardedDelete } from './delete-guard'
 import { guardedSend } from './send-guard'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
+import { listWorkspaceFiles, type WorkspaceFilePorts } from './workspace-files'
 import { listBackgroundSessions } from './agent-view'
 import { ensureListEngine, type ListEnginePorts } from './list-engine'
 import type { PermissionDecision } from '../shared/engine-types'
@@ -53,6 +54,21 @@ import type { PermissionDecision } from '../shared/engine-types'
 let engine: ReturnType<typeof createEngine> | null = null
 let pendingResume: string | null = null
 const permissionBroker = createPermissionBroker()
+
+// The real filesystem behind `files:list` (#118). Injected rather than imported
+// inside the module so the walk's containment can be tested by asserting these
+// ports were never REACHED for an escaping entry — a result-only suite would
+// pass against a version that returned it and let the renderer filter.
+const workspaceFilePorts: WorkspaceFilePorts = {
+  readDir: async (dir) =>
+    (await readdir(dir, { withFileTypes: true })).map((e) => ({
+      name: e.name,
+      isDirectory: e.isDirectory(),
+      isSymbolicLink: e.isSymbolicLink()
+    })),
+  realPath: (target) => realpath(target),
+  readIgnore: (file) => readFile(file, 'utf8').catch(() => null)
+}
 const rendererFile = join(__dirname, '../renderer/index.html')
 const rendererUrl = pathToFileURL(rendererFile).href
 
@@ -417,6 +433,22 @@ const listEnginePorts: ListEnginePorts<ReturnType<typeof createEngine>> = {
 ipcMain.handle('commands:list', async (event) => {
   if (!isTrustedIpc(event)) return []
   return ensureListEngine(listEnginePorts).listCommands()
+})
+
+// The `@` file list (#118). Read-only, and the ONLY thing that crosses is a
+// list of workspace-relative POSIX paths — main resolves nothing and the
+// renderer never learns an absolute path, so a renderer bug cannot turn a
+// suggestion into a filesystem reach. Escape rejection happens inside
+// `listWorkspaceFiles`, at discovery, so an out-of-workspace candidate is never
+// reached rather than merely absent here.
+//
+// No workspace open is `[]`, not an error: the composer exists before a folder
+// is picked, and an empty list is the honest answer for "nothing to reference".
+ipcMain.handle('files:list', async (event): Promise<string[]> => {
+  if (!isTrustedIpc(event)) return []
+  const cwd = getSessionCwd()
+  if (!cwd) return []
+  return listWorkspaceFiles(workspaceFilePorts, cwd)
 })
 
 ipcMain.handle('session:list', async (event) => {

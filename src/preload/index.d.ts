@@ -51,6 +51,7 @@ export interface WrapperApi {
   setPermissionMode: (mode: PermissionMode) => void
   onPermissionChanged: (cb: (mode: PermissionMode) => void) => () => void
   listCommands: () => Promise<SlashCommandInfo[]>
+  listWorkspaceFiles: () => Promise<string[]>
   listModels: () => Promise<ModelInfo>
   setModel: (model: string | null) => void
   onModelChanged: (cb: (model: string | null) => void) => () => void

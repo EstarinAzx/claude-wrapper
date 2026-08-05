@@ -77,6 +77,12 @@ const api = {
     }
   },
   listCommands: (): Promise<SlashCommandInfo[]> => ipcRenderer.invoke('commands:list'),
+  // #118 — the open workspace's referenceable files, as workspace-relative
+  // POSIX paths. Typing assistance ONLY: `@path` in prompt text is already
+  // resolved by the CLI (#116 measured it), so nothing here touches the send
+  // path. `[]` is the honest answer for "no workspace open" as well as for an
+  // empty one — the composer exists before a folder is picked.
+  listWorkspaceFiles: (): Promise<string[]> => ipcRenderer.invoke('files:list'),
   listModels: (): Promise<ModelInfo> => ipcRenderer.invoke('model:list'),
   setModel: (model: string | null): void => ipcRenderer.send('model:set', model),
   onModelChanged: (cb: (model: string | null) => void): (() => void) => {

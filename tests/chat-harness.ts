@@ -135,6 +135,9 @@ export const fakeChatApi = (folder = FOLDER) => {
     listCommands: vi
       .fn<() => Promise<SlashCommandInfo[]>>()
       .mockResolvedValue([]),
+    // #118 — the `@` file list. Empty by default so no existing test grows a
+    // popover it never asked for; the at-mentions suite sets its own.
+    listWorkspaceFiles: vi.fn<() => Promise<string[]>>().mockResolvedValue([]),
     listModels: vi
       .fn<() => Promise<ModelInfo>>()
       .mockResolvedValue({ models: CLI_MODELS, current: null }),
