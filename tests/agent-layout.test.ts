@@ -197,11 +197,44 @@ describe('layoutAgentMap', () => {
       const to = byId.get(e.to)
       expect(from).toBeDefined()
       expect(to).toBeDefined()
+      // x is untouched by the inset — the curve leaves both ends vertically.
       expect(e.fromX).toBe(from!.x)
-      expect(e.fromY).toBe(from!.y)
       expect(e.toX).toBe(to!.x)
-      expect(e.toY).toBe(to!.y)
+      // y is pulled back to each node's rim, so the edge starts BELOW its
+      // parent's centre and ends ABOVE its child's, never at either centre.
+      expect(e.fromY).toBeGreaterThan(from!.y)
+      expect(e.toY).toBeLessThan(to!.y)
+      expect(e.fromY).toBeLessThan(e.toY)
     }
+  })
+
+  // The whole point of the inset: an edge must stop at the node's rim rather
+  // than run under the glyph. Asserted as a clearance, not as an exact
+  // coordinate, so retuning the gap does not force a test rewrite.
+  test('edges clear the rim of the nodes they join', () => {
+    const rows = [
+      row({ parentToolUseId: 'tp', agentId: 'p' }),
+      row({ parentToolUseId: 'tc', agentId: 'c', parentAgentId: 'p' })
+    ]
+    const { nodes, edges, nodeRadius, sessionRadius } = layoutAgentMap(rows)
+    const byId = new Map(nodes.map((n) => [n.id, n]))
+    expect(edges.length).toBeGreaterThan(0)
+    for (const e of edges) {
+      const from = byId.get(e.from)!
+      const to = byId.get(e.to)!
+      const fromR = from.kind === 'session' ? sessionRadius : nodeRadius
+      expect(e.fromY - from.y).toBeGreaterThan(fromR)
+      expect(to.y - e.toY).toBeGreaterThan(nodeRadius)
+    }
+  })
+
+  // The session is the origin and reads as such by SIZE, never by taking the
+  // accent — colour is spoken for by status.
+  test('the session mark is larger than an agent mark', () => {
+    const { nodeRadius, sessionRadius } = layoutAgentMap([
+      row({ parentToolUseId: 't1', agentId: 'a' })
+    ])
+    expect(sessionRadius).toBeGreaterThan(nodeRadius)
   })
 
   test('the same agent list always produces identical coordinates', () => {
@@ -301,14 +334,31 @@ describe('layoutAgentMap', () => {
       )
       const map = layoutAgentMap(rows)
       expect(map.nodeRadius).toBeGreaterThanOrEqual(3)
-      expect(map.nodeRadius).toBeLessThanOrEqual(9)
+      expect(map.nodeRadius).toBeLessThanOrEqual(14)
       for (const n of map.nodes) {
-        expect(n.x - map.nodeRadius).toBeGreaterThanOrEqual(0)
-        expect(n.x + map.nodeRadius).toBeLessThanOrEqual(map.width)
-        expect(n.y).toBeGreaterThanOrEqual(0)
-        expect(n.y).toBeLessThanOrEqual(map.height)
+        // Each mark is checked against ITS OWN half-extent — the session's is
+        // the larger one, and checking it against nodeRadius would let the
+        // biggest mark on the canvas be the one that clips.
+        const half = n.kind === 'session' ? map.sessionRadius : map.nodeRadius
+        expect(n.x - half).toBeGreaterThanOrEqual(0)
+        expect(n.x + half).toBeLessThanOrEqual(map.width)
+        expect(n.y - half).toBeGreaterThanOrEqual(0)
+        expect(n.y + half).toBeLessThanOrEqual(map.height)
       }
     }
+  })
+
+  // The R_MAX raise is targeted: it may only affect fans small enough that the
+  // cap is the binding term. A wide fan must come out byte-identical, because
+  // that is the case with no room to spare.
+  test('a wide fan is unaffected by the raised radius cap', () => {
+    const rows = Array.from({ length: 28 }, (_, i) =>
+      row({ parentToolUseId: `t${i}`, agentId: `a${i}` })
+    )
+    const map = layoutAgentMap(rows)
+    // 240 / 28 = 8.57 slot units; 8.57 * 0.3 floors at R_MIN, so neither the
+    // old cap of 9 nor the new one of 14 is reachable here.
+    expect(map.nodeRadius).toBe(3)
   })
 
   // Sibling nodes must not overlap, or a dense fan reads as one blob and the

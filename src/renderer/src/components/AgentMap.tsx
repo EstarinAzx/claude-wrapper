@@ -14,7 +14,7 @@ const AgentMap = ({
   selectedId: string | null
   onOpenAgent: (parentToolUseId: string, agentType: string) => void
 }) => {
-  const { nodes, edges, width, height, nodeRadius: r } = layoutAgentMap(rows)
+  const { nodes, edges, width, height, nodeRadius: r, sessionRadius: sr } = layoutAgentMap(rows)
 
   // Transparent hit circles are what make a 3px node clickable, but in a dense
   // fan an oversized one would sit on top of its neighbour and steal the click.
@@ -34,7 +34,7 @@ const AgentMap = ({
     const xs = [...band].sort((a, b) => a - b)
     for (let i = 1; i < xs.length; i++) tightest = Math.min(tightest, xs[i] - xs[i - 1])
   }
-  const hitR = Math.min(Math.max(r + 4, 9), tightest / 2)
+  const hitR = Math.min(Math.max(r + 6, 11), tightest / 2)
 
   return (
     <div className="agent-map">
@@ -60,10 +60,19 @@ const AgentMap = ({
         </g>
         {nodes.map((n) => {
           if (n.kind === 'session') {
+            // The largest mark on the canvas, and the only rounded square — the
+            // origin every edge descends from. Corner radius tracks the size so
+            // the silhouette stays the same shape at every fan width.
             return (
               <g className="agent-map-node-session" key={n.id}>
                 <title>Session</title>
-                <rect x={n.x - r} y={n.y - r} width={r * 2} height={r * 2} rx={3} />
+                <rect
+                  x={n.x - sr}
+                  y={n.y - sr}
+                  width={sr * 2}
+                  height={sr * 2}
+                  rx={Math.round(sr * 0.42 * 100) / 100}
+                />
               </g>
             )
           }
@@ -112,13 +121,17 @@ const AgentMap = ({
               }}
             >
               <title>{label}</title>
+              {/* Every satellite scales WITH the node rather than sitting a
+                  fixed few units outside it: the radius swings 3 → 14 across
+                  fan widths, and a constant offset reads as a tight collar at
+                  one end of that range and a loose orbit at the other. */}
               {running ? (
-                <circle className="agent-map-halo" cx={n.x} cy={n.y} r={r + 3} />
+                <circle className="agent-map-halo" cx={n.x} cy={n.y} r={r * 1.55} />
               ) : null}
               {selected ? (
-                <circle className="agent-map-ring" cx={n.x} cy={n.y} r={r + 4} />
+                <circle className="agent-map-ring" cx={n.x} cy={n.y} r={r * 1.85} />
               ) : null}
-              <circle className="agent-map-hover" cx={n.x} cy={n.y} r={r + 4} />
+              <circle className="agent-map-hover" cx={n.x} cy={n.y} r={r * 1.7} />
               {glyph}
               <circle className="agent-map-hit" cx={n.x} cy={n.y} r={hitR} />
             </g>

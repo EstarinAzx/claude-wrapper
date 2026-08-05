@@ -101,11 +101,22 @@ export const flattenAgentTree = (nodes: AgentNode[]): AgentNode[] => {
 
 const CONTENT_W = 240
 const MIN_SLOTS = 5
-const BAND_H = 46
-const PAD_Y = 22
+const BAND_H = 62
+const PAD_Y = 30
 const R_RATIO = 0.3
 const R_MIN = 3
-const R_MAX = 9
+// Raised from 9 in #126. A cap can only bind while slotW * R_RATIO exceeds it,
+// so raising one can only change the fans where the OLD cap bound: below 8
+// leaves (at 8, slotW * R_RATIO is already exactly 9). From 8 leaves up, slotW
+// alone is the smaller term under either value and the geometry is
+// byte-identical — so this grows the marks in the sessions people actually have,
+// one root and a handful of children, and leaves the crowded case alone.
+const R_MAX = 14
+// The session is the origin of the tree and reads as such by being the largest
+// mark, not by taking the accent: colour is spoken for by status.
+const SESSION_R_RATIO = 1.3
+// Clearance between a node's rim and the edge that meets it, in viewBox units.
+const EDGE_GAP = 4
 
 // Discriminated on `kind` so the renderer gets `row` narrowed to a real AgentRow
 // after one check, rather than reaching for a non-null assertion at the only
@@ -121,6 +132,11 @@ export type MapNode =
   | (MapNodeBase & { kind: 'session'; row?: undefined })
   | (MapNodeBase & { kind: 'agent'; row: AgentRow })
 
+// Endpoints are the drawn ones, NOT the node centres: each is pulled back to its
+// node's rim plus EDGE_GAP, so an edge meets a node instead of running under it.
+// Keeping the inset here rather than in the renderer is what lets it be tested
+// as data, and is why `fromX`/`toX` still equal the nodes' x — the curve leaves
+// both ends vertically, so a pure-y inset is exact rather than an approximation.
 export interface MapEdge {
   id: string
   from: string
@@ -137,6 +153,9 @@ export interface AgentMap {
   width: number
   height: number
   nodeRadius: number
+  // The session mark's half-extent. Separate from nodeRadius because the two
+  // differ, and the renderer needs the session's own size to draw its rect.
+  sessionRadius: number
 }
 
 const round2 = (n: number): number => Math.round(n * 100) / 100
@@ -211,19 +230,32 @@ export const layoutAgentMap = (rows: AgentRow[]): AgentMap => {
   const nodes: MapNode[] = [sessionNode, ...agentNodes]
   const byId = new Map(nodes.map((n) => [n.id, n]))
 
+  const nodeRadius = round2(clamp(slotW * R_RATIO, R_MIN, R_MAX))
+  const sessionRadius = round2(nodeRadius * SESSION_R_RATIO)
+  const radiusOf = (n: MapNode): number => (n.kind === 'session' ? sessionRadius : nodeRadius)
+
   const edges: MapEdge[] = []
   const link = (fromId: string, toId: string): void => {
     const from = byId.get(fromId)
     const to = byId.get(toId)
     if (from === undefined || to === undefined) return
+    const span = to.y - from.y
+    const wanted = radiusOf(from) + radiusOf(to) + EDGE_GAP * 2
+    // ponytail: at BAND_H 62 and R_MAX 14 the full inset is always well under
+    // the span, so `k` is 1 in every reachable case. It exists so that shrinking
+    // a band later degrades to a shorter edge rather than an inverted one —
+    // an edge whose endpoints crossed would draw a visible backwards hook.
+    // Upgrade path if bands ever get that tight: drop the edge entirely and let
+    // adjacency carry the nesting.
+    const k = span <= 0 ? 0 : Math.min(1, (span * 0.7) / wanted)
     edges.push({
       id: `${fromId}->${toId}`,
       from: fromId,
       to: toId,
       fromX: from.x,
-      fromY: from.y,
+      fromY: round2(from.y + (radiusOf(from) + EDGE_GAP) * k),
       toX: to.x,
-      toY: to.y
+      toY: round2(to.y - (radiusOf(to) + EDGE_GAP) * k)
     })
   }
   for (const p of placedRoots) link('session', p.node.row.parentToolUseId)
@@ -246,7 +278,10 @@ export const layoutAgentMap = (rows: AgentRow[]): AgentMap => {
     // ponytail: radius floors at R_MIN, so past ~40 leaves the outermost nodes
     // would clip the canvas edge. Real sessions top out around 28 (28 sidecars
     // is the largest observed) and 28 still fits. Inset the slot span by the
-    // radius if a fan-out ever gets wide enough to matter.
-    nodeRadius: round2(clamp(slotW * R_RATIO, R_MIN, R_MAX))
+    // radius if a fan-out ever gets wide enough to matter. #126 raised R_MAX
+    // rather than R_MIN precisely so this ceiling did not move: the floor, and
+    // therefore the widest fan that fits, is unchanged.
+    nodeRadius,
+    sessionRadius
   }
 }

@@ -1,22 +1,43 @@
-/* Agents dock, map mode. SVG paint only: shape = kind, colour = status. */
+/* Agents dock, map mode. SVG paint only: shape = kind, colour = status.
+
+   The material vocabulary is deliberately the same one the rest of the app
+   uses — neutral tint ladder for structure, the accent for live state only.
+   A node that has finished is a SOLID neutral object, not a hollow outline:
+   hollow is reserved for `unknown`, which is the one status that really is an
+   absence of information. Before #126 both were outlines and they read as the
+   same thing at a 180px panel. */
 
 .agent-map {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 12px 18px;
+  padding: 18px 14px 22px;
 }
 
+/* The map zooms with the panel, since the viewBox scales into whatever width
+   it gets. Left uncapped, a 480px dock inflates a seven-node tree into
+   fifty-pixel blobs, so the drawing stops growing at a sensible size and
+   centres in the space instead. */
 .agent-map-svg {
   width: 100%;
+  max-width: 280px;
   height: auto;
   display: block;
+  margin-inline: auto;
 }
 
+/* Nesting is the one thing this view exists to show, so the edges are content,
+   not chrome. Two things were wrong with them: stroke width is in viewBox
+   units, so a 1 rendered at roughly 0.6 of a device pixel at the clamp floor,
+   and a 16%-alpha near-white over a near-black ground is close to nothing. The
+   tint ladder tops out at 20% and cannot fix the second, so the line takes the
+   faint TEXT colour instead — opaque, quiet, and already this file's vocabulary
+   for a structural stroke. */
 .agent-map-edge {
   fill: none;
-  stroke: var(--tint-5);
-  stroke-width: 1;
+  stroke: var(--text-faint);
+  stroke-width: 1.4;
+  stroke-linecap: round;
 }
 
 .agent-map-node {
@@ -24,10 +45,16 @@
   outline: none;
 }
 
+/* Settled marks are SOLID and sit lighter than the panel. Two darker candidates
+   were tried on the real window first and both read as holes punched in the
+   surface rather than as objects on it: a tint-ladder step is a near-white
+   alpha over a near-black ground, and `--bubble` composites to roughly the
+   panel's own value once the wash under it is counted. `--text-faint` is the
+   quietest opaque value in the system that actually lifts. The root takes the
+   same material as a finished agent and is told apart by shape and size, never
+   by colour — colour is spoken for by status. */
 .agent-map-node-session rect {
-  fill: var(--surface);
-  stroke: var(--text-muted);
-  stroke-width: 1.25;
+  fill: var(--text-faint);
 }
 
 .agent-map-glyph {
@@ -40,9 +67,8 @@
 }
 
 .agent-map-node--done .agent-map-glyph {
-  fill: none;
-  stroke: var(--text-muted);
-  stroke-width: 1.5;
+  fill: var(--text-faint);
+  stroke: none;
 }
 
 .agent-map-node--failed .agent-map-glyph {
@@ -53,13 +79,13 @@
 .agent-map-node--unknown .agent-map-glyph {
   fill: none;
   stroke: var(--text-faint);
-  stroke-width: 1;
-  stroke-dasharray: 2 2;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
 }
 
 /* The alpha lives in the fill, not in `opacity`: subagent-pulse animates opacity
    between 1 and 0.35, so an opacity-based tint would be overridden and the halo
-   would flash near-solid mint instead of breathing. */
+   would flash near-solid mint. */
 .agent-map-halo {
   fill: color-mix(in oklch, var(--mint) 22%, transparent);
   animation: subagent-pulse 1.4s ease-in-out infinite;
@@ -88,7 +114,7 @@
 .agent-map-ring {
   fill: none;
   stroke: var(--mint);
-  stroke-width: 1;
+  stroke-width: 1.5;
 }
 
 .agent-map-hit {
