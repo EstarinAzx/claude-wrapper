@@ -1,0 +1,510 @@
+{
+  "spike": 127,
+  "question": "Three routes nobody has called: subagent inbound, rewind, backgrounding.",
+  "measuredAt": "2026-08-05T12:31:44.715Z",
+  "phasesRun": [
+    "0",
+    "1",
+    "2",
+    "3"
+  ],
+  "env": {
+    "backendMode": "wisped",
+    "hostCliUsed": true,
+    "cliVersion": "2.1.222 (Claude Code)",
+    "sdkVersion": "0.3.220",
+    "platform": "win32",
+    "node": "v22.17.0"
+  },
+  "scrubbing": "Counts, shapes, vocabularies, timings, booleans and CLI-generated error text passed through a redactor. No cwd, home directory, username, absolute path, session id, model id or command name.",
+  "method": "Every route is probed by CALLING a warm handle, never by grepping a bundle or reading a .d.ts (#115: a declared wire type is not a callable route; #117: a callable route is not an effective one). Each phase carries a bogus-subtype negative control, and a route that only THREW is still scored ROUTE PRESENT when its error differs from the unknown-subtype refusal — that difference is the instrument.",
+  "phase0_sourceFacts": {
+    "note": "Every entry records the TEXT it matched, not a boolean (#113/#114/#116). These are HYPOTHESIS GENERATORS for the phases below — a declared wire type is not a callable route (#115), which is why nothing here appears in any verdict.",
+    "sdkVersion": "0.3.220",
+    "declaredSubtypes": {
+      "rewind_files": {
+        "readable": true,
+        "count": 3,
+        "matched": [
+          "subtype: 'rewind_files'",
+          "user_message_id: string",
+          "dry_run?: boolean"
+        ]
+      },
+      "background_tasks": {
+        "readable": true,
+        "count": 2,
+        "matched": [
+          "Backgrounds in-flight foreground tasks (Bash commands and subagents). With tool_use_id, targets the single task started by that tool_use block; without it, ba",
+          "subtype: 'background_tasks'"
+        ]
+      },
+      "parentToolUseIdOnUserMessage": {
+        "readable": true,
+        "count": 2,
+        "matched": [
+          "type: 'user';\r\n    message: MessageParam;\r\n    parent_tool_use_id: string | null;",
+          "type: 'user';\r\n    message: MessageParam;\r\n    parent_tool_use_id: string | null;"
+        ]
+      },
+      "remoteControlMethod": {
+        "readable": true,
+        "count": 1,
+        "matched": [
+          "enableRemoteControl(e,t)"
+        ]
+      },
+      "sideQuestionMethod": {
+        "readable": true,
+        "count": 1,
+        "matched": [
+          "askSideQuestion(e)"
+        ]
+      }
+    },
+    "appSendShape": {
+      "matched": [
+        "parent_tool_use_id: null"
+      ],
+      "appAlwaysSendsNullParent": true,
+      "forwardSubagentTextOff": true
+    }
+  },
+  "q1_subagentInbound": {
+    "sentinelShape": "SPIKE127-Q1-<16 hex>, random per run",
+    "turnsSpent": 4,
+    "negativeControl": {
+      "refused": true,
+      "refusalText": "Unsupported control request subtype: spike127_definitely_not_a_real_subtype",
+      "verdict": "The CLI refuses unknown subtypes by name, so a differing error below is a real signal."
+    },
+    "armA_transport": {
+      "label": "A-transport-bogus-parent-no-subagent",
+      "ranTurn": true,
+      "turnIsError": false,
+      "resultSubtype": "success",
+      "error": null,
+      "toolUseNames": [],
+      "subagentToolUseIds": [],
+      "injected": [],
+      "durationMs": 8700,
+      "resultText": "OK",
+      "bogusParentAccepted": true,
+      "sentinelEchoedInResult": false,
+      "note": "A push that does not throw only means the SDK serialised it. Whether the CLI routed, dropped or folded it is what the sentinel echo and the arms below speak to."
+    },
+    "armB_positiveControl": {
+      "label": "B-no-injection",
+      "mode": "none",
+      "ranTurn": true,
+      "turnIsError": false,
+      "resultSubtype": "success",
+      "error": null,
+      "toolUseNames": [
+        "Agent",
+        "Bash"
+      ],
+      "subagentToolUseIds": [
+        "toolu_01Up3LkMHaZ48xBqrRvNCyfm"
+      ],
+      "injected": {
+        "attempted": false,
+        "toolUseId": null,
+        "threw": null,
+        "atMs": null
+      },
+      "durationMs": 59216,
+      "resultText": "READY\n\nNONE",
+      "startedASubagent": true,
+      "sentinelInResultText": false,
+      "sentinelInSubagentTaggedMessages": false,
+      "sentinelAnywhereInStream": false,
+      "sentinelOccurrences": 0,
+      "note": "sentinelInResultText is the main thread repeating the report. sentinelInSubagentTaggedMessages is the token appearing on a message the CLI itself tagged with a parent_tool_use_id, which is the closest observable to \"the subagent had it\"."
+    },
+    "armC_measurement": {
+      "label": "C-inject-live-subagent-id",
+      "mode": "live",
+      "ranTurn": true,
+      "turnIsError": false,
+      "resultSubtype": "success",
+      "error": null,
+      "toolUseNames": [
+        "Agent",
+        "Bash"
+      ],
+      "subagentToolUseIds": [
+        "toolu_01N5gQVYCpVGPL7YiY8SDeiq"
+      ],
+      "injected": {
+        "attempted": true,
+        "toolUseId": "<live subagent tool_use id>",
+        "threw": null,
+        "atMs": 12389
+      },
+      "durationMs": 62278,
+      "resultText": "READY\n\nNONE\n\nSPIKE127-Q1-EFA47995F3FFCB22",
+      "startedASubagent": true,
+      "sentinelInResultText": true,
+      "sentinelInSubagentTaggedMessages": false,
+      "sentinelAnywhereInStream": true,
+      "sentinelOccurrences": 3,
+      "note": "sentinelInResultText is the main thread repeating the report. sentinelInSubagentTaggedMessages is the token appearing on a message the CLI itself tagged with a parent_tool_use_id, which is the closest observable to \"the subagent had it\"."
+    },
+    "armD_negativeControl": {
+      "label": "D-inject-bogus-id",
+      "mode": "bogus",
+      "ranTurn": true,
+      "turnIsError": false,
+      "resultSubtype": "success",
+      "error": null,
+      "toolUseNames": [
+        "Agent",
+        "Bash"
+      ],
+      "subagentToolUseIds": [
+        "toolu_01GjPJQai1nABL5fpD3p6ZBw"
+      ],
+      "injected": {
+        "attempted": true,
+        "toolUseId": "<bogus>",
+        "threw": null,
+        "atMs": 1170
+      },
+      "durationMs": 61265,
+      "resultText": "READY\n\nNONE\n\nSPIKE127-Q1-EFA47995F3FFCB22\n\n(Token added per your mid-turn instruction — agent itself got no message; its report was just \"READY / NONE\".)",
+      "startedASubagent": true,
+      "sentinelInResultText": true,
+      "sentinelInSubagentTaggedMessages": false,
+      "sentinelAnywhereInStream": true,
+      "sentinelOccurrences": 3,
+      "note": "sentinelInResultText is the main thread repeating the report. sentinelInSubagentTaggedMessages is the token appearing on a message the CLI itself tagged with a parent_tool_use_id, which is the closest observable to \"the subagent had it\"."
+    },
+    "answer": "NO, WITH A NEAR MISS — the addressed message was accepted and reached the MAIN thread (it appears beyond its own echo), but never reached subagent-tagged output. The field is transported and ignored for routing.",
+    "cannotSettle": [
+      "Whether some OTHER route (a control subtype not in the SDK's vocabulary, an MCP surface, a file the CLI watches) can reach a running subagent. This arm measures the one addressing field the protocol declares.",
+      "What a FUTURE CLI does — the answer is pinned to the version recorded in `env`, and phase 0's matched text is the alarm for a rename.",
+      "Whether a message addressed at a different MOMENT (before the worker exists, or after its Bash settles) behaves differently. One injection window was measured and it is stated in `injected.atMs`."
+    ]
+  },
+  "q2_rewind": {
+    "turnsSpent": 2,
+    "commandSurface": {
+      "count": 120,
+      "rewindAdvertised": false,
+      "bgAdvertised": false,
+      "anyNameContainingRewind": 0,
+      "anyNameContainingCheckpoint": 0,
+      "recon120SaidCount": 121,
+      "note": "#120's recon measured 121 commands with /rewind and /bg both absent. Re-asserted here so a CLI update that ADDS either shows up as a changed number rather than as this spike quietly measuring a different world."
+    },
+    "negativeControl": {
+      "refused": true,
+      "refusalText": "Unsupported control request subtype: spike127_definitely_not_a_real_subtype",
+      "verdict": "The CLI refuses unknown subtypes by name, so a differing error below is a real signal."
+    },
+    "armA_reachability": [
+      {
+        "label": "rewind_files / unroutable id / dry_run",
+        "subtype": "rewind_files",
+        "outcome": "accepted",
+        "responseKeys": [
+          "request_id",
+          "response",
+          "subtype"
+        ],
+        "responseInnerKeys": [
+          "canRewind",
+          "error"
+        ],
+        "canRewind": false,
+        "responseError": "File rewinding is not enabled.",
+        "responseCounts": {},
+        "responseArrayLengths": {},
+        "ms": 19,
+        "verdict": "ROUTE PRESENT — the subtype was accepted where a bogus one is refused."
+      },
+      {
+        "label": "get_workspace_diff",
+        "subtype": "get_workspace_diff",
+        "outcome": "accepted",
+        "responseKeys": [
+          "request_id",
+          "response",
+          "subtype"
+        ],
+        "responseInnerKeys": [
+          "diff"
+        ],
+        "canRewind": null,
+        "responseError": null,
+        "responseCounts": {},
+        "responseArrayLengths": {},
+        "ms": 594,
+        "verdict": "ROUTE PRESENT — the subtype was accepted where a bogus one is refused."
+      },
+      {
+        "label": "rewind_files / required field omitted",
+        "subtype": "rewind_files",
+        "outcome": "threw",
+        "errorText": "File rewinding is not enabled.",
+        "sameAsBogusRefusal": false,
+        "looksLikeUnknownSubtype": false,
+        "ms": 1,
+        "verdict": "ROUTE PRESENT — refused, but NOT with the unknown-subtype refusal, so the subtype was recognised and its own validator rejected the arguments."
+      }
+    ],
+    "armB_baseline_appShape": {
+      "label": "B-checkpointing-off-app-env",
+      "checkpointing": false,
+      "envPassed": "the app's own resolveSpawnEnv output (engine.ts shape)",
+      "attempted": true,
+      "ranTurn": true,
+      "turnIsError": false,
+      "fileChangedByTurn": true,
+      "hostStampedUuidAccepted": {
+        "checked": true,
+        "transcriptUserMessages": 4,
+        "firstUserUuidIsHostStamped": true
+      },
+      "bogusIdControl": {
+        "label": "B-checkpointing-off-app-env / bogus uuid / dry_run=false",
+        "subtype": "rewind_files",
+        "outcome": "threw",
+        "errorText": "File rewinding is not enabled.",
+        "sameAsBogusRefusal": false,
+        "looksLikeUnknownSubtype": false,
+        "ms": 1,
+        "verdict": "ROUTE PRESENT — refused, but NOT with the unknown-subtype refusal, so the subtype was recognised and its own validator rejected the arguments.",
+        "fileRevertedByBogusId": false,
+        "verdictAttribution": "HELD — a bogus id did not revert the file."
+      },
+      "dryRun": {
+        "label": "B-checkpointing-off-app-env / real uuid / dry_run=true",
+        "subtype": "rewind_files",
+        "outcome": "accepted",
+        "responseKeys": [
+          "request_id",
+          "response",
+          "subtype"
+        ],
+        "responseInnerKeys": [
+          "canRewind",
+          "error"
+        ],
+        "canRewind": false,
+        "responseError": "File rewinding is not enabled.",
+        "responseCounts": {},
+        "responseArrayLengths": {},
+        "ms": 3,
+        "verdict": "ROUTE PRESENT — the subtype was accepted where a bogus one is refused."
+      },
+      "dryRunLeftFileMutated": true,
+      "wetRun": {
+        "label": "B-checkpointing-off-app-env / real uuid / dry_run=false",
+        "subtype": "rewind_files",
+        "outcome": "threw",
+        "errorText": "File rewinding is not enabled.",
+        "sameAsBogusRefusal": false,
+        "looksLikeUnknownSubtype": false,
+        "ms": 0,
+        "verdict": "ROUTE PRESENT — refused, but NOT with the unknown-subtype refusal, so the subtype was recognised and its own validator rejected the arguments."
+      },
+      "fileRevertedToOriginal": false,
+      "verdict": "REACHABLE BUT NOT EFFECTIVE — the route answered and the file did not revert (canRewind=false, error=\"File rewinding is not enabled.\"). #117's distinction, and here it is a CONFIGURATION answer rather than a missing capability."
+    },
+    "armC_checkpointingOn_appEnv": {
+      "label": "C-checkpointing-on-app-env",
+      "checkpointing": true,
+      "envPassed": "the app's own resolveSpawnEnv output (engine.ts shape)",
+      "attempted": true,
+      "ranTurn": true,
+      "turnIsError": false,
+      "fileChangedByTurn": true,
+      "hostStampedUuidAccepted": {
+        "checked": true,
+        "transcriptUserMessages": 4,
+        "firstUserUuidIsHostStamped": true
+      },
+      "bogusIdControl": {
+        "label": "C-checkpointing-on-app-env / bogus uuid / dry_run=false",
+        "subtype": "rewind_files",
+        "outcome": "threw",
+        "errorText": "No file checkpoint found for this message.",
+        "sameAsBogusRefusal": false,
+        "looksLikeUnknownSubtype": false,
+        "ms": 1,
+        "verdict": "ROUTE PRESENT — refused, but NOT with the unknown-subtype refusal, so the subtype was recognised and its own validator rejected the arguments.",
+        "fileRevertedByBogusId": false,
+        "verdictAttribution": "HELD — a bogus id did not revert the file."
+      },
+      "dryRun": {
+        "label": "C-checkpointing-on-app-env / real uuid / dry_run=true",
+        "subtype": "rewind_files",
+        "outcome": "accepted",
+        "responseKeys": [
+          "request_id",
+          "response",
+          "subtype"
+        ],
+        "responseInnerKeys": [
+          "canRewind",
+          "deletions",
+          "filesChanged",
+          "insertions"
+        ],
+        "canRewind": true,
+        "responseError": null,
+        "responseCounts": {
+          "insertions": 1,
+          "deletions": 1
+        },
+        "responseArrayLengths": {
+          "filesChanged": 1
+        },
+        "ms": 2,
+        "verdict": "ROUTE PRESENT — the subtype was accepted where a bogus one is refused."
+      },
+      "dryRunLeftFileMutated": true,
+      "wetRun": {
+        "label": "C-checkpointing-on-app-env / real uuid / dry_run=false",
+        "subtype": "rewind_files",
+        "outcome": "accepted",
+        "responseKeys": [
+          "request_id",
+          "response",
+          "subtype"
+        ],
+        "responseInnerKeys": [
+          "canRewind",
+          "skippedLinks"
+        ],
+        "canRewind": true,
+        "responseError": null,
+        "responseCounts": {
+          "skippedLinks": 0
+        },
+        "responseArrayLengths": {},
+        "ms": 9,
+        "verdict": "ROUTE PRESENT — the subtype was accepted where a bogus one is refused."
+      },
+      "fileRevertedToOriginal": true,
+      "verdict": "EFFECTIVE — the file returned to its pre-turn contents after rewind_files on the turn's own prompt uuid, while a bogus id left it alone."
+    },
+    "armD_checkpointingOn_sdkEnv": {
+      "skipped": "arm C already worked in the app's own option shape, so there is nothing to attribute."
+    },
+    "answer": "YES, AND BUILDABLE AS ONE OPTION — the rewind route works from this app's exact option shape once `enableFileCheckpointing: true` is passed. `/rewind` being unadvertised is about the COMMAND surface, not about the capability, and the app never had to wrap a command. The env-replacement hypothesis (that engine.ts's wholesale `options.env` would drop the SDK's checkpointing env var) was TESTED HERE AND REFUTED — arm C passes the app's own env and works.",
+    "cannotSettle": [
+      "Whether rewind_files reverts CONVERSATION state as well as files. Its declared name, its response shape and this measurement are all about files; nothing here restores a transcript, so an \"undo\" UI built on it would undo the disk and not the chat.",
+      "What it does on a RESUMED session. The SDK's own source carries a matching caveat for the store-backed case, and nothing here exercises a resume.",
+      "Whether the app SHOULD offer it. Rewinding files is destructive and the blast radius is the user's workspace; that is a product call for the build ticket, not a measurement.",
+      "Whether enabling checkpointing costs anything at runtime — it snapshots files before edits, and no overhead was measured here."
+    ]
+  },
+  "q3_backgrounding": {
+    "turnsSpent": 3,
+    "negativeControl": {
+      "refused": true,
+      "refusalText": "Unsupported control request subtype: spike127_definitely_not_a_real_subtype",
+      "verdict": "The CLI refuses unknown subtypes by name, so a differing error below is a real signal."
+    },
+    "armD_remoteControlReachability": {
+      "label": "remote_control / enabled=false",
+      "subtype": "remote_control",
+      "outcome": "accepted",
+      "responseKeys": [
+        "request_id",
+        "subtype"
+      ],
+      "responseInnerKeys": null,
+      "canRewind": null,
+      "responseError": null,
+      "responseCounts": null,
+      "responseArrayLengths": null,
+      "ms": 5,
+      "verdict": "ROUTE PRESENT — the subtype was accepted where a bogus one is refused.",
+      "deliberateLimit": "Probed with enabled:FALSE only. Enabling Remote Control bridges a live session to an external service — outward-facing, and the owner is away. This arm settles REACHABILITY of the subtype and nothing about what enabling would do."
+    },
+    "armB_timingControl": {
+      "label": "B-timing-control-no-background-call",
+      "ranTurn": true,
+      "turnIsError": false,
+      "resultSubtype": "success",
+      "error": null,
+      "toolUseNames": [
+        "Bash"
+      ],
+      "subagentToolUseIds": [],
+      "injected": [],
+      "durationMs": 50194,
+      "resultText": "SLEPT",
+      "ranBash": true,
+      "controlReallyBlocked": true,
+      "note": "The turn that is NOT backgrounded. Its duration is the baseline arm A must beat; without it, \"returned in Xms\" means nothing. controlReallyBlocked is the setup assertion — false means the long command never ran in the foreground and arm A is UNSCORED rather than effective."
+    },
+    "armA_taskBackgrounding": {
+      "label": "A-background-tasks-midflight",
+      "ranTurn": true,
+      "turnIsError": false,
+      "resultSubtype": "success",
+      "error": null,
+      "toolUseNames": [
+        "Bash"
+      ],
+      "subagentToolUseIds": [],
+      "injected": [],
+      "durationMs": 52747,
+      "resultText": "SLEPT",
+      "backgroundCall": {
+        "called": true,
+        "atMs": 14700,
+        "row": {
+          "label": "background_tasks / all foreground",
+          "subtype": "background_tasks",
+          "outcome": "accepted",
+          "responseKeys": [
+            "request_id",
+            "response",
+            "subtype"
+          ],
+          "responseInnerKeys": [],
+          "canRewind": null,
+          "responseError": null,
+          "responseCounts": {},
+          "responseArrayLengths": {},
+          "ms": 4,
+          "verdict": "ROUTE PRESENT — the subtype was accepted where a bogus one is refused."
+        }
+      },
+      "ranBash": true,
+      "fasterThanControlMs": -2553
+    },
+    "armC_sessionDetach": {
+      "sessionIdObserved": true,
+      "resultBeforeCut": false,
+      "proofFileExistedBeforeCut": false,
+      "sessionMessagesBeforeCut": 3,
+      "sessionMessagesAfterCut": 3,
+      "sessionTranscriptGrewAfterCut": false,
+      "proofFileWritten": false,
+      "verdict": "SESSION DID NOT SURVIVE — the handle closing ended the work. Closing the SDK query kills the CLI child, so there is no detach through this route."
+    },
+    "answer": "TASK backgrounding: REACHABLE BUT NOT DEMONSTRATED — the subtype was accepted and the turn did not return materially sooner than a control that did block. | SESSION detach: SESSION DID NOT SURVIVE — the handle closing ended the work. Closing the SDK query kills the CLI child, so there is no detach through this route. | Remote Control subtype: ROUTE PRESENT — the subtype was accepted where a bogus one is refused.",
+    "cannotSettle": [
+      "What enabling Remote Control does. Deliberately not exercised — it is outward-facing and the owner is away.",
+      "Whether a session detached by some OTHER mechanism (a daemon, a resumed session id, the CLI's own agent view) keeps working. Only the SDK handle's own lifetime was measured.",
+      "The COST of a write-side backgrounding route in the app. #90 measured the read side at ~893ms of CLI subprocess per look; nothing here prices a write."
+    ]
+  },
+  "turnsSpent": {
+    "total": 9,
+    "note": "A control request on a warm handle costs NO turn (#105). Every number here is a real CLI turn: phase 1 spends up to 4, phase 2 spends 1, phase 3 spends 3. Phase 0 and every reachability arm are free."
+  },
+  "whatANegativeRunProves": {
+    "general": "A verdict of ROUTE ABSENT is a measurement ONLY IF that phase's negativeControl.refused is true. Otherwise the dispatcher accepts anything and neither a success nor a refusal means what it looks like (#116, and #122's swallowed gesture error). An arm whose own setup failed is reported UNSCORED and never as the phenomenon (#114, #125).",
+    "q1": "A NO here is a statement about ONE addressing field — parent_tool_use_id, the only one the protocol declares for this — measured on one CLI version at one injection moment. It is not \"no inbound route can exist\", which is the exact over-claim that was refuted during this spec's grill.",
+    "q2": "A YES requires the file on disk to change back AND the bogus-id control to have left it alone. Reachability alone is explicitly NOT scored as a yes (#117).",
+    "q3": "The session-detach arm answers on disk and on a file the CLI itself wrote, not on an SDK return value. Its NO is attributable because the same turn provably started before the handle was cut."
+  }
+}
