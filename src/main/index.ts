@@ -47,11 +47,15 @@ import { guardedDelete } from './delete-guard'
 import { guardedSend } from './send-guard'
 import { listSubagents, readSubagentTranscript } from './subagent-store'
 import { listWorkspaceFiles, type WorkspaceFilePorts } from './workspace-files'
+import { createBackdropKeeper, type BackdropKeeper } from './backdrop-keeper'
 import { listBackgroundSessions } from './agent-view'
 import { ensureListEngine, type ListEnginePorts } from './list-engine'
 import type { PermissionDecision } from '../shared/engine-types'
 
 let engine: ReturnType<typeof createEngine> | null = null
+// Created with the window, because its port closes over that window and there is
+// no read-back to recover the material from (#117).
+let backdropKeeper: BackdropKeeper | null = null
 let pendingResume: string | null = null
 const permissionBroker = createPermissionBroker()
 
@@ -324,6 +328,17 @@ const createWindow = (): void => {
   // the moment the user comes back is the moment to clear it. Unconditional —
   // clearing a flash that was never set is a no-op.
   win.on('focus', () => win.flashFrame(false))
+
+  // #119 — acrylic goes flat the moment the window loses focus, which is Win11
+  // DWM behaviour and which #117 found no supported Electron route to change.
+  // Re-asserting the material on blur re-engages the blur-behind, measured and
+  // reproduced in `scripts/probe-acrylic-reapply.mjs` (948 focused / 118
+  // unfocused / 924 unfocused-and-re-asserted, still 924 at +15s). The keeper
+  // holds the value because there is no read-back to ask the window for it.
+  backdropKeeper = createBackdropKeeper({
+    apply: (material) => win.setBackgroundMaterial(material)
+  })
+  win.on('blur', () => backdropKeeper?.reassert())
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)
@@ -716,7 +731,11 @@ ipcMain.on('zoom:set', (event, level: unknown) => {
 ipcMain.on('backdrop:set', (event, material: unknown) => {
   if (!isTrustedIpc(event)) return
   const win = BrowserWindow.fromWebContents(event.sender)
-  win?.setBackgroundMaterial(normalizeBackdrop(material))
+  if (!win) return
+  // Through the keeper, never straight at the window: #117 measured that there
+  // is no read-back on this API, so the blur handler below has no way to learn
+  // the material except from here.
+  backdropKeeper?.set(normalizeBackdrop(material))
 })
 
 // #79 — the renderer's stored bounds arriving on mount. Two jobs, and they are

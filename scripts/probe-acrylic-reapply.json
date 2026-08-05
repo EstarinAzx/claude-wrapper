@@ -1,0 +1,240 @@
+{
+  "probe": "acrylic-reapply-on-blur",
+  "summary": {
+    "focusedBaseline": 948,
+    "plainBlur": 118,
+    "reapplySame": 924,
+    "toggleThroughNone": 924,
+    "usableRows": 10,
+    "totalRows": 10,
+    "instrumentCanSeeTheFlip": true,
+    "verdict": "RE-APPLY HELPS — a free fix is on the table",
+    "persistence": [
+      {
+        "label": "persist-5000ms",
+        "colours": 924,
+        "usable": true,
+        "held": true
+      },
+      {
+        "label": "persist-15000ms",
+        "colours": 924,
+        "usable": true,
+        "held": true
+      }
+    ],
+    "persists": true
+  },
+  "rows": [
+    {
+      "label": "r1-focused-baseline",
+      "script": "focused-baseline",
+      "measured": {
+        "isFocused": true,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 948,
+      "file": "scripts/probe-acrylic-shots/r1-focused-baseline.png",
+      "usable": true
+    },
+    {
+      "label": "r1-plain-blur",
+      "script": "plain-blur",
+      "measured": {
+        "isFocused": false,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 118,
+      "file": "scripts/probe-acrylic-shots/r1-plain-blur.png",
+      "usable": true
+    },
+    {
+      "label": "r1-reapply-same",
+      "script": "reapply-same",
+      "measured": {
+        "isFocused": false,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 924,
+      "file": "scripts/probe-acrylic-shots/r1-reapply-same.png",
+      "usable": true
+    },
+    {
+      "label": "r1-toggle-through-none",
+      "script": "toggle-through-none",
+      "measured": {
+        "isFocused": false,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 924,
+      "file": "scripts/probe-acrylic-shots/r1-toggle-through-none.png",
+      "usable": true
+    },
+    {
+      "label": "r2-focused-baseline",
+      "script": "focused-baseline",
+      "measured": {
+        "isFocused": true,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 948,
+      "file": "scripts/probe-acrylic-shots/r2-focused-baseline.png",
+      "usable": true
+    },
+    {
+      "label": "r2-plain-blur",
+      "script": "plain-blur",
+      "measured": {
+        "isFocused": false,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 118,
+      "file": "scripts/probe-acrylic-shots/r2-plain-blur.png",
+      "usable": true
+    },
+    {
+      "label": "r2-reapply-same",
+      "script": "reapply-same",
+      "measured": {
+        "isFocused": false,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 924,
+      "file": "scripts/probe-acrylic-shots/r2-reapply-same.png",
+      "usable": true
+    },
+    {
+      "label": "r2-toggle-through-none",
+      "script": "toggle-through-none",
+      "measured": {
+        "isFocused": false,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 924,
+      "file": "scripts/probe-acrylic-shots/r2-toggle-through-none.png",
+      "usable": true
+    },
+    {
+      "label": "persist-5000ms",
+      "script": "reapply-same",
+      "measured": {
+        "isFocused": false,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 924,
+      "file": "scripts/probe-acrylic-shots/persist-5000ms.png",
+      "usable": true
+    },
+    {
+      "label": "persist-15000ms",
+      "script": "reapply-same",
+      "measured": {
+        "isFocused": false,
+        "isVisible": true,
+        "isMinimized": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1083,
+          "height": 715
+        }
+      },
+      "focusHonest": true,
+      "cornersFound": 4,
+      "unoccluded": true,
+      "colours": 924,
+      "file": "scripts/probe-acrylic-shots/persist-15000ms.png",
+      "usable": true
+    }
+  ]
+}
