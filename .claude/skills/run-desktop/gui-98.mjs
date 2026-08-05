@@ -59,15 +59,24 @@
 // in the 820 derivation goes untested.
 //
 // The stubs are the LAST thing this window is asked to do and the app is closed
-// immediately afterwards, so nothing inherits them. Criterion 5 is a source-level
-// grep done with `fs`, and is labelled as such — it is the one check here that is
-// not a measurement of the running app.
+// immediately afterwards, so nothing inherits them.
+//
+// CRITERION 5 WAS INVERTED BY #125 and is now three parts. It used to assert
+// ZERO `backdrop-filter` in subagent.css — #98's non-goal, which kept the
+// then-unresolved glass-ban question harmless. The owner has since named this
+// surface, so the pane carries the material and the criterion asserts its
+// PRESENCE instead. It is not deleted and not softened: 5a is a COMPUTED read
+// off the live pane (strictly stronger than the grep it replaced, which would
+// pass on a rule the cascade never applies), 5b is the discrimination control
+// that keeps 5a from being vacuous, and only 5c is still source-level — the
+// scope, i.e. that no other stylesheet gained one.
 //
 // RED-VERIFIED against the pre-#98 stylesheet, by restoring it, rebuilding and
 // running: criterion 1 fails on X by 350 device px (the pane sits against the
 // right edge, `left: 560` in a 1120 viewport) and criterion 2 fails in both
-// states (511.2 not overflowing, 501.6 overflowing), while criterion 5 and the
-// scroll-state premises still pass and the run exits 1.
+// states (511.2 not overflowing, 501.6 overflowing), while the scroll-state
+// premises still pass and the run exits 1. (That run predates #125, so it also
+// reds the new criterion 5a — the pre-#98 sheet has no material either.)
 //
 // THE RED RUN CAUGHT A VACUITY IN THIS DRIVER, WHICH IS THE WHOLE ARGUMENT FOR
 // DOING IT. Criterion 2 was first written against a bare `.chat-column` and
@@ -299,6 +308,21 @@ const measure = () =>
         // The authored entry, which stays readable in the computed style long
         // after the animation itself has left `getAnimations()`.
         animationName: getComputedStyle(pane).animationName,
+        // #125 — the material, read as a COMPUTED value off the mounted pane.
+        // Strictly stronger than the source grep this replaced: a grep passes
+        // on a rule the cascade never applies, or one whose selector no longer
+        // matches this element. Computed style is resolved without rasterising,
+        // so `--disable-gpu` cannot affect it — this is a claim about the rule
+        // reaching the element, never about pixels.
+        backdropFilter: getComputedStyle(pane).backdropFilter,
+        // Discrimination control. `backdrop-filter` does not inherit, so a head
+        // INSIDE the glassed pane must still read `none`. Without this, a
+        // reader that answered the same string for every element would pass
+        // criterion 5 while measuring nothing.
+        headBackdropFilter: (() => {
+          const head = pane.querySelector('.subagent-drawer-head')
+          return head ? getComputedStyle(head).backdropFilter : null
+        })(),
         animation: anims.map((a) => ({ name: a.animationName, state: a.playState })),
         scroll: chat ? { scrollHeight: chat.scrollHeight, clientHeight: chat.clientHeight } : null
       }
@@ -377,16 +401,43 @@ assertState('long', longState, true)
 const shotLong = path.join(SHOT_DIR, 'gui-98-popup-long.png')
 await page.screenshot({ path: shotLong })
 
-// ---- criterion 5: the source grep ----------------------------------------
-// The one check here that is NOT a measurement of the running app.
-const subagentCss = fs.readFileSync(path.join(STYLE_DIR, 'subagent.css'), 'utf8')
-const glassHits = subagentCss
-  .split(/\r?\n/)
-  .map((line, i) => (line.includes('backdrop-filter') ? i + 1 : null))
-  .filter(Boolean)
-check('criterion 5: zero `backdrop-filter` in subagent.css (SOURCE grep)', glassHits.length === 0, {
-  lines: glassHits,
-  note: 'the non-goal that keeps the unresolved glass-ban question harmless'
+// ---- criterion 5: the pane CARRIES the window material -------------------
+// REPLACED IN #125, deliberately not deleted and not softened. This criterion
+// used to assert ZERO `backdrop-filter` in subagent.css — "the non-goal that
+// keeps the unresolved glass-ban question harmless". The owner has now named
+// this surface, so the non-goal is spent; but a deviation left with no positive
+// pin is exactly what a later conformance pass removes without noticing (#96
+// shipped as `style: two off-scale values conform to DESIGN.md`). So the
+// negative becomes a positive of the same strength or better, in three parts.
+const material = longState.backdropFilter
+const materialControl = longState.headBackdropFilter
+
+// 5a — MEASURED on the live pane, not grepped. A grep is green on a rule the
+// cascade drops or whose selector no longer matches the element.
+check('criterion 5a: the mounted pane computes a real backdrop-filter', typeof material === 'string' && material !== 'none' && material !== '', {
+  backdropFilter: material,
+  note: 'computed style resolves without rasterising, so --disable-gpu does not reach this; it is not a pixel claim'
+})
+
+// The control that makes 5a mean something.
+check('criterion 5b: control — a child of the glassed pane still reads `none`', materialControl === 'none', {
+  head: materialControl,
+  hint: 'backdrop-filter does not inherit; anything else here means the reader is not discriminating and 5a is unscored'
+})
+
+// 5c — SOURCE, and the only part still read as text: the SCOPE. The owner named
+// one surface. Every other `var(--surface)` pane in the app must stay flat, and
+// this is where a quiet generalisation shows up. `tests/subagent-material.test.ts`
+// pins the same rule in the gate; this repeats it because a driver run on a dirty
+// tree is where the generalisation would actually be typed.
+const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '')
+const glassElsewhere = fs
+  .readdirSync(STYLE_DIR)
+  .filter((f) => f.endsWith('.css') && f !== 'subagent.css')
+  .filter((f) => /backdrop-filter\s*:/.test(stripComments(fs.readFileSync(path.join(STYLE_DIR, f), 'utf8'))))
+check('criterion 5c: no OTHER stylesheet declares a backdrop-filter (SOURCE)', glassElsewhere.length === 0, {
+  files: glassElsewhere,
+  note: 'the exception is this pane only; extending it is an open owner call, not this ticket'
 })
 
 // ---- give the window back its size ---------------------------------------

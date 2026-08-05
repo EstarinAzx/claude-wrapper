@@ -96,6 +96,22 @@
    idiom (`.model-menu`, `.command-popover` in composer.css), joined rather than
    invented. `overflow: hidden` clips the head's hairline to the radius; the
    inner `.chat` keeps its own `min-height: 0` scroll. */
+/* #125 — THE ONE EXCEPTION TO DESIGN.md's GLASS BAN, AND IT IS THIS PANE ONLY.
+   The ban reads "no decorative extra glass layers inside the window (the OS
+   acrylic is the one glass)", and #98 shipped this pane deliberately flat,
+   leaving "whether the ban reaches a var(--surface) pane" unresolved. The owner
+   has now named this surface, which by #98's own division moves material out of
+   the bucket settled-against-the-record and into the bucket executed-as-given.
+   Nothing here authorises the same on .model-menu, .command-popover, the
+   Appearance dock or any other var(--surface) surface; extending it is an open
+   owner call. See the ADR in .context/decisions for 2026-08-05.
+
+   The pane was ALREADY translucent — var(--surface) is 0.58 alpha — so the
+   scrimmed chat behind it already shows through, sharply. The blur does not add
+   a ply; it finishes the one that was there. 30px blur with a 1.25 saturation
+   lift is Fluent's own acrylic recipe, CITED not measured: no driver can see a
+   DWM backdrop, so gui-98 pins the declaration and the computed value, never a
+   pixel. Chromium 140 (Electron 43) takes this unprefixed. */
 .subagent-drawer {
   position: relative;
   width: min(820px, 100%);
@@ -103,6 +119,7 @@
   display: flex;
   flex-direction: column;
   background: var(--surface);
+  backdrop-filter: blur(30px) saturate(1.25);
   border: 1px solid var(--border);
   border-radius: var(--r-mark);
   box-shadow: 0 8px 28px oklch(0 0 0 / 0.35);
