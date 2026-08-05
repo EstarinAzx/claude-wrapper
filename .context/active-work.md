@@ -38,9 +38,11 @@ measured shape, and the owner asked for rewind by name. Nothing is in flight.
   unchanged across #127 and #128, correctly: a spike and a version bump add no
   tests. Batch total moved 1122/74 → 1246/82, **+124 tests, +8 files**.
   **Read the number off `main`, never off this file.**
-- **`origin/main` is 14 commits behind, deliberately** (`git rev-list --count
-  origin/main..main` — this number has been stale in the handoff twice, so read
-  it rather than copying it). Every leg of this chain
+- **`origin/main` is many commits behind, deliberately.** The count is **not
+  recorded here on purpose** — every wrap-up commit increments it, so any literal
+  is stale the moment it is written, and it drifted in the handoff three legs
+  running before this stopped. Read it: `git rev-list --count origin/main..main`.
+  Every leg of this chain
   landed locally and pushed nothing — pushing is outward-facing and the owner has
   not asked for it. **Worth raising when they are back.**
 

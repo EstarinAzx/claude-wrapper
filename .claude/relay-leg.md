@@ -97,8 +97,10 @@ version bump add no tests. Read the current number off `main` rather than
 trusting any of these. When a ticket's substance *is* the gate, run it **on
 `main` after the merge** rather than inferring it from the branch; #128 did.
 
-**Do not push.** `origin/main` is **14 commits behind** (`git rev-list --count
-origin/main..main` — read it, do not copy it); every leg of this chain
+**Do not push.** `origin/main` is many commits behind — the count is
+deliberately not written here, because every wrap-up commit increments it and
+any literal is stale on arrival. Read it: `git rev-list --count
+origin/main..main`. Every leg of this chain
 has landed locally and pushed nothing, deliberately, because pushing is
 outward-facing and the owner has not asked for it. The 1.0.0 bump did **not**
 publish — `git tag` still **0** after it, no electron-builder config, `npm run
