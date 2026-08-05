@@ -335,6 +335,18 @@ amendment + an ADR. Reversible in full.
       why: the desired behaviour is a product call, and the spike's answer
       changes what is even possible
       reversible: yes (nothing built)
+      measured (#127, 2026-08-06): the spike this call asked for has run.
+      **Detach does NOT work** — closing the SDK handle kills the CLI child, so
+      in-flight work stops and the session transcript does not grow. The
+      `background_tasks` control route (the CLI's Ctrl+B) is REACHABLE but
+      showed no measurable effect. The one genuine candidate is **Remote
+      Control** (`remote_control` subtype, REACHABLE): it bridges a live session
+      to an external service so the CLI keeps working with this UI detached.
+      It was probed with `enabled: false` ONLY and deliberately never enabled —
+      turning it on is OUTWARD-FACING and the owner is away. **This is the part
+      that still needs you**: whether the app may offer Remote Control at all.
+      The call stays open and the reversible default (nothing enabled, nothing
+      built) is unchanged.
 - [ ] **"Edit message, resend" ships as REFILL, not as a true edit.** The
       transcript on disk is the source of truth and the renderer's list is
       replaced wholesale from it, so a renderer-side edit cannot rewrite what

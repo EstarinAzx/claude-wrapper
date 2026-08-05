@@ -10,7 +10,7 @@ Each leg = exactly ONE ticket end to end, then the relay machinery hands off to
 a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides.
 
-**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 6.** Everything this file said before is
+**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 7.** Everything this file said before is
 gone: it described the completed #115–#119 chain, announced an empty queue, and
 told legs that `ready-for-human` was allowed. All three are now false.
 
@@ -49,8 +49,9 @@ self-contained; read #120 only if you want the why.
 | ~~#124~~ | ~~five-position effort control~~ | **CLOSED** `39c2896` — leg 4. Levels measured off the REAL CLI; the range carries **six stops for five levels** (stop 0 = Default, the absence of a level) because five bare stops left `low` unreachable by one gesture |
 | ~~#125~~ | ~~subagent viewer takes the window material~~ | **CLOSED** `c92fca7` — leg 5. **One declaration** of `backdrop-filter`, the only one in the app, shipped as a **named, scoped exception** rather than a relaxation; `gui-98` criterion 5 **inverted** to a three-part positive; gate-run twin added because no driver runs in `npm test` |
 | ~~#126~~ | ~~subagent map visual pass~~ | **CLOSED** `0628745` — leg 6. Every acceptance criterion was **already green before a line changed** (the driver was written first and run against unmodified `main`), so the risk was breaking a pinned criterion while chasing looks, not failing to meet one. SVG `stroke-width` is in **viewBox units**; the tint ladder cannot carry a structural line |
-| #127 | spike — three routes nobody has called | **no `src/` diff** |
-| #128 | version 1.0.0 | **blocked by #121–#127** — skip until all seven are closed |
+| ~~#127~~ | ~~spike — three routes nobody has called~~ | **CLOSED** `8a3481e` — leg 7. **No `src/` diff**, 9 CLI turns. Q1 subagent-inbound **dead** (the address is carried and ignored); Q2 rewind **works** → filed **#129**; Q3 detach **fails**, Remote Control left to the owner |
+| #128 | version 1.0.0 | **now UNBLOCKED** — all seven blockers closed. The leg that lands it **also closes spec #120** |
+| #129 | rewind a turn's file changes | **NEW, filed by #127.** Not part of spec #120. **Blocked by #128** via a native dependency |
 
 Pick the **oldest unblocked `ready-for-agent`** ticket. Run the frontier query;
 never trust this table:
@@ -59,9 +60,21 @@ never trust this table:
 gh issue list --state open --label ready-for-agent
 ```
 
-**#127 is the only unblocked slice left**, and it is a **spike that builds
-nothing** — expect no `src/` diff from it. #128 is last by the owner's own
-instruction, so the leg after #127 does #128 and closes spec #120.
+**#128 is next**, and the leg that lands it closes spec #120 as delivered.
+**#129 comes back from that query too and is NOT next** — it is blocked by #128.
+
+> **`issue_dependencies_summary` is EVENTUALLY CONSISTENT.** Right after
+> `POST .../dependencies/blocked_by`, #129's summary still read `blocked_by: 0`
+> while the `blocked_by` **list endpoint** already showed `#128`; it caught up
+> seconds later. Read it twice, or read the list endpoint, if an edge was just
+> written.
+
+**Why #129 is `ready-for-agent` and the chain is expected to build it after
+#128.** That is this repo's established pattern — #112 was filed from #105 and
+#118 from #116, both `ready-for-agent`, both built by a later leg — and the
+owner asked for rewind **by name**. The warrant is theirs, not the leg's. The
+one thing #129 must not do is imply the *conversation* was rewound; rewind
+restores files only.
 
 ## Per-leg contract
 
@@ -72,14 +85,42 @@ above. In short: read `.context/pick-up.md` → pick ONE ticket → branch
 
 **Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`. The
 baseline was **1122 / 74** before this batch and is **1246 tests / 82 files**
-after #126 — read the current number off `main` rather than trusting any of
-these, because every slice adds tests.
+after #126 — **unchanged by #127**, correctly, since a spike adds no tests. Read
+the current number off `main` rather than trusting any of these.
+
+**Do not push.** `origin/main` is **11 commits behind**; every leg of this chain
+has landed locally and pushed nothing, deliberately, because pushing is
+outward-facing and the owner has not asked for it. The 1.0.0 bump does **not**
+publish — `git tag` empty, no electron-builder config, `npm run dev` only.
 
 ## Landmines that bind more than one slice
 
 - **Probe by CALLING, never by grepping a bundle or reading a `.d.ts`.** A
   declared wire type is not a callable route (#115); a callable route is not an
-  effective one (#117). #127 lives or dies on this.
+  effective one (#117). **#127 paid this out three times** and its instrument is
+  reusable verbatim and free: on one warm handle send a **bogus subtype** (which
+  answers `Unsupported control request subtype: …`), then the candidate, then
+  the candidate with bad arguments. A candidate that fails with a **different**
+  error was recognised by the dispatcher and reached its own validator — that is
+  how "no such route" is told from "route exists, switched off".
+- **A CONTROL CATCHES FALSE POSITIVES TOO, and #127's two saves were both.**
+  Task backgrounding first scored EFFECTIVE off a 37s speed-up whose real cause
+  was that **this machine's harness blocks standalone `sleep`** — the arm was
+  measuring a hook, not a route. Session detach first scored SURVIVED off a
+  proof file written *before* the cut plus a witness watching **the newest
+  transcript anywhere on the machine**. So: **use a node timer, never `sleep`**,
+  for a long foreground command in a probe; assert the control **actually
+  blocked** before scoring the treatment; check the artefact **before** the cut
+  (present → UNSCORED, never a pass); scope any on-disk witness to the session
+  id you are measuring; and **use absolute paths in probe prompts** — a relative
+  one made the model write a file that was not the target.
+- **THE CLI NEVER ECHOES THE PROMPT BACK.** The only `type: 'user'` messages on
+  the stream are **tool results**. Anything needing a user-message id must
+  **stamp its own `uuid`** on the outgoing message; the CLI stores it under
+  exactly that id (assert with `getSessionMessages`). Scraping the stream
+  silently addresses a tool_result — #127's own arm did, before it was fixed.
+- **`enableFileCheckpointing` binds at query CONSTRUCTION**, like `model` and
+  `effort`. A setter that only stores changes nothing. Binds **#129**.
 - **A VERIFICATION HARNESS IS A THING THAT CAN FAIL, and #125 caught its own
   doing it.** Its mutation runner passed `--reporter=basic`, which vitest 4 does
   not have; the run died with `ERR_LOAD_URL` **before a single test executed**,
@@ -220,14 +261,22 @@ leg to stall on:
    those five levels — stop 0 is `Default`, the absence of a level, added
    because five bare stops left `low` unreachable by one gesture. That is not
    the invented sixth position this call forbids.
-3. What "background a session" should mean — #127 **measures, builds nothing**.
+3. What "background a session" should mean — **#127 has now delivered the
+   measurement this call was waiting for, and the call stays open.** Detach
+   **fails** (closing the handle kills the CLI child); `background_tasks` is
+   reachable but showed **no effect**. The one genuine candidate is **Remote
+   Control**, **reachable**, probed `enabled: false` **ONLY** — enabling it
+   bridges a live session to an external service, which is outward-facing, and
+   the owner is away. **That is the open part now**, and it is not a leg's to
+   take.
 4. #123 ships as **refill, not a true edit** — **now shipped that way**
    (`f649f1d`), with the record carrying why a true edit is *impossible* rather
    than merely unchosen. Still listed, because the owner asked for the edit by
    name and may want to revisit what the app should do instead.
 
-**None of #122, #123, #124 or #125 added any of these, and none resolved one by
-decision.** The count stands at four.
+**None of #122–#127 added any of these, and none resolved one by decision.**
+#127 delivered call 3's measurement and left the call open, which is what a
+spike is for. The count stands at four.
 
 If you hit a genuinely new call the record cannot settle, take the most
 reversible option, finish the rest of the ticket, and say so in the breadcrumb.
@@ -237,5 +286,10 @@ reversible option, finish the rest of the ticket, and say so in the breadcrumb.
 
 Queue dry — no unblocked `ready-for-agent` tickets left — is `ticket-loop`'s
 designed stop. Set `stop: true`, write `queue empty` into the baton, and spawn
-no further leg. When #128 lands, close spec **#120** as delivered in that same
-leg.
+no further leg.
+
+**The queue is no longer dry at #128.** When #128 lands, close spec **#120** as
+delivered in that same leg — but that unblocks **#129**, which is real work with
+a measured shape and an owner ask behind it, so the chain continues into it
+rather than stopping. The stop is when the frontier query comes back empty,
+which is now one leg later than this file previously said.
