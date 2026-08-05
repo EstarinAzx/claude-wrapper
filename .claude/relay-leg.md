@@ -10,7 +10,7 @@ Each leg = exactly ONE ticket end to end, then the relay machinery hands off to
 a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides.
 
-**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 7.** Everything this file said before is
+**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 8.** Everything this file said before is
 gone: it described the completed #115–#119 chain, announced an empty queue, and
 told legs that `ready-for-human` was allowed. All three are now false.
 
@@ -50,8 +50,8 @@ self-contained; read #120 only if you want the why.
 | ~~#125~~ | ~~subagent viewer takes the window material~~ | **CLOSED** `c92fca7` — leg 5. **One declaration** of `backdrop-filter`, the only one in the app, shipped as a **named, scoped exception** rather than a relaxation; `gui-98` criterion 5 **inverted** to a three-part positive; gate-run twin added because no driver runs in `npm test` |
 | ~~#126~~ | ~~subagent map visual pass~~ | **CLOSED** `0628745` — leg 6. Every acceptance criterion was **already green before a line changed** (the driver was written first and run against unmodified `main`), so the risk was breaking a pinned criterion while chasing looks, not failing to meet one. SVG `stroke-width` is in **viewBox units**; the tint ladder cannot carry a structural line |
 | ~~#127~~ | ~~spike — three routes nobody has called~~ | **CLOSED** `8a3481e` — leg 7. **No `src/` diff**, 9 CLI turns. Q1 subagent-inbound **dead** (the address is carried and ignored); Q2 rewind **works** → filed **#129**; Q3 detach **fails**, Remote Control left to the owner |
-| #128 | version 1.0.0 | **now UNBLOCKED** — all seven blockers closed. The leg that lands it **also closes spec #120** |
-| #129 | rewind a turn's file changes | **NEW, filed by #127.** Not part of spec #120. **Blocked by #128** via a native dependency |
+| ~~#128~~ | ~~version 1.0.0~~ | **CLOSED** `024361a` — leg 8, and **spec #120 closed as delivered in the same leg**. Diff was **three lines across two files**, not the one the ticket predicted: `package-lock.json` is tracked and mirrors the version twice, so the bump went through `npm version --no-git-tag-version`. No tag cut |
+| #129 | rewind a turn's file changes | **NOW UNBLOCKED and NEXT.** Filed by #127. **Not part of spec #120.** The last ticket in the repo — the frontier goes empty behind it |
 
 Pick the **oldest unblocked `ready-for-agent`** ticket. Run the frontier query;
 never trust this table:
@@ -60,8 +60,8 @@ never trust this table:
 gh issue list --state open --label ready-for-agent
 ```
 
-**#128 is next**, and the leg that lands it closes spec #120 as delivered.
-**#129 comes back from that query too and is NOT next** — it is blocked by #128.
+**#129 is next and it is the only open issue left.** Spec #120 is closed. When
+#129 lands the frontier query comes back **empty** — that is the chain's stop.
 
 > **`issue_dependencies_summary` is EVENTUALLY CONSISTENT.** Right after
 > `POST .../dependencies/blocked_by`, #129's summary still read `blocked_by: 0`
@@ -69,12 +69,19 @@ gh issue list --state open --label ready-for-agent
 > seconds later. Read it twice, or read the list endpoint, if an edge was just
 > written.
 
-**Why #129 is `ready-for-agent` and the chain is expected to build it after
-#128.** That is this repo's established pattern — #112 was filed from #105 and
-#118 from #116, both `ready-for-agent`, both built by a later leg — and the
-owner asked for rewind **by name**. The warrant is theirs, not the leg's. The
-one thing #129 must not do is imply the *conversation* was rewound; rewind
-restores files only.
+**Why the chain builds #129 rather than stopping at the closed spec.** That is
+this repo's established pattern — #112 was filed from #105 and #118 from #116,
+both `ready-for-agent`, both built by a later leg — and the owner asked for
+rewind **by name**. The warrant is theirs, not the leg's. The one thing #129
+must not do is imply the *conversation* was rewound; rewind restores files only.
+
+**Read `scripts/spike-127-findings.json` before starting #129.** Every claim in
+its ticket was produced by calling the route with a negative control that held.
+The build is: `enableFileCheckpointing: true` in the engine options (it binds at
+query **construction**, like `model` and `effort` — a setter that only stores
+changes nothing), a `uuid` stamped on each outgoing user message and retained
+(**the CLI never echoes the prompt back**), a `dry_run: true` preview shown
+before the destructive call, and a main-process handler that cannot throw.
 
 ## Per-leg contract
 
@@ -85,13 +92,16 @@ above. In short: read `.context/pick-up.md` → pick ONE ticket → branch
 
 **Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`. The
 baseline was **1122 / 74** before this batch and is **1246 tests / 82 files**
-after #126 — **unchanged by #127**, correctly, since a spike adds no tests. Read
-the current number off `main` rather than trusting any of these.
+after #126 — **unchanged by #127 and #128**, correctly, since a spike and a
+version bump add no tests. Read the current number off `main` rather than
+trusting any of these. When a ticket's substance *is* the gate, run it **on
+`main` after the merge** rather than inferring it from the branch; #128 did.
 
-**Do not push.** `origin/main` is **11 commits behind**; every leg of this chain
+**Do not push.** `origin/main` is **13 commits behind**; every leg of this chain
 has landed locally and pushed nothing, deliberately, because pushing is
-outward-facing and the owner has not asked for it. The 1.0.0 bump does **not**
-publish — `git tag` empty, no electron-builder config, `npm run dev` only.
+outward-facing and the owner has not asked for it. The 1.0.0 bump did **not**
+publish — `git tag` still **0** after it, no electron-builder config, `npm run
+dev` only.
 
 ## Landmines that bind more than one slice
 
@@ -274,9 +284,17 @@ leg to stall on:
    than merely unchosen. Still listed, because the owner asked for the edit by
    name and may want to revisit what the app should do instead.
 
-**None of #122–#127 added any of these, and none resolved one by decision.**
+**None of #122–#128 added any of these, and none resolved one by decision.**
 #127 delivered call 3's measurement and left the call open, which is what a
-spike is for. The count stands at four.
+spike is for; #128 was a version bump and had no calls in it. The count stands
+at four.
+
+**One new thing that is NOT a call and needs no decision:** the repo now reads
+**1.0.0** while nothing publishes — `git tag` **0**, no electron-builder config,
+`npm run dev` only, and the post-bump build emitted **byte-identical asset
+hashes**, so the version does not enter the bundle. If the owner ever wants that
+to mean something (a tag, an installer, a version readout), each is its own
+ticket with its own warrant. Do not build one off the number alone.
 
 If you hit a genuinely new call the record cannot settle, take the most
 reversible option, finish the rest of the ticket, and say so in the breadcrumb.
@@ -288,8 +306,9 @@ Queue dry — no unblocked `ready-for-agent` tickets left — is `ticket-loop`'s
 designed stop. Set `stop: true`, write `queue empty` into the baton, and spawn
 no further leg.
 
-**The queue is no longer dry at #128.** When #128 lands, close spec **#120** as
-delivered in that same leg — but that unblocks **#129**, which is real work with
-a measured shape and an owner ask behind it, so the chain continues into it
-rather than stopping. The stop is when the frontier query comes back empty,
-which is now one leg later than this file previously said.
+**#128 landed and spec #120 is closed.** That unblocked **#129**, which is now
+the **only open issue in the repo** — so the queue is not dry yet and the chain
+continues into it.
+
+**#129 is the last one.** When it lands, the frontier query comes back empty:
+set `stop: true`, write `queue empty` into the baton, and spawn no further leg.
