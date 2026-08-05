@@ -1,5 +1,9 @@
 import { describe, test, expect, vi } from 'vitest'
-import { createBackdropKeeper, FLATTENS_ON_BLUR } from '../src/main/backdrop-keeper'
+import {
+  REASSERT_DELAYS_MS,
+  createBackdropKeeper,
+  FLATTENS_ON_BLUR
+} from '../src/main/backdrop-keeper'
 import { DEFAULT_BACKDROP } from '../src/shared/backdrop'
 
 // #119 — acrylic is re-asserted on blur so it does not go flat.
@@ -12,9 +16,34 @@ import { DEFAULT_BACKDROP } from '../src/shared/backdrop'
 // `gui-119.mjs` is what re-checks it in a real window. A green run here with a
 // broken effect is possible and the driver is the guard against it.
 
+// A hand-driven clock. The schedule is the whole point of this module now, and
+// a real timer would make every test below a sleep.
 const keeper = () => {
   const apply = vi.fn()
-  return { apply, k: createBackdropKeeper({ apply }) }
+  let next = 1
+  const timers = new Map<number, { fn: () => void; ms: number }>()
+  const k = createBackdropKeeper({
+    apply,
+    setTimer: (fn, ms) => {
+      const id = next++
+      timers.set(id, { fn, ms })
+      return id
+    },
+    clearTimer: (h) => {
+      timers.delete(h as number)
+    }
+  })
+  return {
+    apply,
+    k,
+    pending: () => [...timers.values()].map((t) => t.ms).sort((a, b) => a - b),
+    /** Fire everything still queued, in delay order. */
+    fireAll: () => {
+      const due = [...timers.entries()].sort((a, b) => a[1].ms - b[1].ms)
+      timers.clear()
+      for (const [, t] of due) t.fn()
+    }
+  }
 }
 
 describe('what main believes the window is wearing', () => {
@@ -28,8 +57,9 @@ describe('what main believes the window is wearing', () => {
   })
 
   test('a blur BEFORE the renderer has ever spoken still re-asserts', () => {
-    const { apply, k } = keeper()
+    const { apply, k, fireAll } = keeper()
     k.reassert()
+    fireAll()
     expect(apply).toHaveBeenCalledWith(DEFAULT_BACKDROP)
   })
 
@@ -42,22 +72,28 @@ describe('what main believes the window is wearing', () => {
 })
 
 describe('the asymmetry is measured, not assumed', () => {
-  test('acrylic is re-asserted on blur', () => {
-    const { apply, k } = keeper()
+  test('acrylic is re-asserted on the whole schedule, not once', () => {
+    // The single-call version was the one the owner stress-tested into slipping:
+    // nothing orders Electron's blur event against DWM's switch to the inactive
+    // backdrop, so a re-assert that lands first is overwritten.
+    const { apply, k, pending, fireAll } = keeper()
     k.set('acrylic')
     apply.mockClear()
     k.reassert()
-    expect(apply).toHaveBeenCalledExactlyOnceWith('acrylic')
+    expect(pending()).toEqual([...REASSERT_DELAYS_MS].sort((a, b) => a - b))
+    fireAll()
+    expect(apply.mock.calls).toEqual(REASSERT_DELAYS_MS.map(() => ['acrylic']))
   })
 
   test('mica is NOT re-asserted — it does not flatten, so a repaint buys nothing', () => {
     // Owner observation, 2026-08-05, real window: "micas fine when i click away
     // its there". The first actual sighting on a record that had twice refuted
     // the claim for want of one.
-    const { apply, k } = keeper()
+    const { apply, k, pending } = keeper()
     k.set('mica')
     apply.mockClear()
     k.reassert()
+    expect(pending()).toEqual([])
     expect(apply).not.toHaveBeenCalled()
   })
 
@@ -65,37 +101,81 @@ describe('the asymmetry is measured, not assumed', () => {
     expect([...FLATTENS_ON_BLUR]).toEqual(['acrylic'])
   })
 
-  test('re-asserting many times is idempotent in value', () => {
-    // Focus can churn — alt-tabbing, a dialog, a notification. Every blur
-    // re-asserts, and each must carry the SAME material rather than drifting.
-    const { apply, k } = keeper()
-    k.set('acrylic')
-    apply.mockClear()
-    k.reassert()
-    k.reassert()
-    k.reassert()
-    expect(apply.mock.calls).toEqual([['acrylic'], ['acrylic'], ['acrylic']])
-  })
-
   test('switching to mica stops the re-assert that acrylic had earned', () => {
     // The bug this catches: a keeper that latched "we are re-asserting" rather
     // than reading the current material would keep pushing acrylic after the
     // user opted into Mica, and the window would wear the wrong material only
     // after a focus loss — invisible to every display-facing assertion.
-    const { apply, k } = keeper()
+    const { apply, k, fireAll } = keeper()
     k.set('acrylic')
     k.set('mica')
     apply.mockClear()
     k.reassert()
+    fireAll()
     expect(apply).not.toHaveBeenCalled()
   })
 
   test('switching back to acrylic resumes it', () => {
-    const { apply, k } = keeper()
+    const { apply, k, fireAll } = keeper()
     k.set('mica')
     k.set('acrylic')
     apply.mockClear()
     k.reassert()
-    expect(apply).toHaveBeenCalledExactlyOnceWith('acrylic')
+    fireAll()
+    expect(apply.mock.calls).toEqual(REASSERT_DELAYS_MS.map(() => ['acrylic']))
+  })
+})
+
+describe('churned focus does not pile up late writes', () => {
+  test('a second blur drops the first blurs pending schedule', () => {
+    // Without this, alt-tabbing five times leaves fifteen queued writes landing
+    // over each other — which is the shape of "it slips under stress".
+    const { k, pending } = keeper()
+    k.set('acrylic')
+    k.reassert()
+    k.reassert()
+    k.reassert()
+    expect(pending().length).toBe(REASSERT_DELAYS_MS.length)
+  })
+
+  test('refocusing cancels what is still queued', () => {
+    const { apply, k, pending, fireAll } = keeper()
+    k.set('acrylic')
+    apply.mockClear()
+    k.reassert()
+    k.cancel()
+    expect(pending()).toEqual([])
+    fireAll()
+    expect(apply).not.toHaveBeenCalled()
+  })
+
+  test('a queued write never resurrects a material the user changed meanwhile', () => {
+    // The delayed call reads `current` at FIRE time. Capturing the value at
+    // schedule time would let a blur-then-switch-to-mica sequence push acrylic
+    // back onto the window 800ms after the user opted out of it.
+    const { apply, k, fireAll } = keeper()
+    k.set('acrylic')
+    k.reassert()
+    k.set('mica') // user opens Appearance and switches while unfocused
+    apply.mockClear()
+    fireAll()
+    expect(apply).not.toHaveBeenCalledWith('acrylic')
+  })
+
+  test('picking a material also drops a pending schedule', () => {
+    const { k, pending } = keeper()
+    k.set('acrylic')
+    k.reassert()
+    expect(pending().length).toBeGreaterThan(0)
+    k.set('acrylic')
+    expect(pending()).toEqual([])
+  })
+
+  test('the schedule brackets the race rather than firing once', () => {
+    // Named so the reason survives: a single 0ms call races DWM's own switch to
+    // the inactive backdrop and loses whenever it lands first.
+    expect(REASSERT_DELAYS_MS.length).toBeGreaterThan(1)
+    expect(REASSERT_DELAYS_MS[0]).toBe(0)
+    expect(Math.max(...REASSERT_DELAYS_MS)).toBeGreaterThanOrEqual(500)
   })
 })

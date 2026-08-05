@@ -100,17 +100,54 @@ const clearCalls = () =>
     globalThis.__bd119 = []
   })
 
-const setup = await app.evaluate(async ({ BrowserWindow }) => {
-  const target = BrowserWindow.getAllWindows()[0]
-  if (!target) return null
-  target.show()
-  target.focus()
-  target.setAlwaysOnTop(true, 'screen-saver')
-  await new Promise((r) => setTimeout(r, 900))
-  const thief = new BrowserWindow({ show: true, width: 320, height: 220, x: 30, y: 30 })
-  await new Promise((r) => setTimeout(r, 400))
-  return { targetId: target.id, thiefId: thief.id }
-})
+// A KNOWN, VARIED SURFACE BEHIND THE WINDOW, and it is not decoration.
+//
+// The metric here is "how many distinct colours does the window rectangle
+// show", and acrylic only differs from flat by what it blurs THROUGH from
+// behind. Over a uniform dark desktop the two are identical and the instrument
+// is blind — measured the hard way: a sibling probe scored a focused, properly
+// blurred window at 60 distinct colours because a maximised dark terminal
+// happened to be behind it, then reported a confident verdict off two scored
+// trials. Its answer was discarded and the probe deleted.
+//
+// This window removes the dependency on whatever the desktop happens to hold.
+const PATTERN = `data:text/html,${encodeURIComponent(
+  `<body style="margin:0;height:100vh;background:
+     repeating-linear-gradient(45deg,#ff004c 0 40px,#00e5ff 40px 80px,#ffe600 80px 120px,#00ff85 120px 160px)">`
+)}`
+
+const setup = await app.evaluate(
+  async ({ BrowserWindow }, pattern) => {
+    const target = BrowserWindow.getAllWindows()[0]
+    if (!target) return null
+    target.show()
+    target.focus()
+    await new Promise((r) => setTimeout(r, 600))
+
+    // Behind the target, covering it, created BEFORE the target is pinned.
+    const b = target.getBounds()
+    const backdropSource = new BrowserWindow({
+      show: true,
+      frame: false,
+      skipTaskbar: true,
+      focusable: false,
+      x: b.x - 40,
+      y: b.y - 40,
+      width: b.width + 80,
+      height: b.height + 80
+    })
+    await backdropSource.loadURL(pattern)
+
+    target.setAlwaysOnTop(true, 'screen-saver')
+    target.focus()
+    await new Promise((r) => setTimeout(r, 900))
+
+    const thief = new BrowserWindow({ show: true, width: 320, height: 220, x: 30, y: 30 })
+    await new Promise((r) => setTimeout(r, 400))
+    return { targetId: target.id, thiefId: thief.id, sourceId: backdropSource.id }
+  },
+  PATTERN
+)
 if (!setup) {
   fails.push('could not drive: the app had no window')
   await finish()
@@ -203,25 +240,38 @@ const state = () =>
     setup.targetId
   )
 
-const capture = async (label, wantFocused) => {
+// `checkOcclusion` is opt-out for the repeated stress trials, and the reason is
+// measured rather than convenient: Chromium THROTTLES rendering in a background
+// window, so injected marker divs frequently do not paint within any wait short
+// enough to keep a stress loop reasonable — the first stress run scored
+// corners=0 on trials whose captures were otherwise perfect. The target is
+// pinned always-on-top at 'screen-saver' level for the entire run and nothing
+// else moves, so occlusion is checked once on the headline captures and taken
+// as holding for the repeats. Focus honesty is still checked on EVERY trial,
+// because that is the property that actually varies.
+const capture = async (label, wantFocused, checkOcclusion = true) => {
   const s = await state()
   const marked = path.join(SHOT_DIR, `${label}.marked.png`)
   const clean = path.join(SHOT_DIR, `${label}.png`)
-  await markers(true)
-  await new Promise((r) => setTimeout(r, 400))
-  const okM = s ? grab(marked, s.bounds) : false
-  const corners = okM ? cornersFound(marked) : -1
-  await markers(false)
-  await new Promise((r) => setTimeout(r, 400))
+  let corners = 4
+  if (checkOcclusion) {
+    await markers(true)
+    await new Promise((r) => setTimeout(r, 700))
+    const okM = s ? grab(marked, s.bounds) : false
+    corners = okM ? cornersFound(marked) : -1
+    await markers(false)
+    await new Promise((r) => setTimeout(r, 500))
+    try {
+      fs.rmSync(marked, { force: true })
+    } catch {}
+  }
   const ok = s ? grab(clean, s.bounds) : false
-  try {
-    fs.rmSync(marked, { force: true })
-  } catch {}
   const row = {
     label,
     measured: s,
     focusHonest: !!s && s.isFocused === wantFocused && s.isVisible && !s.isMinimized,
     corners,
+    occlusionChecked: checkOcclusion,
     colours: ok ? colours(clean) : -1
   }
   row.usable = row.focusHonest && corners === 4 && ok
@@ -266,15 +316,36 @@ const focusTarget = async () => {
   )
 }
 
-const blurTarget = async () => {
+// `churn` alternations before settling unfocused. A single clean blur is the
+// easy case; the owner's report was "90% works but when i stress tested it
+// sometimes it slips", so the stress IS the test.
+const blurTarget = async (churn = 0) => {
   await app.evaluate(
-    async ({ BrowserWindow }, a) => {
-      BrowserWindow.fromId(a.thiefId)?.focus()
-      await new Promise((r) => setTimeout(r, 1600))
-      BrowserWindow.fromId(a.targetId)?.moveTop()
-      await new Promise((r) => setTimeout(r, 400))
+    async ({ BrowserWindow, app: a }, arg) => {
+      const t = BrowserWindow.fromId(arg.targetId)
+      const th = BrowserWindow.fromId(arg.thiefId)
+      for (let i = 0; i < arg.churn; i++) {
+        th?.focus()
+        await new Promise((r) => setTimeout(r, 110))
+        t?.focus()
+        a.focus({ steal: true })
+        await new Promise((r) => setTimeout(r, 110))
+      }
+      // Settle UNFOCUSED, and verify rather than assume. `moveTop()` and the
+      // app-level `focus({steal:true})` used during churn can both hand focus
+      // back on win32, which showed up as trials scored dishonest — an
+      // instrument failing its own setup, not the product slipping.
+      for (let attempt = 0; attempt < 4; attempt++) {
+        th?.focus()
+        await new Promise((r) => setTimeout(r, 700))
+        t?.moveTop()
+        await new Promise((r) => setTimeout(r, 500))
+        if (!t?.isFocused()) break
+      }
+      await new Promise((r) => setTimeout(r, 1200))
+      return t ? { isFocused: t.isFocused() } : null
     },
-    setup
+    { ...setup, churn }
   )
 }
 
@@ -284,6 +355,20 @@ await pickBackdrop('acrylic')
 await focusTarget()
 const focused = await capture('acrylic-focused', true)
 if (fails.length) await finish()
+
+// THE INSTRUMENT'S OWN PRECONDITION, checked before anything is concluded.
+// If the focused window does not itself show plenty of variety, then blurred
+// and flat are indistinguishable to this metric and every comparison below
+// would be a false PASS. A sibling probe skipped this check, scored a properly
+// blurred window at 60, and printed a verdict anyway.
+const CAN_SEE_FLOOR = 250
+if (focused.colours < CAN_SEE_FLOOR) {
+  fails.push(
+    `UNSCORED: the focused window shows only ${focused.colours} distinct colours (floor ${CAN_SEE_FLOOR}). Blurred and flat are indistinguishable at this level, so nothing below would be evidence — the pattern window behind the target did not take effect.`
+  )
+  await finish()
+}
+log('CANSEE', { focused: focused.colours, floor: CAN_SEE_FLOOR })
 
 // ---- 2 + 3. acrylic, unfocused: the app must re-assert, and the pixels move --
 
@@ -323,6 +408,56 @@ const later = await capture('acrylic-unfocused-12s', false)
 if (later.usable && focused.usable && later.colours / focused.colours < 0.6) {
   fails.push(
     `12s after losing focus the window scored ${later.colours} against ${focused.colours} focused — the re-assert engages the blur and then decays, so it is a flicker rather than a fix`
+  )
+}
+
+// ---- 4b. THE STRESS TEST — the tail is the whole complaint -------------------
+
+// "90% works" and "works" are the same to a single-trial driver, which is why
+// the single-call version shipped. Repeated trials, half of them with focus
+// churned, and the bar is EVERY trial rather than most.
+const TRIALS = Number(process.env.GUI119_TRIALS ?? 4)
+const stress = []
+for (const churn of [0, 3]) {
+  for (let i = 1; i <= TRIALS; i++) {
+    await focusTarget()
+    await blurTarget(churn)
+    const shot = await capture(`stress-churn${churn}-t${i}`, false, false)
+    const ratio = focused.colours > 0 ? shot.colours / focused.colours : 0
+    const kept = shot.usable && ratio >= 0.6
+    stress.push({ churn, trial: i, usable: shot.usable, colours: shot.colours, ratio, kept })
+    // Only keep the images that failed — a passing run should not leave a pile.
+    if (kept && shot.usable) {
+      try {
+        fs.rmSync(path.join(SHOT_DIR, `stress-churn${churn}-t${i}.png`), { force: true })
+      } catch {}
+    }
+  }
+}
+const scored = stress.filter((s) => s.usable)
+const keptCount = scored.filter((s) => s.kept).length
+log('STRESS', {
+  trials: stress.length,
+  scored: scored.length,
+  kept: keptCount,
+  byChurn: [0, 3].map((c) => ({
+    churn: c,
+    kept: `${scored.filter((s) => s.churn === c && s.kept).length}/${
+      scored.filter((s) => s.churn === c).length
+    }`
+  }))
+})
+if (scored.length < stress.length) {
+  fails.push(
+    `only ${scored.length} of ${stress.length} stress trials produced a usable capture — an unscored trial is not a passing one`
+  )
+}
+if (keptCount < scored.length) {
+  const worst = scored.filter((s) => !s.kept)
+  fails.push(
+    `the blur was LOST in ${worst.length} of ${scored.length} stress trials (${worst
+      .map((w) => `churn${w.churn}/t${w.trial} ratio ${w.ratio.toFixed(2)}`)
+      .join(', ')}) — this is the "sometimes it slips" the schedule exists to fix`
   )
 }
 

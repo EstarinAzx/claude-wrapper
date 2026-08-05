@@ -336,9 +336,28 @@ const createWindow = (): void => {
   // unfocused / 924 unfocused-and-re-asserted, still 924 at +15s). The keeper
   // holds the value because there is no read-back to ask the window for it.
   backdropKeeper = createBackdropKeeper({
-    apply: (material) => win.setBackgroundMaterial(material)
+    // Guarded, and not defensively-for-its-own-sake: this runs from an EVENT
+    // HANDLER, so anything it throws is an uncaught exception in main — which
+    // Electron surfaces as a modal "A JavaScript error occurred in the main
+    // process" dialog over the user's app. A window can be torn down between
+    // the blur firing and this running, and `setBackgroundMaterial` on a
+    // destroyed window throws. Observed live: an unguarded blur handler
+    // (injected by a probe, not this one) produced exactly that dialog.
+    apply: (material) => {
+      if (win.isDestroyed()) return
+      try {
+        win.setBackgroundMaterial(material)
+      } catch {
+        // A material we could not apply is a cosmetic loss. A modal error
+        // dialog over the app is not.
+      }
+    }
   })
   win.on('blur', () => backdropKeeper?.reassert())
+  // Refocusing makes anything still queued pointless — DWM re-engages the blur
+  // itself for the focused window — and dropping it keeps a churned focus from
+  // ending in a pile of late writes.
+  win.on('focus', () => backdropKeeper?.cancel())
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)

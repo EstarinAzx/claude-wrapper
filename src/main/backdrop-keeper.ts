@@ -35,7 +35,34 @@ import { DEFAULT_BACKDROP, type Backdrop } from '../shared/backdrop'
 export interface BackdropPorts {
   /** `win.setBackgroundMaterial`. The only thing this module does to a window. */
   apply(material: Backdrop): void
+  /** `setTimeout`. Injected so the schedule below is testable without waiting. */
+  setTimer?(fn: () => void, ms: number): unknown
+  /** `clearTimeout`, paired with the above. */
+  clearTimer?(handle: unknown): void
 }
+
+// WHY THE RE-ASSERT IS A SCHEDULE AND NOT A SINGLE CALL.
+//
+// The owner stress-tested the single-call version and reported it "90% works…
+// sometimes it slips". The race explains it: nothing orders Electron's `blur`
+// event against DWM's own switch to the inactive backdrop. A re-assert that
+// lands FIRST is simply overwritten a moment later, which reads exactly as
+// "mostly fine, occasionally flat, worse when focus is churned".
+//
+// The original probe that found this fix re-applied 800ms AFTER focus was lost
+// and scored 924/948 every time — its timing hid the race by construction, so
+// the measurement that justified shipping never exercised the shipped path.
+//
+// Three attempts bracket the window instead. This is chosen by reasoning about
+// the race rather than by measuring each variant: a probe written to compare
+// schedules failed its own setup (a uniform desktop behind the window makes
+// blurred and flat score identically) and its verdict was discarded rather than
+// trusted. What IS measured is the end state, over repeated trials with focus
+// churn, by `gui-119.mjs`.
+//
+// Cost of the extra calls is two `setBackgroundMaterial` invocations per focus
+// loss, on a window that is not being looked at.
+export const REASSERT_DELAYS_MS: readonly number[] = [0, 250, 800]
 
 // Only acrylic is re-asserted, and the asymmetry is measured rather than
 // assumed. Acrylic flattens on blur (118 vs 948 above). Mica does not — owner
@@ -50,6 +77,8 @@ export interface BackdropKeeper {
   set(material: Backdrop): void
   /** The window lost focus. Re-assert, if this material is one that flattens. */
   reassert(): void
+  /** The window got focus back. Drops anything still pending. */
+  cancel(): void
   /** What main believes the window is wearing. Test seam; nothing else reads it. */
   current(): Backdrop
 }
@@ -63,15 +92,37 @@ export interface BackdropKeeper {
  * away, which is exactly when a user is most likely to notice the flip.
  */
 export const createBackdropKeeper = (ports: BackdropPorts): BackdropKeeper => {
+  const setTimer = ports.setTimer ?? ((fn, ms) => setTimeout(fn, ms))
+  const clearTimer = ports.clearTimer ?? ((h) => clearTimeout(h as ReturnType<typeof setTimeout>))
+
   let current: Backdrop = DEFAULT_BACKDROP
+  let pending: unknown[] = []
+
+  // Every entry point drops what is still in flight first. Focus can churn —
+  // alt-tab, a dialog, a notification — and without this each blur stacks
+  // another three timers on top of the last one's, so a rapid churn ends with
+  // a pile of delayed writes landing after the user is already back.
+  const drop = (): void => {
+    for (const h of pending) clearTimer(h)
+    pending = []
+  }
+
   return {
     set(material) {
+      drop()
       current = material
       ports.apply(material)
     },
     reassert() {
-      if (FLATTENS_ON_BLUR.includes(current)) ports.apply(current)
+      drop()
+      if (!FLATTENS_ON_BLUR.includes(current)) return
+      pending = REASSERT_DELAYS_MS.map((ms) =>
+        // The value is read at FIRE time, not captured now: a delayed write must
+        // never resurrect a material the user changed while it was queued.
+        setTimer(() => ports.apply(current), ms)
+      )
     },
+    cancel: drop,
     current: () => current
   }
 }
