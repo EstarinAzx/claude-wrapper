@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi } from './chat-harness'
+import { fakeChatApi, SENT_UUID } from './chat-harness'
 
 let harness: ReturnType<typeof fakeChatApi>
 
@@ -58,8 +58,8 @@ describe('stop button', () => {
 
     send('again')
     expect(harness.prompts).toEqual([
-      { text: 'hello', attachments: [] },
-      { text: 'again', attachments: [] }
+      { text: 'hello', attachments: [], uuid: SENT_UUID },
+      { text: 'again', attachments: [], uuid: SENT_UUID }
     ])
   })
 
@@ -93,8 +93,8 @@ describe('legible failure', () => {
 
     send('again')
     expect(harness.prompts).toEqual([
-      { text: 'hello', attachments: [] },
-      { text: 'again', attachments: [] }
+      { text: 'hello', attachments: [], uuid: SENT_UUID },
+      { text: 'again', attachments: [], uuid: SENT_UUID }
     ])
   })
 })

@@ -3,6 +3,7 @@ import type { TurnOutcome } from '../../shared/announce'
 import type { LastTurn } from '../../shared/queued-send'
 import type { Attachment } from '../../shared/attachment-types'
 import type { EngineEvent, PermissionDecision } from '../../shared/engine-types'
+import { isMessageUuid, type MessageUuid } from '../../shared/message-uuid'
 import type { AttachmentMarker, TranscriptMessage } from '../../shared/session-types'
 import type { LiveAgent } from '../../shared/subagent-types'
 import type { BackgroundTask } from '../../shared/background-tasks'
@@ -19,6 +20,18 @@ export type ChatMessage =
       text: string
       attachments?: Attachment[]
       attachmentMarkers?: AttachmentMarker[]
+      // #129 — the id the CLI stored this message under, and therefore the one a
+      // file rewind is addressed by. Present ONLY on messages this pane sent:
+      // `toChatMessage` never sets it, so a replayed transcript carries no
+      // rewind control.
+      //
+      // That is not caution about the route — #129 measured rewind working on a
+      // RESUMED session and, from a rebuilt query, on a message the PREVIOUS
+      // query sent. It is that a replayed message's uuid is not in hand here,
+      // and inventing one would address nothing. Carrying the transcript's own
+      // uuid through would make the control work on reopened conversations too;
+      // that is a real follow-up, not a defect of this one.
+      rewindId?: MessageUuid
     }
   | { id: string; role: 'assistant'; text: string }
   | { id: string; role: 'error'; text: string }
@@ -430,9 +443,25 @@ export const useChat = () => {
       setFailedTranscript(null)
       const message: Extract<ChatMessage, { role: 'user' }> = { id: uid(), role: 'user', text }
       if (attachments.length) message.attachments = attachments
+      // #129 — the rewind address, minted HERE because this is where the bubble
+      // is created. The CLI stores the outgoing message under exactly this id
+      // (asserted by both spikes reading the transcript back), so holding it on
+      // the bubble is what lets that message be pointed at later.
+      //
+      // `uid()` above cannot serve: it is a per-pane counter that means nothing
+      // to the CLI. A context without `randomUUID` — which `file://` is not,
+      // being a secure context (#122 measured it) — simply sends no uuid, and
+      // that message gets no rewind control rather than a broken one.
+      const minted = crypto.randomUUID?.()
+      const rewindId = isMessageUuid(minted) ? minted : undefined
+      if (rewindId) message.rewindId = rewindId
       setMessages((prev) => [...prev, message])
       markBusy(true)
-      window.api.sendPrompt({ text, attachments })
+      // The key is OMITTED rather than sent as undefined when there is no id:
+      // `normalizeSendPayload` drops it either way, but a payload that carries
+      // no uuid must stay byte-identical to the one this app sent before #129,
+      // which is what engine.test.ts's core-path pin reads.
+      window.api.sendPrompt(rewindId ? { text, attachments, uuid: rewindId } : { text, attachments })
     },
     [busy, stopTail]
   )

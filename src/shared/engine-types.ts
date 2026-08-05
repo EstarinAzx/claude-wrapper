@@ -4,6 +4,29 @@ import type { ModelOption } from './model-types'
 
 export type PermissionDecision = 'allow' | 'deny'
 
+// What a file rewind answers (#129), for both the preview and the real call.
+//
+// ONE shape rather than a success/failure union, because the CLI already speaks
+// exactly this vocabulary and a union would only re-encode it: a refusal IS a
+// `canRewind: false` with the reason in `error`, and every route to a refusal —
+// checkpointing switched off, an id with no checkpoint, an SDK too old to carry
+// the method — is the same fact to the control that has to render it.
+//
+// The counts are what makes the preview a preview. `filesChanged` is a COUNT and
+// not the list: the SDK answers it with absolute paths on the user's disk, and
+// the number is what the confirmation needs.
+//
+// `error` is the CLI's OWN text, passed through unrewritten. A rewind attempted
+// with checkpointing off must surface `File rewinding is not enabled.` rather
+// than a silent no-op or a phrase this app invented.
+export interface RewindResult {
+  canRewind: boolean
+  filesChanged: number
+  insertions: number
+  deletions: number
+  error: string | null
+}
+
 // The permission modes the app exposes as an in-app toggle. A subset of the
 // SDK's PermissionMode, assignable straight into query options.permissionMode.
 //   bypassPermissions — auto-run every tool, no prompt (needs the danger flag)
@@ -96,4 +119,19 @@ export interface Engine {
   // tokens, which is how it came to offer a value the CLI did not advertise
   // while missing ten that it did.
   listModels(): Promise<ModelOption[]>
+  // Restore the workspace's tracked files to their state at `userMessageId`
+  // (#129). FILES ONLY — the conversation is untouched, and nothing that renders
+  // this may imply otherwise.
+  //
+  // `dryRun` is the preview: it answers `canRewind` plus the counts and leaves
+  // the disk exactly as it found it (measured — the mutated file was still
+  // mutated after a dry run). The destructive call is the same route with
+  // `dryRun: false`.
+  //
+  // NEVER REJECTS. The ordinary refusal path from the CLI is a THROW, not a
+  // `canRewind: false` — an id with no checkpoint answers `No file checkpoint
+  // found for this message.` by throwing (#129) — and this is called from a
+  // main-process IPC handler, where an escaping rejection becomes a modal error
+  // dialog over the app.
+  rewindFiles(userMessageId: string, dryRun: boolean): Promise<RewindResult>
 }

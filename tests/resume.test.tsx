@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, within, act } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi, FOLDER } from './chat-harness'
+import { fakeChatApi, FOLDER, SENT_UUID } from './chat-harness'
 import type { SessionMeta } from '../src/shared/session-types'
 
 let harness: ReturnType<typeof fakeChatApi>
@@ -99,7 +99,7 @@ describe('resume — continue a reopened session (#13)', () => {
     fireEvent.change(input(), { target: { value: 'keep going' } })
     fireEvent.keyDown(input(), { key: 'Enter' })
 
-    expect(harness.prompts).toEqual([{ text: 'keep going', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: 'keep going', attachments: [], uuid: SENT_UUID }])
   })
 
   test('New chat clears the pane and starts a fresh (unresumed) session', async () => {

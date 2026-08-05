@@ -1,7 +1,12 @@
-import { vi } from 'vitest'
+import { expect, vi } from 'vitest'
 import { act } from '@testing-library/react'
 import { createPermissionBroker } from '../src/main/permission-broker'
-import type { EngineEvent, PermissionDecision, PermissionMode } from '../src/shared/engine-types'
+import type {
+  EngineEvent,
+  PermissionDecision,
+  PermissionMode,
+  RewindResult
+} from '../src/shared/engine-types'
 import type { BackendInfo } from '../src/shared/backend-types'
 import type { ModelInfo, ModelOption } from '../src/shared/model-types'
 import type { EffortLevel } from '../src/shared/effort'
@@ -39,6 +44,22 @@ const CLI_MODELS: ModelOption[] = [
 // `cwd` to count as in-project: the rail is global now (#45) and a row from
 // another project is deliberately inert.
 export const FOLDER = 'D:\\projects\\demo'
+
+// #129 — every send now carries the id the CLI will store the message under, so
+// every payload assertion in this suite names it.
+//
+// A MATCHER RATHER THAN `expect.any(String)`, and the difference is the point:
+// the id is minted fresh per send so its VALUE cannot be pinned, but its SHAPE
+// can, and the shape is what `normalizeSendPayload` refuses a message's rewind
+// control for getting wrong. `any(String)` would keep these assertions green
+// against a build that shipped `uuid: ''`.
+//
+// Written into each expected object rather than folded into a looser
+// `objectContaining` so the assertions stay EXACT — an unexpected fourth field
+// on the send channel must still fail them, which is what they were for.
+export const SENT_UUID = expect.stringMatching(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+)
 
 export const fakeChatApi = (folder = FOLDER) => {
   const prompts: SendPayload[] = []
@@ -161,7 +182,19 @@ export const fakeChatApi = (folder = FOLDER) => {
     onSessionChanged: (cb: (id: string) => void): (() => void) => {
       sessionChangedListeners.add(cb)
       return () => sessionChangedListeners.delete(cb)
-    }
+    },
+    // #129. The default REFUSES, so no suite that merely renders a sent message
+    // can accidentally exercise a destructive path — a test that wants the
+    // rewind to work says so by replacing this mock.
+    rewindFiles: vi.fn<(userMessageId: string, dryRun: boolean) => Promise<RewindResult>>(
+      async () => ({
+        canRewind: false,
+        filesChanged: 0,
+        insertions: 0,
+        deletions: 0,
+        error: 'File rewinding is not enabled.'
+      })
+    )
   }
   const emit = (e: EngineEvent): void => {
     act(() => {

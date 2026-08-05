@@ -68,7 +68,15 @@ const setup = (sessions: SessionMeta[], transcript: TranscriptMessage[] = []): v
     onChatEvent: vi.fn().mockReturnValue(() => {}),
     onEngineTerminal: vi.fn().mockReturnValue(() => {}),
     onBackgroundTasks: vi.fn().mockReturnValue(() => {}),
-    onSubagent: vi.fn().mockReturnValue(() => {})
+    onSubagent: vi.fn().mockReturnValue(() => {}),
+    // #129 — refuses by default, like the shared harness's.
+    rewindFiles: vi.fn().mockResolvedValue({
+      canRewind: false,
+      filesChanged: 0,
+      insertions: 0,
+      deletions: 0,
+      error: 'File rewinding is not enabled.'
+    })
   }
 }
 

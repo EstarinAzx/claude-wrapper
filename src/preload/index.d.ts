@@ -1,4 +1,9 @@
-import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
+import type {
+  EngineEvent,
+  PermissionDecision,
+  PermissionMode,
+  RewindResult
+} from '../shared/engine-types'
 import type {
   DeleteStatus,
   FolderChoice,
@@ -70,6 +75,11 @@ export interface WrapperApi {
   onWindowBoundsChanged: (cb: (bounds: Bounds) => void) => () => void
   sendPrompt: (payload: SendPayload) => void
   stopTurn: () => void
+  // #129 — FILES ONLY, never the conversation. `dryRun: true` previews and moves
+  // nothing; `false` is destructive. A refusal arrives as `canRewind: false`
+  // with the CLI's own reason, never as a rejection.
+  rewindFiles: (userMessageId: string, dryRun: boolean) => Promise<RewindResult>
+
   respondToPermission: (toolUseId: string, decision: PermissionDecision) => void
   onEngineTerminal: (cb: () => void) => () => void
   // #83 — REPLACE semantics: every payload is the full live set, and `[]` on an

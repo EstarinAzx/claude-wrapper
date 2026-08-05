@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi } from './chat-harness'
+import { fakeChatApi, SENT_UUID } from './chat-harness'
 
 let harness: ReturnType<typeof fakeChatApi>
 
@@ -39,7 +39,7 @@ describe('first chat turn', () => {
   test('Enter sends the prompt: user bubble appears, input clears and stays live', async () => {
     await startSession()
     send('hello there')
-    expect(harness.prompts).toEqual([{ text: 'hello there', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: 'hello there', attachments: [], uuid: SENT_UUID }])
     expect(screen.getByText('hello there')).toBeTruthy()
     expect(input().value).toBe('')
     // This line read `toBe(true)` until #80, and the change is the ticket rather
@@ -113,8 +113,8 @@ describe('first chat turn', () => {
     harness.emit({ type: 'text-delta', text: 'second answer' })
     harness.emit({ type: 'turn-end' })
     expect(harness.prompts).toEqual([
-      { text: 'first question', attachments: [] },
-      { text: 'second question', attachments: [] }
+      { text: 'first question', attachments: [], uuid: SENT_UUID },
+      { text: 'second question', attachments: [], uuid: SENT_UUID }
     ])
     expect(screen.getByText('first question')).toBeTruthy()
     expect(screen.getByText('first answer')).toBeTruthy()
@@ -134,7 +134,7 @@ describe('first chat turn', () => {
     await startSession()
     fireEvent.change(input(), { target: { value: 'via button' } })
     fireEvent.click(screen.getByLabelText('Send'))
-    expect(harness.prompts).toEqual([{ text: 'via button', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: 'via button', attachments: [], uuid: SENT_UUID }])
   })
 })
 

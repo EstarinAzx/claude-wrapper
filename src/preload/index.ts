@@ -1,5 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { EngineEvent, PermissionDecision, PermissionMode } from '../shared/engine-types'
+import type {
+  EngineEvent,
+  PermissionDecision,
+  PermissionMode,
+  RewindResult
+} from '../shared/engine-types'
 import type {
   DeleteStatus,
   FolderChoice,
@@ -135,6 +140,17 @@ const api = {
   },
   sendPrompt: (payload: SendPayload): void => ipcRenderer.send('chat:send', payload),
   stopTurn: (): void => ipcRenderer.send('chat:stop'),
+  // #129 — restore the workspace's tracked FILES to their state at one user
+  // message. The conversation is not touched and nothing rendering this may
+  // imply it is.
+  //
+  // `dryRun: true` is the preview and moves nothing (measured: the mutated file
+  // was still mutated afterwards); `false` is the destructive call. Both answer
+  // the same shape, so a refusal — checkpointing off, an id with no checkpoint,
+  // no live session — arrives as a `canRewind: false` carrying the CLI's own
+  // reason rather than as a rejection.
+  rewindFiles: (userMessageId: string, dryRun: boolean): Promise<RewindResult> =>
+    ipcRenderer.invoke('chat:rewind', userMessageId, dryRun),
   respondToPermission: (toolUseId: string, decision: PermissionDecision): void => {
     ipcRenderer.send('chat:permission-response', toolUseId, decision)
   },

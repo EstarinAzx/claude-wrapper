@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi } from './chat-harness'
+import { fakeChatApi, SENT_UUID } from './chat-harness'
 
 // #40 — composer slash-command autocomplete. Trigger: value starts with '/'
 // and contains no space. Enter is intercepted ONLY while the popover is open
@@ -126,7 +126,7 @@ describe('composer autocomplete (#40)', () => {
     // Now closed (accept added the space): Enter submits the composed command.
     fireEvent.change(input(), { target: { value: '/context please' } })
     fireEvent.keyDown(input(), { key: 'Enter' })
-    expect(harness.prompts).toEqual([{ text: '/context please', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: '/context please', attachments: [], uuid: SENT_UUID }])
   })
 
   test('after Escape, Enter falls through and sends the typed slash text', async () => {
@@ -134,7 +134,7 @@ describe('composer autocomplete (#40)', () => {
     await type('/context')
     fireEvent.keyDown(input(), { key: 'Escape' })
     fireEvent.keyDown(input(), { key: 'Enter' })
-    expect(harness.prompts).toEqual([{ text: '/context', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: '/context', attachments: [], uuid: SENT_UUID }])
   })
 
   test('a plain message never fetches the list and sends exactly as before', async () => {
@@ -142,7 +142,7 @@ describe('composer autocomplete (#40)', () => {
     await type('hello there')
     expect(harness.api.listCommands).not.toHaveBeenCalled()
     fireEvent.keyDown(input(), { key: 'Enter' })
-    expect(harness.prompts).toEqual([{ text: 'hello there', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: 'hello there', attachments: [], uuid: SENT_UUID }])
   })
 })
 

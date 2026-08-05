@@ -8,7 +8,7 @@ import {
   waitFor
 } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi, FOLDER } from './chat-harness'
+import { fakeChatApi, FOLDER, SENT_UUID } from './chat-harness'
 
 // #80 — the wiring half. The decision table is `tests/queued-send.test.ts`; the
 // "it really only reaches the CLI once" half is `gui-80.mjs`, because a count of
@@ -130,8 +130,8 @@ describe('the queued prompt fires', () => {
     harness.emit({ type: 'turn-end' })
 
     expect(harness.prompts).toEqual([
-      { text: 'first', attachments: [] },
-      { text: 'second', attachments: [] }
+      { text: 'first', attachments: [], uuid: SENT_UUID },
+      { text: 'second', attachments: [], uuid: SENT_UUID }
     ])
     expect(note()).toBeNull()
     expect(input().value).toBe('')
@@ -181,7 +181,7 @@ describe('the queued prompt fires', () => {
     harness.emit({ type: 'turn-end' })
 
     expect(harness.prompts).toHaveLength(3)
-    expect(harness.prompts[2]).toEqual({ text: 'third', attachments: [] })
+    expect(harness.prompts[2]).toEqual({ text: 'third', attachments: [], uuid: SENT_UUID })
   })
 
   test('attachments ride along with it', async () => {

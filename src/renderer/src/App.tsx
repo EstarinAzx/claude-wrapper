@@ -316,6 +316,13 @@ const App = () => {
               onReuse={(text) =>
                 setPendingInsert((p) => ({ text, nonce: (p?.nonce ?? 0) + 1 }))
               }
+              // #129 — a straight pass-through to main, with no state held here.
+              // The two-step (preview, then commit) lives in the control itself
+              // because it belongs to ONE message; a preview parked in App would
+              // be state that goes stale the moment another turn edits a file.
+              onRewind={(userMessageId, dryRun) =>
+                window.api.rewindFiles(userMessageId, dryRun)
+              }
             />
             {/* A transcript that would not READ (#60). Sits under the pane
                 rather than inside it because the pane is now empty by

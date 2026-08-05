@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import type { ChatMessage } from '../useChat'
-import type { PermissionDecision } from '../../../shared/engine-types'
+import type { PermissionDecision, RewindResult } from '../../../shared/engine-types'
 import { isNearBottom } from '../autoscroll'
 import ToolCard from './ToolCard'
 
@@ -134,6 +134,153 @@ const ReuseGlyph = () => (
   </svg>
 )
 
+const RewindGlyph = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+    <path
+      d="M2.1 5.1a4 4 0 1 1 .6 3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+    <path
+      d="M1.3 2.3v2.9h2.9"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+// #129 — restore the workspace's FILES to their state at this message.
+//
+// THE WORD "UNDO" IS NOT USED, and neither is anything else that would suggest
+// the conversation moved. The route is `rewind_files`, its response is about the
+// disk, and every measurement behind it watched a file — an "undo" here would
+// undo the workspace and leave the transcript exactly where it was. It also does
+// NOT reopen #123's refill decision: the pane is still a projection of the CLI's
+// own transcript.
+//
+// TWO GESTURES, and the first one is the preview. `dryRun: true` answers how
+// many files and lines would move and provably leaves the disk alone (measured:
+// the mutated file was still mutated afterwards), so the destructive call is
+// only ever reached from a state that has already shown its consequence. There
+// is no dialog: this app's two anti-modal ADRs stand, and a confirmation that
+// lives in the control is a smaller thing than one that covers the window.
+//
+// A refusal — checkpointing off, an id with no checkpoint, no live session —
+// comes back as `canRewind: false` carrying the CLI's OWN text, which is
+// rendered verbatim rather than replaced with a phrase this app invented.
+const RewindControl = ({
+  rewindId,
+  busy,
+  onRewind
+}: {
+  rewindId: string
+  busy: boolean
+  onRewind: (userMessageId: string, dryRun: boolean) => Promise<RewindResult>
+}) => {
+  const [preview, setPreview] = useState<RewindResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+  // Set once the destructive call has come back clean, so the control reports
+  // what it did instead of offering to do it again.
+  const [done, setDone] = useState(false)
+
+  // A rewind while a turn is streaming would pull files out from under the tool
+  // calls editing them, so the control is inert then. `busy` is the pane's one
+  // reading of that, already in hand.
+  const disabled = busy || pending
+
+  const run = (dryRun: boolean): void => {
+    if (disabled) return
+    setPending(true)
+    setError(null)
+    void onRewind(rewindId, dryRun)
+      .then((result) => {
+        if (!result.canRewind) {
+          setPreview(null)
+          // The CLI's own sentence when it gave one; a bare refusal otherwise.
+          setError(result.error ?? 'This message cannot be rewound.')
+          return
+        }
+        if (dryRun) {
+          setPreview(result)
+          return
+        }
+        setPreview(null)
+        setDone(true)
+      })
+      // `rewindFiles` resolves on every path by contract, so this is the
+      // channel dying rather than a rewind failing — reported as a refusal
+      // rather than swallowed, which would leave the control claiming nothing
+      // happened when it does not know that.
+      .catch(() => {
+        setPreview(null)
+        setError('Could not reach Claude Code to rewind these files.')
+      })
+      .finally(() => setPending(false))
+  }
+
+  if (done) {
+    return (
+      <span className="bubble-rewind-note" role="status">
+        Files restored
+      </span>
+    )
+  }
+
+  if (error) {
+    return (
+      <span className="bubble-rewind-note bubble-rewind-note--error" role="status">
+        {error}
+      </span>
+    )
+  }
+
+  if (preview) {
+    return (
+      <span className="bubble-rewind-confirm">
+        <span className="bubble-rewind-summary">
+          {preview.filesChanged === 1 ? '1 file' : `${preview.filesChanged} files`}
+          {', '}
+          {`+${preview.insertions} −${preview.deletions}`}
+        </span>
+        <button
+          type="button"
+          className="bubble-rewind-go"
+          disabled={disabled}
+          onClick={() => run(false)}
+        >
+          Restore files
+        </button>
+        <button
+          type="button"
+          className="bubble-rewind-cancel"
+          onClick={() => setPreview(null)}
+        >
+          Cancel
+        </button>
+      </span>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      className="bubble-rewind"
+      aria-label="Restore files to before this message"
+      title="Restore files to before this message. The conversation is not changed."
+      disabled={disabled}
+      onClick={() => run(true)}
+    >
+      <RewindGlyph />
+    </button>
+  )
+}
+
 const Typing = () => (
   <div className="typing" aria-label="Typing">
     <span className="typing-dot" />
@@ -152,9 +299,22 @@ interface ChatProps {
   // same component against an agent's transcript, where a refill would put
   // another agent's words into the conversation's composer.
   onReuse?: (text: string) => void
+  // #129 — restore the workspace's FILES to their state at one user message.
+  // OPTIONAL for the same reason `onReuse` is, and scoped twice over: the
+  // control also needs the message to carry a `rewindId`, which only messages
+  // this pane SENT have. A replayed transcript therefore shows no control even
+  // when the handler is supplied.
+  onRewind?: (userMessageId: string, dryRun: boolean) => Promise<RewindResult>
 }
 
-const Chat = ({ messages, busy, onPermission, onOpenSubagent, onReuse }: ChatProps) => {
+const Chat = ({
+  messages,
+  busy,
+  onPermission,
+  onOpenSubagent,
+  onReuse,
+  onRewind
+}: ChatProps) => {
   const scrollerRef = useRef<HTMLElement | null>(null)
   const nearBottomRef = useRef(true)
 
@@ -212,6 +372,19 @@ const Chat = ({ messages, busy, onPermission, onOpenSubagent, onReuse }: ChatPro
                     It sits BESIDE the bubble rather than inside it —
                     tests/multiline-composer.test.tsx reads `.bubble`'s
                     textContent verbatim. */}
+                {/* #129 — sits beside the reuse control, and OUTSIDE `.bubble`
+                    for the same reason that one does: the bubble's textContent
+                    is read verbatim by tests/multiline-composer.test.tsx. Keyed
+                    on the message id so a rewind's two-step state belongs to one
+                    message and cannot survive onto another. */}
+                {onRewind && m.rewindId ? (
+                  <RewindControl
+                    key={`rewind-${m.id}`}
+                    rewindId={m.rewindId}
+                    busy={busy}
+                    onRewind={onRewind}
+                  />
+                ) : null}
                 {onReuse ? (
                   <button
                     type="button"

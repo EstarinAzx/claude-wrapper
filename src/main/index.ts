@@ -24,6 +24,7 @@ import { clampZoom } from '../shared/zoom'
 import { normalizeBackdrop } from '../shared/backdrop'
 import { clampBounds, isBounds } from '../shared/window-bounds'
 import { normalizeSendPayload } from '../shared/attachment-types'
+import { isMessageUuid } from '../shared/message-uuid'
 import {
   MAX_IMAGE_BYTES,
   isEmbeddable,
@@ -51,7 +52,7 @@ import { listWorkspaceFiles, type WorkspaceFilePorts } from './workspace-files'
 import { createBackdropKeeper, type BackdropKeeper } from './backdrop-keeper'
 import { listBackgroundSessions } from './agent-view'
 import { ensureListEngine, type ListEnginePorts } from './list-engine'
-import type { PermissionDecision } from '../shared/engine-types'
+import type { PermissionDecision, RewindResult } from '../shared/engine-types'
 
 let engine: ReturnType<typeof createEngine> | null = null
 // Created with the window, because its port closes over that window and there is
@@ -862,6 +863,49 @@ ipcMain.on(
   (event, toolUseId: string, decision: PermissionDecision) => {
     if (!isTrustedIpc(event)) return
     permissionBroker.respond(String(toolUseId), decision)
+  }
+)
+
+// Destructive write, and the second one in the app after session deletion (#68)
+// — this puts files on the user's disk back to an earlier state.
+//
+// `handle` rather than `on` because the answer IS the feature: the renderer runs
+// this with `dryRun: true` first and shows what would change, and only a second,
+// deliberate gesture sends `dryRun: false`. Main does not enforce that ordering
+// and deliberately does not try to: a preview is not a token, holding one would
+// be state that goes stale the moment another turn edits a file, and the CLI
+// re-derives the change set on the real call anyway.
+//
+// EVERY PATH RESOLVES. An untrusted sender, a malformed id, no engine, an SDK
+// without the method and the CLI's own refusal all come back as a `RewindResult`
+// carrying a reason — `engine.rewindFiles` never rejects, and the guards here do
+// not either. A rejection escaping an ipcMain.handle becomes a modal error
+// dialog over the app.
+//
+// FILES ONLY. Nothing here touches the transcript, and the control that calls it
+// must not suggest otherwise.
+ipcMain.handle(
+  'chat:rewind',
+  async (event, userMessageId: unknown, dryRun: unknown): Promise<RewindResult> => {
+    const refusal = (error: string): RewindResult => ({
+      canRewind: false,
+      filesChanged: 0,
+      insertions: 0,
+      deletions: 0,
+      error
+    })
+    if (!isTrustedIpc(event)) return refusal('Rewind refused.')
+    if (!isMessageUuid(userMessageId)) return refusal('This message cannot be rewound.')
+    if (!engine) {
+      return refusal(
+        'Rewind is unavailable — this conversation has no live Claude Code session.'
+      )
+    }
+    // The engine is NOT rebuilt to serve this, unlike the list handlers (#112).
+    // A rebuild would spawn a fresh CLI process whose checkpoints are its own,
+    // so it could only ever answer "no checkpoint for this message" — the honest
+    // refusal above is the same answer for free and without the ~5.5s.
+    return engine.rewindFiles(userMessageId, dryRun === true)
   }
 )
 

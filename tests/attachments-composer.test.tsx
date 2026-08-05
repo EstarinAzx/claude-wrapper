@@ -10,7 +10,7 @@ import {
   act
 } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi } from './chat-harness'
+import { fakeChatApi, SENT_UUID } from './chat-harness'
 import {
   MAX_ATTACHMENTS,
   MAX_IMAGE_BYTES,
@@ -117,7 +117,8 @@ describe('pasting an image into the composer', () => {
         attachments: [
           { kind: 'image', mediaType: 'image/png', data: b64(PNG) },
           { kind: 'image', mediaType: 'image/jpeg', data: b64(JPEG) }
-        ]
+        ],
+        uuid: SENT_UUID
       }
     ])
   })
@@ -130,7 +131,11 @@ describe('pasting an image into the composer', () => {
     send('')
 
     expect(harness.prompts).toEqual([
-      { text: '', attachments: [{ kind: 'image', mediaType: 'image/png', data: b64(PNG) }] }
+      {
+        text: '',
+        attachments: [{ kind: 'image', mediaType: 'image/png', data: b64(PNG) }],
+        uuid: SENT_UUID
+      }
     ])
   })
 
@@ -151,7 +156,7 @@ describe('pasting an image into the composer', () => {
     await startSession()
     send('no pictures')
     expect(thumbs()).toHaveLength(0)
-    expect(harness.prompts).toEqual([{ text: 'no pictures', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: 'no pictures', attachments: [], uuid: SENT_UUID }])
   })
 
   // #42 retired the single-line pin this replaces. What still matters to the
@@ -194,7 +199,7 @@ describe('the policy module refusing inline', () => {
     expect(chips()).toHaveLength(0)
 
     send('did it go')
-    expect(harness.prompts).toEqual([{ text: 'did it go', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: 'did it go', attachments: [], uuid: SENT_UUID }])
   })
 
   test('a non-image paste is routed by policy, not special-cased away', async () => {
@@ -306,7 +311,11 @@ describe('a clipboard image that cannot be read', () => {
     send('this one')
 
     expect(harness.prompts).toEqual([
-      { text: 'this one', attachments: [{ kind: 'image', mediaType: 'image/png', data: b64(PNG) }] }
+      {
+        text: 'this one',
+        attachments: [{ kind: 'image', mediaType: 'image/png', data: b64(PNG) }],
+        uuid: SENT_UUID
+      }
     ])
   })
 
@@ -417,7 +426,8 @@ describe('the paperclip file picker', () => {
         attachments: [
           { kind: 'image', mediaType: 'image/png', data: b64(PNG) },
           { kind: 'path', path: 'D:\\proj\\notes.pdf' }
-        ]
+        ],
+        uuid: SENT_UUID
       }
     ])
   })
@@ -450,7 +460,8 @@ describe('the paperclip file picker', () => {
           { kind: 'image', mediaType: 'image/png', data: b64(PNG) },
           { kind: 'image', mediaType: 'image/jpeg', data: b64(JPEG) },
           { kind: 'path', path: 'D:\\proj\\notes.pdf' }
-        ]
+        ],
+        uuid: SENT_UUID
       }
     ])
   })

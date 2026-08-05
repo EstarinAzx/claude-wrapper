@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import App from '../src/renderer/src/App'
-import { fakeChatApi } from './chat-harness'
+import { fakeChatApi, SENT_UUID } from './chat-harness'
 
 // #42 — the composer is a textarea. Enter sends, Shift+Enter breaks the line.
 // The #40 popover keeps first claim on a plain Enter; Shift+Enter escapes it
@@ -107,7 +107,7 @@ describe('the composer is multiline (#42)', () => {
 
     fireEvent.keyDown(composer(), { key: 'Enter' })
 
-    expect(harness.prompts).toEqual([{ text: 'hello there', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: 'hello there', attachments: [], uuid: SENT_UUID }])
   })
 })
 
@@ -132,7 +132,7 @@ describe('a newline survives the whole path (#42)', () => {
 
     fireEvent.keyDown(composer(), { key: 'Enter' })
 
-    expect(harness.prompts).toEqual([{ text: 'first\nsecond', attachments: [] }])
+    expect(harness.prompts).toEqual([{ text: 'first\nsecond', attachments: [], uuid: SENT_UUID }])
   })
 
   test('3/3 — the sent bubble keeps the break instead of flattening it', async () => {

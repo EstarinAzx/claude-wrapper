@@ -3,8 +3,10 @@ import type { PermissionResult, SDKUserMessage } from '@anthropic-ai/claude-agen
 import type {
   Engine,
   EngineEvent,
-  PermissionDecision
+  PermissionDecision,
+  RewindResult
 } from '../shared/engine-types'
+import { isMessageUuid } from '../shared/message-uuid'
 import type { SendPayload } from '../shared/attachment-types'
 import type { SlashCommandInfo } from '../shared/command-types'
 import type { ModelOption } from '../shared/model-types'
@@ -77,6 +79,19 @@ type QueryHandle = AsyncIterable<SdkMessage> & {
   interrupt?: () => Promise<void>
   supportedCommands?: () => Promise<unknown>
   supportedModels?: () => Promise<unknown>
+  // #129. Optional like the three above and for the same reason: a fake handle
+  // in a test supplies only what its case is about, and an SDK without the
+  // method must degrade to a refusal rather than a crash.
+  //
+  // This is the DECLARED method (sdk.d.ts:2488), not the raw dispatcher
+  // underneath it. #127 proved the wire route `request({subtype:
+  // 'rewind_files'})` works but never called the method, and a declared type is
+  // not a callable route (#115) — so #129 called it, from this app's exact
+  // option shape, and watched the file on disk return to its pre-turn contents.
+  rewindFiles?: (
+    userMessageId: string,
+    options?: { dryRun?: boolean }
+  ) => Promise<unknown>
 }
 
 // Pushable async queue of user messages for streaming-input mode.
@@ -135,7 +150,7 @@ type ContentBlock = Exclude<SDKUserMessage['message']['content'], string>[number
 // Otherwise: one text block, then one image block per embedded image. Non-image
 // attachments are never embedded; their absolute paths are appended to the
 // prompt text so the agent opens them with its own file tools.
-const toUserMessage = ({ text, attachments }: SendPayload): SDKUserMessage => {
+const toUserMessage = ({ text, attachments, uuid }: SendPayload): SDKUserMessage => {
   const paths = attachments.filter((a) => a.kind === 'path')
   const prompt =
     paths.length === 0
@@ -161,12 +176,23 @@ const toUserMessage = ({ text, attachments }: SendPayload): SDKUserMessage => {
             )
         ]
 
-  return {
+  const message: SDKUserMessage = {
     type: 'user',
     message: { role: 'user', content },
     parent_tool_use_id: null,
     origin: { kind: 'human' }
   }
+  // #129 — the rewind address, and it is stamped CONDITIONALLY. The CLI stores
+  // the message under exactly this id, which is what makes `rewindFiles(id)`
+  // able to find it later; without one the CLI mints its own and the message is
+  // simply not addressable from here, which is a working send with no rewind
+  // control rather than a broken one.
+  //
+  // Conditional rather than always-on so a payload that carries no uuid produces
+  // a byte-identical message to the one this function returned before the field
+  // existed — engine.test.ts pins that core path.
+  if (uuid !== undefined) message.uuid = uuid
+  return message
 }
 
 type SubagentEvent = Extract<EngineEvent, { type: 'subagent' }>
@@ -713,6 +739,21 @@ export const createEngine = (
       cwd,
       includePartialMessages: true,
       canUseTool,
+      // #129 — what makes `rewindFiles` able to do anything. Without it the
+      // route is reachable and answers `canRewind: false` / "File rewinding is
+      // not enabled." (#127 measured exactly that), so this is the whole switch.
+      //
+      // It binds at query CONSTRUCTION, like `model`, `effort` and `resume`
+      // below — a setter that only stored it would change nothing — so it is
+      // stated here unconditionally rather than injected as a getter: there is
+      // no pick to follow, the app always wants checkpoints, and a getter would
+      // imply a control that could turn it off mid-conversation and appear to
+      // work.
+      //
+      // Its runtime cost is UNMEASURED (#129 says so in its own findings rather
+      // than reporting the turn timings it had, which model latency dominates).
+      // Shipped on regardless: the alternative is a control that cannot work.
+      enableFileCheckpointing: true,
       // options.env REPLACES the child env wholesale (see sdk.d.ts). getEnv
       // returns the full env resolved for the active backend mode.
       env: getEnv(),
@@ -888,6 +929,56 @@ export const createEngine = (
     })
   }
 
+  // #129. Restore the workspace's tracked files to their state at a user
+  // message. FILES ONLY — nothing here touches the conversation.
+  //
+  // THE REFUSAL PATH IS A THROW, and that is measured rather than defensive: an
+  // id the CLI has no checkpoint for answers `No file checkpoint found for this
+  // message.` by REJECTING, while checkpointing being off answers
+  // `canRewind: false` with the reason in the body. Two different mechanisms for
+  // the same user-visible fact, so both are folded into one result here and the
+  // CLI's own text is carried through unrewritten.
+  //
+  // Every failure resolves. This is called from an ipcMain.handle, and a
+  // rejection escaping one becomes a modal error dialog over the app.
+  const rewindFiles = async (
+    userMessageId: string,
+    dryRun: boolean
+  ): Promise<RewindResult> => {
+    const refusal = (error: string): RewindResult => ({
+      canRewind: false,
+      filesChanged: 0,
+      insertions: 0,
+      deletions: 0,
+      error
+    })
+    // Checked here as well as at the IPC boundary because this is the last stop
+    // before the SDK, and `Engine` is a contract other callers can reach.
+    if (!isMessageUuid(userMessageId)) return refusal('This message cannot be rewound.')
+    const call = currentQuery?.rewindFiles
+    if (!call) {
+      return refusal(
+        'Rewind is unavailable — this conversation has no live Claude Code session.'
+      )
+    }
+    let raw: unknown
+    try {
+      raw = await call.call(currentQuery, userMessageId, { dryRun })
+    } catch (err) {
+      return refusal(err instanceof Error ? err.message : String(err))
+    }
+    const row = (raw ?? {}) as Record<string, unknown>
+    return {
+      canRewind: row['canRewind'] === true,
+      // Carried as a COUNT: the SDK answers `filesChanged` with absolute paths,
+      // and the number is what a confirmation needs.
+      filesChanged: Array.isArray(row['filesChanged']) ? row['filesChanged'].length : 0,
+      insertions: num(row['insertions']) ?? 0,
+      deletions: num(row['deletions']) ?? 0,
+      error: str(row['error']) ?? null
+    }
+  }
+
   const runTurn = async (
     payload: SendPayload,
     onEvent: (e: EngineEvent) => void,
@@ -976,6 +1067,7 @@ export const createEngine = (
     warmUp,
     listCommands,
     listModels,
+    rewindFiles,
     isBusy
   }
 }

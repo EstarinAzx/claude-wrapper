@@ -1,0 +1,194 @@
+{
+  "spike": 129,
+  "question": "Does the DECLARED rewindFiles method work, does rewind survive a resume, and can a rebuilt query rewind a message the previous one sent?",
+  "measuredAt": "2026-08-05T13:10:17.142Z",
+  "phasesRun": [
+    "A",
+    "B"
+  ],
+  "env": {
+    "platform": "win32",
+    "node": "v22.17.0",
+    "backendMode": "wisped",
+    "hostCliResolved": true
+  },
+  "scrubbing": "Counts, shapes, booleans, timings and CLI-generated error text only. filesChanged is recorded as a LENGTH — its entries are absolute paths on the operator disk. No cwd, home, username, path or session id is written.",
+  "method": "Every question is answered by CALLING and reading the FILE ON DISK back, never by a name on the object or a type in sdk.d.ts (#115: a declared type is not a callable route; #88: an absent name is not an absent route; #117: a callable route is not an effective one). Each arm runs a bogus-uuid rewind BEFORE its real one and re-reads the file, so a revert is attributable; an arm whose turn did not mutate the file is UNSCORED rather than a refutation (#76).",
+  "phaseA_freshSession_declaredMethod": {
+    "label": "A-fresh-declared-method",
+    "resumed": false,
+    "attempted": true,
+    "declaredMethodPresent": true,
+    "ranTurn": true,
+    "turnIsError": false,
+    "turnMs": 15450,
+    "sessionId": "recorded-internally",
+    "newSessionOnResume": null,
+    "fileChangedByTurn": true,
+    "hostStampedUuidAccepted": {
+      "checked": true,
+      "transcriptUserMessages": 4,
+      "myUuidPresent": true
+    },
+    "bogusIdControl": {
+      "label": "A-fresh-declared-method / bogus uuid / wet",
+      "dryRun": false,
+      "expectRevert": false,
+      "outcome": "threw",
+      "errorText": "No file checkpoint found for this message.",
+      "ms": 8,
+      "fileReverted": false,
+      "verdict": "AS PREDICTED — the file was left mutated."
+    },
+    "dryRun": {
+      "label": "A-fresh-declared-method / real uuid / dry_run=true",
+      "dryRun": true,
+      "expectRevert": false,
+      "outcome": "accepted",
+      "responseKeys": [
+        "canRewind",
+        "deletions",
+        "filesChanged",
+        "insertions"
+      ],
+      "canRewind": true,
+      "error": null,
+      "filesChangedCount": 1,
+      "insertions": 1,
+      "deletions": 1,
+      "skippedLinks": null,
+      "ms": 2,
+      "fileReverted": false,
+      "verdict": "AS PREDICTED — the file was left mutated."
+    },
+    "wetRun": {
+      "label": "A-fresh-declared-method / real uuid / dry_run=false",
+      "dryRun": false,
+      "expectRevert": true,
+      "outcome": "accepted",
+      "responseKeys": [
+        "canRewind",
+        "skippedLinks"
+      ],
+      "canRewind": true,
+      "error": null,
+      "filesChangedCount": null,
+      "insertions": null,
+      "deletions": null,
+      "skippedLinks": 0,
+      "ms": 7,
+      "fileReverted": true,
+      "verdict": "AS PREDICTED — the file returned to its pre-turn contents."
+    },
+    "verdict": "EFFECTIVE THROUGH THE DECLARED METHOD — q.rewindFiles() returned the file to its pre-turn contents, while a bogus id left it alone and the dry run left it mutated."
+  },
+  "phaseB_resumedSession": {
+    "label": "B-resumed-declared-method",
+    "resumed": true,
+    "attempted": true,
+    "declaredMethodPresent": true,
+    "ranTurn": true,
+    "turnIsError": false,
+    "turnMs": 10538,
+    "sessionId": "recorded-internally",
+    "newSessionOnResume": false,
+    "fileChangedByTurn": true,
+    "hostStampedUuidAccepted": {
+      "checked": true,
+      "transcriptUserMessages": 7,
+      "myUuidPresent": true
+    },
+    "bogusIdControl": {
+      "label": "B-resumed-declared-method / bogus uuid / wet",
+      "dryRun": false,
+      "expectRevert": false,
+      "outcome": "threw",
+      "errorText": "No file checkpoint found for this message.",
+      "ms": 1,
+      "fileReverted": false,
+      "verdict": "AS PREDICTED — the file was left mutated."
+    },
+    "dryRun": {
+      "label": "B-resumed-declared-method / real uuid / dry_run=true",
+      "dryRun": true,
+      "expectRevert": false,
+      "outcome": "accepted",
+      "responseKeys": [
+        "canRewind",
+        "deletions",
+        "filesChanged",
+        "insertions"
+      ],
+      "canRewind": true,
+      "error": null,
+      "filesChangedCount": 1,
+      "insertions": 1,
+      "deletions": 1,
+      "skippedLinks": null,
+      "ms": 1,
+      "fileReverted": false,
+      "verdict": "AS PREDICTED — the file was left mutated."
+    },
+    "wetRun": {
+      "label": "B-resumed-declared-method / real uuid / dry_run=false",
+      "dryRun": false,
+      "expectRevert": true,
+      "outcome": "accepted",
+      "responseKeys": [
+        "canRewind",
+        "skippedLinks"
+      ],
+      "canRewind": true,
+      "error": null,
+      "filesChangedCount": null,
+      "insertions": null,
+      "deletions": null,
+      "skippedLinks": 0,
+      "ms": 4,
+      "fileReverted": true,
+      "verdict": "AS PREDICTED — the file returned to its pre-turn contents."
+    },
+    "verdict": "EFFECTIVE THROUGH THE DECLARED METHOD — q.rewindFiles() returned the file to its pre-turn contents, while a bogus id left it alone and the dry run left it mutated."
+  },
+  "phaseC_crossQueryRewind": {
+    "label": "C-previous-querys-message / dry_run=true",
+    "dryRun": true,
+    "expectRevert": true,
+    "outcome": "accepted",
+    "responseKeys": [
+      "canRewind",
+      "deletions",
+      "filesChanged",
+      "insertions"
+    ],
+    "canRewind": true,
+    "error": null,
+    "filesChangedCount": 0,
+    "insertions": 0,
+    "deletions": 0,
+    "skippedLinks": null,
+    "ms": 4,
+    "fileReverted": true,
+    "verdict": "YES — the resumed query recognises the previous query's user-message id, so a rewind control may survive an engine rebuild.",
+    "comparedAgainstUnknownId": {
+      "unknownIdOutcome": "threw",
+      "unknownIdCanRewind": null,
+      "unknownIdError": "No file checkpoint found for this message.",
+      "differs": true
+    },
+    "note": "Scored on canRewind and on the contrast with an unknown id, NOT on the disk: phase A already reverted its file, so its contents match `before` whatever this call does. The question is whether a query built with `resume` recognises a user-message id the PREVIOUS query stamped — the engine-rebuild case (model pick, permission cycle, backend flip)."
+  },
+  "turnsSpent": 2,
+  "cost": {
+    "turnMsByArm": {
+      "phaseA_freshSession_declaredMethod": 15450,
+      "phaseB_resumedSession": 10538
+    },
+    "verdict": "UNSCORED for checkpointing overhead. A turn's wall time here is dominated by model latency and tool round-trips, so these numbers cannot separate the cost of snapshotting files from the weather. Measuring it honestly needs a fixed local workload (N writes, no model in the loop) run both ways, which is a different harness; #129 ships checkpointing ON regardless, because the alternative is a control that cannot work."
+  },
+  "whatANegativeRunProves": {
+    "ifPhaseAFails": "The DECLARED method is not usable from this app's option shape. #127 already proved the RAW route works, so the build falls back to q.request({subtype: \"rewind_files\", ...}) rather than dropping the feature.",
+    "ifPhaseBFails": "Rewind does not survive a resume. The control must then be hidden for any message sent on a resumed session — which is most of them, since reopening a session is how this app continues a conversation.",
+    "ifPhaseCFails": "A rebuilt engine cannot rewind what the previous one sent. The control must be withdrawn from every message in the pane whenever main discards the engine (model pick, permission cycle, backend flip, workspace switch)."
+  }
+}
