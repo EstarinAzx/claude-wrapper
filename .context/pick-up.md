@@ -28,7 +28,9 @@ held, and the run identifies itself in `measuredAt` / `env`.
 
 **After #129 the frontier query comes back empty and the chain stops.**
 
-**Do not push.** `origin/main` is now **13 commits behind** — this chain landed
+**Do not push.** `origin/main` is now **14 commits behind** (`git rev-list
+--count origin/main..main` — **read it, do not copy it**; this number has been
+stale in the handoff twice now) — this chain landed
 every leg locally and pushed none, deliberately, because pushing is
 outward-facing and the owner has not asked for it. **Still worth raising when
 they are back.**
