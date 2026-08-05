@@ -80,6 +80,47 @@
   font-weight: 600;
 }
 
+/* #121 — GFM tables have always parsed; this file simply had no table rules,
+   so they arrived as real markup and read as run-together text.
+
+   `display: block` is what lets an over-wide table scroll: react-markdown emits
+   no wrapper, so the overflow has to sit on the table element itself, and a
+   table box cannot scroll. The rows still lay themselves out inside an
+   anonymous table box, so `max-content` sizes to the widest row and the table
+   stays shrink-to-fit until it outgrows the 760px column. The bar it scrolls
+   with is the global one in base.css — nothing here may author its own. */
+.assistant-body table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 8px 0 12px;
+  font-size: var(--fs-ui);
+}
+
+/* The parser writes the column alignment as an inline style on every cell, so
+   this is a default rather than a rule — and nothing here may be important, or
+   all three columns collapse back to the left. */
+.assistant-body th,
+.assistant-body td {
+  padding: 6px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.assistant-body thead th {
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  border-bottom-color: var(--text-faint);
+}
+
+.assistant-body tbody tr:last-child td {
+  border-bottom: none;
+}
+
 /* hljs tokens — muted frost-mint palette */
 .hljs-keyword,
 .hljs-selector-tag,
