@@ -10,7 +10,7 @@ Each leg = exactly ONE ticket end to end, then the relay machinery hands off to
 a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides.
 
-**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 5.** Everything this file said before is
+**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 6.** Everything this file said before is
 gone: it described the completed #115–#119 chain, announced an empty queue, and
 told legs that `ready-for-human` was allowed. All three are now false.
 
@@ -48,7 +48,7 @@ self-contained; read #120 only if you want the why.
 | ~~#123~~ | ~~reuse a past user message~~ | **CLOSED** `f649f1d` — leg 3. Refill through the **existing `pendingInsert` channel**, text only; `pendingInsert` now has two callers and its nonce is load-bearing for both |
 | ~~#124~~ | ~~five-position effort control~~ | **CLOSED** `39c2896` — leg 4. Levels measured off the REAL CLI; the range carries **six stops for five levels** (stop 0 = Default, the absence of a level) because five bare stops left `low` unreachable by one gesture |
 | ~~#125~~ | ~~subagent viewer takes the window material~~ | **CLOSED** `c92fca7` — leg 5. **One declaration** of `backdrop-filter`, the only one in the app, shipped as a **named, scoped exception** rather than a relaxation; `gui-98` criterion 5 **inverted** to a three-part positive; gate-run twin added because no driver runs in `npm test` |
-| #126 | subagent map visual pass | inside the pinned encoding |
+| ~~#126~~ | ~~subagent map visual pass~~ | **CLOSED** `0628745` — leg 6. Every acceptance criterion was **already green before a line changed** (the driver was written first and run against unmodified `main`), so the risk was breaking a pinned criterion while chasing looks, not failing to meet one. SVG `stroke-width` is in **viewBox units**; the tint ladder cannot carry a structural line |
 | #127 | spike — three routes nobody has called | **no `src/` diff** |
 | #128 | version 1.0.0 | **blocked by #121–#127** — skip until all seven are closed |
 
@@ -59,8 +59,9 @@ never trust this table:
 gh issue list --state open --label ready-for-agent
 ```
 
-Seven of the eight are independent, so order barely matters — except that #128
-is last, by the owner's own instruction.
+**#127 is the only unblocked slice left**, and it is a **spike that builds
+nothing** — expect no `src/` diff from it. #128 is last by the owner's own
+instruction, so the leg after #127 does #128 and closes spec #120.
 
 ## Per-leg contract
 
@@ -70,8 +71,8 @@ above. In short: read `.context/pick-up.md` → pick ONE ticket → branch
 `/preset wrap-up` with `.context/` committed on **main only**.
 
 **Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`. The
-baseline was **1122 / 74** before this batch and is **1234 tests / 81 files**
-after #125 — read the current number off `main` rather than trusting any of
+baseline was **1122 / 74** before this batch and is **1246 tests / 82 files**
+after #126 — read the current number off `main` rather than trusting any of
 these, because every slice adds tests.
 
 ## Landmines that bind more than one slice
@@ -91,6 +92,20 @@ these, because every slice adds tests.
   Also: **a mutation coming back GREEN is ambiguous** between a gap in the test
   and a mutation that did not mutate the thing the test is about — one of #125's
   six was the latter, and only reading it settled which.
+- **AN SVG LENGTH IS IN VIEWBOX UNITS, NOT CSS PIXELS.** #126: the map edges had
+  `stroke-width: 1`, which rendered at roughly **0.6 of a device pixel**, because
+  a 240-unit viewBox scales into ~151px at the dock's clamp floor. Anything in an
+  SVG authored with a CSS-pixel intuition is wrong by that scale. Related, and
+  both measured on the real window rather than read off the token file: **the
+  tint ladder tops out at 20% alpha of a near-white over a near-black ground and
+  cannot carry a structural line**, and **a nominally lighter neutral is not
+  necessarily lighter on screen** — `--bubble` (OKLCH 0.27 vs `--surface` 0.19)
+  composites to roughly the panel's own value once the wash beneath it counts.
+- **THE AGENTS DOCK NEEDS TWO CHANNELS AND AN ADOPTED SESSION TO FIXTURE.**
+  `parentAgentId` (nesting) is **disk-only**, `status` is **live-only**, and the
+  disk half never runs until `activeSessionId` is set — so a driver must click a
+  `.session-row-btn` before a patched `subagents:list` is ever called. `gui-126`
+  is the worked example. Reopening the dock also resets its mode to `list`.
 - **A COMPUTED-STYLE READ BEATS A SOURCE GREP and works where pixels do not.** A
   grep is green on a rule the cascade drops. `getComputedStyle` resolves without
   rasterising, so `--disable-gpu` cannot reach it — which is how #125 pinned a

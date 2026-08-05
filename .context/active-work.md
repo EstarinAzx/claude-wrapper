@@ -7,31 +7,31 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-05 by Opus 5, relay chain 3 leg 5, owner away_
-_At commit: `c92fca7` on `main`_
+_Last updated: 2026-08-05 by Opus 5, relay chain 3 leg 6, owner away_
+_At commit: `0628745` on `main`_
 
 ## Current focus
 
-**Spec #120's batch is draining. #121-#125 have landed; two unblocked slices
-remain.** Nothing is in flight — the leg that delivered #125 closed it and
+**Spec #120's batch is draining. #121-#126 have landed; ONE unblocked slice
+remains.** Nothing is in flight — the leg that delivered #126 closed it and
 handed off.
 
 ## State
 
 - **In flight:** nothing. No ticket branch exists;
-  `ticket/125-subagent-viewer-material` was squash-merged and deleted.
+  `ticket/126-agent-map-visual-pass` was squash-merged and deleted.
 - **Closed 2026-08-05:** **#121** — markdown tables render (`ef6ef22`) ·
   **#122** — code blocks carry a copy button (`a359f9f`) · **#123** — reuse a
   past user message (`f649f1d`) · **#124** — a five-position effort control
   (`39c2896`) · **#125** — the subagent viewer takes the window material
-  (`c92fca7`).
-- **Queue:** **#126 and #127 unblocked and independent**, takeable in either
-  order. **#128 (the 1.0.0 bump) is last by the owner's own instruction** and
-  waits on the other seven. It still wears `ready-for-agent`, so the frontier
+  (`c92fca7`) · **#126** — the subagent map reads as objects (`0628745`).
+- **Queue:** **#127 is the only unblocked slice left.** **#128 (the 1.0.0 bump)
+  is last by the owner's own instruction** and waits on the other seven, so the
+  leg after #127 is the one that closes the batch and the spec. It still wears `ready-for-agent`, so the frontier
   query returns it — the ordering constraint lives in the ticket body and in
   `.claude/relay-leg.md`, not in a label.
-- **Gate on `main`:** typecheck clean, build clean, **1234 tests / 81 files**.
-  This replaces the `1226 / 80` line. Every remaining slice adds tests —
+- **Gate on `main`:** typecheck clean, build clean, **1246 tests / 82 files**.
+  This replaces the `1234 / 81` line. Every remaining slice adds tests —
   **read the number off `main`, never off this file.**
 
 ## The slices
@@ -43,30 +43,33 @@ handed off.
 | #123 | Reuse a past user message in the composer | Refill through the existing `pendingInsert` channel | **closed `f649f1d`** |
 | #124 | A five-position effort control | CLI-sourced levels, engine rebuild | **closed `39c2896`** |
 | #125 | The subagent viewer takes the window material | CSS + pin + DESIGN.md + ADR | **closed `c92fca7`** |
-| #126 | The subagent map earns its place | Visual pass inside the pinned encoding | open |
+| #126 | The subagent map earns its place | Visual pass inside the pinned encoding | **closed `0628745`** |
 | #127 | spike — three routes nobody has called | Probe by calling, build nothing | open |
 | #128 | Version 1.0.0 | Blocked by #121–#127 | open, blocked |
 
 ## Pick up here
 
-Take either of #126 / #127. `/preset ticket-loop` picks the lowest unblocked id,
-so **#126** by default.
+**#127**, the only unblocked slice left. It is a **spike: it measures and builds
+nothing**, so it ships no `src/` diff. When it closes, the leg after it does
+#128 and closes spec #120.
 
 ## Skills for next session
 
-- `run-desktop` — **#126 needs it**, and it is the most instrument-hostile slice
-  left. There are **36 `gui-*.mjs` drivers**; #125 added none, having inverted
-  `gui-98`'s criterion 5 in place. Read `gui-124.mjs` first for the three traps
-  that bind a visual slice — **`getComputedStyle(el, '::pseudo')` does not read
-  that pseudo-element in Chromium**, `locator.screenshot()` carries the zoom/clip
-  defect, and **a pixel probe needs a positive control** so a broken instrument
-  reports UNSCORED instead of refuting. Then `gui-123.mjs` for **removing a
-  main-side IPC listener so a driver spends zero CLI turns** (with the removal
-  read back) and **reading a computed value both on landing and after it
-  settles**. #125's own contribution to this list is smaller but sharper: **a
-  computed-style read is available where a pixel read is not**, and it is
-  strictly stronger than a source grep, because a grep passes on a rule the
-  cascade drops.
+- **#127 is a SPIKE and needs no design skill — it needs discipline.** Its whole
+  content is the rule this batch keeps paying for: **probe by CALLING, never by
+  grepping a bundle or reading a `.d.ts`.** A declared wire type is not a
+  callable route (#115); a callable route is not an effective one (#117). And
+  **a negative claim needs negative-shaped evidence** — "channel X is outbound"
+  does not prove no inbound route exists, which is the error that created #127.
+- `run-desktop` if a probe needs the real app. There are **37 `gui-*.mjs`
+  drivers**; #126 added `gui-126.mjs`, whose reusable parts are the two channels
+  that feed the Agents dock a synthetic fixture (`subagents:list` re-registered
+  on `ipcMain`, plus `subagent:changed` pushed from main) and the fact that
+  **the dock's disk half is gated on a session id** — without adopting a session
+  first, a patched `subagents:list` is never called at all.
+- **Every probe still needs its controls.** #126's driver reported UNSCORED
+  rather than a false pass under mutation, because a discrimination control
+  caught that its reader had stopped discriminating. Copy that shape.
 
 ## Open questions
 
