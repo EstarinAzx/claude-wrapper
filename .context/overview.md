@@ -212,12 +212,14 @@ tags: [context, overview]
   syntax colours are semantic — while `color-mix(in oklch, var(--mint) N%,
   transparent)` at six sites is already theme-correct and must not be
   tokenised — a `data-theme` block overrides the token they read, so they
-  re-hue for free. **Three** tests now read the stylesheet as raw
+  re-hue for free. **Six** tests now read the stylesheet as raw
   TEXT (two over the whole `styles/` directory), so `.bubble` and
   `.message-input` must stay ungrouped and no comment may name a scrollbar
-  pseudo-element or contain a closing brace; the third (`theme.test.ts`) strips
-  comments before parsing, which is why `themes.css` may carry prose the other
-  two could not.
+  pseudo-element or contain a closing brace; `theme.test.ts` strips
+  comments before parsing, which is why `themes.css` may carry prose the others
+  could not, and #121's, #122's and #123's do the same. `reuse-message.test.tsx`
+  adds one more: **`.bubble {` must stay the FIRST literal match of that string
+  in `chat.css`**, because `multiline-composer.test.tsx` slices from exactly it.
   **Keyboard focus is picked per control, not applied** (#93): the `shared.css`
   focus group paints `background: var(--tint-3)` as well as its hairline, so it
   is only for genuinely transparent menu/list rows — anything carrying a fill in
@@ -308,6 +310,20 @@ tags: [context, overview]
   everything living inside the composer. Both entry points — a foreign session
   row and the sidebar's "Open project" affordance — share that one reset via a
   nullable `resumeId`.
+  Its `pendingInsert` is now the composer's ONE insert channel with **two**
+  callers (#123): the commands dock and `Chat`'s per-message reuse control. A
+  second channel is deliberately not added — routing the refill here is what
+  makes #80's queued-send commitment correct with no new logic, since that flag
+  rides the draft rather than a copy of it, so an insert can only replace what
+  is in the box and can neither fork the draft nor double-commit. The nonce is
+  load-bearing for both callers. `Chat`'s control is **refill, never edit**, and
+  that is forced: `setMessages(transcript.map(toChatMessage))` runs on adopt and
+  on every live-tail reload, so the pane is a projection of the disk transcript
+  the CLI owns. It renders only when a handler is passed, which is what keeps it
+  out of `SubagentDrawer`'s reuse of the same component, and it sits BESIDE
+  `.bubble` because that element's `textContent` is read verbatim by a test. It
+  restores **text only**. See
+  [[2026-08-05-the-pane-is-a-projection-so-the-edit-is-a-refill]].
 - `src/shared/` — types + pure modules both processes import. `background-tasks.ts`
   (#83) is the CLI level's whole vocabulary: `parseBackgroundTasks` is the trust
   boundary on the payload (`task_id` is identity so a row without one is dropped;
@@ -390,12 +406,13 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **#116 is
-  delivered and closed, leaving #117 as the only `ready-for-agent` ticket — a
-  SPIKE that must stay one, no `src/` diff. #118 was filed BY #116 and is
-  `needs-info`, blocked on four owner calls parked on #115; do not take it**; run
-  the frontier query anyway, it is the authority and this line has been wrong before.
-  **31 `gui-*.mjs`** — 30 assertion drivers plus the observational
+- `.context/pick-up.md` — current frontier + landmines (currently: **spec #120's
+  batch is draining — #121, #122 and #123 are closed, leaving #124–#127
+  unblocked and independent, with #128 (the 1.0.0 bump) last by the owner's own
+  instruction. `ready-for-human` is BANNED for this batch; use `needs-info` + a
+  comment + a PushNotification**; run the frontier query anyway, it is the
+  authority and this line has been wrong before.
+  **35 `gui-*.mjs`** — 34 assertion drivers plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`), with **two standing
   environmental reds**,
@@ -460,7 +477,22 @@ tags: [context, overview]
   than anything rendered. `SPIKE108_PHASES=A` re-runs the drift alarm alone in a
   second; `B` and `C` cost real CLI turns. Re-run phase C2 after #113 lands — it
   is that fix's end-to-end evidence
-- `.claude/skills/run-desktop/gui-110.mjs` — the newest GUI driver (#110) and
+- `.claude/skills/run-desktop/gui-123.mjs` — the newest GUI driver (#123) and
+  **the one to copy for two things**. First, **spending zero CLI turns**: it
+  removes main's own `chat:send` listener with `ipcMain.removeAllListeners`
+  before typing, so the renderer still appends the user bubble and no engine
+  turn ever starts — and it **reads the listener count back**
+  (`{before: 1, after: 0}`), because a send that quietly still fired would empty
+  the composer under its later assertions and report a product failure. Second,
+  **reading a computed value behind a transition**: its first run called a
+  150ms reveal mid-flight an invisible control (`opacity: 0.585`), and it now
+  records the value **on landing** beside the settled one so an animating rule
+  (`0.17 → 1`) is distinguishable from one that never applies (`0 → 0`). Its
+  hover phase had a settle wait and passed while its keyboard phase did not —
+  two phases of one driver disagreeing for no product reason. Verified red
+  twice with distinct messages. Re-run it after any change to `chat.css`'s
+  reveal rules or to the `pendingInsert` channel
+- `.claude/skills/run-desktop/gui-110.mjs` — an earlier GUI driver (#110) and
   **the one to copy when a remedy can fail in two places that different processes
   own**. Three launches against one profile, in `gui-79`'s probe-as-entry-point
   shape, and its first launch is a **positive control** — it moves and waits past

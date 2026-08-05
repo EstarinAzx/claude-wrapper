@@ -9,7 +9,7 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## Next: #123 — five unblocked tickets left
+## Next: #124 — four unblocked tickets left
 
 Confirm rather than trust this line — it has been wrong before:
 
@@ -17,7 +17,7 @@ Confirm rather than trust this line — it has been wrong before:
 gh issue list --state open --label ready-for-agent
 ```
 
-**#123–#127 are unblocked and independent.** #128 (the 1.0.0 bump) waits on all
+**#124–#127 are unblocked and independent.** #128 (the 1.0.0 bump) waits on all
 of them and is last by the owner's explicit instruction — **it still wears
 `ready-for-agent`, so the frontier query returns it.** The ordering lives in the
 ticket body and in `.claude/relay-leg.md`, not in a label. Spec **#120** is the
@@ -30,51 +30,53 @@ chain continue. A call you cannot make goes in `.claude/vibe.md` under
 
 ## Landed last leg
 
-**#122 — code blocks carry a copy button.** `a359f9f` on `main`, squash-merged,
-branch deleted, ticket closed. The repo's **first `components` override** on
-ReactMarkdown: the `pre` renderer is replaced by a wrapper holding the button
-and the original `pre`, and **one exported map is shared by both** ReactMarkdown
-call sites. Route taken: **`navigator.clipboard.writeText`**, measured effective
-in the built app — no IPC bridge, no preload change, no ADR. New files:
-`tests/code-copy.test.tsx`, `scripts/spike-122-clipboard.mjs`,
-`.claude/skills/run-desktop/gui-122.mjs`.
+**#123 — reuse a past user message in the composer.** `f649f1d` on `main`,
+squash-merged, branch deleted, ticket closed. A user message carries a
+`Reuse this message` control that refills the composer with its exact text; the
+message itself is untouched in the pane and on disk. It routes through the
+**existing `pendingInsert` channel** the commands dock uses — not a second one —
+which is what makes #80's queued-send commitment correct with no new logic.
+**Text only**, decided and stated. New files: `tests/reuse-message.test.tsx` (19
+tests), `.claude/skills/run-desktop/gui-123.mjs`, `scripts/gui-123-shots/`.
 
 ## Baseline — READ IT, do not trust it
 
-`main` = `a359f9f`. typecheck clean, build clean, **1145 tests / 76 files**
-(was `1130 / 75` before #122). Every remaining slice adds tests, so read the
+`main` = `f649f1d`. typecheck clean, build clean, **1164 tests / 77 files**
+(was `1145 / 76` before #123). Every remaining slice adds tests, so read the
 current number off `main` at the start of your leg.
 
-## What #122 measured that the next legs need
+## What #123 measured that the next legs need
 
-- **`file://` is a SECURE CONTEXT in Chromium.** That is why `navigator.clipboard`
-  exists in the built app at all despite `win.loadFile`. The "the renderer is on
-  `file://` so web APIs are unavailable" worry is dead for this repo — but check
-  the specific API rather than generalising from this one.
-- **Blink rewrites LF → CRLF inside `writeText` on Windows.** Not the OS, not the
-  button: writing the same LF string from **main** reads back unchanged. If you
-  ever compare clipboard content in a driver, compare modulo that — and prove it
-  with a main-side control first rather than assuming it.
-- **`capturePage` takes window DIP; `getBoundingClientRect()` gives the ZOOMED
-  page's CSS pixels.** This app has its own zoom, so scale the rect by
-  `webContents.getZoomFactor()` or the shot lands up and to the left of the
-  target. Three runs of #122's driver photographed the wrong region.
-  `page.screenshot({clip})` has the same problem and no clean fix — use
-  `capturePage`. **Binds #125 and #126**, both of which are visual tickets.
-- **Playwright's `hover()` works, but `--tint-2` is 6% alpha** — a real state
-  change that is invisible in a PNG. Assert hover/active states by
-  `getComputedStyle`, never by comparing two screenshots.
+- **A value read behind a transition is not a settled one.** `gui-123`'s first
+  run reported "tabbing lands on an invisible control" off a computed
+  `opacity: 0.585` — that was the 150ms reveal mid-flight, not a defect. It now
+  records the value **on landing** beside the settled one, so an animating rule
+  (`0.17 → 1`) is distinguishable from one that never applies (`0 → 0`). Its
+  hover phase had a settle wait and passed while its keyboard phase did not.
+  **Binds #125 and #126**, both visual, both likely to read computed styles.
+- **A GUI driver can cost ZERO CLI turns.** Remove main's `chat:send` listener
+  with `ipcMain.removeAllListeners` before typing: the renderer still appends
+  the user bubble, and no engine turn starts. **Read the count back** —
+  `{before: 1, after: 0}` — because a send that quietly still fired would empty
+  the composer under later assertions and read as a product failure.
+- **`display: none` is not the same hiding as `opacity: 0`.** The first removes
+  the tab stop with the pixels. A control meant to be keyboard reachable while
+  invisible must stay laid out, and the driver asserts the computed `display`
+  for exactly that reason.
+- **`pendingInsert` is the composer's one insert channel** and now has two
+  callers. Its nonce is load-bearing in both.
 
 ## Landmines this batch will hit
 
-- **A copy control now exists on every fenced block.** #123 refills the composer
-  from a past user message; user bubbles are not markdown-rendered, so the two do
-  not collide — but if #123 ever renders one through ReactMarkdown it inherits
-  the override.
+- **The chat pane now carries TWO controls with the same treatment** — #122's
+  copy button on fenced blocks and #123's reuse button on user rows. Both take
+  the #93 hairline ring alone because both wash on hover. A third gets the same
+  or it will look like a different kind of control.
 - **`/rewind` and `/bg` are NOT CLI commands here.** Measured: 121 advertised
   commands, neither present. `/bg` is one of three ways to OPEN the CLI's agent
   view — a terminal takeover — which is why it "doesn't work". Do not build a UI
-  wrapper for either; #127 measures whether any other route exists.
+  wrapper for either; **#127 measures whether any other route exists** and
+  #123's warrant note now points at it.
 - **`/effort` IS advertised**, and the model list carries `supportedEffortLevels`.
   The slider's five positions come from the SDK's `EffortLevel` type, which
   excludes `ultracode` and `auto` — those are in the command's argument hint but
@@ -86,61 +88,67 @@ current number off `main` at the start of your leg.
   `subagent.css` for zero `backdrop-filter`. Replace that criterion with a
   **positive** pin — a deviation with no positive pin gets quietly conformed
   away by a later tidy-up, which is exactly what #96 was.
-- **The map ADR refuses four NAMED alternatives, not aesthetics.** Its own
-  Reversibility section calls a layout rewrite *"Easy."* Keep shape = kind and
-  colour = status, keep `role="group"`, keep the halo alpha in `fill` not
-  `opacity`, and measure hit radius **within a depth band** or a nested spine
-  collapses every hit circle to `r=0`.
-- **A renderer-side message edit cannot persist.** `setMessages(transcript.map(toChatMessage))`
-  replaces the whole array from disk on adopt and on every live-tail reload.
+- **The map ADR refuses four NAMED alternatives, not aesthetics.** Keep shape =
+  kind and colour = status, keep `role="group"`, keep the halo alpha in `fill`
+  not `opacity`, and measure hit radius **within a depth band** or a nested
+  spine collapses every hit circle to `r=0`.
+- **A renderer-side message edit cannot persist**, and #123 is the record of
+  why: `setMessages(transcript.map(toChatMessage))` runs on adopt and on every
+  live-tail reload, so the pane is a projection of the CLI's file.
+- **`capturePage` takes window DIP; `getBoundingClientRect()` gives the ZOOMED
+  page's CSS pixels.** Scale by `webContents.getZoomFactor()` or the shot lands
+  up and left. `page.screenshot({clip})` has the same defect. **Binds #125 and
+  #126.** Hover states cannot be eyeballed either — `--tint-2` is 6% alpha;
+  assert them with `getComputedStyle`.
 
 ## Stylesheet rules that bind more than one slice
 
-- **Stylesheets are read as raw TEXT by five tests now** — `scrollbar.test.ts`,
-  `theme.test.ts`, `multiline-composer.test.tsx`, `markdown-tables.test.tsx` and
-  #122's new `code-copy.test.tsx`. No comment may contain a closing brace; no
-  scrollbar rule may be component-scoped; **and `base.css` warns that even
-  NAMING the scrollbar pseudo-element in a comment trips the scan.** `.bubble`
-  and `.message-input` stay ungrouped.
+- **Stylesheets are read as raw TEXT by SIX tests now** — `scrollbar.test.ts`,
+  `theme.test.ts`, `multiline-composer.test.tsx`, `markdown-tables.test.tsx`,
+  `code-copy.test.tsx` and #123's `reuse-message.test.tsx`. No comment may
+  contain a closing brace; no scrollbar rule may be component-scoped; **and
+  `base.css` warns that even NAMING the scrollbar pseudo-element in a comment
+  trips the scan.** `.bubble` and `.message-input` stay ungrouped — and
+  `.bubble {` must stay the **first** literal match of that string in
+  `chat.css`, which `reuse-message.test.tsx` now pins, because
+  `multiline-composer` slices from exactly it.
 - **`markdown.css` may only author DESCENDANT rules** — react-markdown owns the
-  markup. `code-copy.test.tsx` now enforces that every `.code-block` /
-  `.code-copy` rule starts with `.assistant-body `, the same guard #121 put on
-  table rules.
+  markup. `chat.css` has no such restriction: #123's rules are top-level,
+  because `Chat.tsx` owns that markup itself.
 - **The `@import` order in `styles.css` IS the cascade.** Add rules inside a
   file; never reorder the imports.
 - **Focus rings are picked per control, not applied.** Anything that paints a
-  fill in any state takes the hairline alone. #122's control follows this, and
-  the ring is now verified against the **built** stylesheet under a real Tab
-  focus rather than only as stylesheet text.
+  fill in any state takes the hairline alone. #122's and #123's controls both
+  follow this, and both rings are verified against the **built** stylesheet
+  under a real Tab focus rather than only as stylesheet text.
 - **jsdom loads no CSS.** A raw-text pin proves a rule was written, never that
-  it works. Two routes exist now: #121's (render measured markup in a real
-  Electron window and read computed layout) and #122's (drive the real app and
-  read `getComputedStyle` off the focused control).
+  it works. Three routes exist now: #121's (render measured markup in a real
+  Electron window and read computed layout), #122's (drive the real app and read
+  `getComputedStyle` off the focused control) and #123's (read the same value
+  twice around a transition).
 
 ## Process landmines from this batch
 
 - **Unscored is not refuted.** #122's spike scored its preferred clipboard route
-  as DEAD on run 1 because two probe buttons overlapped and the click was
-  refused — the handler never ran, and a bare `.catch(() => {})` hid it.
-  Believing it would have built an IPC bridge the app does not need. Any probe
-  must record its gesture errors and score "did the trial run" separately from
-  "did the thing work".
+  DEAD on run 1 because two probe buttons overlapped and the click was refused —
+  the handler never ran, and a bare `.catch(() => {})` hid it. #123's driver hit
+  the same family from a different direction: a real product behaviour reported
+  as broken because the instrument read it too early.
 - **Measure before you ask an agent.** The single most valuable act of the
   planning session was a zero-turn `supportedCommands()` probe that main ran
   itself. It killed two asks and sized a third.
 - **Probe by CALLING, never by grepping a bundle or reading a `.d.ts`** — a
   declared wire type is not a callable route (#115); a callable route is not an
   effective one (#117). #127 lives or dies on this.
-- **A negative claim needs a negative-shaped warrant.** "`subagent:changed` is a
-  leaf channel" proves that channel is outbound and says nothing about whether
-  any inbound route exists. That is #90 and #116's error in both directions.
+- **A negative claim needs a negative-shaped warrant.**
 - **A driver never seen failing proves nothing** — and its red path must fail
-  *cleanly*. `gui-122.mjs` was verified red by stashing the two source files and
-  rebuilding; the first red run threw an uncaught `TimeoutError`, skipping the
-  summary and leaking the Electron process, so the wait is now caught and
-  reported with a diagnosis.
-- **A warrant can be real and still not support its claim.** `"version": "0.1.0",`
-  proves a string exists, not that nothing reads it.
+  *cleanly*. `gui-123` was verified red twice with distinct messages: control
+  removed (stops at phase 2, summary printed, no leaked process) and reveal rule
+  removed (reds hover and keyboard, `onLand: 0`).
+- **An absence must be counted, not assumed.** #123's "the click reaches main by
+  no route" pin counts `targetSession` calls **before** the click, because
+  adopting the session had already made one — a bare `not.toHaveBeenCalled()`
+  was false for a reason with nothing to do with the feature.
 - **Every control-protocol probe needs a bogus-subtype negative control.**
 
 ## Still-live landmines from earlier legs
@@ -161,9 +169,9 @@ current number off `main` at the start of your leg.
   path contains a space.
 - **Node 22 refuses to spawn a `.cmd`** (`EINVAL`, CVE-2024-27980 mitigation).
   Electron's own `electron.exe` under `node_modules/electron/dist/` is a real
-  exe and spawns fine — that is how #121 and #122 got real renders.
-- **The repo is CRLF throughout, with no `.gitattributes`.** Anything written by
-  a tool that emits LF has to be converted, generated findings JSON included.
+  exe and spawns fine.
+- **The repo is CRLF throughout, with no `.gitattributes`.** Both of #123's new
+  files were written LF and needed converting. Check every new file.
 - Never hardcode a model name. Never read `~/.claude/daemon/roster.json`.
 - Absence assertions need a surviving positive control and mutation evidence.
 - **Squash-merged ticket branches need `git branch -D`.**
@@ -177,9 +185,11 @@ pane. The other four are untouched: the Tailwind adopt-utilities half, the
 titlebar control count, the 12px line box for 11px muted descriptions, and the
 accent clause enumeration after #97.
 
-Four open owner-calls live in `.claude/vibe.md` under `## Needs you`. Every one
-already has a reversible default taken and the affected ticket states it. **#122
-added none.**
+Four open owner-calls live in `.claude/vibe.md` under `## Needs you`. **#123
+added none and resolved none by decision** — it *shipped* the fourth (refill
+rather than a true edit) with the reversible default the ticket already named,
+and the record now carries why a true edit is impossible rather than merely
+unchosen. The count stands at four for the owner to revisit.
 
 ## Related
 

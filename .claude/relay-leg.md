@@ -45,7 +45,7 @@ self-contained; read #120 only if you want the why.
 |---|---|---|
 | ~~#121~~ | ~~markdown tables render~~ | **CLOSED** `ef6ef22` — leg 1 |
 | ~~#122~~ | ~~code-block copy button~~ | **CLOSED** `a359f9f` — leg 2. Route measured: `navigator.clipboard`, effective on `file://`. Established the repo's first `components` override; the wrapper was **not** extended to `<table>` |
-| #123 | reuse a past user message | refill, never mutate the transcript |
+| ~~#123~~ | ~~reuse a past user message~~ | **CLOSED** `f649f1d` — leg 3. Refill through the **existing `pendingInsert` channel**, text only; `pendingInsert` now has two callers and its nonce is load-bearing for both |
 | #124 | five-position effort control | CLI-sourced levels; must rebuild the engine |
 | #125 | subagent viewer takes the window material | + positive pin + DESIGN.md + ADR |
 | #126 | subagent map visual pass | inside the pinned encoding |
@@ -70,8 +70,8 @@ above. In short: read `.context/pick-up.md` → pick ONE ticket → branch
 `/preset wrap-up` with `.context/` committed on **main only**.
 
 **Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`. The
-baseline was **1122 / 74** before this batch and is **1145 tests / 76 files**
-after #122 — read the current number off `main` rather than trusting any of
+baseline was **1122 / 74** before this batch and is **1164 tests / 77 files**
+after #123 — read the current number off `main` rather than trusting any of
 these, because every slice adds tests.
 
 ## Landmines that bind more than one slice
@@ -85,6 +85,18 @@ these, because every slice adds tests.
   swallowed by a bare `.catch(() => {})`. Believing it would have built an IPC
   bridge the app does not need. Any probe must record its gesture errors and
   score "did the trial run" separately from "did the thing work".
+- **A VALUE READ BEHIND A TRANSITION IS NOT A SETTLED ONE.** Same family, caught
+  by #123. `gui-123`'s first run reported "tabbing lands on an invisible
+  control" off a computed `opacity: 0.585` — the 150ms reveal mid-flight, not a
+  defect. It now records the value **on landing** beside the settled one, so an
+  animating rule (`0.17 → 1`) is distinguishable from one that never applies
+  (`0 → 0`). Its hover phase had a settle wait and passed while its keyboard
+  phase did not. **Binds #125 and #126**, both visual.
+- **A GUI driver can cost ZERO CLI turns.** `gui-123` removes main's `chat:send`
+  listener with `ipcMain.removeAllListeners` before typing — the renderer still
+  appends the user bubble, no engine turn starts — and **reads the count back**,
+  because a send that quietly still fired would empty the composer under its own
+  assertions and read as a product failure.
 - **A driver's RED path must fail cleanly.** `gui-122.mjs` was verified red by
   stashing its source files and rebuilding; the first red run threw an uncaught
   `TimeoutError`, skipping the summary and leaking the Electron process.
@@ -103,11 +115,14 @@ these, because every slice adds tests.
   assert them with `getComputedStyle`.
 - **No GUI driver can see a DWM backdrop** — `--disable-gpu` flattens acrylic
   and `page.screenshot()` cannot show it. #125 pins the declaration as text.
-- **Stylesheets are read as raw TEXT by five tests** — #121 added
-  `markdown-tables.test.tsx` and #122 added `code-copy.test.tsx` to the three. No comment may contain a closing
+- **Stylesheets are read as raw TEXT by six tests** — #121 added
+  `markdown-tables.test.tsx`, #122 added `code-copy.test.tsx` and #123 added
+  `reuse-message.test.tsx` to the three. No comment may contain a closing
   brace; no scrollbar rule may be component-scoped; **and `base.css` warns that
   even NAMING the scrollbar pseudo-element in a comment trips the scan**;
-  `.bubble` and `.message-input` stay ungrouped. Binds #122, #123.
+  `.bubble` and `.message-input` stay ungrouped, **and `.bubble {` must stay the
+  FIRST literal match of that string in `chat.css`** — `multiline-composer`
+  slices from exactly it, which `reuse-message.test.tsx` now pins.
 - **jsdom loads no CSS**, so a raw-text pin proves a rule was written, never
   that it works. #121's route: render the measured markup against the **built**
   stylesheet in a real Electron window (`node_modules/electron/dist/electron.exe`
@@ -135,9 +150,13 @@ leg to stall on:
 2. Whether `ultracode` / `auto` should be reachable — #124 ships **five
    positions**. Do not invent a sixth.
 3. What "background a session" should mean — #127 **measures, builds nothing**.
-4. #123 ships as **refill, not a true edit**.
+4. #123 ships as **refill, not a true edit** — **now shipped that way**
+   (`f649f1d`), with the record carrying why a true edit is *impossible* rather
+   than merely unchosen. Still listed, because the owner asked for the edit by
+   name and may want to revisit what the app should do instead.
 
-**#122 added none of these**, and resolved none. The count stands at four.
+**Neither #122 nor #123 added any of these, and neither resolved one by
+decision.** The count stands at four.
 
 If you hit a genuinely new call the record cannot settle, take the most
 reversible option, finish the rest of the ticket, and say so in the breadcrumb.

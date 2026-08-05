@@ -7,28 +7,29 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-05 by Opus 5, relay chain 3 leg 2, owner away_
-_At commit: `a359f9f` on `main`_
+_Last updated: 2026-08-05 by Opus 5, relay chain 3 leg 3, owner away_
+_At commit: `f649f1d` on `main`_
 
 ## Current focus
 
-**Spec #120's batch is draining. #121 and #122 have landed; five unblocked
-slices remain.** Nothing is in flight — the leg that delivered #122 closed it
-and handed off.
+**Spec #120's batch is draining. #121, #122 and #123 have landed; four unblocked
+slices remain.** Nothing is in flight — the leg that delivered #123 closed it and
+handed off.
 
 ## State
 
 - **In flight:** nothing. No ticket branch exists;
-  `ticket/122-code-block-copy-button` was squash-merged and deleted.
+  `ticket/123-reuse-past-message` was squash-merged and deleted.
 - **Closed 2026-08-05:** **#121** — markdown tables render (`ef6ef22`) ·
-  **#122** — code blocks carry a copy button (`a359f9f`).
-- **Queue:** **#123–#127 unblocked and independent**, takeable in any order.
+  **#122** — code blocks carry a copy button (`a359f9f`) · **#123** — reuse a
+  past user message (`f649f1d`).
+- **Queue:** **#124–#127 unblocked and independent**, takeable in any order.
   **#128 (the 1.0.0 bump) is last by the owner's own instruction** and waits on
-  the other five. It still wears `ready-for-agent`, so the frontier query
+  the other four. It still wears `ready-for-agent`, so the frontier query
   returns it — the ordering constraint lives in the ticket body and in
   `.claude/relay-leg.md`, not in a label.
-- **Gate on `main`:** typecheck clean, build clean, **1145 tests / 76 files**.
-  This replaces the `1130 / 75` line. Every remaining slice adds tests —
+- **Gate on `main`:** typecheck clean, build clean, **1164 tests / 77 files**.
+  This replaces the `1145 / 76` line. Every remaining slice adds tests —
   **read the number off `main`, never off this file.**
 
 ## The slices
@@ -37,7 +38,7 @@ and handed off.
 |---|---|---|---|
 | #121 | Markdown tables render | CSS only — GFM already emits `<table>` | **closed `ef6ef22`** |
 | #122 | Code blocks carry a copy button | `components` override + a **measured** clipboard route | **closed `a359f9f`** |
-| #123 | Reuse a past user message in the composer | Refill, never mutate | open |
+| #123 | Reuse a past user message in the composer | Refill through the existing `pendingInsert` channel | **closed `f649f1d`** |
 | #124 | A five-position effort control | CLI-sourced levels, engine rebuild | open |
 | #125 | The subagent viewer takes the window material | CSS + pin + DESIGN.md + ADR | open |
 | #126 | The subagent map earns its place | Visual pass inside the pinned encoding | open |
@@ -46,71 +47,74 @@ and handed off.
 
 ## Pick up here
 
-Take any of #123–#127. `/preset ticket-loop` picks the lowest unblocked id, so
-**#123** by default.
+Take any of #124–#127. `/preset ticket-loop` picks the lowest unblocked id, so
+**#124** by default.
 
 ## Skills for next session
 
 - `run-desktop` — **#125 needs it**, and it must keep `gui-98` passing with
-  criterion 5 replaced rather than deleted. #122 has now left three drivers'
-  worth of hard-won mechanics behind in `gui-122.mjs`; read it before writing
-  a new one, particularly the screenshot and clipboard notes.
+  criterion 5 replaced rather than deleted. There are now **35 `gui-*.mjs`
+  drivers**. Read `gui-122.mjs` for the screenshot/clipboard mechanics and
+  `gui-123.mjs` for two newer ones: **removing a main-side IPC listener so a
+  driver spends zero CLI turns** (with the removal read back), and **reading a
+  computed value both on landing and after it settles** when a transition is in
+  the way.
 
 ## Open questions
 
 Four, all recorded in `.claude/vibe.md` under `## Needs you`, all reversible,
-none blocking. Unchanged this leg — #121 touched none of them:
+none blocking. **#123 resolved one of them by shipping it** and added none:
 
 1. Whether the acrylic exception reaches any pane beyond the subagent viewer.
 2. Whether `ultracode` / `auto` should be reachable at all.
 3. What "background a session" should mean in this app.
-4. That #123 ships as **refill rather than a true edit** — the superseded turn
-   stays in the conversation, because the disk transcript is the source of truth.
+4. ~~That #123 ships as **refill rather than a true edit**~~ — **taken, shipped
+   and warranted.** The default was the reversible one and the record now
+   carries why a true edit is impossible rather than merely unchosen. Left in
+   the list as answered rather than deleted, since the owner asked for the edit
+   by name and may want to revisit what the app should do instead.
 
 ## Recent context
 
-- **#121's rules were measured, not chosen, and one of them binds #122.** The
-  parser writes column alignment as an **inline style** on every cell and emits
-  **no wrapper element** around the table. So no rule anywhere may mark
-  `text-align` important, and the table scrolls via `display: block` on itself.
-  **#122 adds a `components` override to wrap `<pre>` — do not extend that to
-  `<table>`;** the block route is already measured working. Full reasoning in
-  [[2026-08-05-the-parser-writes-the-alignment-and-emits-no-wrapper]].
-- **A zero-turn probe reshaped the batch.** `supportedCommands()` on a warm
-  handle: 121 commands. `/effort` advertised, `/rewind` and `/bg` **absent**.
-  That killed two asks as command-wrappers and authorised the third with its
-  exact domain. It is why this batch ships six build slices where #115 shipped
-  none.
+- **#123's shape was forced by one line, not chosen.**
+  `setMessages(transcript.map(toChatMessage))` runs on adopt AND on every
+  live-tail reload, so the pane is a projection of the disk transcript the CLI
+  owns. Full reasoning in
+  [[2026-08-05-the-pane-is-a-projection-so-the-edit-is-a-refill]].
+- **The refill routes through `pendingInsert`, the commands dock's channel.**
+  That is what makes the queued-send constraint hold with no new logic — #80's
+  commitment is a flag on the draft, not a copy of it. Anything that lifts
+  composer state or snapshots text at click time breaks it silently.
+- **A value read behind a transition is not a settled one.** `gui-123`'s first
+  run reported an invisible control off `opacity: 0.585`, which was the 150ms
+  reveal mid-flight. Both readings are now taken. The hover phase had a settle
+  wait and passed while the keyboard phase did not — two phases of one driver
+  disagreeing for no product reason.
+- **A driver can cost zero CLI turns.** `gui-123` removes main's `chat:send`
+  listener before typing, so the renderer still appends the user bubble and no
+  engine turn runs — and it **reads the listener count back**, because a send
+  that quietly still fired would have emptied the composer under the assertion
+  and reported a product failure.
+- **`chat.css` now has a raw-text reader.** Six test files read a stylesheet as
+  text. The new suite also pins that `.bubble {` is still the **first** literal
+  match in that file, because `multiline-composer` slices from exactly that
+  string.
+- **#121's rules were measured, not chosen.** The parser writes column alignment
+  as an **inline style** on every cell and emits **no wrapper** around the
+  table, so no rule may mark `text-align` important and the table scrolls via
+  `display: block` on itself. #122's `components` override wraps `<pre>` only —
+  it was **not** extended to `<table>` and should not be.
+- **The copy button did NOT ship dead.** `file://` reports
+  `isSecureContext: true`, so `navigator.clipboard.writeText` is present and
+  measured effective in the built app. Blink rewrites LF → CRLF inside
+  `writeText` on Windows; a main-side control proved the OS clipboard innocent.
+- **`capturePage`'s rect is window DIP; `getBoundingClientRect()` is the ZOOMED
+  page's CSS pixels.** Scale by `getZoomFactor()` or the shot lands up and left.
+  Binds #125 and #126.
 - **The effort slider's five positions are the SDK's own type**, not a taste
   call — `EffortLevel = 'low'|'medium'|'high'|'xhigh'|'max'`, and `effort` rides
   `Options`, so it binds at query CONSTRUCTION and changing it must rebuild the
   engine exactly as `model:set` does.
-- **The glass ban's parked question is answered for one pane only.** #98 split
-  the owner's instruction into what was stated and what was not; material sat in
-  the second bucket *only because the owner had not named it*. The owner has now
-  named it.
-- **The copy button did NOT ship dead, and the measurement is the finding.**
-  `file://` reports `isSecureContext: true`, so `navigator.clipboard.writeText`
-  is present and — measured against the built app, read back through main's own
-  `clipboard` module — effective. No IPC bridge, no `execCommand` fallback, no
-  ADR. `execCommand` is also effective and stays the fallback.
-- **The spike's FIRST run scored that route dead, and it was the instrument.**
-  Both probe buttons were injected at the same fixed position, so the second
-  covered the first, the hit-test refused the click, and the handler never ran —
-  with the error swallowed by a bare `.catch(() => {})`. Believing it would have
-  built an IPC bridge the app does not need. **Unscored is not refuted**, and a
-  probe that swallows its own gesture errors cannot tell the two apart.
-- **Blink rewrites LF to CRLF inside `navigator.clipboard.writeText` on Windows.**
-  The tempting reading is that the button mangles the payload; a control refuted
-  it — the same LF string written from **main** reads back unchanged, so the OS
-  clipboard is innocent and the rewrite sits below this repo's code and above the
-  OS. Nothing was done about it: on a Windows paste target it is what you want.
-- **`capturePage`'s rect is window DIP; `getBoundingClientRect()` is the ZOOMED
-  page's CSS pixels.** This app carries its own zoom, so the two differ by
-  `getZoomFactor()` and an unscaled rect captures up and to the left of the
-  target. Three runs of #122's driver photographed the space above the very
-  control they existed to show. Any future driver shooting a specific element
-  needs the scaling.
 
 ## Related
 
