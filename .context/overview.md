@@ -191,9 +191,23 @@ tags: [context, overview]
   a chosen 24px gutter and its pane is **820px**, derived term-by-term
   (`760 + 48 + 2 + 10`) so the reused `.chat-column` lands at its documented 760
   in **both** scroll states. Placement was the owner's instruction; the entry is
-  `DESIGN.md`'s 4px Y rise; and it adds **no `backdrop-filter`, blur or ply beyond
-  `var(--surface)`**, which is what keeps the unresolved glass-ban question
-  harmless. See
+  `DESIGN.md`'s 4px Y rise. Since #125 it also carries **`backdrop-filter:
+  blur(30px) saturate(1.25)`** — the **one named exception** to `DESIGN.md`'s
+  glass ban, and **the only `backdrop-filter` in the whole app**. #98 shipped it
+  flat and left the ban's reach over a `var(--surface)` pane unresolved; the
+  owner then named this surface, which by #98's own stated/not-stated division
+  moves material into the executed-as-given bucket. **The general question stays
+  open for every other pane** — `.model-menu`, `.command-popover`,
+  `.file-popover` and the Appearance dock share this treatment and stay flat, and
+  extending it is an open owner call. Scope is enforced twice rather than
+  promised: `gui-98`'s criterion 5c and `tests/subagent-material.test.ts` both
+  red on a leak into any other stylesheet. The pane was **already translucent**
+  (`--surface` is 0.58 alpha and the scrim paints before it), so the blur
+  finishes an existing ply rather than adding one — which is why the suite also
+  pins the translucent fill. **No instrument can see a DWM backdrop**, so both
+  pins are on the declaration and the computed value, never on pixels, and the
+  cost is unmeasured. See
+  [[2026-08-05-the-owner-named-the-surface-so-the-ban-takes-one-exception]] and
   [[2026-08-04-the-viewer-is-centred-and-the-glass-ban-is-left-unresolved]].
   `appearance` (#66) sits after `rails` because the Appearance dock JOINS the
   dock-shell groups that file owns (it carries `.agents-dock`) and its one
@@ -212,8 +226,10 @@ tags: [context, overview]
   syntax colours are semantic — while `color-mix(in oklch, var(--mint) N%,
   transparent)` at six sites is already theme-correct and must not be
   tokenised — a `data-theme` block overrides the token they read, so they
-  re-hue for free. **Six** tests now read the stylesheet as raw
-  TEXT (two over the whole `styles/` directory), so `.bubble` and
+  re-hue for free. **Seven** tests now read the stylesheet as raw
+  TEXT (three over the whole `styles/` directory — `subagent-material.test.ts`
+  joined them in #125 and is the one that scans every sheet for a stray
+  `backdrop-filter`), so `.bubble` and
   `.message-input` must stay ungrouped and no comment may name a scrollbar
   pseudo-element or contain a closing brace; `theme.test.ts` strips
   comments before parsing, which is why `themes.css` may carry prose the others
@@ -407,7 +423,7 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **spec #120's
-  batch is draining — #121-#124 are closed, leaving #125-#127
+  batch is draining — #121-#125 are closed, leaving #126 and #127
   unblocked and independent, with #128 (the 1.0.0 bump) last by the owner's own
   instruction. `ready-for-human` is BANNED for this batch; use `needs-info` + a
   comment + a PushNotification**; run the frontier query anyway, it is the
@@ -719,8 +735,25 @@ tags: [context, overview]
   and build #118 (`needs-info`). #118 was filed by #116 and waits on four of the six owner
   calls parked on #115; answering them flips it to `ready-for-agent` with no
   other change. #117 was a **SPIKE with no `src/` diff**.
-  **As of 2026-08-05 chain 3 is draining spec #120: #121-#124 closed, with
-  #125, #126 and #127 open, unblocked and independent, and #128 (the 1.0.0
+  **#125** (`c92fca7`, the subagent viewer takes the window material — **one
+  declaration** of `backdrop-filter` on `.subagent-drawer`, the first and only
+  one in the app, shipped as a **named, scoped exception** to `DESIGN.md`'s glass
+  ban rather than a relaxation of it, because the owner named the surface and #98
+  had recorded in advance that material sat in its not-stated bucket **only** for
+  want of a naming; `gui-98`'s criterion 5 **inverted** from "zero
+  `backdrop-filter`" to a three-part positive — a computed read off the mounted
+  pane, a discrimination control, and the scope — with a gate-run twin
+  `tests/subagent-material.test.ts` because no driver runs in `npm test`; both
+  anti-modal ADRs explicitly **not superseded**; the transferable half is that
+  **the mutation runner built to verify it was itself broken**, passing a
+  `--reporter=basic` vitest 4 does not have, so three runs died before executing
+  a test and their `exit 1` read as "the mutation was caught" — a verdict must be
+  parsed, never taken from an exit code, and an unparseable result is UNSCORED
+  rather than RED; see
+  [[2026-08-05-the-owner-named-the-surface-so-the-ban-takes-one-exception]]) is
+  **closed**.
+  **As of 2026-08-05 chain 3 is draining spec #120: #121-#125 closed, with
+  #126 and #127 open, unblocked and independent, and #128 (the 1.0.0
   bump) open but last by the owner's instruction.**
   Run the frontier query rather than trusting any line in this file
 

@@ -10,7 +10,7 @@ Each leg = exactly ONE ticket end to end, then the relay machinery hands off to
 a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides.
 
-**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 4.** Everything this file said before is
+**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 5.** Everything this file said before is
 gone: it described the completed #115–#119 chain, announced an empty queue, and
 told legs that `ready-for-human` was allowed. All three are now false.
 
@@ -47,7 +47,7 @@ self-contained; read #120 only if you want the why.
 | ~~#122~~ | ~~code-block copy button~~ | **CLOSED** `a359f9f` — leg 2. Route measured: `navigator.clipboard`, effective on `file://`. Established the repo's first `components` override; the wrapper was **not** extended to `<table>` |
 | ~~#123~~ | ~~reuse a past user message~~ | **CLOSED** `f649f1d` — leg 3. Refill through the **existing `pendingInsert` channel**, text only; `pendingInsert` now has two callers and its nonce is load-bearing for both |
 | ~~#124~~ | ~~five-position effort control~~ | **CLOSED** `39c2896` — leg 4. Levels measured off the REAL CLI; the range carries **six stops for five levels** (stop 0 = Default, the absence of a level) because five bare stops left `low` unreachable by one gesture |
-| #125 | subagent viewer takes the window material | + positive pin + DESIGN.md + ADR |
+| ~~#125~~ | ~~subagent viewer takes the window material~~ | **CLOSED** `c92fca7` — leg 5. **One declaration** of `backdrop-filter`, the only one in the app, shipped as a **named, scoped exception** rather than a relaxation; `gui-98` criterion 5 **inverted** to a three-part positive; gate-run twin added because no driver runs in `npm test` |
 | #126 | subagent map visual pass | inside the pinned encoding |
 | #127 | spike — three routes nobody has called | **no `src/` diff** |
 | #128 | version 1.0.0 | **blocked by #121–#127** — skip until all seven are closed |
@@ -70,8 +70,8 @@ above. In short: read `.context/pick-up.md` → pick ONE ticket → branch
 `/preset wrap-up` with `.context/` committed on **main only**.
 
 **Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`. The
-baseline was **1122 / 74** before this batch and is **1226 tests / 80 files**
-after #124 — read the current number off `main` rather than trusting any of
+baseline was **1122 / 74** before this batch and is **1234 tests / 81 files**
+after #125 — read the current number off `main` rather than trusting any of
 these, because every slice adds tests.
 
 ## Landmines that bind more than one slice
@@ -79,6 +79,30 @@ these, because every slice adds tests.
 - **Probe by CALLING, never by grepping a bundle or reading a `.d.ts`.** A
   declared wire type is not a callable route (#115); a callable route is not an
   effective one (#117). #127 lives or dies on this.
+- **A VERIFICATION HARNESS IS A THING THAT CAN FAIL, and #125 caught its own
+  doing it.** Its mutation runner passed `--reporter=basic`, which vitest 4 does
+  not have; the run died with `ERR_LOAD_URL` **before a single test executed**,
+  and the script read the resulting `exit 1` as "the mutation was caught" —
+  **three confident false REDs**. Take the verdict from the **parsed result**,
+  never from the exit code (an exit code conflates *the code failed* with *the
+  harness failed*, the two outcomes a mutation run exists to separate); an
+  **unparseable result is UNSCORED, not RED**; and give any runner a `control`
+  mode that runs the suite **unmutated** and demands green, before and after.
+  Also: **a mutation coming back GREEN is ambiguous** between a gap in the test
+  and a mutation that did not mutate the thing the test is about — one of #125's
+  six was the latter, and only reading it settled which.
+- **A COMPUTED-STYLE READ BEATS A SOURCE GREP and works where pixels do not.** A
+  grep is green on a rule the cascade drops. `getComputedStyle` resolves without
+  rasterising, so `--disable-gpu` cannot reach it — which is how #125 pinned a
+  material whose rendered effect no instrument can see. Pair it with a
+  **discrimination control** (a sibling that must read the default) so a
+  non-discriminating reader reports UNSCORED rather than passing. **Binds #126.**
+- **THE ACRYLIC EXCEPTION IS ONE PANE AND TWO PINS WILL RED IF YOU GENERALISE
+  IT.** `gui-98` criterion 5c and `tests/subagent-material.test.ts` both scan
+  every sheet in `styles/`. Extending glass to the model menu, the popovers, the
+  Appearance dock or the map is an **open owner call**, not a styling choice.
+  `gui-98` criterion 5 is now **positive** — it asserts the material is present.
+  Do not "fix" a red there by softening it back.
 - **UNSCORED IS NOT REFUTED, and #122 nearly paid for it.** Its clipboard spike
   scored the preferred route DEAD on run 1 because two probe buttons overlapped,
   the hit-test refused the click, and the handler never ran — with the error
@@ -115,9 +139,11 @@ these, because every slice adds tests.
   assert them with `getComputedStyle`.
 - **No GUI driver can see a DWM backdrop** — `--disable-gpu` flattens acrylic
   and `page.screenshot()` cannot show it. #125 pins the declaration as text.
-- **Stylesheets are read as raw TEXT by six tests** — #121 added
-  `markdown-tables.test.tsx`, #122 added `code-copy.test.tsx` and #123 added
-  `reuse-message.test.tsx` to the three. No comment may contain a closing
+- **Stylesheets are read as raw TEXT by SEVEN tests** — #121 added
+  `markdown-tables.test.tsx`, #122 added `code-copy.test.tsx`, #123 added
+  `reuse-message.test.tsx` and #125 added `subagent-material.test.ts` to the
+  three; **three of the seven scan the whole `styles/` directory**. No comment
+  may contain a closing
   brace; no scrollbar rule may be component-scoped; **and `base.css` warns that
   even NAMING the scrollbar pseudo-element in a comment trips the scan**;
   `.bubble` and `.message-input` stay ungrouped, **and `.bubble {` must stay the
@@ -167,7 +193,10 @@ They are there for the owner to revisit, not for a leg to resolve and not for a
 leg to stall on:
 
 1. Whether the acrylic exception reaches panes beyond the subagent viewer —
-   #125 says **that pane only**. Do not generalise it.
+   **#125 shipped it** (`c92fca7`) as **that pane only**, and the scope is now
+   enforced by two pins rather than by good intentions. The call is unchanged and
+   still the owner's: it was always about the GENERALISATION, not about the
+   viewer. Do not take it.
 2. Whether `ultracode` / `auto` should be reachable — **now shipped** as five
    positions (`39c2896`), with the SDK citation that makes it a measurement
    rather than a taste call: `ultracode` is a session settings FLAG
@@ -182,7 +211,7 @@ leg to stall on:
    than merely unchosen. Still listed, because the owner asked for the edit by
    name and may want to revisit what the app should do instead.
 
-**None of #122, #123 or #124 added any of these, and none resolved one by
+**None of #122, #123, #124 or #125 added any of these, and none resolved one by
 decision.** The count stands at four.
 
 If you hit a genuinely new call the record cannot settle, take the most
