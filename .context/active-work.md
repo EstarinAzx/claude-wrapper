@@ -7,75 +7,83 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-05 by Opus 5, owner present_
-_At commit: `e0b8855`_
+_Last updated: 2026-08-05 by Opus 5, autonomous `/preset vibe init` run, owner away_
+_At commit: `e0b8855` + this session's planning commit_
 
 ## Current focus
 
-**Nothing. The tracker is empty — zero open issues.** Spec #115 is delivered and
-closed, both halves of its seed shipped and owner-verified in the real app.
+**Spec #120 is filed and sliced. Seven unblocked `ready-for-agent` tickets are
+queued; nothing is in flight.** No code was written this session — vibe plans,
+the relay builds.
 
 ## State
 
 - **In flight:** nothing.
-- **Shipped 2026-08-05:** #116 (`bd0fed5`, spike) · #117 (`50b6a8d`, spike,
-  adopted nothing) · **#118 (`8a58686`)** `@` file references in the composer ·
-  **#119 (`403d761` + `e0b8855`)** acrylic keeps its blur through a focus loss.
-- **Gate:** typecheck clean, **1122 tests / 74 files**, build clean.
-  `gui-118` PASS, `gui-119` PASS including 8/8 stress trials.
-- **Queue:** empty. No open issues at all.
+- **Filed 2026-08-05:** spec **#120** (`needs-triage`) and slices **#121–#128**
+  (all `ready-for-agent`).
+- **Queue:** #121–#127 unblocked and independent, takeable in any order. **#128
+  (the 1.0.0 bump) is last by the owner's own instruction** and waits on the
+  other seven.
+- **Gate:** untouched this session — `main` is still `e0b8855`, typecheck clean,
+  **1122 tests / 74 files**, build clean. Every slice adds tests, so #128 must
+  read the new baseline off `main` rather than trusting that number.
+
+## The slices
+
+| # | Slice | Shape |
+|---|---|---|
+| #121 | Markdown tables render | CSS only — GFM already emits `<table>` |
+| #122 | Code blocks carry a copy button | `components` override + a **measured** clipboard route |
+| #123 | Reuse a past user message in the composer | Refill, never mutate |
+| #124 | A five-position effort control | CLI-sourced levels, engine rebuild |
+| #125 | The subagent viewer takes the window material | CSS + pin + DESIGN.md + ADR |
+| #126 | The subagent map earns its place | Visual pass inside the pinned encoding |
+| #127 | spike — three routes nobody has called | Probe by calling, build nothing |
+| #128 | Version 1.0.0 | Blocked by #121–#127 |
 
 ## Pick up here
 
-There is no queued work. Two things are recorded as *worth a ticket if they
-matter*, neither filed, both the owner's call:
-
-1. **The Acrylic option's copy is stale.** It reads *"blurs what's behind the
-   window; Windows flattens it when the window loses focus."* The second clause
-   is no longer true — and with the 250ms flash the accurate replacement is not
-   simply deleting it.
-2. **The 250ms flash**, if it stops being acceptable. Upgrade path is earlier
-   entries in `REASSERT_DELAYS_MS` (`src/main/backdrop-keeper.ts`); the open
-   question is how early DWM will accept a re-assert, which needs a capture taken
-   *during* the transition rather than after.
-
-Otherwise: a new idea starts at `/preset init`.
+Take any of #121–#127. `/preset ticket-loop` picks the lowest unblocked id.
 
 ## Skills for next session
 
-- `run-desktop` — `gui-118.mjs` and `gui-119.mjs` are the two newest drivers, and
-  both caught defects a fully green suite could not see.
+- `run-desktop` — **#122 and #125 both need it.** #122's clipboard route cannot
+  be settled in jsdom or in dev; #125 must keep `gui-98` passing with its
+  criterion 5 replaced rather than deleted.
 
 ## Open questions
 
-None. All six owner calls parked on #115 are answered — four taken with warrants
-on 2026-08-05 and shipped in #118, the two backdrop ones answered by observation
-and by #119 respectively.
+Four, all recorded in `.claude/vibe.md` under `## Needs you`, all reversible,
+none blocking:
+
+1. Whether the acrylic exception reaches any pane beyond the subagent viewer.
+2. Whether `ultracode` / `auto` should be reachable at all.
+3. What "background a session" should mean in this app.
+4. That #123 ships as **refill rather than a true edit** — the superseded turn
+   stays in the conversation, because the disk transcript is the source of truth.
 
 ## Recent context
 
-- **Acrylic keeps its blur now**, for free — the material is re-asserted on
-  `blur` at 0/250/800ms. No dependency; both routes #117 priced stay rejected.
-- **What ships is "it comes back", not "it never goes"** — the 0ms attempt loses
-  the race against DWM, so there is ~250ms of opaque before the blur returns.
-  Owner-accepted.
-- **A probe must trigger the mechanism the way the product will.** The probe that
-  justified this fix re-applied 800ms after focus loss and never exercised the
-  synchronous path that shipped — which is exactly where the race lived.
-- **Mica survives blur** — owner observation, the first sighting on a record that
-  had twice refuted the claim. The keeper does not re-assert mica because of it.
-- **`@` file references ship as typing assistance only**; the send path is
-  untouched because the CLI already resolves `@path`.
-- **The caret is a trigger jsdom models differently** — read caret state off the
-  ref, never off a synthetic event target, and never fall back to `0`.
-- **An event handler in main must not be able to throw** — Electron turns it into
-  a modal error dialog over the app.
+- **A zero-turn probe reshaped the batch.** `supportedCommands()` on a warm
+  handle: 121 commands. `/effort` advertised, `/rewind` and `/bg` **absent**.
+  That killed two asks as command-wrappers and authorised the third with its
+  exact domain. It is why this batch ships six build slices where #115 shipped
+  none.
+- **The effort slider's five positions are the SDK's own type**, not a taste
+  call — `EffortLevel = 'low'|'medium'|'high'|'xhigh'|'max'`, and `effort` rides
+  `Options`, so it binds at query CONSTRUCTION and changing it must rebuild the
+  engine exactly as `model:set` does.
+- **The glass ban's parked question is answered for one pane only.** #98 split
+  the owner's instruction into what was stated and what was not; material sat in
+  the second bucket *only because the owner had not named it*. The owner has now
+  named it.
+- **A copy button can ship dead.** Production loads `file://`, dev loads
+  http://localhost, and no permission handler is registered — so
+  `navigator.clipboard` may pass jsdom, pass dev, and be inert in the built app.
 
 ## Related
 
 - [[overview]]
 - [[pick-up]]
 - [[decisions]]
-- [[2026-08-05-a-probe-that-hides-the-race-cannot-justify-the-code-that-runs-into-it]]
-- [[2026-08-05-the-caret-is-the-trigger-and-jsdom-cannot-see-it]]
-- [[2026-08-05-an-accepted-call-is-not-a-supported-route]]
+- [[happy-path]]

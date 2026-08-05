@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-08-05T08:48:24.274Z",
+  "binary": "host (cli-path.ts resolved)",
+  "backendMode": "wisped",
+  "commands": {
+    "count": 121,
+    "entryShape": "object{argumentHint,description,name}",
+    "namesResolved": 121,
+    "matches": [
+      "autocompact",
+      "compact",
+      "domain-modeling",
+      "effort",
+      "model"
+    ],
+    "present": {
+      "rewind": false,
+      "effort": true,
+      "bg": false
+    }
+  },
+  "models": {
+    "count": 15,
+    "entryShape": "object{description,displayName,resolvedModel,supportedEffortLevels,supportsAdaptiveThinking,supportsAutoMode,supportsEffort,supportsFastMode,value}",
+    "carriesEffortField": true
+  },
+  "verdict": {
+    "rewind": "NOT ADVERTISED — the ask cannot be built as a wrapper for a CLI command.",
+    "effort": "ADVERTISED — same caveat.",
+    "bg": "NOT ADVERTISED — consistent with the owner’s report that /bg does not work.",
+    "readsOnly": "This probe measures ADVERTISEMENT, never effectiveness. No prompt was sent and no turn was spent."
+  }
+}
