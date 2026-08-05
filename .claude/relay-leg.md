@@ -69,11 +69,13 @@ off `main` rather than trusting this one. When a ticket's substance *is* the
 gate, run it **on `main` after the merge** rather than inferring it from the
 branch; #128 and #129 both did.
 
-**Do not push.** `origin/main` is many commits behind — the count is
-deliberately not written here, because every wrap-up commit increments it and any
-literal is stale on arrival. Read it: `git rev-list --count origin/main..main`.
-Every leg of chains 2 and 3 landed locally and pushed nothing, deliberately,
-because pushing is outward-facing and the owner has not asked for it.
+**Do not push on your own initiative.** Every leg of chains 2 and 3 landed
+locally and pushed nothing, because pushing is outward-facing and the owner had
+not asked. **On 2026-08-06 they asked, and the backlog went up** — `origin/main`
+is now `041843a`, 18 commits, clean fast-forward. That authorisation covered the
+accumulated backlog; it is **not** a standing grant, so a fresh unattended leg
+still lands locally and says so. Read the current gap rather than any literal:
+`git rev-list --count origin/main..main`.
 
 ## Landmines that bind more than one slice
 

@@ -42,29 +42,30 @@ human touches.
   Ran on the branch and **again on `main` after the merge**. Chain 3 moved the
   baseline 1122/74 → 1277/84, **+155 tests, +10 files**.
   **Read the number off `main`, never off this file.**
-- **`origin/main` is many commits behind, deliberately.** The count is **not
-  recorded here on purpose** — every wrap-up commit increments it, so any literal
-  is stale the moment it is written, and it drifted three legs running before
-  this stopped. Read it: `git rev-list --count origin/main..main`. Chains 2 and 3
-  landed every leg locally and pushed nothing — pushing is outward-facing and the
-  owner has not asked for it. **This is the first thing to raise when they are
-  back.**
+- **PUSHED 2026-08-06 on the owner's instruction.** `origin/main` is now
+  `041843a` — chains 2 and 3 in full, **18 commits**, clean fast-forward (18
+  ahead / 0 behind at push time), nothing forced. The backlog that had been the
+  longest-waiting decision is cleared.
+  The count is still **not recorded here** — every wrap-up commit changes it and
+  a literal drifted three legs running. Read it:
+  `git rev-list --count origin/main..main`.
+  **A leg still does not push on its own initiative:** that authorisation was for
+  the accumulated backlog, not a standing grant.
 
 ## Pick up here
 
 **There is no queued ticket, and that is the intended end state, not a gap.**
 
-A session arriving now has three honest options, in order:
+A session arriving now has two honest options:
 
-1. **Report to the owner.** The unpushed local history is the headline: two full
-   chains of work exist only on this machine. Nothing about it is broken — it was
-   never pushed because pushing is outward-facing — but it is the decision that
-   has been waiting longest.
-2. **Work an owner call.** Four sit in `.claude/vibe.md` under `## Needs you`,
+1. **Work an owner call.** Four sit in `.claude/vibe.md` under `## Needs you`,
    all reversible, all with a default already taken. The live one is #127's
    Remote Control question.
-3. **Triage #130.** It has the shape and the measurement already; it needs a
+2. **Triage #130.** It has the shape and the measurement already; it needs a
    `ready-for-agent` from a human before anything builds it.
+
+~~Report the unpushed history~~ — **done 2026-08-06.** The owner said "push it"
+and `origin/main` is now `041843a`. See State.
 
 **Do not relabel #130 to restart the chain.** The stop condition is an empty
 `ready-for-agent` frontier, and a leg promoting its own follow-up would make that
@@ -72,7 +73,8 @@ condition unreachable by construction.
 
 ## Skills for next session
 
-- **Do not push.** See State.
+- **Do not push on your own initiative.** The 2026-08-06 push was an explicit
+  instruction covering the accumulated backlog, not a standing grant. See State.
 - **Do not apply `ready-for-human`** — the owner banned it for this batch. A
   blocker becomes `needs-info` + a comment + a `PushNotification`.
 - The relay machinery is stopped, not broken. Re-running `/relay N=1 read and
@@ -101,9 +103,16 @@ blocking. **#129 added none and resolved none.** The count stands at four:
    rather than merely unchosen. Left listed because the owner asked for the edit
    by name and may want to revisit what the app should do instead.
 
-**Not calls, but waiting:** the unpushed history; 1.0.0 reading on the repo while
-nothing publishes; and **#130**, filed `needs-triage` precisely so a leg does not
-take it.
+**Not calls, but waiting:** 1.0.0 reading on the repo while nothing publishes;
+and **#130**, filed `needs-triage` precisely so a leg does not take it. The
+unpushed history is **no longer one of these** — pushed 2026-08-06.
+
+**Note what the push did NOT do.** `origin/main` now carries 1.0.0, but nothing
+publishes: `git tag` is still empty, there is no electron-builder config, and
+the post-bump build emitted byte-identical asset hashes, so the version never
+enters the bundle. A tag, an installer or a version readout is each its own
+ticket with its own warrant — do not build one off the number now being on a
+remote.
 
 ## Recent context
 

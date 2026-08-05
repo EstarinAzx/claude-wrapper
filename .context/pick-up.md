@@ -27,13 +27,20 @@ a candidate for the owner rather than queued work. Labelling it
 `ready-for-agent` is what would restart an unattended chain on a feature choice
 nobody asked for — that is the owner's call, not a leg's.
 
-**Do not push.** `origin/main` is many commits behind. **The count is
-deliberately not written here** — every wrap-up commit increments it, so any
-literal is stale the moment it is written, and it drifted three legs running
-before this stopped. Read it: `git rev-list --count origin/main..main`. Chains
-2 and 3 landed every leg locally and pushed nothing, because pushing is
-outward-facing and the owner has not asked for it. **This is the first thing to
-raise when they are back.**
+**PUSHED 2026-08-06, on the owner's instruction.** `origin/main` is now
+`041843a` — the whole of chains 2 and 3, 18 commits, fast-forward, nothing
+forced and nothing clobbered. The long-standing "do not push / origin is many
+commits behind" note is **retired**: it was never a rule about this repo, only
+about the owner not having asked yet, and they have now asked.
+
+Read the current gap rather than trusting any literal:
+`git rev-list --count origin/main..main`. It drifted three legs running when a
+number was written down, which is why no number is written here.
+
+**Still true:** a leg does not push on its own initiative. Pushing is
+outward-facing, this authorisation was for the accumulated backlog, and a fresh
+unattended chain should land locally and say so unless the owner says otherwise
+again.
 
 ## Landed last leg
 
@@ -217,9 +224,17 @@ UI detaches", it is **reachable**, and it was probed with `enabled: false`
 **only** — enabling it bridges a live session to an external service, which is
 outward-facing, and the owner is away. Nothing was enabled and nothing built.
 
-**Not calls, but waiting for the owner:** the unpushed local history (see the top
-of this file), the repo reading 1.0.0 while nothing publishes, and **#130**,
-which is `needs-triage` precisely so a leg does not take it.
+**Not calls, but waiting for the owner:** the repo reading 1.0.0 while nothing
+publishes, and **#130**, which is `needs-triage` precisely so a leg does not take
+it. The unpushed local history is **no longer one of these** — pushed 2026-08-06
+on the owner's instruction (see the top of this file).
+
+**What the push did NOT change.** `origin/main` now carries 1.0.0, and nothing
+publishes: `git tag` is still empty, there is no electron-builder config, and the
+post-bump build emitted byte-identical asset hashes, so the version never enters
+the bundle. A tag, an installer or a version readout is each its own ticket with
+its own warrant. **Do not build one off the number now being on a remote** — that
+is the same scope creep #128's body warned off, one step further along.
 
 ## Related
 
