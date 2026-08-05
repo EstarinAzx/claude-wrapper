@@ -7,138 +7,140 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-06 by Opus 5, relay chain 3 leg 8, owner away_
-_At commit: `024361a` on `main`_
+_Last updated: 2026-08-06 by Opus 5, relay chain 3 leg 9 — the final leg, owner away_
+_At commit: `e164d6c` on `main`_
 
 ## Current focus
 
-**Spec #120 is delivered and closed.** All eight slices (#121–#128) landed, one
-per relay leg, every leg gate-green. The final slice — the 1.0.0 bump — landed
-as `024361a` and closed the spec in the same leg.
+**Nothing is in flight, and relay chain 3 has stopped.**
 
-**The queue did not go dry with it.** **#129** (rewind a turn's file changes)
-unblocked the moment #128 closed, and is now the **only open issue in the
-repo**. It is not part of spec #120 — it was filed by #127's spike, carries a
-measured shape, and the owner asked for rewind by name. Nothing is in flight.
+**#129** (rewind a turn's file changes) landed as `e164d6c` and was the last
+ticket. The frontier query comes back **empty**, which is `ticket-loop`'s
+designed stop: `.claude/relay/relay-leg.md` carries `stop: true` and **no leg 10
+was spawned**.
+
+**Chain 3 is complete.** Nine legs, tickets **#121–#129**, spec **#120**
+delivered and closed on leg 8, every leg gate-green, one ticket per leg, zero
+human touches.
 
 ## State
 
-- **In flight:** nothing. No ticket branch exists; `ticket/128-version-1-0-0`
-  was squash-merged and deleted. Tree clean on `main`.
+- **In flight:** nothing. No ticket branch exists; `ticket/129-rewind-files` was
+  squash-merged and deleted. Tree clean on `main`.
 - **Closed 2026-08-05:** **#121** markdown tables (`ef6ef22`) · **#122** copy
   button (`a359f9f`) · **#123** message reuse (`f649f1d`) · **#124** effort
   control (`39c2896`) · **#125** viewer material (`c92fca7`) · **#126** map
   visual pass (`0628745`).
 - **Closed 2026-08-06:** **#127** the three-route spike (`8a3481e`), **no `src/`
   diff** · **#128** version 1.0.0 (`024361a`) · **#120** the spec itself,
-  delivered.
-- **Open:** **#129** only — `ready-for-agent`, **unblocked** (its `blocked_by`
-  list endpoint reads `128 closed`).
-- **Gate on `main`:** typecheck clean, build clean, **1246 tests / 82 files** —
-  unchanged across #127 and #128, correctly: a spike and a version bump add no
-  tests. Batch total moved 1122/74 → 1246/82, **+124 tests, +8 files**.
+  delivered · **#129** rewind a turn's file changes (`e164d6c`).
+- **Open:** **#130** only, and it is **`needs-triage` on purpose** — a candidate
+  filed by #129's leg for the owner, not queued work. Labelling it
+  `ready-for-agent` is what restarts an unattended chain; that is the owner's
+  call.
+- **Gate on `main`:** typecheck clean, build clean, **1277 tests / 84 files**.
+  Ran on the branch and **again on `main` after the merge**. Chain 3 moved the
+  baseline 1122/74 → 1277/84, **+155 tests, +10 files**.
   **Read the number off `main`, never off this file.**
 - **`origin/main` is many commits behind, deliberately.** The count is **not
   recorded here on purpose** — every wrap-up commit increments it, so any literal
-  is stale the moment it is written, and it drifted in the handoff three legs
-  running before this stopped. Read it: `git rev-list --count origin/main..main`.
-  Every leg of this chain
-  landed locally and pushed nothing — pushing is outward-facing and the owner has
-  not asked for it. **Worth raising when they are back.**
+  is stale the moment it is written, and it drifted three legs running before
+  this stopped. Read it: `git rev-list --count origin/main..main`. Chains 2 and 3
+  landed every leg locally and pushed nothing — pushing is outward-facing and the
+  owner has not asked for it. **This is the first thing to raise when they are
+  back.**
 
 ## Pick up here
 
-**#129 — rewind a turn's file changes.** The only open ticket, and the whole
-build is decided by #127's measurements. **Read `scripts/spike-127-findings.json`
-before starting**; every claim in the ticket was produced by calling the route
-with a negative control that held.
+**There is no queued ticket, and that is the intended end state, not a gap.**
 
-Shape, already measured so nobody re-derives it:
+A session arriving now has three honest options, in order:
 
-- **`enableFileCheckpointing: true` is the whole switch.** Without it,
-  `rewind_files` answers `canRewind: false` / `"File rewinding is not
-  enabled."`. With it, `dry_run: true` returns `canRewind: true` plus
-  `filesChanged` / `insertions` / `deletions` — a real preview — and the wet call
-  **reverted the file on disk**, with a bogus-uuid control run first that left it
-  alone, so the revert is attributable.
-- **It binds at query CONSTRUCTION**, like `model` and `effort`. A setter that
-  only stores changes nothing — it must rebuild the engine exactly as `model:set`
-  does.
-- **Stamp your own `uuid`.** The CLI **never echoes the prompt back**; the only
-  `type: 'user'` messages on the stream are **tool results**. `engine.ts` must set
-  `uuid` on the outgoing user message and keep it (assert with
-  `getSessionMessages`). The spike's own arm scraped the stream and was addressing
-  a `tool_result` before it was fixed.
-- **No env plumbing needed.** The flag travels as an env var and `engine.ts`
-  replaces the child env wholesale — a real collision hypothesis, **tested and
-  refuted**. The arm passing the app's own `resolveSpawnEnv` output works.
-- **Rewind restores FILES, not the conversation.** The UI must not imply
-  otherwise, and it does **not** reopen #123's refill decision.
-- **Unmeasured, worth measuring in the build:** behaviour on a **resumed**
-  session (the SDK's own source carries a caveat for the store-backed case), and
-  the runtime cost of checkpointing.
+1. **Report to the owner.** The unpushed local history is the headline: two full
+   chains of work exist only on this machine. Nothing about it is broken — it was
+   never pushed because pushing is outward-facing — but it is the decision that
+   has been waiting longest.
+2. **Work an owner call.** Four sit in `.claude/vibe.md` under `## Needs you`,
+   all reversible, all with a default already taken. The live one is #127's
+   Remote Control question.
+3. **Triage #130.** It has the shape and the measurement already; it needs a
+   `ready-for-agent` from a human before anything builds it.
 
-After #129 the frontier query comes back **empty** and the chain stops.
+**Do not relabel #130 to restart the chain.** The stop condition is an empty
+`ready-for-agent` frontier, and a leg promoting its own follow-up would make that
+condition unreachable by construction.
 
 ## Skills for next session
 
-- **#129 is a real build** — engine option, uuid retention, a preview affordance,
-  and a main-process handler that cannot throw. TDD applies; the acceptance
-  criteria are already testable as written.
 - **Do not push.** See State.
 - **Do not apply `ready-for-human`** — the owner banned it for this batch. A
-  blocker becomes `needs-info` + a comment + a `PushNotification`, and the chain
-  continues.
+  blocker becomes `needs-info` + a comment + a `PushNotification`.
+- The relay machinery is stopped, not broken. Re-running `/relay N=1 read and
+  follow .claude/relay-leg.md` against a `stop: true` file **re-inits** the chain
+  — check the frontier first, or it will spin a leg with nothing to do.
 
 ## Open questions
 
 Four, all in `.claude/vibe.md` under `## Needs you`, all reversible, none
-blocking. **#128 added none and resolved none** — a version bump has no calls in
-it. The count stands at four:
+blocking. **#129 added none and resolved none.** The count stands at four:
 
 1. Whether the acrylic exception reaches any pane beyond the subagent viewer.
-   Answer taken is the reversible one — **that pane only** — and it is enforced by
-   two pins rather than good intentions, so a later leg that generalises it reds
-   rather than drifts.
+   Answer taken is the reversible one — **that pane only** — enforced by two pins
+   rather than good intentions, so a later leg that generalises it reds rather
+   than drifts.
 2. Whether `ultracode` / `auto` should be reachable at all.
 3. What "background a session" should mean. #127 delivered the measurement and
    the call stayed open. Detach **fails** (closing the handle kills the CLI
    child); `background_tasks` is reachable but showed **no effect**. The one
    genuine candidate is **Remote Control** — reachable, probed `enabled: false`
-   **only**, because enabling it bridges a live session to an external service and
-   the owner is away. **That is the live part.** Nothing enabled, nothing built.
+   **only**, because enabling it bridges a live session to an external service
+   and the owner is away. **That is the live part.** Nothing enabled, nothing
+   built.
 4. ~~That #123 ships as **refill rather than a true edit**~~ — taken, shipped and
    warranted (`f649f1d`); the record carries why a true edit is *impossible*
    rather than merely unchosen. Left listed because the owner asked for the edit
    by name and may want to revisit what the app should do instead.
 
-**New, and not a decision anyone took:** 1.0.0 now reads on the repo while
-nothing publishes. If the owner wants that to mean something — a tag, an
-installer, a version readout — each is its own ticket with its own warrant. See
-[[2026-08-06-one-point-oh-is-a-marker-and-the-lockfile-moves-with-it]].
+**Not calls, but waiting:** the unpushed history; 1.0.0 reading on the repo while
+nothing publishes; and **#130**, filed `needs-triage` precisely so a leg does not
+take it.
 
 ## Recent context
 
 Pruned to what can still bite. Detail for closed slices lives in their tickets,
 commits and `decisions/`.
 
-### Binds #129 directly
+### From #129, and the sharpest of them is a process failure
 
-- **THE CLI NEVER ECHOES THE PROMPT BACK.** The only `type: 'user'` messages on
-  the stream are **tool results**. Stamp your own `uuid`; the CLI stores the
-  message under exactly that id.
-- **`effort`, `model` and `enableFileCheckpointing` all ride `Options`, so all
-  three bind at query CONSTRUCTION.** Changing one must rebuild the engine.
-- **An event handler in main must not be able to throw** — Electron turns it into
-  a modal error dialog over the app. `rewind_files` errors are in scope for this.
-- **A renderer-side message edit cannot persist** — the pane is a projection of
-  the CLI's file (#123). Rewind does not change that.
+- **A GATE ON ONE PHASE DOES NOT PROTECT THE PHASE THAT REUSES ITS HANDLE.** The
+  spike's phase B resumed from a **fresh temp directory**; the CLI's session store
+  is keyed by **project directory**, so the lookup died with `No conversation
+  found with session ID` — a perfect id in the wrong place. Phase B's positive
+  control caught it and scored `UNSCORED`. **Phase C had no gate**, read the same
+  dead handle, and answered a confident "NO, the rewind control must be withdrawn
+  on an engine rebuild" — which, believed, ships a control that vanishes on every
+  model pick for a reason that was never true. **A resume needs the WORKSPACE as
+  much as the id.**
+- **AN UNAPPLIED MUTATION READS EXACTLY LIKE A CAUGHT ONE.** One of #129's eight
+  mutations reported `ANCHOR NOT FOUND` — a multi-line anchor missed this repo's
+  CRLF. Re-run, not counted.
+- **A REFUSAL CAN BE A THROW.** `rewindFiles` with an id that has no checkpoint
+  **rejects** (`No file checkpoint found for this message.`), while
+  checkpointing-off answers `canRewind: false` in the body. Two mechanisms, one
+  user-visible fact. An `ipcMain.handle` that lets either escape gets a modal
+  error dialog over the app.
+- **`enableFileCheckpointing` joins `model`, `effort` and `resume` on `Options`**
+  — all four bind at query CONSTRUCTION.
+- **The tokens are `--fs-micro` and `--danger-text`.** There is no `--fs-meta` and
+  no bare `--danger`. #129 wrote both wrong first, and only the real window could
+  catch it: jsdom loads no CSS and an unknown `var()` resolves silently to
+  nothing.
 
 ### Probe discipline — the batch's most transferable output
 
-- **UNSCORED IS NOT REFUTED**, hit from six sides: #122's clipboard, #124's three
-  instrument traps, #125's own verification harness, #126's halo control, and
-  #127's two false positives.
+- **UNSCORED IS NOT REFUTED**, hit from seven sides: #122's clipboard, #124's
+  three instrument traps, #125's own verification harness, #126's halo control,
+  #127's two false positives, and #129's phase C.
 - **A CONTROL CATCHES FALSE POSITIVES TOO.** #127's task backgrounding first
   scored EFFECTIVE off a 37s speed-up whose real cause was that **this machine's
   harness blocks standalone `sleep`** — it was measuring a hook. Its session
@@ -147,11 +149,10 @@ commits and `decisions/`.
   **node timer, never `sleep`**; assert the control **actually blocked**; check
   the artefact **before** the cut (present → UNSCORED, never a pass); scope any
   on-disk witness to the **session id**; use **absolute paths** in probe prompts.
-- **THE THREE-WAY SUBTYPE COMPARISON, reusable verbatim and free.** On one warm
-  handle: bogus subtype → `Unsupported control request subtype: …`; the
-  candidate; the candidate with bad arguments. A **different** error means the
-  dispatcher recognised the subtype and reached its own validator. That is how
-  "no such route" is told from "route exists, switched off".
+- **THE THREE-WAY COMPARISON, reusable verbatim and free.** On one warm handle:
+  bogus subtype → `Unsupported control request subtype: …`; the candidate; the
+  candidate with bad arguments. A **different** error means the dispatcher
+  recognised it. #129 applied the same shape to **uuids** rather than subtypes.
 - **Probe by CALLING.** A declared wire type is not a callable route (#115); a
   callable route is not an effective one (#117); a negative claim needs
   **negative-shaped evidence** (#127).
@@ -165,7 +166,7 @@ commits and `decisions/`.
 
 ### Standing repo traps
 
-- **Stylesheets are read as raw TEXT by EIGHT tests**, three of which scan the
+- **Stylesheets are read as raw TEXT by NINE tests**, three of which scan the
   whole `styles/` directory. No comment may contain a closing brace; no scrollbar
   rule may be component-scoped; **`base.css` warns that even NAMING the scrollbar
   pseudo-element in a comment trips the scan**; `.bubble` and `.message-input`
@@ -180,9 +181,13 @@ commits and `decisions/`.
 - **Focus rings are picked per control, not applied.**
 - **jsdom loads no CSS**, so a raw-text pin proves a rule was written, never that
   it works. Verify with a `run-desktop` driver.
+- **A value read behind a transition is not a settled one** (#123) — `gui-129`
+  waits 500ms after `hover()` before reading opacity for exactly this reason.
+  **A driver's RED path must fail cleanly**, or it leaks the Electron process.
 - **`core.autocrlf` is `true`**: every blob is LF, the working tree is CRLF. New
   files need no hand-conversion. What bites is reading — **anything that reads a
-  file from disk must expect `\r\n`**, and `/^## Heading$/m` matches nothing here.
+  file from disk must expect `\r\n`**, `/^## Heading$/m` matches nothing here, and
+  a multi-line string anchor in a script must expect it too.
 - **ESM freezes every JS seam a driver might patch** — `sdk.query` cannot be
   monkey-patched (frozen namespace, silent no-op) and neither can
   `child_process.spawn`. The route that works is the OS: read the child's command
@@ -191,7 +196,8 @@ commits and `decisions/`.
 - **`canUseTool` is NOT a control surface** (#116) — deny with `disallowedTools`.
 - **`setBackgroundMaterial` has NO runtime whitelist** — `src/shared/backdrop.ts`'s
   compare-never-coerce guard is the only one. `src/shared/effort.ts` is the same
-  pattern except it REJECTS rather than defaulting.
+  pattern except it REJECTS rather than defaulting; `src/shared/message-uuid.ts`
+  (#129) is the third and **drops** rather than coercing.
 - Harness scripts importing `.ts` from `src/` need
   `node --experimental-strip-types` (Node 22.17). Use `fileURLToPath`, never
   `URL.pathname` — this repo's path contains a space. A script **outside** the
@@ -203,8 +209,6 @@ commits and `decisions/`.
   `setZoomFactor(1)` before any pixel measurement.
   **`getComputedStyle(el, '::pseudo')` does not read that pseudo-element** in
   Chromium, and a pixel probe needs a positive control.
-- **A value read behind a transition is not a settled one** (#123). **A driver's
-  RED path must fail cleanly**, or it leaks the Electron process.
 - **`gui-52`'s red is DOUBTFUL** and `gui-75` is focus-dependent — reproduce solo
   on clean `main` before believing either.
 - Never hardcode a model name or an effort level list. Never read
@@ -216,7 +220,8 @@ commits and `decisions/`.
   owner.** If `.claude/relay-leg.md` disagrees with the tracker or with
   [[pick-up]], **they win** — and fix that file in the wrap-up.
 - **Never `git checkout <file>` to undo a mutation on uncommitted work** — it
-  reverts to HEAD and drops every edit since the branch point.
+  reverts to HEAD and drops every edit since the branch point. #129's mutation
+  runner kept its own backup copy instead.
 - **Squash-merged ticket branches need `git branch -D`.**
 - **`issue_dependencies_summary` is EVENTUALLY CONSISTENT.** Right after writing
   an edge it can read `blocked_by: 0` while the **list endpoint** already shows
@@ -230,5 +235,6 @@ commits and `decisions/`.
 - [[pick-up]]
 - [[decisions]]
 - [[happy-path]]
+- [[2026-08-06-the-id-is-minted-where-the-bubble-is-and-the-store-is-keyed-by-directory]]
 - [[2026-08-06-one-point-oh-is-a-marker-and-the-lockfile-moves-with-it]]
 - [[2026-08-06-the-address-is-carried-and-ignored-and-the-rewind-was-one-flag-away]]

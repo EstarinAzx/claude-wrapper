@@ -326,6 +326,25 @@ tags: [context, overview]
   everything living inside the composer. Both entry points — a foreign session
   row and the sidebar's "Open project" affordance — share that one reset via a
   nullable `resumeId`.
+  `Chat`'s **rewind control** (#129) sits beside the reuse one and restores the
+  workspace's tracked FILES to their state at that message — never the
+  conversation, and a test asserts that vocabulary rather than a comment
+  promising it. It renders only when the message carries a `rewindId`, which
+  only messages this pane SENT have: `toChatMessage` never sets one, so a
+  replayed transcript shows no control. That boundary is app-side, not a limit
+  of the route — #129 measured rewind working on a RESUMED session and, from a
+  rebuilt query, on a message the PREVIOUS query sent, so the control may
+  safely outlive the model/permission/backend rebuilds that discard the engine.
+  Extending it to replayed messages is **#130**, `needs-triage`.
+  The control is **two gestures**: `dryRun: true` reports the file and line
+  counts and provably leaves the disk alone, then a deliberate second click
+  commits. No dialog — both anti-modal ADRs stand — and main holds no preview
+  token, because one would go stale the moment another turn edited a file. The
+  id is minted in the RENDERER, at the moment the bubble is created: the CLI
+  never echoes a prompt back, so there is nothing to scrape, and an id chosen
+  downstream would have to be routed back and matched to a row already on
+  screen. See
+  [[2026-08-06-the-id-is-minted-where-the-bubble-is-and-the-store-is-keyed-by-directory]].
   Its `pendingInsert` is now the composer's ONE insert channel with **two**
   callers (#123): the commands dock and `Chat`'s per-message reuse control. A
   second channel is deliberately not added — routing the refill here is what
@@ -340,7 +359,14 @@ tags: [context, overview]
   `.bubble` because that element's `textContent` is read verbatim by a test. It
   restores **text only**. See
   [[2026-08-05-the-pane-is-a-projection-so-the-edit-is-a-refill]].
-- `src/shared/` — types + pure modules both processes import. `background-tasks.ts`
+- `src/shared/` — types + pure modules both processes import. `message-uuid.ts`
+  (#129) is the id a user message is addressed by for a file rewind: a restated
+  `MessageUuid` template type (node's `UUID` is not imported — the RENDERER
+  imports this module and `tsconfig.web.json` carries no node types) plus
+  `isMessageUuid`, which is simultaneously the trust boundary and the narrowing
+  that lets the value reach the SDK **without a cast**. Third member of the
+  compare-never-coerce family after `backdrop.ts` and `effort.ts`, and it
+  **drops** rather than defaulting or rejecting. `background-tasks.ts`
   (#83) is the CLI level's whole vocabulary: `parseBackgroundTasks` is the trust
   boundary on the payload (`task_id` is identity so a row without one is dropped;
   `task_type` and `description` are display-only so a missing one costs a label,
@@ -422,13 +448,13 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **spec #120's
-  batch is draining — #121-#125 are closed, leaving #126 and #127
-  unblocked and independent, with #128 (the 1.0.0 bump) last by the owner's own
-  instruction. `ready-for-human` is BANNED for this batch; use `needs-info` + a
+- `.context/pick-up.md` — current frontier + landmines (currently: **the queue is
+  EMPTY and relay chain 3 has stopped — #121–#129 all closed, spec #120
+  delivered, and the only open issue is #130 at `needs-triage`, which a leg must
+  NOT promote. `ready-for-human` is BANNED for this batch; use `needs-info` + a
   comment + a PushNotification**; run the frontier query anyway, it is the
   authority and this line has been wrong before.
-  **36 `gui-*.mjs`** — 35 assertion drivers plus the observational
+  **37 `gui-*.mjs`** — 36 assertion drivers plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`), with **two standing
   environmental reds**,
@@ -493,7 +519,23 @@ tags: [context, overview]
   than anything rendered. `SPIKE108_PHASES=A` re-runs the drift alarm alone in a
   second; `B` and `C` cost real CLI turns. Re-run phase C2 after #113 lands — it
   is that fix's end-to-end evidence
-- `.claude/skills/run-desktop/gui-123.mjs` — the newest GUI driver (#123) and
+- `.claude/skills/run-desktop/gui-129.mjs` — the newest GUI driver (#129) and
+  **the one to copy when the feature's whole point is an effect on something
+  outside the app**. It is the only evidence for #129's first acceptance
+  criterion: the join from composer → `chat:send` carrying a uuid → the CLI
+  storing the message under it → `chat:rewind` → the file moving exists in no
+  test and in no spike, because a stub cannot corroborate a fact about the CLI
+  and the spike drove its own query. It **costs one CLI turn by necessity** —
+  gui-123's zero-turn trick would leave the CLI with no checkpoint, and the
+  correct refusal would read as a product failure, which is the inverse of the
+  usual economy and worth recognising. Its controls: the turn must have CHANGED
+  the file before anything is concluded (#76), the DRY RUN must leave it
+  mutated (which is both a real assertion and the within-run attribution for the
+  second gesture), and a discrimination control on the bubble's own opacity so a
+  reader that cannot resolve the built stylesheet reports UNSCORED rather than
+  passing the hidden-at-rest check. Re-run it after any SDK bump that touches
+  `rewindFiles` or `enableFileCheckpointing`
+- `.claude/skills/run-desktop/gui-123.mjs` — an earlier GUI driver (#123) and
   **the one to copy for two things**. First, **spending zero CLI turns**: it
   removes main's own `chat:send` listener with `ipcMain.removeAllListeners`
   before typing, so the renderer still appends the user bubble and no engine
@@ -752,9 +794,18 @@ tags: [context, overview]
   rather than RED; see
   [[2026-08-05-the-owner-named-the-surface-so-the-ban-takes-one-exception]]) is
   **closed**.
-  **As of 2026-08-05 chain 3 is draining spec #120: #121-#125 closed, with
-  #126 and #127 open, unblocked and independent, and #128 (the 1.0.0
-  bump) open but last by the owner's instruction.**
+  **As of 2026-08-06 chain 3 is COMPLETE and the queue is EMPTY.** Nine legs,
+  tickets **#121–#129**, spec **#120** delivered and closed on leg 8, every leg
+  gate-green. **#129** (`e164d6c`, rewind a turn's file changes) was the last:
+  `enableFileCheckpointing: true` is the whole switch, the addressing id is
+  minted in the renderer and validated on both IPC crossings, the preview is a
+  real `dryRun` that leaves the disk alone, and refusals carry the CLI's own
+  text through one `RewindResult` that never rejects. Measured first in
+  `scripts/spike-129-rewind-resume.mjs` — the DECLARED `q.rewindFiles()` method
+  works, rewind survives a RESUME, and a rebuilt query recognises the previous
+  query's message id — after a first run whose phase B resumed from the wrong
+  directory and whose ungated phase C reported that setup failure as a finding.
+  The only open issue is **#130**, `needs-triage` by design so no leg takes it.
   Run the frontier query rather than trusting any line in this file
 
 ## Conventions

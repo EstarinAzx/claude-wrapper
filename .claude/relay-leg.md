@@ -1,4 +1,4 @@
-# relay-leg — one ticket per leg, spec #120 batch
+# relay-leg — one ticket per leg
 
 Loop body for:
 
@@ -10,101 +10,70 @@ Each leg = exactly ONE ticket end to end, then the relay machinery hands off to
 a fresh session. Legs run **unattended**: never call AskUserQuestion; every gate
 below auto-decides.
 
-**Rewritten 2026-08-05 for the #120 batch; queue table refreshed by leg 8.** Everything this file said before is
-gone: it described the completed #115–#119 chain, announced an empty queue, and
-told legs that `ready-for-human` was allowed. All three are now false.
-
 > **A loop body is an artefact of an earlier leg, not an instruction from the
-> owner.** That lesson cost the previous chain a night — two legs obeyed a stale
-> section and shipped zero features while warrants sat in the record. If this
-> file disagrees with the tracker or with `.context/pick-up.md`, **they win**,
-> and fix this file in your wrap-up.
+> owner.** That lesson cost a chain a night — two legs obeyed a stale section and
+> shipped zero features while warrants sat in the record. If this file disagrees
+> with the tracker or with `.context/pick-up.md`, **they win**, and fix this file
+> in your wrap-up.
 
-## THE ONE HARD RULE THIS BATCH
+## THE QUEUE IS EMPTY AND CHAIN 3 HAS STOPPED — read this before anything else
 
-**Never apply the `ready-for-human` label. The owner is away and banned it.**
+**Rewritten 2026-08-06 by leg 9, the final leg.** Everything the previous
+version of this file said about a queue is now false: it listed spec #120 with
+#129 still to come, and all of it has landed.
 
-`/preset ticket-loop` steps 4 and 6 tell you to relabel `ready-for-human` on a
-branch collision or a failed gate. **Do not.** Instead:
+| chain 3 | |
+|---|---|
+| legs | 9 |
+| tickets | **#121–#129, all closed** |
+| spec | **#120 delivered and closed** on leg 8 |
+| gate | green on every leg; `main` at **1277 tests / 84 files** |
+| human touches | zero |
 
-1. Label the ticket **`needs-info`**.
-2. Comment on it: exactly where you stopped, what you tried, what evidence you
-   have, and what a cold reader needs to continue.
-3. `PushNotification` naming the ticket and the blocker in one line.
-4. Continue to wrap-up and let the chain move to the next ticket.
+`.claude/relay/relay-leg.md` carries `stop: true` and **no leg 10 was spawned**.
 
-A stuck ticket must not stop the chain — the others are independent.
-
-## The queue
-
-Spec **#120** is the container and carries the full reasoning, 25 grep-verified
-warrants, and the measurement that shaped the batch. The slice bodies are
-self-contained; read #120 only if you want the why.
-
-| # | slice | note |
-|---|---|---|
-| ~~#121~~ | ~~markdown tables render~~ | **CLOSED** `ef6ef22` — leg 1 |
-| ~~#122~~ | ~~code-block copy button~~ | **CLOSED** `a359f9f` — leg 2. Route measured: `navigator.clipboard`, effective on `file://`. Established the repo's first `components` override; the wrapper was **not** extended to `<table>` |
-| ~~#123~~ | ~~reuse a past user message~~ | **CLOSED** `f649f1d` — leg 3. Refill through the **existing `pendingInsert` channel**, text only; `pendingInsert` now has two callers and its nonce is load-bearing for both |
-| ~~#124~~ | ~~five-position effort control~~ | **CLOSED** `39c2896` — leg 4. Levels measured off the REAL CLI; the range carries **six stops for five levels** (stop 0 = Default, the absence of a level) because five bare stops left `low` unreachable by one gesture |
-| ~~#125~~ | ~~subagent viewer takes the window material~~ | **CLOSED** `c92fca7` — leg 5. **One declaration** of `backdrop-filter`, the only one in the app, shipped as a **named, scoped exception** rather than a relaxation; `gui-98` criterion 5 **inverted** to a three-part positive; gate-run twin added because no driver runs in `npm test` |
-| ~~#126~~ | ~~subagent map visual pass~~ | **CLOSED** `0628745` — leg 6. Every acceptance criterion was **already green before a line changed** (the driver was written first and run against unmodified `main`), so the risk was breaking a pinned criterion while chasing looks, not failing to meet one. SVG `stroke-width` is in **viewBox units**; the tint ladder cannot carry a structural line |
-| ~~#127~~ | ~~spike — three routes nobody has called~~ | **CLOSED** `8a3481e` — leg 7. **No `src/` diff**, 9 CLI turns. Q1 subagent-inbound **dead** (the address is carried and ignored); Q2 rewind **works** → filed **#129**; Q3 detach **fails**, Remote Control left to the owner |
-| ~~#128~~ | ~~version 1.0.0~~ | **CLOSED** `024361a` — leg 8, and **spec #120 closed as delivered in the same leg**. Diff was **three lines across two files**, not the one the ticket predicted: `package-lock.json` is tracked and mirrors the version twice, so the bump went through `npm version --no-git-tag-version`. No tag cut |
-| #129 | rewind a turn's file changes | **NOW UNBLOCKED and NEXT.** Filed by #127. **Not part of spec #120.** The last ticket in the repo — the frontier goes empty behind it |
-
-Pick the **oldest unblocked `ready-for-agent`** ticket. Run the frontier query;
-never trust this table:
+**If you are reading this as a freshly spawned leg, something re-inited the
+chain.** Run the frontier query FIRST:
 
 ```text
 gh issue list --state open --label ready-for-agent
 ```
 
-**#129 is next and it is the only open issue left.** Spec #120 is closed. When
-#129 lands the frontier query comes back **empty** — that is the chain's stop.
+**Empty → you have no work. Stop; do not invent some.** Set `stop: true`, say so,
+and spawn nothing. The queue going dry is `ticket-loop`'s designed end, not a
+failure to find something.
 
-> **`issue_dependencies_summary` is EVENTUALLY CONSISTENT.** Right after
-> `POST .../dependencies/blocked_by`, #129's summary still read `blocked_by: 0`
-> while the `blocked_by` **list endpoint** already showed `#128`; it caught up
-> seconds later. Read it twice, or read the list endpoint, if an edge was just
-> written.
+**#130 is open and is deliberately `needs-triage`, not `ready-for-agent`.** It
+was filed by leg 9 as a candidate for the owner — extending rewind to replayed
+messages is a feature choice nobody asked for. **Do not relabel it to give
+yourself work.** A leg promoting its own follow-up makes the stop condition
+unreachable by construction, which is the failure mode this whole paragraph
+exists to prevent.
 
-**Why the chain builds #129 rather than stopping at the closed spec.** That is
-this repo's established pattern — #112 was filed from #105 and #118 from #116,
-both `ready-for-agent`, both built by a later leg — and the owner asked for
-rewind **by name**. The warrant is theirs, not the leg's. The one thing #129
-must not do is imply the *conversation* was rewound; rewind restores files only.
+## Still true if a leg ever does run again
 
-**Read `scripts/spike-127-findings.json` before starting #129.** Every claim in
-its ticket was produced by calling the route with a negative control that held.
-The build is: `enableFileCheckpointing: true` in the engine options (it binds at
-query **construction**, like `model` and `effort` — a setter that only stores
-changes nothing), a `uuid` stamped on each outgoing user message and retained
-(**the CLI never echoes the prompt back**), a `dry_run: true` preview shown
-before the destructive call, and a main-process handler that cannot throw.
+**Never apply the `ready-for-human` label. The owner is away and banned it.**
+`/preset ticket-loop` steps 4 and 6 tell you to relabel it on a branch collision
+or a failed gate. Instead: label **`needs-info`**, comment with exactly where you
+stopped and what a cold reader needs, `PushNotification` the ticket and the
+blocker in one line, then continue. A stuck ticket must not stop the chain.
 
-## Per-leg contract
+**Follow `/preset ticket-loop` exactly**, with that substitution: read
+`.context/pick-up.md` → pick ONE ticket → branch `ticket/<id>-<slug>` →
+`/implement` → gate → breadcrumb comment → gateless `/preset wrap-up` with
+`.context/` committed on **main only**.
 
-Follow `/preset ticket-loop` exactly, with the `ready-for-human` substitution
-above. In short: read `.context/pick-up.md` → pick ONE ticket → branch
-`ticket/<id>-<slug>` → `/implement` → gate → breadcrumb comment → gateless
-`/preset wrap-up` with `.context/` committed on **main only**.
-
-**Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`. The
-baseline was **1122 / 74** before this batch and is **1246 tests / 82 files**
-after #126 — **unchanged by #127 and #128**, correctly, since a spike and a
-version bump add no tests. Read the current number off `main` rather than
-trusting any of these. When a ticket's substance *is* the gate, run it **on
-`main` after the merge** rather than inferring it from the branch; #128 did.
+**Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`.
+`main` is at **1277 tests / 82+2 = 84 files** after #129. Read the current number
+off `main` rather than trusting this one. When a ticket's substance *is* the
+gate, run it **on `main` after the merge** rather than inferring it from the
+branch; #128 and #129 both did.
 
 **Do not push.** `origin/main` is many commits behind — the count is
-deliberately not written here, because every wrap-up commit increments it and
-any literal is stale on arrival. Read it: `git rev-list --count
-origin/main..main`. Every leg of this chain
-has landed locally and pushed nothing, deliberately, because pushing is
-outward-facing and the owner has not asked for it. The 1.0.0 bump did **not**
-publish — `git tag` still **0** after it, no electron-builder config, `npm run
-dev` only.
+deliberately not written here, because every wrap-up commit increments it and any
+literal is stale on arrival. Read it: `git rev-list --count origin/main..main`.
+Every leg of chains 2 and 3 landed locally and pushed nothing, deliberately,
+because pushing is outward-facing and the owner has not asked for it.
 
 ## Landmines that bind more than one slice
 
@@ -208,10 +177,35 @@ dev` only.
   assert them with `getComputedStyle`.
 - **No GUI driver can see a DWM backdrop** — `--disable-gpu` flattens acrylic
   and `page.screenshot()` cannot show it. #125 pins the declaration as text.
-- **Stylesheets are read as raw TEXT by SEVEN tests** — #121 added
+- **A REFUSAL CAN BE A THROW, and #129 measured both mechanisms for one fact.**
+  `rewindFiles` with an id that has no checkpoint **rejects**
+  (`No file checkpoint found for this message.`), while checkpointing being off
+  answers `canRewind: false` in the BODY. A handler that only reads the body
+  turns the ordinary refusal into an unhandled rejection — and this one is called
+  from an `ipcMain.handle`, where that becomes a modal error dialog over the app.
+- **A GATE ON ONE PHASE DOES NOT PROTECT THE PHASE THAT REUSES ITS HANDLE.**
+  #129's spike resumed phase B from a **fresh temp directory**; the CLI's session
+  store is keyed by **project directory**, so the lookup died with `No
+  conversation found with session ID`. Phase B's positive control caught it and
+  scored UNSCORED. **Phase C had no gate**, read the same dead handle, and
+  answered a confident "NO" that would have shipped a control withdrawing itself
+  on every model pick. **A resume needs the WORKSPACE as much as the id.**
+- **AN UNAPPLIED MUTATION READS EXACTLY LIKE A CAUGHT ONE.** One of #129's eight
+  mutations came back `ANCHOR NOT FOUND` because a multi-line anchor missed this
+  repo's CRLF. It was re-run, not counted. A mutation runner must report
+  "never applied" as its own outcome, distinct from RED.
+- **`model`, `effort`, `resume` AND `enableFileCheckpointing` all ride `Options`**
+  — all four bind at query CONSTRUCTION. A setter that only stores changes
+  nothing.
+- **The tokens are `--fs-micro` and `--danger-text`.** There is no `--fs-meta`,
+  no bare `--danger`. #129 wrote both wrong first and nothing but the real window
+  could catch it: jsdom loads no CSS and an unknown `var()` resolves silently to
+  nothing.
+- **Stylesheets are read as raw TEXT by NINE tests** — #121 added
   `markdown-tables.test.tsx`, #122 added `code-copy.test.tsx`, #123 added
-  `reuse-message.test.tsx` and #125 added `subagent-material.test.ts` to the
-  three; **three of the seven scan the whole `styles/` directory**. No comment
+  `reuse-message.test.tsx`, #125 added `subagent-material.test.ts` and #129 added
+  `rewind-message.test.tsx` to the earlier ones; **three of the nine scan the
+  whole `styles/` directory**. No comment
   may contain a closing
   brace; no scrollbar rule may be component-scoped; **and `base.css` warns that
   even NAMING the scrollbar pseudo-element in a comment trips the scan**;
@@ -287,10 +281,13 @@ leg to stall on:
    than merely unchosen. Still listed, because the owner asked for the edit by
    name and may want to revisit what the app should do instead.
 
-**None of #122–#128 added any of these, and none resolved one by decision.**
+**None of #122–#129 added any of these, and none resolved one by decision.**
 #127 delivered call 3's measurement and left the call open, which is what a
-spike is for; #128 was a version bump and had no calls in it. The count stands
-at four.
+spike is for; #128 was a version bump and had no calls in it; #129 hit one
+genuinely new choice — whether replayed messages get the rewind control — and
+took the reversible option (they do not, because their id is not in hand) and
+**filed the alternative as #130 at `needs-triage`** rather than deciding it. The
+count stands at four.
 
 **One new thing that is NOT a call and needs no decision:** the repo now reads
 **1.0.0** while nothing publishes — `git tag` **0**, no electron-builder config,
@@ -303,15 +300,17 @@ If you hit a genuinely new call the record cannot settle, take the most
 reversible option, finish the rest of the ticket, and say so in the breadcrumb.
 **Do not stop the chain over it, and do not label it `ready-for-human`.**
 
-## Stop condition
+## Stop condition — ALREADY REACHED
 
 Queue dry — no unblocked `ready-for-agent` tickets left — is `ticket-loop`'s
 designed stop. Set `stop: true`, write `queue empty` into the baton, and spawn
 no further leg.
 
-**#128 landed and spec #120 is closed.** That unblocked **#129**, which is now
-the **only open issue in the repo** — so the queue is not dry yet and the chain
-continues into it.
+**#129 landed as `e164d6c` on 2026-08-06 and it was the last ticket.** The
+frontier query returns **empty**. Leg 9 set `stop: true`, wrote `queue empty`
+into the baton, and **spawned nothing**.
 
-**#129 is the last one.** When it lands, the frontier query comes back empty:
-set `stop: true`, write `queue empty` into the baton, and spawn no further leg.
+The one open issue, **#130**, is `needs-triage` by design and does not match the
+frontier query. **Promoting it to `ready-for-agent` to give a leg something to do
+would make this stop condition unreachable by construction** — it is a candidate
+for the owner, and taking it is their call, not a leg's.
