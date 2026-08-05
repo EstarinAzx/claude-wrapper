@@ -266,6 +266,14 @@ const App = () => {
               onOpenSubagent={(parentToolUseId, agentType) =>
                 setOpenSubagent({ parentToolUseId, agentType })
               }
+              // #123 — the SAME channel the commands dock inserts through, and
+              // deliberately not a second one. The nonce is what makes reusing
+              // one message twice work; routing through the existing insert is
+              // also what keeps the queued-send commitment correct for free,
+              // since that flag rides the draft rather than a copy of it.
+              onReuse={(text) =>
+                setPendingInsert((p) => ({ text, nonce: (p?.nonce ?? 0) + 1 }))
+              }
             />
             {/* A transcript that would not READ (#60). Sits under the pane
                 rather than inside it because the pane is now empty by

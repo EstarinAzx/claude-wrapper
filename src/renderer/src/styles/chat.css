@@ -78,6 +78,50 @@
   overflow-wrap: anywhere;
 }
 
+/* #123 — the reuse control, beside the bubble rather than inside it. At rest it
+   is invisible and spends no ink: one on every user row, permanently lit, would
+   compete with the words for attention on a surface that is mostly words. It
+   keeps its place in the tab order while hidden, which is what the
+   :focus-within rule below is for — tabbing onto an invisible control is worse
+   than not offering one at all. */
+.bubble-reuse {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 150ms var(--ease),
+    color 150ms var(--ease),
+    background 150ms var(--ease);
+}
+
+.msg-user:hover .bubble-reuse,
+.msg-user:focus-within .bubble-reuse {
+  opacity: 1;
+}
+
+.bubble-reuse:hover {
+  background: var(--tint-2);
+  color: var(--text-muted);
+}
+
+/* #93 — anything that paints a fill in any state takes the hairline ALONE. This
+   one washes on hover, so a focus wash would read as "hovered", not "focused". */
+.bubble-reuse:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
 .msg-assistant {
   align-items: flex-start;
   gap: 12px;

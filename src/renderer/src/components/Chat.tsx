@@ -114,6 +114,26 @@ const CodeBlock = ({ children, ...rest }: ComponentPropsWithoutRef<'pre'>) => {
 // override without going through the whole Chat.
 export const markdownComponents = { pre: CodeBlock }
 
+const ReuseGlyph = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+    <path
+      d="M4.3 2 1.5 4.8l2.8 2.8"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M1.5 4.8h5.2a3.3 3.3 0 0 1 0 6.6H4.4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
 const Typing = () => (
   <div className="typing" aria-label="Typing">
     <span className="typing-dot" />
@@ -127,9 +147,14 @@ interface ChatProps {
   busy: boolean
   onPermission?: (toolUseId: string, decision: PermissionDecision) => void
   onOpenSubagent?: (parentToolUseId: string, agentType: string) => void
+  // #123 — put a past user message back in the composer. OPTIONAL, and the
+  // control renders only when it is supplied: `SubagentDrawer` renders this
+  // same component against an agent's transcript, where a refill would put
+  // another agent's words into the conversation's composer.
+  onReuse?: (text: string) => void
 }
 
-const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
+const Chat = ({ messages, busy, onPermission, onOpenSubagent, onReuse }: ChatProps) => {
   const scrollerRef = useRef<HTMLElement | null>(null)
   const nearBottomRef = useRef(true)
 
@@ -172,6 +197,32 @@ const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
             const markers = m.attachmentMarkers ?? []
             return (
               <div key={m.id} className="msg msg-user">
+                {/* #123 — refill, never edit. The message is left exactly as it
+                    is, in the pane and on disk: the pane is a projection of the
+                    CLI's transcript (`setMessages(transcript.map(...))` on adopt
+                    and on every tail reload), so a renderer-side edit would be
+                    erased by the next reload anyway.
+
+                    TEXT ONLY, decided: a reopened session replays attachment
+                    MARKERS and not bytes, so the messages most worth resending
+                    are exactly the ones whose attachments cannot be rebuilt.
+                    Restoring them for a live message only would make the
+                    control depend on state the user cannot see.
+
+                    It sits BESIDE the bubble rather than inside it —
+                    tests/multiline-composer.test.tsx reads `.bubble`'s
+                    textContent verbatim. */}
+                {onReuse ? (
+                  <button
+                    type="button"
+                    className="bubble-reuse"
+                    aria-label="Reuse this message"
+                    title="Reuse this message"
+                    onClick={() => onReuse(m.text)}
+                  >
+                    <ReuseGlyph />
+                  </button>
+                ) : null}
                 <div className="bubble">
                   {images.length ? (
                     <div className="bubble-thumbs">
