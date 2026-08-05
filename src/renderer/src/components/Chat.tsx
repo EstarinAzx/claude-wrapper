@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, type ComponentPropsWithoutRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -8,6 +8,111 @@ import { isNearBottom } from '../autoscroll'
 import ToolCard from './ToolCard'
 
 const Avatar = () => <span className="avatar" aria-hidden="true" />
+
+const COPIED_MS = 1400
+
+const CopyGlyph = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+    <rect
+      x="4.3"
+      y="1.2"
+      width="6.5"
+      height="6.5"
+      rx="1.4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+    />
+    <path
+      d="M7.7 10.8H2.6a1.4 1.4 0 0 1-1.4-1.4V4.3"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+const CheckGlyph = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+    <path
+      d="M2.4 6.3l2.4 2.5 4.8-5.4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+// #122 — the copy control. `markdown.css` cannot deliver this on its own:
+// react-markdown owns the markup, so a stylesheet there can only ever author
+// descendant rules and there is no element to hang a button on. The `pre`
+// renderer is replaced instead — the first `components` override in the repo.
+//
+// THE CLIPBOARD ROUTE IS MEASURED, NOT ASSUMED. Production loads `file://`
+// (`win.loadFile`), dev loads http://localhost, and no `setPermissionRequestHandler`
+// is registered anywhere in main, so a button written against
+// `navigator.clipboard` can pass jsdom, pass `npm run dev`, and be inert in the
+// shipped app. `scripts/spike-122-clipboard.mjs` drove the BUILT app and read
+// the result back through main's own `clipboard` module: `file://` reports
+// `isSecureContext: true`, and the write landed on the OS clipboard under a real
+// click. No IPC bridge and no `execCommand` fallback is needed — the second is
+// also effective, and is the fallback if this ever stops being.
+const CodeBlock = ({ children, ...rest }: ComponentPropsWithoutRef<'pre'>) => {
+  const preRef = useRef<HTMLPreElement>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    },
+    []
+  )
+
+  const copy = (): void => {
+    // The payload is the RENDERED DOM's own text. Model output is hostile input
+    // (the sandbox decision), and rehype-highlight has already wrapped the code
+    // in token spans by this point; `textContent` flattens those back to exactly
+    // the characters the model wrote, with nothing interpreted and no innerHTML
+    // anywhere on the path. `?.` short-circuits the whole chain, so a context
+    // without a clipboard is a no-op rather than a throw.
+    const text = preRef.current?.textContent ?? ''
+    void navigator.clipboard
+      ?.writeText(text)
+      .then(() => {
+        setCopied(true)
+        if (timerRef.current) clearTimeout(timerRef.current)
+        timerRef.current = setTimeout(() => setCopied(false), COPIED_MS)
+      })
+      // A refused write must not leave the control claiming success: it stays
+      // at rest, which is the honest report.
+      .catch(() => {})
+  }
+
+  return (
+    <div className="code-block">
+      <button
+        type="button"
+        className={copied ? 'code-copy code-copy--copied' : 'code-copy'}
+        aria-label={copied ? 'Copied' : 'Copy code'}
+        onClick={copy}
+      >
+        {copied ? <CheckGlyph /> : <CopyGlyph />}
+      </button>
+      <pre ref={preRef} {...rest}>
+        {children}
+      </pre>
+    </div>
+  )
+}
+
+// Exported so both render paths below share ONE map — a `components` map
+// applied to only one of them is the easy miss — and so the tests can drive the
+// override without going through the whole Chat.
+export const markdownComponents = { pre: CodeBlock }
 
 const Typing = () => (
   <div className="typing" aria-label="Typing">
@@ -131,6 +236,7 @@ const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeHighlight]}
+                    components={markdownComponents}
                   >
                     {m.text}
                   </ReactMarkdown>
@@ -145,6 +251,7 @@ const Chat = ({ messages, busy, onPermission, onOpenSubagent }: ChatProps) => {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeHighlight]}
+                  components={markdownComponents}
                 >
                   {m.text}
                 </ReactMarkdown>

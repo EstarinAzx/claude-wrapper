@@ -1,0 +1,75 @@
+{
+  "env": {
+    "protocol": "file:",
+    "href": "file:///D:/.claude/claude%20projects/playground/4/out/render",
+    "isSecureContext": true,
+    "hasClipboard": "object",
+    "hasWriteText": "function",
+    "hasExecCommand": "function"
+  },
+  "precondition": {
+    "wrote": "spike122-precondition-1785923530149",
+    "readBack": "spike122-precondition-1785923530149",
+    "ok": true
+  },
+  "trials": [
+    {
+      "route": "navigator.clipboard",
+      "gesture": "click",
+      "nonce": "spike122-navigator.clipboard-click-q9ho5a9k",
+      "stompHeldBefore": true,
+      "gestureError": null,
+      "handlerRan": true,
+      "rendererReported": {
+        "ok": true,
+        "error": null
+      },
+      "clipboardAfterMatchesNonce": true,
+      "clipboardAfterSample": "<nonce>",
+      "effective": true,
+      "scored": true
+    },
+    {
+      "route": "execCommand",
+      "gesture": "click",
+      "nonce": "spike122-execCommand-click-0loptf21",
+      "stompHeldBefore": true,
+      "gestureError": null,
+      "handlerRan": true,
+      "rendererReported": {
+        "ok": true,
+        "error": null
+      },
+      "clipboardAfterMatchesNonce": true,
+      "clipboardAfterSample": "<nonce>",
+      "effective": true,
+      "scored": true
+    },
+    {
+      "route": "navigator.clipboard",
+      "gesture": "synthetic",
+      "nonce": "spike122-navigator.clipboard-synthetic-iiust554",
+      "stompHeldBefore": true,
+      "gestureError": null,
+      "handlerRan": true,
+      "rendererReported": {
+        "ok": true,
+        "error": null
+      },
+      "clipboardAfterMatchesNonce": true,
+      "clipboardAfterSample": "<nonce>",
+      "effective": true,
+      "scored": true
+    }
+  ],
+  "verdict": {
+    "scored": true,
+    "unscoredTrials": [],
+    "origin": "file:",
+    "route1_navigator_clipboard_under_real_click": true,
+    "route3_execCommand_under_real_click": true,
+    "route1_without_user_gesture": true,
+    "route2_ipc_bridge_available": true,
+    "pick": "navigator.clipboard.writeText — effective in the built app under a real click; no new surface needed"
+  }
+}

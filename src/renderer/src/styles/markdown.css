@@ -12,6 +12,60 @@
   margin: 8px 0 12px;
 }
 
+/* #122 — the copy control on a fenced block. The BUTTON itself cannot come from
+   here at all: react-markdown owns the markup, so this file only dresses an
+   element a `components` override in Chat.tsx supplies.
+
+   The wrapper carries the block margin and the `pre` inside it carries none.
+   Leave the margin on the `pre` and it collapses through the wrapper, which
+   puts the button in the gap above the code instead of over it. The button
+   cannot live inside the `pre` either — that element scrolls, so on a wide
+   block the control would scroll away from the corner it is anchored to. */
+.assistant-body .code-block {
+  position: relative;
+  margin: 8px 0 12px;
+}
+
+.assistant-body .code-block > pre {
+  margin: 0;
+}
+
+.assistant-body .code-copy {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: color 150ms var(--ease), background 150ms var(--ease);
+}
+
+.assistant-body .code-copy:hover {
+  background: var(--tint-2);
+  color: var(--text-muted);
+}
+
+.assistant-body .code-copy--copied {
+  color: var(--mint);
+}
+
+/* #93 — hairline alone, never the shared focus wash. This control paints a
+   `var(--tint-2)` fill on hover, and on a 26px glyph button a wash is
+   indistinguishable from that: the ring would read as "hovered" rather than
+   "focused". */
+.assistant-body .code-copy:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
 .assistant-body code {
   font-family: var(--mono);
   font-size: var(--fs-ui);
