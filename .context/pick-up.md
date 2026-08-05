@@ -9,7 +9,7 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## The queue is FULL — seven unblocked tickets
+## Next: #122 — six unblocked tickets left
 
 Confirm rather than trust this line — it has been wrong before:
 
@@ -17,32 +17,36 @@ Confirm rather than trust this line — it has been wrong before:
 gh issue list --state open --label ready-for-agent
 ```
 
-**#121–#127 are unblocked and independent.** #128 (the 1.0.0 bump) waits on all
-seven and is last by the owner's explicit instruction. Spec **#120** is the
+**#122–#127 are unblocked and independent.** #128 (the 1.0.0 bump) waits on all
+of them and is last by the owner's explicit instruction. Spec **#120** is the
 container and carries the full reasoning.
 
 **The owner is away and banned the `ready-for-human` label for this batch.** Do
-not apply it. A call you cannot make goes in `.claude/vibe.md` under
+not apply it. Use `needs-info` + a comment + a `PushNotification`, and let the
+chain continue. A call you cannot make goes in `.claude/vibe.md` under
 `## Needs you`, not onto a label.
 
-## Filed 2026-08-05 by an autonomous `/preset vibe init` run
+## Landed last leg
 
-| # | what |
-|---|---|
-| **120** | spec — ten UI asks, with 25 grep-verified warrants and one zero-turn measurement |
-| 121 | markdown tables render (CSS only) |
-| 122 | code-block copy button (clipboard route **measured**, not chosen) |
-| 123 | reuse a past user message in the composer (refill, never mutate) |
-| 124 | five-position effort control (CLI-sourced, rebuilds the engine) |
-| 125 | subagent viewer takes the window material (+ pin, ban line, ADR) |
-| 126 | subagent map visual pass (inside the pinned encoding) |
-| 127 | spike — three routes nobody has called |
-| 128 | version 1.0.0 — blocked by #121–#127 |
+**#121 — markdown tables render.** `ef6ef22` on `main`, squash-merged, branch
+deleted, ticket closed. 41 lines of CSS in `markdown.css` and one new test file.
+No plugin, no dependency, no `Chat.tsx` change.
 
-No `src/` changed this session. `main` is still `e0b8855` plus a planning commit.
+## Baseline — READ IT, do not trust it
+
+`main` = `ef6ef22`. typecheck clean, build clean, **1130 tests / 75 files**
+(was `1122 / 74` before #121). Every remaining slice adds tests, so read the
+current number off `main` at the start of your leg.
 
 ## Landmines this batch will hit
 
+- **#121's measurement binds #122.** The markdown parser writes column alignment
+  as an **inline `style` on every cell**, and emits **no wrapper element**. So
+  nothing anywhere may mark `text-align` important, and the table scrolls via
+  `display: block` on itself. **#122 adds a `components` override to wrap
+  `<pre>` — do NOT extend that to `<table>`.** The block route is already
+  measured working in a real Chromium; a wrapper would add a second scroll
+  container for no gain.
 - **`/rewind` and `/bg` are NOT CLI commands here.** Measured: 121 advertised
   commands, neither present. `/bg` is one of three ways to OPEN the CLI's agent
   view — a terminal takeover — which is why it "doesn't work". Do not build a UI
@@ -60,8 +64,6 @@ No `src/` changed this session. `main` is still `e0b8855` plus a planning commit
   Both `navigator.clipboard` and an `ipcRenderer.invoke` bridge are open — the
   bridge does **not** need an ADR, because the sandbox ADR's trigger is preload
   needing **Node**, which an invoke bridge does not.
-- **Tables already parse.** `remark-gfm` is wired at `Chat.tsx:132` and `:146`.
-  The defect is that `markdown.css` has zero table rules. Do not add a plugin.
 - **Acrylic on the subagent pane REDS `gui-98` criterion 5**, which greps
   `subagent.css` for zero `backdrop-filter`. Replace that criterion with a
   **positive** pin — a deviation with no positive pin gets quietly conformed
@@ -74,36 +76,44 @@ No `src/` changed this session. `main` is still `e0b8855` plus a planning commit
 - **A renderer-side message edit cannot persist.** `setMessages(transcript.map(toChatMessage))`
   replaces the whole array from disk on adopt and on every live-tail reload.
 
-## Process landmines from this run
+## Stylesheet rules that bind more than one slice
 
-- **Measure before you ask an agent.** The single most valuable act of this
-  session was a zero-turn `supportedCommands()` probe that main ran itself. It
-  killed two asks and sized a third. Neither agent could have supplied it, and
-  both would have speculated if asked.
-- **A negative claim needs a negative-shaped warrant.** Pressure's best catch:
-  "`subagent:changed` is a leaf channel" proves that channel is outbound and
-  says nothing about whether any inbound route exists. That is #90 and #116's
-  error in both directions. It moved ask 7 from "impossible" to "unmeasured".
+- **Stylesheets are read as raw TEXT by four tests now** — `scrollbar.test.ts`,
+  `theme.test.ts`, `multiline-composer.test.tsx`, and #121's new
+  `markdown-tables.test.tsx`. No comment may contain a closing brace; no
+  scrollbar rule may be component-scoped; **and `base.css` warns that even
+  NAMING the scrollbar pseudo-element in a comment trips the scan.** `.bubble`
+  and `.message-input` stay ungrouped.
+- **The `@import` order in `styles.css` IS the cascade.** Add rules inside a
+  file; never reorder the imports.
+- **Focus rings are picked per control, not applied.** Anything that paints a
+  fill in any state takes the hairline alone.
+- **jsdom loads no CSS.** A raw-text pin proves a rule was written, never that
+  it works. #121's route for this: render the measured markup against the
+  **built** stylesheet in a real Electron window and read computed layout.
+
+## Process landmines from this batch
+
+- **Measure before you ask an agent.** The single most valuable act of the
+  planning session was a zero-turn `supportedCommands()` probe that main ran
+  itself. It killed two asks and sized a third.
+- **Probe by CALLING, never by grepping a bundle or reading a `.d.ts`** — a
+  declared wire type is not a callable route (#115); a callable route is not an
+  effective one (#117). #127 lives or dies on this.
+- **A negative claim needs a negative-shaped warrant.** "`subagent:changed` is a
+  leaf channel" proves that channel is outbound and says nothing about whether
+  any inbound route exists. That is #90 and #116's error in both directions.
 - **A warrant can be real and still not support its claim.** `"version": "0.1.0",`
-  proves a string exists, not that nothing reads it. The claim survived only
-  because it was then measured directly.
-- **The grep guard caught nothing again — 25 of 25 passed.** That is the good
-  outcome and not a reason to drop it.
-- **A flaky adversary must be swapped, not dropped.** The owner-named kimi-k3
-  died three times on gateway 502/503; the run continued on a different
-  cross-model Target and every decision records which adversary judged it.
+  proves a string exists, not that nothing reads it.
+- **Every control-protocol probe needs a bogus-subtype negative control.**
 
 ## Still-live landmines from earlier legs
 
 - **`canUseTool` is NOT a control surface** (#116) — deny with `disallowedTools`.
-- **Probe by CALLING, never by grepping a bundle or reading a `.d.ts`** — a
-  declared wire type is not a callable route (#115); a callable route is not an
-  effective one (#117).
-- **Every control-protocol probe needs a bogus-subtype negative control.**
 - **`setBackgroundMaterial` has NO runtime whitelist** — `src/shared/backdrop.ts`'s
   compare-never-coerce guard is the only one.
-- **`page.screenshot()` cannot show a DWM backdrop**; `--disable-gpu` flattens
-  acrylic. Pin the declaration as text, never the pixels.
+- **No GUI driver can see a DWM backdrop** — `page.screenshot()` cannot show it
+  and `--disable-gpu` flattens acrylic. Pin the declaration as text.
 - **An event handler in main must not be able to throw** — Electron turns it
   into a modal error dialog over the app.
 - **A green suite is evidence about the code only if the runner is sound** —
@@ -114,10 +124,11 @@ No `src/` changed this session. `main` is still `e0b8855` plus a planning commit
   on this Node (22.17). Use `fileURLToPath`, never `URL.pathname` — this repo's
   path contains a space.
 - **Node 22 refuses to spawn a `.cmd`** (`EINVAL`, CVE-2024-27980 mitigation).
+  Electron's own `electron.exe` under `node_modules/electron/dist/` is a real
+  exe and spawns fine — that is how #121 got a real render.
 - Never hardcode a model name. Never read `~/.claude/daemon/roster.json`.
 - Absence assertions need a surviving positive control and mutation evidence.
-- Test baseline on `main` was **1122/74** before this batch — read it from `main`.
-- Squash-merged ticket branches need `git branch -D`.
+- **Squash-merged ticket branches need `git branch -D`.**
 
 ## Do not decide these
 
@@ -127,11 +138,6 @@ only**, by the owner naming that surface. It stays undecided for every other
 pane. The other four are untouched: the Tailwind adopt-utilities half, the
 titlebar control count, the 12px line box for 11px muted descriptions, and the
 accent clause enumeration after #97.
-
-## Baseline
-
-`main` = `e0b8855` plus this session's planning commit. No ticket branch, no
-`src/` diff.
 
 ## Related
 

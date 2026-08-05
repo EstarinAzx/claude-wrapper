@@ -43,8 +43,8 @@ self-contained; read #120 only if you want the why.
 
 | # | slice | note |
 |---|---|---|
-| #121 | markdown tables render | CSS only; `remark-gfm` is already wired |
-| #122 | code-block copy button | the clipboard route is a **measurement**, not a pick |
+| ~~#121~~ | ~~markdown tables render~~ | **CLOSED** `ef6ef22` — leg 1 |
+| #122 | code-block copy button | the clipboard route is a **measurement**, not a pick. **Do not extend its `components` wrapper to `<table>`** — #121 measured the table scrolling via `display: block` on itself |
 | #123 | reuse a past user message | refill, never mutate the transcript |
 | #124 | five-position effort control | CLI-sourced levels; must rebuild the engine |
 | #125 | subagent viewer takes the window material | + positive pin + DESIGN.md + ADR |
@@ -70,8 +70,9 @@ above. In short: read `.context/pick-up.md` → pick ONE ticket → branch
 `/preset wrap-up` with `.context/` committed on **main only**.
 
 **Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`. The
-baseline before this batch was **1122 tests / 74 files** — read the current
-number off `main` rather than trusting that, because every slice adds tests.
+baseline was **1122 / 74** before this batch and is **1130 tests / 75 files**
+after #121 — read the current number off `main` rather than trusting either,
+because every slice adds tests.
 
 ## Landmines that bind more than one slice
 
@@ -86,9 +87,15 @@ number off `main` rather than trusting that, because every slice adds tests.
   registered. Verify with a `run-desktop` driver.
 - **No GUI driver can see a DWM backdrop** — `--disable-gpu` flattens acrylic
   and `page.screenshot()` cannot show it. #125 pins the declaration as text.
-- **Stylesheets are read as raw TEXT by three tests.** No comment may contain a
-  closing brace; no scrollbar rule may be component-scoped; `.bubble` and
-  `.message-input` stay ungrouped. Binds #121, #122, #123.
+- **Stylesheets are read as raw TEXT by four tests** — #121 added
+  `markdown-tables.test.tsx` to the three. No comment may contain a closing
+  brace; no scrollbar rule may be component-scoped; **and `base.css` warns that
+  even NAMING the scrollbar pseudo-element in a comment trips the scan**;
+  `.bubble` and `.message-input` stay ungrouped. Binds #122, #123.
+- **jsdom loads no CSS**, so a raw-text pin proves a rule was written, never
+  that it works. #121's route: render the measured markup against the **built**
+  stylesheet in a real Electron window (`node_modules/electron/dist/electron.exe`
+  is a real exe and spawns fine, unlike a `.cmd`) and read computed layout.
 - **The `@import` order in `styles.css` IS the cascade.** Add rules inside a
   file; never reorder the imports.
 - **Focus rings are picked per control, not applied.** Anything that paints a
