@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import type { BackendInfo, BackendMode } from '../../shared/backend-types'
 import type { PermissionMode } from '../../shared/engine-types'
 import type { DeleteStatus, SwitchStatus } from '../../shared/session-types'
+import type { ModelOption } from '../../shared/model-types'
+import type { EffortLevel } from '../../shared/effort'
 import Titlebar from './components/Titlebar'
 import Sidebar from './components/Sidebar'
 import Chat from './components/Chat'
@@ -35,6 +37,13 @@ const App = () => {
   const [backend, setBackend] = useState<BackendInfo | null>(null)
   const [permission, setPermission] = useState<PermissionMode | null>(null)
   const [model, setModel] = useState<string | null>(null)
+  // #124 — the pickable rows and the effort pick, both from `model:list`. The
+  // rows are lifted here rather than kept inside the model pill because the
+  // effort control needs the SAME rows: which levels it may offer is read off
+  // the row covering the current model. Two components fetching independently
+  // would double the cost of a read that can spawn a CLI process (#112).
+  const [models, setModels] = useState<ModelOption[]>([])
+  const [effort, setEffort] = useState<EffortLevel | null>(null)
   const [openSubagent, setOpenSubagent] = useState<{
     parentToolUseId: string
     agentType: string
@@ -102,12 +111,35 @@ const App = () => {
     return window.api.onPermissionChanged(setPermission)
   }, [])
 
-  // Read the current model once (for the pill label), then track picks the main
-  // broadcasts. The pickable list itself is fetched on demand when the pill opens.
+  // Read the current model, the pickable rows and the effort pick once, then
+  // track the picks main broadcasts. The rows are re-read on demand when the
+  // pill opens (below) — the read is live by contract, never cached, so this
+  // mount read is a starting snapshot rather than the last word.
   useEffect(() => {
-    void window.api.listModels().then((info) => setModel(info.current))
-    return window.api.onModelChanged(setModel)
+    void window.api.listModels().then((info) => {
+      setModel(info.current)
+      setModels(info.models)
+      setEffort(info.effort ?? null)
+    })
+    const offModel = window.api.onModelChanged(setModel)
+    const offEffort = window.api.onEffortChanged(setEffort)
+    return () => {
+      offModel()
+      offEffort()
+    }
   }, [])
+
+  // Re-read the rows when the pill opens. Lifted out of the pill for #124 so
+  // the effort control sees the same refresh, and kept on-demand rather than
+  // subscribed: a model pick discards the engine, and this read rebuilds it
+  // lazily (#112), so firing it more often than a user actually opens the menu
+  // would put a ~1.5s CLI spawn back on every click.
+  const refreshModels = (): void => {
+    void window.api.listModels().then((info) => {
+      setModels(info.models)
+      setEffort(info.effort ?? null)
+    })
+  }
 
   const pickFolder = async (): Promise<void> => {
     const folder = await window.api.pickFolder()
@@ -218,6 +250,16 @@ const App = () => {
   const pickModel = (next: string | null): void => {
     setModel(next)
     window.api.setModel(next)
+  }
+
+  // Pick an effort level (#124): same transaction as the model pick — main
+  // rebuilds the engine, resumes the conversation and broadcasts back. The
+  // optimistic local set matters more here than for the model, because the
+  // control's thumb IS the value: waiting for the broadcast would make the
+  // control spring back under the pointer.
+  const pickEffort = (next: EffortLevel | null): void => {
+    setEffort(next)
+    window.api.setEffort(next)
   }
 
   return (
@@ -346,12 +388,16 @@ const App = () => {
               key={cwd}
               busy={busy}
               model={model}
+              models={models}
+              effort={effort}
               lastTurn={lastTurn}
               engineDead={engineDead}
               pendingInsert={pendingInsert}
               onSend={send}
               onStop={stop}
               onPickModel={pickModel}
+              onPickEffort={pickEffort}
+              onRefreshModels={refreshModels}
             />
           </div>
           {openDock === 'agents' ? (

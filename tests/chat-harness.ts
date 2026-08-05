@@ -4,6 +4,7 @@ import { createPermissionBroker } from '../src/main/permission-broker'
 import type { EngineEvent, PermissionDecision, PermissionMode } from '../src/shared/engine-types'
 import type { BackendInfo } from '../src/shared/backend-types'
 import type { ModelInfo, ModelOption } from '../src/shared/model-types'
+import type { EffortLevel } from '../src/shared/effort'
 import type { SendPayload } from '../src/shared/attachment-types'
 import type { Candidate } from '../src/shared/attachment-policy'
 import type { SlashCommandInfo } from '../src/shared/command-types'
@@ -48,6 +49,7 @@ export const fakeChatApi = (folder = FOLDER) => {
   const backendListeners = new Set<(info: BackendInfo) => void>()
   const permListeners = new Set<(mode: PermissionMode) => void>()
   const modelListeners = new Set<(model: string | null) => void>()
+  const effortListeners = new Set<(effort: EffortLevel | null) => void>()
   const sessionChangedListeners = new Set<(id: string) => void>()
   const terminalListeners = new Set<() => void>()
   const taskListeners = new Set<(t: BackgroundTask[]) => void>()
@@ -140,11 +142,18 @@ export const fakeChatApi = (folder = FOLDER) => {
     listWorkspaceFiles: vi.fn<() => Promise<string[]>>().mockResolvedValue([]),
     listModels: vi
       .fn<() => Promise<ModelInfo>>()
-      .mockResolvedValue({ models: CLI_MODELS, current: null }),
+      .mockResolvedValue({ models: CLI_MODELS, current: null, effort: null }),
     setModel: vi.fn(),
     onModelChanged: (cb: (model: string | null) => void): (() => void) => {
       modelListeners.add(cb)
       return () => modelListeners.delete(cb)
+    },
+    // #124 — the effort pick. No `listEffort` to stub: the value rides
+    // listModels above, exactly as it does over the real bridge.
+    setEffort: vi.fn(),
+    onEffortChanged: (cb: (effort: EffortLevel | null) => void): (() => void) => {
+      effortListeners.add(cb)
+      return () => effortListeners.delete(cb)
     },
     // Live-tail (#57): a signal in, a signal out. Never transcript bytes — the
     // transcript still travels over loadTranscript.
@@ -172,6 +181,11 @@ export const fakeChatApi = (folder = FOLDER) => {
   const emitModel = (model: string | null): void => {
     act(() => {
       modelListeners.forEach((l) => l(model))
+    })
+  }
+  const emitEffort = (effort: EffortLevel | null): void => {
+    act(() => {
+      effortListeners.forEach((l) => l(effort))
     })
   }
   const emitSessionChanged = (id: string): void => {
@@ -204,6 +218,7 @@ export const fakeChatApi = (folder = FOLDER) => {
     emitBackend,
     emitPermission,
     emitModel,
+    emitEffort,
     emitSessionChanged,
     emitTerminal,
     emitBackgroundTasks,

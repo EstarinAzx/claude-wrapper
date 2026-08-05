@@ -18,6 +18,7 @@ import {
   setReportedModel,
   getDisplayModel
 } from './model-mode'
+import { getEffortMode, toEffortOptions, applyEffortPick } from './effort-mode'
 import { resolveHostCli, toCliOptions } from './cli-path'
 import { clampZoom } from '../shared/zoom'
 import { normalizeBackdrop } from '../shared/backdrop'
@@ -127,6 +128,10 @@ const makeEngine = (): ReturnType<typeof createEngine> =>
       getEnv: () => getSpawnEnv(process.env),
       getPermissionOptions: () => toPermissionOptions(getPermissionMode()),
       getModelOptions: () => toModelOptions(getModelMode()),
+      // #124 — options.effort for the active pick. Same shape as the model
+      // getter above and read at the same moment, because both bind at query
+      // construction.
+      getEffortOptions: () => toEffortOptions(getEffortMode()),
       // #52: the CLI is the authority on what it is running. `/model` changes it
       // without the pill being touched, so the pill has to follow the CLI rather
       // than only its own last click. Display only — this never becomes
@@ -710,7 +715,14 @@ ipcMain.handle('model:list', async (event) => {
   // Rebuilt lazily when a pill click discarded the handle (#112) — the same
   // treatment as commands:list, and for the same reason: `current` comes from
   // model-mode.ts, so an empty list here was invisible behind a correct pill.
-  return { models: await ensureListEngine(listEnginePorts).listModels(), current: getDisplayModel() }
+  return {
+    models: await ensureListEngine(listEnginePorts).listModels(),
+    current: getDisplayModel(),
+    // #124 — the effort pick rides this read rather than a second channel. The
+    // two are one question: which levels the control may offer comes off the
+    // model rows above, so a consumer holding one always wants the other.
+    effort: getEffortMode()
+  }
 })
 
 // Guarded write: pick the model the next turn runs against (a model id, or null
@@ -729,6 +741,28 @@ ipcMain.on('model:set', (event, model: unknown) => {
   discardEngine(engine?.sessionId() ?? pendingResume)
   const win = BrowserWindow.fromWebContents(event.sender)
   win?.webContents.send('model:changed', getDisplayModel())
+})
+
+// Guarded write: pick the reasoning effort the next turn runs at (one of the
+// SDK's five levels, or null for the CLI default). Like the model pill it
+// rebuilds the engine and RESUMES the current session, because `effort` rides
+// `Options` (sdk.d.ts:1664) and Options bind at query construction — storing the
+// pick alone would look like it worked and change nothing. The control is
+// disabled while a turn streams (renderer), so this never lands mid-stream.
+//
+// The transaction itself lives in `effort-mode.ts` behind ports, not here: what
+// has to be pinned is that a hostile payload never reaches the engine and that
+// the resume target is read BEFORE the discard, and neither is testable in this
+// file (vitest cannot import it). Same reasoning as `list-engine.ts`.
+ipcMain.on('effort:set', (event, effort: unknown) => {
+  if (!isTrustedIpc(event)) return
+  const win = BrowserWindow.fromWebContents(event.sender)
+  applyEffortPick(effort, {
+    sessionId: () => engine?.sessionId() ?? null,
+    pendingResume: () => pendingResume,
+    discardEngine,
+    broadcast: (level) => win?.webContents.send('effort:changed', level)
+  })
 })
 
 // Guarded write: the renderer owns the zoom-level number (persisted in its own

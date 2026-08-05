@@ -245,9 +245,106 @@
   line-height: 1.4;
 }
 
+/* ── effort control (#124) ──
+
+   The footer is space-between with the disclaimer left and the model pill
+   right; `margin-left: auto` packs this against the pill rather than stranding
+   it mid-row, without touching the two rules that were already there. Applied
+   to the unavailable span too, so the row does not reflow when a model that
+   takes no effort level swaps the control out. */
+.effort-control,
+.effort-none {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+}
+
+.effort-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The level word, and the widest of them ("Default") sets the floor: without it
+   the slider shifts sideways as the label changes length, which reads as the
+   control drifting under the pointer while it is being dragged. */
+.effort-value {
+  min-width: 46px;
+  color: var(--text-muted);
+}
+
+/* The current model takes no effort level. Dimmer than the live control and
+   deliberately still present — see InputBar.tsx. */
+.effort-none {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.effort-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 68px;
+  /* Taller than the 2px track on purpose: the pointer target is the element,
+     and a 2px-high one is unhittable. */
+  height: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.effort-range::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 1px;
+  background: var(--tint-6);
+}
+
+/* The offset is half the thumb minus half the track — anything else parks the
+   thumb above or below the line it is supposed to ride. */
+.effort-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background 150ms var(--ease);
+}
+
+.effort-range:not(:disabled):hover::-webkit-slider-thumb {
+  background: var(--text);
+}
+
+/* #93 — hairline alone. The track is an authored fill, so the shared focus wash
+   would paint over the one part of this control that carries its value. The
+   thumb brightens with it because a 1px ring at 18% alpha is a weak cue for a
+   control whose whole job is to show which of five positions is live. */
+.effort-range:focus-visible {
+  outline: none;
+  border-radius: var(--r-mark);
+  box-shadow: inset 0 0 0 1px var(--tint-6);
+}
+
+.effort-range:focus-visible::-webkit-slider-thumb {
+  background: var(--text);
+}
+
+/* An effort pick the CURRENT model does not offer. The thumb is parked at the
+   low end because a range has nowhere else to put it, so it is dimmed to say
+   it is not standing for the value — the readout beside it still shows what
+   will actually be sent. */
+.effort-control--offscale .effort-range::-webkit-slider-thumb {
+  background: var(--text-faint);
+}
+
+.effort-control--offscale .effort-value {
+  font-style: italic;
+}
+
 .send-btn:disabled,
 .message-input:disabled,
-.attach-btn:disabled {
+.attach-btn:disabled,
+.effort-range:disabled {
   opacity: 0.55;
   cursor: default;
 }

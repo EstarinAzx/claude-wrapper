@@ -8,6 +8,7 @@ import type {
 import type { SendPayload } from '../shared/attachment-types'
 import type { SlashCommandInfo } from '../shared/command-types'
 import type { ModelOption } from '../shared/model-types'
+import { orderEffortLevels } from '../shared/effort'
 import { parseBackgroundTasks, type BackgroundTask } from '../shared/background-tasks'
 
 export type SdkMessage =
@@ -247,6 +248,12 @@ export type EnginePorts = {
   // default). Injected like getPermissionOptions — the engine stays decoupled
   // from the model-mode store.
   getModelOptions?: () => Record<string, unknown>
+  // Extra query options for the active reasoning effort (options.effort, or {}
+  // for the CLI default) (#124). Injected like getModelOptions, and it rides
+  // the SAME object — `effort` is on `Options` (sdk.d.ts:1664) beside `model`
+  // and `resume`, so it binds at query CONSTRUCTION and a pick that does not
+  // rebuild the engine changes nothing.
+  getEffortOptions?: () => Record<string, unknown>
   // What model the CLI says it is running (#52). Injected like the getters
   // above, and deliberately NOT an EngineEvent: emit() only reaches
   // activeOnEvent, which is null outside a turn, and the `init` that carries
@@ -299,6 +306,7 @@ export const createEngine = (
     getEnv = () => process.env,
     getPermissionOptions = () => ({}),
     getModelOptions = () => ({}),
+    getEffortOptions = () => ({}),
     onModelReport = () => {},
     getCliOptions = () => ({}),
     onTerminal = () => {},
@@ -713,6 +721,8 @@ export const createEngine = (
       ...getPermissionOptions(),
       // options.model for the active model pick (absent → CLI default).
       ...getModelOptions(),
+      // options.effort for the active effort pick (absent → CLI default).
+      ...getEffortOptions(),
       // Which CLI binary to spawn (absent → the SDK's bundled one).
       ...getCliOptions()
     }
@@ -860,6 +870,19 @@ export const createEngine = (
       // a resolved id, not the row's value.
       if (typeof row.resolvedModel === 'string' && row.resolvedModel.length > 0) {
         option.resolvedModel = row.resolvedModel
+      }
+      // #124 — the effort scale is the CLI's per-model answer, so it travels on
+      // the row it belongs to. Both fields are carried ONLY when the CLI
+      // actually said something: an absent field means "did not say", which
+      // `effortLevelsFor` reads as the full scale, while a coerced `false` or
+      // `[]` would read as "this model supports nothing" and silently kill the
+      // control. `orderEffortLevels` drops anything off the SDK's own union
+      // rather than trusting the wire.
+      if (typeof row.supportsEffort === 'boolean') option.supportsEffort = row.supportsEffort
+      if (Array.isArray(row.supportedEffortLevels)) {
+        option.supportedEffortLevels = orderEffortLevels(
+          row.supportedEffortLevels.filter((l): l is string => typeof l === 'string')
+        )
       }
       return [option]
     })

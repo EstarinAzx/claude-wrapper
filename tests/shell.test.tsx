@@ -31,6 +31,8 @@ beforeEach(() => {
     listModels: vi.fn().mockResolvedValue({ models: [], current: null }),
     setModel: vi.fn(),
     onModelChanged: vi.fn().mockReturnValue(() => {}),
+    setEffort: vi.fn(),
+    onEffortChanged: vi.fn().mockReturnValue(() => {}),
     watchSession: vi.fn(),
     onSessionChanged: vi.fn().mockReturnValue(() => {}),
     setZoom: vi.fn(),

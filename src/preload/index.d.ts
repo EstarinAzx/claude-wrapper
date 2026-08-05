@@ -11,6 +11,7 @@ import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { Backdrop } from '../shared/backdrop'
 import type { Bounds } from '../shared/window-bounds'
 import type { ModelInfo } from '../shared/model-types'
+import type { EffortLevel } from '../shared/effort'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { BackgroundTask } from '../shared/background-tasks'
 import type { BackgroundSession } from '../shared/background-session-types'
@@ -55,6 +56,9 @@ export interface WrapperApi {
   listModels: () => Promise<ModelInfo>
   setModel: (model: string | null) => void
   onModelChanged: (cb: (model: string | null) => void) => () => void
+  // #124 — no `listEffort`; the current value rides listModels above.
+  setEffort: (effort: EffortLevel | null) => void
+  onEffortChanged: (cb: (effort: EffortLevel | null) => void) => () => void
   watchSession: (id: string | null) => void
   onSessionChanged: (cb: (id: string) => void) => () => void
   setZoom: (level: number) => void

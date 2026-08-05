@@ -12,6 +12,7 @@ import type { BackendInfo, BackendMode } from '../shared/backend-types'
 import type { Backdrop } from '../shared/backdrop'
 import type { Bounds } from '../shared/window-bounds'
 import type { ModelInfo } from '../shared/model-types'
+import type { EffortLevel } from '../shared/effort'
 import type { SlashCommandInfo } from '../shared/command-types'
 import type { SubagentInfo } from '../shared/subagent-types'
 import type { BackgroundTask } from '../shared/background-tasks'
@@ -90,6 +91,18 @@ const api = {
     ipcRenderer.on('model:changed', listener)
     return () => {
       ipcRenderer.removeListener('model:changed', listener)
+    }
+  },
+  // #124 — the effort pick. No `listEffort`: the current value rides
+  // `listModels` above, because which levels the control may offer is read off
+  // the model rows in that same payload.
+  setEffort: (effort: EffortLevel | null): void => ipcRenderer.send('effort:set', effort),
+  onEffortChanged: (cb: (effort: EffortLevel | null) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, effort: EffortLevel | null): void =>
+      cb(effort)
+    ipcRenderer.on('effort:changed', listener)
+    return () => {
+      ipcRenderer.removeListener('effort:changed', listener)
     }
   },
   // Live-tail (#57): a signal out, a signal in. `null` stops watching. The

@@ -1580,6 +1580,72 @@ describe('engine model options', () => {
   })
 })
 
+// #124. THE failure this ticket exists to prevent: `effort` rides `Options`
+// (sdk.d.ts:1664), so a setter that only stores the value appears to work and
+// changes nothing. These pin the far end of that path — the value actually
+// arriving in the object handed to the SDK.
+describe('engine effort options (#124)', () => {
+  test('spreads injected effort options into query options', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      getEffortOptions: () => ({ effort: 'xhigh' })
+    })
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options).toMatchObject({ effort: 'xhigh' })
+  })
+
+  test('no effort options injected → options carry no effort (CLI default)', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options).not.toHaveProperty('effort')
+  })
+
+  // Both ride the SAME object, and a spread that clobbered the other would be
+  // invisible in either test alone.
+  test('effort and model reach the SDK together', async () => {
+    const { fn, calls, push } = streamingStub()
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      getModelOptions: () => ({ model: 'opus' }),
+      getEffortOptions: () => ({ effort: 'max' })
+    })
+    const turn = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await turn
+    expect(calls[0].options).toMatchObject({ model: 'opus', effort: 'max' })
+  })
+
+  // Options bind at query CONSTRUCTION (#73), which is exactly why a pick has to
+  // discard the engine. Pinned here so the reason the IPC path rebuilds is
+  // recorded as a measurement rather than a claim: the getter's later answer is
+  // NOT read on a second turn of the same query.
+  test('a later answer from the getter does not reach the live query', async () => {
+    const { fn, calls, push } = streamingStub()
+    let level = 'low'
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn, {
+      getEffortOptions: () => ({ effort: level })
+    })
+    const first = collect(engine, 'hi')
+    await Promise.resolve()
+    push(success)
+    await first
+    level = 'max'
+    const second = collect(engine, 'again')
+    await Promise.resolve()
+    push(success)
+    await second
+    expect(calls).toHaveLength(1)
+    expect(calls[0].options).toMatchObject({ effort: 'low' })
+  })
+})
+
 // #52 — the pill has to follow the CLI, so the engine has to notice what the
 // CLI says it is running. Delivered as an injected callback rather than an
 // EngineEvent because `init` lands during warmUp(), when there is no turn and
@@ -1986,6 +2052,44 @@ describe('engine warm-up + command list (#39)', () => {
     ])
     await engine.listModels()
     expect(supported.calls).toBe(2)
+  })
+
+  // #124 — the effort scale is the CLI's per-model answer, so it has to survive
+  // the trip across this mapper. What it must NOT do is invent one: an absent
+  // field stays absent, because `effortLevelsFor` reads "the CLI did not say"
+  // as the full scale while a coerced `false`/`[]` would kill the control.
+  test('listModels carries each row’s effort fields, and invents none', async () => {
+    const base = streamingStub()
+    const fn: QueryFn = (args) => {
+      const stream = base.fn(args) as AsyncIterable<SdkMessage> & {
+        supportedModels?: () => Promise<unknown>
+      }
+      stream.supportedModels = async () => [
+        {
+          value: 'opus',
+          displayName: 'Opus',
+          supportsEffort: true,
+          // Deliberately out of scale order, and carrying a value outside the
+          // SDK's union — the mapper orders and drops rather than trusting the
+          // wire, so no control position can exist that the IPC boundary would
+          // then refuse.
+          supportedEffortLevels: ['max', 'low', 'ultracode']
+        },
+        { value: 'legacy', displayName: 'Legacy', supportsEffort: false },
+        { value: 'quiet', displayName: 'Quiet' },
+        // Junk in both fields: neither may be coerced onto the row.
+        { value: 'junk', displayName: 'Junk', supportsEffort: 'yes', supportedEffortLevels: 'high' }
+      ]
+      return stream
+    }
+    const engine = createEngine(() => 'D:\\proj', autoAllow(), fn)
+    engine.warmUp()
+    expect(await engine.listModels()).toEqual([
+      { id: 'opus', label: 'Opus', supportsEffort: true, supportedEffortLevels: ['low', 'max'] },
+      { id: 'legacy', label: 'Legacy', supportsEffort: false },
+      { id: 'quiet', label: 'Quiet' },
+      { id: 'junk', label: 'Junk' }
+    ])
   })
 
   test('listModels drops rows with no usable value, and falls back to it for a label', async () => {

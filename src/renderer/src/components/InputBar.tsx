@@ -5,7 +5,8 @@ import {
   type Rejection
 } from '../../../shared/attachment-policy'
 import type { Attachment } from '../../../shared/attachment-types'
-import { modelLabel, type ModelOption } from '../../../shared/model-types'
+import { findModel, modelLabel, type ModelOption } from '../../../shared/model-types'
+import { effortLevelsFor, type EffortLevel } from '../../../shared/effort'
 import type { SlashCommandInfo } from '../../../shared/command-types'
 import { decideQueue, type LastTurn } from '../../../shared/queued-send'
 import { applyAtAccept, findAtQuery, matchFiles } from '../../../shared/file-refs'
@@ -13,6 +14,11 @@ import { applyAtAccept, findAtQuery, matchFiles } from '../../../shared/file-ref
 interface InputBarProps {
   busy: boolean
   model: string | null
+  // #124 — the CLI's pickable rows, owned by App because two controls read
+  // them: the pill lists them, and the effort control reads the effort scale
+  // off the row covering `model`.
+  models: ModelOption[]
+  effort: EffortLevel | null
   // How the last turn ended (#80), which is not the same question as whether one
   // is running. `busy` going false cannot drive the queued send: Stop, a failed
   // turn and a finished one all clear it, and only the last has earned a send.
@@ -30,23 +36,35 @@ interface InputBarProps {
   onSend: (text: string, attachments: Attachment[]) => void
   onStop: () => void
   onPickModel: (model: string | null) => void
+  onPickEffort: (effort: EffortLevel | null) => void
+  // Re-read the rows. Called when the pill opens, so the list stays live
+  // without this component owning the fetch.
+  onRefreshModels: () => void
 }
 
-// Bottom-right model pill. The list is fetched on demand each time the menu
+// Bottom-right model pill. The list is re-read on demand each time the menu
 // opens (mode-aware, live from wisp routing); disabled while a turn streams so a
 // pick never lands mid-stream. The label maps the current id back to its option
 // label when known, else shows the raw id, else "Default" (the CLI default).
+//
+// #124 moved the FETCH up to App without changing when it happens: the effort
+// control needs these same rows, and a second independent read would double a
+// call that can spawn a CLI process (#112). `options` arrives as a prop now;
+// `onOpen` is the same on-demand trigger it always was.
 const ModelPill = ({
   model,
+  options,
   busy,
-  onPick
+  onPick,
+  onOpen
 }: {
   model: string | null
+  options: ModelOption[]
   busy: boolean
   onPick: (model: string | null) => void
+  onOpen: () => void
 }) => {
   const [open, setOpen] = useState(false)
-  const [options, setOptions] = useState<ModelOption[]>([])
 
   const label = modelLabel(options, model)
 
@@ -54,7 +72,7 @@ const ModelPill = ({
     if (busy) return
     const next = !open
     setOpen(next)
-    if (next) void window.api.listModels().then((info) => setOptions(info.models))
+    if (next) onOpen()
   }
 
   const pick = (id: string | null): void => {
@@ -99,6 +117,98 @@ const ModelPill = ({
   )
 }
 
+// #124 — the reasoning-effort control, beside the model pill.
+//
+// A RANGE, not a menu, because effort is ORDINAL: `sdk.d.ts:551` documents the
+// five levels as an ascending scale, and a dropdown throws that ordering away.
+// Native `<input type="range">` rather than a hand-rolled segmented strip: arrow
+// keys, Home/End and the roving focus all come free and correct, which a div
+// with click handlers has to reimplement and usually gets wrong.
+//
+// THE POSITIONS ARE THE CLI'S, not this file's. `effortLevelsFor` reads them off
+// the row covering the current model, so a model advertising fewer levels gets
+// fewer positions and the one measured model reporting `supportsEffort: false`
+// gets no control at all. A literal five-item array here would be the #53 bug
+// again, one layer up.
+const EffortControl = ({
+  effort,
+  levels,
+  busy,
+  onPick
+}: {
+  effort: EffortLevel | null
+  levels: EffortLevel[]
+  busy: boolean
+  onPick: (effort: EffortLevel | null) => void
+}) => {
+  // The CLI says this model takes no effort level. Say so where the control
+  // would have been rather than hiding it: a control that silently vanishes
+  // reads as a bug, and the acceptance here is that the degradation is VISIBLE.
+  if (levels.length === 0) {
+    return (
+      <span className="effort-none" title="This model does not accept an effort level">
+        Effort n/a
+      </span>
+    )
+  }
+
+  // STOP 0 IS "Default" — the absence of a level, not a sixth level. It is the
+  // state the app opens in (no pick → no options.effort at all), and the model
+  // pill's menu carries the identical row for the identical reason.
+  //
+  // It is here because five bare stops made `low` UNREACHABLE by one gesture, a
+  // hole the suite caught rather than review: an unset pick has to park the
+  // thumb somewhere, that somewhere was position 0, and a range fires no change
+  // event when the thumb is already where the gesture put it. So clicking the
+  // leftmost position on a fresh launch did nothing at all. Shifting the scale
+  // by one gives the unset state a stop of its own and every level a stop the
+  // user can actually land on.
+  //
+  // This does NOT make it a six-level control: `levels` is still exactly what
+  // the CLI advertises, and `ultracode`/`auto` are still absent. Default is the
+  // null pick, which is a real IPC value.
+  const index = effort === null ? 0 : levels.indexOf(effort) + 1
+  // A pick that is not on THIS model's scale — indexOf gave -1, so the thumb has
+  // nowhere honest to go and parks on Default. The readout keeps naming the real
+  // pick and `--offscale` says the thumb is not standing for it.
+  const offscale = index === 0 && effort !== null
+  const shown = effort ?? 'Default'
+
+  return (
+    <div
+      className={`effort-control${offscale ? ' effort-control--offscale' : ''}`}
+      title={
+        offscale
+          ? `Effort: ${shown} — the current model does not offer this level`
+          : `Effort: ${shown}`
+      }
+    >
+      <span className="effort-name" aria-hidden="true">
+        Effort
+      </span>
+      <input
+        type="range"
+        className="effort-range"
+        min={0}
+        max={levels.length}
+        step={1}
+        value={offscale ? 0 : index}
+        disabled={busy}
+        aria-label="Effort"
+        // The number under the thumb means nothing to a screen reader; the level
+        // is the value. Carries the same truth as the readout, including
+        // "Default" for an unset pick.
+        aria-valuetext={shown}
+        onChange={(e) => {
+          const stop = Number(e.target.value)
+          onPick(stop === 0 ? null : (levels[stop - 1] ?? null))
+        }}
+      />
+      <span className="effort-value">{shown}</span>
+    </div>
+  )
+}
+
 interface TrayItem {
   id: string
   name: string
@@ -132,12 +242,16 @@ const COULD_NOT_READ = "Couldn't be read — it may have been moved, deleted or 
 const InputBar = ({
   busy,
   model,
+  models,
+  effort,
   lastTurn,
   engineDead = false,
   pendingInsert,
   onSend,
   onStop,
-  onPickModel
+  onPickModel,
+  onPickEffort,
+  onRefreshModels
 }: InputBarProps) => {
   const [value, setValue] = useState('')
   // A prompt committed while a turn is still running (#80). A FLAG on the draft,
@@ -670,7 +784,19 @@ const InputBar = ({
       </div>
       <div className="input-foot">
         <p className="footer-line">Claude can make mistakes. Verify important information.</p>
-        <ModelPill model={model} busy={busy} onPick={onPickModel} />
+        <EffortControl
+          effort={effort}
+          levels={effortLevelsFor(findModel(models, model))}
+          busy={busy}
+          onPick={onPickEffort}
+        />
+        <ModelPill
+          model={model}
+          options={models}
+          busy={busy}
+          onPick={onPickModel}
+          onOpen={onRefreshModels}
+        />
       </div>
     </footer>
   )
