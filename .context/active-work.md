@@ -7,32 +7,36 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-05 by Opus 5, relay chain 3 leg 1, owner away_
-_At commit: `ef6ef22` on `main`_
+_Last updated: 2026-08-05 by Opus 5, relay chain 3 leg 2, owner away_
+_At commit: `a359f9f` on `main`_
 
 ## Current focus
 
-**Spec #120's batch is draining. #121 landed; six unblocked slices remain.**
-Nothing is in flight — the leg that delivered #121 closed it and handed off.
+**Spec #120's batch is draining. #121 and #122 have landed; five unblocked
+slices remain.** Nothing is in flight — the leg that delivered #122 closed it
+and handed off.
 
 ## State
 
-- **In flight:** nothing. No ticket branch exists; `ticket/121-markdown-tables`
-  was squash-merged and deleted.
-- **Closed 2026-08-05:** **#121** — markdown tables render (`ef6ef22`).
-- **Queue:** **#122–#127 unblocked and independent**, takeable in any order.
+- **In flight:** nothing. No ticket branch exists;
+  `ticket/122-code-block-copy-button` was squash-merged and deleted.
+- **Closed 2026-08-05:** **#121** — markdown tables render (`ef6ef22`) ·
+  **#122** — code blocks carry a copy button (`a359f9f`).
+- **Queue:** **#123–#127 unblocked and independent**, takeable in any order.
   **#128 (the 1.0.0 bump) is last by the owner's own instruction** and waits on
-  the other six.
-- **Gate on `main`:** typecheck clean, build clean, **1130 tests / 75 files**.
-  This replaces the `1122 / 74` batch baseline. Every remaining slice adds
-  tests — **read the number off `main`, never off this file.**
+  the other five. It still wears `ready-for-agent`, so the frontier query
+  returns it — the ordering constraint lives in the ticket body and in
+  `.claude/relay-leg.md`, not in a label.
+- **Gate on `main`:** typecheck clean, build clean, **1145 tests / 76 files**.
+  This replaces the `1130 / 75` line. Every remaining slice adds tests —
+  **read the number off `main`, never off this file.**
 
 ## The slices
 
 | # | Slice | Shape | State |
 |---|---|---|---|
 | #121 | Markdown tables render | CSS only — GFM already emits `<table>` | **closed `ef6ef22`** |
-| #122 | Code blocks carry a copy button | `components` override + a **measured** clipboard route | open |
+| #122 | Code blocks carry a copy button | `components` override + a **measured** clipboard route | **closed `a359f9f`** |
 | #123 | Reuse a past user message in the composer | Refill, never mutate | open |
 | #124 | A five-position effort control | CLI-sourced levels, engine rebuild | open |
 | #125 | The subagent viewer takes the window material | CSS + pin + DESIGN.md + ADR | open |
@@ -42,14 +46,15 @@ Nothing is in flight — the leg that delivered #121 closed it and handed off.
 
 ## Pick up here
 
-Take any of #122–#127. `/preset ticket-loop` picks the lowest unblocked id, so
-**#122** by default.
+Take any of #123–#127. `/preset ticket-loop` picks the lowest unblocked id, so
+**#123** by default.
 
 ## Skills for next session
 
-- `run-desktop` — **#122 and #125 both need it.** #122's clipboard route cannot
-  be settled in jsdom or in dev; #125 must keep `gui-98` passing with its
-  criterion 5 replaced rather than deleted.
+- `run-desktop` — **#125 needs it**, and it must keep `gui-98` passing with
+  criterion 5 replaced rather than deleted. #122 has now left three drivers'
+  worth of hard-won mechanics behind in `gui-122.mjs`; read it before writing
+  a new one, particularly the screenshot and clipboard notes.
 
 ## Open questions
 
@@ -84,9 +89,28 @@ none blocking. Unchanged this leg — #121 touched none of them:
   the owner's instruction into what was stated and what was not; material sat in
   the second bucket *only because the owner had not named it*. The owner has now
   named it.
-- **A copy button can ship dead.** Production loads `file://`, dev loads
-  http://localhost, and no permission handler is registered — so
-  `navigator.clipboard` may pass jsdom, pass dev, and be inert in the built app.
+- **The copy button did NOT ship dead, and the measurement is the finding.**
+  `file://` reports `isSecureContext: true`, so `navigator.clipboard.writeText`
+  is present and — measured against the built app, read back through main's own
+  `clipboard` module — effective. No IPC bridge, no `execCommand` fallback, no
+  ADR. `execCommand` is also effective and stays the fallback.
+- **The spike's FIRST run scored that route dead, and it was the instrument.**
+  Both probe buttons were injected at the same fixed position, so the second
+  covered the first, the hit-test refused the click, and the handler never ran —
+  with the error swallowed by a bare `.catch(() => {})`. Believing it would have
+  built an IPC bridge the app does not need. **Unscored is not refuted**, and a
+  probe that swallows its own gesture errors cannot tell the two apart.
+- **Blink rewrites LF to CRLF inside `navigator.clipboard.writeText` on Windows.**
+  The tempting reading is that the button mangles the payload; a control refuted
+  it — the same LF string written from **main** reads back unchanged, so the OS
+  clipboard is innocent and the rewrite sits below this repo's code and above the
+  OS. Nothing was done about it: on a Windows paste target it is what you want.
+- **`capturePage`'s rect is window DIP; `getBoundingClientRect()` is the ZOOMED
+  page's CSS pixels.** This app carries its own zoom, so the two differ by
+  `getZoomFactor()` and an unscaled rect captures up and to the left of the
+  target. Three runs of #122's driver photographed the space above the very
+  control they existed to show. Any future driver shooting a specific element
+  needs the scaling.
 
 ## Related
 

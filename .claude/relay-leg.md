@@ -44,7 +44,7 @@ self-contained; read #120 only if you want the why.
 | # | slice | note |
 |---|---|---|
 | ~~#121~~ | ~~markdown tables render~~ | **CLOSED** `ef6ef22` — leg 1 |
-| #122 | code-block copy button | the clipboard route is a **measurement**, not a pick. **Do not extend its `components` wrapper to `<table>`** — #121 measured the table scrolling via `display: block` on itself |
+| ~~#122~~ | ~~code-block copy button~~ | **CLOSED** `a359f9f` — leg 2. Route measured: `navigator.clipboard`, effective on `file://`. Established the repo's first `components` override; the wrapper was **not** extended to `<table>` |
 | #123 | reuse a past user message | refill, never mutate the transcript |
 | #124 | five-position effort control | CLI-sourced levels; must rebuild the engine |
 | #125 | subagent viewer takes the window material | + positive pin + DESIGN.md + ADR |
@@ -70,25 +70,41 @@ above. In short: read `.context/pick-up.md` → pick ONE ticket → branch
 `/preset wrap-up` with `.context/` committed on **main only**.
 
 **Gate is the full one:** `npm run typecheck`, `npm test`, `npm run build`. The
-baseline was **1122 / 74** before this batch and is **1130 tests / 75 files**
-after #121 — read the current number off `main` rather than trusting either,
-because every slice adds tests.
+baseline was **1122 / 74** before this batch and is **1145 tests / 76 files**
+after #122 — read the current number off `main` rather than trusting any of
+these, because every slice adds tests.
 
 ## Landmines that bind more than one slice
 
 - **Probe by CALLING, never by grepping a bundle or reading a `.d.ts`.** A
   declared wire type is not a callable route (#115); a callable route is not an
   effective one (#117). #127 lives or dies on this.
+- **UNSCORED IS NOT REFUTED, and #122 nearly paid for it.** Its clipboard spike
+  scored the preferred route DEAD on run 1 because two probe buttons overlapped,
+  the hit-test refused the click, and the handler never ran — with the error
+  swallowed by a bare `.catch(() => {})`. Believing it would have built an IPC
+  bridge the app does not need. Any probe must record its gesture errors and
+  score "did the trial run" separately from "did the thing work".
+- **A driver's RED path must fail cleanly.** `gui-122.mjs` was verified red by
+  stashing its source files and rebuilding; the first red run threw an uncaught
+  `TimeoutError`, skipping the summary and leaking the Electron process.
 - **A negative claim needs negative-shaped evidence.** "Channel X is outbound"
   does not prove no inbound route exists. That error was caught during this
   batch's own grill and is why #127 exists at all.
-- **jsdom and `npm run dev` are not the built app.** #122 turns on this: prod
-  loads `file://`, dev loads http://localhost, and no permission handler is
-  registered. Verify with a `run-desktop` driver.
+- **jsdom and `npm run dev` are not the built app.** Verify with a `run-desktop`
+  driver. #122 settled the clipboard case: **`file://` is a SECURE CONTEXT**, so
+  `navigator.clipboard` is present and effective there, and no permission is
+  requested on that path. Do not generalise past the API you measured.
+- **Screenshots in this app need the zoom factor.** `capturePage` takes window
+  DIP while `getBoundingClientRect()` gives the ZOOMED page's CSS pixels; scale
+  by `webContents.getZoomFactor()` or the shot lands up and left of the target.
+  `page.screenshot({clip})` has the same defect with no clean fix. **Binds #125
+  and #126.** Hover states cannot be eyeballed either — `--tint-2` is 6% alpha;
+  assert them with `getComputedStyle`.
 - **No GUI driver can see a DWM backdrop** — `--disable-gpu` flattens acrylic
   and `page.screenshot()` cannot show it. #125 pins the declaration as text.
-- **Stylesheets are read as raw TEXT by four tests** — #121 added
-  `markdown-tables.test.tsx` to the three. No comment may contain a closing
+- **Stylesheets are read as raw TEXT by five tests** — #121 added
+  `markdown-tables.test.tsx` and #122 added `code-copy.test.tsx` to the three. No comment may contain a closing
   brace; no scrollbar rule may be component-scoped; **and `base.css` warns that
   even NAMING the scrollbar pseudo-element in a comment trips the scan**;
   `.bubble` and `.message-input` stay ungrouped. Binds #122, #123.
@@ -120,6 +136,8 @@ leg to stall on:
    positions**. Do not invent a sixth.
 3. What "background a session" should mean — #127 **measures, builds nothing**.
 4. #123 ships as **refill, not a true edit**.
+
+**#122 added none of these**, and resolved none. The count stands at four.
 
 If you hit a genuinely new call the record cannot settle, take the most
 reversible option, finish the rest of the ticket, and say so in the breadcrumb.
