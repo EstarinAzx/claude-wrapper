@@ -85,6 +85,20 @@ const sendAndSettle = async (text = 'change some files'): Promise<void> => {
   await waitFor(() => expect(rewindButtons().length + 0).toBeGreaterThanOrEqual(0))
 }
 
+/** Open a STORED session, so every message in the pane is a replayed one. */
+const replayed = async (
+  messages: Parameters<typeof harness.api.loadTranscript.mockResolvedValue>[0]
+): Promise<void> => {
+  const meta: SessionMeta = { id: 'sess-1', title: 'My chat', lastUpdated: 1000, cwd: FOLDER }
+  harness.api.listSessions.mockResolvedValue([meta])
+  harness.api.loadTranscript.mockResolvedValue(messages)
+  await startSession()
+  fireEvent.click(await screen.findByText('My chat'))
+  await waitFor(() =>
+    expect(document.querySelectorAll('.msg-user .bubble').length).toBeGreaterThan(0)
+  )
+}
+
 describe('which messages carry the control', () => {
   test('a message this pane SENT carries it', async () => {
     await sendAndSettle()
@@ -95,21 +109,55 @@ describe('which messages carry the control', () => {
     expect(rewindButtons()[0]?.closest('.msg-user')).not.toBeNull()
   })
 
-  test('a REPLAYED message does not — its id is not in hand', async () => {
-    const meta: SessionMeta = { id: 'sess-1', title: 'My chat', lastUpdated: 1000, cwd: FOLDER }
-    harness.api.listSessions.mockResolvedValue([meta])
-    harness.api.loadTranscript.mockResolvedValue([{ role: 'user', text: 'from disk' }])
-    await startSession()
-    fireEvent.click(await screen.findByText('My chat'))
-    await waitFor(() =>
-      expect(document.querySelectorAll('.msg-user .bubble')).toHaveLength(1)
-    )
+  // #130 REVERSED #129's answer here, and it is the ticket's whole point.
+  //
+  // #129 left a replayed message with no control because its uuid was not in
+  // hand — never because the route could not serve one. #130 carries the stored
+  // line's own uuid through `transcript.ts`, so the address exists and the
+  // control follows it.
+  //
+  // The reversal is licensed by MEASUREMENT, not by preference (spike-130):
+  // a checkpoint outlives the process that made it — a later process resumed
+  // the session, rewound a uuid read off disk, and the file on disk moved back —
+  // and 6 of 6 real sessions aged 0 to 17 days were still rewindable. The bar
+  // the ticket set was "a control that always refuses is worse than none"; it
+  // does not always refuse.
+  test('a REPLAYED message DOES carry it, once the transcript hands over its id', async () => {
+    await replayed([
+      { role: 'user', text: 'from disk', rewindId: '11111111-2222-4333-8444-555555555555' }
+    ])
 
-    // NOT caution about the route: #129 measured rewind working on a resumed
-    // session and, from a rebuilt query, on a message the previous query sent.
-    // A replayed message simply has no uuid here to address, and offering a
-    // control that could only ever be refused is worse than offering none.
+    expect(rewindButtons()).toHaveLength(1)
+    // Beside the bubble, never inside it — the same placement rule the sent
+    // case holds to, because `.bubble`'s textContent is read verbatim by
+    // tests/multiline-composer.test.tsx.
+    expect(rewindButtons()[0]?.closest('.bubble')).toBeNull()
+    expect(rewindButtons()[0]?.closest('.msg-user')).not.toBeNull()
+  })
+
+  test('a REPLAYED message with NO id still carries none', async () => {
+    // The absent-address case did not disappear, it just stopped being the rule.
+    // A stored line whose uuid failed `isMessageUuid` is dropped at the parse
+    // boundary and arrives here with no `rewindId` at all — and a control with
+    // nothing to address must not render.
+    await replayed([{ role: 'user', text: 'from disk' }])
     expect(rewindButtons()).toHaveLength(0)
+  })
+
+  test('the id the control sends is the one that came off disk', async () => {
+    // Not merely "a control appeared": the wrong id would rewind the wrong turn.
+    harness.api.rewindFiles.mockResolvedValue(ok())
+    await replayed([
+      { role: 'user', text: 'from disk', rewindId: '11111111-2222-4333-8444-555555555555' }
+    ])
+
+    fireEvent.click(rewindButtons()[0]!)
+
+    await waitFor(() => expect(harness.api.rewindFiles).toHaveBeenCalled())
+    expect(harness.api.rewindFiles.mock.calls[0]?.[0]).toBe('11111111-2222-4333-8444-555555555555')
+    // Still a dry run first on the replayed path — the blast radius here is
+    // LARGER than the just-sent case, so the preview matters more, not less.
+    expect(harness.api.rewindFiles.mock.calls[0]?.[1]).toBe(true)
   })
 
   test('an assistant message never carries it', async () => {
@@ -297,6 +345,49 @@ describe('the control does not claim the conversation moved', () => {
     const bubbles = [...document.querySelectorAll('.msg-user .bubble')]
     expect(bubbles).toHaveLength(1)
     expect(bubbles[0]?.textContent).toBe('change some files')
+  })
+
+  // #130 — THE SAME VOCABULARY ON THE REPLAYED PATH, and it needs its own test
+  // rather than trust in the shared component.
+  //
+  // The risk is strictly larger here. Rewinding a REOPENED conversation reverts
+  // every turn after the chosen message, and spike-130 measured real aged
+  // sessions coming back with 4 to 21 files. A user looking at a conversation
+  // from last week is much more likely to read a control beside an old message
+  // as 'take back what I said' than one beside the message they just sent.
+  test('a REPLAYED message keeps the files-only vocabulary and is not edited', async () => {
+    harness.api.rewindFiles.mockResolvedValue(ok({ filesChanged: 18, insertions: 40, deletions: 12 }))
+    await replayed([
+      { role: 'user', text: 'from disk', rewindId: '11111111-2222-4333-8444-555555555555' }
+    ])
+
+    const label = `${rewindButtons()[0]?.getAttribute('aria-label') ?? ''} ${
+      rewindButtons()[0]?.getAttribute('title') ?? ''
+    }`
+    expect(label.toLowerCase()).toContain('file')
+    for (const forbidden of ['undo', 'unsend', 'delete this message', 'revert the conversation']) {
+      expect(label.toLowerCase()).not.toContain(forbidden)
+    }
+
+    fireEvent.click(rewindButtons()[0]!)
+    await waitFor(() => expect(confirmButton()).not.toBeNull())
+
+    // AC5's copy half: the second gesture STATES WHAT IT IS ABOUT TO REVERT.
+    // The count alone reads as 'these files'; the scope is what makes 18 files
+    // legible as 'everything since this message'.
+    expect(summary()).toContain('18 files')
+    expect(summary().toLowerCase()).toContain('since this message')
+    expect(summary()).toContain('+40')
+
+    fireEvent.click(confirmButton()!)
+    await waitFor(() => expect(note()).toMatch(/files restored/i))
+
+    // The replayed message is STILL THERE, still saying what it said. The
+    // conversation is the CLI's file and rewind moves the disk, not the
+    // transcript — asserted, not promised in a comment.
+    const replayedBubbles = [...document.querySelectorAll('.msg-user .bubble')]
+    expect(replayedBubbles).toHaveLength(1)
+    expect(replayedBubbles[0]?.textContent).toBe('from disk')
   })
 })
 

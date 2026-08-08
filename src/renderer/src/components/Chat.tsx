@@ -243,8 +243,20 @@ const RewindControl = ({
   if (preview) {
     return (
       <span className="bubble-rewind-confirm">
+        {/*
+          #130 — the second gesture STATES ITS BLAST RADIUS, because on a
+          reopened conversation that radius is much larger than the just-sent
+          case #129 shipped. Rewinding to message N reverts every turn after it,
+          and the aged real sessions measured in spike-130 phase C came back
+          with 4 to 21 files. "since this message" is the part that was missing:
+          the counts alone read as "these files", not "everything you have done
+          since". The counts themselves stay first and stay singular-correct —
+          two tests pin "2 files" and the absence of "1 files".
+        */}
         <span className="bubble-rewind-summary">
-          {preview.filesChanged === 1 ? '1 file' : `${preview.filesChanged} files`}
+          {`Reverts ${
+            preview.filesChanged === 1 ? '1 file' : `${preview.filesChanged} files`
+          } since this message`}
           {', '}
           {`+${preview.insertions} −${preview.deletions}`}
         </span>
@@ -300,10 +312,17 @@ interface ChatProps {
   // another agent's words into the conversation's composer.
   onReuse?: (text: string) => void
   // #129 — restore the workspace's FILES to their state at one user message.
-  // OPTIONAL for the same reason `onReuse` is, and scoped twice over: the
-  // control also needs the message to carry a `rewindId`, which only messages
-  // this pane SENT have. A replayed transcript therefore shows no control even
-  // when the handler is supplied.
+  // OPTIONAL for the same reason `onReuse` is: `SubagentDrawer` renders this
+  // same component and does not pass it, so an agent's transcript shows no
+  // control. The message must also carry a `rewindId`.
+  //
+  // #130 widened WHICH messages have one. It used to be only those this pane
+  // SENT; `transcript.ts` now carries the stored line's own uuid through, so a
+  // REOPENED conversation shows the control too. It is offered on every
+  // addressed user message and not gated on whether a checkpoint exists,
+  // because rewindability tracks POSITION: a message with file changes after it
+  // rewinds, and one with nothing after it refuses in the CLI's own words —
+  // which is the right answer to "undo nothing" (measured, spike-130 phase E).
   onRewind?: (userMessageId: string, dryRun: boolean) => Promise<RewindResult>
 }
 

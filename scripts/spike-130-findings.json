@@ -1,0 +1,228 @@
+{
+  "spike": 130,
+  "question": "Does a file checkpoint survive the process that made it — so a conversation REOPENED later can still be rewound — and for how long? Plus: what does enableFileCheckpointing cost?",
+  "measuredAt": "2026-08-08T05:58:22.774Z",
+  "phasesRun": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E"
+  ],
+  "env": {
+    "platform": "win32",
+    "node": "v22.17.0",
+    "backendMode": "wisped",
+    "hostCliResolved": true
+  },
+  "scrubbing": "Counts, shapes, booleans, timings, ages in days and CLI-generated error text only. filesChanged is recorded as a LENGTH — its entries are absolute paths on the operator disk. No cwd, home, username, path or session id is written; any uuid appearing in carried-through text is masked.",
+  "method": "Every question is answered by CALLING and reading the FILE ON DISK back. The mutating turn runs in a CHILD PROCESS that EXITS first, and it deliberately does NOT rewind, so the file crosses the process boundary MUTATED and the later rewind is a disk witness rather than an inference from filesChanged=0 (#129 phase C's gap). The parent gates on the child's PARSED handoff, never on its exit code (#125).",
+  "phaseA_mutatingTurnInAChildProcess": {
+    "childExited": true,
+    "childStatusIgnoredForScoring": 0,
+    "declaredMethodPresent": true,
+    "ranTurn": true,
+    "turnIsError": false,
+    "fileChangedByTurn": true,
+    "turnMs": 16982,
+    "scored": true,
+    "verdict": "SCORED — the turn ran and mutated the file, which is left MUTATED on purpose."
+  },
+  "phaseB_rewindFromALaterProcess": {
+    "settleMs": 2000,
+    "turnsSpent": 0,
+    "fileStillMutatedAtStart": true,
+    "transcriptRead": {
+      "checked": true,
+      "userMessagesOnDisk": 4,
+      "readAnIdFromDisk": true,
+      "matchesTheIdTheHostStamped": true
+    },
+    "bogusIdControl": {
+      "label": "bogus uuid / wet",
+      "dryRun": false,
+      "expectRevert": false,
+      "outcome": "threw",
+      "errorText": "No file checkpoint found for this message.",
+      "ms": 4472,
+      "fileRestored": false,
+      "verdict": "AS PREDICTED — the file was left mutated."
+    },
+    "dryRun": {
+      "label": "uuid off disk / dry_run=true",
+      "dryRun": true,
+      "expectRevert": false,
+      "outcome": "accepted",
+      "canRewind": true,
+      "error": null,
+      "filesChangedCount": 1,
+      "insertions": 1,
+      "deletions": 1,
+      "ms": 70,
+      "fileRestored": false,
+      "verdict": "AS PREDICTED — the file was left mutated."
+    },
+    "wetRun": {
+      "label": "uuid off disk / dry_run=false",
+      "dryRun": false,
+      "expectRevert": true,
+      "outcome": "accepted",
+      "canRewind": true,
+      "error": null,
+      "filesChangedCount": null,
+      "insertions": null,
+      "deletions": null,
+      "ms": 6,
+      "fileRestored": true,
+      "verdict": "AS PREDICTED — the file returned to its pre-turn contents."
+    },
+    "verdict": "GREEN — A CHECKPOINT SURVIVES THE PROCESS THAT MADE IT. A later process resumed the session, read the uuid off the stored transcript, and the file on disk returned to its pre-turn contents. A bogus id left it alone and the dry run left it mutated.",
+    "dryRunProvablyLeftDiskAlone": true,
+    "checkpointFootprint": {
+      "present": true,
+      "backupFiles": 1,
+      "totalBytes": 9
+    }
+  },
+  "phaseC_agedRealSessions": {
+    "dryRunOnly": true,
+    "turnsSpent": 0,
+    "projectDirsMatched": 1,
+    "populationSize": 131,
+    "ageSpanDays": {
+      "oldest": 17,
+      "newest": 0
+    },
+    "probes": [
+      {
+        "ageDays": 17,
+        "outcome": "accepted",
+        "canRewind": true,
+        "filesChangedCount": 17,
+        "error": null,
+        "ms": 4852
+      },
+      {
+        "ageDays": 14,
+        "outcome": "accepted",
+        "canRewind": true,
+        "filesChangedCount": 6,
+        "error": null,
+        "ms": 4839
+      },
+      {
+        "ageDays": 11,
+        "outcome": "accepted",
+        "canRewind": true,
+        "filesChangedCount": 8,
+        "error": null,
+        "ms": 4866
+      },
+      {
+        "ageDays": 8,
+        "outcome": "accepted",
+        "canRewind": true,
+        "filesChangedCount": 11,
+        "error": null,
+        "ms": 4983
+      },
+      {
+        "ageDays": 5,
+        "outcome": "accepted",
+        "canRewind": true,
+        "filesChangedCount": 6,
+        "error": null,
+        "ms": 4959
+      },
+      {
+        "ageDays": 3,
+        "outcome": "accepted",
+        "canRewind": true,
+        "filesChangedCount": 7,
+        "error": null,
+        "ms": 4862
+      }
+    ],
+    "workspaceUntouched": true,
+    "verdict": "GREEN — every probed checkpoint from 0d to 17d old was still recognised (6/6). No expiry cliff within the range this machine can witness."
+  },
+  "phaseE_uncheckpointedReplayedMessage": {
+    "dryRunOnly": true,
+    "turnsSpent": 0,
+    "userMessagesInSession": 74,
+    "snapshotAnchorsInSession": 1,
+    "probes": [
+      {
+        "position": "IS an anchor (a backup was filed under it)",
+        "outcome": "accepted",
+        "rewindable": true,
+        "canRewind": true,
+        "filesChangedCount": 7,
+        "error": null
+      },
+      {
+        "position": "no backup of its own, but an anchor comes LATER",
+        "outcome": "accepted",
+        "rewindable": true,
+        "canRewind": true,
+        "filesChangedCount": 7,
+        "error": null
+      },
+      {
+        "position": "no backup, and NO anchor after it — nothing to undo",
+        "outcome": "accepted",
+        "rewindable": false,
+        "canRewind": false,
+        "filesChangedCount": null,
+        "error": "No file checkpoint found for this message."
+      }
+    ],
+    "workspaceUntouched": true,
+    "verdict": "COHERENT — rewindability tracks POSITION, not whether the message has a backup of its own. A message with file changes after it is rewindable; one with nothing after it refuses, which is the correct answer to \"undo nothing\". The control may be carried onto every replayed user message: it refuses exactly where there is nothing to undo."
+  },
+  "phaseD_cost": {
+    "mechanismNoModel": {
+      "rows": [
+        {
+          "fileBytes": 4096,
+          "files": 50,
+          "totalMs": 24.87,
+          "perFileMs": 0.497
+        },
+        {
+          "fileBytes": 65536,
+          "files": 50,
+          "totalMs": 26.41,
+          "perFileMs": 0.528
+        }
+      ],
+      "note": "read + sha256 + write a content-addressed copy, which is the SHAPE of a real file-history entry (<hash>@v1). A BOUND on the per-file mechanism, not a measurement of the CLI.",
+      "verdict": "Per backed-up file: ~0.497ms at 4096B, ~0.528ms at 65536B."
+    },
+    "turnDifferential": {
+      "writesPerTurn": 3,
+      "reps": 3,
+      "onMs": [
+        13459,
+        20550,
+        27624
+      ],
+      "offMs": [
+        23790,
+        30257,
+        19580
+      ],
+      "onMedianMs": 20550,
+      "offMedianMs": 23790,
+      "deltaMs": -3240,
+      "withinArmSpreadMs": 14165,
+      "verdict": "UNSCORED FOR A PER-TURN NUMBER, and now with the number that says why: the on/off median difference is -3240ms while the spread WITHIN a single arm is 14165ms. Model latency dominates, exactly as #129 predicted. The honest cost figure is D1's per-file bound plus the disk footprint, not this."
+    }
+  },
+  "turnsSpent": 7,
+  "whatANegativeRunProves": {
+    "ifPhaseBIsRed": "A checkpoint does NOT survive the process that made it. #130 Phase 2 must NOT be built: the control would render on every replayed message and refuse on every one of them, which the ticket itself calls worse than no control. The correct outcome is to report the number, build nothing, and file the finding at needs-triage.",
+    "ifPhaseCIsRedOrPartial": "Checkpoints expire. The control cannot be offered unconditionally on a reopened conversation — it would need the app to know the expiry, which nothing here exposes. That is a Phase 2 shape change, not merely a caveat.",
+    "ifPhaseDIsUnscored": "The per-turn cost is inside the noise, which is itself the answer the ticket asked for: checkpointing is not a latency decision. The disk footprint in phase B is then the cost worth reporting."
+  }
+}

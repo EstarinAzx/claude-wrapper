@@ -20,17 +20,17 @@ export type ChatMessage =
       text: string
       attachments?: Attachment[]
       attachmentMarkers?: AttachmentMarker[]
-      // #129 — the id the CLI stored this message under, and therefore the one a
-      // file rewind is addressed by. Present ONLY on messages this pane sent:
-      // `toChatMessage` never sets it, so a replayed transcript carries no
-      // rewind control.
+      // The id the CLI stored this message under, and therefore the one a file
+      // rewind is addressed by.
       //
-      // That is not caution about the route — #129 measured rewind working on a
-      // RESUMED session and, from a rebuilt query, on a message the PREVIOUS
-      // query sent. It is that a replayed message's uuid is not in hand here,
-      // and inventing one would address nothing. Carrying the transcript's own
-      // uuid through would make the control work on reopened conversations too;
-      // that is a real follow-up, not a defect of this one.
+      // #129 set this only on messages THIS pane sent, because a replayed
+      // message's uuid was not in hand and inventing one would address nothing.
+      // #130 closed that: `transcript.ts` carries the stored line's own `uuid`
+      // through, so a REOPENED conversation gets the control too.
+      //
+      // Absent means "no usable address", which is now rare rather than the
+      // rule — a stored line whose uuid failed `isMessageUuid` at the parse
+      // boundary, or a message the pane sent before the id was minted.
       rewindId?: MessageUuid
     }
   | { id: string; role: 'assistant'; text: string }
@@ -95,6 +95,12 @@ export const toChatMessage = (m: TranscriptMessage): ChatMessage => {
     if (m.attachments && m.attachments.length) {
       msg.attachmentMarkers = m.attachments
     }
+    // #130 — a replayed message now carries its own address, so the rewind
+    // control lights up on a REOPENED conversation and not only on messages
+    // this pane happened to send. Already validated at the parse boundary
+    // (`transcript.ts` drops a malformed on-disk uuid), so there is nothing to
+    // re-check here and nothing to cast.
+    if (m.rewindId !== undefined) msg.rewindId = m.rewindId
     return msg
   }
   return { id: uid(), role: m.role, text: m.text }

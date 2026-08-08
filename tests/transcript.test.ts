@@ -454,3 +454,90 @@ describe('parseTranscript CLI markup sanitizing (#50)', () => {
     ])
   })
 })
+
+// #130 — the address a REOPENED conversation rewinds by.
+//
+// The uuid is already on disk: every stored user line carries one, and both
+// #127 and #129 read it back with `getSessionMessages` to prove the CLI stores
+// a message under exactly the id the host stamped. #129 still shipped no
+// control on replayed messages, because the RENDERER did not have that id —
+// `toChatMessage` never set one. Carrying it through is the whole of #130's
+// build half.
+//
+// Licensed by measurement, not by preference (spike-130): a checkpoint outlives
+// the process that made it, and 6 of 6 real sessions aged 0 to 17 days were
+// still rewindable, so the ticket's bar — "a control that always refuses is
+// worse than no control" — is cleared.
+describe('parseTranscript carries the rewind address (#130)', () => {
+  const UUID = '11111111-2222-4333-8444-555555555555'
+
+  test('a plain user line carries its uuid through as rewindId', () => {
+    const raw = `{"type":"user","uuid":"${UUID}","message":{"role":"user","content":"Hi there"}}`
+    expect(parseTranscript(raw)).toEqual([{ role: 'user', text: 'Hi there', rewindId: UUID }])
+  })
+
+  test('a user line with attachments carries it too', () => {
+    const raw = `{"type":"user","uuid":"${UUID}","message":{"role":"user","content":[{"type":"text","text":"look"},{"type":"image","source":{"media_type":"image/png"}}]}}`
+    expect(parseTranscript(raw)).toEqual([
+      {
+        role: 'user',
+        text: 'look',
+        attachments: [{ kind: 'image', mediaType: 'image/png' }],
+        rewindId: UUID
+      }
+    ])
+  })
+
+  // THE TRUST BOUNDARY. Being the CLI's own value earns it no exemption: this
+  // is where on-disk data enters the app, and the guard is simultaneously the
+  // narrowing that lets the value reach the SDK without a cast.
+  //
+  // DROPPED, not coerced and not thrown on. Coercing would type a value as
+  // checked without anything having checked it; throwing would cost the user
+  // the whole transcript over one bad line. That makes this the fourth member
+  // of the compare-never-coerce family, beside backdrop.ts (defaults),
+  // effort.ts (rejects) and message-uuid.ts itself (drops).
+  test.each([
+    ['not a uuid at all', '"nope"'],
+    ['right shape, wrong characters', '"zzzzzzzz-2222-4333-8444-555555555555"'],
+    ['truncated', '"11111111-2222-4333-8444"'],
+    ['a number', '12345'],
+    ['null', 'null'],
+    ['an object', '{"v":1}']
+  ])('a malformed uuid (%s) is DROPPED, leaving the message intact', (_label, value) => {
+    const raw = `{"type":"user","uuid":${value},"message":{"role":"user","content":"Hi there"}}`
+    const out = parseTranscript(raw)
+    // The message survives in full...
+    expect(out).toEqual([{ role: 'user', text: 'Hi there' }])
+    // ...and the key is ABSENT rather than present-and-undefined, so nothing
+    // downstream can read a falsy address as an address.
+    expect('rewindId' in out[0]!).toBe(false)
+  })
+
+  test('a line with no uuid field at all is unchanged', () => {
+    const raw = '{"type":"user","message":{"role":"user","content":"Hi there"}}'
+    expect(parseTranscript(raw)).toEqual([{ role: 'user', text: 'Hi there' }])
+  })
+
+  // Only user messages are addressable — `rewind_files` takes a USER MESSAGE
+  // id, and an assistant line's uuid would address nothing.
+  test('an assistant line does not gain a rewindId from its own uuid', () => {
+    const raw = `{"type":"assistant","uuid":"${UUID}","message":{"role":"assistant","content":[{"type":"text","text":"Hello!"}]}}`
+    expect(parseTranscript(raw)).toEqual([{ role: 'assistant', text: 'Hello!' }])
+  })
+
+  // A tool_result is a `type: "user"` line, and it is NOT a prompt the user
+  // typed. #127 measured exactly this trap: the only `type: 'user'` messages on
+  // the live stream are tool results, and an earlier probe addressed one and
+  // would have reported a confident false negative. Folding into a tool message
+  // already drops these; this pins that the uuid does not leak out with them.
+  test('a tool_result line contributes no addressable user message', () => {
+    const raw = [
+      '{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu1","name":"Read","input":{}}]}}',
+      `{"type":"user","uuid":"${UUID}","message":{"role":"user","content":[{"tool_use_id":"tu1","type":"tool_result","content":"out","is_error":false}]}}`
+    ].join('\n')
+    expect(parseTranscript(raw)).toEqual([
+      { role: 'tool', toolUseId: 'tu1', name: 'Read', input: {}, result: 'out', isError: false }
+    ])
+  })
+})

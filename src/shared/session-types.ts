@@ -1,3 +1,5 @@
+import type { MessageUuid } from './message-uuid'
+
 // Metadata for one recorded Claude Code session, as the SDK's `listSessions`
 // reports it from the native store (~/.claude/projects/<enc-cwd>/).
 export interface SessionMeta {
@@ -71,7 +73,16 @@ export interface AttachmentMarker {
 // ChatMessage user/assistant/tool cases, minus renderer-transient fields (the
 // renderer assigns its own id + permission when it maps these back on replay).
 export type TranscriptMessage =
-  | { role: 'user'; text: string; attachments?: AttachmentMarker[] }
+  | {
+      role: 'user'
+      text: string
+      attachments?: AttachmentMarker[]
+      // #130 — the id the CLI stored this message under, carried through from
+      // the transcript's own `uuid` field so a REOPENED conversation can address
+      // a file rewind. Absent when the stored line carried no usable uuid; the
+      // control renders only where it is present.
+      rewindId?: MessageUuid
+    }
   | { role: 'assistant'; text: string }
   | {
       role: 'tool'

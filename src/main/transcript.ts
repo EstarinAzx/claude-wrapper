@@ -1,3 +1,4 @@
+import { isMessageUuid, type MessageUuid } from '../shared/message-uuid'
 import type { AttachmentMarker, TranscriptMessage } from '../shared/session-types'
 
 type ToolMessage = Extract<TranscriptMessage, { role: 'tool' }>
@@ -118,6 +119,27 @@ const sanitizeUserText = (raw: string): string | null => {
   return raw
 }
 
+// #130 — the address a REOPENED conversation rewinds by.
+//
+// The uuid is the CLI's OWN, read straight off the stored line, and it still
+// passes `isMessageUuid`. Being the CLI's value earns it no exemption: this is
+// the trust boundary where on-disk data enters the app, and the guard is
+// simultaneously the narrowing that lets the value reach the SDK without a cast.
+// A malformed one is DROPPED, never coerced and never thrown on — a bad uuid on
+// one line must not cost the user the whole transcript. That makes this the
+// fourth member of the compare-never-coerce family, beside `backdrop.ts`
+// (defaults), `effort.ts` (rejects) and `message-uuid.ts` itself (drops).
+//
+// MEASURED, not assumed (spike-130): a checkpoint outlives the process that
+// made it, so an id read back off disk in a later process really does move
+// files — and rewindability tracks POSITION, not whether this particular
+// message has a backup filed under it. A message with file changes after it is
+// rewindable; one with nothing after it refuses with the CLI's own sentence,
+// which is the correct answer to "undo nothing" rather than a failure. That is
+// why every user message carries the id and nothing here gates on checkpoints.
+const rewindIdOf = (rec: Record<string, unknown>): MessageUuid | undefined =>
+  isMessageUuid(rec.uuid) ? rec.uuid : undefined
+
 // Parse a native JSONL transcript to the replay message list. Main-session
 // transcripts tag subagent lines with `isSidechain: true` and those are dropped
 // by default (they belong to the subagent, not the main thread). A subagent's
@@ -152,7 +174,12 @@ export const parseTranscript = (
       if (typeof content === 'string') {
         if (content.trim()) {
           const text = sanitizeUserText(content)
-          if (text !== null) messages.push({ role: 'user', text })
+          if (text !== null) {
+            const msg: Extract<TranscriptMessage, { role: 'user' }> = { role: 'user', text }
+            const rewindId = rewindIdOf(rec)
+            if (rewindId !== undefined) msg.rewindId = rewindId
+            messages.push(msg)
+          }
         }
       } else if (Array.isArray(content)) {
         // tool_result never co-occurs with text/image in real transcripts; pure
@@ -189,11 +216,14 @@ export const parseTranscript = (
             markers.push(toAttachmentMarker(b))
           }
           if (markers.length > 0) {
-            messages.push({
+            const msg: Extract<TranscriptMessage, { role: 'user' }> = {
               role: 'user',
               text: extractText(content),
               attachments: markers,
-            })
+            }
+            const rewindId = rewindIdOf(rec)
+            if (rewindId !== undefined) msg.rewindId = rewindId
+            messages.push(msg)
           }
         }
       }
