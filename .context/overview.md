@@ -329,16 +329,20 @@ tags: [context, overview]
   `Chat`'s **rewind control** (#129) sits beside the reuse one and restores the
   workspace's tracked FILES to their state at that message — never the
   conversation, and a test asserts that vocabulary rather than a comment
-  promising it. It renders only when the message carries a `rewindId`, which
-  only messages this pane SENT have: `toChatMessage` never sets one, so a
-  replayed transcript shows no control. That boundary is app-side, not a limit
-  of the route — #129 measured rewind working on a RESUMED session and, from a
-  rebuilt query, on a message the PREVIOUS query sent, so the control may
-  safely outlive the model/permission/backend rebuilds that discard the engine.
-  Extending it to replayed messages is **#130**, `needs-triage`.
+  promising it. It renders only when the message carries a `rewindId`.
+  **#130 widened which messages have one.** Under #129 that was only messages
+  this pane SENT; `transcript.ts` now carries each stored line's own `uuid`
+  through, so a **REOPENED conversation shows the control too**. Absent now
+  means "no usable address" — a stored uuid that failed `isMessageUuid` — rather
+  than "replayed". The control is **not** gated on whether a checkpoint exists,
+  because rewindability tracks **position**: a message with file changes after
+  it rewinds, one with nothing after it refuses in the CLI's own words, which is
+  the right answer to "undo nothing" (`spike-130` phase E).
   The control is **two gestures**: `dryRun: true` reports the file and line
   counts and provably leaves the disk alone, then a deliberate second click
-  commits. No dialog — both anti-modal ADRs stand — and main holds no preview
+  commits. The second gesture **states its blast radius** — "Reverts 18 files
+  since this message" — because on a reopened conversation it reverts every turn
+  after the chosen one, and real aged sessions measured 4 to 21 files. No dialog — both anti-modal ADRs stand — and main holds no preview
   token, because one would go stale the moment another turn edited a file. The
   id is minted in the RENDERER, at the moment the bubble is created: the CLI
   never echoes a prompt back, so there is nothing to scrape, and an id chosen
@@ -366,7 +370,11 @@ tags: [context, overview]
   `isMessageUuid`, which is simultaneously the trust boundary and the narrowing
   that lets the value reach the SDK **without a cast**. Third member of the
   compare-never-coerce family after `backdrop.ts` and `effort.ts`, and it
-  **drops** rather than defaulting or rejecting. `background-tasks.ts`
+  **drops** rather than defaulting or rejecting. #130 added the fourth site:
+  `transcript.ts` applies the same guard to the CLI's OWN on-disk uuid, because
+  being the CLI's value earns it no exemption at the boundary where stored data
+  enters the app — and a malformed line is dropped rather than thrown on, so one
+  bad uuid never costs the user the whole transcript. `background-tasks.ts`
   (#83) is the CLI level's whole vocabulary: `parseBackgroundTasks` is the trust
   boundary on the payload (`task_id` is identity so a row without one is dropped;
   `task_type` and `description` are display-only so a missing one costs a label,
@@ -449,11 +457,10 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **the queue is
-  EMPTY and relay chain 3 has stopped — #121–#129 all closed, spec #120
-  delivered, and the only open issue is #130 at `needs-triage`, which a leg must
-  NOT promote. `ready-for-human` is BANNED for this batch; use `needs-info` + a
-  comment + a PushNotification**; run the frontier query anyway, it is the
-  authority and this line has been wrong before.
+  EMPTY and relay chain 4 has stopped — #130 delivered and closed, and there is
+  now NO open issue at all. `ready-for-human` is BANNED for this batch; use
+  `needs-info` + a comment + a PushNotification**; run the frontier query
+  anyway, it is the authority and this line has been wrong before.
   **37 `gui-*.mjs`** — 36 assertion drivers plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`), with **two standing
@@ -805,7 +812,16 @@ tags: [context, overview]
   works, rewind survives a RESUME, and a rebuilt query recognises the previous
   query's message id — after a first run whose phase B resumed from the wrong
   directory and whose ungated phase C reported that setup failure as a finding.
-  The only open issue is **#130**, `needs-triage` by design so no leg takes it.
+  **As of 2026-08-08 chain 4 is COMPLETE and NO ISSUE IS OPEN.** One leg, one
+  ticket: **#130** (`ff2be52`, rewind a REPLAYED message). The owner promoted it
+  out of `needs-triage`; a `/preset vibe` run scoped it into two phases with the
+  build half GATED on the measurement half, and the leg ran the measurement
+  first. `scripts/spike-130-checkpoint-durability.mjs` answered both halves
+  green — a checkpoint OUTLIVES the process that made it, witnessed on the disk
+  rather than inferred from `filesChanged: 0`, and six real sessions aged 0 to
+  17 days were all still rewindable. The build was then one field carried
+  through `transcript.ts` behind the same `isMessageUuid` guard. See
+  [[2026-08-08-a-checkpoint-outlives-its-process-and-rewindability-tracks-position]].
   Run the frontier query rather than trusting any line in this file
 
 ## Conventions
