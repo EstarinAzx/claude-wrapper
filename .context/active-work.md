@@ -39,10 +39,15 @@ unit of work has to come from a person.
   Ran on the branch and **again on `main` after the merge**. #130 moved the
   baseline 1277/84 → 1295/85, **+18 tests, +1 file**.
   **Read the number off `main`, never off this file.**
-- **PUSHED 2026-08-06 on the owner's instruction**, and **not since**. #130 has
-  NOT been pushed — a leg does not push on its own initiative, and that
-  authorisation covered the accumulated backlog rather than being a standing
-  grant. Read the gap: `git rev-list --count origin/main..main`.
+- **PUSHED 2026-08-08 on the owner's instruction** — they said "push it" after
+  the leg reported the work sitting local. `origin/main` is now `3fe7798`: the
+  triage commit, #130 itself, and this wrap-up, **3 commits, clean fast-forward**
+  (0 behind at push time), nothing forced.
+  **The rule is unchanged: a leg does not push on its own initiative.** This was
+  a second explicit one-off, exactly like 2026-08-06 — two instructions, not a
+  standing grant, and a fresh unattended chain still lands locally and says so.
+  Read the gap rather than trusting this line:
+  `git rev-list --count origin/main..main`.
 
 ## What #130 delivered, and why the measurement is the valuable half
 

@@ -28,9 +28,16 @@ This is a **harder** stop than chain 3's. Then, #130 sat open at `needs-triage`
 as a candidate. Now the backlog is genuinely exhausted: the next unit of work has
 to come from a human, because there is no ticket left to read.
 
-**PUSHING: still not on a leg's own initiative.** The 2026-08-06 push was an
-explicit instruction covering the accumulated backlog, not a standing grant. Read
-the current gap rather than trusting a literal:
+**PUSHED 2026-08-08, on the owner's instruction.** They said "push it" after this
+leg reported #130 sitting local. `origin/main` is now `3fe7798` — the triage
+commit, #130, and the wrap-up: **3 commits, clean fast-forward**, nothing forced
+and nothing clobbered.
+
+**PUSHING is still not on a leg's own initiative.** That is now TWO explicit
+one-offs (2026-08-06 and 2026-08-08), which is a pattern of the owner asking, not
+a standing grant. A fresh unattended chain lands locally and says so. Read the
+current gap rather than trusting a literal — it drifted three legs running the
+last time a number was written down:
 `git rev-list --count origin/main..main`.
 
 ## Landed this leg
