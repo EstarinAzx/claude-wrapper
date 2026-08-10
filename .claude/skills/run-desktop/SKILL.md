@@ -24,6 +24,8 @@ dependency (matches the `dev-run-only` decision). It lands in node_modules
 ```bash
 node .claude/skills/run-desktop/driver.mjs           # read both pills + screenshot
 node .claude/skills/run-desktop/driver.mjs --cycle   # also click each pill once, re-read
+
+SCREENSHOT_DIR=<dir> node .claude/skills/run-desktop/inspect.mjs   # all five core surfaces
 ```
 
 Output (stdout): `BACKEND {…}` / `PERMISSION {…}` JSON with each pill's
@@ -36,6 +38,38 @@ Expected on a wisp-routed launch shell, fresh state:
 - permission pill → `Bypass`, class `perm-pill perm-pill--bypass` (danger tint)
 
 `--cycle` then shows `Native` and `Accept Edits` (both neutral classes).
+
+## `inspect.mjs` — the five core surfaces in one run (#131)
+
+`driver.mjs` never picks a project folder, so it sees **Welcome and Titlebar
+only**. `inspect.mjs` is the consolidated command: it seeds a conversation
+straight into the CLI's store, opens a workspace, replays it, and captures each
+surface into its own file.
+
+```
+welcome.png  titlebar.png  sidebar.png  chat.png  input-bar.png
+window-welcome.png  window-session.png     ← whole-window frames, for composition
+```
+
+- **Zero CLI turns, no engine, no API key.** The transcript is a fixture on
+  disk (gui-63's mechanism), so the same command gives the same five surfaces on
+  any machine.
+- **Deterministic.** Window forced to 1440x900 and `setZoomFactor(1)` — both are
+  otherwise remembered across launches and would silently change the scale.
+- **A capture failure is loud.** Each surface is proven present, painted, on
+  screen and carrying the content that makes it that surface *before* it is
+  photographed; anything missing exits non-zero naming the surface, and prints
+  `CAPTURED n/7` so a half-empty output directory cannot pass for a complete one.
+- Cleans up its fixture and its Electron process on both the pass and fail path.
+
+`SCREENSHOT_DIR` is required in practice — it defaults to
+`%TEMP%/claude-wrapper-shots/`, which `driver.mjs` also writes to.
+
+**This is the `inspect:` command in `.gauntlet/bar/README.md`.** A critic grading
+the UI reads these files. Note what they cannot show: no driver can see the DWM
+acrylic backdrop, so every capture has a flat ground where the running app is
+translucent — colour, translucency and material are out of scope for any verdict
+taken from them.
 
 ## What it checks
 

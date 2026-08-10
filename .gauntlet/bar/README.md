@@ -14,8 +14,8 @@ bar_win:  Every surface of the running app survives side by side with Linear —
           scale holds across all of them — while never drifting off
           frost-mono-reference.png: near-black, one mint accent under 10% of
           surface, no decorative glass beyond the single named exception.
-inspect:  SCREENSHOT_DIR=<dir> node .claude/skills/run-desktop/driver.mjs
-          # PARTIAL — reaches Welcome + Titlebar only. See "The inspect gap".
+inspect:  SCREENSHOT_DIR=<dir> node .claude/skills/run-desktop/inspect.mjs
+          # All five core surfaces. Closed by #131 — see "The inspect gap".
 spec:     DESIGN.md (design system, source of truth for the renderer)
           PRODUCT.md (purpose, single user, anti-references)
 ```
@@ -71,15 +71,23 @@ under a loop is not a bar.
 
 ## The inspect gap — read this before wave one
 
-**`inspect:` is partial, and a wave that forgets this will invent findings.**
+**One of the two limits below is CLOSED. The other is permanent.**
 
-1. **It reaches two surfaces.** `driver.mjs` waits for the two titlebar pills,
-   screenshots, and exits. It never picks a project folder, so **Welcome and
-   Titlebar are all it can see** — nine of the eleven surfaces are unreachable.
-   About twenty ticket-specific `gui-*.mjs` drivers in the same directory *do*
-   open workspaces and drive live sessions, so the machinery exists; it has
-   never been consolidated into one reusable command. **Building that is ticket
-   one of any run against this bar** — a task, not a guess.
+1. **~~It reaches two surfaces.~~ CLOSED by #131, 2026-08-10.** `driver.mjs`
+   never picked a project folder, so Welcome and Titlebar were all it could see.
+   `inspect.mjs` now captures all five core surfaces into `SCREENSHOT_DIR` —
+   `welcome.png`, `titlebar.png`, `sidebar.png`, `chat.png`, `input-bar.png`,
+   plus `window-welcome.png` and `window-session.png` as whole-window frames for
+   composition questions a clipped surface cannot answer. It seeds a
+   conversation into the CLI's store and replays it, so the chat carries real
+   message rhythm and two tool cards at **zero CLI turns**.
+
+   **A missing surface is a loud failure, never a silently absent file** — every
+   surface is proven present, painted and non-empty before it is photographed,
+   and the run prints `CAPTURED n/7`. **If a file you expected is not in the
+   directory, the run failed; read its output rather than judging the surface.**
+   The six remaining surfaces are still unreachable and are a second run's
+   problem, as scoped.
 
 2. **No driver can see the material.** The app's wash is
    `oklch(0.12 0.008 210 / 0.64)` — translucent by design, composited by Windows
