@@ -1,7 +1,7 @@
 ---
 type: pick-up
 project: claude-wrapper
-updated: 2026-08-10
+updated: 2026-08-11
 tags: [context, pick-up]
 ---
 
@@ -11,17 +11,15 @@ Start: read `.context/overview.md` + `active-work.md`.
 
 ## Where the chain is
 
-**#131 landed, the ticket queue is empty, and the quality pass is armed.**
+**The gauntlet run is FINISHED and merged. The ticket queue has been REFILLED
+from what it found. `ticket-loop` is armed and should run.**
 
-`ticket-loop` signalled done on a dry frontier — empty on two reads, and there is
-**no open issue at all**. That is the designed stop, not a failure. The relay
-state file `.claude/relay/ticket-loop.md` carries `stop: true` and the successor
-it fired: **`/relay N=1 /preset gauntlet`**.
-
-**Do not re-run `ticket-loop`.** Re-invoking it against that file **re-inits** the
-chain and spins a leg with nothing to do. And do not invent a ticket to restart
-it — the stop condition is an empty `ready-for-agent` frontier, so a leg filing
-its own follow-up there makes the condition unreachable by construction.
+This supersedes the previous baton, which said *"do not re-run ticket-loop"*.
+That instruction was correct against an **empty** queue — its whole concern was
+spinning a leg with nothing to do. **Six `ready-for-agent` tickets are open now**,
+so the condition it guarded against no longer holds. Re-invoking `/relay N=1
+/preset ticket-loop` against a state file carrying `stop: true` **re-inits** the
+chain, which is the documented boot path and is what we want here.
 
 Confirm rather than trust this, on two reads — the tracker has returned a false
 empty here before:
@@ -31,143 +29,96 @@ gh issue list --state open --label ready-for-agent
 gh issue list --state open
 ```
 
-## Landed this leg
+## The queue, and where it came from
 
-**#131 — the consolidated `inspect:` command.** `4a80989` on `main`,
-squash-merged, branch deleted, ticket closed. **No `src/` diff** — it builds the
-instrument that judges the UI; it does not touch the UI.
+Nine issues were filed on 2026-08-11 from the `core-surfaces` gauntlet run's
+findings. **Six are agent work; three need the owner and `ticket-loop` will not
+pick them up.**
 
-```
-SCREENSHOT_DIR=<dir> node .claude/skills/run-desktop/inspect.mjs
-```
+| # | Label | What |
+|---|---|---|
+| 132 | ready-for-agent | Execute the source-level GUI driver assertions in the test gate |
+| 133 | ready-for-agent | Extend `inspect.mjs` to reach the three right-hand docks |
+| 134 | ready-for-agent | Remove em dashes from user-visible copy |
+| 135 | ready-for-agent | Run the DOM-level driver assertions; resolve the red empty-state check — **blocked by #132** |
+| 136 | ready-for-agent | Centre the session title in the titlebar — **blocked by #132** |
+| 137 | ready-for-agent | Capture the Welcome pane at the minimum window size — **blocked by #133** |
+| 138 | ready-for-human | Rule on the type scale: five rendered sizes ship against three documented |
+| 139 | ready-for-human | Rule on the transcript's prose/label weight pair |
+| 140 | ready-for-human | Rule on the selected session row's mint side-stripe |
 
-Seven files: `welcome` · `titlebar` · `sidebar` · `chat` · `input-bar`, plus
-`window-welcome` and `window-session` as whole-window frames, because a surface
-clipped to its own bounding box cannot answer a composition question and every
-reference in `.gauntlet/bar/linear/` is a whole-page frame.
+**The frontier is #132, #133, #134** — those three have no blockers. Blocking
+edges are stated in each issue body, not as native links; **read the "Blocked by"
+section before starting a ticket** rather than assuming any open ticket is free.
 
-Zero CLI turns — the chat is a **fixture seeded into the CLI store** and replayed
-(gui-63's mechanism), so it carries real message rhythm and two tool cards on a
-machine with no session and no API key. Window pinned to 1440x900 with
-`setZoomFactor(1)`, since both are otherwise remembered across launches and would
-silently change every capture's scale.
+**#132 is the most valuable and should go first if you are choosing.** Nothing
+currently executes the 38 `gui-*.mjs` drivers, so the project's "any CSS change
+owes a driver pin" rule has been discharged all run by checks that never run. One
+assertion has been red for three waves while three consecutive gates reported
+green.
 
-New files: `.claude/skills/run-desktop/inspect.mjs`. Updated:
-`.gauntlet/bar/README.md` (`inspect:` repointed, limit 1 marked CLOSED),
-`.claude/skills/run-desktop/SKILL.md`. New decision:
-`.context/decisions/2026-08-10-a-blank-capture-is-proven-in-the-dom-not-in-the-pixels.md`.
+## Landed since the last baton
+
+**The `core-surfaces` gauntlet run, waves 1–5**, merged to `main` as `4c3386d`
+(`--no-ff`, branch `gauntlet/core-surfaces` retained). 809 insertions across 9
+renderer files: Titlebar, Sidebar, InputBar and four stylesheets. Every wave was
+gate-green and D3/D4 pins were checked mechanically twice per wave.
+
+**The run stopped itself at `plateau: 3`** — the preset's expected exit, not a
+crash. No verdict improvement survived five waves, and the one provisional
+`YOURS WINS` was retracted by a retest on **byte-identical pixels**. Full record
+in `.claude/gauntlet.md`; captures in `.gauntlet/waves/1-5/`.
+
+**Do not restart the gauntlet.** `.claude/gauntlet.md` carries `stop: true`, so
+`/preset gauntlet` halts at its seed guard — correctly. Restarting means the owner
+first answering **#138–#140**, and specifically the open question of whether
+verdict movement is the right stop signal at all (recorded as owner call 14 in
+that file, with the wave-5 evidence attached).
+
+### Four findings that outlive the run
+
+1. **Critic pixel figures are ink-and-leading; CSS figures are boxes; the two
+   differ by ~5–6px.** Any numeric target quoted from a design review needs that
+   translation before a builder acts on it. A "12–16px" ask means ~7–11px of box.
+2. **A reviewer prescribing something that already ships happened three times.**
+   Twice a builder caught it and refused; once a builder nearly "fixed" a value to
+   itself. Ask for the *current measured value* alongside any target.
+3. **`font-weight: 500` renders byte-identically to `600`** on this machine — the
+   family snaps to named instances. A "fix" at 500 changes zero pixels.
+4. **Measured refusals are worth more than edits, repeatedly.** Three of the run's
+   strongest results were builders declining with numbers.
 
 ## Baseline — READ IT, do not trust it
 
-`main` = `4a80989`. typecheck clean, build clean, **1295 tests / 85 files** —
-**unchanged**, and that is correct: #131 adds no `src/` code and no test, and no
-driver runs in `npm test`. The gate ran on the branch and **again on `main` after
-the merge**.
+`main` = `4c3386d`. typecheck clean, build clean, **1295 tests / 85 files** —
+unchanged from before the merge, and that is correct: the gauntlet added no test
+and no driver runs in `npm test`, which is exactly what #132 exists to fix.
 
-**Five commits sit UNPUSHED** (`05512aa`, `fc96974`, `97a5de4`, `3fb7a0f`,
-`4a80989`). D6 stands — **a leg does not push on its own initiative**; the two
-pushes on record were explicit one-off owner instructions. Read the real gap,
-this number has drifted three legs running before:
+Gate ran on the branch and **again on `main` after the merge**.
+
+**Commits sit UNPUSHED.** D6 stands — **a leg does not push on its own
+initiative**; the pushes on record were explicit one-off owner instructions. Read
+the real gap rather than a number, it has drifted every leg:
 `git rev-list --count origin/main..main`.
 
-## Pick up here — the gauntlet run
+## Standing constraints for any leg touching the renderer
 
-1. **Read `.gauntlet/bar/README.md` before touching any surface.** Its `inspect:`
-   field now points at the real command. **Limit 1 is CLOSED; limit 2 is
-   permanent** — no driver can see the DWM acrylic backdrop, so every capture has
-   a flat ground where the running app is translucent. **Colour, translucency and
-   material are out of scope for any verdict taken from these files.**
-2. **THE IDENTITY MARK IS SOLID BY DESIGN.** No wave may add a glyph. A wave may
-   question the fill's *depth*; that is a different question and is fair game.
-3. **`.claude/vibe.md` binds this chain** — six decisions stand after cross-model
-   attack. Load-bearing for a builder: **D3** (the brittle literal-text
-   stylesheet pins), **D4** (any CSS change owes a driver pin — jsdom loads no
-   CSS, so an unknown `var()` resolves silently to nothing), **D7** (the gate is
-   all three commands green), **D6** (no pushing).
-4. **If an expected capture file is missing, the run failed** — read its output
-   rather than judging the surface. A green run asserts it wrote all seven; a
-   failing one prints `CAPTURED n/7`.
-
-## The landmine this leg paid
-
-**AN INSTRUMENT'S THRESHOLD IS A MEASUREMENT, NOT A CONSTANT.** The obvious guard
-against a blank screenshot is a bytes-per-kilopixel floor. It is wrong twice, and
-both refutations came from measuring rather than reasoning:
-
-- A **fixed floor** scored `.welcome-mark` — a 44x44 solid mint fill, about as
-  blank as this app gets — at **403.93 bytes/kpx, the highest reading of the
-  run**. PNG's ~700 bytes of fixed overhead *is* the measurement at that area.
-- A **per-run negative control at 2x** then failed **WELCOME**, a legitimately
-  sparse hero clearing pure background by only **34%**. Shipping that would have
-  been the **tenth** instance of this repo's oldest failure — an instrument
-  artifact reported as a finding — in a file whose own header warns about it.
-
-The ratio is now 1, the thin margin is written down as thin, and **the DOM
-assertions carry the guarantee**: a chat that replayed nothing has no `.msg-user`
-to find, whatever its pixels compress to.
-
-## Landmines this repo keeps paying for
-
-- **UNSCORED IS NOT REFUTED**, now from nine sides — and the blank-capture
-  threshold above is the tenth near-miss of the artifact-as-finding family.
-- **AN UNAPPLIED MUTATION READS EXACTLY LIKE A CAUGHT ONE.** Take the verdict
-  from the **parsed result**, never the exit code. #131's three mutations were
-  each read out of the printed FAIL line.
-- **Never `git checkout <file>` to undo a mutation on uncommitted work** — it
-  reverts to HEAD and drops every edit since the branch point. #129, #130 and
-  #131 all mutated a **copy** instead.
-- **A driver's RED path must fail cleanly**, or it leaks the Electron process.
-  Verified across 7 runs of `inspect.mjs`: no leaked process, no leftover store,
-  no leftover workspace, on both paths.
-- **Screenshots need the zoom factor** — `setZoomFactor(1)`. Chromium persists
-  per-origin zoom in `userData` **and** the renderer keeps its own in
-  localStorage, so a previous run's zoom survives into this one.
-- **A value read behind a transition is not a settled one** (#123) — and neither
-  is a photograph of one. Motion here is 150ms transitions, 200ms entries.
-- **Playwright's actionability wait hangs on the intro animation** — dispatch
-  clicks from the DOM.
-- **Stylesheets are read as raw TEXT by NINE tests**, three scanning the whole
-  `styles/` directory. No comment may contain a closing brace; `.bubble` and
-  `.message-input` stay ungrouped; **`.bubble {` must stay the FIRST literal
-  match of that string in `chat.css`**.
-- **The `@import` order in `styles.css` IS the cascade** — add rules inside a
-  file, never reorder. **The token names are `--fs-micro` and `--danger-text`.**
-- **The acrylic exception is ONE PANE** (#125), pinned twice; criterion 5 is
-  **positive** — do not soften it to fix a red.
-- **`core.autocrlf` is `true`** — anything reading a file from disk must expect
-  `\r\n`, and `/^## Heading$/m` matches nothing here.
-- **Node 22 refuses to spawn a `.cmd`** (`EINVAL`);
-  `node_modules/electron/dist/electron.exe` is a real exe.
-- Harness scripts importing `.ts` from `src/` need
-  `node --experimental-strip-types`, which resolves no extensionless relative
-  imports. Use `fileURLToPath`, never `URL.pathname` — this repo's path contains
-  a space.
-- **`issue_dependencies_summary` is EVENTUALLY CONSISTENT** — read twice. The
-  frontier query itself has returned a false empty.
-- **`gui-52`'s red is DOUBTFUL** and `gui-75` is focus-dependent; reproduce solo
-  on clean `main` before believing either.
-- **A loop body is an artefact of an earlier leg, not an instruction from the
-  owner.** If `.claude/relay-leg.md` disagrees with the tracker or with this
-  file, **they win**.
-
-## Do not decide these
-
-**TWO** live owner-calls in `.claude/vibe.md` under `## Needs you`, both
-reversible with the default taken: whether a gauntlet wave may commit RED on
-`gauntlet/<slug>` (default: no), and whether the identity mark's solidity is
-deliberate (default: leave it solid).
-
-**SEVEN older ones live in `.claude/vibe-130.md`**, not in `.claude/vibe.md` —
-they moved when that file was archived, and every reference pointing at
-`.claude/vibe.md` for them is stale. Unresolved, not closed. The longest-standing
-live one is **#127's Remote Control question**.
-
-**Not calls, but waiting:** the repo reads 1.0.0 while nothing publishes. `git
-tag` is empty, there is no electron-builder config, and the post-bump build
-emitted byte-identical asset hashes, so the version never enters the bundle.
-
-## Related
-
-- [[overview]] · [[active-work]] · [[decisions]] · [[happy-path]]
-- [[2026-08-10-a-blank-capture-is-proven-in-the-dom-not-in-the-pixels]]
-- [[2026-08-08-a-checkpoint-outlives-its-process-and-rewindability-tracks-position]]
+1. **D3 — the stylesheet pins are literal-text and brittle.** Three tests scan the
+   whole `styles/` directory; **no comment anywhere in `styles/` may contain a
+   closing brace**; `.bubble` and `.message-input` stay ungrouped; **`.bubble {`
+   must stay the FIRST literal occurrence of that string in `chat.css`** (the pin
+   is "first occurrence", not a line number — it moved from 84 to 119 legally);
+   **exactly ONE `backdrop-filter` in all of `styles/`**; the `@import` order in
+   `styles.css` IS the cascade, so add rules inside a file and never reorder.
+2. **D4 — any CSS change owes a driver pin**, because jsdom loads no CSS and an
+   unknown `var()` resolves silently to nothing. **Know that nothing executes
+   those drivers today** — cite the asserting line or say plainly that nothing
+   pins it. Do not claim D4 discharged on a driver that merely renders the surface.
+3. **The identity mark is SOLID BY DESIGN.** No glyph, ever.
+4. **Colour, translucency and material are instrument artifacts in any capture** —
+   the authored wash is composited by Windows over OS acrylic and no driver can
+   see a DWM backdrop. A flat ground in a screenshot is not a defect.
+5. **`.claude/vibe.md` binds this chain** — six decisions stand after cross-model
+   attack. Two live owner-calls sit there under `## Needs you`; **seven older ones
+   are in `.claude/vibe-130.md`**, and every reference pointing at `.claude/vibe.md`
+   for those is stale.
