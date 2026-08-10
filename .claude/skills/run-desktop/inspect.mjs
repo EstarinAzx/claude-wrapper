@@ -132,9 +132,16 @@ const EDIT_NEW = [
   '  return engine.listModels()'
 ].join('\n')
 
+// This transcript is PHOTOGRAPHED and then judged against DESIGN.md, so it is
+// held to the product's own copy rules rather than to comment style. DESIGN.md
+// "Bans in force" forbids em dashes in copy: a gauntlet critic reading these
+// captures cannot tell fixture prose from shipped prose, and wave 1 duly
+// returned a SPEC BREAK on the Chat surface for two em dashes that lived here
+// rather than in the renderer. Keep the replies em-dash free so the finding
+// stays available for real copy defects.
 const REPLY_ONE = [
   'Flipping the pill discards the engine, and both list handlers read straight',
-  'off that handle — so the menu asks a null engine and gets an empty array back.',
+  'off that handle, so the menu asks a null engine and gets an empty array back.',
   'The list is not cached anywhere, which is deliberate: the answer genuinely',
   'differs between backends, so a cache would be wrong rather than merely stale.'
 ].join(' ')
@@ -143,7 +150,7 @@ const REPLY_TWO = [
   'engine is discarded. Eager costs every user a rebuild on every pill click,',
   'including the one who never opens a menu.'
 ].join(' ')
-const REPLY_THREE = 'Added — it drives a flip, then reads both lists back and asserts neither is empty.'
+const REPLY_THREE = 'Added. It drives a flip, then reads both lists back and asserts neither is empty.'
 
 const base = {
   parentUuid: null,

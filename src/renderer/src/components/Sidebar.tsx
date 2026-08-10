@@ -59,9 +59,10 @@ const Trash = () => (
   </svg>
 )
 
-// Used twice: the rail head re-lists stored transcripts, the background-sessions
-// head re-runs the CLI look. Same glyph because it is the same verb — extracted
-// so the two cannot drift into different arrows.
+// The rail head's re-list of the STORED transcripts, and now the only circular
+// arrow in the rail. The background-sessions head wore this same glyph until it
+// put two identical arrows in the rail's first 80px pointed at two different
+// lists; that head says the word instead, so one arrow means one thing again.
 const Refresh = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
     <path
@@ -307,6 +308,19 @@ const Sidebar = ({
     [sessions, query, cwd, scope, limit, labels]
   )
 
+  // How many sessions the SCOPE alone is holding back. Read straight off the
+  // same grouping the rows come from, so "outside this project" folds a
+  // drive-letter case difference exactly the way a row does, and nothing here
+  // re-derives what `groupSessions` already decided.
+  //
+  // Only while the filter is empty. With a query typed, part of what is missing
+  // is the user's own narrowing, and one number covering both would be true of
+  // neither.
+  const outside =
+    scope === 'project' && cwd.length > 0 && !query.trim()
+      ? (sessions?.length ?? 0) - matched
+      : 0
+
   // Same class of preference as the width, so it persists the same way. Changing
   // scope starts at page one again for the same reason a narrowed query does:
   // carrying a "show more" across would reveal a page the user never asked for.
@@ -498,17 +512,31 @@ const Sidebar = ({
       <section className="bg-sessions" aria-label="Background sessions">
         <div className="bg-sessions-head">
           <h3 className="bg-sessions-title">Background sessions</h3>
+          {/* A WORD, not the rail head's arrow. Two identical circular arrows in
+              the rail's first 80px, scoped to two different lists — the one
+              above re-lists FILES ON DISK, this one re-runs a CLI look — is a
+              hierarchy a glance cannot read. Different scope now reads as a
+              different KIND of control rather than as a repeated glyph.
+
+              Saying it in words is also what lets the scoped-and-empty state
+              below carry no control of its own: the labelled action it grew is
+              this one, two lines up, and one action needs one button.
+
+              The ONLY thing in this app that repopulates the list, besides
+              opening a different workspace. Disabled while a look is in flight
+              so a second click cannot start a second CLI process (#90).
+
+              The accessible name stays the scoped one and the visible word sits
+              inside it, so the control a screen reader hears and the control a
+              pointer sees are the same control. */}
           <button
             type="button"
-            className="sidebar-toggle"
+            className="sidebar-empty-retry bg-sessions-refresh"
             aria-label="Refresh background sessions"
-            // The ONLY thing in this app that repopulates the list, besides
-            // opening a different workspace. Disabled while a look is in flight
-            // so a second click cannot start a second CLI process (#90).
             disabled={bgLooking}
             onClick={refreshBackground}
           >
-            <Refresh />
+            Refresh
           </button>
         </div>
         {bgSessions === null ? (
@@ -521,9 +549,30 @@ const Sidebar = ({
         ) : bgSessions.length === 0 ? (
           // An empty list after a successful look is a real answer, not an
           // error — but only once someone has actually looked, which is what
-          // separates these two strings.
+          // separates these two strings. The looking branch stays a bare line:
+          // a note explaining an answer nobody has yet is the same lie in a
+          // longer form.
+          //
+          // The note says why the list is empty at all, which is the thing a
+          // bare line left the user to guess: this look is scoped to the open
+          // workspace, not the whole machine.
+          //
+          // It carries NO control of its own. The reason it grew one was real —
+          // the only honest action here is looking again, and that action was
+          // reachable only by inferring it from an unlabelled arrow — but the
+          // answer belonged one line up, not here: the head's control now says
+          // "Refresh" in words. A second button firing the SAME handler was one
+          // action wearing two faces, and `gui-91.mjs` had already pinned this
+          // section at exactly one control.
           <div className="bg-sessions-empty">
-            {bgLooking ? 'Looking…' : 'None running here'}
+            {bgLooking ? (
+              'Looking…'
+            ) : (
+              <>
+                <span className="bg-sessions-empty-line">None running here</span>
+                <span className="bg-sessions-empty-hint">Scoped to the open project.</span>
+              </>
+            )}
           </div>
         ) : (
           <ul className="bg-session-list">
@@ -532,9 +581,10 @@ const Sidebar = ({
               // 8-char prefix of this where it exists (#90).
               //
               // Read-only rows, deliberately: no attach, no peek, no reply —
-              // those are a separate unmeasured feature. Which also means this
-              // section adds exactly ONE tab stop (its refresh button) to a
-              // rail that already carries ~100.
+              // those are a separate unmeasured feature. Which also means a
+              // listing of ANY length adds exactly ONE tab stop (the head's
+              // Refresh) to a rail that already carries ~100 — and that count
+              // now holds in every branch of this section, not just this one.
               <li key={s.sessionId} className="bg-session-row">
                 <span className="bg-session-name" title={s.name || s.sessionId}>
                   {s.name || s.sessionId}
@@ -659,6 +709,30 @@ const Sidebar = ({
           ) : null}
         </div>
       )}
+      {/* The rail's bottom edge. The agents dock has carried a footer strip
+          since #83 and the sessions rail carried none, so the two rails stopped
+          mirroring at exactly the point where it shows: under a short list this
+          one ran to the window edge as dead ground, with nothing anchoring it.
+
+          What the bottom of a SCOPED rail owes the user is the size of what the
+          scope is hiding, and the control that reveals it. Both are things the
+          rail already knows and already does; nothing new is claimed here.
+
+          Same words and same shell as the zero-session state's button, because
+          it is the same action — and the two can never appear together, since
+          that state only renders when nothing grouped at all. */}
+      {groups.length > 0 && outside > 0 ? (
+        <div className="sidebar-foot">
+          <span className="sidebar-foot-count">
+            {outside === 1
+              ? '1 session outside this project'
+              : `${outside} sessions outside this project`}
+          </span>
+          <button type="button" className="sidebar-empty-retry" onClick={() => setScope('all')}>
+            Show all projects
+          </button>
+        </div>
+      ) : null}
       <div
         className="sidebar-resize-handle"
         role="separator"

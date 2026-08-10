@@ -292,10 +292,67 @@
   color: var(--text-faint);
 }
 
+/* The section's ONE control, and deliberately NOT `.sidebar-toggle`: that class
+   is the RAIL HEAD's 28px icon housing, and wearing it here put a second
+   circular arrow in the rail's first 80px — identical to the one above it, and
+   pointed at a different list. Different SCOPE has to read as a different KIND
+   of control, so the rail keeps the glyph and the section says the word.
+
+   Saying the word is also what let the scoped-and-empty state below stop
+   growing a labelled Refresh of its own: that copy sits two lines under this
+   one, so the named action is already beside it.
+
+   The shell is `.sidebar-empty-retry`, the rail's ONE secondary-action design,
+   and the hover and focus halves of it live with the other shared control
+   states in shared.css — nothing here re-authors a state. Only the SIZE is
+   local: a 13px control beside an 11px heading is the wrong weight for a head
+   band, and this way the band comes in a little under the 28px housing it
+   replaces rather than over it. The selector is compound because it has to
+   outrank that shell's own --fs-ui wherever the two rules sit in this file. */
+.sidebar-empty-retry.bg-sessions-refresh {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: var(--fs-micro);
+}
+
+/* In flight. The rail already had exactly one measure for an inert control —
+   .sidebar-toggle:disabled further down this file — and this control needs it
+   for a different reason, so it takes the numbers rather than the selector: a
+   streaming turn blocks the toggles, a look already running blocks this one.
+   pointer-events with it, or the shell's cursor and hover wash keep promising a
+   click the browser is refusing. */
+.sidebar-empty-retry.bg-sessions-refresh:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Column + gap for the scoped-and-empty state, the same construction
+   .sidebar-empty uses: a lone text child (the failed look, and the in-flight
+   line) lays out identically either way, so neither of those branches needs a
+   modifier class of its own. Two lines of prose and nothing else — the named
+   action this band once carried is the head's, where it is the section's only
+   one. */
 .bg-sessions-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   padding: 2px 16px 4px;
   font-size: var(--fs-micro);
   color: var(--text-faint);
+}
+
+/* The answer, one step brighter than the note under it. A state the user asked
+   for and a note explaining it are not the same weight, and at 11px the only
+   register available for that difference is the tint step. */
+.bg-sessions-empty-line {
+  color: var(--text-muted);
+}
+
+/* The note wraps to two lines in a 248px rail, and body 1.6 spaces those far
+   enough apart to read as two separate remarks. 1.45 closes them into one,
+   unitless so it still tracks --fs-micro. */
+.bg-sessions-empty-hint {
+  line-height: 1.45;
 }
 
 /* 6px gutter plus the row's own 10px inset puts the name on the shared 16px
@@ -312,7 +369,9 @@
 
 /* Read-only rows: no button, no hover, no focus ring, no tab stop. Attach,
    peek and reply are a separate unmeasured feature, and the rail already
-   carries about a hundred real tab stops without this section adding more. */
+   carries about a hundred real tab stops without a listing of ANY length
+   adding one. The section's own is the head's labelled Refresh, and it is the
+   only one in every branch — rows, empty, in-flight or failed. */
 .bg-session-row {
   display: flex;
   align-items: baseline;
@@ -576,9 +635,12 @@
   color: var(--text-faint);
 }
 
-/* Only the FAILED listing has one of these — an empty store has nothing a
-   second look could turn up, so it deliberately offers no button. Shares its
-   shell with the composer-side refusal retry (#47). */
+/* The rail's named secondary action, wherever the rail has one to name: the
+   FAILED listing's retry, the scoped-and-empty state's way out, and the foot's
+   copy of that same way out. An empty STORE deliberately gets none of them,
+   because there is nothing a second look or a wider scope could turn up. Shares
+   its shell with the composer-side refusal retry (#47); the hover and focus
+   halves live with the other shared control states in shared.css. */
 .sidebar-empty-retry,
 .switch-refusal-retry,
 .queued-note-cancel {
@@ -594,6 +656,41 @@
 .sidebar-empty-retry {
   padding: 5px 14px;
   font-size: var(--fs-ui);
+}
+
+/* ── the rail's foot ──
+   The agents dock has ended in a footer strip since #83 and the sessions rail
+   ended in nothing, so the two rails stopped mirroring at the one place a short
+   list makes visible: the ground under the last row ran to the window edge
+   unanchored. Same construction as .background-tasks — a hairline from the
+   opposite end to the head's, flex-shrink 0 so the scrolling list above always
+   yields to it rather than squeezing it.
+
+   It exists only while the scope is holding rows back, which is the only moment
+   it has something true to say; there is no version of this strip that is
+   furniture. The 16px left edge is the rail's shared one, the same edge the
+   head, the filter placeholder, the group headings and the row titles sit on.
+
+   The vertical inset is .background-tasks' own 8 / 10, not a second pair. Same
+   construction has to mean the same numbers: DESIGN.md has the agents dock
+   mirroring this rail, the two strips sit at the same window edge on opposite
+   sides, and a foot that started 2px lower and ended 2px higher than its mirror
+   is the drift that reads as two panes rather than one app. The GAP is the one
+   thing that legitimately differs: 4px stacks task rows, 8px separates a line
+   of prose from the control under it. */
+.sidebar-foot {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 16px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-foot-count {
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
 }
 
 /* ── agents dock (right-hand aside, mirrors the sessions rail) ── */
