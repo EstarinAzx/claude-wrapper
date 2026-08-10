@@ -7,51 +7,66 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 00:55 by Opus 5, relay chain 6 leg 1 — owner away_
-_At commit: `78afd56` on `main`_
+_Last updated: 2026-08-11 01:20 by Opus 5, relay chain 6 leg 2 — owner away_
+_At commit: `5e1b6b0` on `main`_
 
 ## Current focus
 
-**#132 landed: the gate now executes the GUI drivers' source-level assertions.**
-About 38 `gui-*.mjs` drivers encoded real contracts and `npm test` ran none of
-them — during the `core-surfaces` gauntlet run one edit turned two assertions red
-and the three gate runs that followed all reported green.
+**#133 landed: `inspect.mjs` now photographs the three right-hand docks.** The
+instrument captured five surfaces and could not reach Agents, Commands or
+Appearance at all — a visible third of the window's chrome that no automated
+check and no reviewer ever looked at, while `DESIGN.md` defines the Agents dock
+as the sessions rail's *mirror*. Five gauntlet waves photographed the rail every
+time and the dock never once.
 
-The chain continues. **Four tickets are unblocked**: closing #132 released #135
-and #136, which were waiting on it.
+The chain continues. **Four tickets are unblocked**: closing #133 released #137.
 
 ## State
 
-- **In flight:** nothing. `ticket/132-source-level-driver-assertions` was
+- **In flight:** nothing. `ticket/133-inspect-right-hand-docks` was
   squash-merged and deleted. Tree clean on `main`.
-- **Closed 2026-08-11:** **#132** (`78afd56`). **Filed:** **#141** at
-  `needs-triage` — the two build-artifact assertions #132 deliberately left out.
-- **Open:** #133, #134, #135, #136, #137 (`ready-for-agent`) · #138, #139, #140
-  (`ready-for-human`) · #141 (`needs-triage`). **Frontier: #133, #134, #135,
-  #136.** #137 still waits on #133.
+- **Closed 2026-08-11:** **#133** (`5e1b6b0`). **Filed:** **#142** at
+  `needs-triage` — `titlebar.png` is not byte-stable, cause identified.
+- **Open:** #134, #135, #136, #137 (`ready-for-agent`) · #138, #139, #140
+  (`ready-for-human`) · #141, #142 (`needs-triage`). **Frontier: #134, #135,
+  #136, #137** — nothing is blocked any more.
 - **Gate on `main` after the merge:** typecheck clean, build clean,
-  **86 files / 1301 passed + 36 skipped** (was 85 / 1295). Ran on the branch and
-  again on `main`. **Read the number off `main`, never off this file.**
-- **NOT PUSHED. Eight commits sit local.** D6 stands: **a leg does not push on
-  its own initiative.** Read the real gap rather than this number, it has drifted
+  **87 files / 1313 passed + 36 skipped** (was 86 / 1301 + 36). Ran on the branch
+  and again on `main`. **Read the number off `main`, never off this file.**
+- **NOT PUSHED. Ten commits sit local.** D6 stands: **a leg does not push on its
+  own initiative.** Read the real gap rather than this number, it has drifted
   every leg: `git rev-list --count origin/main..main`.
 
-## What #132 delivered, and the shape to copy
+## What #133 delivered, and the shape to copy
 
-A **convention, not a list**: a driver `gui-<n>.mjs` ships a sibling
-`gui-<n>.source.mjs` exporting `checks: { name, run() }[]`, `run()` pure,
-returning `{ ok, detail }`. `tests/gui-source-assertions.test.ts` **globs** for
-sidecars — a new one needs no wiring. **The driver imports the same array**, so
-the gated copy cannot drift from the driven one. Documented in the `run-desktop`
-SKILL.md.
+Three `stage: 'dock'` surfaces driven through their titlebar toggles, producing
+`agents-dock.png`, `commands-dock.png`, `appearance-dock.png`. `EXPECTED_FILES`
+is `SURFACES.length + 2`, so it went 7 → 10 with no number edited by hand.
 
-**The survey came out smaller than the ticket assumed, and that is the finding.**
-Reading every `fs.*` call across all 38 drivers: five no-browser static
-assertions, only three truly source-level, one of those already pinned by
-`subagent-material.test.ts`. **Net-new coverage is two** — gui-96 criteria 2
-and 6 — and grepping `tests/` for `font-weight.*500`, `subagent-slide` and
-`translateY` returns **nothing**, so those two were protected solely by a driver
-no one ran.
+**Three rules, and the third outlives this file:**
+
+1. **Docks are captured LAST**, after the window frames. A dock is an *in-flow*
+   aside, so an open one takes width out of `main.chat`.
+2. **Docks are selected by `aria-label`, never class.** All three asides wear
+   `agents-dock`; a class selector matches whichever is open and files it under
+   the wrong name.
+3. **An instrument must not force the app into a state the app calls
+   impossible** — see below.
+
+## The zoom finding, which is the transferable half
+
+`useZoom` applies its persisted level on mount (`DEFAULT_ZOOM` 1.25). The driver
+then called `setZoomFactor(1)` *afterwards*. So the window rendered at 1 (1440
+CSS px, visible in every capture) while the app still believed 1.25 — a state
+`useZoom` calls impossible in its own words: *"the readout can never disagree
+with the window"*.
+
+**Nothing photographed the disagreement for two tickets.** Then #133 added the
+Appearance dock, whose stepper prints that number, and the first capture read
+**"125%" over a demonstrably 100% window** — a critic cannot tell that from a
+real defect. Fixed by seeding `zoom-level-v2` to `1` and reloading before the
+folder pick. *Seeded*, not stepped: `nextZoom(level, 'reset')` returns
+DEFAULT_ZOOM, not 1.
 
 ## Pick up here
 
@@ -63,12 +78,12 @@ gh issue list --state open --label ready-for-agent
 ```
 
 Then read the **"Blocked by"** section in the chosen issue body. Edges are prose,
-not native tracker links, so an open ticket is not necessarily a free one.
+not native tracker links.
 
-**#135 is the natural next one** — it is the sibling of what just landed (the
-DOM-level assertions, plus the empty-state check that has been red for three
-waves) and #132 built the classification it will extend. #133 is older and also
-free if you prefer strict age order.
+**#137 is the natural next one** — it is the direct continuation (same file, same
+capture stage, and #133 was its declared blocker), and #133 just built the
+`stage`/`requires`/loud-failure machinery it extends. **But read the #142 warning
+below before starting it.** #134 is older and free if you prefer strict age order.
 
 ## Skills for next session
 
@@ -77,35 +92,46 @@ free if you prefer strict age order.
   `needs-info` + a comment + a `PushNotification`.
 - **File follow-ups at `needs-triage`, never `ready-for-agent`.** This chain
   stops on an empty frontier; a leg promoting its own follow-up there makes the
-  stop condition unreachable by construction. #132's leg filed #141 correctly.
+  stop condition unreachable by construction. #132's leg filed #141, #133's
+  filed #142, both correctly.
 
 ## Open questions
 
 **TWO** live owner-calls in `.claude/vibe.md` under `## Needs you`, both
-reversible with the default already taken (may a gauntlet wave commit RED; is the
-identity mark's solidity deliberate). **SEVEN older ones live in
+reversible with the default already taken. **SEVEN older ones live in
 `.claude/vibe-130.md`** — every reference pointing at `.claude/vibe.md` for those
 is stale. Plus **#138–#140** (`ready-for-human`) and the gauntlet stop-signal
 question recorded as owner call 14 in `.claude/gauntlet.md`.
 
 ## Recent context
 
-- **The `.source.mjs` convention does NOT fit the build-artifact case as
-  written** — `run()` is specified pure, no `out/` access. Extending it needs a
-  second export or a requirement flag; that is #141's design work, not a detail.
-- **The criterion-6 red-verify was placed in the `to` stop only.** A lazy
-  `\{([\s\S]*?)\}` body extraction reads `from`, sees `translateY`, and passes —
-  the brace-counting version reds, and its `stops: 2` is the evidence it read the
-  whole body. The mutation proves the check *and* its implementation.
-- **Both mutations were restored byte-identical against git**, verified with
-  `git diff`, not eyeballed.
-- **overview.md said 37 drivers; the real count is 38.** Corrected. The two new
-  `.source.mjs` sidecars are NOT drivers and are excluded from that count.
-- Added phase costs ~11–27ms of test time. Before 69.15s / 63.40s, after 63.53s /
-  61.10s — less than the baseline varies against itself.
+- **#137's AC2 as written cannot be satisfied, and #142 is why.** It asks that
+  every other surface be **byte-identical**, *"proved with a hash comparison, not
+  an eyeball"*. `titlebar.png` is not byte-stable: `.session-title` renders
+  `basename(cwd)` and the fixture workspace is `mkdtemp`'d, so six random
+  characters move the pixels while the box and text length (43) stay fixed.
+  Measured across seven runs, and the **unmodified** driver spreads *wider*
+  (9084 / 9538 / 9083) than the modified one — this predates #133. The leg taking
+  #137 should hash the other six and treat titlebar by box and content, or
+  resolve #142 first. Do not silently "fix" a red hash by adjusting the capture.
+- **The instrument is fixture-driven end to end, and now says so per surface.**
+  Chat replays a seeded transcript (since #131), Agents reads seeded `.meta.json`
+  sidecars on its **real** disk path, Commands has its IPC handler **replaced in
+  main** because `commands:list` needs a live query. So **a green
+  `commands-dock.png` says nothing about whether the CLI serves commands** —
+  gui-51 and gui-94 own that against a warm engine.
+- **The obvious coverage check was wrong.** Grepping `tests/` for
+  `aria-label="Agents"` returns nothing, so the aside labels look unpinned.
+  Mutating one reds **six** existing tests: they pin it via
+  `getByRole('complementary', { name: 'Commands' })`. An accessible-name query
+  pins a label without ever spelling it as an attribute — worth remembering
+  before concluding anything from a grep for an attribute.
+- Both new failure paths red-verified in one run (renamed toggle + empty command
+  list): exit 1, each failure naming its surface, `CAPTURED 8/10 files`, and the
+  third dock still captured.
 
 ## Related
 
 - [[overview]] · [[pick-up]] · [[decisions]] · [[stack]] · [[happy-path]] · [[flows]]
+- [[2026-08-11-an-instrument-may-not-photograph-a-state-the-app-calls-impossible]]
 - [[2026-08-11-a-check-nobody-runs-is-not-a-check]]
-- [[2026-08-10-a-blank-capture-is-proven-in-the-dom-not-in-the-pixels]]

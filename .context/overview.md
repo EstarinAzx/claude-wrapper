@@ -479,20 +479,32 @@ tags: [context, overview]
   list); both are premise failures, not regressions, and both were reproduced on
   clean `main` before being called so)
 - `.claude/skills/run-desktop/inspect.mjs` — **the consolidated `inspect:`
-  command (#131), and the one to copy when a run must produce EVIDENCE rather
-  than a verdict.** `SCREENSHOT_DIR=<dir> node …/inspect.mjs` captures all five
-  core surfaces — Welcome, Titlebar, Sidebar, Chat, InputBar — plus two
+  command (#131, #133), and the one to copy when a run must produce EVIDENCE
+  rather than a verdict.** `SCREENSHOT_DIR=<dir> node …/inspect.mjs` captures
+  **eight** surfaces — Welcome, Titlebar, Sidebar, Chat, InputBar, and since #133
+  the three right-hand docks (Agents, Commands, Appearance) — plus two
   whole-window frames, because a surface clipped to its own box cannot answer a
   composition question. It spends **zero CLI turns**: the chat is a transcript
   **fixture seeded into the CLI store** and replayed (gui-63's mechanism), so it
   carries real message rhythm and two tool cards on a machine with no session and
-  no API key. Determinism is bought explicitly — the window is pinned to 1440x900
-  and `setZoomFactor(1)`, both of which are otherwise remembered across launches
-  and would silently rescale every capture. **Every surface is proven present,
-  painted, on screen and non-empty BEFORE it is photographed**, and a green run
-  asserts it wrote all seven files, so a half-empty output directory cannot read
-  as a complete one. `driver.mjs` is untouched and still owns the two-pill read.
-  Re-run it after any change to a surface's root class
+  no API key. Determinism is bought explicitly — the window is pinned to 1440x900,
+  the zoom level is seeded and the app reloaded so the app AGREES it is at factor
+  1 rather than being overridden behind its back (#133), and the agents dock's
+  remembered width is cleared; all three are otherwise remembered across launches
+  and would silently rescale or resize a capture. **Every surface is proven
+  present, painted, on screen and non-empty BEFORE it is photographed**, and a
+  green run asserts it wrote all **ten** files, so a half-empty output directory
+  cannot read as a complete one. `driver.mjs` is untouched and still owns the
+  two-pill read. Re-run it after any change to a surface's root class.
+  **The docks are captured LAST, after the window frames, and that order is
+  load-bearing** — a dock is an in-flow aside, so an open one takes width out of
+  `main.chat` and would move the boxes of surfaces it has nothing to do with.
+  **All three docks wear the class `agents-dock`**, so they are selected by
+  `aside[aria-label="…"]`; a class selector matches whichever dock is open and
+  files it under the wrong name. **`titlebar.png` is the one capture that is NOT
+  byte-stable** — `.session-title` renders `basename(cwd)` and the fixture
+  workspace is `mkdtemp`'d, so six random characters change the pixels while the
+  box and text length stay fixed (measured across seven runs; #142)
   (`.welcome`, `header.titlebar`, `aside.sidebar`, `main.chat`,
   `footer.input-bar`) or to the shape `transcript.ts` parses
 - `scripts/spike-81-background-tasks.mjs` — the CLI-measurement harness (#81),
