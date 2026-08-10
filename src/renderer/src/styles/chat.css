@@ -247,9 +247,24 @@
    else, so they read as one editorial pair with the identity above and the
    action below.
 
-   The stack is lifted off true centre: the bottom padding carries 80px more
-   than the top, and centring in the remainder puts the block 40px high. Dead
-   centre is where a stack lands when nobody placed it. */
+   THE STACK IS LIFTED OFF TRUE CENTRE, and the lift is exactly half the
+   padding difference: centring inside the remainder moves the block up by
+   `(bottom - top) / 2`. The shipped pair is 32 top against 152 bottom, so 120
+   of difference puts it 60px high. Dead centre is where a stack lands when
+   nobody placed it.
+
+   60 AND NOT 40. The first attempt carried 80px of difference for a 40px lift,
+   and photographed at 1440x900 it still read as centred. The pane is the
+   window under a 48px titlebar and its 1px rule, so the field is 851px and a
+   40px offset is 4.7% of it — under a twentieth, which is inside the margin
+   where the eye still calls a thing middle. 60px is 7.1%, far enough that the
+   larger reserve below reads as a decision about where the hero sits.
+
+   It survives the smallest window. The content measures about 200px — a 44px
+   mark and 24 under it, a 23px title at 1.25 leading and 8 under it, a 13px
+   hint at 1.5, then 40 above a 36px button — and 200 plus 184 of padding needs
+   384px. `minHeight` is 480px in `src/main/index.ts`, which leaves this pane
+   431px, so the authored reserve never becomes a clip. */
 .welcome {
   flex: 1;
   min-height: 0;
@@ -257,7 +272,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32px 32px 112px;
+  padding: 32px 32px 152px;
 }
 
 /* Solid by design and stays that way. 44px is exactly twice the titlebar mark,

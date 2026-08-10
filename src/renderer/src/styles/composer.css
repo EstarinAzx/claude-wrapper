@@ -266,11 +266,62 @@
   flex-shrink: 0;
 }
 
-/* The name beside the pill. Matches `.effort-name`, which gets the same two
-   values by inheriting them from the effort control's own rule. */
+/* The pill is an inline-block inside this wrapper, so the wrapper carries a LINE
+   BOX and the parent font's descender is dead space under the button — about
+   3px at the inherited 15px --fs-body. `align-items: center` then centres the
+   wrapper rather than the button, which parks the model value ~1.5px above the
+   effort value it is meant to line up with. Flex has no line box, so the wrapper
+   collapses onto the button and the two values sit on one centre line. Scoped to
+   the composer copy, so the titlebar's own pills are untouched; the wrapper
+   keeps `position: relative` from titlebar.css and both the menu and the
+   backdrop are positioned, so neither was ever in this flow. */
+.model-control .model-pill-wrap {
+  display: flex;
+}
+
+/* ONE label treatment for both settings, declared once instead of matched by
+   coincidence: `.effort-name` used to pick these values up by INHERITING them
+   from `.effort-control`, so a change there split the two labels apart with
+   nothing to say it had. The 1.3 line box is `.control-value`'s below, so a
+   label and a value are one type object at two weights. */
+.effort-name,
 .control-name {
   font-size: var(--fs-micro);
+  line-height: 1.3;
   color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* ONE value treatment for both settings. The strip used to print "Default"
+   twice in two unrelated shells — the effort readout as bare 400-weight text,
+   the model as a 600-weight outlined lozenge — so the two settings read as
+   having been built at different times. Both values are the same object now:
+   11px --fs-micro at 600, 0.02em tracking, a 1.3 line box and a 2px/9px pad
+   inside one hairline, which makes both boxes 20.3px tall (14.3 text + 4
+   padding + 2 border) and lands their baselines on one line.
+
+   Declared HERE rather than borrowed from `.model-pill`, which lives in
+   titlebar.css grouped with the two titlebar toggles — a different surface with
+   a different owner. composer.css imports after it at equal specificity, so
+   this class is what the strip actually renders and the strip cannot drift when
+   a titlebar pill is retuned. The values are the pill's current ones, so the
+   model side is unchanged and only the effort readout moves.
+
+   A hairline box is this app's "small panel reporting one thing" — the shell
+   `.attachment-chip` wears without being a button — so the effort readout
+   wearing it is not claiming to be clickable. The pill keeps the pointer cursor
+   and the hover it has always had, which is what separates them. */
+.control-value {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  color: var(--text-muted);
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -306,16 +357,26 @@
   gap: 6px;
 }
 
-/* The level word, and the widest of them ("Default") sets the floor: without it
-   the slider shifts sideways as the label changes length, which reads as the
-   control drifting under the pointer while it is being dragged. */
+/* The shell is `.control-value`; only the FLOOR is the effort side's own, and
+   only because its word changes under a pointer that is dragging. The strip is
+   right-aligned, so a value that widens pushes the slider LEFT and the control
+   reads as drifting mid-drag. The floor is the widest word ("Default"; the
+   levels are low/medium/high/xhigh/max) plus the shell: ~48px of text at
+   11px/600 with 0.02em tracking, plus the 18px padding pair and the 2px border
+   pair, so 68px border-box. It replaces a bare-span 46px that measured text
+   alone at 400 weight with no shell to sit in. The model side takes no floor —
+   model names vary in length and none of them move under a drag, and a floor
+   there would only pad short names away from the strip's right edge. */
 .effort-value {
-  min-width: 46px;
-  color: var(--text-muted);
+  min-width: 68px;
 }
 
 /* The current model takes no effort level. Dimmer than the live control and
-   deliberately still present — see InputBar.tsx. */
+   deliberately still present — see InputBar.tsx. Deliberately NOT wearing
+   `.control-value`: there is no value here to put in it, and the shell at 0.7
+   opacity would draw its hairline at 0.056 alpha (--border is 0.08), a ghost
+   outline. The strip does not reflow when this swaps in either way, because the
+   model value is 20.3px in both states and it is the tallest thing on the row. */
 .effort-none {
   opacity: 0.7;
   cursor: default;

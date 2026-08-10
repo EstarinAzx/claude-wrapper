@@ -18,8 +18,8 @@ pieces:
     verdict: BAR WINS
     open: true
   - name: Sidebar
-    verdict: YOURS WINS        # PROVISIONAL — see "Wave 2 adjudications"; deliberately still open
-    open: true
+    verdict: BAR WINS          # CORRECTED at wave 3: wave 2's YOURS WINS was an instrument
+    open: true                 # artifact of the trimmed prompt. See "Wave 3 adjudications" 1.
   - name: Chat
     verdict: BAR WINS
     open: true
@@ -29,8 +29,8 @@ pieces:
 critic: sonnet                 # re-resolved live at wave 2 -> codex/gpt-5.6-sol; RE-RESOLVE every wave
 critic_degraded: false
 branch: gauntlet/core-surfaces
-wave: 2
-plateau: 0
+wave: 3
+plateau: 1                     # rose while 4/5 critics said BETTER — see owner call 4
 max_waves: 12
 page: false
 stop: false
@@ -157,6 +157,67 @@ has to reconstruct them. **They are not up for re-litigation by a wave.**
 | 2 | Sidebar | **YOURS WINS** (provisional) | The background-empty explanation still relies on an unlabelled circular-arrow for its action: add a visible inline "Refresh" action beside the copy to remove the remaining icon inference. |
 | 2 | Chat | BAR WINS | *(as returned)* "The assistant prose is consistently too heavy for sustained reading; render ordinary transcript text at the specified regular 400 weight and reserve 600 for labels or real emphasis." **REFUTED AGAINST SOURCE — see adjudication 1. Do not hand this to a wave-3 builder as written.** |
 | 2 | InputBar | BAR WINS | Recompose the right-hand settings strip as two visually matching compact controls with equal label/value structure, because the bare Effort "Default" and the outlined Model "Default" make the area beneath the otherwise resolved pill look improvised. |
+
+| 3 | Welcome | BAR WINS | Increase the whole stack's SCALE — title, supporting line and button — so it occupies enough width and visual mass to carry the desktop field instead of reading as a small utility cluster placed on a canvas. |
+| 3 | Titlebar | BAR WINS | The three toggles are now stroke-consistent but **semantically** disconnected: give slash / connected-node / split-circle a shared legible panel-outline metaphor so they read as one panel group rather than three unrelated utilities. |
+| 3 | Sidebar | BAR WINS | *(verdict CORRECTED down from wave 2 — adjudication 1)* Consolidate or explicitly differentiate the THREE reload affordances — the arrow beside "SESSIONS", the arrow beside "Background sessions", and the new labelled "Refresh" — whose concentration in the rail's first 110px makes the action hierarchy ambiguous. |
+| 3 | Chat | BAR WINS | Reduce the apparent optical weight of assistant paragraphs so they read **distinctly lighter than the 600-weight "Read"/"Edit" tool labels**. *(Second independent raising of the heavy-prose perception — but note the NEW mechanism, adjudication 2.)* |
+| 3 | InputBar | BAR WINS | Pull the Effort/Model strip closer to the composer so it reads as attached metadata rather than a control island floating between the input and the disclaimer. |
+
+## Wave 3 adjudications — the provisional verdict was tested and it failed
+
+Wave 3 raised **zero** `SPEC BREAK`s (third wave running). It settled the two things
+wave 2 explicitly deferred to it, and both settled *against* the comfortable answer.
+
+1. **Sidebar's provisional `YOURS WINS` WAS AN INSTRUMENT ARTIFACT. Re-run on the
+   standardised prompt it returns `BAR WINS`, and the piece's recorded verdict is
+   corrected down.** This is the exact test wave 2 designed: its Sidebar verdict came
+   from a trimmed retry (three images instead of five, plus one pre-refusal the other
+   four critics never got) after the full prompt died on context length, so what was
+   unproven was not its honesty but its **comparability**. Wave 3 gave all five critics
+   an identical three-image payload; on that instrument Sidebar sits where the other
+   four sit.
+   **The correction is worth more than the verdict was.** Had the piece been closed at
+   wave 2 as the preset's letter directs, the run would have frozen an inflated
+   measurement *and* retired the only test capable of catching it — and every later
+   plateau reading would have been computed against a phantom. The deviation from the
+   preset paid for itself in exactly one wave.
+   **Note what this does NOT say.** The wave-2 Sidebar critic saw real pixels and
+   reasoned honestly; it was the *scale* that was not shared. A lighter prompt produced
+   a kinder verdict, which is a fact about prompts, not about that agent.
+
+2. **Chat's heavy-prose perception was raised a SECOND time, independently — and the
+   new phrasing names a lever wave 2 ruled out.** Wave 2 refuted the mechanism (it
+   asked for 400 weight that already ships) and concluded the only remaining lever was
+   colour, which binding constraint 1 puts out of scope, making a repeat an owner call.
+   The repeat has arrived, but it is **not the same claim**: wave 3 asks for the prose
+   to read *"distinctly lighter than the 600-weight Read and Edit tool labels"*. That
+   is a **relative** claim about a contrast between two elements, and it names the
+   second element. Wave 2 only ever considered moving the prose down; this points at
+   the tool labels moving too, and `tool-card.css` is Chat's own file, not colour, and
+   not out of scope.
+   **So a wave-4 Chat builder may have a legal move after all**, which wave 2's
+   adjudication had concluded it would not. It is still worth an owner's eye — two
+   independent critics reporting the same perception is the signal wave 2 said to
+   escalate on — but do not hand wave 4 an owner call as though the analysis were
+   closed. The honest brief is the relative one: widen the gap between body and tool
+   label, from whichever end does not require colour.
+   Evidence this critic actually read the transcript rather than pattern-matching: it
+   named the two specific paragraphs it was judging (*"Flipping the pill discards the
+   engine…"*, *"Rebuilding lazily…"*) and the two labels it compared them against.
+
+3. **The one addition slot is STILL UNSPENT, and this time the smoothing pass refused
+   it itself.** It considered re-proposing the three right-hand docks, found nothing new
+   that clears the instrument refusal, and then made the sharper argument *against* its
+   own wave-2 predecessor: the strongest evidence for a dock piece was that
+   cross-surface drift goes uncaught, and this wave the smoothing pass **caught exactly
+   that class of drift from source, with no capture of either half** (finding 2 in the
+   log below). That is evidence the existing decomposition plus a whole-app pass already
+   reaches this class — not evidence a sixth piece is missing.
+   It also declined to propose *cross-surface composition* as a piece, on the grounds
+   that no single builder could act on such a verdict under binding constraint 8. An
+   agent reasoning correctly about the loop's own mechanics, and declining a slot it was
+   invited to spend, is the smoothing pass at its best.
 
 ## Wave 1 adjudications — three SPEC BREAKs raised, one survived
 
@@ -408,6 +469,117 @@ sweep, and it is the reason this note exists rather than a verdict.
   plateau, and it is an owner call — not something a leg should quietly rule on by
   changing the counter.**
 
+- [wave 3] **Four builders, not five, and the skip was the point.** Chat got a critic
+  but no builder: its wave-2 gap was refuted against source, and binding constraint 8
+  restricts a builder to the named gap, so a wave-3 Chat builder had no legal move.
+  Same structural logic that made wave 1 measure-only. Gate green **twice** (D7) — after
+  the builders and again after the smoothing pass: typecheck clean, **1295 tests / 85
+  files**, build clean, unchanged from baseline. Nothing reverted; constraint 10 never
+  fired.
+- [wave 3] **THE STANDARDISED THREE-IMAGE PROMPT WORKED, AND IT IS THE WAVE'S MAIN
+  INSTRUMENT RESULT. 5/5 critics returned on ATTEMPT 1 — no retries, no context-length
+  death, 39–45k tokens each.** Wave 2 lost a critic at five images and had to re-run it
+  trimmed, which is what produced the incomparable verdict this wave had to correct.
+  Payload is now identical for all five: the piece's own surface, its window frame, and
+  its one `linear/` reference. Sized before spending an agent rather than after losing
+  one: every `linear/` reference is 3360x2100 (~9.4k image-tokens), so three images cost
+  the same for InputBar's 894KB `linear-home-product.png` as for the reference that
+  wave 2's successful retry used. **Do not add a fourth image to a critic.**
+- [wave 3] **The improvement axis DISCRIMINATES, which is the strongest evidence yet
+  that the critics track reality rather than pattern-matching approval.** Four built
+  pieces returned BETTER; **the one piece with no builder — Chat — returned SAME**, and
+  it was the only SAME. Nobody told any critic which pieces had been rebuilt. A panel
+  that answered BETTER out of politeness would have said BETTER five times.
+- [wave 3] Critic **re-resolved live** per the standing instruction: `wisp routing`
+  gives `sonnet` -> `codex/gpt-5.6-sol`, third wave at the same value, read fresh rather
+  than carried. `critic_degraded: false`.
+- [wave 3] **Instrument verified first-hand, not from the critics' own claims.** Capture
+  `PASS`, 7/7, frame 1440x900 @ zoom 1, chat text **923** (the corrected-fixture number,
+  third wave running). The leg read `titlebar.png`, `sidebar.png`, `input-bar.png` and
+  `welcome.png` itself BEFORE reading any verdict, then checked every critic's literals
+  against that read: the new session id `inspect-ws-yCT6Rl`, both exact truncations
+  (`Why does the sessions rail go e...`, `C:\Users\S.D\AppData\Local\Temp\inspect-...`),
+  the live `951 sessions outside this project` (**950 last wave — this number drifts, so
+  it is the best liveness literal the capture offers**), `Show all projects`, and
+  InputBar's `"Default" appears exactly twice`. The Welcome critic additionally quoted
+  its bar reference's own copy (`THE LINEAR METHOD`, `Practices for building`), proving
+  it read the bar and not only the capture. 5/5 saw pixels. **Zero factual errors this
+  wave** — the first clean sweep in three (waves 1 and 2 each had one). The only
+  discrepancy is the Titlebar critic transcribing the session id's final lowercase `l`
+  as capital `I`, which is a glyph ambiguity in the rendered font rather than a claim.
+- [wave 3] **The leg BUILT the Titlebar piece itself after killing a runaway builder.**
+  The Titlebar builder reached retry 2 at 262k tokens and went idle; it was stopped and
+  the edit done in-context. It had written **nothing** — `git status` showed
+  `Titlebar.tsx` and `titlebar.css` untouched — so there was no partial edit to unwind.
+  The other three builders had already returned and their edits were on disk, unaffected.
+  **The transferable half: a fan-out that writes to a shared tree needs its survivors'
+  work to be independent of the casualty, and here it was, because file ownership was
+  assigned per piece up front.** The one open-ended licence in that brief (permission to
+  change the Commands glyph's *metaphor*, not just its geometry) is the most likely cause
+  of the spiral, and it is the one thing wave 2's builder had flagged as "a call worth a
+  human". A brief that hands an agent an unbounded design question is where the tokens go.
+- [wave 3] **The smoothing pass PROVED the flatness artifact instead of restating it,
+  closing the run's most-repeated assertion by measurement.** Binding constraint 1 has
+  said since seed that the flat ground is an instrument artifact; that was reasoning, not
+  evidence. The pass measured it: both wave-3 window captures are RGBA with a dominant
+  alpha of **163/255 = 0.639**, which is exactly the authored wash
+  `oklch(0.12 0.008 210 / 0.64)`, while `frost-mono-reference.png` is alpha 255 on every
+  pixel. **The wash is present in the capture at its authored alpha with nothing behind
+  it** — the mid-grey a viewer sees is the viewer compositing over its own chrome. The
+  identity floor otherwise `HOLDS` on numbers: ground `(3,6,6)` at 93.9% of the welcome
+  frame, mint coverage **0.664% welcome / 0.351% session against the reference's 0.283%**
+  — about one fifteenth of the 10% ceiling — one mint value with only antialias ramps
+  beside it, and exactly one `backdrop-filter` in `styles/`, still `.subagent-drawer`'s.
+- [wave 3] **The smoothing pass caught the wave-2 defect class repeating — in the LEG'S
+  OWN edit.** The leg's new Titlebar comment justified the 14 -> 16 grid move as making
+  the glyphs "carry their 28px housings". That housing is **not the titlebar's**:
+  `titlebar.css:169` declares `.agents-toggle, .sidebar-toggle` jointly, and the sessions
+  rail's three glyphs still draw on **14 at 1.4 stroke** (`Sidebar.tsx:66`, `:460`,
+  `:477`). Taken at face value the stated reason condemns three glyphs in a file the
+  Titlebar builder never opened. The pass measured both sides before touching anything
+  (titlebar 10.0 / 9.9 / 10.8x10.6 on the 16 grid; rail 9.0x9.5 / 10x7.8 / 9x9 on the 14)
+  , found both land ~10px optical inside the same 28px box, **redrew nothing**, rewrote
+  the false justification, and added the reciprocal note to `titlebar.css:169` so the
+  next builder told to "unify the icons" sees that the rule has two tenants. It also
+  caught the Welcome comment stating its own arithmetic wrongly (`120 against 32` reads
+  as a 120px bottom padding; the shipped value is 152). **Both are comment-level defects
+  and neither changes a pixel — which is exactly why only a whole-app reader finds them.**
+- [wave 3] **Two independent instruments landed on the same new defect, which is the
+  wave's most trustworthy finding.** The Sidebar critic (pixels only, forbidden from
+  reading source) named *three reload affordances concentrated in the rail's first 110px*
+  as its biggest gap. The smoothing pass (source only, never saw a verdict) independently
+  flagged that the rail now holds three refresh controls whose accessible names are
+  `Refresh sessions`, `Refresh background sessions` and a bare `Refresh`. **Wave 3's own
+  Sidebar build created the third**: it closed the named gap and opened an adjacent one,
+  which is honest loop behaviour rather than a failure, but it means the piece's gap is
+  now partly of the run's own making. The obvious fix is blocked —
+  `tests/background-sessions.test.tsx:262` resolves that control by
+  `getByRole('button', { name: 'Refresh background sessions' })` and three tests call it
+  in the empty branch, so renaming to match makes `getByRole` throw on ambiguity. **This
+  wants a ticket, not a smoothing edit**, and the pass correctly declined it.
+- [wave 3] **The smoothing pass's declined half, recorded because a later wave will meet
+  these again.** (a) `.control-value` (`composer.css:314`) is a nine-declaration
+  hardcoded twin of `.model-pill` (`titlebar.css:46`) — compared property by property,
+  **zero drift today**, and declined because undoing it would re-decide an InputBar
+  construction one wave after its builder deliberately chose it. (b) `.model-pill`'s rule
+  lives in `titlebar.css` grouped with the two titlebar pills, yet **only
+  `InputBar.tsx:94` renders it** — a standing drift generator, pre-existing, and the
+  reason the twin got written at all; flagged for the second run. (c) The send/stop glyph
+  is a 16 viewBox at 1.75 stroke, so this wave moved the toggles **onto** its grid rather
+  than off it. (d) Swept clean and therefore reported as a negative result: the identity
+  mark pair still matches at corner ratio 0.3182 after wave 2's fix, the
+  `.sidebar-foot`/`.background-tasks` mirror holds, `SOLID` left zero stragglers, and a
+  sweep of all 253 classes in `styles/` against every `.ts`/`.tsx`/`.html` in `src/`
+  found no rule orphaned by this wave.
+- [wave 3] **D3/D4 pins checked MECHANICALLY twice — after the builders and again after
+  smoothing — never from any agent's self-report.** All clean both times: `.bubble {`
+  still the first literal occurrence in `chat.css` (line 84); zero comments in `styles/`
+  containing a closing brace; exactly one `backdrop-filter`; **every `var(--x)` used
+  anywhere in `styles/` resolves — 66 used against 67 defined, zero undefined**, which is
+  #129's exact failure mode closed by measurement. Additionally `tokens.css` and
+  `themes.css` are **untouched by the entire wave**, so `theme.test.ts`'s no-lightness /
+  no-alpha bar was never even approached.
+
 ## Owner calls raised by wave 2 — none of these are a wave's to settle
 
 1. **`DESIGN.md` is now FALSE about the build.** Its Type section (line 54) and its
@@ -440,5 +612,48 @@ sweep, and it is the reason this note exists rather than a verdict.
    visible third of the window's chrome that no critic owns, and `DESIGN.md:60`
    defines the agents dock as the sessions rail's mirror. A ticket extending the
    instrument would unblock the second run and close a proven drift path.
-</content>
-</invoke>
+
+## Owner calls raised by wave 3
+
+4. **THE MEASUREMENT-SCALE RISK WAVE 2 FLAGGED HAS NOW BITTEN, AND WAVE 2 LEFT
+   STANDING INSTRUCTIONS FOR THIS EXACT MOMENT: IT IS AN OWNER CALL AND NOT SOMETHING
+   A LEG MAY QUIETLY RULE ON BY ADJUSTING THE COUNTER.** `plateau` rose **0 -> 1** while
+   **four of five critics independently reported BETTER** and the fifth was the piece
+   nobody built. No verdict improved, so by the preset's letter the counter moves, and
+   **it has been recorded faithfully at 1 rather than massaged back to 0.**
+   The mechanism is exactly as predicted: the verdict is a three-state ordinal against a
+   deliberately hard bar, so real improvement that does not cross an ordinal boundary is
+   invisible to it. Two waves of genuine, independently-confirmed progress can therefore
+   spend two thirds of the stop budget.
+   **What the owner is being asked, precisely:** at `plateau >= 3` this run stops. If the
+   next two waves also improve without moving a verdict, the run will halt at wave 5
+   having been told BETTER roughly a dozen times. Is the honest stop signal (a) verdict
+   movement as written, (b) verdict movement OR three straight waves of unanimous SAME on
+   the improvement axis, or (c) is `BAR WINS` against Linear simply the correct permanent
+   answer for most of these pieces, making the plateau the intended graceful end?
+   **No leg should decide this.** A leg that quietly resets `plateau` on "but the critics
+   said BETTER" has removed the only stop signal the loop has, which is the failure mode
+   the whole preset is built to prevent.
+5. **The Sidebar's new gap is partly the run's own artifact, and that is a question about
+   the loop rather than about the rail.** Wave 3 added the labelled `Refresh` the wave-2
+   critic asked for, and wave 3's critic then named the resulting **three** reload
+   affordances as the biggest gap. Each step was correct in isolation. **A one-gap-per-
+   wave loop can walk a surface into a defect that no single wave's brief could have
+   foreseen**, and the only agent positioned to see it coming is the smoothing pass — a
+   consistency fixer, deliberately barred from redesigning a surface on its own terms.
+   Worth an owner's eye on whether the smoothing pass should be allowed to *veto* a
+   builder's brief when it can see the brief will create a new defect. Not a leg's call;
+   it changes the preset, not the app.
+6. **The accessible-name collision on the rail's three refresh controls WANTS A TICKET**
+   (`Refresh sessions` / `Refresh background sessions` / bare `Refresh`). Blocked from
+   being a smoothing edit because `tests/background-sessions.test.tsx:262` resolves by
+   `getByRole('button', { name: 'Refresh background sessions' })` and three tests call it
+   in the empty branch, so the obvious rename makes `getByRole` throw on ambiguity.
+   Fixing it properly means touching the test's query, which is a spec-adjacent change
+   rather than a consistency pass.
+7. **Owner calls 1–3 from wave 2 are all still open and none has been actioned**, because
+   none is a wave's to settle: `DESIGN.md` remains false about the type scale (four rungs
+   ship, three documented), the em-dash ban remains broken in ~15 pre-existing
+   user-visible strings, and `inspect.mjs` still cannot reach the three docks. **Wave 3
+   verified it introduced no new em dash in rendered copy** — its only two new strings
+   are `Scoped to the open project.` and `Refresh`, both clean.

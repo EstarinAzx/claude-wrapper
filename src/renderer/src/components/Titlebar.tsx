@@ -78,18 +78,38 @@ const BackendPill = ({
   )
 }
 
-// ONE icon set for the three dock toggles. Every glyph is drawn on the same 14
-// grid, inscribed in the same 10px optical square centred on (7,7), at one
-// stroke width with round caps and joins, so the three read as one family
-// inside their identical 28px housings. They previously carried three stroke
-// widths (1.4 / 1.2 / 1.3), three optical sizes (8.8 / 9.4 / 10) and one fill
-// that bled past its own stroke, which is what made them look borrowed from
-// three different sets. Solid parts opt out of the inherited stroke explicitly,
-// so a filled node reads at its authored radius rather than radius + stroke.
+// ONE icon set for the three dock toggles: one grid, one stroke weight, one
+// visual centre, and — the part that changed — one DRAWING MODE.
+//
+// The previous set unified the geometry and stopped there. Every glyph sat on a
+// 14 grid in a 10px optical square at one 1.3 stroke, which is measurably one
+// family, and it still did not read as one, because two of the three carried
+// solid elements: the appearance disc was half filled and all three agent nodes
+// were filled discs. Fill and outline are different weights of ink no amount of
+// size matching reconciles, so the eye sorted them into "two heavy, one light"
+// before it ever compared their boxes. The set is now outline throughout, which
+// is why the solid escape hatch that used to live here is gone rather than
+// merely unused.
+//
+// The grid moves 14 -> 16, which is a change of COORDINATE SPACE and not a fit
+// correction. The 28px housing is NOT this surface's own: it is declared once,
+// in titlebar.css, jointly with `.sidebar-toggle`, and the sessions rail's three
+// glyphs still draw on 14 inside the identical box at ~10px optical extent —
+// which is what these reach at 16. So the housing is not what differs and never
+// asked for a wider grid. What the wider grid buys is room to draw the agent
+// nodes hollow at r 1.7 and still land their connectors on the ring edge. The
+// stroke stays 1.3, near the proportion Lucide draws at (2 on 24), and it is
+// the reason those rings read as rings at this size rather than closing into
+// dots.
+//
+// Everything is centred on (8,8) and drawn to a ~10px optical extent: the slash
+// spans 10.0 vertically, the disc 9.9, the agent cluster 10.8 wide by 10.6 tall.
+// The agent connectors start and end exactly 1.7 from their node centres, which
+// is the node radius, so each line meets its ring on the edge instead of near it.
 const glyph = {
-  width: 14,
-  height: 14,
-  viewBox: '0 0 14 14',
+  width: 16,
+  height: 16,
+  viewBox: '0 0 16 16',
   fill: 'none',
   stroke: 'currentColor',
   strokeWidth: 1.3,
@@ -97,8 +117,6 @@ const glyph = {
   strokeLinejoin: 'round',
   'aria-hidden': true
 } as const
-
-const SOLID = { fill: 'currentColor', stroke: 'none' } as const
 
 // Toggles the right-hand Commands dock — same right-slot family as the agents
 // toggle; App keeps the two docks mutually exclusive.
@@ -112,15 +130,18 @@ const CommandsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => voi
     onClick={onToggle}
   >
     <svg {...glyph}>
-      <line x1="9" y1="2.6" x2="5" y2="11.4" />
+      <line x1="10.3" y1="3" x2="5.7" y2="13" />
     </svg>
   </button>
 )
 
 // Toggles the right-hand Appearance dock (#66) — third member of the same
-// right-slot family; App keeps all three docks mutually exclusive. A half-filled
+// right-slot family; App keeps all three docks mutually exclusive. A bisected
 // disc: the one glyph that reads as "how this looks" without borrowing the gear
-// that would promise settings this panel deliberately does not hold.
+// that would promise settings this panel deliberately does not hold. It used to
+// fill one half to say the same thing, which is the more literal drawing of
+// contrast and also the reason the set read as mixed weights; the diameter says
+// it in the family's own mode.
 const AppearanceToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => (
   <button
     type="button"
@@ -131,8 +152,8 @@ const AppearanceToggle = ({ open, onToggle }: { open: boolean; onToggle: () => v
     onClick={onToggle}
   >
     <svg {...glyph}>
-      <circle cx="7" cy="7" r="4.35" />
-      <path d="M7 3.3A3.7 3.7 0 0 1 7 10.7Z" {...SOLID} />
+      <circle cx="8" cy="8" r="4.95" />
+      <line x1="8" y1="3.05" x2="8" y2="12.95" />
     </svg>
   </button>
 )
@@ -151,11 +172,11 @@ const AgentsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void 
     onClick={onToggle}
   >
     <svg {...glyph}>
-      <line x1="4.5" y1="6.5" x2="9.5" y2="4.3" />
-      <line x1="4.5" y1="7.5" x2="9.5" y2="9.7" />
-      <circle cx="3.3" cy="7" r="1.3" {...SOLID} />
-      <circle cx="10.7" cy="3.8" r="1.3" {...SOLID} />
-      <circle cx="10.7" cy="10.2" r="1.3" {...SOLID} />
+      <circle cx="4.3" cy="8" r="1.7" />
+      <circle cx="11.7" cy="4.4" r="1.7" />
+      <circle cx="11.7" cy="11.6" r="1.7" />
+      <line x1="5.83" y1="7.26" x2="10.17" y2="5.14" />
+      <line x1="5.83" y1="8.74" x2="10.17" y2="10.86" />
     </svg>
   </button>
 )

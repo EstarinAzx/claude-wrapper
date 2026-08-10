@@ -83,9 +83,15 @@ const ModelPill = ({
   return (
     <div className="model-pill-wrap">
       {open && <button type="button" className="model-backdrop" aria-hidden="true" tabIndex={-1} onClick={() => setOpen(false)} />}
+      {/* Two classes on purpose. `model-pill` is the shell it has always had,
+          declared in titlebar.css beside the two titlebar toggles;
+          `control-value` is the composer strip's own value treatment, which
+          restates those same values in composer.css so this pill and the effort
+          readout beside it cannot drift apart when a titlebar pill is retuned.
+          Nothing about how this renders today changes. */}
       <button
         type="button"
-        className="model-pill"
+        className="model-pill control-value"
         aria-label="Model"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -204,7 +210,11 @@ const EffortControl = ({
           onPick(stop === 0 ? null : (levels[stop - 1] ?? null))
         }}
       />
-      <span className="effort-value">{shown}</span>
+      {/* `control-value` is the strip's shared value shell, worn by the model
+          pill too (composer.css). This readout is not a button and does not
+          become one by wearing it — the app already uses a hairline box for a
+          static chip, and the pill is told apart by its cursor and its hover. */}
+      <span className="effort-value control-value">{shown}</span>
     </div>
   )
 }

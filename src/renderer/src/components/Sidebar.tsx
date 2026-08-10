@@ -538,22 +538,35 @@ const Sidebar = ({
           // a note explaining an answer nobody has yet is the same lie in a
           // longer form.
           //
-          // The answer is authored rather than bare, and the note carries no
-          // control of its own. The only honest action for "nothing is running
-          // here" is looking again, and its one affordance is the refresh
-          // button a line above — so the copy NAMES that control instead of
-          // growing a second one beside it. The other half says why the list is
-          // empty at all, which is the thing a bare line left the user to guess:
-          // this look is scoped to the open workspace, not the whole machine.
+          // The note says why the list is empty at all, which is the thing a
+          // bare line left the user to guess: this look is scoped to the open
+          // workspace, not the whole machine. The only honest action for
+          // "nothing is running here" is looking again — but NAMING that action
+          // in prose still left it reachable only by inferring it from the
+          // unlabelled circular arrow a line above. So the sentence stops
+          // instructing and the verb becomes a control.
+          //
+          // Not a rival control: it fires `refreshBackground`, the SAME handler
+          // the head's icon button fires. One action, two entry points, one of
+          // them labelled — which is the whole difference from growing a second
+          // affordance beside the first. It needs no `disabled` guard of its
+          // own, unlike that button: it exists only in the settled branch, so
+          // the first click flips `bgLooking`, this collapses to the bare
+          // "Looking…" line, and there is nothing left to click twice.
           <div className="bg-sessions-empty">
             {bgLooking ? (
               'Looking…'
             ) : (
               <>
                 <span className="bg-sessions-empty-line">None running here</span>
-                <span className="bg-sessions-empty-hint">
-                  Scoped to the open project. Refresh to look again.
-                </span>
+                <span className="bg-sessions-empty-hint">Scoped to the open project.</span>
+                <button
+                  type="button"
+                  className="sidebar-empty-retry bg-sessions-empty-action"
+                  onClick={refreshBackground}
+                >
+                  Refresh
+                </button>
               </>
             )}
           </div>
@@ -564,9 +577,12 @@ const Sidebar = ({
               // 8-char prefix of this where it exists (#90).
               //
               // Read-only rows, deliberately: no attach, no peek, no reply —
-              // those are a separate unmeasured feature. Which also means this
-              // section adds exactly ONE tab stop (its refresh button) to a
-              // rail that already carries ~100.
+              // those are a separate unmeasured feature. Which also means a
+              // listing of ANY length adds exactly ONE tab stop (the head's
+              // refresh) to a rail that already carries ~100. The
+              // scoped-and-empty state is the only branch that reaches TWO, and
+              // it is the branch with no rows in it at all — its labelled
+              // Refresh fires the same handler that one does.
               <li key={s.sessionId} className="bg-session-row">
                 <span className="bg-session-name" title={s.name || s.sessionId}>
                   {s.name || s.sessionId}
