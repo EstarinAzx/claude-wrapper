@@ -78,6 +78,28 @@ const BackendPill = ({
   )
 }
 
+// ONE icon set for the three dock toggles. Every glyph is drawn on the same 14
+// grid, inscribed in the same 10px optical square centred on (7,7), at one
+// stroke width with round caps and joins, so the three read as one family
+// inside their identical 28px housings. They previously carried three stroke
+// widths (1.4 / 1.2 / 1.3), three optical sizes (8.8 / 9.4 / 10) and one fill
+// that bled past its own stroke, which is what made them look borrowed from
+// three different sets. Solid parts opt out of the inherited stroke explicitly,
+// so a filled node reads at its authored radius rather than radius + stroke.
+const glyph = {
+  width: 14,
+  height: 14,
+  viewBox: '0 0 14 14',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.3,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true
+} as const
+
+const SOLID = { fill: 'currentColor', stroke: 'none' } as const
+
 // Toggles the right-hand Commands dock — same right-slot family as the agents
 // toggle; App keeps the two docks mutually exclusive.
 const CommandsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => (
@@ -89,8 +111,8 @@ const CommandsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => voi
     title={open ? 'Commands panel — click to hide' : 'Commands panel — click to show'}
     onClick={onToggle}
   >
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-      <line x1="8.8" y1="3" x2="5.2" y2="11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    <svg {...glyph}>
+      <line x1="9" y1="2.6" x2="5" y2="11.4" />
     </svg>
   </button>
 )
@@ -108,9 +130,9 @@ const AppearanceToggle = ({ open, onToggle }: { open: boolean; onToggle: () => v
     title={open ? 'Appearance panel — click to hide' : 'Appearance panel — click to show'}
     onClick={onToggle}
   >
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-      <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M7 2a5 5 0 0 1 0 10z" fill="currentColor" />
+    <svg {...glyph}>
+      <circle cx="7" cy="7" r="4.35" />
+      <path d="M7 3.3A3.7 3.7 0 0 1 7 10.7Z" {...SOLID} />
     </svg>
   </button>
 )
@@ -128,12 +150,12 @@ const AgentsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void 
     title={open ? 'Agents panel — click to hide' : 'Agents panel — click to show'}
     onClick={onToggle}
   >
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-      <line x1="3.6" y1="7" x2="9.4" y2="4" stroke="currentColor" strokeWidth="1.2" />
-      <line x1="3.6" y1="7" x2="9.4" y2="10" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="2.7" cy="7" r="1.4" fill="currentColor" />
-      <circle cx="10.3" cy="3.7" r="1.4" fill="currentColor" />
-      <circle cx="10.3" cy="10.3" r="1.4" fill="currentColor" />
+    <svg {...glyph}>
+      <line x1="4.5" y1="6.5" x2="9.5" y2="4.3" />
+      <line x1="4.5" y1="7.5" x2="9.5" y2="9.7" />
+      <circle cx="3.3" cy="7" r="1.3" {...SOLID} />
+      <circle cx="10.7" cy="3.8" r="1.3" {...SOLID} />
+      <circle cx="10.7" cy="10.2" r="1.3" {...SOLID} />
     </svg>
   </button>
 )
@@ -189,15 +211,19 @@ const Titlebar = ({
       )}
     </div>
     <div className="titlebar-right">
-      {onToggleCommands ? (
-        <CommandsToggle open={commandsOpen} onToggle={onToggleCommands} />
-      ) : null}
-      {onToggleAgents ? <AgentsToggle open={agentsOpen} onToggle={onToggleAgents} /> : null}
-      {onToggleAppearance ? (
-        <AppearanceToggle open={appearanceOpen} onToggle={onToggleAppearance} />
-      ) : null}
       {onToggleAgents || onToggleCommands || onToggleAppearance ? (
-        <span className="titlebar-sep" aria-hidden="true" />
+        <>
+          <div className="titlebar-actions">
+            {onToggleCommands ? (
+              <CommandsToggle open={commandsOpen} onToggle={onToggleCommands} />
+            ) : null}
+            {onToggleAgents ? <AgentsToggle open={agentsOpen} onToggle={onToggleAgents} /> : null}
+            {onToggleAppearance ? (
+              <AppearanceToggle open={appearanceOpen} onToggle={onToggleAppearance} />
+            ) : null}
+          </div>
+          <span className="titlebar-sep" aria-hidden="true" />
+        </>
       ) : null}
       <button
         type="button"

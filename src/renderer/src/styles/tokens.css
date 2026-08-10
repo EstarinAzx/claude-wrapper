@@ -60,6 +60,15 @@
   /* type */
   --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
+  /* The one step ABOVE body, and the first the app has ever had. DESIGN.md
+     names a ~1.15 ladder and then lists only its three descending rungs, so
+     the largest type in the product was body weighted 600 and the Welcome
+     headline sat 15:13 against its own supporting line. This continues the
+     documented ladder upward rather than inventing a round number:
+     15 x 1.15^3 = 22.8, rounded to 23. One caller today, the Welcome
+     headline, which is the only headline in the app; it is a named step so
+     the second one cannot arrive as a literal. */
+  --text-display: 23px;
   --text-body: 15px;
   --text-ui: 13px;
   --text-micro: 11px;
@@ -98,6 +107,7 @@
   --r-mark: var(--radius-mark);
   --font: var(--font-sans);
   --mono: var(--font-mono);
+  --fs-display: var(--text-display);
   --fs-body: var(--text-body);
   --fs-ui: var(--text-ui);
   --fs-micro: var(--text-micro);

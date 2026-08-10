@@ -307,6 +307,19 @@ const Sidebar = ({
     [sessions, query, cwd, scope, limit, labels]
   )
 
+  // How many sessions the SCOPE alone is holding back. Read straight off the
+  // same grouping the rows come from, so "outside this project" folds a
+  // drive-letter case difference exactly the way a row does, and nothing here
+  // re-derives what `groupSessions` already decided.
+  //
+  // Only while the filter is empty. With a query typed, part of what is missing
+  // is the user's own narrowing, and one number covering both would be true of
+  // neither.
+  const outside =
+    scope === 'project' && cwd.length > 0 && !query.trim()
+      ? (sessions?.length ?? 0) - matched
+      : 0
+
   // Same class of preference as the width, so it persists the same way. Changing
   // scope starts at page one again for the same reason a narrowed query does:
   // carrying a "show more" across would reveal a page the user never asked for.
@@ -521,9 +534,28 @@ const Sidebar = ({
         ) : bgSessions.length === 0 ? (
           // An empty list after a successful look is a real answer, not an
           // error — but only once someone has actually looked, which is what
-          // separates these two strings.
+          // separates these two strings. The looking branch stays a bare line:
+          // a note explaining an answer nobody has yet is the same lie in a
+          // longer form.
+          //
+          // The answer is authored rather than bare, and the note carries no
+          // control of its own. The only honest action for "nothing is running
+          // here" is looking again, and its one affordance is the refresh
+          // button a line above — so the copy NAMES that control instead of
+          // growing a second one beside it. The other half says why the list is
+          // empty at all, which is the thing a bare line left the user to guess:
+          // this look is scoped to the open workspace, not the whole machine.
           <div className="bg-sessions-empty">
-            {bgLooking ? 'Looking…' : 'None running here'}
+            {bgLooking ? (
+              'Looking…'
+            ) : (
+              <>
+                <span className="bg-sessions-empty-line">None running here</span>
+                <span className="bg-sessions-empty-hint">
+                  Scoped to the open project. Refresh to look again.
+                </span>
+              </>
+            )}
           </div>
         ) : (
           <ul className="bg-session-list">
@@ -659,6 +691,30 @@ const Sidebar = ({
           ) : null}
         </div>
       )}
+      {/* The rail's bottom edge. The agents dock has carried a footer strip
+          since #83 and the sessions rail carried none, so the two rails stopped
+          mirroring at exactly the point where it shows: under a short list this
+          one ran to the window edge as dead ground, with nothing anchoring it.
+
+          What the bottom of a SCOPED rail owes the user is the size of what the
+          scope is hiding, and the control that reveals it. Both are things the
+          rail already knows and already does; nothing new is claimed here.
+
+          Same words and same shell as the zero-session state's button, because
+          it is the same action — and the two can never appear together, since
+          that state only renders when nothing grouped at all. */}
+      {groups.length > 0 && outside > 0 ? (
+        <div className="sidebar-foot">
+          <span className="sidebar-foot-count">
+            {outside === 1
+              ? '1 session outside this project'
+              : `${outside} sessions outside this project`}
+          </span>
+          <button type="button" className="sidebar-empty-retry" onClick={() => setScope('all')}>
+            Show all projects
+          </button>
+        </div>
+      ) : null}
       <div
         className="sidebar-resize-handle"
         role="separator"

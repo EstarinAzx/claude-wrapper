@@ -238,7 +238,48 @@
   box-shadow: inset 0 0 0 1px var(--tint-6);
 }
 
+/* ── composer controls strip ──
+
+   The composer's two settings, on a line of their own. Before this they were
+   flex children of one space-between row shared with the disclaimer, which left
+   the disclaimer packed against the left edge while DESIGN.md line 67 asks for a
+   CENTRED line under the input. A line cannot be centred and also be one column
+   of a three-column row, so the two jobs are two rows now.
+
+   Right edge flush with the composer's own 760px measure, so the strip, the pill
+   above it and the centred line below all share one frame. Gaps do the grouping:
+   wide between the two settings, tight inside each, which is why no divider is
+   needed to keep "Effort" and "Model" from reading as one run of words. */
+.composer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+  width: 100%;
+  max-width: 760px;
+}
+
+.model-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* The name beside the pill. Matches `.effort-name`, which gets the same two
+   values by inheriting them from the effort control's own rule. */
+.control-name {
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* Its own row now, centred on the same measure as the pill, which is what
+   DESIGN.md line 67 specifies. The width is stated rather than left to shrink to
+   the text, so the centring is against the composer and not against itself. */
 .footer-line {
+  width: 100%;
+  max-width: 760px;
   font-size: var(--fs-micro);
   color: var(--text-faint);
   text-align: center;
@@ -247,15 +288,14 @@
 
 /* ── effort control (#124) ──
 
-   The footer is space-between with the disclaimer left and the model pill
-   right; `margin-left: auto` packs this against the pill rather than stranding
-   it mid-row, without touching the two rules that were already there. Applied
-   to the unavailable span too, so the row does not reflow when a model that
-   takes no effort level swaps the control out. */
+   `margin-left: auto` used to live here to pack the control against the model
+   pill across the old space-between footer. The strip above does that with
+   layout, so the auto margin is gone: kept, it would eat the strip's gap and
+   shove the two settings apart. Applied to the unavailable span too, so the row
+   does not reflow when a model that takes no effort level swaps the control out. */
 .effort-control,
 .effort-none {
   flex-shrink: 0;
-  margin-left: auto;
   font-size: var(--fs-micro);
   color: var(--text-faint);
 }

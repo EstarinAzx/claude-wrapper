@@ -9,7 +9,7 @@
   border-radius: 10px;
   padding: 12px 14px;
   overflow-x: auto;
-  margin: 8px 0 12px;
+  margin: 12px 0;
 }
 
 /* #122 — the copy control on a fenced block. The BUTTON itself cannot come from
@@ -23,7 +23,7 @@
    block the control would scroll away from the corner it is anchored to. */
 .assistant-body .code-block {
   position: relative;
-  margin: 8px 0 12px;
+  margin: 12px 0;
 }
 
 .assistant-body .code-block > pre {
@@ -78,9 +78,12 @@
   padding: 1px 5px;
 }
 
+/* Every block inside a message spaces itself on the same 12px step the
+   paragraph does, so a list, a code block and a table all sit at one interval
+   instead of the four slightly different ones this file had accumulated. */
 .assistant-body ul,
 .assistant-body ol {
-  margin: 6px 0 10px;
+  margin: 12px 0;
   padding-left: 1.4em;
 }
 
@@ -105,16 +108,25 @@
   color: var(--mint);
 }
 
+/* 2px let the items touch, and a list is where this prose is densest — the
+   mint markers had nothing to separate. Sibling margins collapse, so this is
+   6px between items and not 12px. */
 .assistant-body li {
-  margin: 2px 0;
+  margin: 6px 0;
 }
 
+/* ASYMMETRIC ON PURPOSE. 12 above and 6 below sat a heading almost exactly
+   between the block it followed and the block it introduced, so it read as a
+   third paragraph in bold rather than as the start of a section. 16 above and
+   8 below binds it to what it heads, and 16 slots cleanly between the 12px
+   block step and the 24px message gap — the rank a section break actually
+   holds. */
 .assistant-body h1,
 .assistant-body h2,
 .assistant-body h3 {
   font-weight: 600;
   line-height: 1.3;
-  margin: 12px 0 6px;
+  margin: 16px 0 8px;
   color: var(--text);
 }
 
@@ -149,7 +161,7 @@
   max-width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
-  margin: 8px 0 12px;
+  margin: 12px 0;
   font-size: var(--fs-ui);
 }
 
@@ -173,6 +185,26 @@
 
 .assistant-body tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* THE 24px GAP WAS NEVER ACTUALLY 24px. Every block rule above carries a
+   bottom margin, and the last one in a message leaked straight past
+   `.assistant-body` into the column's flex gap: a message ending in a
+   paragraph sat 32px from the next row, one ending in a code block or a table
+   sat 36px, and one ending in a bubble sat 24px. Four intervals where the
+   layout authors one, which is most of why the rhythm did not read as
+   deliberate. Zeroing both ends hands the spacing back to the column, so the
+   24px between messages and the 40px at an exchange boundary are the measured
+   distances and not approximations of them.
+
+   These come last in the file on purpose: `.assistant-body .code-block`
+   matches at the same specificity, so order is what decides it. */
+.assistant-body > :first-child {
+  margin-top: 0;
+}
+
+.assistant-body > :last-child {
+  margin-bottom: 0;
 }
 
 /* hljs tokens — muted frost-mint palette */

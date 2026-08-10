@@ -72,13 +72,13 @@
   filter: brightness(1.12);
 }
 
-/* input-box footer: mistake disclaimer on the left, model pill bottom-right. */
-.input-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
+/* The composer footer's old one-row shell is GONE, and so is this rule. It
+   described "disclaimer left, model pill right", which the composer no longer
+   builds and DESIGN.md line 67 never asked for: the footer is a CENTRED line
+   under the input, and it is now two rows, a right-aligned settings strip in
+   composer.css plus that centred line. Nothing renders .input-foot any more.
+   Left in place it would keep stating a layout the app contradicts, in the one
+   file the composer's author had no reason to open. */
 
 /* the pill anchors its pop-up menu, which opens UPWARD (it sits at the bottom). */
 .model-pill-wrap {
@@ -146,11 +146,31 @@
   -webkit-app-region: no-drag;
 }
 
-/* The two 28px rounded-square icon buttons: the Agents-dock toggle in the
-   titlebar and the rail's own collapse/new-chat controls. Deliberately NOT
-   shaped like a window control — a centred 28px square behind a hairline, so
-   the 40px-tall min/max/close run stays visually its own group and the dock
-   toggle is not a mis-click away from Close. */
+/* The three dock toggles are ONE cluster, not three loose neighbours of the
+   window controls. A 2px rhythm inside the group against a 25px gutter across
+   the hairline is what says, by proximity alone, where the app actions end and
+   min / max / close begin: glyph to glyph reads 20px inside the cluster, 30px
+   between window cells, and 49px across the separator. Before this the gutter
+   was 15px, which put the crossing at 39px against a 30px window rhythm — a
+   1.3x ratio, far too weak to break the run, so all six controls read as one
+   strip. The gutter is split 15 left / 9 right rather than evenly because the
+   toggle side contributes only 9px of housing padding after its glyph while a
+   window cell contributes 15px; an even split would sit the hairline visibly
+   off centre. Net width change is +2px, so the centred session title keeps its
+   measured clearance. */
+.titlebar-actions {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+/* The 28px rounded-square icon buttons: the three dock toggles in the titlebar
+   and the rail's own collapse/new-chat controls. Deliberately NOT shaped like a
+   window control — a centred 28px square behind a hairline, so the 40px-tall
+   min/max/close run stays visually its own group and a dock toggle is not a
+   mis-click away from Close. */
 .agents-toggle,
 .sidebar-toggle {
   display: flex;
@@ -165,9 +185,11 @@
   cursor: pointer;
 }
 
+/* Spacing lives on the cluster's `gap`, not on each button's margin: a margin
+   here also indented the FIRST toggle, so the group had a phantom lead-in and
+   no authored inner rhythm. */
 .agents-toggle {
   align-self: center;
-  margin-left: 4px;
   transition: background 150ms var(--ease), color 150ms var(--ease);
 }
 
@@ -198,7 +220,7 @@
   align-self: center;
   width: 1px;
   height: 18px;
-  margin: 0 6px 0 8px;
+  margin: 0 9px 0 15px;
   background: var(--border);
 }
 

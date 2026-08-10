@@ -782,22 +782,43 @@ const InputBar = ({
           )}
         </button>
       </div>
-      <div className="input-foot">
-        <p className="footer-line">Claude can make mistakes. Verify important information.</p>
+      {/* The composer's two settings, on a strip of their own. They used to share
+          one space-between row with the disclaimer, which packed the disclaimer
+          against the left edge and broke DESIGN.md line 67 outright: the footer
+          is specified as a CENTRED line under the input, and it cannot be
+          centred while two controls are competing for the same row.
+
+          The "Model" name is here and not inside the pill for two reasons. The
+          pill's own text is the model, and only the model (tests/model-picker
+          pins it to exactly "Default" on a fresh launch, and gui-52 reads it
+          back to prove the pill follows the CLI). And with the effort readout
+          also resting on "Default", an unlabelled row printed that word twice
+          with nothing to say what either one was. Named, they read as two
+          settings that happen to be untouched. */}
+      <div className="composer-controls">
         <EffortControl
           effort={effort}
           levels={effortLevelsFor(findModel(models, model))}
           busy={busy}
           onPick={onPickEffort}
         />
-        <ModelPill
-          model={model}
-          options={models}
-          busy={busy}
-          onPick={onPickModel}
-          onOpen={onRefreshModels}
-        />
+        <div className="model-control">
+          {/* Hidden from assistive tech: the pill already carries
+              aria-label="Model", so announcing the word twice is noise. Mirrors
+              `.effort-name` beside the slider. */}
+          <span className="control-name" aria-hidden="true">
+            Model
+          </span>
+          <ModelPill
+            model={model}
+            options={models}
+            busy={busy}
+            onPick={onPickModel}
+            onOpen={onRefreshModels}
+          />
+        </div>
       </div>
+      <p className="footer-line">Claude can make mistakes. Verify important information.</p>
     </footer>
   )
 }
