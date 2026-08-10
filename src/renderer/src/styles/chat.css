@@ -81,6 +81,41 @@
   margin-top: 16px;
 }
 
+/* THE CARD BINDS UPWARD, to the message that launched it. The base interval ran
+   between an assistant paragraph and the tool card it produced AND between that
+   card and the paragraph that reads the result, so a card sat exactly as far
+   from the prose that caused it as from the prose that answers it — the one
+   relationship inside a turn the rhythm never expressed.
+
+   8px off the base 24, by the mechanism `.tool-card + .tool-card` has used
+   since #61 to pull a run of cards to 8: negative margin is already how this
+   column writes an interval tighter than its own gap. The transcript now keeps
+   four, every one a multiple of 8 — 8 inside a run of cards, 16 from prose to
+   the cards it launched, 24 between successive steps of one answer, 40 at an
+   exchange boundary.
+
+   `.msg-assistant` and NOT `.msg`. A tool card can follow a user bubble
+   directly, when the model calls a tool with no preamble, and it can follow a
+   notice or an error; none of those PRODUCED it, and tightening a card against
+   the user's own words would bind it to the wrong side of the exchange.
+
+   NOT TIGHTER THAN 16, MEASURED. A 15px font sets a 20px inline box inside the
+   24px line box, so the paragraph's last line already carries 2.4px of
+   half-leading below its ink: 16 renders as about 18px of visible air, and
+   about 23px under a line that ends on the baseline. Below 16 this interval
+   reaches the 8px a run of cards keeps, and prose-to-card stops reading as
+   looser than card-to-card, which flattens the very grouping this rule draws.
+
+   THE LAST PARAGRAPH'S OWN MARGIN IS NOT PART OF THIS SUM, and two waves have
+   now assumed it was. `.assistant-body p` sets 12px below, but
+   `.assistant-body > :last-child` in markdown.css zeroes it — higher
+   specificity AND later in the cascade — so the message box has ended at its
+   last line box since that rule shipped. Measured at 0px in Electron. Adding a
+   `p:last-child` reset here would change nothing at all. */
+.msg-assistant + .tool-card {
+  margin-top: -8px;
+}
+
 .bubble {
   max-width: 60%;
   background: var(--bubble);
@@ -234,27 +269,31 @@
 
    Two changes, and they are the same change seen twice.
 
-   RANK BY SIZE, RAISED AGAIN. The title takes three more steps of DESIGN.md's
+   RANK BY SIZE, RAISED AGAIN. The title takes five steps of DESIGN.md's
    documented ~1.15 ladder above `--fs-display`, stated as arithmetic on that
-   token rather than as a literal: 23 x 1.15 x 1.15 x 1.15 = 34.98. The next
-   rule's corner is `calc(var(--r-mark) * 2)` for exactly this reason — a
-   relationship written on the token cannot drift, and a literal type size would
-   be invisible to a grep of the scale. Not the first one in `styles/`, which is
-   where an earlier draft of this note overclaimed: subagent.css sets a 20px
-   glyph and markdown.css sets its headings in `em`. It adds NO token, so
-   `@theme` still holds four rungs, and it adds no rendered size either — this
-   rule was `--fs-display`'s ONLY caller, so 23px now renders nowhere and the
-   count is the four it was: 11 / 13 / 15 / 34.98. The cost against the open
-   owner call on the type scale is that mismatch, a named rung the app no longer
-   paints, and it is recorded here rather than hidden.
+   token rather than as a literal, and written as five separate factors so the
+   RUNG COUNT stays readable: 23 x 1.15^5 = 46.26. The mark's corner below is
+   `calc(var(--r-mark) * 2)` for exactly this reason — a relationship written on
+   the token cannot drift, and a literal type size would be invisible to a grep
+   of the scale. Not the first such calc in `styles/`, which is where an earlier
+   draft of this note overclaimed: subagent.css sets a 20px glyph and
+   markdown.css sets its headings in `em`. It adds NO token, so `@theme` still
+   holds four rungs. It DOES add a rendered size — the supporting line below
+   takes one rung too — so the app now paints five: 11 / 13 / 15 / 17.25 /
+   46.26. This rule is still `--fs-display`'s ONLY caller and still consumes it
+   through a calc, so 23px continues to render nowhere. The cost against the
+   open owner call on the type scale is that mismatch, a named rung the app does
+   not paint, and it is recorded here rather than hidden.
 
-   The supporting line and the button move from `--fs-ui` to `--fs-body`, which
-   is a CORRECTION as much as an enlargement: DESIGN.md line 54 spends 13 on "UI
-   labels" and 15 on body, and a sentence of prose and the screen's only action
-   are neither. 35 against 15 is a ratio of 2.33, where the shipped pair was 23
-   against 13 at 1.77, and the pair before that was 15 against 13 at 1.15 — one
-   ladder step, the smallest difference the scale can express, which read as an
-   accident rather than a decision.
+   The supporting line moved from `--fs-ui` to `--fs-body` and now takes one
+   rung above it, which was a CORRECTION before it was an enlargement:
+   DESIGN.md line 54 spends 13 on "UI labels" and 15 on body, and a sentence of
+   prose under a headline is neither. The button keeps the body rung and grows
+   by padding instead, because its job is to be a large TARGET, not large TEXT.
+   46.26 against 17.25 is a ratio of 2.68, where the shipped pair was 35 against
+   15 at 2.33, before that 23 against 13 at 1.77, and before that 15 against 13
+   at 1.15 — one ladder step, the smallest difference the scale can express,
+   which read as an accident rather than a decision.
 
    RANK BY INTERVAL. The gap is replaced by three authored ones, taken from the
    rhythm the chat column already keeps (24px between messages, 40px around the
@@ -277,22 +316,48 @@
    where the eye still calls a thing middle. 60px is 7.0%, far enough that the
    larger reserve below reads as a decision about where the hero sits.
 
-   IT STILL SURVIVES THE SMALLEST WINDOW, BUT THE RESERVE IS NEARLY SPENT NOW.
-   The content measures about 232px — a 44px mark and 24 under it, a 35px title
-   at 1.25 leading and 8 under it, a 15px hint at 1.6, then 40 above a 48px
-   button — and 232 plus 184 of padding needs 416px. `minHeight` is 480px in
+   THE RESERVE COST THE SAME AT EVERY WINDOW SIZE, AND THAT — NOT THE TYPE
+   SCALE — WAS THE CEILING. Written as a fixed 152px it was charged in full to a
+   480px window as well as to a 900px one. The old content measured about 232px
+   and 232 plus 184 of padding needed 416; `minHeight` is 480px in
    `src/main/index.ts` and the titlebar takes 48, NOT 49 — base.css sets
    border-box on everything, so the hairline is inside the declared height, and
    `inspect.mjs` records the welcome pane at 1440x852 under a 1440x900 window.
-   So this pane gets 432px: 16px of headroom, down from 47. THE NEXT BUILDER TO
-   ENLARGE ANYTHING HERE MUST REDO THIS SUM.
+   So the pane got 432px and 16px of headroom, and a headline large enough to
+   read as a headline does not fit in 16px.
 
-   THREE STEPS AND NOT MORE IS A MEASURED CEILING, not taste. A fourth step puts
-   the title at 40.2px and the sum at 422, leaving 10px; a fifth puts it at 46.3
-   and the sum at 430, leaving 2px, at which the authored reserve below IS the
-   clip it was written not to be. Three also lands the headline's 43.7px line
-   box on the 44px mark, so the hero keeps one repeating vertical beat, with the
-   48px button one notch above it as the only thing on the screen you press. */
+   THIS IS A MECHANISM CHANGE, NOT A VALUE CHANGE. `min(152px, 17vh)` keeps the
+   authored number exactly where it was authored and lets it yield only below
+   the sizes anyone composes for. 17vh is 153 at a 900px window, so the min
+   resolves to a LITERAL 152 at 1440x900 and at every window taller than 894 —
+   the photographed composition is untouched, and the lift is still
+   (152 - 32) / 2 = 60px, still 7.0% of the 852px field. Below 894 it scales
+   rather than clips: 133 at the 780px default height for a 50px lift, which is
+   6.9% of THAT field, and 82 at the 480px minimum for a 25px lift. The wave
+   that authored 60 argued it AS A PERCENTAGE and then pinned it in px, which
+   only holds at one window size; a ratio holds it at all of them. Neither the
+   unit nor the function is new here — base.css already sizes the root in vh and
+   subagent.css already clamps a width with min. DESIGN.md line 54 bans fluid
+   TYPE; every type size on this screen stays fixed.
+
+   THE SUM, REDONE. Content is 253px — a 44px mark and 24 under it, a 46.26px
+   title at 1.25 leading for a 57.8px line box and 8 under it, a 17.25px hint at
+   1.6, then 40 above a 52px button. At the 480px minimum the reserve resolves
+   to 82, so 253 plus 114 of padding needs 367px against the pane's 432: 65px of
+   headroom, up from 16. The stack clears every window down to about 402px tall,
+   which is below the enforced minimum. THE NEXT BUILDER TO ENLARGE ANYTHING
+   HERE MUST STILL REDO THIS SUM — the headroom is large now, not infinite.
+
+   THE FIFTH RUNG AND NOT THE FOURTH. Under the old fixed reserve a fourth step
+   left 10px and a fifth left 2px, at which the reserve below IS the clip it was
+   written not to be; both fit now. The fifth is taken because ~1.15 cannot
+   express anything between 40.23 and 46.26, and the larger is the one that
+   answers a call for MASS. The cost is the beat: the three-rung headline's
+   43.7px line box landed on the 44px mark, one repeating vertical interval. But
+   that beat is also what made the stack read uniform — mark, headline and
+   button all sat within 4px of each other. The run now ascends, 44px mark then
+   52px button then 57.8px headline, and the headline is unambiguously the
+   largest thing on the screen rather than the same size as the logo. */
 .welcome {
   flex: 1;
   min-height: 0;
@@ -300,7 +365,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32px 32px 152px;
+  padding: 32px 32px min(152px, 17vh);
 }
 
 /* Solid by design and stays that way. 44px is exactly twice the titlebar mark,
@@ -326,20 +391,24 @@
 /* Leading tightens as size grows: 1.4 is a reading value and leaves a display
    line looking loosely set even on one line. */
 .welcome-title {
-  font-size: calc(var(--fs-display) * 1.15 * 1.15 * 1.15);
+  font-size: calc(var(--fs-display) * 1.15 * 1.15 * 1.15 * 1.15 * 1.15);
   font-weight: 600;
   color: var(--text);
   line-height: 1.25;
   margin-bottom: 8px;
 }
 
-/* The BODY rung, at DESIGN.md's own body leading. This was 13/1.5, which is the
-   UI-LABEL size — and a supporting sentence under a headline is prose, not a
-   label. No measure is set: the copy is one 44-character line and runs about
-   280px at this size, so any `max-width` large enough not to widow it would
-   never bind, and a declaration that never binds is not a composition. */
+/* ONE RUNG ABOVE BODY, at DESIGN.md's own body leading. This was 13/1.5, which
+   is the UI-LABEL size — and a supporting sentence under a headline is prose,
+   not a label; body was the correction, and the rung above it is what keeps a
+   supporting line legible under a 46px headline instead of shrinking to a
+   caption by contrast. Stated as arithmetic on the token, like the title, so
+   the step is greppable and adds no fifth token to `@theme`. No measure is set:
+   the copy is one 44-character line and runs about 320px at this size, so any
+   `max-width` large enough not to widow it would never bind, and a declaration
+   that never binds is not a composition. */
 .welcome-hint {
-  font-size: var(--fs-body);
+  font-size: calc(var(--fs-body) * 1.15);
   color: var(--text-muted);
   line-height: 1.6;
 }
@@ -353,13 +422,19 @@
   font-family: var(--font);
   font-size: var(--fs-body);
   font-weight: 600;
-  /* 14/28 where it was 10/20: at the body rung that computes to about 48px
-     tall, one notch above the 44px mark and headline line box, so the screen's
-     only control reads as a hero action rather than as toolbar chrome. This is
-     the WHOLE of the wave's mint spend — coverage moves from the measured 0.66%
-     of the welcome frame to about 0.92%, against DESIGN.md's 10% ceiling. The
-     mark is deliberately not enlarged, so the identity pair is untouched. */
-  padding: 14px 28px;
+  /* 16/32 where it was 14/28 and 10/20 before that, holding the 1:2 ratio it
+     was authored at and taking two steps already in the app's spacing rhythm.
+     The font stays on the body rung — a button's job is to be a large TARGET,
+     not large text — so this computes to about 52px tall: the middle term of an
+     ascending run, 44px mark then 52px button then the 57.8px headline line
+     box. At 48 it sat within 4px of both, which is what let mark, headline and
+     control read as one uniform mass. This is the WHOLE of the wave's mint
+     spend — the fill grows 8px wider and 4px taller and nothing else on this
+     screen carries mint — so coverage moves from about 0.92% of the welcome
+     frame to about 1.02%, against DESIGN.md's 10% ceiling. The mark is
+     deliberately NOT enlarged: 44 is twice the titlebar's 22, and that pair is
+     the identity. */
+  padding: 16px 32px;
   cursor: pointer;
   transition: background 150ms var(--ease);
   -webkit-app-region: no-drag;

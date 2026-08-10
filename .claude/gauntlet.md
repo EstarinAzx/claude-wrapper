@@ -24,17 +24,18 @@ pieces:
     verdict: BAR WINS
     open: true
   - name: InputBar
-    verdict: YOURS WINS        # wave 4, PROVISIONAL — kept open for wave-5 confirmation.
-    open: true                 # See "Wave 4 adjudications" 1 for why this one is NOT wave 2's case.
-critic: sonnet                 # re-resolved live at wave 2 -> codex/gpt-5.6-sol; RE-RESOLVE every wave
+    verdict: BAR WINS          # CORRECTED at wave 5 from wave 4's provisional YOURS WINS.
+    open: true                 # The retest ran on BYTE-IDENTICAL pixels. See "Wave 5 adjudications" 1.
+critic: sonnet                 # re-resolved live every wave -> codex/gpt-5.6-sol (5 waves running)
 critic_degraded: false
 branch: gauntlet/core-surfaces
-wave: 4
-plateau: 0                     # RESET BY AN ACTUAL ORDINAL MOVE, not by "critics said BETTER".
-                               # InputBar BAR WINS -> YOURS WINS. Read owner call 4 before touching this.
+wave: 5
+plateau: 3                     # STOP CONDITION MET. Recomputed, not incremented — see
+                               # "Wave 5 adjudications" 2 for the full derivation and the
+                               # stricter reading that would have stopped this run at wave 4.
 max_waves: 12
 page: false
-stop: false
+stop: true
 ---
 
 ## Where things are
@@ -93,7 +94,7 @@ has to reconstruct them. **They are not up for re-litigation by a wave.**
    hierarchy, spacing and state. This repo has read an artifact as a finding nine
    times; this is the tenth waiting to happen.
 2. **The identity mark is SOLID BY DESIGN — no glyph, ever.** Verified three ways
-   (`titlebar.css:26`, `chat.css:199` are bare `background: var(--mint)`; both
+   (`titlebar.css:26`, `chat.css:382` are bare `background: var(--mint)`; both
    elements self-closing and `aria-hidden="true"`; DESIGN.md prescribes size,
    radius and fill but never content). A wave may question the fill's **depth** —
    that is a different question and is fair game.
@@ -170,6 +171,117 @@ has to reconstruct them. **They are not up for re-litigation by a wave.**
 | 4 | Sidebar | BAR WINS | Establish clearer vertical grouping by adding roughly 8–12px between the background-state, filter, scope, and session-list sections instead of compressing every hierarchy layer into the rail's first 280px above a vast unused area. |
 | 4 | Chat | BAR WINS | Reduce the paragraph-to-card gap from about 29px to 12–16px and increase completed-turn separation to 32–40px so each tool card clearly groups with the assistant message that produced it. *(NEW axis — the weight thread is CLOSED as an owner call, adjudication 3.)* |
 | 4 | InputBar | **YOURS WINS** (provisional) | Promote Effort, Model, and both Default values into one consistent 13px UI row, because their current microtype is the only element that loses hierarchy beside the 15px composer. |
+
+| 5 | Welcome | BAR WINS | The supporting line merely repeats the button — replace "Pick a project folder for Claude to work in." with distinct guidance such as "Claude can read and change files only inside the folder you choose." so the heading, explanation and action each do different work. *(NEW axis: copy, not scale. The wave-4 scale gap is reported visibly resolved.)* |
+| 5 | Titlebar | BAR WINS | Pin the session title to the window's true centre: its visible midpoint is x=741 in the 1440px frame, **21px right of the x=720 target**. *(NEW, and INDEPENDENTLY CONFIRMED BY THE LEG'S OWN SCANLINE — adjudication 3.)* |
+| 5 | Sidebar | BAR WINS | Every rail tier from section labels through the selected session title collapses into one undersized ~11–12px scale; raise primary controls and titles to 13px, retaining 11px only for metadata and footer copy. *(`SPEC BREAK` raised on the mint side-stripe and REFUSED — adjudication 4.)* |
+| 5 | Chat | BAR WINS | Tighten each assistant-paragraph-to-tool-card gap from about 21–22px to 12–16px while preserving 32–40px between completed turns. *(Same ask as wave 4 restated against the new measurement. The builder's magnitude refusal is UPHELD — adjudication 5.)* |
+| 5 | InputBar | **BAR WINS** *(corrected down)* | The secondary control row remains the largest gap: its roughly 11px Effort, Model and Default text forms a detached cluster under the right half of the 760px composer; promote the row to the 13px UI scale as one deliberate toolbar with consistent 12px gaps. |
+
+## Wave 5 adjudications — the provisional verdict failed a byte-identical retest, and the run stops
+
+Wave 5 raised **one** `SPEC BREAK`, refused. **One builder edited, three did not** — two returned
+measured refusals and one piece was deliberately left unbuilt. The wave's whole purpose was the
+InputBar retest, and it produced the stop.
+
+1. **THE INPUTBAR RETEST CORRECTED DOWN, AND IT IS THE CLEANEST TEST THIS RUN HAS EVER RUN.**
+   Wave 4 recorded `YOURS WINS` (provisional) and kept the piece open on cost asymmetry. Wave 5
+   gave it no builder — **deliberately**, because building the surface first would make a
+   confirmation indistinguishable from the new build and a correction indistinguishable from the
+   build having made it worse. Wave 3's Sidebar retest ran on a *rebuilt* surface and got away with
+   it only because the correction went the conservative direction.
+   **The result: `input-bar.png` is BYTE-IDENTICAL between waves 4 and 5** — verified by sha256,
+   the only one of the seven captures that is (the other six carry drifting liveness content).
+   So a fresh critic, on the identical standardised payload, judged **literally the same pixels**
+   and returned `BAR WINS` where wave 4 returned `YOURS WINS`.
+   **The sharpest part is that the two critics AGREED on the observation and differed only on the
+   ordinal.** Wave 4's gap and wave 5's gap are the same finding in different words: promote the
+   Effort/Model/Default row from ~11px microtype to the 13px UI scale. Both critics saw the same
+   defect. One called it a win against Linear and one did not. **That isolates the noise to the
+   three-state ordinal itself rather than to perception, which is the most direct evidence yet for
+   owner call 4.**
+   The wave-5 critic's literals were checked against the leg's own first-hand read and match
+   exactly: `inspect-ws-062JPE`, both truncations, `Makes sense. Add a regression test for the
+   rebuild path.`, three toggles before the separator and three window controls after.
+
+2. **`plateau` IS 3 BY RECOMPUTATION, AND THE RECOMPUTATION WAS PRE-REGISTERED BEFORE THE RESULT
+   WAS KNOWN.** Leg 5's handoff wrote, in advance: *"if wave 5 corrects InputBar down, then waves
+   3 AND 4 both had no real improvement, and the honest counter entering wave 6 is 2, not 0. Do
+   not silently carry 0 forward through a correction."* That is a pre-registered analysis, decided
+   before the data, which is the only honest way to make this call.
+   - **Wave 3** — no verdict improved. Non-improvement **1**.
+   - **Wave 4** — its sole improvement was InputBar's provisional `YOURS WINS`, now retracted by
+     the very test the run designed to check it. The piece was deliberately never closed *because*
+     the verdict was provisional. Non-improvement **2**.
+   - **Wave 5** — no verdict improved; one corrected down. Non-improvement **3**.
+   → `plateau: 3`, and the preset's expected exit fires.
+   **The stricter reading, recorded because it is defensible and points the same way.** If a wave
+   counts as an improvement only when the improvement *survives*, then wave 2 (Sidebar's `YOURS
+   WINS`, invalidated at wave 3) is also a non-improvement, and waves 2-3-4 would have tripped the
+   stop at **wave 4**. The run never retroactively recounted wave 2, so this leg applies the
+   pre-registered rule rather than inventing a stricter one at the moment it would end the run.
+   **Both readings stop the run; they differ only on whether it should have stopped a wave ago.**
+   **What was NOT done, and must not be:** `plateau` was not reset on "but the critics said
+   BETTER". Owner call 4 forbids exactly that, and three of five critics did say BETTER this wave.
+   A leg that resets the counter on the improvement axis has deleted the only stop signal the loop
+   has, which is the failure mode the whole preset exists to prevent.
+
+3. **THE TITLEBAR CRITIC FOUND A REAL DEFECT NO WAVE HAD CAUGHT, AND THE LEG CONFIRMED IT
+   INDEPENDENTLY TO THE PIXEL.** It reported the session title sitting right of centre. The leg
+   scanline-measured `titlebar.png` itself without reference to the verdict: title ink runs
+   **x=689→793, midpoint 741.0**, against a window centre of **720** — an offset of **+21px**. The
+   critic reported the identical bounds and ~22px.
+   `DESIGN.md:59` specifies *"Center: session title"*. It is not centred. The mechanism is
+   ordinary flex arithmetic: a centre child centred in the *remaining* space drifts by half the
+   difference between the flanking groups, so a left group (mark + name + two pills) about 42px
+   wider than the right group puts the title 21px right. **This is cheap, concrete and unclaimed —
+   it is the strongest single candidate for a wave-6 Titlebar brief if the run is ever resumed.**
+
+4. **THE `SPEC BREAK` ON THE MINT SIDE-STRIPE IS REFUSED, BUT ITS ARRIVAL IS NEW INFORMATION.**
+   The critic is textually correct: `rails.css:548` gives the active row
+   `box-shadow: inset 2px 0 0 0 var(--color-mint)`, and `DESIGN.md:83` bans *"side-stripe borders"*
+   under **Bans in force**. Refused on three grounds, in ascending order of decisiveness:
+   (a) this is the run's already-recorded **open fence question** — the banned list is *decorative*
+   vocabulary and this stripe carries **state**, so it matches the banned form while failing to
+   match the banned purpose; (b) removing a selection indicator to satisfy a decoration ban is
+   plausibly worse than leaving it, which makes it an owner call; (c) decisively, **Sidebar had no
+   build this wave**, and a `SPEC BREAK` reverts a piece's *build* — there is nothing to revert.
+   **What is new: this is the first time a critic has raised it correctly.** Wave 1's Sidebar critic
+   got the same detail backwards, reporting *"a full mint-outline border indicating selection (not a
+   side-stripe)"*. An independent instrument now reads the pixels right and calls it unprompted,
+   which moves the fence question from "something only the leg noticed" to a live owner call.
+
+5. **THE CHAT BUILDER REFUSED ITS CRITIC'S MAGNITUDE WHILE TAKING ITS DIRECTION, AND THE WAVE-5
+   MEASUREMENT UPHOLDS THE REFUSAL.** The wave-4 gap asked for 12-16px. The builder shipped a
+   **16px box** gap and predicted the critic would measure it ~5-6px hot, because a critic measures
+   ink-and-leading where CSS measures boxes. **Wave 5's critic measured 21-22px** — exactly the
+   predicted offset on a 16px box. So the critic's 12-16px, translated into box units, is roughly
+   **7-11px**, which is at or *below* the 8px that already separates a run of tool cards. Delivered
+   literally it would make prose→card as tight as card→card and collapse the internal structure of
+   a turn, which is the opposite of the grouping the gap asks for. **The measuring-convention offset
+   is a general instrument finding, not a Chat one: every pixel-stated gap in this run's record is
+   in the critic's convention, not the CSS's, and the two differ by about 5-6px.**
+
+6. **A BUILDER CORRECTED THE LEG'S OWN BRIEF FOR THE SECOND WAVE RUNNING.** This leg told the Chat
+   builder that `.assistant-body p` had no `:last-child` reset and offered adding one as candidate
+   (A). **It already ships**, as `.assistant-body > :last-child { margin-bottom: 0 }` at
+   `markdown.css:206-208`, winning on both specificity (0,2,0 vs 0,1,1) and import order
+   (`styles.css:25` after `:22`). Writing candidate (A) would have changed **zero pixels while
+   looking like a fix** — the same shape as the 500-renders-as-600 trap. The consequence: the
+   "29-vs-36px discrepancy" the brief asked the builder to explain **never existed**; the shipped
+   box gap was 24px and the critic's ~29 was a correct read of it under the convention in
+   adjudication 5. Recorded because the run's value depends on agents correcting the layer above
+   them, and this is now the fourth instance.
+
+7. **THE SMOOTHING PASS CORRECTED THE LEG AGAIN, AND RE-PRICED THE TITLEBAR'S ONE CONSTRUCTIVE
+   LEAD.** The leg reported a stale source reference (`titlebar.css:169` → `:181`). The pass swept
+   every line reference in `src/renderer/src/` and found **zero stale in source** — the drift is in
+   the **run's own record**, not the code. It further found the housing rule has **eight tenants,
+   not six**: `.sidebar-toggle` renders at five sites in `Sidebar.tsx` (`:426`, `:444`, `:457`,
+   `:473`, `:490`) and `.agents-toggle` at three. The comment's "the rail's three" is a real
+   shorthand for the 14-grid glyphs but the referent at that line is *tenants*, and a count short by
+   two **under-prices exactly the change the Titlebar refusal recommends** — painting the resting
+   housing would touch eight controls across two surfaces, not six.
 
 ## Wave 4 adjudications — two refusals, one of them overturned, and a three-wave argument settled
 
@@ -362,7 +474,7 @@ leg would otherwise re-spend a wave on.
    but it must not be handed to a wave-3 builder as written.** The critic asked to
    *"render ordinary transcript text at the specified regular 400 weight and
    reserve 600 for labels or real emphasis"*. That is already exactly what ships:
-   `.assistant-body` is `font-weight: 400; line-height: 1.6` (`chat.css:181-182`,
+   `.assistant-body` is `font-weight: 400; line-height: 1.6` (`chat.css:216-217`,
    and this wave's builder made the 400 explicit rather than inherited), and the
    only three `font-weight: 600` rules in `markdown.css` are headings (`:127`),
    `strong` (`:146`) and table headers (`:180`) — precisely the "labels or real
@@ -422,10 +534,16 @@ leg would otherwise re-spend a wave on.
 
 ## Open fence question — not a wave's to settle
 
-`rails.css:486` gives the active session row `background: var(--mint-wash)` plus
+`rails.css:548` gives the active session row `background: var(--mint-wash)` plus
 `box-shadow: inset 2px 0 0 0 var(--color-mint)` — a 2px mint stripe on the left
 edge. DESIGN.md line 83 bans *"side-stripe borders"*. Nothing in `.context/
 decisions/` adjudicates it and no test pins it.
+
+**WAVE 5 UPDATE — a critic finally raised this, correctly, and it is still refused.**
+See "Wave 5 adjudications" 4. The refusal stands on the decorative-versus-state
+argument below, and additionally because Sidebar had no build in wave 5 and a
+`SPEC BREAK` reverts a build. **But it is no longer a question only the leg has
+noticed, which is what an owner should weigh.**
 
 **It was not ruled a break, and no wave should quietly "fix" it.** The banned list
 it sits in is a list of *decorative* vocabulary, and this stripe is carrying
@@ -638,13 +756,13 @@ sweep, and it is the reason this note exists rather than a verdict.
 - [wave 3] **The smoothing pass caught the wave-2 defect class repeating — in the LEG'S
   OWN edit.** The leg's new Titlebar comment justified the 14 -> 16 grid move as making
   the glyphs "carry their 28px housings". That housing is **not the titlebar's**:
-  `titlebar.css:169` declares `.agents-toggle, .sidebar-toggle` jointly, and the sessions
+  `titlebar.css:181` declares `.agents-toggle, .sidebar-toggle` jointly, and the sessions
   rail's three glyphs still draw on **14 at 1.4 stroke** (`Sidebar.tsx:66`, `:460`,
   `:477`). Taken at face value the stated reason condemns three glyphs in a file the
   Titlebar builder never opened. The pass measured both sides before touching anything
   (titlebar 10.0 / 9.9 / 10.8x10.6 on the 16 grid; rail 9.0x9.5 / 10x7.8 / 9x9 on the 14)
   , found both land ~10px optical inside the same 28px box, **redrew nothing**, rewrote
-  the false justification, and added the reciprocal note to `titlebar.css:169` so the
+  the false justification, and added the reciprocal note to `titlebar.css:181` so the
   next builder told to "unify the icons" sees that the rule has two tenants. It also
   caught the Welcome comment stating its own arithmetic wrongly (`120 against 32` reads
   as a 120px bottom padding; the shipped value is 152). **Both are comment-level defects
@@ -737,7 +855,7 @@ sweep, and it is the reason this note exists rather than a verdict.
   leaves 2px not 1). Also `851 -> 852` and `7.1% -> 7.0%`.
 - [wave 4] **"IT ADDS A FIFTH RENDERED SIZE" WAS FALSE, AND THE TRUTH IS SHARPER.** The Welcome
   builder reported its `calc()` added a fifth rendered type size. Verified first-hand: **`--fs-display`
-  had exactly ONE caller** (`chat.css:329`, plus its alias at `tokens.css:110`), so wrapping it
+  had exactly ONE caller** (`chat.css:394`, plus its alias at `tokens.css:110`), so wrapping it
   **replaced** that size rather than adding one — **23px now renders nowhere in the app**. The count
   is still four (11 / 13 / 15 / 34.98). The real cost against owner call 1 is a **named token the app
   no longer paints**, which is a different and cleaner statement of the same problem.
@@ -783,6 +901,112 @@ sweep, and it is the reason this note exists rather than a verdict.
   exactly one `backdrop-filter` (`subagent.css:122`); **every `var(--x)` in `styles/` resolves — 66
   used / 66 defined, zero undefined**; and **zero `font-weight: 500`**, which is `gui-96`'s criterion
   2 checked at the source rather than trusted.
+
+- [wave 5] **THE RUN STOPS HERE. `plateau: 3`, reached by a pre-registered recomputation after the
+  InputBar retest corrected down.** Five critics, one smoothing pass, **one builder edit and three
+  non-edits**. Gate green **twice** (D7 + constraint 10): typecheck clean, **1295 tests / 85 files**,
+  build clean, unchanged from baseline. Nothing reverted; constraint 10 never fired. No verdict
+  improved and one moved backwards, so the counter had nowhere honest to go.
+- [wave 5] **THE RETEST WAS RUN ON BYTE-IDENTICAL PIXELS, WHICH NO PREVIOUS RETEST MANAGED.**
+  InputBar was given a critic and **no builder** — the deliberate choice that made the test clean,
+  because a rebuilt surface confounds both possible outcomes. `sha256` confirms `input-bar.png` is
+  unchanged from wave 4 while the other six captures all moved. Same pixels, same standardised
+  payload, fresh critic, opposite verdict. **Wave 4's `YOURS WINS` did not reproduce.**
+  **Both critics named the same gap.** The disagreement was purely ordinal, which is the cleanest
+  isolation of owner call 4's measurement-scale problem the run has produced.
+- [wave 5] **THE BOUNDED BRIEF HELD FOR A SECOND WAVE, AND THIS TIME IT BOUGHT TWO REFUSALS AND A
+  MECHANISM CHANGE.** Zero runaways, zero casualties, zero collisions. File ownership was assigned
+  per piece up front again and Welcome/Chat were serialized inside the fan-out on `chat.css`. Only
+  the Titlebar builder was permitted to run `inspect.mjs`, into its own scratch dir, which removed
+  the instrument race four concurrent builders would otherwise have had.
+- [wave 5] **THE TITLEBAR REFUSAL SETTLED A THREE-WAVE ARGUMENT BY DRAWING THE THING RATHER THAN
+  DERIVING IT AGAIN.** The builder built the full panel frame at the disputed 0.85-per-side
+  clearance, rendered it in the real app, wrote its own nearest-neighbour magnifier, scanline-read
+  the pixels, and reverted. **0.85 was never a taste question: at 16 units rendered at 16px, DPR 1,
+  one unit is one device pixel**, so 0.85 of clearance between two unaligned 1.3px strokes has no
+  resolution to exist in. Measured: a gap that truly resolves reads ground luminance **14**; this
+  one never drops below **30**. Frame and mark fuse into one smudged double line at ~12% of
+  available contrast. Two waves argued 0.9-versus-0.35 over a number that could never have been
+  either. **Independent second kill:** the frame's 12.1 interior caps the agent connector at
+  **2.97**, and the bare-rule candidate was already dead at **3.01** — the same failure mode reached
+  from a different direction. The leg verified the diff is **comment-only** (zero non-comment changed
+  lines, render byte-identical to HEAD) and read the magnified capture first-hand: the three frames
+  *do* read as one family, and the family is bought by wrecking its members.
+  **The constructive half, for whoever resumes this: the frame that would work is the 28px housing
+  itself**, where clearance is already 7.3px and resolves cleanly — but it is declared jointly and
+  the smoothing pass measured **eight tenants**, so it is a cross-surface decision, not a titlebar one.
+- [wave 5] **THE SIDEBAR REFUSAL IS THE THIRD INSTANCE OF A CRITIC PRESCRIBING SOMETHING THAT
+  ALREADY SHIPS, AND THAT IS NOW A PATTERN.** The builder hand-decoded the graded PNG and measured
+  the three named joints at **12 / 9 / 9**; the leg independently confirmed **11 / 9 / 8** from
+  `rails.css` (`.bg-sessions-empty` pb 4 + `.bg-sessions` pb 6 + rule 1; pb 0 + rule 1 +
+  `.session-scope` pt 8; `.session-scope` pb 2 + `.session-groups` pt 6). All three already sat
+  inside the critic's asked **8-12px** band. Sharper still: applying the asked +10px per joint would
+  push them to **19/19/19**, i.e. *out* of the range the same critic prescribed. The critic measured
+  the symptom correctly — content ends at y≈281 above ~493px of void — and reached for a lever that
+  does not move it. **The prior two instances: wave 2's Chat 400-weight ask, and this wave's Chat
+  completed-turn ask (already 40px, the top of the asked range).**
+- [wave 5] Critic **re-resolved live** per the standing instruction: `wisp routing` gives
+  `sonnet` -> `codex/gpt-5.6-sol`, fifth wave at the same value, read fresh rather than carried.
+  `critic_degraded: false`.
+- [wave 5] **Instrument verified first-hand BEFORE any verdict was read.** Capture `PASS`, 7/7,
+  frame 1440x900 @ zoom 1, chat text **923** (the corrected-fixture number, fifth wave running). The
+  leg read all five surfaces itself, then checked every critic's literals against that read.
+  Unguessable and returned: the new session id **`inspect-ws-062JPE`**, the live **`953 sessions
+  outside this project`** (**952 last wave — still the best liveness literal the capture offers**),
+  both exact truncations, both tool-card paths, all four disclosure labels, and the welcome window's
+  own distinct centre label `New session`. **5/5 returned on ATTEMPT 1 at the standardised
+  three-image payload — third clean sweep running.** Four critics quoted their own bar's copy
+  (`There is a lost art of building true quality software.`, `Tell Linear what to do next...`,
+  `Purpose-built for planning and building products.`, and Linear's mobile-app paragraph).
+- [wave 5] **THE IMPROVEMENT AXIS READ 4 OF 5 CLEANLY AND MISSED ONE — the first miss in three
+  waves, and the miss is instructive rather than random.** Welcome BETTER (built) ✓, Chat BETTER
+  (built) ✓, Titlebar SAME (comment-only, render byte-identical) ✓, InputBar SAME (unbuilt) ✓,
+  **Sidebar BETTER on a surface nobody built** ✗. But the Sidebar case is not simple noise: its
+  wave-4 gap *misdescribed the surface*, so "better than that description implies" is defensible and
+  "same as last wave" is also true. **The axis cannot discriminate when the prior gap was false when
+  written** — which is exactly the third-instance pattern above. Across waves 3-5 the axis is **13
+  of 14**, with the one miss explained by a defective prior gap rather than by politeness.
+- [wave 5] **Welcome was the wave's only build, and it took the mechanism nobody had argued in five
+  waves.** The 152px bottom reserve was a *fixed* px value charged in full to a 480px window as well
+  as a 900px one, and that — not the type ladder — was the ceiling every previous Welcome wave hit.
+  `min(152px, 17vh)` resolves to a literal **152px at any window ≥894px tall**, so wave 2's closed
+  value is untouched where wave 2 measured it, while headroom at the 480px minimum goes **16px →
+  65px**. On that room the builder closed all three axes: title to the fifth rung (**46.26px**), hint
+  to **17.25px** (inside the asked 17-18), button to **52px** (inside the asked 52-56).
+  **Two instruments then confirmed the arithmetic independently:** the critic, blind, measured the
+  content stack at **253px** against the builder's computed **253.43**, and the button at **52px**
+  exactly. It also reported the heading *"reads visually at roughly 44px"*, which retires the
+  builder's own disclosed worry that its 46.26 overshot the asked 42-44 band.
+  **Cost, disclosed not hidden:** rendered type sizes go **4 → 5** (11 / 13 / 15 / 17.25 / 46.26)
+  against a `DESIGN.md` that documents three, and the default launch window is **780px tall** where
+  the reserve now resolves to **133px** rather than 152. Both feed owner call 1.
+- [wave 5] **The smoothing pass made two comment-only edits and declined five, and its most valuable
+  output was a recount the leg had wrong.** Acted: `.welcome-hint`'s character count (this wave had
+  changed a correct 44 to a wrong 43); and the housing-tenant sentence in `Titlebar.tsx`, which said
+  "the rail's three" where the referent was *tenants of the shared rule* — measured, there are
+  **eight**. Declined with reasons: rewriting a previous wave's rhythm-count headline (scoped, not
+  stale); patching the Welcome comment's missing 480px lift percentage (**25/432 = 5.8%**, between
+  the accepted 7.0% and the rejected 4.7%) because that is the Welcome critic's finding to reach
+  independently; correcting a box-versus-extent conflation in the Titlebar unlock paragraph because
+  it needs the glyph redrawn; and restriking `17.25` where it now sits **0.75px** from both markdown
+  headings (16.5 / 18.75), because either side is a piece-scoped restyle.
+  **Negative results worth keeping:** a full census of all 66 `font-size` declarations in `styles/`;
+  `--fs-display` still has exactly one caller so 23px still renders nowhere; every Welcome figure
+  re-derived and correct; `min()`/`vh` precedents verified (`base.css:31`, `subagent.css:117`) and
+  `DESIGN.md:54`'s ban confirmed to be on fluid *type* only; all four transcript intervals distinct
+  with `+` selectors mutually exclusive; and **zero stale line references anywhere in
+  `src/renderer/src/`** — the drift is in the run's own record, which this leg has now repaired.
+- [wave 5] **The addition slot was DECLINED for the fourth consecutive wave**, and this time the
+  proposal considered was a driver asserting the count and grid of every housing tenant. Declined on
+  the same instrument-stability ground, with the additional note that it would change what
+  `npm test` executes — a larger apparatus change than the photograph proposal already refused.
+  **Four for four now. See owner call 11; the slot is ceremony under this run's own rules.**
+- [wave 5] **D3/D4 pins checked MECHANICALLY twice — after the builders and again after smoothing —
+  never from any agent's self-report.** Clean both times: **zero** comments in `styles/` containing a
+  closing brace; exactly one `backdrop-filter` (`subagent.css:122`); **every `var(--x)` resolves — 66
+  used / 66 defined, zero undefined**; **zero `font-weight: 500`**; and `.bubble {` still the **sole
+  and first** literal occurrence in `chat.css` — **now at line 119, moved from 84 this wave, which is
+  legal because the pin is "first occurrence" and not a line number.**
 
 ## Owner calls raised by wave 2 — none of these are a wave's to settle
 
@@ -915,3 +1139,64 @@ sweep, and it is the reason this note exists rather than a verdict.
     longer "a fourth rung ships undocumented" but "`--fs-display` is a named token the app no longer
     paints, and the size it does paint is a `calc()` chain". **Wave 4 introduced no new em dash in
     rendered copy** — its only new user-visible string is the `Refresh` label, which is clean.
+
+## Owner calls raised by wave 5 — THE RUN HAS STOPPED; THESE ARE WHAT IT LEAVES YOU
+
+14. **OWNER CALL 4 PREDICTED THIS EXACT ENDING, AT THIS EXACT WAVE, AND IT WAS RIGHT — SO THE
+    QUESTION IT ASKED IS NOW THE DECISION IN FRONT OF YOU.** Wave 3 wrote: *"at `plateau >= 3` this
+    run stops. If the next two waves also improve without moving a verdict, the run will halt at
+    wave 5 having been told BETTER roughly a dozen times."* It halted at wave 5. The BETTER count
+    across waves 2-5 is **15**. **No verdict has improved since wave 2, and wave 2's improvement was
+    itself later invalidated — so across five waves this run has not produced a single surviving
+    ordinal improvement**, while three or more independent critics per wave reported the work
+    getting better nearly every wave.
+    Wave 5 gives the sharpest possible evidence for *why*: **two critics looked at byte-identical
+    pixels, named the same gap in the same words, and returned different verdicts.** The perception
+    is stable; the ordinal is not. The three-state scale cannot resolve the improvements this run is
+    actually making against a bar as hard as Linear.
+    **The decision, unchanged from wave 3 but now with the data in:** is the honest stop signal
+    (a) verdict movement as written, (b) verdict movement OR three straight waves of unanimous SAME
+    on the improvement axis, or (c) is `BAR WINS` against Linear simply the correct permanent answer
+    for these five surfaces, making this plateau the intended graceful end? **A leg cannot answer
+    this. It is the single most valuable thing this run produced.**
+15. **THE PROVISIONAL-VERDICT PATTERN IS NOW 2 FOR 2 AGAINST, AND THE PRESET'S WRITTEN RULE WOULD
+    HAVE LOST BOTH TIMES.** The preset says to close a piece the moment it reaches `YOURS WINS`.
+    Twice a piece reached it, twice the run deviated and kept it open, and **twice the retest
+    corrected it down** — Sidebar at wave 3, InputBar at wave 5. Had the letter been followed, the
+    run would have frozen two inflated measurements and retired the only tests capable of catching
+    them, and every later plateau reading would have been computed against phantoms.
+    **This is a preset-level finding: a single ordinal reading from one critic is not sufficient to
+    close a piece.** The cheap fix is to require confirmation on a second, unchanged capture before
+    closing — which is precisely what wave 5 did, and it cost two agents.
+16. **EVERY PIXEL FIGURE IN THIS RECORD IS IN THE CRITIC'S MEASURING CONVENTION, NOT THE CSS'S, AND
+    THE TWO DIFFER BY ABOUT 5-6px.** Proven this wave: a builder shipped a **16px** box gap and
+    predicted the critic would read it hot; the critic independently measured **21-22px**. The
+    critic measures ink-and-leading, the CSS measures boxes. **Consequence: a gap asking for "12-16px"
+    is asking for ~7-11px of box**, which in the Chat case is at or below an interval the file
+    already uses for a tighter relationship. Every numeric target a critic has ever given this run
+    needs that translation before a builder acts on it, and until now nobody was applying it.
+17. **A CRITIC PRESCRIBING SOMETHING THAT ALREADY SHIPS HAS NOW HAPPENED THREE TIMES.** Wave 2's Chat
+    ask (400 weight, already shipping), wave 5's Sidebar ask (8-12px joints, already 11/9/8), and
+    wave 5's Chat ask (32-40px turn separation, already 40px). In two of the three the builder caught
+    it and refused; in the first, a builder nearly "fixed" 400 to 400. **The loop generates briefs
+    whose remedy is already in the tree, and the only thing standing between that and wasted waves is
+    a builder willing to refuse.** That is an argument for keeping the measured-refusal option
+    permanently, and an argument that the critic should be asked to state the *current measured
+    value* it believes it is improving on — which would make this class self-detecting.
+18. **THE ONE-ADDITION SLOT IS NOW 0 FOR 4 AND SHOULD BE REMOVED OR REDEFINED.** Four consecutive
+    smoothing passes proposed an addition; all four were refused on instrument stability. Wave 4's
+    proposal cleared the capture objection and was still refused; wave 5's would additionally have
+    changed what `npm test` executes. **If every reachable proposal is barred by a rule the same run
+    enforces, the slot is not a budget, it is ceremony.** Should instrument extensions be allowed at
+    a wave boundary with prior captures retained, or should the slot only be spendable at a seed?
+19. **THE TITLE-CENTRING DEFECT IS REAL, MEASURED TWICE, AND UNFIXED — it is the best single ticket
+    this run leaves.** The session title's midpoint is **x=741 against a 720 centre, 21px right**,
+    confirmed by an independent scanline, while `DESIGN.md:59` specifies *"Center: session title"*.
+    Cheap, concrete, and it survived five waves of a critic looking directly at that strip.
+20. **Owner calls 1–3 and 5–13 all remain open and unactioned.** Wave 5 changed the shape of two of
+    them: **owner call 1 now has to price a FIVE-rung ladder** (11 / 13 / 15 / 17.25 / 46.26 against
+    three documented) whose new 17.25 rung sits **0.75px** from both markdown headings (16.5 / 18.75),
+    and the app's default 780px window now resolves the Welcome reserve to **133px** rather than 152.
+    **Owner call 9 is untouched and still the most dangerous**: nothing executes the 38 `gui-*.mjs`
+    drivers, `gui-91.mjs:131` is still red, and no driver pins a single value this wave changed.
+    **Wave 5 introduced no new em dash in rendered copy** — it added no new user-visible string at all.
