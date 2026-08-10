@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-08-10
+updated: 2026-08-11
 tags: [context, overview]
 ---
 
@@ -443,7 +443,16 @@ tags: [context, overview]
   interactive rows), `state` is carried as the RAW string because the set is
   open, and `pid`/`status` are not carried at all because no single field
   describes liveness. **Nothing polls it**, at ~893ms of CLI process per look.
-- `tests/` — vitest + testing-library shell tests (jsdom, `vitest.config.ts`)
+- `tests/` — vitest + testing-library shell tests (jsdom, `vitest.config.ts`).
+  Since #132 it also reaches OUT of the app: `tests/gui-source-assertions.test.ts`
+  globs `.claude/skills/run-desktop/gui-*.source.mjs` and runs every GUI driver
+  assertion that needs no browser. **The convention is the mechanism** — a driver
+  `gui-<n>.mjs` ships a sibling `gui-<n>.source.mjs` exporting
+  `checks: { name, run() }[]` with `run()` pure, returning `{ ok, detail }`; the
+  glob picks it up with no wiring, and **the driver imports the same array**, so
+  the gated copy cannot drift from the driven one. Drivers with no sidecar are
+  reported as named SKIPS carrying their reason, never omitted — a suite quietly
+  running half its checks is the failure #132 exists to close.
 - `DESIGN.md` / `PRODUCT.md` — Frost Mono design system + product context (impeccable reads these)
 - `docs/design/frost-mono-reference.png` — canonical visual reference
 
@@ -456,17 +465,16 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **the queue is
-  EMPTY and relay chain 5's `ticket-loop` has stopped — #131 delivered and
-  closed, no open issue at all — but the chain does NOT end there: the state file
-  fired its armed successor `/relay N=1 /preset gauntlet`, the quality pass
-  against `.gauntlet/bar/`. `ready-for-human` is BANNED for this batch; use
-  `needs-info` + a comment + a PushNotification**; run the frontier query
-  anyway, it is the authority and this line has been wrong before.
-  **37 `gui-*.mjs`** — 36 assertion drivers plus the observational
+- `.context/pick-up.md` — current frontier + landmines (currently: **relay chain 6
+  is RUNNING. #132 landed and closed; the frontier is #133, #134, #135, #136 —
+  closing #132 unblocked the last two. `ready-for-human` is BANNED for this
+  batch; use `needs-info` + a comment + a PushNotification**; run the frontier
+  query anyway, it is the authority and this line has been wrong before.
+  **38 `gui-*.mjs` assertion drivers** — 37 plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
-  `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`), with **two standing
-  environmental reds**,
+  `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
+  also **two `gui-*.source.mjs` sidecars** (`gui-96`, `gui-98`), which are NOT
+  drivers and are excluded from that count. **Two standing environmental reds**,
   `gui-75` (focus-dependent) and `gui-52` (the CLI returning an empty model
   list); both are premise failures, not regressions, and both were reproduced on
   clean `main` before being called so)
