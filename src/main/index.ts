@@ -898,7 +898,7 @@ ipcMain.handle(
     if (!isMessageUuid(userMessageId)) return refusal('This message cannot be rewound.')
     if (!engine) {
       return refusal(
-        'Rewind is unavailable — this conversation has no live Claude Code session.'
+        'Rewind is unavailable because this conversation has no live Claude Code session.'
       )
     }
     // The engine is NOT rebuilt to serve this, unlike the list handlers (#112).

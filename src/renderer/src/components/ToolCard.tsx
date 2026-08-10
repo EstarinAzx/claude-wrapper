@@ -67,7 +67,7 @@ const EditDiff = ({
         </pre>
       ) : (
         <>
-          <span className="tool-card-change-label">Too large to align — exact texts</span>
+          <span className="tool-card-change-label">Too large to align, so here are the exact texts</span>
           <span className="tool-card-change-label">Before</span>
           <pre className="tool-card-diff-body">{oldText}</pre>
           <span className="tool-card-change-label">After</span>

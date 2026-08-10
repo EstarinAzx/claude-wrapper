@@ -92,7 +92,7 @@ describe('the composer while a turn runs', () => {
     // outside: the prompt did not reach the engine.
     expect(harness.prompts).toHaveLength(1)
     expect(note()).not.toBeNull()
-    expect(note()?.textContent).toMatch(/sends when this turn finishes/i)
+    expect(note()?.textContent).toMatch(/to send when this turn finishes/i)
     // The draft stays in the box, because the queue IS the draft: what fires is
     // what is visible, never a hidden snapshot taken at commit time.
     expect(input().value).toBe('second')

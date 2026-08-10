@@ -185,7 +185,7 @@ const EffortControl = ({
       className={`effort-control${offscale ? ' effort-control--offscale' : ''}`}
       title={
         offscale
-          ? `Effort: ${shown} — the current model does not offer this level`
+          ? `Effort: ${shown}. This model does not offer that level.`
           : `Effort: ${shown}`
       }
     >
@@ -247,7 +247,7 @@ const readAsBase64 = (file: File): Promise<string> =>
 // what it IS, so a read failure flattened to `''` falls out of the embed branch
 // and lands in the catch-all, which names the media type as both the rejected
 // kind and an accepted one. The composer is what knows the read failed.
-const COULD_NOT_READ = "Couldn't be read — it may have been moved, deleted or locked"
+const COULD_NOT_READ = "Couldn't be read, which can mean it was moved, deleted or locked"
 
 const InputBar = ({
   busy,
@@ -619,7 +619,7 @@ const InputBar = ({
           {tray.rejections.map((r) => (
             <span key={`${r.name}:${r.reason}`} className="attachment-reject" role="alert">
               <span className="reject-name">{r.name}</span>
-              {` — ${r.reason}`}
+              {`: ${r.reason}`}
             </span>
           ))}
         </div>
@@ -637,7 +637,7 @@ const InputBar = ({
           on record as bare selectors that started matching the wrong button. */}
       {queued ? (
         <div className="queued-note" role="status">
-          <span className="queued-note-label">Queued — sends when this turn finishes</span>
+          <span className="queued-note-label">Queued to send when this turn finishes</span>
           <button
             type="button"
             className="queued-note-cancel"

@@ -28,7 +28,7 @@ describe('titlebar backend pill', () => {
     render(<Titlebar cwd={null} backend={{ mode: 'native', wispedAvailable: false }} />)
     const pill = screen.getByLabelText('Backend mode')
     expect(pill.textContent).toBe('Native')
-    expect(pill.getAttribute('title')).toBe('Launched without Wisp routing — native only')
+    expect(pill.getAttribute('title')).toBe('Launched without Wisp routing, so this session is native only')
   })
 })
 

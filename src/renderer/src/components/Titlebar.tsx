@@ -28,7 +28,7 @@ const PermissionPill = ({
   const canCycle = !busy && !!onCycle
   const next = PERM_NEXT[mode]
   const title = canCycle
-    ? `Permissions: ${PERM_LABEL[mode]} — click for ${PERM_LABEL[next]}`
+    ? `Permissions: ${PERM_LABEL[mode]}. Click for ${PERM_LABEL[next]}.`
     : `Permissions: ${PERM_LABEL[mode]}`
   return (
     <button
@@ -60,9 +60,9 @@ const BackendPill = ({
   // and no turn is streaming (mid-stream switch is blocked, per #14).
   const canFlip = backend.wispedAvailable && !busy && !!onFlip
   const title = !backend.wispedAvailable
-    ? 'Launched without Wisp routing — native only'
+    ? 'Launched without Wisp routing, so this session is native only'
     : canFlip
-      ? `Backend: ${label} — click to switch`
+      ? `Backend: ${label}. Click to switch.`
       : `Backend: ${label}`
   return (
     <button
@@ -199,7 +199,7 @@ const CommandsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => voi
     className={`agents-toggle${open ? ' agents-toggle--on' : ''}`}
     aria-label="Commands panel"
     aria-pressed={open}
-    title={open ? 'Commands panel — click to hide' : 'Commands panel — click to show'}
+    title={open ? 'Hide the Commands panel' : 'Show the Commands panel'}
     onClick={onToggle}
   >
     <svg {...glyph}>
@@ -221,7 +221,7 @@ const AppearanceToggle = ({ open, onToggle }: { open: boolean; onToggle: () => v
     className={`agents-toggle${open ? ' agents-toggle--on' : ''}`}
     aria-label="Appearance panel"
     aria-pressed={open}
-    title={open ? 'Appearance panel — click to hide' : 'Appearance panel — click to show'}
+    title={open ? 'Hide the Appearance panel' : 'Show the Appearance panel'}
     onClick={onToggle}
   >
     <svg {...glyph}>
@@ -241,7 +241,7 @@ const AgentsToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void 
     className={`agents-toggle${open ? ' agents-toggle--on' : ''}`}
     aria-label="Agents panel"
     aria-pressed={open}
-    title={open ? 'Agents panel — click to hide' : 'Agents panel — click to show'}
+    title={open ? 'Hide the Agents panel' : 'Show the Agents panel'}
     onClick={onToggle}
   >
     <svg {...glyph}>

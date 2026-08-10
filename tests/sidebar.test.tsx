@@ -239,6 +239,36 @@ describe('cross-project session list', () => {
     await waitFor(() => expect(loadTranscript).toHaveBeenCalledWith('far'))
   })
 
+  // #134. The em-dash ban forced this composed title to pick a new separator,
+  // and the pick is load-bearing rather than cosmetic: `label` is NOT a noun
+  // phrase. An enriched row (#49) carries the session's first user prompt
+  // verbatim and untruncated, so it is routinely a whole sentence ending in its
+  // own full stop, and a joining word would read as a fragment after it. A
+  // parenthetical closes cleanly whatever the label turned out to be, which is
+  // what these four branches are here to hold.
+  test('a foreign row names its project in the title, in every branch', async () => {
+    setup([
+      { id: 'far', title: 'Far chat', lastUpdated: 4000, cwd: THERE },
+      { id: 'sentence', title: 'Fix the parser. It crashes on empty input.', lastUpdated: 3000, cwd: THERE },
+      { id: 'homeless', title: 'Homeless chat', lastUpdated: 2000 },
+      { id: 'near', title: 'Near chat', lastUpdated: 1000, cwd: HERE }
+    ])
+    showAllProjects()
+    await startSession()
+
+    await screen.findByText('Far chat')
+    expect(rowButton('Far chat').getAttribute('title')).toBe(`Far chat (${THERE})`)
+    expect(rowButton('Fix the parser. It crashes on empty input.').getAttribute('title')).toBe(
+      `Fix the parser. It crashes on empty input. (${THERE})`
+    )
+    // No cwd on record groups under `Unknown project`, which is a label and not
+    // a path — the same shape still has to read as one.
+    expect(rowButton('Homeless chat').getAttribute('title')).toBe('Homeless chat (Unknown project)')
+    // A row in the OPEN project names no project at all: there is nothing to
+    // disambiguate, and the composed form never renders.
+    expect(rowButton('Near chat').getAttribute('title')).toBe('Near chat')
+  })
+
   test('a session in the open project stays openable', async () => {
     setup([{ id: 'near', title: 'Near chat', lastUpdated: 2000, cwd: HERE }])
     await startSession()

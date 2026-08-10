@@ -227,7 +227,7 @@ describe('the effort control (#124)', () => {
       await startSession()
       expect(document.querySelector('.effort-control--offscale')).toBeTruthy()
       expect(document.querySelector('.effort-control')?.getAttribute('title')).toBe(
-        'Effort: max — the current model does not offer this level'
+        'Effort: max. This model does not offer that level.'
       )
     })
 

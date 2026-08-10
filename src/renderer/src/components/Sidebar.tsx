@@ -189,7 +189,13 @@ const SessionRow = ({
         // `busy`. Disabling here would be a second busy source — and would make
         // the refusal it returns unreachable.
         disabled={!foreign && busy}
-        title={foreign ? `${label} — ${groupLabel}` : label}
+        // A parenthetical rather than a joining word (#134), because `label` is
+        // not a noun phrase: an enriched row carries the session's first user
+        // prompt VERBATIM and untruncated, which is often a whole sentence with
+        // its own punctuation. "<prompt>. in D:\proj" reads as a fragment;
+        // "<prompt> (D:\proj)" closes cleanly whatever the label turned out to
+        // be, including the `Unknown project` group and an `Untitled session`.
+        title={foreign ? `${label} (${groupLabel})` : label}
         onClick={() => (foreign ? onSwitch?.(session.id, session.cwd ?? null) : onOpen?.(session.id))}
       >
         <span className="session-row-title">{label}</span>

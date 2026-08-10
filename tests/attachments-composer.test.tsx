@@ -195,7 +195,7 @@ describe('the policy module refusing inline', () => {
     const text = rejects()[0]?.textContent ?? ''
     expect(text).toContain('huge.png')
     expect(text).toContain('Too large')
-    expect(text).toContain(`the limit is ${MAX_IMAGE_BYTES / (1024 * 1024)} MB`)
+    expect(text).toContain(`over the ${MAX_IMAGE_BYTES / (1024 * 1024)} MB limit`)
     expect(chips()).toHaveLength(0)
 
     send('did it go')
@@ -275,8 +275,8 @@ const failReadsFor = (names: string[]): void => {
 // The two sentences that must never be confused for one another. The second is
 // the policy's catch-all, and AC1's real half is about it: a build that showed
 // BOTH would pass an assertion that only looked for the first.
-const COULD_NOT_READ = "Couldn't be read — it may have been moved, deleted or locked"
-const EMBEDDABLE_SENTENCE = "can't be embedded — only PNG, JPEG, GIF and WebP images can"
+const COULD_NOT_READ = "Couldn't be read, which can mean it was moved, deleted or locked"
+const EMBEDDABLE_SENTENCE = "can't be embedded, since only PNG, JPEG, GIF and WebP images can be"
 
 describe('a clipboard image that cannot be read', () => {
   test('is refused for the reason it actually failed, not as a wrong media type', async () => {

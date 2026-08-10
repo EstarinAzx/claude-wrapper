@@ -135,7 +135,7 @@ describe('judgeAttachment — embeddable images', () => {
     if (result.verdict === 'reject') {
       const actualMb = (decodedBytes(data) / (1024 * 1024)).toFixed(1)
       expect(result.reason).toContain(`${actualMb} MB`)
-      expect(result.reason).toContain(`the limit is ${MAX_IMAGE_BYTES / (1024 * 1024)} MB`)
+      expect(result.reason).toContain(`over the ${MAX_IMAGE_BYTES / (1024 * 1024)} MB limit`)
     }
   })
 

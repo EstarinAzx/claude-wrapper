@@ -958,7 +958,7 @@ export const createEngine = (
     const call = currentQuery?.rewindFiles
     if (!call) {
       return refusal(
-        'Rewind is unavailable — this conversation has no live Claude Code session.'
+        'Rewind is unavailable because this conversation has no live Claude Code session.'
       )
     }
     let raw: unknown

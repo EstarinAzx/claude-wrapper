@@ -100,7 +100,7 @@ export const judgeAttachment = (
       return {
         verdict: 'reject',
         name,
-        reason: `Too large (${formatMb(size)} MB) — the limit is ${MAX_IMAGE_BYTES / MB} MB`
+        reason: `Too large at ${formatMb(size)} MB, over the ${MAX_IMAGE_BYTES / MB} MB limit`
       }
     }
   }
@@ -112,7 +112,7 @@ export const judgeAttachment = (
   return {
     verdict: 'reject',
     name,
-    reason: `${mediaType} can't be embedded — only PNG, JPEG, GIF and WebP images can`
+    reason: `${mediaType} can't be embedded, since only PNG, JPEG, GIF and WebP images can be`
   }
 }
 

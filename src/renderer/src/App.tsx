@@ -30,7 +30,7 @@ const SWITCH_REFUSAL: Record<Exclude<SwitchStatus, 'ok'>, string> = {
 // The one thing a failed delete has to say, and it says the part that matters:
 // the row is still real. A session the store no longer holds answers `ok`, so
 // reaching this line means the transcript survived and the rail is not lying.
-const DELETE_FAILURE = 'Could not delete that session — it is still in the store.'
+const DELETE_FAILURE = 'Could not delete that session. It is still in the store.'
 
 const App = () => {
   const [cwd, setCwd] = useState<string | null>(null)
