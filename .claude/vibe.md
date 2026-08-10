@@ -29,6 +29,27 @@ idea: >
   DESIGN.md states no driver can see a DWM backdrop. The flat mid-grey ground in
   the capture is an instrument artifact, not a defect. This repo has paid the
   read-an-artifact-as-a-finding bill eight times.
+idea_correction: >
+  THE `idea:` FIELD ABOVE CONTAINS A FACTUAL ERROR. It is left intact because
+  vibe's contract writes the seed once and never rewrites it — this field is the
+  correction, and it wins.
+
+  "KNOWN DEFECTS ... the identity mark renders as a blank mint rounded square
+  with no glyph" is WRONG. The mark is solid **by design**: `.logo-mark`
+  (`titlebar.css:26`) and `.welcome-mark` (`chat.css:199`) are each a bare
+  `background: var(--mint)`; both elements are self-closing and
+  `aria-hidden="true"` (`Titlebar.tsx:175`, `Welcome.tsx:3`); DESIGN.md spends
+  the accent on the mark AS an accent and prescribes size, radius and fill but
+  never content; and `frost-mono-reference.png` shows the same solid mark. No
+  wave may add a glyph — see the `## Needs you` entry.
+
+  The other two items in that block ("pills crowd the app name", "composition
+  floats in dead space") are the main agent's unverified impressions from one
+  screenshot. They are NOT findings and must not be handed to a builder or a
+  critic. The bar file's defect list was deleted for the same reason: naming gaps
+  there hands the critic the verdict it exists to reach independently.
+
+  The HARD CONSTRAINT paragraph in the seed is correct and still binds.
 partner: opus                 # anthropic/claude-opus-5
 pressure: opencode-go/kimi-k3
 pressure_via: sonnet          # first non-Claude family; no slot rebind, no restore owed
