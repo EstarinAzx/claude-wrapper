@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-08-05
+updated: 2026-08-10
 tags: [context, overview]
 ---
 
@@ -457,8 +457,10 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **the queue is
-  EMPTY and relay chain 4 has stopped — #130 delivered and closed, and there is
-  now NO open issue at all. `ready-for-human` is BANNED for this batch; use
+  EMPTY and relay chain 5's `ticket-loop` has stopped — #131 delivered and
+  closed, no open issue at all — but the chain does NOT end there: the state file
+  fired its armed successor `/relay N=1 /preset gauntlet`, the quality pass
+  against `.gauntlet/bar/`. `ready-for-human` is BANNED for this batch; use
   `needs-info` + a comment + a PushNotification**; run the frontier query
   anyway, it is the authority and this line has been wrong before.
   **37 `gui-*.mjs`** — 36 assertion drivers plus the observational
@@ -468,6 +470,23 @@ tags: [context, overview]
   `gui-75` (focus-dependent) and `gui-52` (the CLI returning an empty model
   list); both are premise failures, not regressions, and both were reproduced on
   clean `main` before being called so)
+- `.claude/skills/run-desktop/inspect.mjs` — **the consolidated `inspect:`
+  command (#131), and the one to copy when a run must produce EVIDENCE rather
+  than a verdict.** `SCREENSHOT_DIR=<dir> node …/inspect.mjs` captures all five
+  core surfaces — Welcome, Titlebar, Sidebar, Chat, InputBar — plus two
+  whole-window frames, because a surface clipped to its own box cannot answer a
+  composition question. It spends **zero CLI turns**: the chat is a transcript
+  **fixture seeded into the CLI store** and replayed (gui-63's mechanism), so it
+  carries real message rhythm and two tool cards on a machine with no session and
+  no API key. Determinism is bought explicitly — the window is pinned to 1440x900
+  and `setZoomFactor(1)`, both of which are otherwise remembered across launches
+  and would silently rescale every capture. **Every surface is proven present,
+  painted, on screen and non-empty BEFORE it is photographed**, and a green run
+  asserts it wrote all seven files, so a half-empty output directory cannot read
+  as a complete one. `driver.mjs` is untouched and still owns the two-pill read.
+  Re-run it after any change to a surface's root class
+  (`.welcome`, `header.titlebar`, `aside.sidebar`, `main.chat`,
+  `footer.input-bar`) or to the shape `transcript.ts` parses
 - `scripts/spike-81-background-tasks.mjs` — the CLI-measurement harness (#81),
   the #27 pattern with the background path actually exercised. Drives SDK
   `query()` with `engine.ts`'s exact options, imports the app's **real**
