@@ -1,4 +1,4 @@
-// The consolidated `inspect:` command (#131) — capture the five core surfaces
+// The consolidated `inspect:` command (#131, #133) — capture the eight surfaces
 // of the BUILT app into one directory, in one run, with no human present.
 //
 //   SCREENSHOT_DIR=<dir> node .claude/skills/run-desktop/inspect.mjs
@@ -25,13 +25,27 @@
 // address exactly one of them:
 //
 //   welcome.png     titlebar.png    sidebar.png    chat.png    input-bar.png
+//   agents-dock.png commands-dock.png               appearance-dock.png
 //   window-welcome.png              window-session.png
 //
 // The two `window-*.png` frames are the whole window at each stage. They are not
-// a sixth and seventh surface — they exist because a surface clipped to its own
+// a ninth and tenth surface — they exist because a surface clipped to its own
 // bounding box cannot answer a composition question ("does this float in dead
 // space"), and every reference in `.gauntlet/bar/linear/` is a whole-page frame.
 // A critic comparing composition needs a comparable unit.
+//
+// THE THREE DOCKS ARE #133, AND THEY WERE ADDED BECAUSE A MIRROR WITH ONE SIDE
+// UNWATCHED DRIFTS. `DESIGN.md` defines the Agents dock as the sessions rail's
+// mirror: same 44px head, same row shell, grip on the facing edge. Through five
+// gauntlet waves the rail was photographed every time and the dock never was, and
+// a builder duly got a dock foot strip's padding wrong at both ends while
+// claiming in its own comment to be copying a dock rule. Nothing piece-scoped
+// could catch that, because the other half of the mirror was invisible.
+//
+// The docks are captured LAST, after `window-session.png`, and that order is
+// load-bearing rather than tidy: a dock is an in-flow aside, so opening one
+// narrows `main.chat`. Captured any earlier they would change the geometry of a
+// surface that is supposed to be unchanged by their existence (#133 AC3).
 //
 // A CAPTURE FAILURE IS LOUD, and that is the point rather than a nicety. A bar
 // folder that quietly came back half-empty reads exactly like a surface that had
@@ -49,8 +63,34 @@
 //
 // WHAT IT DOES NOT DO, deliberately: it spends ZERO CLI turns and needs no
 // engine. The transcript is seeded on disk and replayed, so the same command
-// produces the same five surfaces on a machine with no Claude Code session, no
+// produces the same eight surfaces on a machine with no Claude Code session, no
 // network and no API key.
+//
+// THE WHOLE INSTRUMENT IS FIXTURE-DRIVEN, and the docks did not change that —
+// they only added two more fixtures to the one that was already here. Stated
+// plainly because a capture cannot show a reader where its content came from:
+//
+//   * CHAT replays a transcript this file wrote to the CLI's own store.
+//   * AGENTS reads `.meta.json` sidecars this file wrote next to that
+//     transcript. That is the dock's REAL disk path (`subagents:list` →
+//     `listSubagents`), driven with fixture rows.
+//   * COMMANDS is the one surface whose content this file cannot reach
+//     honestly. `commands:list` calls `supportedCommands()` on a live query, so
+//     with no engine the dock's truthful answer is its empty state. The handler
+//     is therefore REPLACED IN MAIN with a fixture list, exactly as
+//     `dialog.showOpenDialog` is replaced above it.
+//   * APPEARANCE needs no fixture at all. Its content is local state.
+//
+// So a green `commands-dock.png` says NOTHING about whether the CLI serves
+// commands — gui-51 and gui-94 measure that against a warm engine, and they are
+// where that question belongs. What these captures are for is design review:
+// row rhythm, head alignment, the shell around the content. For that the
+// provenance of a row does not matter, only that a real row rendered through
+// the real component and the real stylesheet.
+//
+// The agent rows are DISK rows, which means no status dot and no live stats
+// line — those two fields only exist on the merged live half. A critic reading
+// `agents-dock.png` is seeing the row shell, not every state a row can wear.
 //
 // WHAT NO DRIVER CAN SEE: the DWM acrylic backdrop. The app's wash is
 // translucent and composited by Windows; these captures show a flat ground where
@@ -223,6 +263,77 @@ fs.writeFileSync(
     line(assistantText(u(), uH, REPLY_THREE, 118000))
 )
 
+// ---- the agents fixture -----------------------------------------------------
+//
+// Sidecars written where `listSubagents` actually looks: <the project dir
+// holding this session>/<sessionId>/subagents/agent-<agentId>.meta.json. The
+// store resolves that directory from its own index rather than from `cwd`, so
+// seeding the transcript above is what puts these on the map at all.
+//
+// THREE rows, and the shape of the three is the point rather than the count.
+// The dock nests by `parentAgentId`, and nesting is rare in life (about 1 agent
+// in 185), so a flat fixture would photograph the common case and leave the
+// indent rule — the one thing a reviewer cannot check by eye anywhere else —
+// invisible. One nested row costs nothing and makes `INDENT_PX` visible.
+//
+// Fields are varied on purpose too: `agent-row-meta` renders only what the
+// sidecar carries, so a row with no model and no depth is a genuinely different
+// shape from a row with both, and both ship in every real session.
+const AGENTS = [
+  {
+    agentId: 'a1b2c3d4',
+    toolUseId: 'tu-inspect-agent-survey',
+    agentType: 'general-purpose',
+    description: 'Survey every fs.* call across the GUI drivers and classify it',
+    model: 'claude-opus-5',
+    spawnDepth: 0
+  },
+  {
+    agentId: 'e5f6a7b8',
+    toolUseId: 'tu-inspect-agent-explore',
+    agentType: 'Explore',
+    description: 'Locate the three stylesheet pins that scan the whole styles directory',
+    model: 'claude-sonnet-5',
+    spawnDepth: 1,
+    parentAgentId: 'a1b2c3d4'
+  },
+  {
+    // No model, no depth: the sidecar recorded neither, and the row must read
+    // as "not recorded" rather than as a zero.
+    agentId: 'c9d0e1f2',
+    toolUseId: 'tu-inspect-agent-review',
+    agentType: 'cavecrew-reviewer',
+    description: 'Review the working diff for scope creep'
+  }
+]
+
+const AGENTS_DIR = path.join(STORE_DIR, SID, 'subagents')
+fs.mkdirSync(AGENTS_DIR, { recursive: true })
+for (const { agentId, ...meta } of AGENTS) {
+  fs.writeFileSync(path.join(AGENTS_DIR, `agent-${agentId}.meta.json`), JSON.stringify(meta))
+}
+
+// ---- the commands fixture ---------------------------------------------------
+//
+// Installed over the `commands:list` IPC handler in MAIN — see the header for
+// why the real one cannot answer here. PHOTOGRAPHED, so it obeys the product's
+// copy rules the same way the transcript prose above does: no em dashes, and no
+// sentence long enough that it is only ever seen truncated.
+//
+// The set is chosen for ROW SHAPE, which is what the dock is looked at for. A
+// command may carry an argument hint, a description, both or neither, and the
+// markup renders each child only when its field is non-empty. A fixture of
+// seven identical rows would photograph one shape out of four.
+const COMMANDS = [
+  { name: 'preset', description: 'Load a named instruction block instead of retyping it', argumentHint: '<name>' },
+  { name: 'trace', description: 'Follow one flow end to end across every file it touches', argumentHint: '<flow>' },
+  { name: 'review', description: 'Fresh eyes over the working diff, findings only', argumentHint: '' },
+  { name: 'context-update', description: 'Refresh the handoff notes for the next session', argumentHint: '' },
+  { name: 'llm-kb', description: 'Ingest a source into the topic vault, or query it', argumentHint: 'ingest|query' },
+  { name: 'wrap-up', description: '', argumentHint: '' },
+  { name: 'hp', description: 'Map the golden path before any code exists', argumentHint: '' }
+]
+
 let cleaned = false
 const cleanup = () => {
   if (cleaned) return
@@ -234,12 +345,24 @@ const cleanup = () => {
   }
 }
 
-// ---- the five surfaces ------------------------------------------------------
+// ---- the eight surfaces -----------------------------------------------------
 //
 // `requires` is what makes the surface itself rather than an empty shell of it.
 // Each entry is asserted inside the surface's own subtree, so a chat column that
 // replayed nothing fails HERE, loudly, instead of producing a photograph of
 // blank space that a critic would read as a design opinion.
+//
+// A `dock` surface additionally carries `open`: the aria-label of the titlebar
+// control that reveals it. The three docks share ONE slot, so opening the next
+// closes the last and the loop needs no close step.
+//
+// THE DOCK SELECTORS ARE aria-label, NOT class, AND THAT IS NOT A STYLE CHOICE.
+// All three asides carry `agents-dock` — the commands and appearance docks are
+// built as `agents-dock commands-dock` / `agents-dock appearance-dock`, so
+// `.agents-dock` matches whichever one happens to be open and would silently
+// photograph the wrong dock under the right filename. The aria-label is the only
+// attribute that distinguishes them, and it is also the thing the app owes a
+// screen reader, so it is the one least likely to be quietly renamed.
 
 const SURFACES = [
   {
@@ -285,6 +408,41 @@ const SURFACES = [
     stage: 'session',
     selector: 'footer.input-bar',
     requires: [['.message-input', 'the composer field is absent']]
+  },
+  {
+    name: 'agents-dock',
+    stage: 'dock',
+    open: 'Agents panel',
+    selector: 'aside[aria-label="Agents"]',
+    requires: [
+      ['.agents-dock-title', 'the dock has no heading, so its head cannot be compared to the rail it mirrors'],
+      ['.agent-row', 'the dock lists no agent, so there is no row rhythm to judge'],
+      ['.agent-row--nested', 'no row is nested, so the indent rule is not in the frame']
+    ]
+  },
+  {
+    name: 'commands-dock',
+    stage: 'dock',
+    open: 'Commands panel',
+    selector: 'aside[aria-label="Commands"]',
+    requires: [
+      ['.agents-dock-title', 'the dock has no heading, so its head cannot be compared to the rail it mirrors'],
+      ['.command-row', 'the dock lists no command, so there is no row rhythm to judge']
+    ]
+  },
+  {
+    name: 'appearance-dock',
+    stage: 'dock',
+    open: 'Appearance panel',
+    selector: 'aside[aria-label="Appearance"]',
+    requires: [
+      ['.agents-dock-title', 'the dock has no heading, so its head cannot be compared to the rail it mirrors'],
+      // This dock is fields rather than rows, so its content check is the
+      // control itself. Both are asserted because they are different widgets:
+      // a listbox of swatches and a stepper with a readout.
+      ['.appearance-choice', 'the dock offers no choice, so its fields are an empty shell'],
+      ['.appearance-stepper', 'the zoom stepper is absent']
+    ]
   }
 ]
 
@@ -486,6 +644,50 @@ const capture = async (surface) => {
   written.push(path.relative(APP_DIR, file).replace(/\\/g, '/'))
 }
 
+// Reveal a dock and wait for its content to arrive. Returns false only when the
+// TOGGLE is missing, which is the one failure `capture` cannot describe: with no
+// control to click, the aside never mounts and `capture` would report a missing
+// surface, pointing a reader at the dock instead of at the titlebar that lost
+// its control. Every other way this can go wrong — the aside mounts empty, stays
+// unpainted, refuses to photograph — is left to `capture`, which already says it
+// precisely and must stay the single place those sentences live.
+const openDock = async (surface) => {
+  const clicked = await page.evaluate((label) => {
+    const btn = document.querySelector(`[aria-label="${label}"]`)
+    btn?.click()
+    return !!btn
+  }, surface.open)
+  if (!clicked) {
+    fails.push(
+      `${surface.name}: the titlebar has no [aria-label="${surface.open}"] control, so the dock was never opened — the instrument has lost its grip on the UI and this is NOT a finding about the dock`
+    )
+    return false
+  }
+
+  // Polled, not slept. The agents dock resolves a disk read and the commands
+  // dock a fetch on mount, so both show "Loading…" first; a fixed sleep is
+  // either short enough to photograph that word on a slow machine or long
+  // enough to waste seconds on every run. Six seconds is the ceiling, and
+  // reaching it is not itself reported — `capture` states what is missing.
+  for (let i = 0; i < 30; i++) {
+    const ready = await page.evaluate(
+      ([sel, reqs]) => {
+        const root = document.querySelector(sel)
+        return !!root && reqs.every((r) => !!root.querySelector(r))
+      },
+      [surface.selector, surface.requires.map(([sel]) => sel)]
+    )
+    if (ready) break
+    await page.waitForTimeout(200)
+  }
+
+  // The toggle keeps focus after its own click, and a focus ring on a titlebar
+  // control is a state the critic did not ask to see.
+  await page.evaluate(() => document.activeElement?.blur?.())
+  await settle(400)
+  return true
+}
+
 const captureWindow = async (name) => {
   const file = path.join(SHOT_DIR, `window-${name}.png`)
   try {
@@ -512,7 +714,45 @@ try {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [dir] })
   }, WORKSPACE)
 
+  // The commands fixture, installed at the same boundary and for the same
+  // reason: main owns the answer, and with no engine the honest answer is empty.
+  // `removeHandler` first because `ipcMain.handle` throws on a second
+  // registration for one channel rather than replacing it, so without this the
+  // whole run would die here instead of capturing seven surfaces and refusing
+  // one. The list travels as an argument, like the path above.
+  await app.evaluate(({ ipcMain }, commands) => {
+    ipcMain.removeHandler('commands:list')
+    ipcMain.handle('commands:list', async () => commands)
+  }, COMMANDS)
+
   page = await app.firstWindow()
+  await page.waitForLoadState('domcontentloaded')
+  await page.waitForSelector('[aria-label="Backend mode"]', { timeout: 20000 })
+
+  // ZOOM IS AGREED WITH THE APP, NOT FORCED PAST IT — and #133 is what exposed
+  // the difference. `useZoom` applies its own persisted level on mount
+  // (DEFAULT_ZOOM is 1.25), and the block below then set the factor to 1
+  // afterwards. That left the window rendering at 1 while the app still believed
+  // 1.25 — a state `useZoom` describes as impossible in its own words, "the
+  // readout can never disagree with the window", because every in-app path goes
+  // through `step`. Nothing photographed the disagreement until the Appearance
+  // dock arrived, whose stepper prints that number: the first dock capture read
+  // "125%" across a window that was demonstrably 1440 CSS px wide at factor 1. A
+  // critic cannot tell that from a real defect, and this repo has already paid
+  // nine times for instrument artifacts reported as findings.
+  //
+  // Seeded and reloaded rather than stepped: `nextZoom(level, 'reset')` returns
+  // DEFAULT_ZOOM, not 1, so the app offers no path to 100% that is not counting
+  // clicks. The reload happens BEFORE the folder pick, so there is no workspace
+  // or session state to lose, and the rendered factor is 1 either way — only the
+  // app's belief about it moves, which is why the five original surfaces keep
+  // their boxes to the pixel.
+  //
+  // The key is versioned and its own comment says to bump it again on the next
+  // default change, so this copy WILL drift. `tests/inspect-docks.test.ts` pins
+  // the two spellings together for the day that happens.
+  await page.evaluate(() => window.localStorage.setItem('zoom-level-v2', '1'))
+  await page.reload()
   await page.waitForLoadState('domcontentloaded')
   await page.waitForSelector('[aria-label="Backend mode"]', { timeout: 20000 })
 
@@ -616,6 +856,23 @@ try {
 
   for (const s of SURFACES.filter((s) => s.stage === 'session')) await capture(s)
   await captureWindow('session')
+
+  // ---- stage 3: the three right-hand docks ----------------------------------
+  //
+  // STRICTLY AFTER the frame above. A dock is an in-flow aside, so an open one
+  // takes its width out of `main.chat`; capturing a dock before the session
+  // surfaces would move the boxes of surfaces that have nothing to do with it.
+  //
+  // The agents dock's width is remembered in localStorage, the same trap the
+  // zoom factor sets above: a human who dragged the grip once would change the
+  // captured width of every later run. Cleared rather than written, so the
+  // default lives in the app instead of being restated here.
+  await page.evaluate(() => window.localStorage.removeItem('agents-dock-width'))
+
+  for (const s of SURFACES.filter((s) => s.stage === 'dock')) {
+    if (!(await openDock(s))) continue
+    await capture(s)
+  }
 
   await finish()
 } catch (e) {
