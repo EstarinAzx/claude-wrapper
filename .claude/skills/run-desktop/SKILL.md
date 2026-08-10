@@ -124,8 +124,86 @@ does not build).
 Live today: `gui-96.source.mjs` (criteria 2 and 6), `gui-98.source.mjs`
 (criterion 5c).
 
+## DOM-level assertions run in a named phase (#135)
+
+The other half. `npm test` runs the pure checks in milliseconds; the checks that
+need a real window run here, one Electron launch per driver:
+
+```bash
+npm run build                             # the phase launches out/
+npm run test:dom                          # every driver that can run unattended
+npm run test:dom -- --only gui-91.mjs     # one driver — use this to prove a red is real
+npm run test:dom -- --list                # what runs, what does not, and why
+```
+
+**The split, and neither half covers the other:**
+
+| | `npm test` | `npm run test:dom` |
+|---|---|---|
+| what runs | `*.source.mjs` checks — pure, no browser | the drivers themselves |
+| cost | milliseconds | ~10 minutes, one app launch per driver |
+| sees CSS | **no** — jsdom loads none, and an unknown `var()` resolves to nothing | yes |
+| sees the real IPC, the real spawn, real layout | no | yes |
+
+**Do not read a green `npm test` as "the drivers pass."** It means the pure
+subset passes and the browser half was not attempted. The fast gate says so in
+its own output: every driver without a sidecar appears as a named skip that
+points here.
+
+**Joining the phase costs nothing.** Every driver already ends in
+`process.exit(fails.length === 0 ? 0 : 1)` — the verdict protocol was there from
+the first driver and had simply never been read. A new driver is picked up by
+existing in the directory; there is no list to add it to.
+
+**A printed FAIL under a zero exit is reported as `LIED`, not trusted.**
+`gui-42.mjs` computed its verdict, printed it, and ended on an unconditional
+`process.exit(0)`, so an exit-code harness would have called it green forever.
+That is fixed, and the shape is now caught by the phase, because the next driver
+to do it will not announce itself either. Exit `2` reports as `UNSCORED` — a
+driver that could not measure what it came to measure is not a pass.
+
+**What the phase does NOT launch is a list with reasons**, in
+`drivers.manifest.mjs`, and the fast gate asserts that list covers the whole
+driver set — so a driver that is neither launched nor skipped reds `npm test` in
+milliseconds, naming itself. Two reasons exist and they are genuinely different:
+
+- **`api-cost`** — the driver drives one or more **real CLI turns**. Needs a key,
+  network and credits, and its result depends on a model's output. A phase that
+  spends money per run is a phase that gets switched off.
+- **`no-verdict`** — the driver computes no pass/fail at all, so its exit code
+  carries no information. Running it would add a green that measured nothing,
+  which is worse than a skip because a skip is legible.
+- **`desktop-exclusive`** — the driver's witness *is* the desktop foreground: a
+  genuine focus loss, and a screen capture of the window rectangle. A batch
+  cannot hand it that while other apps are opening and closing. Run these alone
+  on an idle desktop: `npm run test:dom -- --only gui-119.mjs`.
+
+  This is the category that could quietly become "reds we gave up on", so it
+  carries the highest bar: an entry needs the driver **passing alone and failing
+  in the batch**, measured. `gui-119` earned its entry that way — standalone it
+  records all three re-asserts and keeps the blur in 8/8 stress trials, twice;
+  in the full run, straight after two other Electron apps had launched and
+  closed, it records none and keeps 7/8. The keeper is wired. What the batch
+  takes away is the foreground.
+
+A driver that merely **spawns** the CLI without starting a turn (`gui-91`'s
+`claude agents --json`, `gui-124`'s `model:list`) is not skipped: that costs
+nothing, and on a machine with no `claude` on PATH the driver's own assertion
+reds saying exactly that. A real failure, not a skip.
+
+**The gap, stated rather than papered over: nothing runs this phase for you.**
+This repo has no `.github/` and no CI of any kind, so "runs on every push" has
+nowhere to run. Tracked separately — the phase being cheap to invoke and honest
+about its own coverage is what this ticket could actually deliver.
+
 ## Gotchas
 
+- **The phase dirties the working tree.** Several drivers hardcode
+  `scripts/gui-<n>-shots/` instead of honouring `SCREENSHOT_DIR`, and those
+  directories are tracked — so a phase run rewrites committed PNGs and adds new
+  ones. Check `git status` after a run and `git checkout -- scripts/` before
+  committing anything else; a diff full of regenerated screenshots is how a
+  real change gets lost.
 - **Driver must stay under the project tree.** ESM resolves the bare
   `playwright-core` import by walking up to the project's `node_modules`; run it
   from `$TEMP` and the import fails (`ERR_MODULE_NOT_FOUND`).

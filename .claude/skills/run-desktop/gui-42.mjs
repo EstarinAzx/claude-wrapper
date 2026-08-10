@@ -194,4 +194,10 @@ console.log(fails.length ? 'FAIL ' + fails.join(' | ') : 'PASS all #42 criteria'
 
 await app.close()
 console.log('DONE')
-setTimeout(() => process.exit(0), 500)
+// The verdict has to reach the exit code. This driver computed `fails`, printed
+// it, and then exited 0 unconditionally — so every harness that reads exit codes
+// (the DOM phase, #135) would have called it green no matter what it found. It
+// was the only driver in the set doing this, and `dom-phase.mjs` now catches the
+// shape (a printed FAIL under a zero exit is reported as LIED) so the next one
+// cannot hide either.
+setTimeout(() => process.exit(fails.length ? 1 : 0), 500)

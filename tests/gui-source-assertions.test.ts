@@ -1,9 +1,10 @@
-import { readdirSync } from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
 // #132 — the gate executes the GUI drivers' SOURCE-LEVEL assertions.
+// #135 — the DOM-level ones execute too, in a named phase, and this file is
+//        where the fast gate proves that phase omits nothing.
 //
 // The hole this closes, measured rather than theorised: about 38 `gui-*.mjs`
 // drivers live in `.claude/skills/run-desktop/`, each written alongside the
@@ -24,27 +25,42 @@ import { describe, expect, test } from 'vitest'
 // driver imports the same array, so each assertion has exactly one definition
 // and the gate copy cannot drift from the driven copy.
 //
-// What this file deliberately does NOT do: run the DOM-level assertions. Those
-// need a live Electron window and are #135. They are reported as skipped below
-// rather than omitted, because a suite that quietly runs half its checks is the
-// exact failure this ticket exists to close.
+// THE SPLIT, stated here so nobody assumes the fast gate covers everything:
+// this file runs the PURE half in milliseconds. The browser half needs a live
+// Electron window and runs in `npm run test:dom` (`dom-phase.mjs`), which takes
+// about twenty minutes and launches one real app per driver. Neither covers the
+// other. What this file CAN do cheaply — and does, at the bottom — is assert
+// that every driver is accounted for in that phase: launched, or skipped for a
+// stated reason. A suite that quietly runs half its checks is the exact failure
+// both tickets exist to close, so the accounting is itself a test.
 
 interface SourceCheck {
   name: string
   run: () => { ok: boolean; detail: unknown }
 }
 
+interface Manifest {
+  DOM_SKIP: Map<string, string>
+  listDrivers: () => string[]
+  listSidecars: () => string[]
+  driverOf: (sidecar: string) => string
+  domPhaseDrivers: () => string[]
+}
+
 const REPO = path.resolve(import.meta.dirname, '..')
 const DRIVER_DIR = path.join(REPO, '.claude/skills/run-desktop')
 
-const entries = readdirSync(DRIVER_DIR)
+// Dynamic import, like the sidecars below: the manifest is `.mjs` and this file
+// is typechecked by `tsconfig.web.json`, which has no `allowJs`.
+const manifest = (await import(
+  pathToFileURL(path.join(DRIVER_DIR, 'drivers.manifest.mjs')).href
+)) as Manifest
 
-// `.source.mjs` files are sidecars, not drivers — excluded from the driver list
-// so a covered driver is never also counted as one of its own sidecars.
-const drivers = entries.filter((f) => f.startsWith('gui-') && f.endsWith('.mjs') && !f.endsWith('.source.mjs')).sort()
-const sidecars = entries.filter((f) => f.startsWith('gui-') && f.endsWith('.source.mjs')).sort()
-
-const driverOf = (sidecar: string): string => sidecar.replace(/\.source\.mjs$/, '.mjs')
+// One definition of "the driver set", shared with the phase that launches them.
+// A second glob here is how the two would drift.
+const drivers = manifest.listDrivers()
+const sidecars = manifest.listSidecars()
+const driverOf = manifest.driverOf
 
 // Top-level await: the sidecars must be loaded before `describe` can name their
 // checks, and vitest test files are ESM.
@@ -54,16 +70,6 @@ const loaded = await Promise.all(
       [f, (await import(pathToFileURL(path.join(DRIVER_DIR, f)).href)) as { checks: SourceCheck[] }] as const
   )
 )
-
-// Two reasons, because they are genuinely different and lumping them together
-// would misreport why a check is absent. Anything not listed here needs a live
-// window; these two need `npm run build`, which the gate does not run — a
-// build-artifact check gated on a clean checkout reds for a reason that has
-// nothing to do with the contract it pins. Tracked separately, not forgotten.
-const BUILD_ARTIFACT = new Map([
-  ['gui-75.mjs', 'reads out/main/index.js for setAppUserModelId — needs `npm run build`'],
-  ['gui-93.mjs', 'reads the built CSS for the .subagent-drawer-close focus ring — needs `npm run build`']
-])
 
 const covered = new Set(sidecars.map(driverOf))
 const uncovered = drivers.filter((d) => !covered.has(d))
@@ -102,11 +108,46 @@ describe('every driver is accounted for', () => {
   })
 })
 
+// #135 — the fast gate cannot RUN the DOM phase, but it can prove the phase has
+// no silent omissions, and that costs milliseconds. Add a driver and forget to
+// place it and this reds, naming it, on the next `npm test`.
+describe('the DOM phase accounts for every driver', () => {
+  const skipped = manifest.DOM_SKIP
+  const launched = manifest.domPhaseDrivers()
+
+  test('every driver is either launched by the phase or skipped with a reason', () => {
+    const placed = new Set([...launched, ...skipped.keys()])
+    expect(drivers.filter((d) => !placed.has(d))).toEqual([])
+  })
+
+  test('the skip list names only drivers that exist', () => {
+    expect([...skipped.keys()].filter((d) => !drivers.includes(d))).toEqual([])
+  })
+
+  test('launched and skipped are disjoint, and together are the whole set', () => {
+    expect(launched.filter((d) => skipped.has(d))).toEqual([])
+    expect(launched.length + skipped.size).toBe(drivers.length)
+  })
+
+  // A skip reason is the only thing standing between "we decided not to run
+  // this" and "nobody noticed this stopped running". An empty or lazy one
+  // ("slow", "flaky") is how the second becomes the first in hindsight.
+  test('every skip reason is substantive and names its category', () => {
+    const bad = [...skipped.entries()].filter(
+      ([, reason]) => reason.length < 40 || !/^(api-cost|no-verdict|desktop-exclusive):/.test(reason)
+    )
+    expect(bad).toEqual([])
+  })
+})
+
 // Reported, never omitted. Each of these appears in the vitest run as a named
-// skip, so `npm test` states which contracts it is NOT checking.
+// skip, so `npm test` states which contracts it is NOT checking — and, since
+// #135, where each one IS checked instead.
 describe('drivers with no source-level sidecar (reported, not omitted)', () => {
   for (const d of uncovered) {
-    const reason = BUILD_ARTIFACT.get(d) ?? 'browser-level: needs a live Electron window (#135)'
+    const reason = manifest.DOM_SKIP.has(d)
+      ? `NOT EXECUTED ANYWHERE — ${manifest.DOM_SKIP.get(d)}`
+      : 'browser-level: executes in `npm run test:dom` (#135), not in this gate'
     test.skip(`${d} — ${reason}`, () => {})
   }
 })

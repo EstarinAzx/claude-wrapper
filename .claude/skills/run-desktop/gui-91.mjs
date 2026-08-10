@@ -104,12 +104,55 @@ await page.waitForTimeout(3500)
 // reading which of the two honest answers the section settled on.
 await page.waitForTimeout(6000)
 
+// THE EMPTY STATE IS TWO AUTHORED LINES, and this read used to fuse them.
+//
+// It asserted `textContent === 'None running here'` on the CONTAINER. That was
+// right while the container held one string, and became a whole-versus-part
+// comparison the moment the scoping note shipped beside it: `.bg-sessions-empty`
+// is `display: flex; flex-direction: column`, so the answer and the note are two
+// separate boxes, and `textContent` walks text nodes and inserts nothing for a
+// box boundary — hence `None running hereScoped to the open project.`
+//
+// RESOLVED IN FAVOUR OF THE COPY (#135). Two authored lines, two classes, two
+// tint steps; the assertion is what went stale, and it went stale silently
+// because nothing ran it for three waves of the `core-surfaces` gauntlet.
+//
+// THE REJECTED OPTION was to put a separator into the markup so `textContent`
+// reads cleanly. Rejected twice over: it edits shipped markup to suit a
+// measuring instrument, which is the same move as adjusting a capture to make a
+// hash go green; and it would fix nothing anybody experiences, because the two
+// lines are already two boxes. So the fix is to measure the two lines AS two —
+// each element read on its own, plus `innerText`, which unlike `textContent` is
+// layout-aware and breaks between block-level boxes. That last read turns "the
+// two lines are still two lines" from an assumption into a pin.
 const REAL = await page.evaluate(() => {
   const sec = document.querySelector('.bg-sessions')
   if (!sec) return { missing: true }
+  const empty = sec.querySelector('.bg-sessions-empty')
   return {
     missing: false,
-    text: (sec.querySelector('.bg-sessions-empty')?.textContent || '').trim(),
+    // The whole band, for the one-string branches (`Looking…`, the failed look).
+    text: (empty?.textContent || '').trim(),
+    // The settled answer and its note, each read from the element that owns it.
+    answer: (sec.querySelector('.bg-sessions-empty-line')?.textContent || '').trim(),
+    hint: (sec.querySelector('.bg-sessions-empty-hint')?.textContent || '').trim(),
+    // Layout-aware: what a reader gets, rather than what the DOM string says.
+    renderedLines: (empty?.innerText || '')
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean),
+    // GEOMETRY, because `innerText` turned out not to be the pin it looked like.
+    // Measured while writing this: flipping `.bg-sessions-empty` to
+    // `flex-direction: row` puts the note BESIDE the answer, and `innerText`
+    // still reported two lines — flex items are block-level boxes whichever way
+    // the container runs them, so it breaks between them either way. The check
+    // that catches a side-by-side is where the boxes actually sit.
+    stacked: (() => {
+      const a = sec.querySelector('.bg-sessions-empty-line')?.getBoundingClientRect()
+      const h = sec.querySelector('.bg-sessions-empty-hint')?.getBoundingClientRect()
+      if (!a || !h) return null
+      return { answerBottom: Math.round(a.bottom), hintTop: Math.round(h.top), below: h.top >= a.bottom - 1 }
+    })(),
     rows: sec.querySelectorAll('.bg-session-row').length
   }
 })
@@ -128,8 +171,39 @@ if (REAL.missing) {
   bad.push(
     `SCOPE the temp workspace listed ${REAL.rows} background session(s) — --cwd is not scoping the way #90 measured`
   )
-} else if (REAL.text !== 'None running here') {
-  bad.push(`SPAWN unexpected empty-state copy ${JSON.stringify(REAL.text)}`)
+} else {
+  // The settled empty state, asserted line by line rather than as one fused
+  // string. See the note on the read above for why the copy won this argument.
+  if (REAL.answer !== 'None running here') {
+    bad.push(`SPAWN unexpected empty-state answer ${JSON.stringify(REAL.answer)}`)
+  }
+  if (REAL.hint !== 'Scoped to the open project.') {
+    bad.push(`SPAWN unexpected empty-state note ${JSON.stringify(REAL.hint)}`)
+  }
+  // AC: the note explains why the list is empty, and it must not collapse into
+  // the answer. Two pins, because the first one alone is weaker than it looks:
+  //
+  //   renderedLines  catches the note being DELETED, or the two spans being
+  //                  made genuinely inline. It does NOT catch a side-by-side —
+  //                  measured, not assumed: `flex-direction: row` still reports
+  //                  two lines, because flex items are block-level boxes
+  //                  whichever direction the container runs.
+  //   stacked        catches the side-by-side, by asking where the boxes are.
+  //
+  // Neither is visible to jsdom, which loads no CSS at all — which is the whole
+  // reason a driver owns this and `tests/background-sessions.test.tsx` cannot.
+  if (REAL.renderedLines.length !== 2) {
+    bad.push(
+      `A11Y the empty state renders as ${REAL.renderedLines.length} line(s), want 2 — ${JSON.stringify(REAL.renderedLines)}`
+    )
+  }
+  if (!REAL.stacked) {
+    bad.push('A11Y the answer and its note are not both in the DOM, so the two-line layout could not be measured')
+  } else if (!REAL.stacked.below) {
+    bad.push(
+      `A11Y the note sits BESIDE the answer rather than under it (answer bottom ${REAL.stacked.answerBottom}, note top ${REAL.stacked.hintTop}) — two authored lines rendering as one`
+    )
+  }
 }
 
 const shotEmpty = path.join(SHOT_DIR, 'gui-91-rail-empty.png')
@@ -322,6 +396,13 @@ await page.screenshot({ path: shotRows })
 // ── report ────────────────────────────────────────────────────────────────
 console.log('=== #91 background-sessions section in the sessions rail ===')
 console.log(`real look (temp workspace) : ${REAL.missing ? 'SECTION ABSENT' : `${JSON.stringify(REAL.text)}, ${REAL.rows} rows`}`)
+if (!REAL.missing) {
+  // Printed apart, because the fused string above is the thing that misled an
+  // assertion for three gauntlet waves and it should never be the only read on
+  // screen again.
+  console.log(`  answer / note            : ${JSON.stringify(REAL.answer)} / ${JSON.stringify(REAL.hint)}`)
+  console.log(`  rendered lines (innerText): ${JSON.stringify(REAL.renderedLines)}`)
+}
 if (!S.error) {
   console.log(`section                    : <${S.tag.toLowerCase()}> "${S.heading}" (aria-label ${JSON.stringify(S.label)})`)
   console.log(`hairline                   : ${S.borderBottom} ${S.borderColor}`)
