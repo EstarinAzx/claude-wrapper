@@ -9,22 +9,59 @@
   justify-content: space-between;
   height: 48px;
   flex-shrink: 0;
-  padding: 0 0 0 14px;
+  /* No horizontal padding HERE, deliberately (#136). The 14px inset the left
+     group wants now lives on .logo-mark. On the container it was asymmetric —
+     14 left, 0 right — so the flex content box was 14px narrower than the
+     window and offset from it, which put the centred slot's midpoint 7px right
+     of true centre no matter how well balanced the flanks were. Measured: the
+     total error is `(leftWidth - rightWidth) / 2 + padLeft / 2`, and the second
+     term is this line. Put horizontal padding back here — or on either flank —
+     and every centring assertion in gui-136 reds by exactly half of it. */
+  padding: 0;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   -webkit-app-region: drag;
   user-select: none;
 }
 
+/* `flex: 1` here and on .titlebar-right is the whole centring mechanism (#136):
+   two flanks with a zero basis and equal grow take equal shares of whatever the
+   centre slot does not use, so the slot is symmetric about the window and the
+   title's midpoint lands on true centre — for any flank contents, which is the
+   point. Sized to content instead (the old `flex: 0 1 auto`), the slot centres
+   in the space REMAINING between two unequal neighbours and the title drifts by
+   half their difference: +21css with the docks open, +78 on the welcome screen
+   where the right flank is 113px narrower. Both measured, both gone.
+
+   `min-width: 0` is deliberately ABSENT. It let this group shrink below its own
+   content, and with a zero basis the flanks are grown rather than shrunk — so at
+   the 640px minimum the group would have been squeezed to ~137css while still
+   painting 262css of mark, name and pills, i.e. straight under the title. The
+   automatic min-content floor is what makes the flanks stop at their contents
+   and hand the rest to the slot, which is #72's no-overlap guarantee kept
+   intact. At that floor the row is full and true centring becomes geometrically
+   impossible; gui-136 asserts the fullness rather than pretending otherwise. */
 .titlebar-left {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
+  flex: 1;
 }
 
+/* The window's 14px left inset lives HERE, on the first thing in the left group,
+   rather than on .titlebar-left or on .titlebar itself (#136). Both of those put
+   it on a flank's BOX, and with `box-sizing: border-box` a `flex-basis: 0` flank
+   whose box carries 14px of padding comes out exactly 14px wider than its
+   partner under an equal grow — measured, a flat +7css of title offset in every
+   state, which is the same defect one order smaller. As content inside the left
+   flank it is spent out of that flank's own share, so the two flank boxes stay
+   equal for ANY contents and the symmetry depends on no second number agreeing
+   with this one. Balancing it with a matching inset on the right flank would
+   also work and was not taken: it makes two numbers that must be edited
+   together, and this ticket exists because of an offset that drifted. */
 .logo-mark {
   display: block;
+  margin-left: 14px;
   width: 22px;
   height: 22px;
   border-radius: var(--r-mark);
@@ -117,11 +154,18 @@
    them, with no magic number equal to the wider side to rot when a control is
    added or removed. `pointer-events: none` is not decoration: the slot must stay
    inside the inherited `-webkit-app-region: drag`.
-   Trade-off taken: the title centres in the space available, not in the window,
-   so it sits off true centre by half the difference between the two blocks
-   (~15css today). Bounded, and it self-corrects if they are ever balanced. */
+   #72's trade-off — "the title centres in the space available, not in the
+   window" — is PAID OFF rather than still standing: the flanks are balanced by
+   the `flex: 1` above, so available space and window now share a midpoint. What
+   #72 actually settled is untouched, and is why this stays a flex item: the slot
+   is bounded by its neighbours, so no magic number equal to the wider side can
+   rot when a control is added.
+
+   `flex: 0 1 auto` (not `flex: 1`) is what leaves the free space for the flanks
+   to split. Grown here instead, the slot would take everything and the flanks
+   would size to content — the unbalanced arrangement this ticket removed. */
 .titlebar-center {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   display: flex;
   justify-content: center;
@@ -139,10 +183,16 @@
   min-width: 0;
 }
 
+/* The mirror of .titlebar-left's `flex: 1` — see the note there. `justify-content:
+   flex-end` is what that grow makes necessary: the box now extends left to meet
+   the centre slot, so its contents have to be pushed back to the window edge or
+   the window controls float in the middle of it. */
 .titlebar-right {
   display: flex;
   align-items: stretch;
   height: 100%;
+  flex: 1;
+  justify-content: flex-end;
   -webkit-app-region: no-drag;
 }
 
