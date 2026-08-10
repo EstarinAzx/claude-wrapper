@@ -7,75 +7,95 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, relay chain 6 leg 3 — owner away_
-_At commit: `8b93fd5` on `main`_
+_Last updated: 2026-08-11 by Opus 5, relay chain 6 leg 4 — owner away_
+_At commit: `56a25cb` on `main`_
 
 ## Current focus
 
-**#134 landed: the em-dash ban is now a test rather than a sentence.** `DESIGN.md`
-has banned em dashes in copy for as long as **Bans in force** has existed, and the
-ban was broken in **fifteen shipped strings** — the titlebar's five tooltips, four
-composer strings, the sessions rail's row title, the tool card's truncation
-notice, the delete failure, two attachment reasons and the two rewind refusals.
-Nothing ever failed, because nothing ever looked.
+**#135 landed: the DOM-level driver assertions execute.** `npm run test:dom`
+launches 29 drivers, one real Electron window each, ~7 minutes, and reads each
+driver's exit code as the verdict. Together with #132's pure half, the drivers
+are no longer a folder of checks nobody runs.
 
-The chain continues. **Three tickets remain and all three are genuinely
-unblocked** — both declared blockers (#132, #133) are closed.
+The chain continues. **Two tickets remain, both genuinely unblocked** — #136 and
+#137, whose declared blockers (#132, #133) are both closed.
 
 ## State
 
-- **In flight:** nothing. `ticket/134-remove-em-dashes` was squash-merged and
+- **In flight:** nothing. `ticket/135-dom-driver-phase` was squash-merged and
   deleted. Tree clean on `main`.
-- **Closed 2026-08-11:** **#134** (`8b93fd5`). **Filed:** nothing. Nothing broken
-  surfaced that was not fixed in the ticket; the two esbuild traps are recorded
-  in [[2026-08-11-a-ban-that-lives-in-prose-does-not-run]], not as tickets.
-- **Open:** #135, #136, #137 (`ready-for-agent`) · #138, #139, #140
-  (`ready-for-human`) · #141, #142 (`needs-triage`). **Frontier: #135, #136,
-  #137** — blocked-by sections read on all three, both blockers closed.
+- **Closed 2026-08-11:** **#135** (`56a25cb`). **Filed: #143, #144, #145, #146**,
+  all at `needs-triage`.
+- **Open:** #136, #137 (`ready-for-agent`) · #138, #139, #140 (`ready-for-human`)
+  · #141, #142, #143, #144, #145, #146 (`needs-triage`). **Frontier: #136, #137**
+  — blocked-by sections read on both, both blockers closed.
 - **Gate on `main` after the merge:** typecheck clean, build clean,
-  **88 files / 1317 passed + 36 skipped** (was 87 / 1313 + 36). Ran on the branch
-  and again on `main`. **Read the number off `main`, never off this file.**
-- **NOT PUSHED. Twelve commits sit local.** D6 stands: **a leg does not push on
+  **88 files / 1321 passed + 36 skipped** (was 88 / 1317 + 36; the +4 are the
+  DOM-phase accounting tests). Ran on the branch and again on `main`.
+  **Read the number off `main`, never off this file.**
+- **NOT PUSHED. Fourteen commits sit local.** D6 stands: **a leg does not push on
   its own initiative.** Read the real gap rather than this number, it has drifted
   every leg: `git rev-list --count origin/main..main`.
 
-## The new standing constraint, and it will bite the next leg that writes copy
+## The new phase, and the one thing to know before running it
 
-**`tests/copy-em-dash.test.ts` runs in the gate.** It compiles every `.ts`/`.tsx`
-file under `src/` with esbuild and fails on an em dash surviving in the output.
-So: **a new user-visible string containing an em dash reds the suite.** Comments
-are free and stay free — this repo comments in em dashes on purpose, and the
-compiler drops them before the search ever runs.
+```bash
+npm run build
+npm run test:dom                          # 29 drivers, ~7 min
+npm run test:dom -- --only gui-91.mjs     # one driver
+npm run test:dom -- --list                # what runs, what does not, and why
+```
 
-Two things to know before touching that file:
+**`npm run test:dom` currently exits 1**, on `gui-123` — see below. That is a
+real finding left deliberately unsilenced, not a broken phase.
 
-1. **`minifyWhitespace: true` is load-bearing, not cosmetic.** A plain transform
-   *keeps* comments attached to object-literal properties — `src/preload/index.ts`
-   alone has seven, and the first run of the check reported all seven as copy.
-2. **It runs under `// @vitest-environment node`.** esbuild asserts
-   `new TextEncoder().encode('') instanceof Uint8Array`, which jsdom's
-   cross-realm `TextEncoder` fails; under the suite's default jsdom it refuses to
-   load with *"your JavaScript environment is broken"*.
+**It dirties the working tree.** Several drivers hardcode
+`scripts/gui-<n>-shots/` and ignore `SCREENSHOT_DIR`, and those PNGs are tracked.
+Run `git checkout -- scripts/` before committing anything else, or a real change
+disappears into a diff full of regenerated screenshots. Filed as **#146**.
 
-## The rail-title finding, which is the transferable half
+## The two reds the phase found on its first run
 
-The foreign-row title went from `label — groupLabel` to **`label (groupLabel)`**,
-and the parenthetical is structural rather than taste.
+**`gui-123` is RED and stays red** (**#143**). It reports the reuse control
+unreachable by Tab in 60 presses — reproducible alone and in the batch, 3 of 4
+runs, the one green being the very first run of the day. #135 changed **no file
+under `src/`**, so the app binary is byte-identical and this is not from that
+work. Either the control genuinely is not reachable, or the driver's press budget
+is coupled to how many rows the rail happens to list. The green-then-red flip is
+the thing to explain. **Do not quarantine it to make the phase green** — a red
+nobody can explain is not a red anybody may silence.
 
-**`label` is not a noun phrase.** An enriched row (#49) carries the session's
-**first user prompt, verbatim and untruncated** — `session-titles.ts` says so in
-as many words. So the label is routinely a whole sentence ending in its own full
-stop, and any joining word reads as a fragment after it:
+**`gui-119` is quarantined** as `desktop-exclusive` (**#145**), with the
+measurement rather than a shrug: it passes alone twice (three re-asserts
+recorded, stress 8/8) and fails in the batch (zero calls, 7/8). Both its
+witnesses are the real desktop foreground. Run it with
+`npm run test:dom -- --only gui-119.mjs` on an idle desktop.
 
-- `Fix the parser. It crashes on empty input. in D:\projects\other` — broken
-- `Fix the parser. It crashes on empty input. (D:\projects\other)` — closes cleanly
+## What #135 could not deliver
 
-The `Unknown project` branch killed the alternatives: `groupLabel` is
-`cwd || UNKNOWN_PROJECT`, so it is **sometimes a path and sometimes a label**.
-Four branches are pinned in `tests/sidebar.test.tsx`.
+**AC1's CI clause.** The repo has no `.github/` and no CI at all, so "runs on
+every push" has nowhere to run. A workflow was deliberately not invented — on a
+headless runner `gui-91` and `gui-124` spawn the real `claude` CLI, `gui-119`
+needs a real desktop, and nothing has ever been pushed from this checkout.
+Filed as **#144**, including the uncomfortable question: if the phase stays
+local, what makes anybody run it?
 
-Generalises as **a separator chosen for the label you happened to be looking at
-is a bug waiting for the label you were not.**
+## The transferable halves
+
+**A protocol nobody reads is not a protocol.** Every driver had shipped
+`process.exit(fails.length === 0 ? 0 : 1)` since the first one, and for
+thirty-eight tickets the only consumer was a human reading stdout. That is how
+`gui-42.mjs` came to print `FAIL` under an unconditional `process.exit(0)` and
+stay that way. Fixed — and the shape is now caught as `LIED`, because the next
+driver to do it will not announce itself either.
+
+**A pin you have not seen fail is a pin you have not written.** The gui-91
+replacement assertion was vacuous for the case that mattered, and only the AC2
+break revealed it: flipping `.bg-sessions-empty` to `flex-direction: row` puts
+the note *beside* the answer, and `innerText` **still reported two lines**,
+because flex items are block-level boxes whichever direction the container runs.
+Box geometry is what catches a side-by-side. The break that demonstrates a check
+is real is also the only thing that tells you what it is blind to.
 
 ## Pick up here
 
@@ -89,12 +109,12 @@ gh issue list --state open --label ready-for-agent
 Then read the **"Blocked by"** section in the chosen issue body. Edges are prose,
 not native tracker links.
 
-**#135 is the oldest and is free.** It executes the DOM-level driver assertions
-and resolves the red empty-state check — the half #132 deliberately left out, and
-the half that would make constraint D4 below mean something. #136 and #137 are
-also free; **read the #142 warning below before starting either.**
+**#136 is the oldest and is free.** Its blocked-by line asked for #132 "so the
+pin in the fifth criterion is a real check rather than a file nothing runs" —
+which is now *more* true than when it was written: a driver pin added for #136
+will actually execute, in the phase. **Read the #142 warning below first.**
 
-## The landmine, unchanged and now touching two tickets
+## The landmine, unchanged and touching both remaining tickets
 
 **#137's AC2 cannot be satisfied as written, and that is a finding rather than an
 obstacle.** It requires every other surface to be **byte-identical**, *"proved
@@ -124,12 +144,11 @@ reading #142 first; the two may want to land together.
 - **File follow-ups at `needs-triage`, never `ready-for-agent`.** This chain stops
   on an empty frontier; a leg promoting its own follow-up there makes the stop
   condition unreachable by construction.
-- **Sweep for test assertions fragment-by-fragment, never by whole string.** Six
-  tests pinned an affected string by exact text this leg; four were found by
-  grepping the strings and **two only surfaced when the suite ran red**, because
-  the assertions held fragments (`toContain('the limit is 5 MB')`,
-  `toMatch(/sends when this turn finishes/i)`). Check
-  `.claude/skills/run-desktop/` and `scripts/inspect.mjs` too, not just `tests/`.
+- **Any CSS change now owes a driver pin that actually runs** (D4, finally real).
+  Cite the asserting line, and say whether it executes in `npm test` or only in
+  `npm run test:dom`.
+- **Do not pipe the phase through `tail`** when you need a failure detail. It ate
+  `gui-123`'s output on the second full run and cost a re-run to recover.
 
 ## Open questions
 
@@ -141,25 +160,18 @@ question recorded as owner call 14 in `.claude/gauntlet.md`.
 
 ## Recent context
 
-- **`DESIGN.md` now names its one enforced ban.** The **Bans in force** section
-  says which ban has a test behind it and where the test lives. `DESIGN.md` is
-  read literally by `tests/subagent-material.test.ts`, which splits on
-  `\n## Bans in force\n` — that test still passes, but anyone editing that
-  section should re-run it.
-- **Two of the rewritten strings live outside the renderer and were included
-  anyway**: the rewind refusal is duplicated in `src/main/engine.ts` and
-  `src/main/index.ts`, and the two attachment reasons are declared in
-  `src/shared/attachment-policy.ts` but render in the composer's rejection chip.
-  The check scans all of `src/` for the same reason — classifying a string as
-  user-visible is a judgement that would have to be re-made forever.
-- **The attachment rejection chip changed separator too**: `name — reason` is now
-  `name: reason`. Both that and the rail title were separators between two
-  labels, never clause breaks, so they took the idiom for a qualifier rather than
-  a rewrite of a sentence that was never there.
+- **`tests/copy-em-dash.test.ts` still binds** (#134): a new user-visible string
+  with an em dash reds the suite. Comments are free.
+- **D3 stands unchanged** — the stylesheet pins are literal-text and brittle. No
+  comment in `styles/` may contain a closing brace; `.bubble {` must stay the
+  first literal occurrence in `chat.css`; exactly one `backdrop-filter` in all of
+  `styles/`; the `@import` order in `styles.css` IS the cascade.
+- **`DESIGN.md` is read literally by `tests/subagent-material.test.ts`**, which
+  splits on `\n## Bans in force\n`.
 
 ## Related
 
 - [[overview]] · [[pick-up]] · [[decisions]] · [[stack]] · [[happy-path]] · [[flows]]
-- [[2026-08-11-a-ban-that-lives-in-prose-does-not-run]]
-- [[2026-08-11-an-instrument-may-not-photograph-a-state-the-app-calls-impossible]]
+- [[2026-08-11-a-protocol-nobody-reads-is-not-a-protocol]]
 - [[2026-08-11-a-check-nobody-runs-is-not-a-check]]
+- [[2026-08-11-a-ban-that-lives-in-prose-does-not-run]]
