@@ -7,148 +7,141 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, relay chain 6 leg 4 — owner away_
-_At commit: `56a25cb` on `main`_
+_Last updated: 2026-08-11 by Opus 5, relay chain 6 leg 5 — owner away_
+_At commit: `ed81559` on `main`_
 
 ## Current focus
 
-**#135 landed: the DOM-level driver assertions execute.** `npm run test:dom`
-launches 29 drivers, one real Electron window each, ~7 minutes, and reads each
-driver's exit code as the verdict. Together with #132's pure half, the drivers
-are no longer a folder of checks nobody runs.
+**#136 landed: the session title centres on the window.** The centre slot was
+sized by what its neighbours left over, so the title drifted by half the
+difference between the flanking groups, plus half the container's asymmetric
+left padding.
 
-The chain continues. **Two tickets remain, both genuinely unblocked** — #136 and
-#137, whose declared blockers (#132, #133) are both closed.
+**One ticket remains — #137 — and taking it empties the frontier**, which is
+this chain's stop condition.
 
 ## State
 
-- **In flight:** nothing. `ticket/135-dom-driver-phase` was squash-merged and
+- **In flight:** nothing. `ticket/136-centre-session-title` was squash-merged and
   deleted. Tree clean on `main`.
-- **Closed 2026-08-11:** **#135** (`56a25cb`). **Filed: #143, #144, #145, #146**,
-  all at `needs-triage`.
-- **Open:** #136, #137 (`ready-for-agent`) · #138, #139, #140 (`ready-for-human`)
-  · #141, #142, #143, #144, #145, #146 (`needs-triage`). **Frontier: #136, #137**
-  — blocked-by sections read on both, both blockers closed.
+- **Closed 2026-08-11 (leg 5):** **#136** (`ed81559`). **Filed: #147**,
+  `needs-triage`.
+- **Open:** #137 (`ready-for-agent`) · #138, #139, #140 (`ready-for-human`)
+  · #141–#147 (`needs-triage`). **Frontier: #137 alone**, blocker #133 closed.
 - **Gate on `main` after the merge:** typecheck clean, build clean,
-  **88 files / 1321 passed + 36 skipped** (was 88 / 1317 + 36; the +4 are the
-  DOM-phase accounting tests). Ran on the branch and again on `main`.
+  **88 files / 1325 passed + 36 skipped** (was 88 / 1321 + 36; the +4 are
+  gui-136's source checks). Ran on the branch and again on `main`.
   **Read the number off `main`, never off this file.**
-- **NOT PUSHED. Fourteen commits sit local.** D6 stands: **a leg does not push on
-  its own initiative.** Read the real gap rather than this number, it has drifted
-  every leg: `git rev-list --count origin/main..main`.
+- **DOM phase: 29/30**, the single red being `gui-123` (#143), unchanged.
+- **NOT PUSHED. Seventeen commits sit local.** D6 stands. Read the real gap:
+  `git rev-list --count origin/main..main`.
 
-## The new phase, and the one thing to know before running it
+## What #136 actually was
 
-```bash
-npm run build
-npm run test:dom                          # 29 drivers, ~7 min
-npm run test:dom -- --only gui-91.mjs     # one driver
-npm run test:dom -- --list                # what runs, what does not, and why
-```
+The offset obeyed `(L - R)/2 + padLeft/2`, measured against prediction in four
+flank states and correct to a tenth of a pixel every time:
 
-**`npm run test:dom` currently exits 1**, on `gui-123` — see below. That is a
-real finding left deliberately unsilenced, not a broken phase.
+| state | left | right | predicted | measured |
+|---|---|---|---|---|
+| welcome (no dock toggles) | 261.8 | 120.0 | +77.9 | +77.9 |
+| project open (the ticket's case) | 261.8 | 233.0 | +21.4 | +21.4 |
+| one status pill absent | 196.4 | 233.0 | -11.3 | -11.3 |
+| no status pills | 127.7 | 233.0 | -45.7 | -45.7 |
 
-**It dirties the working tree.** Several drivers hardcode
-`scripts/gui-<n>-shots/` and ignore `SCREENSHOT_DIR`, and those PNGs are tracked.
-Run `git checkout -- scripts/` before committing anything else, or a real change
-disappears into a diff full of regenerated screenshots. Filed as **#146**.
+**The ticket measured only the docks-open state at +21. The welcome screen — the
+first thing every user sees — was at +77.9.**
 
-## The two reds the phase found on its first run
+Fix: `flex: 1` on both flanks (equal grow from a zero basis gives equal boxes for
+any contents), `flex: 0 1 auto` on the slot so there is free space to split, and
+`justify-content: flex-end` on the right flank. The 14px inset moved onto
+`.logo-mark` — **inside** the left flank's content. On a flank's **box** it
+re-creates the defect at +7css, because `box-sizing: border-box` widens a
+`flex-basis: 0` box by its padding on top of the grow. `min-width: 0` came off
+`.titlebar-left` so the automatic min-content floor keeps #72's no-overlap
+guarantee.
 
-**`gui-123` is RED and stays red** (**#143**). It reports the reuse control
-unreachable by Tab in 60 presses — reproducible alone and in the batch, 3 of 4
-runs, the one green being the very first run of the day. #135 changed **no file
-under `src/`**, so the app binary is byte-identical and this is not from that
-work. Either the control genuinely is not reachable, or the driver's press budget
-is coupled to how many rows the rail happens to list. The green-then-red flip is
-the thing to explain. **Do not quarantine it to make the phase green** — a red
-nobody can explain is not a red anybody may silence.
+**At the 640px minimum, centring and non-overlap are mutually exclusive** — the
+flanks bottom out on their contents and a symmetric slot would start inside the
+left group. The driver asserts the honest thing there (`offset = (L - R)/2`,
+the maximal slot) rather than a zero.
 
-**`gui-119` is quarantined** as `desktop-exclusive` (**#145**), with the
-measurement rather than a shrug: it passes alone twice (three re-asserts
-recorded, stress 8/8) and fails in the batch (zero calls, 7/8). Both its
-witnesses are the real desktop foreground. Run it with
-`npm run test:dom -- --only gui-119.mjs` on an idle desktop.
+## The mutation that nearly got through
 
-## What #135 could not deliver
+Reverting `.titlebar-center` to `flex: 1` makes all three titlebar children split
+into **equal thirds**, which *also* centres the title. **10 of the 12 driver rows
+still passed.** It is caught only by the 640px row and by the source-level check.
+Measuring at the ticket's own 1440 alone would have shipped a different, worse
+layout as a green — the title capped at a third of the window.
 
-**AC1's CI clause.** The repo has no `.github/` and no CI at all, so "runs on
-every push" has nowhere to run. A workflow was deliberately not invented — on a
-headless runner `gui-91` and `gui-124` spawn the real `claude` CLI, `gui-119`
-needs a real desktop, and nothing has ever been pushed from this checkout.
-Filed as **#144**, including the uncomfortable question: if the phase stays
-local, what makes anybody run it?
+The other two mutations: restoring the container padding reds at +7 **with the
+flanks still exactly equal**, so a flank-equality check alone would miss it;
+restoring `min-width: 0` collapses the left flank to 40.1css at 640 while it
+still paints 262css, putting the title underneath it.
 
-## The transferable halves
+## The instrument lesson, which cost four phase runs
 
-**A protocol nobody reads is not a protocol.** Every driver had shipped
-`process.exit(fails.length === 0 ? 0 : 1)` since the first one, and for
-thirty-eight tickets the only consumer was a human reading stdout. That is how
-`gui-42.mjs` came to print `FAIL` under an unconditional `process.exit(0)` and
-stay that way. Fixed — and the shape is now caught as `LIED`, because the next
-driver to do it will not announce itself either.
+`gui-136` reded `gui-69` and `gui-70` — both of which pass alone. Attribution:
 
-**A pin you have not seen fail is a pin you have not written.** The gui-91
-replacement assertion was vacuous for the case that mattered, and only the AC2
-break revealed it: flipping `.bg-sessions-empty` to `flex-direction: row` puts
-the note *beside* the answer, and `innerText` **still reported two lines**,
-because flex items are block-level boxes whichever direction the container runs.
-Box geometry is what catches a side-by-side. The break that demonstrates a check
-is real is also the only thing that tells you what it is blind to.
+| run | #136 CSS fix | gui-136 in batch | result |
+|---|---|---|---|
+| baseline on `main` | no | no | 28/29 — gui-123 only |
+| first, then repeated clean | yes | yes | 27/30 — gui-123 + gui-69 + gui-70 |
+| isolating | yes | **no** | 28/29 — gui-123 only |
+| after the private profile | yes | yes | 29/30 — gui-123 only |
+
+**Cause:** the driver pins window bounds and zoom, and both outlive the process —
+bounds are remembered (#79, #110), zoom persists per origin in `userData` and in
+the renderer's localStorage. Written to the shared profile, later drivers
+inherited them. **Fix:** a private `--user-data-dir` per launch. Filed generally
+as **#147**.
+
+Three carried forward, in full in
+[[2026-08-11-the-batch-is-the-instrument-and-a-teardown-is-a-promise]]:
+
+1. **The batch is the instrument.** The adjacency check (suspect then victim)
+   passed and was taken as exoneration. Wrong — the effect accumulates through
+   the intervening launches.
+2. **A teardown is a promise that goes unkept precisely when it matters.**
+   Restoring state on exit does not run when a driver throws or times out, which
+   is the population that dirties the profile. Isolation is a property.
+3. **"Passes alone, fails in the batch" is a question, not a category.** Two
+   healthy drivers were one shrug from a `desktop-exclusive` quarantine for
+   another driver's bug.
+
+Plus: **a verdict must be parsed, and the shell can lose it.** The phase's
+verdict was read off `npm run test:dom | tail -60`, whose exit status is
+`tail`'s — reported 0 while the text said `DOM PHASE FAIL`. #125's rule reaches
+one level further out than it was written.
 
 ## Pick up here
 
-**Run the frontier query first — it is the authority, and this file has been
-wrong before:**
+**Run the frontier query first — it is the authority:**
 
 ```text
 gh issue list --state open --label ready-for-agent
 ```
 
-Then read the **"Blocked by"** section in the chosen issue body. Edges are prose,
-not native tracker links.
-
-**#136 is the oldest and is free.** Its blocked-by line asked for #132 "so the
-pin in the fifth criterion is a real check rather than a file nothing runs" —
-which is now *more* true than when it was written: a driver pin added for #136
-will actually execute, in the phase. **Read the #142 warning below first.**
-
-## The landmine, unchanged and touching both remaining tickets
-
-**#137's AC2 cannot be satisfied as written, and that is a finding rather than an
-obstacle.** It requires every other surface to be **byte-identical**, *"proved
-with a hash comparison, not an eyeball"*.
-
-`titlebar.png` is **not byte-stable**, and never was. `.session-title` renders
-`basename(cwd)` and the fixture workspace is `mkdtemp`'d, so six random characters
-change the glyphs while the box and text length (43) hold. Measured across seven
-runs, and the **unmodified** driver spreads *wider* (9084 / 9538 / 9083) than the
-modified one, so this predates #133. Filed as **#142** with four candidate fixes,
-none obviously right, because each trades randomness for a collision between
-concurrent runs.
-
-A leg taking #137 should hash the other six surfaces and treat the titlebar by
-box and content — or resolve #142 first and hash all seven. **Do not silently
-adjust a capture to make a hash go green.**
-
-**#136 is the other half of the same subject**: centring the session title means
-editing the element whose rendered content makes `titlebar.png` unstable. Worth
-reading #142 first; the two may want to land together.
+**#137 is the only free ticket, and it empties the queue.** Its AC2 cannot be
+satisfied as written: `titlebar.png` is not byte-stable, because `.session-title`
+renders `basename(cwd)` and the fixture workspace is `mkdtemp`'d (#142). #136
+moved that element's box but not the string it renders, so the randomness is
+unchanged — though every stored titlebar capture now differs from a fresh one by
+a real layout change as well as by noise. Hash the other six surfaces and treat
+the titlebar by box and content, or resolve #142 first. **Do not silently adjust
+a capture to green a hash.**
 
 ## Skills for next session
 
 - **Do not push on your own initiative.** See State.
-- **Do not apply `ready-for-human`** — banned for this batch. A blocker becomes
-  `needs-info` + a comment + a `PushNotification`.
-- **File follow-ups at `needs-triage`, never `ready-for-agent`.** This chain stops
-  on an empty frontier; a leg promoting its own follow-up there makes the stop
-  condition unreachable by construction.
-- **Any CSS change now owes a driver pin that actually runs** (D4, finally real).
-  Cite the asserting line, and say whether it executes in `npm test` or only in
-  `npm run test:dom`.
-- **Do not pipe the phase through `tail`** when you need a failure detail. It ate
-  `gui-123`'s output on the second full run and cost a re-run to recover.
+- **Do not apply `ready-for-human`** — banned for this batch. Use `needs-info` +
+  a comment + a `PushNotification`.
+- **File follow-ups at `needs-triage`, never `ready-for-agent`.**
+- **Any CSS change owes a driver pin that runs** (D4), and say which gate it runs
+  in. The titlebar's centring is now load-bearing — see pick-up constraint 4.
+- **A driver that pins bounds or zoom needs its own `--user-data-dir`** (#147).
+- **Do not pipe the DOM phase through `tail`.** Redirect to a file and grep it.
+- **Clean `scripts/` after any phase run** (#146): `git checkout -- scripts/`
+  then `git clean -fdq scripts/`.
 
 ## Open questions
 
@@ -158,20 +151,15 @@ reversible with the default already taken. **SEVEN older ones live in
 is stale. Plus **#138–#140** (`ready-for-human`) and the gauntlet stop-signal
 question recorded as owner call 14 in `.claude/gauntlet.md`.
 
-## Recent context
-
-- **`tests/copy-em-dash.test.ts` still binds** (#134): a new user-visible string
-  with an em dash reds the suite. Comments are free.
-- **D3 stands unchanged** — the stylesheet pins are literal-text and brittle. No
-  comment in `styles/` may contain a closing brace; `.bubble {` must stay the
-  first literal occurrence in `chat.css`; exactly one `backdrop-filter` in all of
-  `styles/`; the `@import` order in `styles.css` IS the cascade.
-- **`DESIGN.md` is read literally by `tests/subagent-material.test.ts`**, which
-  splits on `\n## Bans in force\n`.
+**#144's uncomfortable question is now sharper.** AC4 of #136 demanded a pin that
+"must actually run in the gate", and the gate structurally cannot see a layout
+defect. The measurement runs only in the DOM phase, and nothing runs that phase
+automatically because the repo has no CI. The executing pin exists; the thing
+that would make it bite on every push does not.
 
 ## Related
 
 - [[overview]] · [[pick-up]] · [[decisions]] · [[stack]] · [[happy-path]] · [[flows]]
+- [[2026-08-11-the-batch-is-the-instrument-and-a-teardown-is-a-promise]]
 - [[2026-08-11-a-protocol-nobody-reads-is-not-a-protocol]]
 - [[2026-08-11-a-check-nobody-runs-is-not-a-check]]
-- [[2026-08-11-a-ban-that-lives-in-prose-does-not-run]]

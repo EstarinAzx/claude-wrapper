@@ -466,15 +466,20 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **relay chain 6
-  is RUNNING. #132 landed and closed; the frontier is #133, #134, #135, #136 —
-  closing #132 unblocked the last two. `ready-for-human` is BANNED for this
-  batch; use `needs-info` + a comment + a PushNotification**; run the frontier
-  query anyway, it is the authority and this line has been wrong before.
-  **38 `gui-*.mjs` assertion drivers** — 37 plus the observational
+  is RUNNING. #136 landed and closed; the frontier is #137 ALONE, and taking it
+  empties the queue, which is this chain's stop condition. `ready-for-human` is
+  BANNED for this batch; use `needs-info` + a comment + a PushNotification**; run
+  the frontier query anyway, it is the authority and this line has been wrong
+  before.
+  **39 `gui-*.mjs` assertion drivers** — 38 plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
-  also **two `gui-*.source.mjs` sidecars** (`gui-96`, `gui-98`), which are NOT
-  drivers and are excluded from that count. **Two standing environmental reds**,
+  also **three `gui-*.source.mjs` sidecars** (`gui-96`, `gui-98`, `gui-136`),
+  which are NOT drivers and are excluded from that count. The DOM phase launches
+  **30** of them, nine being accounted skips. **`gui-136` launches on a private
+  `--user-data-dir`** — it pins bounds and zoom, both of which outlive the
+  process, and reded two later drivers until it stopped sharing the profile
+  (#147). **Two standing environmental reds**,
   `gui-75` (focus-dependent) and `gui-52` (the CLI returning an empty model
   list); both are premise failures, not regressions, and both were reproduced on
   clean `main` before being called so)
@@ -861,6 +866,16 @@ tags: [context, overview]
   17 days were all still rewindable. The build was then one field carried
   through `transcript.ts` behind the same `isMessageUuid` guard. See
   [[2026-08-08-a-checkpoint-outlives-its-process-and-rewindability-tracks-position]].
+  **Chain 6 is RUNNING.** Legs 1–5 landed **#131–#136**. Leg 5's **#136**
+  (`ed81559`) centred the session title on the window rather than on the space
+  its neighbours leave over: `flex: 1` on both flanks, `flex: 0 1 auto` on the
+  slot, and the 14px inset moved onto `.logo-mark` because padding on a
+  `flex-basis: 0` flank box widens it on top of the grow and reproduces the
+  defect at +7css. The offset obeyed `(L - R)/2 + padLeft/2` to a tenth of a
+  pixel across four flank states, and the welcome screen measured +77.9 against
+  the ticket's +21. Its driver reded two neighbours until it took a private
+  `--user-data-dir`; see
+  [[2026-08-11-the-batch-is-the-instrument-and-a-teardown-is-a-promise]].
   Run the frontier query rather than trusting any line in this file
 
 ## Conventions
