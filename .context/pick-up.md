@@ -9,7 +9,36 @@ tags: [context, pick-up]
 
 Start: read `.context/overview.md` + `active-work.md`.
 
-## The queue is EMPTY — and this time there is NO OPEN ISSUE AT ALL
+## SUPERSEDED 2026-08-10 — the queue is NO LONGER empty
+
+**Read this block before anything below it.** The owner brought new work on
+2026-08-10: `/preset bar` established an external standard, `/preset vibe init`
+scoped it, and a relay chain was fired. Everything below describing an exhausted
+tracker was true on 2026-08-08 and is now **history**. Confirm against `gh`
+rather than trusting either version.
+
+- **#131 is OPEN at `ready-for-agent`** — consolidate the ~20 one-shot
+  `gui-*.mjs` drivers into one `inspect:` command reaching all five core
+  surfaces. Verified open on two frontier reads.
+- **A bar is confirmed and committed**: `.gauntlet/bar/` — Linear as the craft
+  ceiling, `docs/design/frost-mono-reference.png` as the identity floor.
+  **Read `.gauntlet/bar/README.md` before touching any surface.** It carries two
+  limits on `inspect:` that will otherwise be rediscovered as invented findings.
+- **The chain is `/relay N=1 then="/relay N=1 /preset gauntlet" /preset
+  ticket-loop`** — drain #131 first, then the quality waves run against the bar.
+- **Grill decisions and their warrants live in `.claude/vibe.md`.** Six stand
+  after cross-model attack; two questions are the owner's and are listed under
+  `## Needs you` there.
+- **The SEVEN older owner-calls moved to `.claude/vibe-130.md`** when that file
+  was archived. Every reference below pointing at `.claude/vibe.md` for them is
+  stale — the new `vibe.md` is this run's, not that one's.
+- **THE IDENTITY MARK IS SOLID BY DESIGN.** No wave may add a glyph to it. This
+  session claimed otherwise from a screenshot and was overturned from the record;
+  the correction is in `.gauntlet/bar/README.md` and `.claude/vibe.md`.
+- **Still local.** Three commits sit unpushed (`05512aa`, `fc96974`, `97a5de4`).
+  D6 stands: a leg does not push on its own initiative.
+
+## Historical as of 2026-08-08 — the queue WAS empty and there was no open issue
 
 Confirm rather than trust this line — it has been wrong before, and the tracker
 is eventually consistent enough that a single read can lie:
@@ -79,7 +108,14 @@ branch and **again on `main` after the merge**.
 
 ## Pick up here
 
-**There is no queued ticket and no open issue. That is the intended end state.**
+**SUPERSEDED — see the block at the top of this file. #131 is queued at
+`ready-for-agent` and a relay chain is running it.** The paragraph below was the
+2026-08-08 state and is kept only because its reasoning still binds: do not
+invent a ticket to restart a chain. That rule is intact. It simply is not the
+current situation — the owner brought the work, and `/preset vibe init` filed
+#131 as the scoping run rather than as a leg promoting its own follow-up.
+
+~~There is no queued ticket and no open issue. That is the intended end state.~~
 
 A session arriving now has two honest options:
 
