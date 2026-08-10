@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "linear-home-hero",
+    "url": "https://linear.app/",
+    "scroll": 0,
+    "judges": "Sidebar + Chat: app shell, rail density, one type scale",
+    "file": "linear-home-hero.png",
+    "bytes": 516084
+  },
+  {
+    "slug": "linear-home-product",
+    "url": "https://linear.app/",
+    "scroll": 900,
+    "judges": "Chat: list rhythm, row hierarchy, restraint",
+    "file": "linear-home-product.png",
+    "bytes": 915726
+  },
+  {
+    "slug": "linear-features",
+    "url": "https://linear.app/features",
+    "scroll": 400,
+    "judges": "Titlebar + docks: control grouping, iconography",
+    "file": "linear-features.png",
+    "bytes": 703754
+  },
+  {
+    "slug": "linear-method",
+    "url": "https://linear.app/method",
+    "scroll": 0,
+    "judges": "Welcome + copy: authored empty space, editorial type",
+    "file": "linear-method.png",
+    "bytes": 215311
+  },
+  {
+    "slug": "linear-changelog",
+    "url": "https://linear.app/changelog",
+    "scroll": 300,
+    "judges": "Chat transcript: long-form reading, date dividers",
+    "file": "linear-changelog.png",
+    "bytes": 542848
+  }
+]
