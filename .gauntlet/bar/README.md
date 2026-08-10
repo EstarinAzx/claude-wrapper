@@ -96,17 +96,57 @@ under a loop is not a bar.
 
 ## The five core surfaces, in wave order
 
-Confirmed scope: core first, widen on plateau.
+Confirmed scope: core first. The remaining six need their **own gauntlet run
+under a separate slug** — `pieces` is capped at 6 and fixed at seed, and the
+smoothing pass may add only one per wave, so they cannot be a widening inside
+this run.
 
-1. **Welcome** — the blank mint rounded square reads as a missing image, the
-   composition floats in dead space, the copy is a label rather than an invitation
-2. **Titlebar** — two mode pills crowd the identity mark with no separation
+1. **Welcome**
+2. **Titlebar**
 3. **Sidebar** — sessions rail
 4. **Chat** — message rhythm, tool cards, date divider
 5. **InputBar** — composer, attach, send
 
-On plateau, widen to AgentsDock, AppearanceDock, CommandsDock, AgentMap,
+Then, as a second run: AgentsDock, AppearanceDock, CommandsDock, AgentMap,
 SubagentDrawer, ToolCard.
+
+**No defect list is supplied, on purpose.** Naming the gaps here hands the critic
+its verdict, and the critic ruling independently is the one thing this loop
+exists to protect. An earlier draft of this file listed three; one was wrong,
+which is the second reason the list is gone.
+
+## THE MARK IS SOLID BY DESIGN — do not "fix" it
+
+The identity mark renders as a **flat mint rounded square with no glyph**, in
+both the titlebar and the Welcome hero. This is **intentional and is not a
+missing asset.** Three independent signals, each verified rather than inferred:
+
+- `.logo-mark` (`titlebar.css:26`) and `.welcome-mark` (`chat.css:199`) are each
+  a bare `background: var(--mint)` — a fill, not a container.
+- Both elements are **self-closing and `aria-hidden="true"`**
+  (`Titlebar.tsx:175`, `Welcome.tsx:3`). Nobody marks a *missing* image
+  decorative; you mark a *deliberate* one.
+- DESIGN.md spends the accent on the mark **as** an accent: *"Mint accent ≤10% of
+  surface, spent only on: logo mark, assistant avatar, send button, list markers,
+  typing dots."* It prescribes size, radius and fill, never content — and
+  `docs/design/frost-mono-reference.png` shows the same solid mark.
+
+Adding a glyph would also change the painted area of a **named site** in the
+≤10% mint accounting measured by
+`.context/decisions/2026-08-04-the-ground-cancels-in-a-token-differential.md`:
+the logo mark, the avatar, the send button and the welcome mark are four of the
+five `background:` sites that instrument scans.
+
+**This section exists because the first draft of this file got it wrong.** It
+called the mark "a missing image" from a screenshot, which is the ninth instance
+of the exact failure the section above warns about — an artifact read as a
+finding. It was caught by the vibe Partner agent citing the record, not by
+looking harder at the picture.
+
+A wave may still find the mark lacks the **depth** the reference image gives it.
+That is a fidelity question about the fill, and it is fair game. It is a
+different question from "the glyph is missing", which is answered: there is no
+glyph, by design.
 
 ## Next
 
