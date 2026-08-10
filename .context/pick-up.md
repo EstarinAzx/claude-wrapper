@@ -7,177 +7,124 @@ tags: [context, pick-up]
 
 # Pick up
 
-## FIRST, BEFORE ANY WORK — owner instruction, 2026-08-11
+## queue empty
 
-**Call `ScheduleWakeup` with `delaySeconds: 900` and then continue.** Pass the
-`/relay` input back verbatim as the `prompt` so this leg resumes itself, and say
-in `reason` that the owner asked each leg to pace at 15 minutes. Do this as the
-first action of the leg, before picking a ticket. It is a pacing instruction from
-the owner, not a condition to wait on — schedule it and get on with the work.
+**Relay chain 6 has STOPPED, and it stopped correctly rather than by failing.**
 
-Then: read `.context/overview.md` + `active-work.md`.
+Leg 6 landed **#137** and closed it, which emptied the `ready-for-agent` queue —
+the chain's declared stop condition. No leg 7 was spawned.
+`.claude/relay/ticket-loop.md` carries `stop: true`.
 
-## Where the chain is
-
-**Relay chain 6 is RUNNING. Leg 5 landed #136 and closed it. ONE ticket remains
-in the frontier — #137 — and it is genuinely unblocked** (its declared blocker
-#133 is closed).
-
-Confirm rather than trust this. The tracker is the authority and this file has
-been wrong before:
+**There is no agent-ready work in this repo right now.** Confirm rather than
+trust this file; the tracker is the authority and this file has been wrong
+before:
 
 ```text
 gh issue list --state open --label ready-for-agent
 ```
 
-## The queue
+If that returns nothing, **the next move belongs to a human**, not to another
+leg. Everything open is either a design ruling (`ready-for-human`) or untriaged.
 
-| # | Label | What | Blocked by |
-|---|---|---|---|
-| 137 | ready-for-agent | Capture the Welcome pane at the minimum window size | #133, **closed** |
-| 138–140 | ready-for-human | Type scale · transcript weight pair · mint side-stripe | — |
-| 141–147 | needs-triage | Instrument follow-ups — see below | — |
+## The state you are picking up
 
-**#137 is the only free ticket. Taking it empties the frontier**, which is this
-chain's stop condition — so the leg that lands it also signals done rather than
-spawning another.
+`main` = `b35e799`. Tree clean. typecheck clean, build clean,
+**89 files / 1329 passed + 36 skipped**. DOM phase **29/30**, the single red the
+documented `gui-123` (#143).
 
-**Read the "Blocked by" section in the issue body before claiming it** — edges
-are prose, not native tracker links.
-
-## Landed this leg
-
-**#136** — the session title now centres on the window instead of on the space
-its neighbours leave over. Squash-merged to `main` as `ed81559`, branch deleted.
-
-The offset was `(L - R)/2 + padLeft/2`, confirmed to a tenth of a pixel in four
-flank states. Fix is `flex: 1` on both flanks, `flex: 0 1 auto` on the slot, and
-the 14px inset moved onto `.logo-mark` — **not** onto a flank's box, where
-`box-sizing: border-box` re-creates the same defect at +7css.
-
-**The ticket's +21 was the docks-open case. The welcome screen ran at +77.9**,
-because the right flank is 113px narrower before a project is open.
-
-**Filed #147** (`needs-triage`): the DOM phase's drivers share one Electron
-profile, so any driver pinning bounds or zoom silently reds later ones.
-
-## The new landmine, and it is about instruments
-
-**A driver that pins state outliving its process must launch with its own
-`--user-data-dir`.** `gui-136` did not, and reded `gui-69` and `gui-70` — both
-of which pass alone. It took four full phase runs to attribute, and the run that
-settled it was the *withheld* one: same CSS change, driver removed, batch clean.
-
-Three things to carry (full version in
-[[2026-08-11-the-batch-is-the-instrument-and-a-teardown-is-a-promise]]):
-
-1. **The batch is the instrument.** An adjacency check — run the suspect, then
-   the victim — passed here and was wrong. The effect accumulates through the
-   intervening launches. Do not attribute a batch-only red with a pair.
-2. **A teardown is a promise that goes unkept precisely when it matters.**
-   Restoring borrowed state on exit does not run when a driver throws or times
-   out, which is the population that leaves the profile dirty. Isolation is a
-   property of the launch; prefer it.
-3. **"Passes alone, fails in the batch" is a question, not a category.** That is
-   the literal wording of `DOM_SKIP`'s `desktop-exclusive` entry, and two healthy
-   drivers were one shrug from being quarantined under it for another driver's
-   bug. Attribute to a cause before assigning a name.
-
-## The DOM phase
-
-```bash
-npm run build
-npm run test:dom                          # 30 drivers, ~12 min
-npm run test:dom -- --only gui-136.mjs    # one driver
-npm run test:dom -- --list                # what runs, what does not, and why
-```
-
-**Current state: 29/30, the single red being `gui-123` (#143)** — the documented
-one, unchanged and still unexplained. Do not quarantine it.
-
-**It dirties the working tree.** Several drivers hardcode `scripts/gui-<n>-shots/`
-and those PNGs are tracked. `git checkout -- scripts/` and `git clean -fdq
-scripts/` before committing anything else (**#146**).
-
-**Do not pipe it through `tail`** when you need the verdict: a pipeline reports
-`tail`'s exit status, so a failing phase came back as exit 0 this leg while the
-text said `DOM PHASE FAIL`. Redirect to a file and grep it.
-
-## Baseline — READ IT, do not trust it
-
-`main` = `ed81559`. typecheck clean, build clean, **88 files / 1325 passed +
-36 skipped** (was 88 / 1321 + 36: +4 source checks, files and skips unchanged).
-
-The 36 skips are by design — one per driver with no source-level sidecar. There
-are now **39 drivers and 3 sidecars** (`gui-96`, `gui-98`, `gui-136`).
-
-Gate ran on the branch and **again on `main` after the merge**.
-
-**Commits sit UNPUSHED — 17 at the time of writing.** D6 stands: **a leg does
-not push on its own initiative**. Read the real gap rather than that number:
+**Nineteen commits sit UNPUSHED.** D6 stands — a leg does not push on its own
+initiative. Read the real gap rather than that number:
 `git rev-list --count origin/main..main`.
 
-## The landmine on #137 itself
+## What is waiting on you
 
-**#137's AC2 cannot be satisfied as written, and that is a finding rather than
-an obstacle.** It requires every other surface to be **byte-identical**,
-*"proved with a hash comparison, not an eyeball"*.
+| # | Label | What it needs |
+|---|---|---|
+| 138 | ready-for-human | Rule on the type scale: five rendered sizes against three documented |
+| 139 | ready-for-human | Rule on the transcript's prose/label weight pair |
+| 140 | ready-for-human | Rule on the selected row's mint side-stripe against the ban |
+| 141–149 | needs-triage | Nine follow-ups, six of them about the instruments |
 
-`titlebar.png` is **not byte-stable** and never was. `.session-title` renders
-`basename(cwd)` and the fixture workspace is `mkdtemp`'d, so six random
-characters change the glyphs while the box and the text length (43) hold.
-Measured across seven runs; the **unmodified** driver spreads *wider* (9084 /
-9538 / 9083) than the modified one, so it predates #133. Filed as **#142** with
-four candidate fixes, none obviously right, because each trades randomness for a
-collision between concurrent runs.
+Plus **two live owner-calls** in `.claude/vibe.md` under `## Needs you`, both
+reversible with the default already taken, and **seven older ones in
+`.claude/vibe-130.md`** — every reference pointing at `.claude/vibe.md` for those
+is stale.
 
-**#136 did not change this.** Centring moved the element's box, not the string
-it renders, so the randomness is untouched — but every stored titlebar capture
-now differs from a fresh one by a real layout change as well as by noise.
+**Do not restart the gauntlet before #138–#140 are answered.**
+`.claude/gauntlet.md` carries `stop: true` at `plateau: 3`, so `/preset gauntlet`
+halts at its own seed guard — correctly. Restarting also needs the stop-signal
+question recorded there as owner call 14.
 
-The leg taking #137 should hash the other six surfaces and treat the titlebar by
-box and content — or resolve #142 first and hash all seven. **Do not silently
-adjust a capture to green a hash.**
+**The `needs-triage` pile is itself the signal.** Six of the nine are about the
+instruments rather than the app: #142 and #148 (captures that are not
+reproducible), #144 (nothing runs the DOM phase), #145 (a driver that cannot run
+in a batch), #146 (the phase dirties tracked files), #147 (drivers share one
+Electron profile), #149 (the published surface list is stale). The app's tests
+are in better shape than the things that test it.
 
-## Standing constraints for any leg touching the renderer
+**#144 is the sharpest.** #137 added a measurement that only the DOM phase can
+run, and nothing runs that phase because the repo has no CI. The executing pins
+exist; the thing that would make them bite on every push does not.
 
-1. **No em dashes in any user-visible string** — enforced by
-   `tests/copy-em-dash.test.ts`, which compiles `src/` with esbuild. Comments are
-   free and stay free.
-2. **D3 — the stylesheet pins are literal-text and brittle.** Three tests scan
-   the whole `styles/` directory; **no comment anywhere in `styles/` may contain
-   a closing brace**; `.bubble` and `.message-input` stay ungrouped; **`.bubble {`
-   must stay the FIRST literal occurrence of that string in `chat.css`**;
-   **exactly ONE `backdrop-filter` in all of `styles/`**; the `@import` order in
-   `styles.css` IS the cascade, so add rules inside a file and never reorder.
-3. **D4 — any CSS change owes a driver pin, and now it runs.** Cite the asserting
-   line and say plainly whether it executes in `npm test` or only in
-   `npm run test:dom`. jsdom loads no CSS, so the fast gate structurally cannot
-   see a layout regression.
-4. **The titlebar's centring is now load-bearing** (#136). Horizontal padding on
-   `.titlebar`, `.titlebar-left` or `.titlebar-right` reds `gui-136` by half its
-   width; so does a `min-width: 0` on `.titlebar-left`, or letting
-   `.titlebar-center` grow.
-5. **The identity mark is SOLID BY DESIGN.** No glyph, ever.
-6. **Colour, translucency and material are instrument artifacts in any capture** —
-   the authored wash is composited by Windows over OS acrylic and no driver can
-   see a DWM backdrop. A flat ground in a screenshot is not a defect.
-7. **`.claude/vibe.md` binds this chain** — six decisions stand after cross-model
-   attack. Two live owner-calls sit there under `## Needs you`; **seven older ones
-   are in `.claude/vibe-130.md`**, and every reference pointing at
-   `.claude/vibe.md` for those is stale.
-8. **`DESIGN.md` is read literally by a test.** `tests/subagent-material.test.ts`
-   splits on `\n## Bans in force\n` and asserts inside that section.
+## If you restart a relay chain
 
-## Rules this chain runs under
+The owner's standing pacing instruction for chain 6 was: **call `ScheduleWakeup`
+with `delaySeconds: 900` as the first action of each leg**, passing the `/relay`
+input back verbatim as `prompt`, then get straight on with the ticket — it is a
+pacing instruction, not a condition to wait on. That instruction was scoped to
+chain 6, which has ended. Re-confirm it before applying it to a new chain.
+
+Chain rules that were live and would apply again unchanged:
 
 - **Do not push on your own initiative** (D6).
-- **Do not apply `ready-for-human`** — banned for this batch. A blocker becomes
-  `needs-info` + a comment + a `PushNotification`.
+- **Do not apply `ready-for-human`** — a blocker becomes `needs-info` + a comment
+  + a `PushNotification`.
 - **File follow-ups at `needs-triage`, never `ready-for-agent`.** The chain stops
   on an empty frontier; a leg promoting its own follow-up there makes the stop
-  condition unreachable by construction. Leg 5 filed #147 correctly.
-- **Do not restart the gauntlet.** `.claude/gauntlet.md` carries `stop: true` at
-  `plateau: 3`, so `/preset gauntlet` halts at its seed guard — correctly.
-  Restarting needs the owner to answer **#138–#140** and the stop-signal question
-  recorded as owner call 14 in that file.
+  condition unreachable by construction.
+
+## Landmines for anyone touching the instruments
+
+**Do not read the DOM phase's verdict off a compound command.** It reported
+**exit 0 while its own text said `DOM PHASE FAIL`** this leg, with no pipe
+involved — the command ended in `; echo`. Leg 5 recorded this as "do not pipe
+through `tail`", which is narrower than the defect: **any trailing command
+replaces the status.** Read `$?` on its own line, or grep the redirected file.
+
+**Clean `scripts/` after any phase run** (#146): `git checkout -- scripts/` then
+`git clean -fdq scripts/`. It rewrote five tracked PNGs this leg.
+
+**Do not trust a capture comparison without a baseline.** Three of `inspect.mjs`'s
+ten files differ between two runs of the *unmodified* driver. Pinning the fixture
+isolates `titlebar.png` (#142); `sidebar.png` and `window-session.png` move for a
+different reason (#148) — the rail photographs 100 real sessions, 99 of them
+foreign, whose relative ages tick at identical character length.
+
+**Point `SCREENSHOT_DIR` outside the repo** when running `inspect.mjs`, or the
+captures land in the tree.
+
+## Standing constraints for the renderer
+
+No em dashes in user-visible strings (`tests/copy-em-dash.test.ts` compiles
+`src/`; comments are free). D3 — the stylesheet pins are literal-text and
+brittle: no comment in `styles/` may contain a closing brace, `.bubble` and
+`.message-input` stay ungrouped, `.bubble {` must stay the first literal
+occurrence in `chat.css`, exactly one `backdrop-filter` in all of `styles/`, and
+the `@import` order in `styles.css` IS the cascade. D4 — any CSS change owes a
+driver pin that **executes**, naming which gate runs it; jsdom loads no CSS, so
+the fast gate structurally cannot see layout. The titlebar's centring is
+load-bearing (#136): horizontal padding on `.titlebar`, `.titlebar-left` or
+`.titlebar-right` reds `gui-136` by half its width, as does `min-width: 0` on
+`.titlebar-left` or letting `.titlebar-center` grow. The identity mark is solid
+by design. Colour, translucency and material are instrument artifacts in any
+capture. `DESIGN.md` is read literally by `tests/subagent-material.test.ts`,
+which splits on `\n## Bans in force\n`.
+
+**New from #137:** `CLAIMED_HEADROOM_PX` in `inspect.mjs` is a copy of a sum
+argued in prose in `chat.css`. **Never move it to match a measurement without
+moving that sum too** — that converts the check into a rubber stamp.
+
+## Related
+
+- [[active-work]] · [[overview]] · [[decisions]] · [[stack]]
+- [[2026-08-11-the-noise-floor-is-part-of-the-instrument]]
