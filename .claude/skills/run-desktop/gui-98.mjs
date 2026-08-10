@@ -100,8 +100,11 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
 
+// #132 — criterion 5c moved to this sidecar so the GATE runs it too. It is
+// still driven here; the array is the single definition of the check.
+import { checks as sourceChecks } from './gui-98.source.mjs'
+
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
-const STYLE_DIR = path.join(APP_DIR, 'src/renderer/src/styles')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
 fs.mkdirSync(SHOT_DIR, { recursive: true })
 
@@ -430,15 +433,14 @@ check('criterion 5b: control — a child of the glassed pane still reads `none`'
 // this is where a quiet generalisation shows up. `tests/subagent-material.test.ts`
 // pins the same rule in the gate; this repeats it because a driver run on a dirty
 // tree is where the generalisation would actually be typed.
-const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '')
-const glassElsewhere = fs
-  .readdirSync(STYLE_DIR)
-  .filter((f) => f.endsWith('.css') && f !== 'subagent.css')
-  .filter((f) => /backdrop-filter\s*:/.test(stripComments(fs.readFileSync(path.join(STYLE_DIR, f), 'utf8'))))
-check('criterion 5c: no OTHER stylesheet declares a backdrop-filter (SOURCE)', glassElsewhere.length === 0, {
-  files: glassElsewhere,
-  note: 'the exception is this pane only; extending it is an open owner call, not this ticket'
-})
+//
+// Since #132 the check itself lives in `gui-98.source.mjs` and the gate runs it
+// through `tests/gui-source-assertions.test.ts`. Driven here off that same
+// array, so there is one definition and the two copies cannot drift.
+for (const c of sourceChecks) {
+  const { ok, detail } = c.run()
+  check(c.name, ok, detail)
+}
 
 // ---- give the window back its size ---------------------------------------
 // Bounds are borrowed state and #79 persists them; 400ms clears the 250ms

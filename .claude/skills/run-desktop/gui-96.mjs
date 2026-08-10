@@ -59,8 +59,11 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
 
+// #132 — criteria 2 and 6 moved to this sidecar so the GATE runs them too.
+// They are still driven here; the array is the single definition of both.
+import { checks as sourceChecks } from './gui-96.source.mjs'
+
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
-const STYLE_DIR = path.join(APP_DIR, 'src/renderer/src/styles')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
 fs.mkdirSync(SHOT_DIR, { recursive: true })
 
@@ -288,64 +291,17 @@ check('criterion 4b: .agent-map-halo still pulses at 1.4s (PROBE element)', anim
 const drawerShot = path.join(SHOT_DIR, 'gui-96-drawer.png')
 await page.screenshot({ path: drawerShot })
 
-// ---- phase 4: criterion 2, the source grep -------------------------------
-// The one check here that is NOT a measurement of the running app.
-const hits = []
-const walk = (dir) => {
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, e.name)
-    if (e.isDirectory()) walk(p)
-    else if (e.name.endsWith('.css')) {
-      fs.readFileSync(p, 'utf8')
-        .split(/\r?\n/)
-        .forEach((line, i) => {
-          if (/font-weight:\s*500\b/.test(line)) hits.push(`${path.relative(APP_DIR, p)}:${i + 1}`)
-        })
-    }
-  }
+// ---- phases 4-5: the SOURCE-level criteria --------------------------------
+// Criteria 2 and 6 are the two checks here that are NOT measurements of the
+// running app — they read `src/renderer/src/styles/` as text. Since #132 they
+// live in `gui-96.source.mjs` and the gate runs them through
+// `tests/gui-source-assertions.test.ts`. This loop drives that same array, so
+// there is one definition and the gated copy cannot drift from the driven one.
+console.log('--- phases 4-5: source-level (also run by `npm test` since #132) ---')
+for (const c of sourceChecks) {
+  const { ok, detail } = c.run()
+  check(c.name, ok, detail)
 }
-walk(STYLE_DIR)
-check('criterion 2: zero `font-weight: 500` in src/renderer/src/styles/ (SOURCE grep)', hits.length === 0, {
-  hits
-})
-
-// ---- phase 5: #98's axis pin, added to this driver's SOURCE phase ---------
-// #98 turned the entry from an X slide into a Y rise while KEEPING the keyframe
-// name, so criterion 3 above (200ms) and the premise (`animationName ===
-// 'subagent-slide'`) both stay green no matter which axis the body moves. That
-// leaves the axis itself uncovered: a later edit could reinstate the X slide
-// with every check in this file passing. This is the only pin on it.
-//
-// The body is extracted by COUNTING BRACES, not by a lazy regex. `@keyframes`
-// bodies nest (`from { … } to { … }`), so `\{([\s\S]*?)\}` stops at the end of
-// the `from` block — which would read the first stop only and never see an X
-// translate reinstated in `to`. That is the vacuous version of this check.
-const keyframeBody = (source, name) => {
-  const head = new RegExp(`@keyframes\\s+${name}\\s*\\{`).exec(source)
-  if (!head) return null
-  let depth = 1
-  let i = head.index + head[0].length
-  const start = i
-  for (; i < source.length && depth > 0; i++) {
-    if (source[i] === '{') depth++
-    else if (source[i] === '}') depth--
-  }
-  return depth === 0 ? source.slice(start, i - 1) : null
-}
-
-const subagentCss = fs.readFileSync(path.join(STYLE_DIR, 'subagent.css'), 'utf8')
-const slideBody = keyframeBody(subagentCss, 'subagent-slide')
-check(
-  'criterion 6 (#98): the `subagent-slide` body rises on Y and never translates on X (SOURCE)',
-  slideBody !== null && slideBody.includes('translateY') && !slideBody.includes('translateX'),
-  {
-    found: slideBody !== null,
-    hasY: slideBody?.includes('translateY') ?? null,
-    hasX: slideBody?.includes('translateX') ?? null,
-    stops: slideBody ? (slideBody.match(/\{/g) || []).length : null,
-    hint: 'stops should be 2 (from + to) — a 1 here means the body was truncated at the first close brace'
-  }
-)
 
 console.log(`screenshots: ${menuShot} | ${drawerShot}`)
 console.log(fails.length === 0 ? 'ALL GREEN' : `RED: ${fails.join(' | ')}`)

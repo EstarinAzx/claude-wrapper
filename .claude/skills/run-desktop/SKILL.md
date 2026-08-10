@@ -80,6 +80,50 @@ The two titlebar toggles this repo added:
 - **Permission pill** (`[aria-label="Permission mode"]`) — cycles Bypass →
   Accept Edits → Ask. Default `Bypass` wears the red danger tint.
 
+## Source-level assertions run in `npm test` (#132)
+
+A driver's assertions used to run only when a human remembered to run the
+driver. `npm test` executed none of them, and during the `core-surfaces`
+gauntlet run one edit turned two driver assertions red while the three gate runs
+that followed all reported green.
+
+The subset that needs no browser now runs in the gate.
+
+**The one convention.** A driver `gui-<n>.mjs` contributes its source-level
+assertions by shipping a sibling **`gui-<n>.source.mjs`** with a named export
+`checks`:
+
+```js
+export const checks = [
+  {
+    name: 'criterion 2: zero `font-weight: 500` in src/renderer/src/styles/ (SOURCE grep)',
+    run() {
+      /* … */
+      return { ok: hits.length === 0, detail: { hits } }
+    }
+  }
+]
+```
+
+`run()` must be **pure**: no browser, no Electron, no `out/` build artifact, no
+network, no clock. It returns `{ ok, detail }`; `detail` is printed on failure,
+so put the offending value in it.
+
+Nothing else needs wiring. `tests/gui-source-assertions.test.ts` globs for
+`*.source.mjs` and turns every entry into a real gate test named
+`<driver> › <criterion>`. The driver imports the same array and feeds it to its
+own `check()`, so each assertion has exactly one definition and the gated copy
+cannot drift from the driven one.
+
+**Drivers without a sidecar are reported, not omitted** — each appears in the
+vitest run as a named skip with its reason, so `npm test` states which contracts
+it is *not* checking. Two reasons exist: browser-level (needs a live window —
+that is #135) and build-artifact (`gui-75`, `gui-93` read `out/`, and the gate
+does not build).
+
+Live today: `gui-96.source.mjs` (criteria 2 and 6), `gui-98.source.mjs`
+(criterion 5c).
+
 ## Gotchas
 
 - **Driver must stay under the project tree.** ESM resolves the bare
