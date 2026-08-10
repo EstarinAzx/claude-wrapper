@@ -27,6 +27,14 @@
 //   welcome.png     titlebar.png    sidebar.png    chat.png    input-bar.png
 //   agents-dock.png commands-dock.png               appearance-dock.png
 //   window-welcome.png              window-session.png
+//   welcome-min-window.png
+//
+// `welcome-min-window.png` is #137 and is the ONE surface photographed twice.
+// It is the same `.welcome` pane as `welcome.png`, at the window's enforced
+// minimum instead of the standard capture size, because the pane's height
+// budget is arithmetic about that size and nothing had ever photographed it.
+// Named so it cannot be mistaken for the standard hero at a glance in a
+// directory listing.
 //
 // The two `window-*.png` frames are the whole window at each stage. They are not
 // a ninth and tenth surface — they exist because a surface clipped to its own
@@ -124,6 +132,19 @@ const WANT_HEIGHT = 900
 // it counts as a picture of something. NOT a byte threshold, and deliberately
 // only just above 1 — see `flatControl` for both measurements that put it there.
 const MIN_DENSITY_RATIO = 1
+
+// What the `.welcome` comment in `src/renderer/src/styles/chat.css` CLAIMS is
+// left over at the minimum window: content of 253px plus 114px of padding
+// against the pane's 432px. Restated here rather than derived because the claim
+// lives in prose and a regex over prose is a worse pin than a number with a
+// pointer to its source.
+//
+// This is a CLAIM UNDER TEST, not a target. A disagreement between it and the
+// measurement below is the finding — the sum has drifted, or the capture is
+// being read wrongly — and the run says so instead of quietly picking a side.
+// Never move this number to match a measurement without also moving the sum in
+// `chat.css` that it is a copy of.
+const CLAIMED_HEADROOM_PX = 65
 
 const log = (label, m) => console.log(String(label).padEnd(12) + JSON.stringify(m))
 const fails = []
@@ -371,6 +392,33 @@ const SURFACES = [
     selector: '.welcome',
     requires: [
       ['.welcome-title', 'the hero has no title'],
+      ['.pick-folder-btn', 'the empty state offers no action']
+    ]
+  },
+  {
+    // #137 — THE SAME PANE AT THE WINDOW'S OWN MINIMUM, under its own name so a
+    // wave can address one without reaching the other.
+    //
+    // The Welcome hero's layout is a height budget argued in a `chat.css`
+    // comment: content plus padding against the pane that the shortest
+    // permitted window leaves. Every term in that sum has been re-derived by
+    // hand across several passes and NOTHING HAD EVER PHOTOGRAPHED IT. That is
+    // not hypothetical: a one-pixel error at the root of it (49px charged for a
+    // 48px titlebar, because border-box puts the hairline inside the declared
+    // height) survived a full review cycle and made every dependent figure
+    // wrong by the same one.
+    //
+    // Its `requires` is the WHOLE hero, where the standard capture above asks
+    // only for a title and an action. The question this photograph exists to
+    // answer is whether all four parts still fit when the pane is at its
+    // smallest, so all four are proven present before the shutter opens.
+    name: 'welcome-min-window',
+    stage: 'welcome-min',
+    selector: '.welcome',
+    requires: [
+      ['.welcome-mark', 'the identity mark is absent'],
+      ['.welcome-title', 'the hero has no title'],
+      ['.welcome-hint', 'the supporting line is absent'],
       ['.pick-folder-btn', 'the empty state offers no action']
     ]
   },
@@ -789,6 +837,171 @@ try {
   flatDensity = await flatControl()
   for (const s of SURFACES.filter((s) => s.stage === 'welcome')) await capture(s)
   await captureWindow('welcome')
+
+  // ---- stage 1b: the same pane at the window's enforced minimum -------------
+  //
+  // STRICTLY AFTER the two captures above and STRICTLY BEFORE the folder pick,
+  // and both halves of that are load-bearing. After, because the standard
+  // Welcome frames must be photographed at the standard size. Before, because
+  // `.welcome` stops existing the moment a workspace opens — there is no later
+  // point in the run where this pane can be reached at all.
+  //
+  // THE SIZE IS ASKED FOR, NOT WRITTEN DOWN. `minWidth`/`minHeight` live in
+  // `src/main/index.ts` and Electron enforces them; a second copy here would go
+  // stale the first time they moved, and the capture would then be a photograph
+  // of a size the app no longer permits while still being filed under the name
+  // "minimum". `tests/inspect-welcome-min.test.ts` holds that shape.
+  //
+  // The restore is in a `finally` because a resize is BORROWED STATE: window
+  // bounds are remembered across launches (#79, #110) in a profile this run
+  // shares with every other driver, so a throw between here and the restore
+  // would leave the next process to launch at the minimum for no reason it
+  // could trace. That is the #147 class of bug, and a `finally` is a promise rather
+  // than a guarantee — the real fix is a private `--user-data-dir`, which is
+  // #147's job and not this capture's.
+  try {
+    const min = await app.evaluate(({ BrowserWindow }) => {
+      const w = BrowserWindow.getAllWindows()[0]
+      const [width, height] = w.getMinimumSize()
+      if (width < 1 || height < 1) return { asked: { width, height }, got: null }
+      w.setBounds({ width, height })
+      const b = w.getBounds()
+      return { asked: { width, height }, got: { width: b.width, height: b.height } }
+    })
+    log('MINIMUM', min)
+
+    if (!min.got) {
+      fails.push(
+        `the window reports no minimum size (${JSON.stringify(min.asked)}), so there is no "minimum window" to photograph — this is an instrument failure and NOT a finding about the pane`
+      )
+    } else if (min.got.width !== min.asked.width || min.got.height !== min.asked.height) {
+      // A display can clamp a window smaller than the app asks for. Photographing
+      // the clamped size under the name "minimum" would be a picture of this
+      // machine rather than of the app.
+      fails.push(
+        `the window came to rest at ${min.got.width}x${min.got.height} after being asked for its own minimum of ${min.asked.width}x${min.asked.height} — the size was clamped, so this capture would not be of the minimum window`
+      )
+    } else {
+      // The 150ms transitions on this screen plus a reflow: a value read behind
+      // either is not a settled one, and neither is a photograph of it.
+      await settle(700)
+
+      // AC3 and AC4 in one read, because they are one question asked twice: does
+      // the hero still fit, and by how much. `intrusion` is positive on a side
+      // where the hero has crossed OUT of the pane's content box and into the
+      // pane's own padding, which is the geometric form of "overlapping the
+      // padding"; `overflow` is the pane needing more room than it has, which is
+      // the geometric form of "clipped".
+      const budget = await page.evaluate(() => {
+        const pane = document.querySelector('.welcome')
+        if (!pane) return null
+        const cs = getComputedStyle(pane)
+        const pad = {
+          top: parseFloat(cs.paddingTop),
+          bottom: parseFloat(cs.paddingBottom),
+          left: parseFloat(cs.paddingLeft),
+          right: parseFloat(cs.paddingRight)
+        }
+        const r = pane.getBoundingClientRect()
+        const kids = [...pane.children].map((el) => {
+          const k = el.getBoundingClientRect()
+          return { cls: String(el.className), ...k.toJSON() }
+        })
+        if (!kids.length) return null
+        const hero = {
+          top: Math.min(...kids.map((k) => k.top)),
+          bottom: Math.max(...kids.map((k) => k.bottom)),
+          left: Math.min(...kids.map((k) => k.left)),
+          right: Math.max(...kids.map((k) => k.right))
+        }
+        const box = {
+          top: r.top + pad.top,
+          bottom: r.bottom - pad.bottom,
+          left: r.left + pad.left,
+          right: r.right - pad.right
+        }
+        const n = (v) => Number(v.toFixed(2))
+        return {
+          pane: { w: n(r.width), h: n(r.height) },
+          padding: { top: n(pad.top), bottom: n(pad.bottom) },
+          content: n(hero.bottom - hero.top),
+          headroom: n(box.bottom - box.top - (hero.bottom - hero.top)),
+          overflow: n(pane.scrollHeight - pane.clientHeight),
+          intrusion: {
+            top: n(box.top - hero.top),
+            bottom: n(hero.bottom - box.bottom),
+            left: n(box.left - hero.left),
+            right: n(hero.right - box.right)
+          },
+          parts: kids.map((k) => ({ cls: k.cls, h: n(k.height) }))
+        }
+      })
+
+      if (!budget) {
+        fails.push(
+          'the welcome pane had no children to measure at the minimum window, so its height budget could not be read'
+        )
+      } else {
+        log('MIN-PANE', { pane: budget.pane, padding: budget.padding, parts: budget.parts })
+        log('HEADROOM', {
+          measured: budget.headroom,
+          claimed: CLAIMED_HEADROOM_PX,
+          drift: Number((budget.headroom - CLAIMED_HEADROOM_PX).toFixed(2)),
+          content: budget.content,
+          overflow: budget.overflow,
+          intrusion: budget.intrusion
+        })
+
+        // Half a pixel of tolerance: these are subpixel layout values, and the
+        // claimed sum rounds its terms to whole pixels.
+        const intruding = Object.entries(budget.intrusion).filter(([, v]) => v > 0.5)
+        if (budget.overflow > 1) {
+          fails.push(
+            `welcome-min-window: the pane needs ${budget.overflow}px more than it has at the minimum window, so the hero is CLIPPED there — the height budget in chat.css no longer holds and this is a finding about the pane, not about the instrument`
+          )
+        } else if (intruding.length) {
+          fails.push(
+            `welcome-min-window: the hero crosses into the pane's own padding at the minimum window (${intruding
+              .map(([side, v]) => `${side} by ${v}px`)
+              .join(', ')}) — the reserve below it is being used as the clip it was written not to be`
+          )
+        } else if (Math.abs(budget.headroom - CLAIMED_HEADROOM_PX) > 1) {
+          // Loud on purpose. A sum that only a comment asserts is a sum nobody
+          // checks, and this capture exists precisely because that had been the
+          // state of this one for its whole life.
+          fails.push(
+            `welcome-min-window: the pane has ${budget.headroom}px of headroom at the minimum window against the ${CLAIMED_HEADROOM_PX}px claimed by the .welcome comment in chat.css — the two disagree, which is the finding. Fix the sum or fix the claim; do not adjust this capture`
+          )
+        }
+
+        await capture(SURFACES.find((s) => s.stage === 'welcome-min'))
+      }
+    }
+  } finally {
+    // `.catch`, because a `finally` that throws REPLACES the exception it was
+    // running alongside — and the case where the window is already gone is
+    // exactly the case where the original error is the one worth reading.
+    const back = await app
+      .evaluate(
+        ({ BrowserWindow }, want) => {
+          const w = BrowserWindow.getAllWindows()[0]
+          w.setBounds({ width: want.width, height: want.height })
+          const b = w.getBounds()
+          return { width: b.width, height: b.height }
+        },
+        { width: WANT_WIDTH, height: WANT_HEIGHT }
+      )
+      .catch((e) => ({ width: null, height: null, error: String(e && e.message).split('\n')[0] }))
+    log('RESTORED', back)
+    if (back.width !== WANT_WIDTH || back.height !== WANT_HEIGHT) {
+      fails.push(
+        back.error
+          ? `the window could not be restored to ${WANT_WIDTH}x${WANT_HEIGHT} after the minimum capture — ${back.error}. Every surface below would be photographed at the wrong size, so the run is UNSCORED rather than a finding about the UI`
+          : `the window did not return to ${WANT_WIDTH}x${WANT_HEIGHT} after the minimum capture (it is ${back.width}x${back.height}) — every surface below would be photographed at the wrong size, so the run is UNSCORED rather than a finding about the UI`
+      )
+    }
+    await settle(700).catch(() => {})
+  }
 
   // ---- stage 2: a workspace with a real conversation in it ------------------
 
