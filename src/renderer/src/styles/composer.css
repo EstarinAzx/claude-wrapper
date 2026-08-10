@@ -257,6 +257,21 @@
   gap: 20px;
   width: 100%;
   max-width: 760px;
+  /* PROXIMITY, and the reason these are two numbers and not one. `.input-bar` is
+     a flex column with a uniform 10px gap, so the strip sat 10px under the pill
+     and 10px over the disclaimer — equidistant between two things it does not
+     equally belong to, which is what made it read as a third floating band
+     rather than as the composer's own settings. 4px above and 14px below says
+     which one owns it.
+
+     Written as an OFFSET from that column gap rather than instead of it: flex
+     measures the gap between margin boxes, so these resolve to 10 - 6 = 4px
+     above and 10 + 4 = 14px below. Retune `.input-bar` and both follow, which is
+     the coupling to know about — the strip wants a position in the composer's
+     rhythm, not absolute spacing of its own. Net height change is -2px, so
+     nothing above or below has to move. */
+  margin-top: -6px;
+  margin-bottom: 4px;
 }
 
 .model-control {

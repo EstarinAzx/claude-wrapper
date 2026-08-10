@@ -106,6 +106,60 @@ const BackendPill = ({
 // spans 10.0 vertically, the disc 9.9, the agent cluster 10.8 wide by 10.6 tall.
 // The agent connectors start and end exactly 1.7 from their node centres, which
 // is the node radius, so each line meets its ring on the edge instead of near it.
+//
+// MEASURED, AND THE FULL-FRAME LINE IS DISPUTED — read the note at the end of
+// this block before treating any of it as settled. The set is one drawing mode
+// and the three marks are still semantically unrelated, and the natural fix — a
+// shared panel outline, since all three docks are right-hand panels — is at best
+// a very tight fit on this grid. The binding constraint is the agent cluster.
+// Its ring is
+// already at the floor: r 1.7 at stroke 1.3 leaves a 2.1 hole, and any smaller
+// closes the ring into a dot, which is the mixed-ink failure this set just
+// escaped. Holding that floor the cluster needs 8.34 wide by 9.1 tall of path
+// extent — two stacked rings at 4.7 inked apiece plus one visible pixel between
+// them, and a left ring far enough out to keep the same clearance. Against it:
+//
+//   FULL FRAME — drawn all the way to the viewBox bleed and with no interior
+//   divider at all, so not yet even a panel, the two horizontal bars still
+//   leave the mark 9.0 of vertical path extent against that 9.1 floor. The
+//   ring gap goes sub-pixel. Adding the divider that would make it mean
+//   "right-hand panel" only takes more.
+//
+//   THREE-SIDED BRACKET — the arms must run 2.5 to read as arms rather than as
+//   cap blobs at this stroke, which reserves everything right of 10.35 and
+//   leaves the mark 7.2 of horizontal path extent against the 8.34 floor.
+//
+//   BARE RIGHT-HAND RULE — the only one that draws, and it costs twice. The
+//   cluster shrinks to 8.9 wide, which shortens each connector from 4.83 to
+//   3.01, a 2.3:1 lozenge at stroke 1.3 — so the one glyph whose meaning IS
+//   the connection stops showing it. Worse, it puts a vertical hairline at
+//   x 19 / 49 / 79 of the rendered strip, which lands the real .titlebar-sep
+//   at 103 inside the same 30 / 30 / 24 series. The group boundary that
+//   titlebar.css bought with its 15 / 9 gutter split dissolves into a rule
+//   rhythm, and a lone vertical is an edge rather than an outline anyway.
+//
+// THE FULL-FRAME NUMBER ABOVE IS DISPUTED, and the dispute is the useful part.
+// A second reader re-derived this block and got the opposite verdict for the
+// frame, because the whole result turns on a clearance convention this block
+// never states. Stated plainly, so the next reader does not have to guess:
+//
+//   Interior clear inside a frame drawn to the bleed is 12.1. The cluster's
+//   vertical floor is 9.1 of path extent, which is 10.4 once its own 1.3 stroke
+//   is inked. That leaves 1.7 of total clearance — 0.85 per side — between the
+//   frame's inner edge and the mark's ink.
+//
+// So the frame FITS if and only if 0.85 per side is acceptable breathing room at
+// this size. The 9.0-against-9.1 reading above assumes 0.9 per side and misses by
+// 0.05; a looser convention clears it. That is a judgement about what looks
+// cramped at 16 units, not a measurement, and it should not be recorded as one.
+// The bracket and the bare-rule verdicts survive re-derivation; only their
+// intermediate numbers were off.
+//
+// So: the metaphor may be reachable on this grid after all, at 0.85 clearance,
+// and the honest next step is to draw it and look rather than to re-argue the
+// arithmetic. The alternative unlock is a wider glyph grid or a taller housing —
+// and the housing is declared jointly with the rail's three, so that half is not
+// this surface's call to make alone.
 const glyph = {
   width: 16,
   height: 16,

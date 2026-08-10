@@ -59,9 +59,10 @@ const Trash = () => (
   </svg>
 )
 
-// Used twice: the rail head re-lists stored transcripts, the background-sessions
-// head re-runs the CLI look. Same glyph because it is the same verb — extracted
-// so the two cannot drift into different arrows.
+// The rail head's re-list of the STORED transcripts, and now the only circular
+// arrow in the rail. The background-sessions head wore this same glyph until it
+// put two identical arrows in the rail's first 80px pointed at two different
+// lists; that head says the word instead, so one arrow means one thing again.
 const Refresh = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
     <path
@@ -511,17 +512,31 @@ const Sidebar = ({
       <section className="bg-sessions" aria-label="Background sessions">
         <div className="bg-sessions-head">
           <h3 className="bg-sessions-title">Background sessions</h3>
+          {/* A WORD, not the rail head's arrow. Two identical circular arrows in
+              the rail's first 80px, scoped to two different lists — the one
+              above re-lists FILES ON DISK, this one re-runs a CLI look — is a
+              hierarchy a glance cannot read. Different scope now reads as a
+              different KIND of control rather than as a repeated glyph.
+
+              Saying it in words is also what lets the scoped-and-empty state
+              below carry no control of its own: the labelled action it grew is
+              this one, two lines up, and one action needs one button.
+
+              The ONLY thing in this app that repopulates the list, besides
+              opening a different workspace. Disabled while a look is in flight
+              so a second click cannot start a second CLI process (#90).
+
+              The accessible name stays the scoped one and the visible word sits
+              inside it, so the control a screen reader hears and the control a
+              pointer sees are the same control. */}
           <button
             type="button"
-            className="sidebar-toggle"
+            className="sidebar-empty-retry bg-sessions-refresh"
             aria-label="Refresh background sessions"
-            // The ONLY thing in this app that repopulates the list, besides
-            // opening a different workspace. Disabled while a look is in flight
-            // so a second click cannot start a second CLI process (#90).
             disabled={bgLooking}
             onClick={refreshBackground}
           >
-            <Refresh />
+            Refresh
           </button>
         </div>
         {bgSessions === null ? (
@@ -540,19 +555,15 @@ const Sidebar = ({
           //
           // The note says why the list is empty at all, which is the thing a
           // bare line left the user to guess: this look is scoped to the open
-          // workspace, not the whole machine. The only honest action for
-          // "nothing is running here" is looking again — but NAMING that action
-          // in prose still left it reachable only by inferring it from the
-          // unlabelled circular arrow a line above. So the sentence stops
-          // instructing and the verb becomes a control.
+          // workspace, not the whole machine.
           //
-          // Not a rival control: it fires `refreshBackground`, the SAME handler
-          // the head's icon button fires. One action, two entry points, one of
-          // them labelled — which is the whole difference from growing a second
-          // affordance beside the first. It needs no `disabled` guard of its
-          // own, unlike that button: it exists only in the settled branch, so
-          // the first click flips `bgLooking`, this collapses to the bare
-          // "Looking…" line, and there is nothing left to click twice.
+          // It carries NO control of its own. The reason it grew one was real —
+          // the only honest action here is looking again, and that action was
+          // reachable only by inferring it from an unlabelled arrow — but the
+          // answer belonged one line up, not here: the head's control now says
+          // "Refresh" in words. A second button firing the SAME handler was one
+          // action wearing two faces, and `gui-91.mjs` had already pinned this
+          // section at exactly one control.
           <div className="bg-sessions-empty">
             {bgLooking ? (
               'Looking…'
@@ -560,13 +571,6 @@ const Sidebar = ({
               <>
                 <span className="bg-sessions-empty-line">None running here</span>
                 <span className="bg-sessions-empty-hint">Scoped to the open project.</span>
-                <button
-                  type="button"
-                  className="sidebar-empty-retry bg-sessions-empty-action"
-                  onClick={refreshBackground}
-                >
-                  Refresh
-                </button>
               </>
             )}
           </div>
@@ -579,10 +583,8 @@ const Sidebar = ({
               // Read-only rows, deliberately: no attach, no peek, no reply —
               // those are a separate unmeasured feature. Which also means a
               // listing of ANY length adds exactly ONE tab stop (the head's
-              // refresh) to a rail that already carries ~100. The
-              // scoped-and-empty state is the only branch that reaches TWO, and
-              // it is the branch with no rows in it at all — its labelled
-              // Refresh fires the same handler that one does.
+              // Refresh) to a rail that already carries ~100 — and that count
+              // now holds in every branch of this section, not just this one.
               <li key={s.sessionId} className="bg-session-row">
                 <span className="bg-session-name" title={s.name || s.sessionId}>
                   {s.name || s.sessionId}

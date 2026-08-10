@@ -292,12 +292,46 @@
   color: var(--text-faint);
 }
 
+/* The section's ONE control, and deliberately NOT `.sidebar-toggle`: that class
+   is the RAIL HEAD's 28px icon housing, and wearing it here put a second
+   circular arrow in the rail's first 80px — identical to the one above it, and
+   pointed at a different list. Different SCOPE has to read as a different KIND
+   of control, so the rail keeps the glyph and the section says the word.
+
+   Saying the word is also what let the scoped-and-empty state below stop
+   growing a labelled Refresh of its own: that copy sits two lines under this
+   one, so the named action is already beside it.
+
+   The shell is `.sidebar-empty-retry`, the rail's ONE secondary-action design,
+   and the hover and focus halves of it live with the other shared control
+   states in shared.css — nothing here re-authors a state. Only the SIZE is
+   local: a 13px control beside an 11px heading is the wrong weight for a head
+   band, and this way the band comes in a little under the 28px housing it
+   replaces rather than over it. The selector is compound because it has to
+   outrank that shell's own --fs-ui wherever the two rules sit in this file. */
+.sidebar-empty-retry.bg-sessions-refresh {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: var(--fs-micro);
+}
+
+/* In flight. The rail already had exactly one measure for an inert control —
+   .sidebar-toggle:disabled further down this file — and this control needs it
+   for a different reason, so it takes the numbers rather than the selector: a
+   streaming turn blocks the toggles, a look already running blocks this one.
+   pointer-events with it, or the shell's cursor and hover wash keep promising a
+   click the browser is refusing. */
+.sidebar-empty-retry.bg-sessions-refresh:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 /* Column + gap for the scoped-and-empty state, the same construction
    .sidebar-empty uses: a lone text child (the failed look, and the in-flight
    line) lays out identically either way, so neither of those branches needs a
-   modifier class of its own. Only the third child, the named action, wants
-   anything a line of prose does not — so it carries the one modifier below
-   rather than this shared rule bending to fit it. */
+   modifier class of its own. Two lines of prose and nothing else — the named
+   action this band once carried is the head's, where it is the section's only
+   one. */
 .bg-sessions-empty {
   display: flex;
   flex-direction: column;
@@ -321,21 +355,6 @@
   line-height: 1.45;
 }
 
-/* The named action for "None running here", hung off .sidebar-empty-retry so
-   the rail keeps ONE secondary-action shell rather than growing a second
-   design: the hover wash and the focus ring already live with that shell in
-   shared.css, so nothing here re-authors a state.
-
-   align-self rather than align-items on the parent, because the other two
-   branches of that band are lone text lines that must keep stretching it. The
-   band's 3px gap stacks two lines of prose; a control wants the foot's 8px, and
-   5px on this one child reaches it without loosening the two lines. 11px prose
-   beside a 13px control is .sidebar-foot's own pairing, taken unchanged. */
-.bg-sessions-empty-action {
-  align-self: flex-start;
-  margin-top: 5px;
-}
-
 /* 6px gutter plus the row's own 10px inset puts the name on the shared 16px
    edge, matching .session-groups. */
 .bg-session-list {
@@ -351,9 +370,8 @@
 /* Read-only rows: no button, no hover, no focus ring, no tab stop. Attach,
    peek and reply are a separate unmeasured feature, and the rail already
    carries about a hundred real tab stops without a listing of ANY length
-   adding one. The section's own are the head's refresh, plus the labelled
-   Refresh in the scoped-and-empty state — which no listing is ever on screen
-   with, since one branch renders rows and the other renders none. */
+   adding one. The section's own is the head's labelled Refresh, and it is the
+   only one in every branch — rows, empty, in-flight or failed. */
 .bg-session-row {
   display: flex;
   align-items: baseline;
