@@ -36,8 +36,12 @@ pieces:
   # Wave 4: BAR WINS -> TOO CLOSE. The first verdict movement in the run, and it
   # came from a piece with NO builder — the other pieces' builders moved the
   # docks under it. That is what a cross-cutting piece is for.
+  # Wave 6: TOO CLOSE -> BAR WINS. THE FIRST BACKWARD MOVEMENT IN EITHER RUN, and
+  # again from a piece with NO builder: CommandsDock closing its own gap with a
+  # resting row shell is what made the docks agree less. Its stated reason is
+  # PARTLY FALSE and must not be handed to a builder as written — adjudication 2.
   - name: DocksAsOne
-    verdict: TOO CLOSE
+    verdict: BAR WINS
     open: true
   # Added by wave 3's smoothing pass, on its one-new-piece budget. THE SIXTH AND
   # LAST SLOT — the piece list is now FULL and no further piece may be proposed.
@@ -51,12 +55,15 @@ pieces:
 critic: sonnet                 # FAMILY name only — re-resolve live every wave, never carry the target
 critic_degraded: false
 branch: gauntlet/docks-and-min-window
-wave: 5
-# HELD AT 0 by a SECOND real verdict movement, one wave after the first:
-# AppearanceDock BAR WINS -> TOO CLOSE at wave 5, DocksAsOne at wave 4. Two
-# consecutive waves have now moved a verdict, so the plateau counter has not
-# incremented since wave 3 and the halt is at least three waves away.
-plateau: 0
+wave: 6
+# 0 -> 1. NO PIECE IMPROVED at wave 6 and one REGRESSED (DocksAsOne, TOO CLOSE ->
+# BAR WINS), so the counter increments on the preset's literal rule: "any piece
+# whose verdict improved -> 0; none improved -> += 1". A regression is not an
+# improvement, so it counts as a plateau wave.
+# NOT ADJUSTED, and the reading that a regression should be treated differently
+# from a stall is raised as owner call 20 rather than acted on here.
+# The halt is at plateau 3, so it is two waves away at the earliest.
+plateau: 1
 max_waves: 12
 page: false
 stop: false
@@ -190,6 +197,287 @@ this file. Every one of them has already cost this repo a false finding.
 | 5 | WelcomeMinWindow | BAR WINS | The stack needs a more editorial cadence: tighten the mark-to-headline relationship and open a distinctly larger gap before the CTA so the action lands as a final beat rather than another evenly spaced row. *(Its `change` answer was a measured FALSE SAME — see adjudication 2.)* |
 | 5 | DocksAsOne | TOO CLOSE | Appearance alone introduces icon-and-rule section headers as a second organizational grammar; reduce those dividers to the same quiet typographic grouping used by the open Agents and Commands lists. *(Held at TOO CLOSE; its wave-4 gap was fully closed — G1 measures all three docks at 215px, spread 0.)* |
 | 5 | IconHousing | BAR WINS | Normalize every glyph to one optical envelope and stroke weight inside the 28px box, enlarging the undersized branch, slash, and sidebar glyphs so they read with the same confidence as the close icons. *(Its wave-4 gap WAS built and verified at 10.4 across all seven tenants; this restates the ask against the glyphs it can still see, which include non-tenants — see owner call 17.)* |
+
+| 6 | AgentsDock | BAR WINS | Wrap each top-level agent in a full-width, consistently padded row shell and keep the nested child inside that shell's indented tree, so the list reads as authored navigation rather than loose text floating in the column. **READ ADJUDICATION 2 BEFORE BUILDING THIS — it asks for the same row shell whose arrival on one dock cost DocksAsOne its verdict.** |
+| 6 | CommandsDock | BAR WINS | Open up the vertical gutters between the outlined command rows; their nearly touching borders make seven distinct targets read as one compressed stack. *(Its own builder named this lever in advance: the list keeps the shared `gap: 2px`, and a dock-local `.command-list { gap: 0 }` or a wider gap is layout-only and enters no other check's arithmetic.)* |
+| 6 | AppearanceDock | TOO CLOSE | Use one shared full-width option-row anatomy and a fixed right-edge state slot across all six Theme and Backdrop choices, rather than letting only the two selected rows have visible control boundaries. |
+| 6 | WelcomeMinWindow | BAR WINS | The new spacing hierarchy is better, but the deck-to-CTA interval is now one beat too wide; pull the button up about 8px without moving the upper three elements. *(Directly reverses half of the gap wave 5 gave this piece. The 8 -> 32 move it is asking to partly undo is what `W1` pins; a builder taking it must supersede `W1`, not soften it.)* |
+| 6 | DocksAsOne | **BAR WINS** | **THE VERDICT MOVED BACKWARDS — the first regression in either run.** "Replace the three-way row grammar with one shared shell for every top-level item, instead of Commands outlining every row, Appearance containing only selected rows, and Agents leaving rows open." **THE THREE-WAY SPLIT IS MEASURABLY FALSE — see adjudication 2. Do not forward this gap as written.** |
+| 6 | IconHousing | BAR WINS | Keep the shared 28px box and the active fill local, but remove the outer capsule joining the two Agents view buttons so each reads as the same independent rounded-square housing used by every other icon control. *(Directly contradicts the gap wave 5 gave AgentsDock, which this wave built. Two pieces, opposite instructions, same object — adjudication 3.)* |
+
+## Wave 6 adjudications — a verdict moved BACKWARDS, the cross-dock gap is partly false, and a driver red was found that had been sitting unreported for a whole wave
+
+**Four builders, six critics, one smoothing pass — eleven agents, zero errors.** Gate green (D7); **zero `SPEC BREAK`s**; zero out-of-scope rulings; **6/6 critics verified against a first-hand read to have seen real pixels.**
+
+### 1. THE PLATEAU RESUMED, AND IT RESUMED THROUGH A REGRESSION RATHER THAN A STALL
+
+`DocksAsOne` went **TOO CLOSE -> BAR WINS**. No other verdict moved in either
+direction, so on the preset's literal rule — *"any piece whose verdict improved ->
+`plateau: 0`; none improved -> `plateau += 1`"* — the counter goes **0 -> 1**. It was
+incremented honestly and **not adjusted**.
+
+**The mechanism is the interesting part, and it is the same shape as wave 4's in
+reverse.** `DocksAsOne` had no builder this wave. What moved it was `CommandsDock`'s
+builder closing `CommandsDock`'s own gap: wave 5's critic asked for *"one consistent
+full-width interactive treatment"* on the command rows, the builder gave every row a
+resting 1px inset shell, and the cross-dock critic then read that shell as a third row
+grammar. **Closing a piece's gap opened the cross-cutting piece's.**
+
+That is now three consecutive waves in which a per-dock build has moved `DocksAsOne`:
+wave 4 up, wave 5 held-while-closing, wave 6 down. **The two kinds of critic are
+trading against each other**, and that is owner call 19.
+
+### 2. THE REGRESSION'S STATED REASON IS MEASURABLY FALSE BY ONE DOCK, AND THE GAP MUST NOT BE FORWARDED AS WRITTEN
+
+The critic named a **three-way** split: *"Commands outlining every row, Appearance
+containing only selected rows, Agents leaving rows open."* The smoothing pass checked it
+against the rules and **it counts one grammar twice.** Verified first-hand at this leg:
+
+| dock | selected-row treatment | boundary? | resting state |
+|---|---|---|---|
+| Agents | `.agent-row--selected > .agent-row-btn` -> `background: var(--tint-3)` | none | transparent |
+| Appearance | `.appearance-choice[aria-checked='true']` -> `background: var(--mint-wash)` | none | transparent |
+
+**Agents and Appearance are the SAME treatment at two tokens** — fill only the row
+carrying state, no boundary, everything else transparent — and the token difference is
+principled (mint marks a persistent preference, which is also what the sessions rail's
+active session takes; `--tint-3` marks a transient selection). So the honest count is
+**one list out of four differing**, not three grammars diverging.
+
+**The real tension underneath is still real**, and it is sharper than the critic's
+version: before this wave all four lists were transparent at rest, and now one is not.
+The two gaps are answering different definitions of "agree" —
+
+- **surface agreement**: every dock's rows look identical at rest. Held before, broken now.
+- **rule agreement**: a row is inked exactly when it has something to report. Broken
+  before (Commands is the one list with **no state at all**, so it was invisible in a
+  still frame while three lists painted theirs) and repaired now.
+
+The wave traded the first for the second. **Two structural facts bound how much that
+costs, both verified at this leg rather than argued:**
+
+1. **`App.tsx:54` holds `openDock` as a single nullable state** —
+   `useState<'agents' | 'commands' | 'appearance' | null>(null)`. The three docks are
+   architecturally mutually exclusive. **The critic is comparing a composite of three
+   PNGs that a user can never see**; the real comparison is sequential, from memory,
+   across a dock switch.
+2. **The divergence sits at the smallest amplitude the ladder offers.** `--tint-2` is
+   `oklch(0.92 0.01 210 / 0.06)` against `--border` at `0.08` — confirmed in
+   `tokens.css`. The shell is 0.75 of the lift the dock's own edge draws.
+
+**This is wave 3 adjudication 3 repeating on a new surface: a critic's perception can
+be real while its stated cause is wrong.** Handing this gap to a wave-7 builder verbatim
+would have it unify three treatments where only two exist to unify.
+
+### 3. TWO PIECES GAVE OPPOSITE INSTRUCTIONS ABOUT THE SAME OBJECT, AND BOTH ARE IN SCOPE
+
+Wave 5's `AgentsDock` gap asked to *"separate the list/tree view controls into a visibly
+grouped two-option switch."* This wave built exactly that. Wave 6's `IconHousing` gap now
+asks to *"remove the outer capsule joining the two Agents view buttons."*
+
+**Neither critic is out of scope.** Grouping the head actions is `AgentsDock`'s to name;
+whether a housing tenant may be wrapped in a second container is `IconHousing`'s. They
+simply disagree, and no builder can satisfy both. Recorded, **not resolved by this leg** —
+it belongs with owner call 19 as the same class of problem: the decomposition has pieces
+whose gaps can contradict.
+
+Worth noting the switch was built so as to cost the housing nothing: `A2` measures all
+three head buttons still **28x28 at 6px radius**, and the builder explicitly declined to
+square the segments' seam corners because that would have broken the shared housing to
+draw the grouping.
+
+### 4. A DRIVER RED HAD BEEN SITTING UNREPORTED SINCE WAVE 5, AND ONLY RUNNING THE WHOLE SET FOUND IT
+
+`gui-gauntlet-wave2.mjs` **C2b** asserted that a 40px `min-height` floor is what lifts a
+descriptionless command row: *rendered >= 40 AND natural < 40*. Wave 5 rebuilt that row to
+**reserve the description's slot** instead, landing it at 48.938px — so the floor stopped
+being what puts it there and the second clause became unsatisfiable.
+
+**Wave 5 did not report it, because a leg had only ever run the driver it wrote.** This
+leg ran all five and found it.
+
+**The attribution was proven rather than assumed**, which matters because the obvious
+suspect was this wave's own CommandsDock change: wave 6's entire `rails.css` diff is two
+AgentsDock-only rules plus one `box-shadow: inset` on `.command-row-btn`, and an inset
+shadow cannot be laid out — which **`gui-gauntlet-wave6.mjs` C2 measures directly**,
+reporting identical row widths and heights with the shadow stripped. The red predates the
+wave.
+
+**Standing instruction: run every gauntlet driver every wave, not only the new one.** A
+pin an OLDER driver holds over ground a LATER wave moved is invisible otherwise.
+
+### 5. FOUR CHECKS SUPERSEDED, EACH RETIRED IN PLACE, NONE SOFTENED
+
+| retired | why | carried forward as |
+|---|---|---|
+| wave2 C2b | the 40px floor stopped being load-bearing at wave 5 | `wave5 C1` — bare row vs shortest described row, not vs a fixed 40 |
+| wave4 B3 | wave 6 deleted the section hairline it required | `wave6 B1` — asserts it is GONE; B3's other three clauses re-asserted, not dropped |
+| wave5 W5 | stale, not violated: its intent is MORE true now, its hardcoded 16px is not | `wave6 W1` |
+| wave5 W6 | **its reconstruction broke, not its assertion** | `wave6 W1` |
+
+**W6 is the instructive one and it is a THIRD distinct way for a check to go wrong.** It
+rebuilds the pre-wave stack by reverting **one** declaration; wave 6 moved **two**. So it
+now reconstructs `[24, 8, 32]` — a state that existed in no wave, half wave-5 and half
+wave-6 — and reasons about it. **A partial revert of a multi-declaration change
+reconstructs nothing.**
+
+All five gauntlet drivers are **GREEN** after the retirements.
+
+### 6. THE WAVE-6 DRIVER CAUGHT ITS OWN AUTHOR IN THE TIE TRAP, FOR THE FOURTH TIME IN THIS RUN
+
+`B2` asks whether the gap above a section header out-ranks the gap below it. It was first
+written as **"at least 2x"**, because 2x is the figure the builder derived — but the
+builder derived it **ink to ink** (35.9 / 15.9 = 2.26, framed by half-leading from two
+font metrics) and the driver measures **box to box**, where the **pre-wave stack is
+exactly 16 / 8 = 2.0**. The threshold was satisfied by the design the wave replaced.
+
+It went red only because the check carries a mandatory *"the reconstruction must also
+fail"* clause. **Nothing in the code would have revealed it.** Box-to-box the wave moves
+the ratio **2.0 -> 6.0**, so the threshold is now 3 and discriminates at both ends.
+
+**Critic figures and CSS figures are different quantities (binding constraint 3) — and so
+are BUILDER figures and DRIVER figures.** That is the same trap one layer down, and it is
+new.
+
+### 7. THE SMOOTHING PASS FOUND TWO CONTRADICTIONS AND MOVED ZERO PIXELS
+
+**Seven changes, every one comment-only**, and this was verified two independent ways
+rather than accepted: the instrument was re-run on the final tree and **all eleven PNGs
+came back byte-identical** to the set the critics were given, and **the CSS bundle hash
+did not move at all** (`index-ih-Msm34` before and after). That second witness is
+stronger than wave 5's, where the hash moved. **Every verdict this wave was returned
+against the exact bytes in this commit.**
+
+The two contradictions, both between builders blind to each other in the same wave:
+
+1. **`appearance.css` vs `rails.css` on where `--border` lives.** The AppearanceDock
+   builder wrote *"these three lines are now the ONLY `--border` in the panel."* The
+   CommandsDock builder wrote, the same wave, that `--border` is what every real container
+   edge is cut from *"including this dock's `border-left` and its head's `border-bottom`."*
+   **The second is correct** — `.appearance-dock` ships as `className="agents-dock
+   appearance-dock"` and inherits both. The appearance claim also contradicted **its own
+   file header**. Corrected to the true and intended claim: no `--border` *separates*
+   inside the body; the frame is inherited structure.
+2. **`AppearanceDock.tsx` on what the other docks do.** It said the agents and commands
+   lists separate rows with *"nothing but 2px of ground"* — written blind to the
+   CommandsDock builder adding a resting shell in the same wave. Corrected, and the
+   correction **strengthens** the hairline deletion rather than undermining it: the
+   deleted rule drew a line *between* rows and bounded nothing; the Commands shell
+   *bounds a target* and separates nothing. A warning against reading one as permission
+   to restore the other was added.
+
+**Nine reasoned declines. No new piece — the list is full at six of six**, and the pass
+returned the required string.
+
+It also **re-derived the icon census by hand** rather than inheriting it, and closed the
+staleness this wave's own fence caused: `titlebar.css` still said the three Appearance
+section marks *"were left at 8.8 to 9.4"* and that this was *"an open question."* Both are
+dead — they are at 10.4 and the question is closed. That note warns in its own words that
+*"a wave fenced away from this file is how the census goes stale a fourth time,"* which is
+exactly what happened and was caught in the same wave.
+
+### 8. Verification that was run rather than trusted
+
+- **The sweep was rebuilt, validated on a pristine `HEAD` export FIRST, and it went RED
+  there — on a check, not on the tree.** A "no selector opens two rule blocks" check is
+  false in this codebase: `rails.css` re-opens `.command-row-btn` **four times** and
+  `.agents-dock` twice, each split deliberately with a comment. **It was CUT rather than
+  softened** and replaced with a premise that is real — every `letter-spacing` lands on a
+  rung **parsed from `shared.css`'s own prose**, so the check cannot drift from the
+  documentation it enforces. Final: **7/7 green on pristine HEAD and on the final tree.**
+- **Sweep mutation-probed 7/7, every mutation producing exactly ONE targeted red.** One
+  check was found **unfailable by its own probe**: `D7` asked whether `agents-dock`
+  appeared in any className, but every dock also carries `.agents-dock-head`, so deleting
+  the shell class off the `<aside>` left it green. It now matches the `<aside>`'s exact
+  class token. **Wave 4's W3 and wave 5's W6 for a third time.**
+- **`gui-gauntlet-wave6.mjs` is GREEN at 12/12, and seven of its checks carry a LIVE
+  reconstruction that is itself asserted to fail** — so they re-prove their own
+  falsifiability on every run rather than relying on a one-time mutation. W1 8/8/32 vs
+  16/8/24; W2 256.688 all three ways; C1 7/7 shells vs 0 stripped; C2 235 both ways; B2
+  6.0 vs 2.0; B3 Theme mark 10.4 vs 9.4 reverted; A1 seam 0 / isolation 8 vs 4 / 4 equal.
+- **The three checks with no built-in reconstruction were red-verified by mutation**
+  (A2 -> 24x24 buttons, A3 -> 4px shell radius, G1 -> commands column 207 against 215/215,
+  spread 8). **B1's falsifiability was proven from the other direction at zero cost**:
+  wave-4 B3 asserted the opposite fact and went red on this exact tree before retirement.
+- **TWO PROBES WERE VACUOUS BEFORE THEY WORKED, AND THE SECOND CAUSE IS NEW.** The first
+  was the documented CRLF trap — a `\n` needle against CRLF files — and the harness's
+  "throw if disk content did not change" guard caught it before anything was written. The
+  second is a **fourth distinct cause**: a `padding-left: 10px` inserted into a block that
+  ends with a `padding: 6px` **shorthand**, which silently overrides the longhand — and
+  the block was `.agent-list, .command-list` **shared**, so even had it landed it would
+  have moved both docks equally and left G1's spread at 0. Doubly vacuous. Re-probed
+  dock-scoped and after the shared block.
+- **Restore proven exact by the CSS bundle hash returning to `index-ih-Msm34`**, from a
+  `cp` backup, never `git checkout`.
+- **Every builder's hand arithmetic confirmed by the instrument or the driver**, a fourth
+  wave running. Welcome `8/8/32` and `256.688` net-zero; AppearanceDock's three marks at
+  **10.4 exactly, spread 0, 0.8 clear ground**; CommandsDock's `clientWidth 235` /
+  `textColumn 215` and a computed shell of exactly
+  `oklch(0.92 0.01 210 / 0.06) 0px 0px 0px 1px inset`; AgentsDock's ink-to-ink **26.6**,
+  which only resolves correctly if the shell's 1px border is counted
+  (`8.8 + 1 + 8 + 8.8`), and it did.
+- **Blast radius: SIX moved, FIVE identical.** Moved: `agents-dock`, `appearance-dock`,
+  `commands-dock`, `welcome-min-window`, `welcome`, `window-welcome`. Identical: `chat`,
+  `input-bar`, `sidebar`, `titlebar`, `window-session`. **`sidebar.png` byte-identical
+  proves BOTH `rails.css` builders' fences held** — two builders edited the file that also
+  paints the sessions rail and the rail did not move, which both predicted in advance.
+  **`titlebar.png` byte-identical keeps the null control alive.**
+- **The HEAD-determinism capture was run and was 11/11 byte-identical** via `cmp`, and the
+  build was confirmed to be HEAD's by bundle hash before any builder ran. Weak by
+  construction (adjudication 1 of wave 5) but clean.
+- **Gate green (D7)** from three separate log files, never a pipeline: typecheck clean,
+  **96 files / 1406 passed + 41 skipped**, build clean. Test count **unchanged at 1406**;
+  the +1 skip attributed by name to `gui-gauntlet-wave6.mjs`, confirmed present in the
+  manifest's live enumeration (five gauntlet drivers now).
+
+## Owner calls raised by wave 6
+
+**NEW — 19. THE PER-DOCK CRITICS AND THE CROSS-DOCK CRITIC ARE NOW TRADING AGAINST EACH
+OTHER, AND THE RUN CANNOT SETTLE IT.** Three consecutive waves have had a per-dock build
+move `DocksAsOne`: wave 4 up, wave 5 held-while-closing its gap, wave 6 **down**. This
+wave the opposition is explicit — `CommandsDock`'s gap asked for a resting row shell,
+`DocksAsOne` penalised exactly that, and separately `IconHousing` asked to remove the
+switch `AgentsDock`'s own gap asked for one wave earlier. **Default taken, reversible:
+build nothing, record it.** The options: (a) accept that a cross-cutting piece will
+oscillate against its constituents and read it as a tiebreaker rather than a verdict —
+which is what is in effect; (b) give all three docks the row shell, which the smoothing
+pass argues against (it would double the signal on rows that already paint state); (c)
+take the shell off Commands, which restores the still-frame invisibility that was the
+named gap; (d) retire `DocksAsOne` now that it has produced its finding. **A human needs
+to pick.**
+
+**NEW — 20. THE PLATEAU COUNTER TREATS A REGRESSION AND A STALL IDENTICALLY.** The
+preset's rule is binary — improved, or not — so a wave in which a verdict moved
+**backwards** increments the counter by exactly as much as a wave in which nothing
+happened. Those are different signals: a regression means the run is still moving and
+still learning, which is the opposite of a plateau. **The counter was NOT adjusted.**
+Recorded so the halt, if it comes at `plateau: 3`, is read with this attached.
+
+**Owner call 17 (the Appearance section marks) is RESOLVED.** Built this wave: all three
+cut to 10.4 optical extent, spread 0, geometry-only inside unchanged 12x12 viewBoxes at
+unchanged `strokeWidth 1.4`, verified in a real engine by `B3`. The stale `titlebar.css`
+census that named it an open question was corrected in the same wave.
+
+**Owner call 18 (`.appearance-choice` lacking `font: inherit`) is untouched and still
+live.** No wave-6 change went near it. The smoothing pass re-flagged it and added a
+warning that the AppearanceDock builder's spacing arithmetic **depends** on the UA face's
+1.09 ratio, so a later pass adding `font: inherit` must re-derive the 11.9 constant and
+the 2.26 ratio rather than assume they survive.
+
+**Owner call 15 (CommandsDock's taxonomy) is unchanged and still (a).** Its wave-6 gap is
+a **gutter** gap — pure spacing — and needs no taxonomy. Its own builder named the exact
+lever in advance and it is layout-only.
+
+**Owner call 12 (`gui-94` red) is unchanged and untouched.** Nothing this wave went near
+it; the CommandsDock builder was explicitly fenced away from reasoning about it.
+
+**NEW — a smoothing-pass decline the orchestrator was asked to rule on, and did not
+build:** `.appearance-choice:focus-visible` takes only the `--tint-6` hairline where
+`shared.css` gives `--tint-3` + `--tint-6` to all five other row-like controls. A real
+inconsistency, undocumented in either direction. **It renders a state**, so it is a
+builder's job and not a consistency pass's. A plausible deliberate reason exists — a
+`--tint-3` focus ground would fight the `--mint-wash` on a selected option — so **do not
+unify it blindly.**
 
 ## Wave 5 adjudications — a second verdict moved, the capture was CAUGHT STALE, and a wave-4 check was found green over a false premise
 
@@ -1144,6 +1432,74 @@ verdict to improve on, so it cannot be a plateau wave — the same call run 1 ma
 recorded. Wave 2 is the first wave that can move it.
 
 ## Log
+- [wave 6] **A VERDICT MOVED BACKWARDS — the first regression in either run.** `DocksAsOne`
+  went **TOO CLOSE -> BAR WINS**, no other verdict moved either way, so `plateau` goes
+  **0 -> 1** on the preset's literal rule and was not adjusted. Four builders, six critics,
+  one smoothing pass; **eleven agents, zero errors**, zero `SPEC BREAK`s, **6/6 critics
+  verified against a first-hand read** to have seen real pixels.
+- [wave 6] **THE REGRESSION CAME FROM A PIECE WITH NO BUILDER, AND ITS CAUSE WAS ANOTHER
+  PIECE CLOSING ITS OWN GAP.** `CommandsDock`'s wave-5 gap asked for "one consistent
+  full-width interactive treatment"; the builder gave every row a resting 1px inset shell;
+  the cross-dock critic read that shell as a third row grammar. **Three consecutive waves
+  have now had a per-dock build move `DocksAsOne` — up, held, down. The two kinds of critic
+  are trading against each other.** Owner call 19.
+- [wave 6] **THE REGRESSION'S STATED REASON IS MEASURABLY FALSE BY ONE DOCK.** The critic
+  named a three-way split; verified at this leg, **Agents and Appearance are the SAME
+  treatment at two tokens** — `.agent-row--selected` fills `--tint-3`,
+  `.appearance-choice[aria-checked]` fills `--mint-wash`, both fill-only with no boundary
+  and transparent otherwise. One list of four differs, not three. **Do not forward this gap
+  as written.** Two structural bounds, both verified: `App.tsx:54` holds `openDock` as a
+  single nullable state, so **the critic compared a composite of three PNGs a user can never
+  see**; and `--tint-2` (0.06) sits deliberately below `--border` (0.08).
+- [wave 6] **A DRIVER RED HAD BEEN SITTING UNREPORTED SINCE WAVE 5.** `gui-gauntlet-wave2`
+  C2b pinned a 40px floor that wave 5's reservation build made inert. **Found only by
+  running all five drivers rather than the one this leg wrote**, and the attribution was
+  proven, not assumed: wave 6's whole `rails.css` change is two AgentsDock rules plus one
+  `box-shadow: inset`, which cannot be laid out — `wave6 C2` measures identical row widths
+  and heights with it stripped. **Standing instruction: run every gauntlet driver every
+  wave.**
+- [wave 6] **Four checks superseded** (wave2 C2b, wave4 B3, wave5 W5, wave5 W6), each
+  retired in place with its reason and successor named, none softened; **all five drivers
+  GREEN after**. **W6 is a THIRD distinct way for a check to go wrong**: its
+  *reconstruction* broke, not its assertion — it reverts one declaration where wave 6 moved
+  two, so it now reasons about `[24, 8, 32]`, a state that existed in no wave.
+- [wave 6] **THE TIE TRAP FIRED A FOURTH TIME, ON THIS LEG'S OWN DRIVER.** `B2` was written
+  at "at least 2x" from the builder's figure — but the builder derived it **ink to ink**
+  and the driver measures **box to box**, where the pre-wave stack is **exactly 2.0**. Only
+  the mandatory "the reconstruction must also fail" clause exposed it. **Builder figures and
+  driver figures are different quantities**, which is binding constraint 3 one layer down
+  and is new.
+- [wave 6] **The rebuilt sweep went RED on the pristine HEAD export — on a check, not the
+  tree.** A duplicate-selector check is false here (`rails.css` re-opens `.command-row-btn`
+  four times, deliberately, each with a comment). **CUT rather than softened**, replaced by
+  a letter-spacing ladder check **parsed from `shared.css`'s own prose** so check and
+  documentation cannot drift. **7/7 green, 7/7 probed with exactly one targeted red each**,
+  and `D7` was found **unfailable by its own probe** and strengthened.
+- [wave 6] **Two probes were vacuous before they worked, and the second cause is NEW**: the
+  documented CRLF trap (caught by the harness's throw, nothing written), then a
+  `padding-left` inserted into a block ending in a `padding` **shorthand** that overrides
+  it — in a **shared** `.agent-list, .command-list` rule that would have moved both docks
+  equally anyway. Doubly vacuous.
+- [wave 6] **Smoothing pass: seven changes, ALL comment-only, and it moved ZERO captured
+  pixels** — verified twice over, all eleven PNGs byte-identical AND **the CSS bundle hash
+  did not move at all** (`index-ih-Msm34` both sides), which is a stronger witness than wave
+  5's moved hash. **Two contradictions between blind builders**, both fixed: `--border`'s
+  presence in the appearance panel (the dock inherits `border-left` and its head's
+  `border-bottom` from `.agents-dock`), and "nothing but 2px of ground" written blind to the
+  new Commands shell. **Nine reasoned declines, no new piece.** It also re-derived the icon
+  census by hand and killed the `titlebar.css` staleness **this wave's own fence caused** —
+  the note that warns, in its own words, that a fence is how the census goes stale.
+- [wave 6] **Two pieces gave OPPOSITE instructions about one object**: `IconHousing` asks to
+  remove the switch capsule that `AgentsDock`'s wave-5 gap asked for and this wave built.
+  Neither is out of scope. Recorded with owner call 19, not resolved.
+- [wave 6] **Owner call 17 RESOLVED** — the three Appearance section marks are at **10.4,
+  spread 0, 0.8 clear ground**, geometry-only inside unchanged 12x12 viewBoxes.
+- [wave 6] Blast radius **6 moved / 5 identical**; **`sidebar.png` identical proves BOTH
+  `rails.css` builders' fences held** and `titlebar.png` identical keeps the null control.
+  Gate green: **96 files / 1406 passed + 41 skipped**, +1 attributed by name to
+  `gui-gauntlet-wave6.mjs` and confirmed in the manifest's live enumeration. Critic
+  re-resolved live: `sonnet` -> `codex/gpt-5.6-sol`, **seventh** consecutive reading, read
+  fresh. Nothing pushed.
 - [wave 5] **A SECOND VERDICT MOVED, one wave after the first.** `AppearanceDock` went
   **BAR WINS -> TOO CLOSE** — this time from a piece that DID have a builder — so `plateau` stays
   **0** and has not incremented since wave 3. Five builders, six critics, one smoothing pass;

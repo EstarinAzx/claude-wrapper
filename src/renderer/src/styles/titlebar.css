@@ -256,10 +256,26 @@
    that instruction is for, and a wave fenced away from this file is how the
    census goes stale a fourth time.
 
-   NOT TENANTS, and deliberately not moved with them: the appearance dock's three
-   SECTION marks are 12-grid at 1.4 too, but they head a section rather than fill
-   a housing, and they were left at 8.8 to 9.4. AppearanceDock.tsx records that
-   as an open question rather than an oversight. */
+   NOT TENANTS, AND NO LONGER SHORT: the appearance dock's three SECTION marks are
+   12-grid at 1.4 too, but they head a section rather than fill a housing, so the
+   pass above correctly left them at 8.8 (sheets), 9.3 (lens) and 9.4 (chip). This
+   paragraph recorded that as an open question. THE QUESTION IS CLOSED and the
+   numbers are dead: all three were re-cut to the same 9 of path extent inking
+   10.4, by the same geometry-only cut the seven took. Every 12-grid mark in the
+   app now inks one envelope whether or not it sits in a housing — 10.4 is the
+   app's glyph envelope, which is what the 14 grid's plus always was, and not a
+   property of buttons. AppearanceDock.tsx carries the argument and each mark's
+   own derivation. Verified here by hand rather than inherited: r4.5 centred on
+   the grid, a 1.5-to-10.5 diamond pair, and a lens spanning 1.50 to 10.50 all
+   give 9 + 1.4.
+
+   ONE LINE BELOW IS NOW LOAD-BEARING OFF-FILE, which the census above would not
+   otherwise catch: `.agents-dock-switch` (rails.css) binds two of the seven
+   12-grid tenants into a bordered shell and deliberately keeps THIS rule's 6px
+   `border-radius` on them instead of squaring the seam — both to keep the three
+   agents-dock head buttons agreeing, and because its stated 0.29px sliver of
+   ground behind a pressed corner is computed from that 6 against the shell's 8.
+   Changing the radius here moves a number derived there. */
 .agents-toggle,
 .sidebar-toggle {
   display: flex;

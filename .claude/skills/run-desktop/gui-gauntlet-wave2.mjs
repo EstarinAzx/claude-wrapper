@@ -541,28 +541,31 @@ if (C.error) {
     threshold: 'rendered height === min-height:auto height, on all 126 rows'
   })
 
-  // C2b. And the floor still BITES on the row it was written for. This machine's
-  // CLI declares a description for every command it reports, so the live list
-  // cannot exercise the rule at all — a check against those rows would pass with
-  // `min-height` deleted, which is worth nothing. The subject here is a real row
-  // with its two OPTIONAL children removed: the DOM the component emits for a
-  // command that declares neither, measured inside the live list.
-  if (!C.bare) {
-    check('C2b the 40px floor lifts a bare row', false, { error: 'could not build the bare row' })
-  } else {
-    check(
-      'C2b the 40px floor lifts a row that has nothing to add',
-      C.bare.now >= 39.5 && C.bare.before < 39.5,
-      {
-        bareRowRenderedPx: C.bare.now,
-        bareRowAtMinHeightAutoPx: C.bare.before,
-        liftPx: px(C.bare.now - C.bare.before),
-        remainingChildren: C.bare.children,
-        threshold: 'rendered >= 40px AND natural < 40px, so the floor is what puts it there',
-        note: 'no command this CLI reports lacks a description, so the bare row is a real row with its optional children removed'
-      }
-    )
-  }
+  // C2b — SUPERSEDED BY WAVE 5, retired at wave 6, and the DELAY is the finding.
+  //
+  // It asserted that a 40px `min-height` floor is what lifts a descriptionless
+  // row: rendered >= 40 AND natural < 40, so the floor is load-bearing. Wave 5
+  // rebuilt that row to RESERVE the description's own slot instead of resting on
+  // the floor, landing it at 48.938px against the shortest described row's
+  // 48.938px, delta 0. The floor stopped being what puts it there, so C2b's
+  // second clause — natural < 39.5 — became unsatisfiable by any honest edit.
+  //
+  // IT WENT RED AT WAVE 5 AND NOBODY REPORTED IT FOR A WHOLE WAVE. Wave 6 found
+  // it by running all four gauntlet drivers rather than only the one it wrote,
+  // and then proved the attribution rather than assuming it: wave 6's entire
+  // rails.css change is two AgentsDock-only rules plus one `box-shadow: inset`
+  // on `.command-row-btn`, and an inset shadow cannot affect layout — which
+  // `gui-gauntlet-wave6.mjs` C2 measures directly, reporting identical row
+  // heights with the shadow stripped. So the red predates this wave.
+  //
+  // THE PROCESS LESSON IS WORTH MORE THAN THE CHECK: a leg that runs only the
+  // driver it authored cannot see a pin an EARLIER driver holds over ground a
+  // later wave moved. Run the whole set every wave.
+  //
+  // Carried forward as `gui-gauntlet-wave5.mjs` C1, which pins the surviving
+  // intent — a descriptionless row is not visibly shorter than a described one —
+  // against the mechanism that now delivers it, comparing the bare row to the
+  // shortest real described row within 1.5px rather than to a fixed 40.
 
   // C3. The description wraps instead of being cut mid-word. Same shape as A2,
   // on the other dock, because the same shared.css group now owns both.

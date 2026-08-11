@@ -263,67 +263,35 @@ const W = await page.evaluate(() => {
   }
 })
 
-check(
-  'W5 the identity mark no longer out-spaces every other interval in the stack',
-  W !== null &&
-    W.markMarginBottom === '16px' &&
-    near(W.now.markToTitle, 16, 0.6) &&
-    near(W.before.markToTitle, 24, 0.6) &&
-    near(W.before.stackHeight - W.now.stackHeight, 8, 0.6),
-  W === null
-    ? { error: 'welcome parts not found' }
-    : {
-        markMarginBottom: W.markMarginBottom,
-        markToTitlePx: px(W.now.markToTitle),
-        titleToHintPx: px(W.now.titleToHint),
-        hintToBtnPx: px(W.now.hintToBtn),
-        stackHeightPx: px(W.now.stackHeight),
-        oldReconstructed: {
-          markToTitlePx: px(W.before.markToTitle),
-          stackHeightPx: px(W.before.stackHeight)
-        },
-        shrankBy: px(W.before.stackHeight - W.now.stackHeight)
-      }
-)
-
-// W6 — the mark's interval is now STRICTLY SMALLER than the largest interval in
-// the stack, by a real margin. The critic's gap stated as an ordering rather than
-// as a number, so it survives a later wave retuning any single value.
+// W5 and W6 — SUPERSEDED BY WAVE 6, and retired here rather than softened.
 //
-// AS FIRST WRITTEN THIS CHECK COULD NOT FAIL, and the mutation probe is what
-// caught it. It asked whether the mark's interval "no longer ranks first", with
-// 0.01 of slack — but the pre-wave stack was 24 / 8 / 24, where the mark TIED
-// the action's interval rather than exceeding it. A tie is not ranking first, so
-// M1 reverted the declaration this check exists to pin and W6 stayed green. Its
-// own green output said as much in a field nobody had to read:
-// `markWasLargestBefore: false`.
+// Both pinned the interval this wave cut: W5 that the mark sits at 16px where it
+// had been 24, W6 that the mark went from equal-largest to strictly smaller.
+// Wave 6 moved the SAME declaration again, 16 -> 8, and moved the action gap
+// 24 -> 32 with it, on a critic gap asking to "tighten the mark-to-headline
+// relationship and open a distinctly larger gap before the CTA so the action
+// lands as a final beat". The run went 16/8/32 to 8/8/32.
 //
-// The real change is that the mark went from EQUAL-LARGEST to strictly smallest,
-// so that is what is asserted. The 4px margin is what makes a tie fail.
-// This is wave 4's W3 lesson repeating one wave later: a check phrased against
-// the state you expect can be satisfied by the state you are trying to exclude.
-check(
-  'W6 the mark-to-headline gap is now strictly the smallest-but-one, not equal-largest',
-  W !== null &&
-    W.now.markToTitle < Math.max(W.now.titleToHint, W.now.hintToBtn) - 4 &&
-    !(W.before.markToTitle < Math.max(W.before.titleToHint, W.before.hintToBtn) - 4),
-  W === null
-    ? { error: 'welcome parts not found' }
-    : {
-        intervalsPx: [px(W.now.markToTitle), px(W.now.titleToHint), px(W.now.hintToBtn)],
-        largestPx: px(Math.max(W.now.markToTitle, W.now.titleToHint, W.now.hintToBtn)),
-        oldReconstructedIntervalsPx: [
-          px(W.before.markToTitle),
-          px(W.before.titleToHint),
-          px(W.before.hintToBtn)
-        ],
-        markWasEqualLargestBefore: near(
-          W.before.markToTitle,
-          Math.max(W.before.titleToHint, W.before.hintToBtn),
-          0.6
-        )
-      }
-)
+// W5 IS STALE RATHER THAN VIOLATED, and the distinction matters. Its stated
+// intent — the identity mark no longer out-spaces every other interval — is MORE
+// true now than when it was written: the mark tied the smallest interval this
+// wave. What reds is its hardcoded 16px, which was never the claim.
+//
+// W6 IS DIFFERENT AND IT IS THE INSTRUCTIVE ONE: its RECONSTRUCTION broke, not
+// its assertion. It rebuilds the pre-wave stack by reverting one declaration,
+// the mark, and wave 6 moved two. So it now reconstructs [24, 8, 32] — a state
+// that never existed in any wave, half wave-5 and half wave-6 — and reasons
+// about it. A partial revert of a multi-declaration change reconstructs nothing.
+// That is a THIRD distinct way for a check to go wrong, after wave 4 W3 (which
+// measured a proxy for its premise rather than the premise) and wave 6 B2 (whose
+// threshold the pre-wave state already satisfied exactly). Read all three before
+// writing a driver; each was found by a probe, and none by reading the code.
+//
+// Carried forward as `gui-gauntlet-wave6.mjs` W1, which is stronger than either:
+// it reverts BOTH declarations, states the composition as an ordering rather than
+// as any single number (the first two intervals within 4px of each other, the
+// third clearing both by 16), and asserts that the reconstruction fails. W2 adds
+// what neither W5 nor W6 covered — that the change cost no height at all.
 
 // ══ open a project, then the docks ════════════════════════════════════════
 await page.evaluate(() => {

@@ -300,11 +300,14 @@
 
    RANK BY INTERVAL. The gap is replaced by three authored ones, taken from the
    rhythm the chat column already keeps (24px between messages, 40px around the
-   date divider) so this screen is measured in the app's own units: 16 under
-   the mark, 8 under the title, 24 above the action. The title and its
-   supporting deck sit closer to each other than either sits to anything else,
-   so they read as one editorial pair, with the identity and the action set at
-   matched air on either side of it.
+   date divider) so this screen is measured in the app's own units: 8 under the
+   mark, 8 under the title, 32 above the action. The mark, the title and its
+   supporting deck sit at near-equal air and read as ONE lockup; the action
+   stands off that lockup at distinctly more, so it lands as a final beat
+   rather than as a fourth evenly spaced row. WHICH two terms are close and
+   which one is far is the whole composition — see THE RUN IS DELIBERATELY
+   LOPSIDED below for why an earlier version of this comment had that backwards
+   and defended a run its own next paragraph condemned.
 
    THE ACTION'S GAP CAME DOWN FROM 40, because at 40 it was the LARGEST
    interval on the screen and the thing it held off was supposed to be inside
@@ -317,14 +320,19 @@
    above the button about 6.6px wider. At the 24 / 8 / 40 this rule once
    shipped, that was 39.6px of air under the mark, 26.6px under the headline
    and 46.6px above the button: the action stood further off than the identity
-   did. That is the whole of why headline, explanation and action read as three
-   centred objects rather than one lockup, and it is why the fix was one
-   interval rather than a new composition. At 24 the last gap reads as about
-   30.6px — still the wider of the two inside the group, so the deck stays
-   attached to the headline rather than floating between two equals.
+   did, at a moment when the identity was ALSO standing well off. Every interval
+   was a boundary and nothing was a group. That is the whole of why headline,
+   explanation and action read as three centred objects rather than one lockup.
+   The cut to 24 was right and it was not sufficient, because it left the last
+   gap at 30.6 — within 5px of both the others, which is a rhythm and not a
+   break. At the 32 this rule carries now the last gap reads about 38.6px. That
+   is still 8px tighter than the 46.6 it was originally cut from, but it is now
+   the ONLY large interval on the screen instead of one of three, and one large
+   interval among two small ones is a group boundary where three large ones were
+   just loose setting.
 
-   THE MARK CAME DOWN FROM 24, AND THAT RETIRES A CLAIM THIS COMMENT USED TO
-   MAKE. The 39.6px under the mark was defended right here as the boundary the
+   THE MARK CAME DOWN FROM 24 AND THEN FROM 16, AND THAT RETIRES A CLAIM THIS
+   COMMENT USED TO MAKE. The 39.6px under the mark was defended right here as the boundary the
    lockup is bounded BY — the identity standing off the group on purpose. Read
    off the render at the 640x432 minimum, wave 4's critic called it the
    opposite: the mark detached from an otherwise cohesive text-and-action
@@ -332,20 +340,49 @@
    39.6 was 9.0px more air than the next largest interval on the screen and
    13.0px more than the tightest, spent on the ONE element here that is not
    text — a 44px solid block with no glyph, which already reads as a different
-   kind of object without a gap arguing the same thing a second time. At 16 it
-   reads about 31.6px, landing on the action's 30.6px, so the identity and the
-   action now bracket the stack at matched air with the editorial pair tightest
-   in the middle. The run is 31.6 / 26.6 / 30.6 where it was 39.6 / 26.6 / 30.6.
+   kind of object without a gap arguing the same thing a second time. 16 reads
+   about 31.6px, and the wave that authored it called that a match for the
+   action's 30.6px. The wave after scored the same capture UNCHANGED, which is
+   the evidence that a 1px difference between two intervals is not a
+   composition. It is 8 now, reading about 23.6px — just INSIDE the
+   headline-to-deck 26.6 rather than level with anything — so the mark stops
+   being a bound of the stack and becomes part of the block it sits on top of.
+   The run is 23.6 / 26.6 / 38.6, where it was 31.6 / 26.6 / 30.6 and before
+   that 39.6 / 26.6 / 30.6.
 
-   THAT IS NOT THE UNIFORM STACK REFUSED BELOW, AND THE DIFFERENCE IS WHICH
-   TERM MOVED. The move refused in the next paragraph flattens the run by
-   RAISING the middle term, which is the one interval this composition depends
-   on staying tight; the deck detaches and nothing is left reading as a pair.
-   This one lowers an OUTER term and leaves the middle exactly where it was,
-   still the smallest number on the screen. Outer, inner, outer is a symmetry
-   with a tight pair inside it, not four things at one interval — which is what
-   this screen shipped as before any of these gaps were authored. The mark is
-   no longer the outlier of the run; it is one of its two matched bounds.
+   THE RUN IS DELIBERATELY LOPSIDED NOW, AND THE SYMMETRY IT REPLACES FAILED
+   THIS COMMENT'S OWN TEST. This paragraph used to defend 31.6 / 26.6 / 30.6 as
+   "outer, inner, outer" — a symmetry with a tight pair inside it, the mark one
+   of two matched bounds. Two paragraphs down, the same comment condemns
+   39.6 / 34.6 / 38.6 as "three near-equal intervals, the uniform stack this
+   whole comment was written against". Put the two runs side by side: both
+   spread exactly 5.0px between their largest and smallest term, and the
+   condemned run is the defended run plus exactly 8.0px on every term. Same
+   shape, opposite verdicts. A composition cannot be a symmetry at one offset
+   and a uniform stack 8px later. What the defence was actually reading is its
+   own INTENT off the CSS values — outer, inner, outer is a true description of
+   which declaration is which — and intent is not what a viewer sees. Three
+   intervals inside a 5px band read as three intervals whatever the middle one
+   is doing. That is the reading two consecutive critics gave this screen, and
+   it is why cutting the mark from 24 to 16 scored the capture unchanged: it
+   moved a term around inside the band instead of leaving it.
+
+   SO THE SHAPE IS GROUP-THEN-BEAT NOW, NOT BOUND-PAIR-BOUND. 23.6 and 26.6 sit
+   3.0px apart, which is a fifth of the 15.5px leading the deck itself sets and
+   comfortably inside what reads as the same interval — mark, headline and deck
+   become one editorial block with no internal boundary. 38.6 is 12.0px above
+   the larger of those two and 15.0px above the smaller, a ratio of 1.64 across
+   the run where the old one managed 1.19. So there is exactly ONE boundary on
+   this screen and it falls where the composition wants it: between the things
+   that explain and the thing you click. The action is the only element here
+   that DOES anything, and it is now the only one set apart.
+
+   THE MIDDLE TERM IS UNTOUCHED BY ALL OF THIS, WHICH IS THE POINT. The refusal
+   in the next paragraph is about RAISING the 8 and it is unaffected: 26.6
+   against the deck's 15.5 leading is still a ratio of 1.7 and the deck is still
+   hanging off the headline. Both moves here are to OUTER terms. Lowering the
+   first and raising the last is the one pair of edits that makes the run
+   lopsided without touching the interval the pair depends on.
 
    THE 8 IS HELD, AND HOLDING IT IS ALSO A DECISION. The obvious second move is
    to open the headline-to-deck gap now that the deck is two lines and carries
@@ -354,13 +391,23 @@
    is what makes a two-line block read as hanging off the headline. At 16 the
    ratio goes to 2.2 and the deck detaches. The tempting version of that move
    is the one that costs no height at all — 8 up to 16, 40 down to 32, net zero
-   — and it is the worst of the three: the run reads 39.6 / 34.6 / 38.7, three
+   — and it is the worst of the three: the run reads 39.6 / 34.6 / 38.6, three
    near-equal intervals, which is the uniform stack this whole comment was
-   written against, rebuilt one wave later. Those three figures are quoted at
-   the mark and action gaps of the wave that refused the move, 24 and 40, and
-   neither is what this rule carries now; the refusal is about the MIDDLE term
-   and it survives the outer ones moving. The deck locks to the headline by
-   gaining mass, not by gaining air.
+   written against, rebuilt one wave later. (That last figure read 38.7 here for
+   two waves and was wrong by 0.1: 32 plus the 6.6 correction is 38.6. It is
+   corrected because the contradiction above is an equality between two spreads
+   and a stale digit hides it.) Those three figures are quoted at the mark and
+   action gaps of the wave that refused the move, 24 and 40, and neither is what
+   this rule carries now; the refusal is about the MIDDLE term and it survives
+   the outer ones moving.
+
+   NET ZERO IS NOT ITSELF THE DEFECT, and saying so keeps this refusal honest,
+   because the run as it now stands is ALSO net zero against the wave before it
+   — 8px taken off the mark and 8px handed to the action. Paying for one
+   interval with another is only wrong when the term you buy with is the one
+   holding the pair together. The refused move funds itself out of the middle;
+   this one funds itself out of the other outer term. The deck locks to the
+   headline by gaining mass, not by gaining air.
 
    THE STACK IS LIFTED OFF TRUE CENTRE, and the lift is exactly half the
    padding difference: centring inside the remainder moves the block up by
@@ -405,19 +452,25 @@
    button. (#138 rounded the title from 46.26 to 46 when it re-pointed
    `--fs-display` at what it paints; the line box lost 0.33px. The button is
    32px of padding around a 19.99px line box, Chromium's `normal` leading on
-   the body rung, which is why it is not a round 52.) The three gaps add 16 plus
-   8 plus 24, which is 48, so content is 256.69px. At the 480px minimum the
+   the body rung, which is why it is not a round 52.) The three gaps add 8 plus
+   8 plus 32, which is 48 — the SAME 48 the 16 / 8 / 24 run added to, because
+   the wave that lopsided the run moved height between two gaps rather than into
+   or out of the stack — so content is 256.69px. At the 480px minimum the
    reserve resolves to 81.6, so 256.69 plus 113.6 of padding needs 370.29px
    against the pane's 432: 61.71px of headroom.
 
-   THE MARK'S 8px HANDED 8px BACK, and nothing was enlarged to spend it. The
-   gaps were 24 plus 8 plus 24 for 56, content was 264.69 and headroom was
-   53.71; the mark's interval is the only term that moved, so every part height
-   is untouched and the whole 8px lands in the reserve. Paying for the tighter
-   mark by opening another gap would have been the net-zero move refused above,
-   so the reserve simply grows. The stack now clears every window down to about
-   406px tall, where 0.83W must reach 336.69, and it was about 415px before —
-   both well below the enforced 480px minimum.
+   THE MARK'S FIRST 8px WENT TO THE RESERVE; ITS SECOND 8px WENT TO THE ACTION.
+   Three states of this rule in order. 24 / 8 / 24 summed 56, content was
+   264.69 and headroom 53.71. 16 / 8 / 24 summed 48 for 256.69 and 61.71 — the
+   mark's interval was the only term that moved, so every part height was
+   untouched and the whole 8px landed in the reserve. 8 / 8 / 32 sums 48 AGAIN,
+   because the second 8px off the mark was spent on the action's gap rather than
+   banked. So the height budget is exactly where the previous wave left it:
+   content 256.69, headroom 61.71, net cost of the lopsiding 0.00px. No part
+   height has moved in any of the three states — every change here has been to
+   the gaps. The stack clears every window down to about 406px tall, where
+   0.83W must reach 336.69; it was about 415px back at the 56px run, and both
+   are well below the enforced 480px minimum.
 
    `inspect.mjs` CARRIES THIS SUM AS A CONSTANT, AND THE CONSTANT MOVED WITH IT.
    `CLAIMED_HEADROOM_PX` there read 54, a copy of the 53.71 above, and the
@@ -427,13 +480,19 @@
    sum HERE moves first and the constant follows in the same change, never the
    other way round. A wave that cannot reach the driver leaves a known
    outstanding correction rather than a drift nobody noticed — this one reached
-   it, so nothing is outstanding.
+   it, so nothing is outstanding. THE WAVE THAT LOPSIDED THE RUN TO 8 / 8 / 32
+   DID NOT TOUCH THE CONSTANT, and that is a decision rather than an omission:
+   its two edits cancel to 0px, so 61.71 is still the sum above and 62 is still
+   the copy of it, measuring inside the driver's own 1px tolerance. The rule is
+   that the constant follows the sum — when the sum does not move, neither does
+   the constant.
 
    THE DECK COST LESS THAN ITS SECOND LINE. Wave 2 measured 65.31px of headroom
    here and warned that a second line would spend 27.6 of it. It does, but the
    action's gap gave 16 back in the same change, so the reserve fell by 11.6
    and not by 27.6. That left 53.71, and the mark's interval has since handed 8
-   of it back; the clearance figure is redone in the sum above. THE NEXT
+   of it back (its SECOND 8 went to the action's gap, not to the reserve, so the
+   figure stopped at 61.71); the clearance is redone in the sum above. THE NEXT
    BUILDER TO ENLARGE ANYTHING HERE MUST STILL REDO THAT SUM — a third deck
    line spends another 27.6 of what is left. There is more left than there was
    for the first time in this rule's history, and that is a reason to redo the
@@ -476,14 +535,22 @@
   height: 44px;
   border-radius: calc(var(--r-mark) * 2);
   background: var(--mint);
-  /* 16 where it was 24. See `.welcome`'s THE MARK CAME DOWN FROM 24 note above
-     for the optical arithmetic; the short version is that 24 painted 39.6px of
-     air here against 30.6 above the action and 26.6 inside the editorial pair,
-     so the one non-text element on the screen also carried the most air and
-     read as detached from the stack rather than as its top bound. 16 reads
-     about 31.6 and lands on the action's 30.6. Nothing else moved, so the 8px
-     goes straight to the height reserve. */
-  margin-bottom: 16px;
+  /* 8, where it was 16 and 24 before that. See `.welcome`'s THE MARK CAME DOWN
+     FROM 24 AND THEN FROM 16 note above for the optical arithmetic. Short
+     version: a gap here reads about 15.6px wider than it measures, because the
+     46px headline at 1.25 leading has a line box tighter than its glyph box and
+     carries about 15.5px of air above its own caps. So 24 painted 39.6, 16
+     painted 31.6, and 8 paints about 23.6.
+
+     16 WAS AUTHORED TO LAND ON the action's 30.6 and read as a matched bound,
+     and the capture at that value scored UNCHANGED against the previous one —
+     31.6 / 26.6 / 30.6 is three intervals inside a 5px band, which the eye
+     takes as one rhythm no matter which declaration is nominally the tight one.
+     23.6 does something different in kind: it sits just inside the
+     headline-to-deck 26.6, so the mark joins the lockup instead of bounding it.
+     The 8px freed goes to `.pick-folder-btn`'s margin-top, so the stack height
+     and the height reserve are both unchanged. */
+  margin-bottom: 8px;
 }
 
 /* Leading tightens as size grows: 1.4 is a reading value and leaves a display
@@ -596,12 +663,24 @@
 }
 
 .pick-folder-btn {
-  /* 24 where it was 40. See `.welcome`'s RANK BY INTERVAL note above for the
-     optical arithmetic; the short version is that at 40 the action stood
-     further off the deck than the identity mark stands off the headline, so
-     headline, deck and action read as three centred objects instead of one
-     lockup. */
-  margin-top: 24px;
+  /* 32, where it was 24 and 40 before that, and the two moves are not a
+     reversal. See `.welcome`'s RANK BY INTERVAL and THE RUN IS DELIBERATELY
+     LOPSIDED notes above. A gap here reads about 6.6px wider than it measures —
+     the deck at 1.6 leading leaves only about 6.6px under its last baseline —
+     so 40 painted 46.6, 24 painted 30.6, and 32 paints about 38.6.
+
+     At 40 the action out-spaced an identity mark that was itself standing 39.6
+     off the headline: every interval a boundary, nothing a group, so the cut to
+     24 was correct. It was also not sufficient. 24 left the run at
+     31.6 / 26.6 / 30.6, three intervals within 5px of one another, which reads
+     as evenly spaced rows rather than as a block with an action after it. Now
+     that the mark is inside the lockup at 23.6, this is the ONLY large interval
+     on the screen: 12.0px above the 26.6 that is the widest gap inside the
+     block and 15.0px above the tightest, which is what makes the action a final
+     beat. It remains 8px tighter than the 40 it was originally cut from, so the
+     earlier finding is respected rather than undone. The 8px comes off
+     `.welcome-mark`'s margin-bottom and the height budget does not move. */
+  margin-top: 32px;
   border: none;
   border-radius: var(--r-pill);
   background: var(--mint);

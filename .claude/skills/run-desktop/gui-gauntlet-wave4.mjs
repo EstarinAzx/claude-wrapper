@@ -684,30 +684,32 @@ if (B === null) {
   // family. A pin is evidence of what a wave believed, not a promise to a later
   // one.
 
-  // B3 — every section got a header, and the header is the three-part object
-  // the change describes: a 12px mark, a micro-caps label, and a rule that runs
-  // to the panel edge. The label must be on the 11px micro rung, uppercased and
-  // tracked — that is what makes it a section header rather than a field label.
-  const L = B.now.label
-  check(
-    'B3 each section carries a 12px mark + micro-caps label + rule',
-    B.now.headCount === 3 &&
-      B.now.headParts?.mark === true &&
-      near(B.now.headParts?.markBox?.w, 12, 0.5) &&
-      near(B.now.headParts?.markBox?.h, 12, 0.5) &&
-      (B.now.headParts?.rule?.width || 0) > 0 &&
-      L && near(parseFloat(L.fontSize), 11, 0.05) && L.fontWeight === '600' &&
-      L.textTransform === 'uppercase' && near(parseFloat(L.letterSpacing), 0.88, 0.02),
-    {
-      headCount: B.now.headCount,
-      markBox: B.now.headParts?.markBox
-        ? { w: px(B.now.headParts.markBox.w), h: px(B.now.headParts.markBox.h) }
-        : null,
-      ruleWidthPx: px(B.now.headParts?.rule?.width),
-      label: L,
-      note: 'text-transform is presentational — the accessible name is still the cased word'
-    }
-  )
+  // B3 — SUPERSEDED BY WAVE 6, and retired here rather than softened.
+  //
+  // It asserted the section header is a THREE-part object: a 12px mark, a
+  // micro-caps label, and a rule running to the panel edge. Wave 6 deleted the
+  // rule. That was not drift — it is the whole of that wave's DocksAsOne gap,
+  // which named those dividers as "a second organizational grammar" that no
+  // other dock uses and asked for them to be reduced to quiet typographic
+  // grouping. Its own AppearanceDock critic independently asked for the same
+  // treatment to become "spacing-led". Two critics converged on this object.
+  //
+  // ONLY THE HAIRLINE CLAUSE IS RETIRED. The other three are not dropped and are
+  // not weakened: `gui-gauntlet-wave6.mjs` B1 re-asserts headCount === 3, the
+  // 12x12 mark box, and all four micro-caps values on the label, and adds what
+  // B3 never covered — that the separation the rule used to draw is now carried
+  // by spacing that measurably out-ranks the interval inside the group (B2).
+  //
+  // Retiring a pin because a later wave reversed the design it pinned is
+  // legitimate; loosening one to clear a red is not. B3 could not have been kept
+  // green by any honest edit — it required an element the wave exists to delete.
+  //
+  // The direction of travel, stated once: wave 4 gave this dock MORE drawn
+  // structure to make it read as composed. Waves 5 and 6 have now removed that
+  // structure twice — first the option-group enclosure, then these header rules —
+  // each time because the same instinct applied repeatedly is what stopped the
+  // three docks reading as one family. A pin is evidence of what a wave believed,
+  // not a promise to a later one.
 
   // B4 — the stepper became a full-column strip of EQUAL segments. The two
   // buttons being equal is the pair a reader compares, so it is the assertion.
