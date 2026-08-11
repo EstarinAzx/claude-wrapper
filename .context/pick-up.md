@@ -12,7 +12,7 @@ Start: read [[overview]] + [[active-work]].
 ## queue empty
 
 **Chain 7 is finished.** Twelve legs, twelve tickets, zero human touches. Leg 12
-landed **#140** as `b30a4b3` and closed it, and
+landed **#140** as `2ab67f1` and closed it, and
 `gh issue list --state open --label ready-for-agent` now returns `[]`.
 
 That is the body-signaled done condition, so the chain set `stop: true` and fired

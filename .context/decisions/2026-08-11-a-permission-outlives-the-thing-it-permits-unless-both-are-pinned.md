@@ -10,7 +10,7 @@ tags: [context, decision, design-system, bans, testing]
 
 ## Decision
 
-#140 (`b30a4b3`) keeps the selected session row's 2px mint stripe and amends
+#140 (`2ab67f1`) keeps the selected session row's 2px mint stripe and amends
 `DESIGN.md`'s **Bans in force** with one named, scoped exception beside the #125 glass
 exception, in the same form and stating it is not a precedent.
 

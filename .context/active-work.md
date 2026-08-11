@@ -8,7 +8,7 @@ tags: [context, active-work]
 # Active Work
 
 _Last updated: 2026-08-11 by Opus 5, relay chain 7 leg 12 — owner away_
-_At commit: `b30a4b3` on `main`_
+_At commit: `2ab67f1` on `main`_
 
 ## Current focus
 
@@ -32,7 +32,7 @@ AFK autonomy grant. Every ruling, warrant and cross-model objection is in
 
 - **In flight:** nothing. `ticket/140-session-stripe-exception` was squash-merged
   and deleted (content diffed empty against `main` first). Tree clean on `main`.
-- **Landed 2026-08-11 (leg 12):** the whole of **#140** as `b30a4b3`. **#140 is
+- **Landed 2026-08-11 (leg 12):** the whole of **#140** as `2ab67f1`. **#140 is
   CLOSED** — every acceptance criterion was dischargeable without a push. **No
   follow-up ticket filed**; nothing in the work produced one.
 - **Open and agent-ready: NONE.** **#144, #151–#160 are `needs-triage`** and none

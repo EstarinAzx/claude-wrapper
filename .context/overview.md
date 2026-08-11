@@ -945,7 +945,7 @@ tags: [context, overview]
   [[2026-08-08-a-checkpoint-outlives-its-process-and-rewindability-tracks-position]].
   **Chain 6 is COMPLETE**, legs 1–6 landing **#131–#137**. **Chain 7 is COMPLETE**
   — twelve legs draining a twelve-ticket queue filled by an autonomous
-  `/preset vibe` pass, ending on **#140** (`b30a4b3`) at leg 12 and firing
+  `/preset vibe` pass, ending on **#140** (`2ab67f1`) at leg 12 and firing
   `/relay N=1 /preset gauntlet` as its chained successor. Leg 1
   landed **#149** (`6067a12`): the published surface list restated in `SKILL.md`
   and `.gauntlet/bar/README.md`, plus the test that reds when either drifts from
@@ -971,7 +971,7 @@ tags: [context, overview]
   `gui-138.source.mjs` (`npm test`) bans `em` and literal px sizes in `styles/`
   and cross-reads `tokens.css` against `DESIGN.md`. See
   [[2026-08-11-a-ratio-rule-is-tested-as-a-ratio-and-its-tolerance-is-set-by-the-rungs-it-already-admits]].
-  Leg 12 closed the chain with **#140** (`b30a4b3`): the selected session row's
+  Leg 12 closed the chain with **#140** (`2ab67f1`): the selected session row's
   mint side-stripe **stays**, and `## Bans in force` gains one named, scoped
   exception beside #125's glass exception, stating it is not a precedent — a
   document edit plus a test, with the stripe byte-identical to `HEAD` and the
