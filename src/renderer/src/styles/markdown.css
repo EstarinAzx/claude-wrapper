@@ -130,16 +130,35 @@
   color: var(--text);
 }
 
+/* #138 — RESTRUCK ONTO THE ONE LADDER. These three were `1.25em` / `1.1em` /
+   `1em`, and an em font-size is a multiplier on inherited text rather than a
+   rung: against the 15px body they painted 18.75 and 16.5, two sizes that
+   appear nowhere in this repo's source and that no reading of the declaration
+   produces. `DESIGN.md` states the scale as a ratio, so the test is whether a
+   size lands on `body * 1.15^k`, and neither did — 16.5 sat 0.75px under the
+   first rung and 18.75 sat 1.09px under the second.
+
+   Stated as arithmetic on the token, in separate factors so the RUNG COUNT
+   reads off the value, which is the idiom `chat.css` already uses for the
+   Welcome pair. A literal would be invisible to a grep of the scale, and an em
+   is invisible to a grep of the painted size.
+
+   h2 now lands on 17.25, which is EXACTLY `.welcome-hint`'s rung rather than
+   0.75px from it. That collision is the thing #138 forbade preserving one step
+   over, so the two are compared across phases in `gui-138.mjs` rather than
+   left to the eye. h3 keeps the body rung: a third rank that is prose-sized and
+   weighted 600 is the rank it has always held, and it was already on the
+   ladder. */
 .assistant-body h1 {
-  font-size: 1.25em;
+  font-size: calc(var(--fs-body) * 1.15 * 1.15);
 }
 
 .assistant-body h2 {
-  font-size: 1.1em;
+  font-size: calc(var(--fs-body) * 1.15);
 }
 
 .assistant-body h3 {
-  font-size: 1em;
+  font-size: var(--fs-body);
 }
 
 .assistant-body strong {

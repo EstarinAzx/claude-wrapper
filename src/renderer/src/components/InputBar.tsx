@@ -794,7 +794,7 @@ const InputBar = ({
       </div>
       {/* The composer's two settings, on a strip of their own. They used to share
           one space-between row with the disclaimer, which packed the disclaimer
-          against the left edge and broke DESIGN.md line 67 outright: the footer
+          against the left edge and broke DESIGN.md's Layout section outright: the footer
           is specified as a CENTRED line under the input, and it cannot be
           centred while two controls are competing for the same row.
 

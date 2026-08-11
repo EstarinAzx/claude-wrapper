@@ -60,15 +60,22 @@
   /* type */
   --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Cascadia Code", "Consolas", "SF Mono", ui-monospace, monospace;
-  /* The one step ABOVE body, and the first the app has ever had. DESIGN.md
-     names a ~1.15 ladder and then lists only its three descending rungs, so
-     the largest type in the product was body weighted 600 and the Welcome
-     headline sat 15:13 against its own supporting line. This continues the
-     documented ladder upward rather than inventing a round number:
-     15 x 1.15^3 = 22.8, rounded to 23. One caller today, the Welcome
-     headline, which is the only headline in the app; it is a named step so
-     the second one cannot arrive as a literal. */
-  --text-display: 23px;
+  /* The top rung: the Welcome headline, which is the only headline in the app.
+     15 x 1.15^8 = 45.885, rounded to 46.
+
+     #138 RE-POINTED THIS TOKEN AT WHAT IT PAINTS. It used to read 23px
+     (15 x 1.15^3, rounded) while its ONLY caller consumed it through
+     `calc(... * 1.15 * 1.15 * 1.15 * 1.15 * 1.15)` and painted 46.26 — so the
+     name said 23 and nothing in the product rendered 23. That is the same
+     defect class as a stylesheet claiming a weight step it does not deliver,
+     and the ticket refused to leave it: a token either names a size something
+     paints or it goes. The five factors moved out of the call site and into
+     the exponent here, which costs one rung of greppability and buys a token
+     that is true. The painted size moves 0.26px, from 46.26 to 46.
+
+     Still one caller. It stays a named step so the second headline, if one
+     ever arrives, cannot come in as a literal. */
+  --text-display: 46px;
   --text-body: 15px;
   --text-ui: 13px;
   --text-micro: 11px;

@@ -51,7 +51,26 @@ Never `#000`/`#fff`. Backgrounds under the acrylic must stay translucent; `html,
 
 ## Type
 
-One family (Segoe UI Variable, native Win11). Body 15/1.6. UI labels 13. Divider/footer 11, letterspaced 0.12em uppercase for the date divider only. Weights: 400 body, 600 app name and bubble-less emphasis. Scale ratio ~1.15, fixed rem-equivalents, no fluid type.
+One family (Segoe UI Variable, native Win11). Weights: 400 body, 600 app name, headings and bubble-less emphasis.
+
+**One scale, and it is stated as a ratio rather than as a list.** Scale ratio ~1.15 off a 15px body, fixed rem-equivalents, no fluid type. A size belongs to this system when it lands within half a pixel of `15 x 1.15^k` for a whole number k. That half pixel is not slack: the authored rungs are rounded to whole px and already carry it (11 is 11.34 rounded, 13 is 13.04, the display rung is 45.89), so no tolerance tighter than 0.35 can keep the rungs this document already names.
+
+**The rungs the app paints, and the role each one holds** (#138). A rung earns its place here by having a caller and a job, not by rendering somewhere:
+
+| k | px | authored as | role |
+|---|---|---|---|
+| -2 | 11 | `--fs-micro` | date divider, footer, timestamps, meta lines. Letterspaced 0.12em uppercase for the date divider only |
+| -1 | 13 | `--fs-ui` | UI labels: rail rows, dock headers, tool cards, inline and block code |
+| 0 | 15 | `--fs-body` | prose at 1.6 leading: assistant text, user bubbles, the composer, and markdown `h3` |
+| 1 | 17.25 | `calc(var(--fs-body) * 1.15)` | the step above prose: the Welcome supporting line, and markdown `h2` |
+| 2 | 19.84 | `calc(var(--fs-body) * 1.15 * 1.15)` | markdown `h1`, the top section break inside a single reply |
+| 8 | 46 | `--fs-display` | the Welcome headline, which is the only headline in the app |
+
+Rungs 3 to 7 have no caller. A ladder does not owe every rung one; what it owes is that nothing painted sits between two of them.
+
+**Two sizes on screen are not authored on the scale, and both are named here rather than quietly tolerated.** `.subagent-drawer-close` sets a 20px close glyph, which is an icon dimension rather than type, and lands 0.16px from rung 2. `.win-btn` carries no font-size rule at all and so inherits Chromium's 13.3333px button default, 0.29px from rung -1 — closer to its rung than the documented 11px sits to its own, which is why no honest reading of the ratio rule can exclude it while keeping `--fs-micro`. Neither is a licence for a third.
+
+**What enforces this.** `gui-138.mjs` (`npm run test:dom`) sweeps every painted box in a real Chromium and measures each distinct size against the ladder, then checks that markdown `h2` and the Welcome supporting line share one rung rather than sitting 0.75px apart, and that `--fs-display` names a size something actually paints. `gui-138.source.mjs` (`npm test`) holds the source half: no `em` font-size anywhere in `styles/`, no literal px size but the one named glyph, and this table's values kept in step with `tokens.css`. jsdom loads no CSS, so the fast gate cannot see the rendered half and does not pretend to.
 
 ## Layout
 

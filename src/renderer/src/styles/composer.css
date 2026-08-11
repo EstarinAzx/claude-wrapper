@@ -242,7 +242,7 @@
 
    The composer's two settings, on a line of their own. Before this they were
    flex children of one space-between row shared with the disclaimer, which left
-   the disclaimer packed against the left edge while DESIGN.md line 67 asks for a
+   the disclaimer packed against the left edge while DESIGN.md's Layout section asks for a
    CENTRED line under the input. A line cannot be centred and also be one column
    of a three-column row, so the two jobs are two rows now.
 
@@ -341,7 +341,7 @@
 }
 
 /* Its own row now, centred on the same measure as the pill, which is what
-   DESIGN.md line 67 specifies. The width is stated rather than left to shrink to
+   DESIGN.md's Layout section specifies. The width is stated rather than left to shrink to
    the text, so the centring is against the composer and not against itself. */
 .footer-line {
   width: 100%;

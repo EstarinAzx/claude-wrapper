@@ -111,7 +111,7 @@
 
 /* The composer footer's old one-row shell is GONE, and so is this rule. It
    described "disclaimer left, model pill right", which the composer no longer
-   builds and DESIGN.md line 67 never asked for: the footer is a CENTRED line
+   builds and DESIGN.md's Layout section never asked for: the footer is a CENTRED line
    under the input, and it is now two rows, a right-aligned settings strip in
    composer.css plus that centred line. Nothing renders .input-foot any more.
    Left in place it would keep stating a layout the app contradicts, in the one

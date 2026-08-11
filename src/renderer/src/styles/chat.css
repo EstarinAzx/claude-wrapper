@@ -269,28 +269,31 @@
 
    Two changes, and they are the same change seen twice.
 
-   RANK BY SIZE, RAISED AGAIN. The title takes five steps of DESIGN.md's
-   documented ~1.15 ladder above `--fs-display`, stated as arithmetic on that
-   token rather than as a literal, and written as five separate factors so the
-   RUNG COUNT stays readable: 23 x 1.15^5 = 46.26. The mark's corner below is
-   `calc(var(--r-mark) * 2)` for exactly this reason — a relationship written on
-   the token cannot drift, and a literal type size would be invisible to a grep
-   of the scale. Not the first such calc in `styles/`, which is where an earlier
-   draft of this note overclaimed: subagent.css sets a 20px glyph and
-   markdown.css sets its headings in `em`. It adds NO token, so `@theme` still
-   holds four rungs. It DOES add a rendered size — the supporting line below
-   takes one rung too — so the app now paints five: 11 / 13 / 15 / 17.25 /
-   46.26. This rule is still `--fs-display`'s ONLY caller and still consumes it
-   through a calc, so 23px continues to render nowhere. The cost against the
-   open owner call on the type scale is that mismatch, a named rung the app does
-   not paint, and it is recorded here rather than hidden.
+   RANK BY SIZE, RAISED AGAIN. The title takes the top rung of DESIGN.md's
+   documented ~1.15 ladder, `--fs-display`, which is 15 x 1.15^8 = 45.885
+   rounded to 46. The mark's corner below is `calc(var(--r-mark) * 2)` for a
+   related reason — a relationship written on a token cannot drift, and a
+   literal type size would be invisible to a grep of the scale.
+
+   #138 MOVED THE ARITHMETIC OUT OF THIS RULE. It used to read
+   `calc(var(--fs-display) * 1.15 * 1.15 * 1.15 * 1.15 * 1.15)` against a 23px
+   token, written in separate factors so the rung count stayed readable. That
+   was legible about the STEP and dishonest about the SIZE: the token said 23,
+   this rule painted 46.26, and 23px rendered nowhere in the product. The
+   exponent now lives in the token's own definition, so the name and the paint
+   agree and the rule reads the rung directly. The painted size moved 0.26px.
+
+   The supporting line below takes one rung above body, so the two Welcome
+   sizes are the ladder's rungs 1 and 8. Since #138 the markdown headings sit
+   on rungs 1 and 2 as well, which is what makes 17.25 a shared rung rather
+   than a near-miss: `gui-138.mjs` compares them across phases.
 
    The supporting line moved from `--fs-ui` to `--fs-body` and now takes one
    rung above it, which was a CORRECTION before it was an enlargement:
-   DESIGN.md line 54 spends 13 on "UI labels" and 15 on body, and a sentence of
+   DESIGN.md spends 13 on "UI labels" and 15 on body, and a sentence of
    prose under a headline is neither. The button keeps the body rung and grows
    by padding instead, because its job is to be a large TARGET, not large TEXT.
-   46.26 against 17.25 is a ratio of 2.68, where the shipped pair was 35 against
+   46 against 17.25 is a ratio of 2.67, where the shipped pair was 35 against
    15 at 2.33, before that 23 against 13 at 1.77, and before that 15 against 13
    at 1.15 — one ladder step, the smallest difference the scale can express,
    which read as an accident rather than a decision.
@@ -337,27 +340,31 @@
    that authored 60 argued it AS A PERCENTAGE and then pinned it in px, which
    only holds at one window size; a ratio holds it at all of them. Neither the
    unit nor the function is new here — base.css already sizes the root in vh and
-   subagent.css already clamps a width with min. DESIGN.md line 54 bans fluid
+   subagent.css already clamps a width with min. DESIGN.md's Type section bans fluid
    TYPE; every type size on this screen stays fixed.
 
-   THE SUM, REDONE. Content is 253px — a 44px mark and 24 under it, a 46.26px
-   title at 1.25 leading for a 57.8px line box and 8 under it, a 17.25px hint at
-   1.6, then 40 above a 52px button. At the 480px minimum the reserve resolves
+   THE SUM, REDONE. Content is 253px — a 44px mark and 24 under it, a 46px
+   title at 1.25 leading for a 57.5px line box and 8 under it, a 17.25px hint at
+   1.6, then 40 above a 52px button. (#138 rounded the title from 46.26 to 46
+   when it re-pointed `--fs-display` at what it paints. The line box lost
+   0.33px, the content total went 253.4 to 253.1, and both still read 253 at
+   whole-pixel terms, so `CLAIMED_HEADROOM_PX` in `inspect.mjs` stays 65 — the
+   sum moved first and the number did not have to.) At the 480px minimum the reserve resolves
    to 82, so 253 plus 114 of padding needs 367px against the pane's 432: 65px of
    headroom, up from 16. The stack clears every window down to about 402px tall,
    which is below the enforced minimum. THE NEXT BUILDER TO ENLARGE ANYTHING
    HERE MUST STILL REDO THIS SUM — the headroom is large now, not infinite.
 
-   THE FIFTH RUNG AND NOT THE FOURTH. Under the old fixed reserve a fourth step
-   left 10px and a fifth left 2px, at which the reserve below IS the clip it was
-   written not to be; both fit now. The fifth is taken because ~1.15 cannot
-   express anything between 40.23 and 46.26, and the larger is the one that
-   answers a call for MASS. The cost is the beat: the three-rung headline's
-   43.7px line box landed on the 44px mark, one repeating vertical interval. But
-   that beat is also what made the stack read uniform — mark, headline and
-   button all sat within 4px of each other. The run now ascends, 44px mark then
-   52px button then 57.8px headline, and the headline is unambiguously the
-   largest thing on the screen rather than the same size as the logo. */
+   RUNG 8 AND NOT RUNG 7. Under the old fixed reserve the lower step left 10px
+   and this one left 2px, at which the reserve below IS the clip it was written
+   not to be; both fit now. The higher is taken because ~1.15 cannot express
+   anything between 39.90 and 45.89, and the larger is the one that answers a
+   call for MASS. The cost is the beat: a rung-6 headline's 43.7px line box
+   landed on the 44px mark, one repeating vertical interval. But that beat is
+   also what made the stack read uniform — mark, headline and button all sat
+   within 4px of each other. The run now ascends, 44px mark then 52px button
+   then 57.5px headline, and the headline is unambiguously the largest thing on
+   the screen rather than the same size as the logo. */
 .welcome {
   flex: 1;
   min-height: 0;
@@ -391,7 +398,7 @@
 /* Leading tightens as size grows: 1.4 is a reading value and leaves a display
    line looking loosely set even on one line. */
 .welcome-title {
-  font-size: calc(var(--fs-display) * 1.15 * 1.15 * 1.15 * 1.15 * 1.15);
+  font-size: var(--fs-display);
   font-weight: 600;
   color: var(--text);
   line-height: 1.25;
@@ -426,7 +433,7 @@
      was authored at and taking two steps already in the app's spacing rhythm.
      The font stays on the body rung — a button's job is to be a large TARGET,
      not large text — so this computes to about 52px tall: the middle term of an
-     ascending run, 44px mark then 52px button then the 57.8px headline line
+     ascending run, 44px mark then 52px button then the 57.5px headline line
      box. At 48 it sat within 4px of both, which is what let mark, headline and
      control read as one uniform mass. This is the WHOLE of the wave's mint
      spend — the fill grows 8px wider and 4px taller and nothing else on this
