@@ -7,8 +7,8 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, gauntlet relay leg 4 (run 2, wave 3) — owner away_
-_At commit: `379c3b1` on `gauntlet/docks-and-min-window`; `main` still at `46e2fce` plus these notes_
+_Last updated: 2026-08-11 by Opus 5, gauntlet relay leg 5 (run 2, wave 4) — owner away_
+_At commit: `2c50048` on `gauntlet/docks-and-min-window`; `main` still at `46e2fce` plus these notes_
 
 > **Run-2 capture landmine.** `.gauntlet/waves/1/`…`5/` hold **run 1's git-tracked**
 > captures, and `inspect.mjs` writes the **same filenames**. Run 2 therefore writes
@@ -34,20 +34,52 @@ _At commit: `379c3b1` on `gauntlet/docks-and-min-window`; `main` still at `46e2f
 > **"The app has no icon vocabulary" (recorded by wave 2) is REFUTED.** Every icon in the
 > three docks renders **1:1 viewBox-to-pixel at `strokeWidth 1.4`**, and the dock icon
 > counts were **identical at the seed commit**, so wave 2 added none. What actually
-> differed was button **chrome**. A mechanical sweep check now enforces the vocabulary.
+> differed was button **chrome**. A mechanical sweep check now enforces the vocabulary —
+> **8 icons before wave 4, 11 after, all uniform.**
+
+> **Third new driver as of leg 5: `gui-gauntlet-wave4.mjs`.** 14 checks across Welcome and
+> two docks, each carrying its reconstructed OLD value. **Red-verified by three mutations
+> producing three distinct targeted red sets.** Same auto-enumeration, so it is the
+> **38 -> 39 skip change**; test count still 1406. Two hard-won facts live in its header:
+> `.agent-row-btn` does not exist without a session (push `subagent:changed` from MAIN), and
+> **`model`/`spawnDepth` can never arrive from a live push** — `mergeAgents` takes both from
+> the disk sidecar only.
+
+> **A CSS font stack fails SILENTLY.** `getComputedStyle` returns the **authored** stack,
+> never the face that won, so a `font-family` naming a missing family passes every string
+> check while rendering identically to before. Wave 4's `W3` compares the headline's rendered
+> advance width under both optical masters **and** requires the title's own box to move when
+> forced back. As first written it compared two detached probes — which measures whether the
+> font is *installed*, not whether the element wears it — and it stayed green under the
+> mutation that deleted the rule.
 
 ## Current focus
 
-**THE GAUNTLET IS RUNNING AND IS ONE WAVE FROM ITS HALT.** Run 2
-(`docks-and-min-window`) landed **WAVE 3** as `379c3b1` on
-`gauntlet/docks-and-min-window`, at **`plateau: 2`**. Its record is
+**THE GAUNTLET IS RUNNING AND THE PLATEAU JUST BROKE — IT IS NOT NEAR A HALT.** Run 2
+(`docks-and-min-window`) landed **WAVE 4** as `2c50048` on
+`gauntlet/docks-and-min-window`, at **`plateau: 0`** (reset from 2). Its record is
 `.claude/gauntlet.md` **on that branch** — `main`'s copy is the seed's and is stale by
-design. Chain 7 fired `/relay N=1 /preset gauntlet`; that chain is at leg 5.
+design. Chain 7 fired `/relay N=1 /preset gauntlet`; that chain is at leg 6.
 
-**Wave 3's result is two refusals and a refutation, not four closed gaps.** Three
-builders, five cross-model critics, one smoothing pass — **nine agents, not ten**,
-because the fourth builder was deliberately not run. All five verdicts hold at
-`BAR WINS`, **zero `SPEC BREAK`s**, 5/5 critics verified against a first-hand read.
+**`DocksAsOne` moved `BAR WINS` -> `TOO CLOSE` — the first verdict movement in either run
+of this gauntlet.** Leg 5 inherited a handoff predicting wave 4 would end the run at
+`plateau: 3`; it did the opposite. **Up to eight waves of budget remain** (`max_waves: 12`).
+The movement came from the one piece with **no builder** — the other pieces' builders moved
+the docks underneath it, which is what a cross-cutting piece is for.
+
+**The critics' change-answer column was tested with a NULL CONTROL, and wave 3's reading of
+it is corrected.** `commands-dock.png` is **byte-identical across waves 2, 3 and 4**
+(verified with `cmp`). Wave 3's critic answered **BETTER** on those unmoved pixels; wave 4's
+answered **SAME**. So wave 3's "3/4 BETTER" contained a false BETTER, and that column is
+usable **only** with an explicit anti-inference clause in the critic prompt plus the unbuilt
+control. Keep CommandsDock's capture as that control for as long as it stays unbuilt.
+
+**Wave 4's result is one verdict movement, one refused `SPEC BREAK`, and three closed gaps.**
+Three builders, six cross-model critics, one smoothing pass — **ten agents, zero errors**.
+**6/6 critics verified against a first-hand read** to have seen real pixels. The `SPEC BREAK`
+(AgentsDock's metadata-less row) was **refused on four grounds**, the decisive one found
+while building the driver: `model`/`spawnDepth` are **disk-only**, so a live agent
+legitimately has no metadata line.
 Gate green (D7).
 
 **`CommandsDock` got no builder, and that is owner call 15.** Its gap asked to group
@@ -104,7 +136,14 @@ AFK autonomy grant. Every ruling, warrant and cross-model objection is in
   follow-up ticket filed**; nothing in the work produced one.
 - **Open and agent-ready: NONE.** **#144, #151–#160 are `needs-triage`** and none
   may be promoted by a leg.
-- **Next:** gauntlet run 2 **wave 3**, at `plateau: 1`. There is no next ticket.
+- **Next:** gauntlet run 2 **wave 5**, at `plateau: 0` after the wave-4 reset. There is no
+  next ticket. Wave 5's shape is worked out in `.claude/relay/gauntlet.md`: **five builders,
+  one critic-only.** `AgentsDock` gets no builder (its gap is refused as unbuildable);
+  `IconHousing` becomes buildable and is **owner call 16** — its gap moves 7 of 13 tenants
+  and the `D4.8` sweep check must move with it, so serialize it against the dock builders.
+- **Merge-time follow-up (do NOT fix early):** `.context/overview.md:215` names
+  `.appearance-field--stacked`. Wave 4 deleted that class **on the branch only** — on `main`
+  it still exists, so the line is correct today and goes stale the moment the branch merges.
 - **Wave 2's fan-out shape was run 1's exact trap, and serializing worked.**
   **`CommandsDock` has NO stylesheet of its own** (zero `.commands-dock` rules in
   `styles/`); it rides the shared `agents-dock` shell in `rails.css`, which
