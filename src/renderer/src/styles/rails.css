@@ -714,6 +714,12 @@
   color: var(--text);
 }
 
+/* The purpose line. Its wrapping AND its leading live in shared.css's two-line
+   clamp group, not here, so the other docks join the same treatment instead of
+   each inventing one; this rule owns only the size and the colour. The lines
+   either side of it stay in shared.css's ONE-line group on purpose: .agent-row-type
+   above is a label and .agent-row-meta below is a model and depth string, and a
+   label that wraps spends a second row saying nothing new. */
 .agent-row-desc {
   font-size: var(--fs-micro);
   color: var(--text-muted);
@@ -812,6 +818,50 @@
 
 /* ── commands dock (#39) — shares .agents-dock layout; rows mirror agent rows ── */
 
+/* The row system. Three optional children stacked in a column gave this list
+   three different row shapes at once — name over hint over description for
+   /preset, name over description for /trace, and for /wrap-up a bare name with
+   nothing under it — so a 248px column of controls read as a loose text stack
+   instead of one deliberate group. Two moves close that, and neither reaches
+   into the two children the composer's popover shares.
+
+   ONE: the argument hint stops being a line of its own. It is a fragment of the
+   command's signature, not a second fact about the command, so it belongs beside
+   the name; moving it there takes a whole line off the tallest rows and leaves
+   every row with the same identity band on top. Baseline rather than
+   .agent-row-head's centre because both children here are type, and the smaller
+   one should sit on the larger one's baseline rather than float in the middle of
+   its box — which is what the composer's popover already does with these exact
+   two spans, so the two surfaces that render them now agree instead of each
+   holding them a different way.
+
+   The wrapper is a NEW class rather than a rule on the children on purpose. #94
+   recorded that .command-row-name and .command-row-hint are shared with that
+   popover and must not be reached into; a parent that exists only in this dock
+   keeps that promise, and the popover's own markup is untouched.
+
+   TWO: the row gets a floor, so a command with nothing to add still occupies a
+   row rather than a stray line of text. 40px is a floor and not a target: it
+   sits BELOW the height a row with one description line comes to, so no row is
+   ever padded out to meet it and the floor only bites on the rows that have
+   nothing more to say. justify-content centres the little that is there —
+   slack dumped at the bottom reads as a row whose second line failed to load,
+   and the trade is that a lone name sits a few px lower than the names in
+   taller rows, which is the cheaper of the two tells. The floor is the whole
+   box, padding included — base.css sets box-sizing: border-box globally — so it
+   is the row height it names and not that height plus an inset pair. */
+.command-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.command-row-btn {
+  min-height: 40px;
+  justify-content: center;
+}
+
 .command-row-name {
   font-size: var(--fs-ui);
   font-family: var(--mono);
@@ -824,21 +874,29 @@
   color: var(--text-faint);
 }
 
-/* The one child that changes: it sets a size but no family, so #94's `font:
-   inherit` repaints it from the UA button font to --font. That is the intended
-   change; the line box moving with it is not. `normal` is resolved from the
-   FAMILY's metrics, so the repaint alone grew this box from 12px to 14.4px
-   (Arial 1.09 → Segoe UI Variable Text 1.31) and the row with it. The ratio
-   holds the row where it was, and unlike a px it still tracks --fs-micro — every
-   other line-height in this app is unitless for the same reason. 1.1 lands
-   0.1px off the 12px it rendered before, an eighth of a device pixel here.
+/* The description. Its wrapping AND its leading live in shared.css's two-line
+   clamp group alongside the agent row's, so this rule owns only the size and the
+   colour — the docks share one treatment for a secondary line rather than
+   inventing one apiece.
 
-   Whether 12px is the RIGHT box for 11px muted text is a separate, taste
-   question — Segoe's own 14.4px is closer to the app's other micro text. This
-   ticket's contract is a family repaint that moves nothing, so it holds the old
-   geometry and leaves that call open. */
+   The line box is the taste question #94 left open, and this ticket closes it by
+   handing the answer to that group rather than writing it here. #94 pinned 1.1 on
+   this selector to stop a family repaint from moving a 12px box (`normal`
+   resolves off the FAMILY's metrics, so the repaint alone would have grown it to
+   14.4px, Arial 1.09 → Segoe UI Variable Text 1.31), and said in the same breath
+   that whether 12px was the RIGHT box for 11px muted text was a separate call it
+   was not making. Two lines make the call for us: what #94 held was a ONE-line
+   box, where a tight ratio only trims the leading above and below a single line
+   and costs nothing. The moment the description clamps to two, that same ratio
+   closes the gap BETWEEN them and 11px muted text starts to crowd itself in the
+   narrowest column in the app — which is exactly why the number sits with the
+   rule that grants the second line and not with one of the two rows that took it.
+
+   This deliberately moves the box #94 froze. That freeze was the contract of a
+   family repaint that was meant to change nothing; a row rebuild is not, and the
+   #94 GUI driver measures this child against a one-line UA-font probe, so its
+   expectation for .command-row-desc is now stale rather than violated. */
 .command-row-desc {
   font-size: var(--fs-micro);
-  line-height: 1.1;
   color: var(--text-muted);
 }

@@ -65,10 +65,19 @@ const CommandsDock = ({
                 className="command-row-btn"
                 onClick={() => onInsert(c.name)}
               >
-                <span className="command-row-name">/{c.name}</span>
-                {c.argumentHint ? (
-                  <span className="command-row-hint">{c.argumentHint}</span>
-                ) : null}
+                {/* Name and hint on ONE line. The hint is a fragment of the
+                    command's signature, not a second fact about it, and as its
+                    own line it made the list three different row shapes deep.
+                    The wrapper is local to this dock: the two spans inside it
+                    also render in the composer's slash popover, so the fix goes
+                    around them and never on them (#94). rails.css owns the
+                    alignment and the row's floor height. */}
+                <span className="command-row-head">
+                  <span className="command-row-name">/{c.name}</span>
+                  {c.argumentHint ? (
+                    <span className="command-row-hint">{c.argumentHint}</span>
+                  ) : null}
+                </span>
                 {c.description ? (
                   <span className="command-row-desc" title={c.description}>
                     {c.description}

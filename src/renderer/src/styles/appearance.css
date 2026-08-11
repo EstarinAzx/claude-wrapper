@@ -61,6 +61,11 @@
 .appearance-choice {
   display: flex;
   flex-direction: column;
+  /* Deliberately small, and deliberately NOT the interval a name sits at from
+     its sentence. The theme rows join this rule as a single-line row, where this
+     stops being the space under a title and becomes the minimum space between a
+     name and its swatch. So the air a description needs is added on the
+     description below, not here, where it would also reach rows carrying none. */
   gap: 3px;
   padding: 8px 10px;
   border: 1px solid var(--border);
@@ -126,10 +131,24 @@
   border: 1px solid var(--color-mint-press);
 }
 
-/* The trade, not a tagline: it is the reason to pick the other one. */
+/* The trade, not a tagline: it is the reason to pick the other one.
+
+   Which is why the top margin is here and not left to the card's 3px gap. The
+   sentence wraps to two lines in a 248px dock, and 1.45 already opens ~5px of
+   leading between those two lines — more than the 3px above them. That inverts
+   the grouping a reader needs: the name stopped reading as the heading of the
+   sentence and started reading as one more line of it. 3px + 5px lands the pair
+   at 8px, which is the interval this panel already uses twice over — what
+   `.appearance-field--stacked` puts between a label and its control, and what
+   the card itself pads top and bottom — rather than a number from nowhere.
+
+   On the description rather than on the card because only a card that carries
+   one has it: the single-line theme rows never match this selector, so they
+   keep the tight row they were tuned for. */
 .appearance-choice-desc {
   font-size: var(--fs-micro);
   line-height: 1.45;
+  margin-top: 5px;
   color: var(--text-faint);
 }
 

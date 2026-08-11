@@ -5,7 +5,7 @@
    so each component override needs to be at least as specific AND later. */
 
 /* ── shared patterns ─────────────────────────────────────────────────────
-   Five patterns that every list, menu, dock and card in the app repeats.
+   Six patterns that every list, menu, dock and card in the app repeats.
    They live together, once, for the same reason the scrollbar rule does:
    the failure mode is drift. Before this section the truncation triad was
    written out 14 times and the focus ring 6 times, so a control added later
@@ -20,12 +20,10 @@
 .session-row-title,
 .session-row-meta,
 .agent-row-type,
-.agent-row-desc,
 .agent-row-meta,
 .agent-row-stats,
 .command-row-name,
 .command-row-hint,
-.command-row-desc,
 .command-option-desc,
 .tool-card-key,
 .tool-card-result,
@@ -37,6 +35,60 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Two-line clamp. The other half of the truncation story, for the SECONDARY
+   line of a "name plus description" row.
+
+   The group above is right for a title, a key or a meta string: the first few
+   words identify the thing and the rest is confirmation, so an ellipsis costs
+   nothing. It is wrong for a description. In a 248px dock the description IS
+   the content of the row, and one line of it ends mid-word — "Locate the three
+   stylesheet pins that sc..." — which turns the panel's primary reading matter
+   into fragments. Two lines is a ceiling and not a target: a short description
+   still sits on one line, the clamp only bites past the second, and the rows
+   that grow taller sit in lists that already scroll.
+
+   This is a named group rather than a rule next to the one description that
+   first needed it because THREE docks grow the same name-plus-description row.
+   Each of them reaching for its own treatment is exactly the drift this file
+   exists to stop, so a secondary line JOINS THIS LIST — it does not write its
+   own -webkit-box somewhere else.
+
+   overflow-wrap is part of the pattern, not a flourish: a description can carry
+   a path or a flag with no break opportunity anywhere in it, and an unbreakable
+   word in a 248px column clips just as badly as the ellipsis did.
+
+   THE LEADING IS PART OF THE CLAMP TOO, and it is here for the reason the rest
+   of the group is. A tight ratio is free on ONE line: it trims the space above
+   and below a single box and nothing else. The moment a description takes two,
+   that same ratio closes the gap BETWEEN them, so the number that governs two
+   lines belongs wherever the second line is granted — not beside whichever
+   description its author happened to be looking at. Left there it had already
+   drifted: the two docks rendered the identical 11px sentence, in the identical
+   248px column, at 17.6px and 15.95px, because one of them took the clamp and
+   left the leading behind. 1.45 is not a new number either — the sessions rail's
+   `.bg-sessions-empty-hint` answers this exact question in this exact column,
+   where body's 1.6 read as two separate remarks. Unitless, so it tracks
+   `--fs-micro`.
+
+   The Appearance dock's `.appearance-choice-desc` is the third of the three
+   name-plus-description rows and deliberately does NOT join, so "joins this
+   list" reads as the default rather than the rule. Its sentence is the reason
+   to pick the other backdrop: a reader who cannot finish it cannot choose, and
+   unlike these two it hangs no title attribute behind itself to recover the
+   rest. It takes this leading locally and no clamp at all.
+
+   Nothing is lost outright — both rows hand their full description to a title
+   attribute, so the clamp costs at most a hover. */
+.agent-row-desc,
+.command-row-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
 }
 
 /* Keyboard focus. Never a bare outline — a wash plus an inset hairline, so the

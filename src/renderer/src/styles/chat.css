@@ -411,9 +411,20 @@
    supporting line legible under a 46px headline instead of shrinking to a
    caption by contrast. Stated as arithmetic on the token, like the title, so
    the step is greppable and adds no fifth token to `@theme`. No measure is set:
-   the copy is one 44-character line and runs about 320px at this size, so any
+   the copy is one 56-character line and runs about 410px at this size, so any
    `max-width` large enough not to widow it would never bind, and a declaration
-   that never binds is not a composition. */
+   that never binds is not a composition.
+
+   THE COPY GREW AND THE REASONING SURVIVED, with less room than it had. The
+   line was 44 characters at about 320px while it restated the button; saying
+   what opening a folder gives you instead costs twelve characters. The
+   narrowest field this line is ever painted in is the 640px enforced minimum
+   window less 32px of padding a side, which is 576px, so the natural width
+   still clears it by about 165px and the no-measure argument holds unchanged.
+   It holds by margin, not by law: a rewrite past roughly 570px wraps to a
+   second line at that window and spends 28px of the 65px of vertical headroom
+   the sum above reserves, so the next editor of that string owns this figure
+   and the sum both. */
 .welcome-hint {
   font-size: calc(var(--fs-body) * 1.15);
   color: var(--text-muted);
