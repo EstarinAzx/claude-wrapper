@@ -1,0 +1,97 @@
+# The fast gate, and deliberately nothing else (#150).
+#
+# WHAT THIS COVERS: `npm run typecheck`, `npm test`, `npm run build`. That is the
+# three-command acceptance gate the record already names (D7), and all three are
+# honestly headless — no Electron window is ever launched here.
+#
+# WHAT IT DOES NOT COVER: the DOM phase (`npm run test:dom`). That phase is a
+# local win32 step and it is documented as one in
+# `.claude/skills/run-desktop/SKILL.md`. It is not "not wired up yet"; it cannot
+# run on a hosted runner at all:
+#
+#   - Electron needs a display. On Linux that means xvfb plus a stack of system
+#     libraries, and the drivers have only ever been verified on win32.
+#   - `gui-91` and `gui-124` spawn the real `claude` CLI, which is not on a
+#     runner's PATH. Their own assertions red when it is missing, which is
+#     correct behaviour and a useless signal in CI.
+#   - `gui-119` is `desktop-exclusive`: its witness is a genuine desktop
+#     foreground and a screen capture of the window rectangle. A runner has
+#     neither, and no amount of wiring gives it one.
+#
+# WHY THE NAME IS `fast-gate` AND NOT `ci` OR `tests`. A green check has to read
+# as partial on sight. Cross-model review refuted the earlier draft of this
+# ticket precisely here: "splitting off documentation and partial CI lets the
+# visible half land while the actual release forcing mechanism remains
+# unresolved. That creates a green-looking workflow which still cannot enforce
+# the claimed gate." A check named `ci` over a repo whose real instrument runs
+# nowhere converts a known gap into an assumed cover, which is worse than having
+# no check. So the boundary is carried in three places a reader cannot miss: the
+# workflow name, the job name that shows up in the checks list, and a job summary
+# printed on every run including failed ones.
+#
+# WHAT THIS WORKFLOW IS NOT. It is not the forcing mechanism. Nothing here makes
+# anyone run the DOM phase before a release; that question is #144 and it stays
+# open. This file is only the half the record already settles.
+#
+# WHY `windows-latest` AND NOT `ubuntu-latest`. win32 is the only platform on
+# which this suite has ever been observed green — every gate run in the project's
+# history is a win32 run, and the DOM drivers are verified win32 only. Ubuntu
+# would be cheaper and would probably work, and "probably" is the exact standard
+# this ticket exists to refuse. Move it to ubuntu when somebody has actually run
+# the three commands there once, not before.
+#
+# THE THREE COMMANDS ARE PINNED. `tests/fast-gate-workflow.test.ts` asserts this
+# file invokes exactly those three npm scripts and never `test:dom`, and that the
+# uncovered boundary is stated here and in `SKILL.md`. A convention nothing
+# executes is a style preference.
+
+name: fast-gate
+
+on: push
+
+permissions:
+  contents: read
+
+jobs:
+  fast-gate:
+    # This name is what appears in the checks list. It is the boundary statement
+    # most readers will ever see, so it carries the exclusion itself.
+    name: fast gate (typecheck, test, build) — does NOT cover the DOM phase
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      - run: npm run build
+
+      # `always()` so the boundary is stated on a red run too. A failed gate is
+      # exactly when somebody is most likely to over-read what it covers.
+      - name: State what this gate does not cover
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### fast-gate — partial coverage by design"
+            echo
+            echo "**Ran:** \`npm run typecheck\`, \`npm test\`, \`npm run build\`."
+            echo
+            echo "**Did NOT run:** the DOM phase (\`npm run test:dom\`)."
+            echo "It is a local win32 step and cannot run on a hosted runner:"
+            echo "Electron needs a display, two drivers spawn the real \`claude\`"
+            echo "CLI, and \`gui-119\` needs a real desktop foreground."
+            echo
+            echo "A green check here means the headless half passed."
+            echo "It is not a statement about CSS, layout, IPC or the real app."
+            echo "See \`.claude/skills/run-desktop/SKILL.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"

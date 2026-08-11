@@ -167,6 +167,11 @@ npm run test:dom -- --only gui-91.mjs     # one driver — use this to prove a r
 npm run test:dom -- --list                # what runs, what does not, and why
 ```
 
+**CI does not run any of this** (#150). The `fast-gate` workflow runs
+`npm run typecheck`, `npm test` and `npm run build`, and stops there. **This
+phase is a local win32 step, run by a human**, and the reasons a hosted runner
+cannot host it are in *"CI runs the fast gate only"* below.
+
 **The split, and neither half covers the other:**
 
 | | `npm test` | `npm run test:dom` |
@@ -280,10 +285,40 @@ A driver that merely **spawns** the CLI without starting a turn (`gui-91`'s
 nothing, and on a machine with no `claude` on PATH the driver's own assertion
 reds saying exactly that. A real failure, not a skip.
 
-**The gap, stated rather than papered over: nothing runs this phase for you.**
-This repo has no `.github/` and no CI of any kind, so "runs on every push" has
-nowhere to run. Tracked separately — the phase being cheap to invoke and honest
-about its own coverage is what this ticket could actually deliver.
+### CI runs the fast gate only, and this phase is a local win32 step (#150)
+
+`.github/workflows/fast-gate.yml` runs on push and executes exactly three
+commands: `npm run typecheck`, `npm test`, `npm run build`. All three are
+honestly headless — no Electron window is launched anywhere in that workflow.
+
+**This phase is not in it, and not because nobody got round to wiring it up.**
+A hosted runner cannot host it, for three independent reasons:
+
+- **Electron needs a display.** On Linux that means `xvfb` plus the system
+  library set listed under *Gotchas* below, and the drivers have only ever been
+  verified on win32.
+- **`gui-91` and `gui-124` spawn the real `claude` CLI**, which is not on a
+  runner's PATH. Their own assertions red when it is missing — correct behaviour,
+  and a useless signal in CI.
+- **`gui-119` is `desktop-exclusive`.** Its witness *is* a real desktop
+  foreground and a capture of the window rectangle. A runner has neither, and
+  wiring cannot supply one.
+
+So the phase stays a **local win32 step, run by a human**, on the machine that
+has a desktop.
+
+**What a green `fast-gate` check means, stated so it cannot be over-read:** the
+headless half passed. It says nothing about CSS, layout, real IPC, the real
+spawn, or the app as a window — jsdom loads no stylesheet and the workflow never
+starts Electron. The workflow carries that boundary in its own name, in the job
+name that appears in the checks list, and in a job summary printed on every run
+including red ones. `tests/fast-gate-workflow.test.ts` pins all of that, so the
+gate cannot quietly grow into a claim it does not support.
+
+**The gap that remains, stated rather than papered over: nothing forces anyone
+to run this phase.** CI now exists, but it covers the fast half only, and a
+release is still one human remembering. That question is **#144**, and it is
+open — this section is not it.
 
 ## Gotchas
 
