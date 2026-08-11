@@ -9,7 +9,7 @@ tags: [context, pick-up]
 
 Start: read [[overview]] + [[active-work]].
 
-## Chain 7 is draining the queue, with gauntlet chained behind it
+## Chain 7 is one ticket from dry, with gauntlet chained behind it
 
 An autonomous `/preset vibe` pass ran while the owner was away, under an explicit
 AFK autonomy grant. It ruled the three design questions, triaged the follow-ups,
@@ -26,62 +26,71 @@ git rev-list --count origin/main..main
 
 ## The queue
 
-**Two tickets left. Legs 1–10 landed #149, #146, #142, #148, #143, #147, #145,
-#150's work, #141, and #138** (`b2a3fd0`, **closed**). **Next is #139.**
+**ONE ticket left. Legs 1–11 landed #149, #146, #142, #148, #143, #147, #145,
+#150's work, #141, #138, and #139** (`ab7aee4`, **closed**). **Next is #140, and
+it is the last one** — when it lands the queue is dry, the body signals done, and
+the chain fires its `then:` into `/preset gauntlet`.
 
 | Order | # | Why here |
 |---|---|---|
-| ~~1–10~~ | ~~149, 146, 142, 148, 143, 147, 145, 150, 141, 138~~ | **DONE, legs 1–10** |
-| 11 | 139 | Tool-card label to 400 |
+| ~~1–11~~ | ~~149, 146, 142, 148, 143, 147, 145, 150, 141, 138, 139~~ | **DONE, legs 1–11** |
 | 12 | 140 | Named scoped exception for the state stripe |
 
 **No ticket in this queue carries a native blocking edge** — checked on all nine
-at leg 3, re-checked on #138 and #139. The ordering lives only in this table, so
-it is the chain's plan rather than something the tracker enforces.
+at leg 3, re-checked on #138, #139 and #140. The ordering lives only in this
+table, so it is the chain's plan rather than something the tracker enforces.
 
-**The gauntlet's ordering constraint is CLEARED.** #138 was the one `bar_win`'s
-*"one type scale holds across all of them"* clause was waiting on. Per-surface
-verdicts are no longer confounded by two scales.
+**The gauntlet's ordering constraint is CLEARED** (#138 landed the one type scale
+`bar_win`'s clause was waiting on).
 
 **#150 is OPEN at `needs-info` and is NOT queue work.** Its code landed in full;
 what it waits on is a human pushing and watching the first CI run. Leave it.
 
-**Ten tickets sit at `needs-triage` and none may be promoted by a leg:** #144,
-#151, #152, #153, #154, #155, #156, #157, #158, and **#159** (new, leg 10).
+**Eleven tickets sit at `needs-triage` and none may be promoted by a leg:** #144,
+#151–#159, and **#160** (new, leg 11).
 
-## Next ticket, #139 — and read the ruling, it inverts the ticket title
+## Next ticket, #140 — a document edit, and the trap is in the test
 
-The title says the prose/label weight pair is off the documented set. **The
-ruling reversed twice and landed somewhere else:** `DESIGN.md` licenses 600 for
-exactly two things, the app name and bubble-less emphasis, and **a tool-card
-label is neither**. So the off-spec element is not the prose at 400 — it is the
-**label at 600**, asserting a weight the spec never granted it.
+The ruling is settled: **keep the stripe, and amend the ban with a named, scoped
+exception** for the selected session row's state stripe, written in **#125's
+form** (the glass-ban exception) and **stating that it is not a precedent**.
 
-**Acceptance 1 is a STOP GATE, and it comes before any code:** confirm against
-the *rendered* elements that the tool-card label is neither the app name nor
-bubble-less emphasis. **If that reading is wrong, stop and report.** Do not build
-on it.
+The ruling is careful about *why*, and the distinction matters if you are tempted
+to simplify: **#125 supplies the METHOD, not the authority.** A cross-model
+adversary refuted the first draft — *"an exception to the glass ban cannot license
+an exception to an unrelated side-stripe ban"* — and it is right. The authority is
+the owner's standing grant. Cite #125 for how to write the amendment, never for
+whether one may exist.
 
-Then: labels at 400, `{400, 600}` untouched, no new rung; `DESIGN.md` records
-that tool-card emphasis is carried by **size and colour**; the `font-weight: 500`
-grep still finds zero.
+**Do not rewrite the ban to say "no decorative side-stripes".** That was
+considered and rejected: it hands every future surface a category-wide licence,
+where a named exception hands out exactly one.
 
-**The trap the ticket keeps in the record, and it is a real one:** `500` renders
-**byte-identically** to `600` on this machine (stem 1.5436 for both) because the
-family snaps to named instances. Anyone "fixing" this at 500 changes **zero
-pixels** while believing otherwise. Assume the same hazard below 400. **Measure
-the stem, not the declaration.**
+**The ticket's own framing is wrong in one place and the ruling says so.** The
+ticket calls the banned list "a list of decorative vocabulary". Read the line —
+*"No side-stripe borders, no gradient text, no decorative extra glass layers
+inside the window (the OS acrylic is the one glass), no card grids, no em dashes
+in copy."* — and "decorative" qualifies the **glass clause only**. The textual
+violation is real. Do not argue it away; exempt it.
 
-D4 applies — this moves rendered type, so it owes a driver pin that executes.
-`gui-96` already owns the computed-weight ground and greps `font-weight: 500`;
-extend it rather than starting a driver, unless the shape genuinely differs.
+**The landmine, and one thing that is NOT a landmine.**
+`tests/subagent-material.test.ts` reads `DESIGN.md` literally and splits on
+`\n## Bans in force\n`, so **that heading must survive the edit verbatim**.
+But it normalises first — `DESIGN.md:95` does `.replace(/\r\n/g, '\n')` before
+splitting — so **CRLF is handled there and is not the hazard**. Do not spend a
+run on it. It splits again on `\n## ` for the section end, so the exception text
+must stay **inside** that section rather than under a new `##` heading.
+
+D4 applies only if pixels move, and this ruling moves none — the stripe ships
+unchanged. Acceptance 3 wants the decision log to carry it so a fresh reviewer
+reading spec-plus-pixels stops re-raising it.
 
 ## Before you trust a gate result
 
 **`main` goes red on its own.** `tests/session-title-enrichment.test.tsx` fails
 intermittently under full-suite load — 4 of 7 complete runs at leg 5, including
 one on the unmodified tree with all work stashed. Filed as **#153**. Green on
-every run at legs 6 through 10, which is not evidence it is fixed.
+every run at legs 6 through 11, which is not evidence it is fixed.
 
 **So a single red run is not evidence your change broke something.** Re-run, and
 if it is that test, stash and run against the bare tree.
@@ -100,51 +109,53 @@ file and read `$?` on its own line.
 `tests/transcript-rewind-real-store.test.ts` skips without a stored transcript
 whose `cwd` is this repo. **#157.** Not a regression.
 
-## What leg 10 added, and the traps it hit
+**Never revert a mutation with `git checkout -- <file>` on an uncommitted tree.**
+Leg 10 did and lost two finished files mid-run. Back up with `cp` and restore
+from that. Mutation testing is routine in this chain.
 
-**The type scale is enforced as a RATIO, not as a list** (#138). Every painted
-size must land within **half a pixel** of `15 * 1.15^k`. `gui-138.mjs`
-(`npm run test:dom`) sweeps every painted box in real Chromium and prints each
-distinct size with its rung; `gui-138.source.mjs` (`npm test`) bans `em`
-font-sizes and literal px sizes in `styles/`, and cross-reads `tokens.css`
-against `DESIGN.md`.
+## What leg 11 added, and the rule worth carrying
+
+**The tool-card label went 600 → 400** (#139), because `DESIGN.md` licenses 600
+for exactly three roles — app name, headings, bubble-less emphasis — and a
+tool-card label is none of them.
+
+**The transferable rule is about the shape of the pin.** The value rests on a
+warrant, and the warrant is a **DOM fact a refactor can change without touching a
+stylesheet** (`ToolCard` renders as a *sibling* of `.assistant-body`; move it
+inside and 600 becomes licensed again). So `gui-96` checks both — criterion 7 the
+value, **criterion 9 the warrant**. A check on a value survives the death of its
+reason unless the reason is checked too.
+
+**Criterion 8 is the anti-vacuity pin, and its technique is reusable here.**
+`500` renders byte-identically to `600` on this machine because the family snaps
+to named instances, so a computed-weight read can be green over a no-op. The fix:
+drive the element through both values in-run and compare `getBoundingClientRect()`
+in **device** pixels. Measured 29.94 at 400 against 31.17 at 600.
 
 ```bash
-npm run build && node .claude/skills/run-desktop/gui-138.mjs
+npm run build && node .claude/skills/run-desktop/gui-96.mjs
 ```
 
-**The tolerance cannot be tightened.** 11px sits 0.34px off its own rung, so
-anything stricter throws a documented rung off the documented scale. That is why
-`.win-btn` at 0.29px (Chromium's UA button default, **a seventh size nobody had
-counted**) is **not** a violation, and is filed as **#159** rather than fixed.
+**Two new source checks** (`npm test`): criterion 10 — every `font-weight` in
+`styles/` is `400` or `600`, matched as `[^;}]+` so **`bold` cannot slip through
+a digit-only pattern**; criterion 11 — `DESIGN.md`'s Type section keeps a line
+naming the tool-card label, its weight, and both size and colour.
 
-**FOUR TRAPS THIS LEG PAID FOR:**
-
-1. **`git checkout -- <file>` during mutation testing destroys uncommitted work.**
-   This leg lost two finished files mid-run that way. On an uncommitted tree,
-   revert a mutation with `cp` from a backup. Never `git checkout`.
-2. **`DESIGN.md` is CRLF.** A regex written `\n## Type\n` matches nothing and
-   reports every rung missing — a red for the wrong reason that reads exactly
-   like real drift. Use `\r?\n`.
-3. **`path.relative()` answers backslashes on win32.** A check comparing it to a
-   hand-written `a/b/c.css:12` allow-list silently never matches, so the
-   exception excuses nothing and the check reds on the line it was written to
-   permit. Normalise with `.split(path.sep).join('/')`.
-4. **Do not cite `DESIGN.md` by line number.** Four `src/` comments did; the
-   Type section grew and broke all four. They now name the section.
-
-**Carry leg 9's habit, which is what caught trap 3: mutation-verify the TEST,
-not only the code.** Reading that check would not have found it. Running it did.
+**And the finding the stop gate produced: #160.** Discharging acceptance 1 meant
+mapping every 600 in `styles/` to a licensed role, and the same reading that
+condemns the tool-card label condemns **eight more** elements. Filed at
+`needs-triage`, not ruled — because #138 **widened this very line** one commit
+earlier rather than restriking code, so the precedents point opposite ways.
 
 ## CI exists, and has still never run
 
 `.github/workflows/fast-gate.yml`, on push, `windows-latest`, exactly
 `typecheck` + `test` + `build`. **Nothing has ever been pushed from this
-checkout.** That is why #150 is open.
+checkout.** That is why #150 is open. `main` is **22 commits ahead**.
 
 ## The DOM phase's current reds, already attributed
 
-**Legs 8, 9 and 10 ran no full phase** — leg 10 ran only `gui-138`, four times —
+**Legs 8 through 11 ran no full phase** — leg 11 ran only `gui-96`, four times —
 so this table is leg 7's and nothing has moved it.
 
 | driver | in batch | alone | verdict |
@@ -156,6 +167,7 @@ so this table is leg 7's and nothing has moved it.
 | `gui-91` | FAIL | **FAIL 1×, PASS 3×** | **#156**, intermittent ~1 in 7 |
 | `gui-93` | **PASS** | PASS (leg 9, twice) | green; red-verified under mutation |
 | `gui-124` | **PASS** | PASS | was batch-red at leg 6, unexplained |
+| `gui-96` | — | **PASS** (leg 11, ALL GREEN) | 11 criteria, all mutation-verified |
 
 There is still **no full-phase baseline on an unmodified tree**.
 
@@ -177,18 +189,18 @@ with a stubbed `dialog.showOpenDialog`, so nobody has ruled out the harness.
 reds on: a changed job name, a changed command **set** (order is free), losing
 `if: always()` on the summary step, or **any** workflow invoking `test:dom`.
 
-**`styles/` may contain no `em` font-size and exactly ONE literal px font-size**
-(#138), allow-listed by exact `file:line` in `gui-138.source.mjs`. The allow-list
-carries an anti-vacuity clause: if that line stops being a px `font-size`, the
-check reds rather than quietly excusing whatever lands there next.
+**`styles/` may contain only `400` and `600` font-weights** (#139), keywords
+included, and **no `em` font-size and exactly ONE literal px font-size** (#138),
+allow-listed by exact `file:line` with an anti-vacuity clause.
 
-**`DESIGN.md`'s `## Type` section must name every `--text-*` value `tokens.css`
-defines** (#138). A token moving without the document following is a red.
+**`DESIGN.md` is read by four checks now** and each wants something different:
+`## Type` must name every `--text-*` value `tokens.css` defines (#138) **and**
+keep the tool-card weight sentence (#139); `## Bans in force` must survive as a
+split token (#125/#140). **It is CRLF** — a section regex needs `\r?\n`, though
+`subagent-material.test.ts` normalises first and is not exposed.
 
 **`CLAIMED_HEADROOM_PX` in `inspect.mjs` is a copy of a sum argued in prose in
 `chat.css`.** Never move it to match a measurement without moving that sum too.
-#138 moved the sum (the title went 46.26 → 46, the line box lost 0.33px) and the
-number still held at 65 — that is the correct order.
 
 **`gui-75` is the first driver with a sidecar that is ALSO in `DOM_SKIP`** (#141).
 "Has a sidecar" and "is executed somewhere" are now different claims.
@@ -204,8 +216,7 @@ drivers at import, same rule as `inspect.mjs` (#142, #148). Put it in
 
 **Every driver launches on a private `userData`** (#147). New driver → spread
 `...profileArgs()` from `driver-profile.mjs`. **No opt-out list, do not add one.**
-
-**The profile is per driver PROCESS, not per launch.**
+The profile is per driver PROCESS, not per launch.
 
 **A cold profile is not the same app as a warm one.** Leg 6's whole finding.
 
@@ -224,6 +235,8 @@ one. Diff the branch against `main` first, and let an empty diff authorise `-D`.
 **`.context/` picks up line-ending churn.** Keep `.context/` off the ticket branch
 and check `git diff --cached --name-only` before committing.
 
+**Do not cite `DESIGN.md` by line number** (#138). Name the section.
+
 ## Standing constraints for the renderer
 
 No em dashes in user-visible strings (`tests/copy-em-dash.test.ts` compiles
@@ -234,9 +247,7 @@ stay the first literal occurrence in `chat.css`, exactly one `backdrop-filter` i
 all of `styles/`, and the `@import` order in `styles.css` IS the cascade. D4 —
 any CSS change owes a driver pin that **executes**, naming which gate runs it;
 jsdom loads no CSS, so neither the fast gate nor CI can see layout. The
-titlebar's centring is load-bearing (#136). `DESIGN.md` is read literally by
-`tests/subagent-material.test.ts`, which splits on `\n## Bans in force\n` — #140
-edits that section, so the split token must survive verbatim.
+titlebar's centring is load-bearing (#136).
 
 **Adding or removing a capture surface costs three edits** (#149): `SURFACES` in
 `inspect.mjs`, the `surfaces:begin`/`surfaces:end` region in
@@ -261,13 +272,14 @@ Live entries in `.claude/vibe.md` under `## Needs you`:
    attempted and both were refuted cross-model as post-hoc goalpost movement.
 
 **Still one command:** `git push origin main`, then watch the first `fast-gate`
-run and close **#150** on green. `main` is **20 commits ahead** and has never
+run and close **#150** on green. `main` is **22 commits ahead** and has never
 been pushed.
 
 Seven older owner-calls remain in `.claude/vibe-130.md`. **#152** and **#155** are
-yours in spirit. **#159** is new and is a design question, not a defect: may a
-painted size be inherited from the user agent at all? It also folds in the 20px
-subagent close glyph, since both are the same "is a glyph a type rung" call.
+yours in spirit. **#159** and **#160** are the newest pair and are the same
+question one property apart: may a painted value sit outside the documented set
+because nothing ever licensed it, or does the document owe an amendment? #159 is
+sizes, #160 is weights.
 
 ## Gauntlet
 
@@ -295,10 +307,14 @@ standard.
   + a `PushNotification`.
 - **File follow-ups at `needs-triage`, never `ready-for-agent`.** A leg promoting
   its own follow-up makes the chain's stop condition unreachable by construction.
-- **A leg may leave a ticket open** (leg 8's precedent, #150) or close it (legs 9
-  and 10, #141 and #138). Landing the work and closing the ticket are separate
-  decisions: close when everything the acceptance asks for was verifiable without
-  a push.
+  Leg 11 filed #160 that way with one ticket left in the queue.
+- **A leg may leave a ticket open** (leg 8's precedent, #150) or close it (legs 9,
+  10 and 11 closed #141, #138 and #139). Landing the work and closing the ticket
+  are separate decisions: close when everything the acceptance asks for was
+  verifiable without a push.
+- **An acceptance criterion written as a stop gate is read first and answered
+  with evidence** (leg 11, #139 acceptance 1). Discharging it honestly may widen
+  the finding beyond the ticket — file the widening, do not detour into it.
 
 ## Related
 
