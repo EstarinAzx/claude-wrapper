@@ -142,6 +142,34 @@
   gap: 4px;
 }
 
+/* Zoom is the only section that carries a control on its header (see the
+   Section note in AppearanceDock.tsx). Without a shell the stepper sits in
+   empty flex slack and reads as a free-floating pill rather than half of one
+   composed row. This modifier puts the SAME resting --tint-2 inset the option
+   rows and command rows already wear around the whole head — mark, label and
+   stepper — so the three pieces share one boundary.
+
+   Deliberately NOT a return to the full-width zoom strip: the stepper stays
+   compact and right-hung inside the shell; only the shell is full-width. That
+   keeps the silhouette discriminator wave 4 established (Zoom is not a third
+   list) while answering the wave-9 gap (label and stepper belong to one row).
+
+   Theme and Backdrop do not take this class. Shelling those headers would
+   reintroduce a second organisational grammar beside the option shells and
+   undo the spacing-led section system. Padding matches an option row so the
+   mark still starts on the same 16px edge and the head still spends 215px. */
+.appearance-field--control > .appearance-head {
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px var(--tint-2);
+  /* The stepper already carries --tint-1 as its own fill. Leaving this head
+     transparent keeps one ground under the label and lets the strip state its
+     own edge inside the shared shell — two nested shells, not one filled slab. */
+  background: transparent;
+  min-height: 36px;
+  box-sizing: border-box;
+}
+
 /* The 10px the body handed to the rows, taken back here. It is the same inset
    an option row carries, so the mark still starts on the app's 16px edge and
    the header still has 215px of content to spend — which is the number the zoom

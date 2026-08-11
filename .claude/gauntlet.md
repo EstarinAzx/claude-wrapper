@@ -37,9 +37,13 @@ pieces:
   # before building it.
   # Wave 9: held BAR WINS, change SAME (pixel-identical). Critic-only. New gap
   # names Zoom row integration — non-colliding candidate for wave 10 if still open.
+  # Wave 10: BAR WINS -> YOURS WINS. Zoom head got appearance-field--control
+  # resting --tint-2 shell binding mark+label+compact stepper. CLOSED.
+  # Critic's next gap (Theme selected-descriptor) is post-close polish — do not
+  # reopen by default; Theme rows stay swatch-only by design (DESIGN.md / copy).
   - name: AppearanceDock
-    verdict: BAR WINS
-    open: true
+    verdict: YOURS WINS
+    open: false
   # Wave 7: BAR WINS -> YOURS WINS. CTA margin-top 32 -> 24. CLOSED.
   - name: WelcomeMinWindow
     verdict: YOURS WINS
@@ -81,10 +85,10 @@ pieces:
 critic: sonnet                 # FAMILY name only — re-resolve live every wave, never carry the target
 critic_degraded: false
 branch: gauntlet/docks-and-min-window
-wave: 9
-# 1 -> 2. NO ordinal improvement. All three open pieces SAME + BAR WINS held.
-# Critic-only wave (no builder). Halt still at plateau: 3 — one clean wave away.
-plateau: 2
+wave: 10
+# 2 -> 0. AppearanceDock BAR WINS -> YOURS WINS (Zoom control-row shell).
+# Agents/DocksAsOne held BAR WINS. Plateau resets. Four of six now YOURS WINS.
+plateau: 0
 max_waves: 12
 page: false
 stop: false
@@ -243,6 +247,74 @@ this file. Every one of them has already cost this repo a false finding.
 | 9 | WelcomeMinWindow | YOURS WINS | *(closed — no critic this wave; capture pixel-identical; headroom still 69.71/70)* |
 | 9 | DocksAsOne | BAR WINS | *(held — change SAME; critic-only)* Tighten the Agents dock's list rhythm and hierarchy: its unframed name-and-description blocks and lone Explore connector read like loosely placed text in a mostly empty panel beside the more composed Commands and Appearance docks. **Still collision A — do not build Agents shells without a human pick.** |
 | 9 | IconHousing | YOURS WINS | *(closed — no critic this wave; capsule kept; collision B held)* |
+| 10 | AgentsDock | BAR WINS | *(no builder — collision A / owner call 19; capture pixel-identical to wave 9)* Align each nesting level to one shared left edge and tighten the vertical rhythm around Explore so its title, description, and metadata read as one deliberate child row rather than a text stack hanging from a rule. **Still collision A if read as resting shells — do not build shells without owner call 19.** |
+| 10 | CommandsDock | YOURS WINS | *(closed — no critic this wave; capture pixel-identical)* |
+| 10 | AppearanceDock | **YOURS WINS** | **THE VERDICT MOVED.** *(builder — Zoom head `appearance-field--control` resting --tint-2 shell; mark+label+compact stepper one composed row; Theme/Backdrop bare; option shells + gap-4 held)* Give the Theme section one concise selected-theme descriptor or preview so its four compact swatch rows feel as authored as the Backdrop choices. **Post-close polish — Theme is swatch-only by design; do not reopen by default.** |
+| 10 | WelcomeMinWindow | YOURS WINS | *(closed — no critic this wave; capture pixel-identical; headroom still 69.71/70)* |
+| 10 | DocksAsOne | BAR WINS | *(held — change BETTER from Appearance's Zoom-row compose; Agents/Commands pixel-identical)* Tighten Agents with consistent spacing between top-level entries and a more clearly subordinate type treatment for nested Explore, without adding resting shells. **Still collision A — do not build Agents shells without a human pick.** |
+| 10 | IconHousing | YOURS WINS | *(closed — no critic this wave; capsule kept; collision B held)* |
+
+## Wave 10 adjudications — Zoom row closes, Appearance ordinal moves, plateau resets
+
+**One builder, three open-piece critics, zero smoothing edits.** Gate green (D7); **zero `SPEC BREAK`s**; critic family re-resolved live to `sonnet` -> `codex/gpt-5.6-sol`; `critic_degraded: false`. Final CSS bundle **`index-DOI17h8g.css`** (left wave 9's `index-d_l3D7IG`).
+
+### 1. THE PLATEAU RESETS — ONE ORDINAL IMPROVED
+
+| piece | before | after | builder? | change |
+|---|---|---|---|---|
+| AppearanceDock | BAR WINS | **YOURS WINS** | yes — Zoom control-row shell | BETTER |
+| AgentsDock | BAR WINS | BAR WINS | no — collision A | SAME |
+| DocksAsOne | BAR WINS | BAR WINS | no — critic-only | BETTER |
+| CommandsDock | YOURS WINS | YOURS WINS | closed | — |
+| WelcomeMinWindow | YOURS WINS | YOURS WINS | closed | — |
+| IconHousing | YOURS WINS | YOURS WINS | closed | — |
+
+On the preset's literal rule any improvement resets the counter, so **`plateau` 2 -> 0**. BETTER-inside-band on DocksAsOne does not itself move the ordinal, but Appearance's band change does. Halt still at `plateau: 3` — three clean waves away at the earliest. Owner call 19 still open, still default build-nothing on Agents shells. Owner call 20 still open, still not acted on.
+
+### 2. THE ZOOM BUILD WAS THE ONLY CLEAN LEVER AND IT WORKED
+
+Wave 9 named Zoom row integration as the non-colliding candidate. Wave 10 built exactly that:
+
+- `appearance-field--control` on the Zoom section only (trailing present)
+- resting `--tint-2` inset shell around the whole head (mark + ZOOM + compact stepper)
+- stepper stays **88×26** inside a **235×38** head — not full-column (Z2 pin)
+- Theme/Backdrop heads stay bare (Z1b)
+- option resting shells + gap-4 held (B1/B2/B3)
+
+Critic: *"The Zoom shell visibly closes the prior gap by binding its label and compact stepper into one deliberate row."* Verdict **YOURS WINS**. Piece closed.
+
+### 3. APPEARANCE'S POST-CLOSE GAP IS NOT A REOPEN WARRANT
+
+Critic asked for a selected-theme descriptor/preview so Theme rows "feel as authored as Backdrop." That is a **content** ask against Theme's deliberate swatch-only anatomy (theme states its case by being applied; Backdrop needs a sentence because the trade is invisible). **Do not reopen AppearanceDock by default to add Theme copy.** Recorded as post-close polish only.
+
+### 4. AGENTS + DOCKS AS ONE STILL COLLISION A
+
+Agents SAME by bytes. DocksAsOne BETTER inside BAR WINS from Appearance alone, and its gap still names Agents rhythm/hierarchy **without resting shells**. Owner call 19 still owns any shell fork. Default remains build nothing on Agents.
+
+### 5. SMOOTHING PASS MOVED ZERO PIXELS
+
+No edit. Piece list full at six of six. **NO_NEW_PIECE.** Smooth reason: control shell correctly marks the only header-with-trailing; Theme/Backdrop stay bare section heads over option shells — one system, two roles.
+
+### 6. Verification that was run rather than trusted
+
+- **Build before capture.** Bundle left `index-d_l3D7IG` for `index-DOI17h8g` before inspect ran.
+- **Inspect PASS**, headroom 69.71 / claimed 70, overflow 0, 11/11 files under `.gauntlet/waves/docks-and-min-window/10/`.
+- **SHA256: DIFF only `appearance-dock.png`.** SAME the other ten, including null controls `titlebar.png` and `sidebar.png`.
+- **Drivers wave2..wave10 ALL GREEN.** Wave10: Z0/Z1/Z1b/Z2 + B1/B2/B3 holds + C1 fence, with live reconstructions that fail.
+- **Gate:** typecheck clean; **96 files / 1406 passed + 44 skipped** (+1 attributed to `gui-gauntlet-wave10.mjs`); build clean, final hash `index-DOI17h8g`.
+- **Critic routing re-resolved live** this wave: `sonnet` -> `codex/gpt-5.6-sol`. Eleven consecutive waves, each read fresh.
+
+### 7. What wave 11 inherits
+
+| piece | wave 11 posture | trap |
+|---|---|---|
+| AppearanceDock | **closed YOURS** | Theme descriptor is post-close polish — do not reopen by default; do not invert shells |
+| AgentsDock / DocksAsOne | **still collision A** — only open pieces | row shell; owner call 19 — default remains build nothing |
+| CommandsDock | closed YOURS | optional horizontal padding only if re-opened |
+| WelcomeMinWindow | closed YOURS | preserve 24; do not tighten |
+| IconHousing | closed YOURS | zoom-minus only if re-opened; **do not remove the capsule** |
+
+With plateau at 0 and only Agents/DocksAsOne still open — both blocked on owner call 19 — wave 11 may be **critic-only / stall** unless a non-shell Agents lever appears. That is allowed; three stalls halt the run.
 
 ## Wave 9 adjudications — critic-only stall, ordinals held, plateau 1 -> 2
 
@@ -1670,6 +1742,24 @@ verdict to improve on, so it cannot be a plateau wave — the same call run 1 ma
 recorded. Wave 2 is the first wave that can move it.
 
 ## Log
+- [wave 10] **ZOOM CONTROL-ROW SHELL, APPEARANCE BAR->YOURS, PLATEAU 2 -> 0.** One
+  builder (AppearanceDock Zoom head `appearance-field--control` resting --tint-2
+  shell), three open-piece critics, zero smoothing edits. Appearance **BAR WINS
+  -> YOURS WINS** (change BETTER) and closed. Agents BAR WINS SAME (collision A).
+  DocksAsOne BAR WINS BETTER inside band (no ordinal). SHA256 DIFF only
+  `appearance-dock.png`; null controls alive. Bundle **`index-DOI17h8g.css`**.
+  Critic re-resolved live: `sonnet` -> `codex/gpt-5.6-sol` (eleventh consecutive).
+  `plateau` **2 -> 0**. Four of six now YOURS WINS.
+- [wave 10] **ONLY CLEAN LEVER WORKED.** Zoom head shells mark+label+compact
+  stepper as one composed row; Theme/Backdrop stay bare; option shells + gap-4
+  held. Wave10 driver Z0/Z1/Z1b/Z2 + B1/B2/B3 + C1 GREEN with live reconstructions.
+- [wave 10] **POST-CLOSE THEME DESCRIPTOR IS POLISH, NOT A REOPEN.** Critic asked
+  for selected-theme descriptor/preview; Theme is swatch-only by design. Do not
+  reopen Appearance by default.
+- [wave 10] **BOTH COLLISIONS HELD.** Owner call 19 default. Capsule kept. Smooth:
+  NO_NEW_PIECE, zero pixels. Drivers wave2..wave10 GREEN. Gate: typecheck clean,
+  **96 files / 1406 passed + 44 skipped**. Nothing pushed. Wave 11 inherits only
+  Agents/DocksAsOne open (collision A); may be critic-only/stall.
 - [wave 9] **CRITIC-ONLY STALL, ORDINALS HELD, PLATEAU 1 -> 2.** Zero builders,
   three open-piece critics, zero smoothing edits. All three open pieces stayed
   BAR WINS with change SAME. All eleven captures SHA256-identical to wave 8

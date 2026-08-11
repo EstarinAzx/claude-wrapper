@@ -295,6 +295,16 @@ const ZoomMark = (
 // pass nothing and render exactly what they rendered before, so the header is
 // still one component and not two.
 //
+// Wave 10: a section that carries `trailing` is a CONTROL ROW, not a bare
+// section header. It takes `appearance-field--control` so the head paints the
+// same resting --tint-2 shell the option rows and command rows already wear.
+// That shell is what unifies the Zoom label with its stepper — without it the
+// compact strip reads as a free-floating pill hung at the far right of empty
+// header slack. Theme and Backdrop pass no trailing, so they keep the bare
+// head and stay a spacing-led section system. Do not hand this class to a
+// list section: a shell around "THEME" would reintroduce the icon-and-rule
+// scaffold wave 5 retired.
+//
 // The header is a `span`, so anything handed to `trailing` must be phrasing
 // content. Buttons and spans are; a div is not.
 const Section = ({
@@ -310,7 +320,11 @@ const Section = ({
   trailing?: ReactNode
   children?: ReactNode
 }) => (
-  <div className="appearance-field">
+  <div
+    className={
+      trailing != null ? 'appearance-field appearance-field--control' : 'appearance-field'
+    }
+  >
     <span className="appearance-head">
       <span className="appearance-head-mark" aria-hidden="true">
         {mark}
