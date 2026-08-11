@@ -195,6 +195,17 @@ The profile is per driver PROCESS, not per launch.
 **A squash merge does not mark the branch merged.** `git branch -d` refuses after
 one. Diff the branch against `main` first, and let an empty diff authorise `-D`.
 
+**And it makes the branch hash a DEAD REFERENCE.** The squash creates a *new*
+commit on `main`; deleting the branch leaves the branch's own hash reachable from
+nothing (`git branch --contains <hash>` returns empty). Leg 12 cited the branch
+hash in seven places across the ticket comment and `.context/` before catching it.
+**Record the hash read off `main` AFTER the merge**, never the one the branch
+commit printed:
+
+```bash
+git log --oneline -1 main
+```
+
 **`.context/` picks up line-ending churn.** `.context/` is **LF** while
 `DESIGN.md` is **CRLF** — do not normalise either to match the other. Keep
 `.context/` off the ticket branch and check `git diff --cached --name-only`
