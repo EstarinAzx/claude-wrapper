@@ -251,25 +251,28 @@ const ZoomMark = (
 // `span.appearance-rule` after the word, running out to the panel's edge — and
 // it is deleted rather than hidden. Two reasons, and the second is why it could
 // not simply be toned down. It was the dock's second organisational grammar:
-// the agents and commands lists SEPARATE their rows with 2px of ground and
+// the agents and commands lists SEPARATE their rows with ground alone and
 // nothing else, so a reader crossing the three right-hand docks met
 // grouping-by-space twice and grouping-by-ruled-band once. And a rule is the
 // loudest available way to say "separate", which is the wrong volume for the
 // boundary between Theme and Backdrop inside one 248px panel — it was the last
 // thing here reading like a generic settings scaffold.
 //
-// THE WORD "SEPARATE" IS NOW CARRYING WEIGHT IT DID NOT HAVE TO BEFORE, and the
-// sentence above said "nothing but 2px of ground" until this note was corrected.
-// In the same wave that deleted this hairline, `.command-row-btn` (rails.css)
-// took a resting --tint-2 shell, so a command row is no longer bare. That does
-// not cost this deletion its argument — it sharpens it. That shell BOUNDS a hit
-// target on a list with no state to paint; it does not divide one row from the
-// next, which is still done by the 2px gap alone in all three docks. The rule
-// deleted here did the opposite: it drew a line BETWEEN things and bounded
-// nothing. So the count stands as written — no dock separates with a rule — and
-// what a later pass must not do is read the commands shell as permission to put
-// this hairline back. rails.css's boundary note derives the distinction, and its
-// two-boundary-answers paragraph ranks the weights it turns on.
+// THE WORD "SEPARATE" IS NOW CARRYING WEIGHT IT DID NOT HAVE TO BEFORE, and an
+// earlier draft of the sentence above said "nothing but 2px of ground" as if
+// that number were still universal. It is not. The shared list gap in rails.css
+// is still 2px (agents and sessions keep it); commands opened to 6 dock-local
+// when `.command-row-btn` took a resting --tint-2 shell, and this panel's
+// `.appearance-choices` opened to 4 for the same shelled-row reason (wave 8).
+// That does not cost this deletion its argument — it sharpens it. A resting
+// shell BOUNDS a hit target; it does not divide one row from the next, which is
+// still done by gap alone in every dock, at whatever dock-local step that list
+// needs. The rule deleted here did the opposite: it drew a line BETWEEN things
+// and bounded nothing. So the count stands as written — no dock separates with
+// a rule — and what a later pass must not do is read a commands/appearance
+// shell as permission to put this hairline back. rails.css's boundary note
+// derives the distinction, and its two-boundary-answers paragraph ranks the
+// weights it turns on.
 //
 // What replaces it is spacing, and the ratio is derived in appearance.css's
 // sections note: 24px above a header against 4px below it, which is 35.9 to

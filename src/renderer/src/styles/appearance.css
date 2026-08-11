@@ -79,13 +79,14 @@
 
    The reason it had to go is that it was this dock's SECOND organisational
    grammar. The agents dock and the commands dock separate nothing with a line:
-   their rows sit 2px apart in a 6px gutter under one 44px head and that is the
-   whole system. This panel then introduced icon-plus-rule bands on top of that,
-   so a reader crossing the three right-hand docks met list-by-spacing twice and
-   list-by-ruled-band once. A rule is also the loudest possible way to say
-   "these things are separate" — it is ink spent on a boundary rather than on
-   content — and it was the last thing in this dock still reading like a generic
-   settings scaffold rather than a composed panel.
+   their rows sit apart by ground alone under one 44px head — agents still on the
+   shared 2px list gap, commands opened to 6 dock-local once every row took a
+   resting shell — and that is the whole system. This panel then introduced
+   icon-plus-rule bands on top of that, so a reader crossing the three right-hand
+   docks met list-by-spacing twice and list-by-ruled-band once. A rule is also
+   the loudest possible way to say "these things are separate" — it is ink spent
+   on a boundary rather than on content — and it was the last thing in this dock
+   still reading like a generic settings scaffold rather than a composed panel.
 
    WHAT REPLACES IT IS A RATIO, and both halves are derived rather than picked.
 
@@ -218,11 +219,12 @@
 
    THE THREE DOCKS DRAW ONE BODY ROW, and this file was the odd one out. The
    agents dock, the commands dock and the sessions rail established the shared
-   8px radius, 2px rhythm, 6px gutter and state grounds; Commands has since made
-   the target visible at rest with one inset --tint-2 hairline. This panel drew
-   the same content as rows inside a bordered, 8px-rounded, --tint-1 slab divided
-   by hairlines. Two grammars for one object inside one 248px slot, so a reader
-   crossing the three docks met a different thing in each of them.
+   8px radius, 2px list gap, 6px gutter and state grounds; Commands has since made
+   the target visible at rest with one inset --tint-2 hairline and opened its list
+   gap to 6 dock-local so shelled rows do not read as one corrugated strip. This
+   panel drew the same content as rows inside a bordered, 8px-rounded, --tint-1
+   slab divided by hairlines. Two grammars for one object inside one 248px slot,
+   so a reader crossing the three docks met a different thing in each of them.
 
    THE DIRECTION IS THE DOCKS', AND THE REASON IS THAT ONLY ONE OF THE TWO
    TRAVELS. Boxing the agent and command lists to match this panel cannot be
@@ -279,22 +281,25 @@
    can only ever shorten a wrap, so the deck cannot grow — it is the one
    direction that needs no measurement to be safe.
 
-   Heights barely move and they move opposite ways: Theme was four rows plus
-   three 1px dividers plus the container's two 1px borders and is now four rows
-   plus three 2px gaps, +1px; Backdrop was two rows plus one divider plus two
-   borders and is now two rows plus one gap, -1px. The panel's content column
-   ends where it started, before any line the wider measure hands back. */
+   Heights, ledgered across two later moves rather than one. Uncontaining the
+   rows first: Theme was four rows plus three 1px dividers plus the container's
+   two 1px borders and became four rows plus three 2px gaps, +1px; Backdrop was
+   two rows plus one divider plus two borders and became two rows plus one 2px
+   gap, -1px — content column ended where it started. Wave 8 then opened this
+   list's gap 2 → 4 (dock-local; see the rule below), so Theme's three inter-row
+   gaps spend +6px more and Backdrop's one gap +2px more on top of that earlier
+   ledger. Shell anatomy did not move; only the ground between shells did. */
 .appearance-choices {
   display: flex;
   flex-direction: column;
-  /* 2px is the shared list rhythm from rails.css's three-selector group. It is
-     what replaced the hairline dividers: ground between rows, not a rule. Wave 7
-     gave every option a resting --tint-2 shell, so this gap is now ground BETWEEN
-     shells rather than between open rows. Commands went dock-local to 6px for the
-     same reason (shell + ground + shell); Agents still shares the 2. Wave 7's
-     Appearance critic named 4px as the next lever if 2 reads corrugated under the
-     new shells — leave that to a builder, do not silently open it here. */
-  gap: 2px;
+  /* 4px is dock-local, not the shared list rhythm. rails.css's three-selector
+     group still declares 2px on agent/command/session lists; this panel alone
+     opens one step because wave 7 gave every option a resting --tint-2 shell and
+     the critic read near-touching rounded rows as a corrugated segmented control.
+     Commands already paid the same tax (gap 2 -> 6, dock-local). Shell anatomy
+     and the 12x12 mark slot are untouched — only the ground BETWEEN shells moved.
+     Agents still shares the 2. */
+  gap: 4px;
 }
 
 .appearance-choice {
@@ -623,8 +628,8 @@
    dividers are cut from --border, the same token this strip's own shell is
    drawn in, so the strip reads as a three-segment control rather than as a lone
    pill. It no longer echoes the option groups' dividers, because those are gone
-   — the rows above are told apart by a 2px gap now, the way the other two docks
-   tell theirs apart.
+   — the rows above are told apart by ground alone (4px here, dock-local; commands
+   6; agents still on the shared 2). Spacing separates; a line does not.
 
    THESE THREE LINES ARE NOW THE ONLY --border THE PANEL'S BODY DRAWS, where this
    sentence used to name the section headers' hairlines alongside them. Those are
