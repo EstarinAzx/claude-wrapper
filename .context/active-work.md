@@ -1,19 +1,17 @@
 ---
 type: active-work
 project: claude-wrapper
-updated: 2026-08-11
+updated: 2026-08-12
 tags: [context, active-work]
 ---
 
 # Active Work
 
-_Last updated: 2026-08-12 by Opus 5, gauntlet relay leg 7 (run 2, wave 6) — owner away_
-_At commit: `8048c8e` on `gauntlet/docks-and-min-window`; `main` still at `46e2fce` plus these notes_
+_Last updated: 2026-08-12 by Opus 5, gauntlet relay leg 8 (run 2, wave 7) — owner away_
+_At commit: `d6748bd` on `gauntlet/docks-and-min-window`; `main` carries these notes only_
 
-> **This note covers waves 5 AND 6. Leg 6 never committed a `.context/` update**, so
-> `main`'s newest context commit before this one was `95b289b` (wave 4) while the branch
-> had already landed wave 5 as `4219912`. If a leg's `.context/` commit is missing, the
-> branch log is the authority.
+> **This note covers wave 7.** Prior waves 5-6 live in `5a90b89`. If a leg's `.context/`
+> commit is missing, the branch log is the authority.
 
 > **Run-2 capture landmine.** `.gauntlet/waves/1/`…`5/` hold **run 1's git-tracked**
 > captures, and `inspect.mjs` writes the **same filenames**. Run 2 therefore writes
@@ -60,58 +58,34 @@ _At commit: `8048c8e` on `gauntlet/docks-and-min-window`; `main` still at `46e2f
 
 ## Current focus
 
-**THE GAUNTLET IS RUNNING AND A VERDICT HAS MOVED BACKWARDS FOR THE FIRST TIME.** Run 2
-(`docks-and-min-window`) landed **WAVE 5** as `4219912` and **WAVE 6** as `8048c8e` on
-`gauntlet/docks-and-min-window`, now at **`plateau: 1`**. Its record is
-`.claude/gauntlet.md` **on that branch** — `main`'s copy is the seed's and is stale by
-design. Chain 7 fired `/relay N=1 /preset gauntlet`; that chain is at leg 8.
+**THE GAUNTLET IS RUNNING. WAVE 7 RESET THE PLATEAU.** Run 2 (`docks-and-min-window`)
+landed **WAVE 7** as `d6748bd` on `gauntlet/docks-and-min-window`, now at **`wave: 7`,
+`plateau: 0`**. Its record is `.claude/gauntlet.md` **on that branch** — `main`'s copy is
+the seed's and is stale by design. Gauntlet relay is at **leg 9** (about to run wave 8).
 
-**Wave 5 moved a SECOND verdict up** (`AppearanceDock` `BAR WINS` -> `TOO CLOSE`, from a
-piece that did have a builder). **Wave 6 moved one DOWN** — `DocksAsOne` `TOO CLOSE` ->
-`BAR WINS`, the first regression in either run — and since no piece improved, `plateau`
-went 0 -> 1 on the preset's literal rule. **Six waves of budget remain** (`max_waves: 12`)
-and the halt is two waves away at the earliest.
+**Wave 7 moved THREE verdicts forward and ONE back:**
 
-**THE REGRESSION IS THE THING TO UNDERSTAND, AND ITS STATED REASON IS PARTLY FALSE.**
-`DocksAsOne` had no builder; what moved it was `CommandsDock` closing its own gap with a
-resting row shell, which the cross-dock critic read as a third row grammar. **Measured at
-leg 7: Agents and Appearance are the SAME treatment at two tokens** —
-`.agent-row--selected` fills `--tint-3`, `.appearance-choice[aria-checked]` fills
-`--mint-wash`, both fill-only with no boundary. One list of four differs, not three.
-**Do not hand that gap to a builder as written.** Two structural bounds: `App.tsx:54`
-holds `openDock` as a single nullable state, so the three docks can never be co-resident
-and the critic compared a composite a user cannot see; and `--tint-2` (0.06) sits
-deliberately below `--border` (0.08).
+| piece | movement | builder? |
+|---|---|---|
+| CommandsDock | BAR WINS -> **YOURS WINS** (closed) | yes — list gap 2 -> 6 |
+| WelcomeMinWindow | BAR WINS -> **YOURS WINS** (closed) | yes — CTA mt 32 -> 24 |
+| IconHousing | BAR WINS -> **YOURS WINS** (closed) | no — capsule held; critic accepted it |
+| AppearanceDock | TOO CLOSE -> **BAR WINS** (regression) | yes — resting shells; gap stayed 2 |
 
-**Three consecutive waves have had a per-dock build move `DocksAsOne` — up, held, down.
-The per-dock and cross-dock critics are trading against each other. That is owner call 19
-and it needs a human.**
+`plateau` **1 -> 0**. Open pieces left: AppearanceDock, AgentsDock, DocksAsOne. **Five
+waves of budget remain** (`max_waves: 12`); halt at `plateau: 3` is three clean waves away.
 
-> **STANDING INSTRUCTION, new at wave 6: run EVERY gauntlet driver every wave, not only
-> the one the leg wrote.** `gui-gauntlet-wave2.mjs` C2b had been **red since wave 5** and
-> went unreported for a whole wave, because legs had only ever run their own driver. A pin
-> an older driver holds over ground a later wave moved is invisible otherwise.
+**Wave 8's primary build is AppearanceDock gap 2 -> 4** on `.appearance-choices` only.
+Shells at 2px read as a corrugated segmented control; named lever is 4px. Do not touch the
+shell anatomy or the 12x12 mark slot.
 
-> **Fourth new driver as of leg 6, fifth as of leg 7: `gui-gauntlet-wave5.mjs` and
-> `gui-gauntlet-wave6.mjs`.** Both auto-enumerated, so they are the **39 -> 40 -> 41 skip
-> change**; test count still **1406**. Wave 6's driver is 12 checks, and **seven of them
-> carry a LIVE reconstruction that is itself asserted to fail**, so they re-prove their own
-> falsifiability on every run rather than relying on a one-time mutation.
+**Owner call 19 still open.** Both collisions held at default build-nothing. Collision B
+effectively settled itself (IconHousing YOURS WINS *because* the capsule stayed). Collision
+A (Agents row shell) is unchanged — do not build without a human pick.
 
-> **A CHECK CAN GO WRONG IN FOUR DISTINCT WAYS, and this run has now hit all four.**
-> (1) it measures a proxy for its premise rather than the premise (wave 4 B5: a column
-> width standing in for a line count); (2) it is phrased against a state the pre-wave tree
-> already satisfied — a tie (wave 5 W6) or a boundary (wave 6 B2, where a 2x threshold was
-> met exactly by the design being replaced); (3) its RECONSTRUCTION breaks rather than its
-> assertion, when it reverts one declaration of a multi-declaration change (wave 5 W6 at
-> wave 6, reasoning about `[24, 8, 32]`, a state no wave ever had); (4) it cannot fail at
-> all (wave 6 D7: `agents-dock` matched `.agents-dock-head`). **Every one was found by a
-> probe. None was found by reading the code.**
-
-> **Builder figures and driver figures are different quantities**, the same trap as the
-> documented critic-vs-CSS one, a layer down. Wave 6's B2 took a 2x threshold the builder
-> derived **ink to ink** and applied it to a **box to box** measurement, where the pre-wave
-> ratio is exactly 2.0.
+> **STANDING: run EVERY gauntlet driver every wave (wave2..wave7+).** Bundle before
+> capture. Wave 7 final CSS: **`index-D6IIg5C6.css`**. Null controls: titlebar + sidebar
+> byte-identical through wave 7. YOURS WINS pieces are `open: false`.
 
 **The critics' change-answer column was tested with a NULL CONTROL, and wave 3's reading of
 it is corrected.** `commands-dock.png` is **byte-identical across waves 2, 3 and 4**
