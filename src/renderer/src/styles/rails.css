@@ -926,15 +926,10 @@
    keeps that promise, and the popover's own markup is untouched.
 
    TWO: the row gets a floor, so a command with nothing to add still occupies a
-   row rather than a stray line of text. 40px is a floor and not a target: it
-   sits BELOW the height a row with one description line comes to, so no row is
-   ever padded out to meet it and the floor only bites on the rows that have
-   nothing more to say. justify-content centres the little that is there —
-   slack dumped at the bottom reads as a row whose second line failed to load,
-   and the trade is that a lone name sits a few px lower than the names in
-   taller rows, which is the cheaper of the two tells. The floor is the whole
-   box, padding included — base.css sets box-sizing: border-box globally — so it
-   is the row height it names and not that height plus an inset pair. */
+   row rather than a stray line of text. The floor is the whole box, padding
+   included — base.css sets box-sizing: border-box globally — so it is the row
+   height it names and not that height plus an inset pair. WHAT that floor is
+   measured against is the question the rule itself answers, below. */
 .command-row-head {
   display: flex;
   align-items: baseline;
@@ -942,9 +937,60 @@
   min-width: 0;
 }
 
+/* THE FLOOR IS THE DESCRIPTION'S OWN SLOT, RESERVED — and 40px was not that.
+   A row that carries a description comes to its head, plus the column's 2px,
+   plus a clamped 11px line led at 1.45, plus the 8px inset at each end; the
+   SHORTEST one of those — a description that fits on one line — already lands
+   near 49px, which the wave that built the 40px pin measured and recorded. So
+   the pin never brought a bare row up into the range the rows around it
+   occupy. It stopped it reading as a stray line of text and no more, and
+   `/wrap-up` still sat as a visibly smaller object between two full rows.
+
+   That is the LIST'S BEAT breaking rather than one short row. This dock is read
+   down the mono `/name` at the left edge of every row, and the pin moved that
+   anchor twice over: the row was ~9px short of the shortest real row, AND the
+   centring it came with pushed the lone name down into the middle of what was
+   left. The interval above the bare row opened past the list's own pace and the
+   interval below it closed to a little over half of it, which is `/hp` reading
+   as pulled up against `/llm-kb` with a short row swallowed between them.
+
+   The reservation replaces the pin and is DERIVED rather than measured. 8px is
+   this row's own bottom inset and 2px is its column gap, both from the
+   three-row group at the top of this file — the gap being exactly what a
+   description would have consumed — and the third term is one line of
+   `.command-row-desc`, which shared.css's two-line clamp group leads at 1.45.
+   A row with nothing to add therefore comes to EXACTLY the height of a row
+   carrying one line of description, to the sub-pixel, whatever the mono face
+   resolves `line-height: normal` to. That last part is why this is not a
+   number: the note on the line-height rule above records that a px pin taken
+   against this machine's Cascadia Code becomes a shift on a machine that falls
+   back to Consolas, and a floor STATED as a height would have had to carry that
+   same unknown inside it.
+
+   Still a floor and not a target. It lands on the shortest a row that says
+   something can be, so no description row is ever padded out to meet it, and a
+   row with nothing to say stops sitting below the range instead of being grown
+   to the top of it. Reserving the clamp's SECOND line as well would have made
+   every row in the dock one height — that is a grid, not a floor, and it would
+   spend the second line on every short description in the list.
+
+   `:has` rather than a modifier class in the markup: the condition is "this row
+   emitted no description", which is a fact about the DOM, so it is read off the
+   DOM. The selector names the command row and only the command row, so the
+   sessions rail this file also paints cannot see it.
+
+   The 40px pin stays as the hard backstop under all of this, which the
+   reservation clears by a wide margin; its `justify-content` does not. That
+   centring existed only to distribute the pin's slack, there is no slack left
+   to distribute, and left in place it would drop a name off the rhythm again
+   the moment anything created some. Every name in this dock now sits one 8px
+   inset from the top of its own row, which is the anchor the beat is read on. */
 .command-row-btn {
   min-height: 40px;
-  justify-content: center;
+}
+
+.command-row-btn:not(:has(.command-row-desc)) {
+  padding-bottom: calc(8px + 2px + 1.45 * var(--fs-micro));
 }
 
 .command-row-name {

@@ -660,32 +660,29 @@ if (B === null) {
   // whole "grouping" half of the gap. Reconstructed old: give the rows their
   // borders and radii back and the group grows, because six cards plus five
   // 6px gutters are taller than one container with hairline dividers.
-  check(
-    'B1 the container carries the border and the rows do not',
-    parseFloat(B.now.groupBorderTopWidth) >= 1 &&
-      parseFloat(B.now.rowBorderLeft) === 0 &&
-      parseFloat(B.now.groupRadius) >= 8 &&
-      B.before.groupHeight > B.now.groupHeight,
-    {
-      groupBorderTopWidth: B.now.groupBorderTopWidth,
-      groupRadius: B.now.groupRadius,
-      rowBorderLeftWidth: B.now.rowBorderLeft,
-      groupHeightPx: px(B.now.groupHeight),
-      oldReconstructed: { asCards: true, groupHeightPx: px(B.before.groupHeight) },
-      shrankBy: px(B.before.groupHeight - B.now.groupHeight)
-    }
-  )
-
-  // B2 — the rows are divided rather than boxed: the FIRST row has no top
-  // border, every later row does. A uniform border on all rows would draw a
-  // line against the container's own edge.
-  check(
-    'B2 rows are hairline-divided — first row has no top border, later rows do',
-    parseFloat(B.now.rowBorderTopFirst) === 0 &&
-      B.now.rowBorderTopSecond !== null &&
-      parseFloat(B.now.rowBorderTopSecond) >= 1,
-    { first: B.now.rowBorderTopFirst, second: B.now.rowBorderTopSecond }
-  )
+  // B1 and B2 — SUPERSEDED BY WAVE 5, and retired here rather than softened.
+  //
+  // Both pinned the ENCLOSURE this wave built: B1 that the container carries a
+  // border and the rows do not, B2 that the rows are divided by hairlines with
+  // no top border on the first. Wave 5's `DocksAsOne` critic named the gap
+  // "standardize the body-row containment grammar, since Agents and Commands
+  // use open text stacks while Appearance encloses every control set in
+  // bordered full-width groups", and the wave closed it by REMOVING the
+  // enclosure: no container border, no dividers, rows on the shared open shell
+  // the other two docks already use.
+  //
+  // That is a design DECISION reversing this wave's, not a regression, so the
+  // pins move with it. What survives of B1 — that a row never draws its own
+  // border — is carried forward and STRENGTHENED in `gui-gauntlet-wave5.mjs`
+  // G2, which asserts it for all three docks at once rather than for this one
+  // dock alone. B2's intent (rows are separated by a deliberate mechanism, not
+  // by accident) is carried by G2's gap-and-radius assertions.
+  //
+  // The direction of travel matters and is worth stating once: this wave made
+  // Appearance MORE enclosed to look composed, and wave 5 found that the same
+  // instinct applied three times is what stopped the three docks reading as one
+  // family. A pin is evidence of what a wave believed, not a promise to a later
+  // one.
 
   // B3 — every section got a header, and the header is the three-part object
   // the change describes: a 12px mark, a micro-caps label, and a rule that runs
@@ -722,34 +719,57 @@ if (B === null) {
   // red against a tree that was correct. What actually moved is the segments:
   // 26px fixed boxes hung at the right, against 70.33px thirds that fill the
   // column. That is the change, so that is what is measured.
-  const eq = B.now.stepWidths.length >= 2 && near(B.now.stepWidths[0], B.now.stepWidths[1], 0.6)
-  const stepsGrew =
-    B.beforeStepper !== null &&
-    B.beforeStepper.stepWidths.length >= 1 &&
-    B.now.stepWidths[0] > B.beforeStepper.stepWidths[0] + 20
-  check(
-    'B4 the zoom stepper is a full-column strip of equal segments, not a right-hung pill',
-    eq && parseFloat(B.now.stepperRadius) <= 12 && stepsGrew,
-    {
-      stepperWidthPx: px(B.now.stepperWidth),
-      stepperRadius: B.now.stepperRadius,
-      stepWidthsPx: B.now.stepWidths.map(px),
-      readoutWidthPx: px(B.now.readoutWidth),
-      oldReconstructed: B.beforeStepper
-        ? { widthPx: px(B.beforeStepper.widthPx), radius: '999px', stepWidthsPx: B.beforeStepper.stepWidths.map(px) }
-        : null
-    }
-  )
+  // B4 — SUPERSEDED BY WAVE 5, and the supersession was predicted by the builder
+  // that caused it rather than discovered by a red run.
+  //
+  // B4 pinned the stepper as a full-column strip of equal segments. Wave 5's
+  // AppearanceDock critic named the gap "move the Zoom stepper into a compact
+  // right-aligned control on its header row, because the third full-width
+  // rounded shell makes all three families resolve to the same silhouette
+  // despite their different content" — which is the instruction to undo exactly
+  // the shape this check pins. The strip is now 88x26 with 24x24 steps, sitting
+  // as the last child of its section header.
+  //
+  // `stepsGrew` is the half that could not survive: it required the steps to be
+  // more than 20px WIDER than the reconstructed pill, and the whole point of the
+  // wave-5 change is that they are narrower. Keeping it green would have needed
+  // a step over 46px, i.e. a strip ~132px across a 215px column — 61% of the
+  // column, which is neither compact nor the fix. There was no version of this
+  // check that both ran and passed, which is what makes it superseded rather
+  // than merely failing.
+  //
+  // Carried forward in `gui-gauntlet-wave5.mjs` B1', which pins the NEW shape
+  // and additionally asserts the thing B4 never could: that the stepper is
+  // inside the header element, not merely narrow.
 
   // B5 — THE WRAP PREMISE SURVIVED THE REGROUPING. The description's text
   // column was 193px before (row border + padding) and must still be 193px
   // after (container border + row padding), or the two-line deck wave 2 built
   // silently became a three-line one. Same number, reached the other way.
-  check(
-    'B5 the description text column is still 193px, so the wrap premise is unchanged',
-    near(B.now.descClientWidth, 193, 1),
-    { descClientWidthPx: B.now.descClientWidth, expected: 193 }
-  )
+  // SUPERSEDED BY WAVE 5 — and this one is the instructive failure of the four,
+  // because the check was never wrong about what it CARED about. It was wrong
+  // about what it MEASURED.
+  //
+  // B5's stated purpose is in its own comment above: "or the two-line deck wave
+  // 2 built silently became a three-line one". The premise it guards is a LINE
+  // COUNT. What it asserted was a WIDTH — 193px — on the reasoning that if the
+  // column is unchanged the wrap must be too. That inference only holds while
+  // the column is the only thing that can move.
+  //
+  // Wave 5 moved it deliberately: `DocksAsOne` removed the container's border
+  // and rebalanced `.appearance-body` from 16px to 6px of side inset, so the
+  // description column is now 215px. The check went red while the premise it
+  // exists to protect was never in danger — a WIDER column can only ever reduce
+  // a line count, never raise it.
+  //
+  // A proxy that reds when the real premise is safe is a proxy that would also
+  // stay green if the real premise broke by some other route: nothing here would
+  // have caught the deck growing to three lines from LONGER COPY at an unchanged
+  // 193px. So the successor in `gui-gauntlet-wave5.mjs` (N1) counts the rendered
+  // line boxes directly. That is strictly stronger, and it is the reason this
+  // block is a rewrite rather than a deletion.
+  //
+  // Measure the premise, not a thing correlated with the premise.
 
   // B6 — selection is carried by the wash alone now. A mint BORDER on a row
   // whose only edges are shared dividers would paint a bar above the selection,

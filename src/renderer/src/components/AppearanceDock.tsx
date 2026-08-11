@@ -28,10 +28,16 @@ const nextInRing = <T,>(ring: readonly T[], current: T, key: string): T | null =
 //
 // The slot is rendered on EVERY option and the glyph only on the selected one.
 // Two reasons, and both are load-bearing: reserving the 12px keeps the theme
-// swatches in one column and the card's right edge still as the selection
+// swatches in one column and the row's right edge still as the selection
 // moves, and drawing nothing on the rest is the restraint DESIGN.md's colour
-// strategy asks for — the mint border, wash and name already say "selected",
+// strategy asks for — the mint wash and the mint name already say "selected",
 // so a mark on every row would be four glyphs saying nothing.
+//
+// This sentence used to name a mint BORDER as a third signal, and a card that
+// the border was drawn on. Neither exists: the option is a bare row on the
+// shared shell now, it owns no edges, and appearance.css carries both the
+// arithmetic for what the wash replaced and the reason a mint edge cannot come
+// back. Two signals, not three.
 //
 // `aria-hidden` because it is decorative twice over: `aria-selected` and
 // `aria-checked` are what actually announce the state.
@@ -61,10 +67,19 @@ const SelectionMark = ({ on }: { on: boolean }) => (
 // only ever as a circle — the same construction AgentsDock's map glyph already
 // uses for its three nodes.
 //
-// Judged by rasterising at actual size and by ink area against the two glyphs
-// already in the family (list 38.3px^2, map 34.6): chip 41.4, sheets 35.7, lens
-// 33.4. Optical extent runs 8.8 to 9.4px, inside the 7.4-9.4 the 12-grid
-// already spans, so nothing here widens the grid.
+// Judged by rasterising at actual size and by ink area: chip 41.4px^2, sheets
+// 35.7, lens 33.4. Optical extent runs 8.8 to 9.4px.
+//
+// Both of those were fixed against the 12-grid range as it stood — 7.4 to 9.4,
+// the agents dock's list and map glyphs at the top of it — and that range has
+// since moved. The seven marks that wear the SHARED 28px housing (the rail's
+// two chevrons and the five dock-head buttons) were cut to the 14 grid's 10.4
+// optical extent; the derivation is on the map glyph in AgentsDock. These three
+// marks are NOT on that housing — they head a section, they are not a button —
+// so they were left exactly as they were, and they now read a rung below the
+// close in this dock's own head rather than level with it. Whether a section
+// mark should track the housing family or hold its own smaller rung is a live
+// question and not one this pass answered.
 //
 // They are section IDENTITY rather than decoration, which is why each one is
 // the group's own subject and not a generic bullet: Theme is a colour chip,
@@ -153,21 +168,34 @@ const ZoomMark = (
 // mark gives the section an identity, the word drops to the micro-caps rung the
 // dock's own title already uses so it stops competing with the option names it
 // heads, and the rule runs the header out to the panel's edge so the group
-// below reads as its content rather than as the next four boxes down.
+// below reads as its content rather than as the next four boxes down. On the
+// one section that carries `trailing`, the rule runs into that control instead
+// of to the edge, and there is no group below for it to introduce.
 //
 // `id` stays on the WORD, because that is the string both pick-one controls
 // point `aria-labelledby` at. `text-transform` does not touch the DOM text, so
 // the accessible name is still "Theme" and not "THEME".
+//
+// `trailing` is the one seam: a section whose whole control fits at the END of
+// its header puts it there instead of below. Only Zoom takes it, and the reason
+// it exists is silhouette — see the zoom note in appearance.css. The two lists
+// pass nothing and render exactly what they rendered before, so the header is
+// still one component and not two.
+//
+// The header is a `span`, so anything handed to `trailing` must be phrasing
+// content. Buttons and spans are; a div is not.
 const Section = ({
   id,
   title,
   mark,
+  trailing,
   children
 }: {
   id: string
   title: string
   mark: ReactNode
-  children: ReactNode
+  trailing?: ReactNode
+  children?: ReactNode
 }) => (
   <div className="appearance-field">
     <span className="appearance-head">
@@ -178,6 +206,7 @@ const Section = ({
         {title}
       </span>
       <span className="appearance-rule" aria-hidden="true" />
+      {trailing}
     </span>
     {children}
   </div>
@@ -368,9 +397,15 @@ const AppearanceDock = ({
         aria-label="Close appearance panel"
         onClick={onClose}
       >
+        {/* Kept byte-identical to the close in AgentsDock and CommandsDock —
+            one mark on three surfaces. 1.5 to 10.5 is 9 of path plus the grid's
+            1.4 stroke: the 10.4 optical extent the 14-grid plus lands on, where
+            3-to-9 inked 7.4. Derivation is on the map glyph in AgentsDock. This
+            is the dock HEAD's button and not one of the section marks below,
+            which are not on the shared housing and did not move. */}
         <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
           <path
-            d="M3 3l6 6M9 3l-6 6"
+            d="M1.5 1.5l9 9M10.5 1.5l-9 9"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.4"
@@ -388,75 +423,95 @@ const AppearanceDock = ({
       <Section id="appearance-backdrop-label" title="Backdrop" mark={BackdropMark}>
         <BackdropChoices value={backdrop} onPick={onPickBackdrop} />
       </Section>
-      {/* Zoom was the one field laid out label-left / control-right, which is
-          why it read as a stray setting rather than the panel's third group. It
-          takes the same header as the other two, and the stepper widens to the
-          same column they occupy — one strip of three equal segments instead of
-          a 100px pill hanging off the right edge. */}
-      <Section id="appearance-zoom-label" title="Zoom" mark={ZoomMark}>
-        {/* Minus / readout / plus, stepping through the same helper the
-            keyboard shortcuts use. No reset button — stepping reaches the
-            default — and no slider or select, either of which would invent a
-            value list the stepping logic does not have. */}
-        <div
-          className="appearance-stepper"
-          role="group"
-          aria-labelledby="appearance-zoom-label"
-        >
-          <button
-            type="button"
-            className="appearance-step"
-            aria-label="Zoom out"
-            disabled={level <= MIN_ZOOM}
-            onClick={() => onStep('out')}
+      {/* Zoom takes the same header as the other two — it did not before, and
+          that stays. What changes is where its control sits: ON the header,
+          flush right, sized to itself, instead of filling the column below it.
+
+          The reason is silhouette, not taste. Zoom is the only one of the three
+          that is not a LIST — one value, two steps — and while its stepper
+          filled the column, all three sections resolved to the same object at a
+          glance: a bordered, 8px-rounded, full-width shell. Three identical
+          shapes holding three unrelated kinds of content is the thing a reader
+          scanning this dock actually meets, and the content differences do not
+          survive it.
+
+          Not a return to the pre-header layout: that row carried no mark, no
+          rule and a 999px pill hung off the edge. Only the strip's POSITION
+          moved; every part the header pass added is still here.
+
+          Minus / readout / plus, stepping through the same helper the keyboard
+          shortcuts use. No reset button — stepping reaches the default — and no
+          slider or select, either of which would invent a value list the
+          stepping logic does not have.
+
+          A `span` rather than a `div` because it is now inside the header span
+          and a div is not phrasing content. Nothing else about it changed: same
+          class, same role, same label, same two buttons. */}
+      <Section
+        id="appearance-zoom-label"
+        title="Zoom"
+        mark={ZoomMark}
+        trailing={
+          <span
+            className="appearance-stepper"
+            role="group"
+            aria-labelledby="appearance-zoom-label"
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-              <line
-                x1="1.5"
-                y1="5"
-                x2="8.5"
-                y2="5"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-          {/* Live region: the shortcuts move this too, so a keyboard user who
-              never opens the panel is not the only one told what happened. */}
-          <span className="appearance-readout" role="status">
-            {Math.round(level * 100)}%
+            <button
+              type="button"
+              className="appearance-step"
+              aria-label="Zoom out"
+              disabled={level <= MIN_ZOOM}
+              onClick={() => onStep('out')}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                <line
+                  x1="1.5"
+                  y1="5"
+                  x2="8.5"
+                  y2="5"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+            {/* Live region: the shortcuts move this too, so a keyboard user who
+                never opens the panel is not the only one told what happened. */}
+            <span className="appearance-readout" role="status">
+              {Math.round(level * 100)}%
+            </span>
+            <button
+              type="button"
+              className="appearance-step"
+              aria-label="Zoom in"
+              disabled={level >= MAX_ZOOM}
+              onClick={() => onStep('in')}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                <line
+                  x1="1.5"
+                  y1="5"
+                  x2="8.5"
+                  y2="5"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="5"
+                  y1="1.5"
+                  x2="5"
+                  y2="8.5"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
           </span>
-          <button
-            type="button"
-            className="appearance-step"
-            aria-label="Zoom in"
-            disabled={level >= MAX_ZOOM}
-            onClick={() => onStep('in')}
-          >
-            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-              <line
-                x1="1.5"
-                y1="5"
-                x2="8.5"
-                y2="5"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-              <line
-                x1="5"
-                y1="1.5"
-                x2="5"
-                y2="8.5"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-      </Section>
+        }
+      />
     </div>
   </aside>
 )

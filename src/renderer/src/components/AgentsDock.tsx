@@ -263,9 +263,13 @@ const AgentsDock = ({
             aria-pressed={mode === 'list'}
             onClick={() => setMode('list')}
           >
+            {/* Coordinates are a uniform 1.125x scale of the drawing that was
+                here, taken about the grid centre — three bars, same 1.4 stroke,
+                same 12 viewBox, nothing about the mark changed except its size.
+                Ink 9.4x7.4 -> 10.4x8.2. See the extent note on the mark below. */}
             <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
               <path
-                d="M2 3h8M2 6h8M2 9h8"
+                d="M1.5 2.6h9M1.5 6h9M1.5 9.4h9"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.4"
@@ -291,7 +295,7 @@ const AgentsDock = ({
                 reader has to be told it means a tree.
 
                 Three things changed, each for a measured reason. The legs went
-                ORTHOGONAL, so the longest run in the box is now the 6.6-unit rail
+                ORTHOGONAL, so the longest run in the box is now the 7.6-unit rail
                 and the silhouette is the sitemap shape rather than an arrowhead.
                 The dots went to r1.4, because a 1.1 dot is 2.2 across against a
                 1.4 stroke and cannot bulge past its own stalk at this size — the
@@ -299,24 +303,46 @@ const AgentsDock = ({
                 clear stroke at both ends, so each dot sits ON a stalk instead of
                 swallowing it.
 
-                Weight now matches its twin: 34.6px^2 of ink against the list
-                glyph's 38.3, where the old mark's 23.5 made this button read
-                lighter than the one beside it. Vocabulary is untouched — same 12
-                viewBox at 12px, same 1.4 stroke, same filled-circle accent.
-                strokeLinejoin is new to this glyph only because it is the first
-                one here with a corner to join. */}
+                Weight still matches its twin, which is a claim about the pair and
+                not about either alone: both marks took the SAME normalization
+                below, so neither gained on the other, and the old mark's problem
+                — reading lighter than the button beside it — stays fixed.
+                Vocabulary is untouched — same 12 viewBox at 12px, same 1.4
+                stroke, same filled-circle accent. strokeLinejoin is new to this
+                glyph only because it is the first one here with a corner to join.
+
+                EXTENT, and the one number every 12-grid tenant is now cut to.
+                A unit is a pixel here (12 viewBox at 12px), so a mark's optical
+                extent is its path extent plus one whole stroke. The 14 grid's
+                plus — `M7 2.5v9M2.5 7h9` at 1.4 in a 14 box — is 9 of path plus
+                1.4 of stroke, exactly 10.4, and the 16 grid's marks sit at 11.2
+                to 12.1. The 12 grid ran 7.4 to 9.4, so the smallest housing
+                tenant carried barely six tenths of the largest, on ONE 28px
+                button shared by all thirteen. Every 12-grid tenant is now built
+                the way the 14 grid's plus is: path extent 9 across its larger
+                dimension, 1.5 to 10.5, inking 0.8 to 11.2 for 10.4. That leaves
+                0.8 of clear ground inside the viewBox, so nothing clips.
+
+                This mark: dot centres moved out by 0.5 to ±3.8, radius held at
+                1.4 (the dot-versus-stroke bulge derived above is a ratio and had
+                to survive), so the dots alone ink 0.8 to 11.2 on both axes.
+                Ink 9.4 square -> 10.4 square. The connectors were re-laid to
+                keep the same relationship to the dots they had: visible clear
+                stroke 1.9 -> 2.4 on the stem and on each leg, still equal, and
+                each cap still buried in its dot by the same 0.3 (stem) and 0.5
+                (legs). */}
             <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
               <path
-                d="M6 4.5V6M2.7 7.7V6h6.6v1.7"
+                d="M6 4V6M2.2 8.2V6h7.6v2.2"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <circle cx="6" cy="2.7" r="1.4" fill="currentColor" stroke="none" />
-              <circle cx="2.7" cy="9.3" r="1.4" fill="currentColor" stroke="none" />
-              <circle cx="9.3" cy="9.3" r="1.4" fill="currentColor" stroke="none" />
+              <circle cx="6" cy="2.2" r="1.4" fill="currentColor" stroke="none" />
+              <circle cx="2.2" cy="9.8" r="1.4" fill="currentColor" stroke="none" />
+              <circle cx="9.8" cy="9.8" r="1.4" fill="currentColor" stroke="none" />
             </svg>
           </button>
           <button
@@ -325,9 +351,15 @@ const AgentsDock = ({
             aria-label="Close agents panel"
             onClick={onClose}
           >
+            {/* The one that was furthest off: 6 of path plus 1.4 of stroke is
+                7.4 square, against 10.4 for the plus on the 14 grid. Now cut to
+                the same 1.5-to-10.5 span as its two neighbours here, so the
+                dock's three head buttons share one 10.4 envelope. The three
+                docks draw this X from identical coordinates — it is one mark on
+                three surfaces, and it moves as one. */}
             <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
               <path
-                d="M3 3l6 6M9 3l-6 6"
+                d="M1.5 1.5l9 9M10.5 1.5l-9 9"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.4"

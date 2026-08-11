@@ -21,7 +21,9 @@
 // edge lands on. That file's comment carries this string's character count,
 // its painted widths and the height sum it is a term of, so a rewrite here is
 // a correction there too — and one that reaches a THIRD line spends another
-// 27.6px of a 53.7px reserve.
+// 27.6px of a 61.7px reserve. That reserve was 53.7px until the mark's gap
+// came down from 24 to 16 and handed 8px back; the deck's own two-line cost is
+// unchanged by that, and so is the 480px measure that decides where it wraps.
 const Welcome = ({ onPick }: { onPick: () => void }) => (
   <main className="welcome">
     <span className="welcome-mark" aria-hidden="true" />

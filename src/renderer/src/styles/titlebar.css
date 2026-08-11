@@ -236,13 +236,30 @@
 
    The 12 grid is the MAJORITY and the one this note used to omit entirely. Every
    grid is 1:1 viewBox-to-pixel, so a unit is a pixel and the optical extent is
-   the path extent plus one stroke: the 16 and 14 grids both land near 10.4, and
-   the 12 grid runs 7.4 to 9.4 across its larger dimension, with the close X at
-   7.4 square. That gap is NOT a licence to retune anything here. The dock icon
-   vocabulary is 12 at 1.4 by rule and a mechanical check enforces it, so closing
-   the gap means moving a grid that spans three docks, and growing the housing
-   itself moves all thirteen. Anyone changing one grid should say which one and
-   count the tenants it holds. */
+   the path extent plus one stroke: the 16 grid's marks sit at 11.2 to 12.1, the
+   14 grid's plus lands on exactly 10.4, and the 12 grid RAN 7.4 to 9.4 across
+   its larger dimension, with the close X at 7.4 square — the smallest tenant
+   carrying barely six tenths of the largest on one housing they all share.
+
+   THAT GAP IS CLOSED, AND CLOSING IT MOVED NO DECLARATION. All seven 12-grid
+   tenants were re-cut to a path extent of 9 across the larger dimension,
+   spanning 1.5 to 10.5 and inking 0.8 to 11.2 for the same 10.4 the 14 grid's
+   plus lands on. Only SVG coordinates moved — no viewBox, no rendered size, no
+   stroke width, and no rule in this file. The derivation is on the map glyph in
+   AgentsDock.tsx; the two chevrons carry their own in Sidebar.tsx; the three
+   dock closes are one mark on three surfaces and stay byte-identical.
+
+   The vocabulary is still 12 at 1.4 by rule and a mechanical check still
+   enforces it, so a grid change still spans three docks and the rail, and
+   growing the housing itself still moves all thirteen. Anyone changing one grid
+   should say which one and count the tenants it holds — this paragraph is what
+   that instruction is for, and a wave fenced away from this file is how the
+   census goes stale a fourth time.
+
+   NOT TENANTS, and deliberately not moved with them: the appearance dock's three
+   SECTION marks are 12-grid at 1.4 too, but they head a section rather than fill
+   a housing, and they were left at 8.8 to 9.4. AppearanceDock.tsx records that
+   as an open question rather than an oversight. */
 .agents-toggle,
 .sidebar-toggle {
   display: flex;

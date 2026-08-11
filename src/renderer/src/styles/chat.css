@@ -300,11 +300,11 @@
 
    RANK BY INTERVAL. The gap is replaced by three authored ones, taken from the
    rhythm the chat column already keeps (24px between messages, 40px around the
-   date divider) so this screen is measured in the app's own units: 24 under
+   date divider) so this screen is measured in the app's own units: 16 under
    the mark, 8 under the title, 24 above the action. The title and its
    supporting deck sit closer to each other than either sits to anything else,
-   so they read as one editorial pair with the identity above and the action
-   below.
+   so they read as one editorial pair, with the identity and the action set at
+   matched air on either side of it.
 
    THE ACTION'S GAP CAME DOWN FROM 40, because at 40 it was the LARGEST
    interval on the screen and the thing it held off was supposed to be inside
@@ -312,15 +312,40 @@
    different amounts at each end: `--fs-display` at 1.25 leading is a line box
    TIGHTER than the glyph box it holds, which puts the headline's cap about
    15.5px below its own box top, while the deck at 1.6 leaves only about 6.6px
-   under its last baseline. So 24 under the mark reads as about 39.6px of air,
-   8 under the headline as about 26.6px, and 40 above the button read as about
-   46.6px: the action stood further off than the identity did. That is the
-   whole of why headline, explanation and action read as three centred objects
-   rather than one lockup, and it is why the fix is one interval rather than a
-   new composition. At 24 the last gap reads as about 30.7px — still the wider
-   of the two inside the group, so the deck stays attached to the headline
-   rather than floating between two equals, and still clearly under the
-   identity's 39.6px, which is the boundary the lockup is bounded BY.
+   under its last baseline. So a gap under the mark reads about 15.6px wider
+   than it measures, a gap under the headline about 18.6px wider, and a gap
+   above the button about 6.6px wider. At the 24 / 8 / 40 this rule once
+   shipped, that was 39.6px of air under the mark, 26.6px under the headline
+   and 46.6px above the button: the action stood further off than the identity
+   did. That is the whole of why headline, explanation and action read as three
+   centred objects rather than one lockup, and it is why the fix was one
+   interval rather than a new composition. At 24 the last gap reads as about
+   30.6px — still the wider of the two inside the group, so the deck stays
+   attached to the headline rather than floating between two equals.
+
+   THE MARK CAME DOWN FROM 24, AND THAT RETIRES A CLAIM THIS COMMENT USED TO
+   MAKE. The 39.6px under the mark was defended right here as the boundary the
+   lockup is bounded BY — the identity standing off the group on purpose. Read
+   off the render at the 640x432 minimum, wave 4's critic called it the
+   opposite: the mark detached from an otherwise cohesive text-and-action
+   stack. Both readings fit the same number and the render is the evidence.
+   39.6 was 9.0px more air than the next largest interval on the screen and
+   13.0px more than the tightest, spent on the ONE element here that is not
+   text — a 44px solid block with no glyph, which already reads as a different
+   kind of object without a gap arguing the same thing a second time. At 16 it
+   reads about 31.6px, landing on the action's 30.6px, so the identity and the
+   action now bracket the stack at matched air with the editorial pair tightest
+   in the middle. The run is 31.6 / 26.6 / 30.6 where it was 39.6 / 26.6 / 30.6.
+
+   THAT IS NOT THE UNIFORM STACK REFUSED BELOW, AND THE DIFFERENCE IS WHICH
+   TERM MOVED. The move refused in the next paragraph flattens the run by
+   RAISING the middle term, which is the one interval this composition depends
+   on staying tight; the deck detaches and nothing is left reading as a pair.
+   This one lowers an OUTER term and leaves the middle exactly where it was,
+   still the smallest number on the screen. Outer, inner, outer is a symmetry
+   with a tight pair inside it, not four things at one interval — which is what
+   this screen shipped as before any of these gaps were authored. The mark is
+   no longer the outlier of the run; it is one of its two matched bounds.
 
    THE 8 IS HELD, AND HOLDING IT IS ALSO A DECISION. The obvious second move is
    to open the headline-to-deck gap now that the deck is two lines and carries
@@ -331,7 +356,10 @@
    is the one that costs no height at all — 8 up to 16, 40 down to 32, net zero
    — and it is the worst of the three: the run reads 39.6 / 34.6 / 38.7, three
    near-equal intervals, which is the uniform stack this whole comment was
-   written against, rebuilt one wave later. The deck locks to the headline by
+   written against, rebuilt one wave later. Those three figures are quoted at
+   the mark and action gaps of the wave that refused the move, 24 and 40, and
+   neither is what this rule carries now; the refusal is about the MIDDLE term
+   and it survives the outer ones moving. The deck locks to the headline by
    gaining mass, not by gaining air.
 
    THE STACK IS LIFTED OFF TRUE CENTRE, and the lift is exactly half the
@@ -371,24 +399,45 @@
    subagent.css already clamps a width with min. DESIGN.md's Type section bans fluid
    TYPE; every type size on this screen stays fixed.
 
-   THE SUM, REDONE AGAIN, THIS TIME IN EXACT TERMS. Content is 264.69px — a
-   44px mark and 24 under it, a 46px title at 1.25 leading for a 57.5px line
-   box and 8 under it, a 17.25px deck at 1.6 leading over TWO lines for 55.2px,
-   then 24 above a 51.99px button. (#138 rounded the title from 46.26 to 46
-   when it re-pointed `--fs-display` at what it paints; the line box lost
-   0.33px. The button is 32px of padding around a 19.99px line box, Chromium's
-   `normal` leading on the body rung, which is why it is not a round 52.) At the
-   480px minimum the reserve resolves to 81.6, so 264.69 plus 113.6 of padding
-   needs 378.29px against the pane's 432: 53.71px of headroom. `inspect.mjs`
-   carries that as `CLAIMED_HEADROOM_PX = 54`, and measures it first-hand.
+   THE SUM, REDONE AGAIN, THIS TIME IN EXACT TERMS. The four parts total
+   208.69px — a 44px mark, a 46px title at 1.25 leading for a 57.5px line box,
+   a 17.25px deck at 1.6 leading over TWO lines for 55.2px, and a 51.99px
+   button. (#138 rounded the title from 46.26 to 46 when it re-pointed
+   `--fs-display` at what it paints; the line box lost 0.33px. The button is
+   32px of padding around a 19.99px line box, Chromium's `normal` leading on
+   the body rung, which is why it is not a round 52.) The three gaps add 16 plus
+   8 plus 24, which is 48, so content is 256.69px. At the 480px minimum the
+   reserve resolves to 81.6, so 256.69 plus 113.6 of padding needs 370.29px
+   against the pane's 432: 61.71px of headroom.
+
+   THE MARK'S 8px HANDED 8px BACK, and nothing was enlarged to spend it. The
+   gaps were 24 plus 8 plus 24 for 56, content was 264.69 and headroom was
+   53.71; the mark's interval is the only term that moved, so every part height
+   is untouched and the whole 8px lands in the reserve. Paying for the tighter
+   mark by opening another gap would have been the net-zero move refused above,
+   so the reserve simply grows. The stack now clears every window down to about
+   406px tall, where 0.83W must reach 336.69, and it was about 415px before —
+   both well below the enforced 480px minimum.
+
+   `inspect.mjs` CARRIES THIS SUM AS A CONSTANT, AND THE CONSTANT MOVED WITH IT.
+   `CLAIMED_HEADROOM_PX` there read 54, a copy of the 53.71 above, and the
+   driver reds when the measurement disagrees with it by more than 1px. It now
+   reads 62, the copy of the 61.71 above, and the run should measure about
+   61.71 against it. The order is the one that file states as its own rule: the
+   sum HERE moves first and the constant follows in the same change, never the
+   other way round. A wave that cannot reach the driver leaves a known
+   outstanding correction rather than a drift nobody noticed — this one reached
+   it, so nothing is outstanding.
 
    THE DECK COST LESS THAN ITS SECOND LINE. Wave 2 measured 65.31px of headroom
    here and warned that a second line would spend 27.6 of it. It does, but the
    action's gap gave 16 back in the same change, so the reserve fell by 11.6
-   and not by 27.6. The stack clears every window down to about 415px tall,
-   which is below the enforced minimum. THE NEXT BUILDER TO ENLARGE ANYTHING
-   HERE MUST STILL REDO THIS SUM — a third deck line spends another 27.6 of
-   what is left, and there is less left than there was.
+   and not by 27.6. That left 53.71, and the mark's interval has since handed 8
+   of it back; the clearance figure is redone in the sum above. THE NEXT
+   BUILDER TO ENLARGE ANYTHING HERE MUST STILL REDO THAT SUM — a third deck
+   line spends another 27.6 of what is left. There is more left than there was
+   for the first time in this rule's history, and that is a reason to redo the
+   arithmetic, not a licence to skip it.
 
    RUNG 8 AND NOT RUNG 7. Under the old fixed reserve the lower step left 10px
    and this one left 2px, at which the reserve below IS the clip it was written
@@ -427,7 +476,14 @@
   height: 44px;
   border-radius: calc(var(--r-mark) * 2);
   background: var(--mint);
-  margin-bottom: 24px;
+  /* 16 where it was 24. See `.welcome`'s THE MARK CAME DOWN FROM 24 note above
+     for the optical arithmetic; the short version is that 24 painted 39.6px of
+     air here against 30.6 above the action and 26.6 inside the editorial pair,
+     so the one non-text element on the screen also carried the most air and
+     read as detached from the stack rather than as its top bound. 16 reads
+     about 31.6 and lands on the action's 30.6. Nothing else moved, so the 8px
+     goes straight to the height reserve. */
+  margin-bottom: 16px;
 }
 
 /* Leading tightens as size grows: 1.4 is a reading value and leaves a display
@@ -478,7 +534,7 @@
    NONE OF THIS COSTS THE HEIGHT BUDGET. `line-height: 1.25` is a NUMBER, so
    this box is 46 x 1.25 = 57.5px whatever the face's own ascent and descent
    are; swapping optical masters cannot move it, and tracking is horizontal.
-   The sum in `.welcome` above still holds at 264.69px of content and 53.71px
+   The sum in `.welcome` above still holds at 256.69px of content and 61.71px
    of headroom. Width moves, and only inward: 15 characters shed 15 x 0.92px
    of advance, about 13.8px off a line painting roughly 300px — scaled off the
    410px this file already records for a 56-character line — inside the 576px

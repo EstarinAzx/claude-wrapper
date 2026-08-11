@@ -37,9 +37,16 @@ const CommandsDock = ({
           aria-label="Close commands panel"
           onClick={onClose}
         >
+          {/* One mark on three surfaces: the three dock closes draw this X from
+              identical coordinates, so it is kept byte-identical here, in
+              AgentsDock and in AppearanceDock. Span is 1.5 to 10.5 — 9 of path
+              plus the grid's 1.4 stroke, the 10.4 optical extent the 14-grid
+              plus already lands on. It was 3 to 9, which inked 7.4 square and
+              made this the smallest mark on a housing thirteen buttons share.
+              The derivation is on the map glyph in AgentsDock. */}
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
             <path
-              d="M3 3l6 6M9 3l-6 6"
+              d="M1.5 1.5l9 9M10.5 1.5l-9 9"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.4"

@@ -18,11 +18,18 @@
   display: none;
 }
 
+/* THE 6px IS THE LISTS' GUTTER, not a smaller version of the 16px inset this
+   had. `.agent-list` and `.command-list` gutter their rows by 6px and let each
+   row's own 10px inset carry the text to the app's 16px edge; this body now
+   does the same, so an option row is bounded exactly like an agent row and a
+   command row. The 10px the body gave up is taken back by the header below, so
+   the header's own content box does not move. Full arithmetic sits with the
+   option rows. */
 .appearance-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 16px;
+  padding: 12px 6px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -43,15 +50,25 @@
 
    1. the section gets a header: a 12px mark, the name dropped to the micro-caps
       rung, and a hairline running out to the panel's edge;
-   2. its options stop being loose boxes and become rows inside ONE bordered
-      container, divided by hairlines;
-   3. Zoom joins them — same header, and its stepper widens from a 100px pill
-      hanging off the right edge to a strip of three equal segments filling the
-      same column the two lists occupy.
+   2. its options stop being loose bordered boxes. WHAT THEY BECAME INSTEAD HAS
+      BEEN ANSWERED TWICE: first as rows inside one bordered container divided
+      by hairlines, and now as the row shell the other two docks already use,
+      with no container at all. The note on the option rows below carries that
+      correction, its arithmetic, and why the standardising went this way round
+      rather than boxing the two lists;
+   3. Zoom joins them — same header, same 12px mark, same micro-caps name and
+      the same hairline. Its stepper does NOT join them: it sits at the end of
+      that header, sized to itself. A later pass first widened it to fill the
+      column like the two bordered lists it then sat under, and that is the one
+      part of this move that was wrong — three full-width rounded shells is one
+      silhouette repeated three times, whatever is inside them. The zoom note at
+      the bottom of this file carries the correction and its arithmetic. Those
+      two lists have since lost their shells as well, for the reason in the
+      option-row note; the stepper is now the only bordered object down here.
 
-   The `--stacked` variant is gone rather than left behind. All three fields are
-   the same shape now, so a variant with no counterpart is dead markup, and the
-   base rule states that shape once. */
+   The `--stacked` variant is gone rather than left behind. All three fields
+   state their shape from the base rule, so a variant with no counterpart is
+   dead markup. */
 .appearance-field {
   display: flex;
   flex-direction: column;
@@ -59,10 +76,17 @@
   gap: 8px;
 }
 
+/* The 10px the body handed to the rows, taken back here. It is the same inset
+   an option row carries, so the mark still starts on the app's 16px edge and
+   the header still has 215px of content to spend — which is the number the zoom
+   note at the foot of this file does its arithmetic in. Nothing in this row
+   moves: mark, name, rule and stepper are all where they were, and only the
+   rows beneath ran out to the wider gutter. */
 .appearance-head {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 0 10px;
 }
 
 /* The section's mark. One rung ABOVE the word beside it, which inverts the
@@ -78,10 +102,12 @@
   color: var(--text-muted);
 }
 
-/* The hairline that turns a label into a header band. It is the same weight and
-   the same token as the container's border 8px below it, and they do not read
-   as a doubled line because they are different lengths: this one starts after
-   the name, the container spans the full column. */
+/* The hairline that turns a label into a header band, and since the option
+   group gave up its border it is the only hairline a list section draws — there
+   is no longer a second line 8px below it that it could double. Same weight and
+   same --border token as every other hairline in the three docks, and it starts
+   after the name rather than at the column's edge, so it reads as the header's
+   own rule and not as a divider between sections. */
 .appearance-rule {
   flex: 1 1 auto;
   height: 1px;
@@ -109,33 +135,77 @@
   letter-spacing: 0.08em;
 }
 
-/* ── grouped options ──────────────────────────────────────────────────────
+/* ── the option rows ──────────────────────────────────────────────────────
 
-   ONE container per control, not one box per option. Six free-floating rounded
-   rectangles said "six things"; a bordered group with divided rows says "one
-   control, six ways", which is what both of these actually are.
+   THE THREE DOCKS DRAW ONE BODY ROW, and this file was the odd one out. The
+   agents dock, the commands dock and the sessions rail all draw theirs the same
+   way: a transparent box on an 8px radius, 2px from its neighbour, sitting in a
+   6px gutter, painted only while the pointer is on it or it is the current one.
+   This panel drew the same content as rows inside a bordered, 8px-rounded,
+   --tint-1 slab divided by hairlines. Two grammars for one object inside one
+   248px slot, so a reader crossing the three docks met a different thing in
+   each of them.
 
-   The width is unchanged by construction, and that matters because the Backdrop
-   sentence's two-line wrap is a premise other pins measure. Before: the card was
-   the full 215px column, minus its own 1px side borders, minus 10px of padding
-   each side = 193px of text. After: the container is the 215px column, minus its
-   1px side borders = 213px inner, and the row inside it carries no side border
-   of its own, so 213 - 20 = 193px. The same number, reached the other way.
+   THE DIRECTION IS THE DOCKS', AND THE REASON IS THAT ONLY ONE OF THE TWO
+   TRAVELS. Boxing the agent and command lists to match this panel cannot be
+   built honestly: those lists are unbounded and scroll, so a border drawn round
+   them either scrolls away or fences a list with no end — and rails.css records
+   the sessions rail and the agents dock as one object mirrored, naming the row
+   shell as one of the four things that make them one. Boxing two of the three
+   right-hand lists would break that mirror to close a smaller gap, and the rail
+   is not this pass's to move. The bare row travels the other way with nothing
+   left over: a bounded set of options is a list with one member lit, which is
+   precisely what the sessions rail's active row has always been.
 
-   The ground moved off the option and onto the group for the same reason: a
-   filled group with transparent rows leaves hover and selection as the ONLY
-   things that paint a row, so a lit row is the only lit thing in the panel. */
+   WHAT THE BORDER SAID IS ALREADY SAID DIRECTLY ABOVE IT. The section header —
+   mark, micro-caps name, hairline running out to the column's edge — was built
+   in the same pass as the container and states the same fact, that the rows
+   under it belong to it. One of the two statements was redundant and the
+   container is the one the other docks cannot repeat. What the container was
+   holding is held, and more of it: with no ground painted under the options,
+   hover and selection are the only things that paint a row anywhere in the
+   panel. The one filled shell left in the dock is the zoom stepper, which is a
+   control and not a body row — and a control that states its own shell is
+   vocabulary the rails already carry, in the bordered retry button and in the
+   filled pressed scope chip.
+
+   --tint-1 IS THE ROWS' HOVER AND THIS FILE WAS SPENDING IT AS A RESTING
+   GROUND. tokens.css names that step "row + menu-item hover" and shared.css
+   hands it to the three row shells and the two menu rows; a slab filled with it
+   left every option here resting at the strength the other two docks reach only
+   under a pointer, and left this file's own hover a rung higher on --tint-2,
+   which tokens.css names for icon buttons. The alphas differ by 0.01 and the
+   difference is not what you see — the point is which rung a ROW takes. Both go
+   back: no ground here, and the hover below drops to --tint-1 with every other
+   row in the app.
+
+   THE ARITHMETIC. The dock is 248px over a 1px left border, so 247px of
+   content. The body was inset 16px a side, which a bordered card needed; the
+   rows take the lists' 6px gutter instead and their own 10px inset carries the
+   name to the 16px edge that the dock heads, the rail heads, the group headings
+   and every row title in this app already sit on. The option name was at 27px —
+   16px of body inset, plus the container's 1px border, plus the row's 10px —
+   the one text edge in the three docks that was not 16.
+
+   Widths follow from that. The row was 213px inside the container and is 235px
+   now; its text column was 193px and is 215px, which is what an agent row and a
+   command row have had all along at the same gutter with the same inset. The
+   Backdrop sentence's wrap is a premise other pins measure, and a wider column
+   can only ever shorten a wrap, so the deck cannot grow — it is the one
+   direction that needs no measurement to be safe.
+
+   Heights barely move and they move opposite ways: Theme was four rows plus
+   three 1px dividers plus the container's two 1px borders and is now four rows
+   plus three 2px gaps, +1px; Backdrop was two rows plus one divider plus two
+   borders and is now two rows plus one gap, -1px. The panel's content column
+   ends where it started, before any line the wider measure hands back. */
 .appearance-choices {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border);
-  /* Literal 8px like the session rows, not --r-pill: this box grows with its
-     rows, and a pill on a growable box becomes a lozenge. */
-  border-radius: 8px;
-  background: var(--tint-1);
-  /* So a row's hover wash and a stepper segment's take the group's corners
-     instead of squaring them off. */
-  overflow: hidden;
+  /* The lists' own row rhythm, from the three-selector group in rails.css. It
+     is what replaces the hairline dividers: rows are told apart by the ground
+     showing between them, exactly as they are in the other two docks. */
+  gap: 2px;
 }
 
 .appearance-choice {
@@ -150,21 +220,18 @@
   gap: 3px;
   padding: 8px 10px;
   border: none;
+  /* Literal 8px, the shared row shell's radius — the same number the session,
+     agent and command rows state, and deliberately not --r-pill: this box grows
+     with its text, and a pill on a growable box becomes a lozenge. */
+  border-radius: 8px;
   background: transparent;
   text-align: left;
   cursor: pointer;
   transition: background 150ms var(--ease);
 }
 
-/* The divider, on the row's leading edge so the first row never draws one and
-   the container's own border is never doubled. This is what keeps four names in
-   a filled box reading as four OPTIONS rather than as four lines of a list. */
-.appearance-choice + .appearance-choice {
-  border-top: 1px solid var(--border);
-}
-
 .appearance-choice:hover {
-  background: var(--tint-2);
+  background: var(--tint-1);
 }
 
 .appearance-choice:focus-visible {
@@ -174,18 +241,45 @@
 
 /* The selected option is the only mint in the panel, so the state reads at a
    glance. It used to be the mint wash PLUS a mint border on the card, and the
-   border is what a grouped list cannot keep: the only edges a row owns now are
-   the dividers it shares with its neighbours, and minting one of those paints a
-   bar above the selection rather than around it — the exact side-stripe form
-   DESIGN.md bans everywhere but one named row.
+   border is what this row cannot keep: it owns no edges at all any more, and a
+   mint one drawn back on would be a ring the other two docks never draw round
+   their own current row. The wash alone is what the sessions rail's active row
+   has always used, minus the stripe that row carries under a named exception.
 
    Losing it costs nothing, and the arithmetic says why. A theme row measures
-   ~30px, not the 33px this note first used — see the zoom note below, which
-   carried the same figure from the same wrong line box and now records the
-   correction. The conclusion is unmoved and the margin is wide. The old outline
+   ~30px, not the 33px this note first used.
+
+   THE DERIVATION OF THAT ~30 LIVES HERE NOW. It used to live in the zoom note
+   below, which this paragraph pointed at, and that note was rewritten when the
+   stepper moved onto its header and stopped deriving its height from a row at
+   all — so the correction went with it and left this pointer reaching nothing.
+   Restated rather than re-pointed, because it is this rule's only load-bearing
+   number. The 33 came from reading a 13px name's line box as ~17.3px, which is
+   what it measures inside a button carrying `font: inherit` AND
+   `line-height: normal` — the pair rails.css spells out on `.command-row-btn`,
+   where a bare `font: inherit` is recorded as moving that subtree by +5.6px
+   because the shorthand also resets the leading. `.appearance-choice` carries
+   NEITHER, and nothing supplies them from above: styles.css imports Tailwind's
+   theme and utilities but not its preflight, and styles/ holds no bare `button`
+   rule, so this button keeps the UA font and the UA `normal` leading. On the
+   ratios rails.css measured for that same repaint — 1.09 for the UA face
+   against 1.31 for the app's — the name's box is ~14.2px. A theme row is the
+   tallest of that ~14.2px box, the 14px swatch and the 12px mark, plus its two
+   8px insets: ~30.2px.
+
+   WHICH LEAVES THIS THE ONE ROW IN THE THREE DOCKS NOT SET IN THE APP'S FACE,
+   and it is recorded rather than closed. rails.css gives `font: inherit` to all
+   three row shells; this rule does not take it, so an option name paints in the
+   UA face while an agent name and a command name paint in `--font` — the last
+   place the row grammar the note above standardises does not actually agree.
+   The honest lever is that missing `font: inherit`, and pulling it repaints the
+   family under a two-line wrap this file records as a premise other pins
+   measure. That is a builder with the instrument in hand, not a comment.
+
+   The conclusion is unmoved and the margin is wide. The old outline
    was a 1px line around a 215 x 30px box: (215 + 30) x 2 = 490px^2 of mint at
-   full strength. The wash now fills the whole 213 x 30px band — 6390px^2 at the
-   0.1 alpha `--mint-wash` carries, so ~639px^2 equivalent. That is more mint,
+   full strength. The wash now fills the whole 235 x 30px band — 7050px^2 at the
+   0.1 alpha `--mint-wash` carries, so ~705px^2 equivalent. That is more mint,
    in one solid block instead of a hairline ring, which is the difference
    between spotting a colour on an edge and spotting a filled row. The mint name
    and the mint mark are unchanged and still ride on top of it.
@@ -292,10 +386,11 @@
    .bg-session-state, a raw status word. This is a sentence, and a sentence is
    the secondary rung.
 
-   Nothing was load-bearing about the faint. The row's ground is --tint-1, or
-   --mint-wash when selected, so the brighter ink raises contrast rather than
-   spending it — the selected row was the panel's dimmest text on its
-   brightest ground. And the pair's hierarchy does not thin out: name to
+   Nothing was load-bearing about the faint. The row's ground is the dock's own
+   surface — literally the ground the agent and command descriptions are already
+   read on, now that the option group has stopped painting a --tint-1 slab over
+   it — or --mint-wash when selected, so the brighter ink raises contrast rather
+   than spending it. And the pair's hierarchy does not thin out: name to
    description keeps the 13-to-11 size step and, on the selected row, a mint
    name against neutral prose, which is one more separator than the dock rows
    carry for the identical step. */
@@ -311,45 +406,56 @@
    Minus / readout / plus as one segmented unit, so the readout reads as the
    value between its two steppers rather than as a third button.
 
-   It now fills the section's column instead of sitting at the end of a label
-   row, and it wears the two lists' 8px corner rather than `--r-pill`. Both are
-   the same argument: Zoom is the panel's third GROUP, and a 100px pill floating
-   right of a 13px word was the one element saying otherwise.
+   IT RIDES ITS HEADER ROW, flush right and sized to itself, and that is a
+   correction to the shape the previous pass built here. That pass widened this
+   control from a right-hung pill into a strip filling the section's whole
+   column, arguing Zoom is the panel's third GROUP. The argument holds; the
+   shape it produced does not. With the strip at full width, all three sections
+   resolved to the SAME object — a bordered, 8px-rounded, full-width shell down
+   a 215px column — so the dock presented three identical silhouettes holding
+   three unrelated kinds of content, and the differences between them stopped
+   being visible at a glance. Zoom is the one of the three that is not a list:
+   one value, two steps, and short enough to be stated at the end of its own
+   header. So it is.
 
-   Its height is derived, not picked. The readout is a span, so it inherits
-   body's 1.6 and its line box is `--fs-micro` 11px x 1.6 = 17.6px; the 8px it
-   is padded top and bottom is the same padding every option row carries.
-   8 + 17.6 + 8 = 33.6px of content. The two buttons carry no height of their
-   own and stretch to meet it.
+   The header keeps everything that pass gave it — the 12px mark, the micro-caps
+   name, the hairline — and the rule now runs INTO the control rather than out
+   to the panel's edge. Nothing is left underneath, so the section is one row
+   tall. This is NOT the pre-header layout returning: that row carried no mark,
+   no rule, and a `--r-pill` 999px pill. Only the strip's position moved.
 
-   THE ROW IT IS MATCHED TO DOES NOT MEASURE WHAT THIS COMMENT FIRST CLAIMED,
-   and the correction is recorded rather than quietly patched. The claim was
-   that an option row comes to 8 + a 13px name's ~17.3px line box + 8, landing
-   within 0.3px of the strip so that the three groups share one rhythm. A 13px
-   name reaches ~17.3px only inside a button carrying `font: inherit` AND
-   `line-height: normal` — the pair rails.css spells out on `.command-row-btn`,
-   where a bare `font: inherit` is recorded as moving that subtree by +5.6px
-   because the shorthand also resets the leading. `.appearance-choice` carries
-   NEITHER, and nothing supplies them from above: styles.css imports Tailwind's
-   theme and utilities but not its preflight, and styles/ holds no bare `button`
-   rule, so this button keeps the UA font and the UA `normal` leading. On the
-   ratios rails.css measured for that same repaint, 1.09 for the UA face against
-   1.31 for the app's, the name's box is ~14.2px and not ~17.3px.
+   ITS HEIGHT IS DERIVED, and the driver is now the buttons rather than the
+   readout — which is the inversion the move required. 24px square is the
+   smallest target WCAG 2.2 accepts, and the 10px glyph inside leaves 7px on
+   every side. The readout no longer sets the height: its vertical padding is
+   gone and it stretches to the buttons, centring its own line box the way they
+   already centre their glyphs. So the strip is 24px of content plus its own 1px
+   top and bottom borders = 26px.
 
-   So a theme row is the tallest of that ~14.2px box, the 14px swatch and the
-   12px mark, plus its two 8px insets: ~30.2px against this strip's 33.6px. The
-   two are about 3.4px apart, not 0.3, and the three groups do not yet share one
-   rhythm. Left as measured rather than closed by moving the 8px, because the
-   honest lever is the missing `font: inherit` and that repaints the family under
-   a two-line wrap this file records as a premise other pins measure — a builder
-   with the instrument in hand, not a comment.
+   BEFORE, for the same box: the readout is a span, so it inherits body's 1.6
+   and its line box is `--fs-micro` 11px x 1.6 = 17.6px; padded 8px top and
+   bottom that made 33.6px of content, and the buttons stretched to meet it —
+   35.6px with the strip's borders. 35.6 to 26.
 
-   Widths: the column is 215px, less the strip's 1px side borders = 213px inner.
-   All three children are `flex: 1 1 0%`, so the free space splits three ways
-   after each child's borders come out — the readout's two dividers are the only
-   ones — giving (213 - 2) / 3 = 70.33px per share: 70.33px per button and
-   72.33px for the readout including its dividers. The two buttons are equal,
-   which is the pair a reader compares. */
+   Widths. Before: the strip filled the 215px column, its three children all
+   `flex: 1 1 0%`, giving (213 - 2) / 3 = 70.33px per button. After: 24 + 24 for
+   the two steps, 38 for the readout — border-box, so 36px of text between its
+   two dividers, against about 26px for four tabular mono glyphs at 11px, which
+   is what both "100%" and the 200% ceiling come to — plus the strip's 2px of
+   side border = 88px. 215 to 88.
+
+   The header row it now sits on is the same 215px. It spends 12 on the mark,
+   8 + 8 + 8 on its three gaps and 88 on the strip, leaving the name and the
+   rule to share 91. The name is four uppercase glyphs at 11px, so the rule
+   keeps the larger part of that and stays a rule rather than a stub — no
+   number is stated for it here because the split is a font metric, not
+   arithmetic. The strip does not shrink, so a longer name would eat the rule
+   and never the control.
+
+   The section comes to 26px where it was 17.6 + 8 + 35.6 = 61.2px, so the
+   panel's content column ends 35.2px higher than it did. Nothing gains or loses
+   a scroll over it: the body is 808px of box under the 44px head and held
+   437.4px of content before this. */
 .appearance-stepper {
   display: flex;
   align-items: stretch;
@@ -360,8 +466,13 @@
   overflow: hidden;
 }
 
+/* Square and fixed, where it used to be a third of the column. This is what
+   sets the strip's cross size — an explicit height beats the parent's stretch —
+   so the readout follows the buttons instead of the other way round. */
 .appearance-step {
-  flex: 1 1 0%;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -393,16 +504,27 @@
 }
 
 /* Tabular so stepping 90 to 100 does not shuffle the two buttons sideways. The
-   dividers are the same hairlines the option rows are separated by, so the
-   strip reads as a three-segment control of the same family as the lists above
-   it rather than as a lone pill. */
+   dividers are cut from --border, the one hairline token this dock's section
+   rules and this strip's own shell are drawn in, so the strip reads as a
+   three-segment control rather than as a lone pill. It no longer echoes the
+   option groups' dividers, because those are gone — the rows above are told
+   apart by a 2px gap now, the way the other two docks tell theirs apart.
+
+   A flex box rather than a padded text span, which is what centring it now
+   costs: it is stretched to the buttons' 24px and its line box is 17.6px, and
+   block text does not centre itself in the leftover 6.4px. `align-items` does,
+   the same way the two buttons already centre their glyphs. The old `padding`
+   and `min-width` are gone with the flex share they were sized against — 38px
+   is a fixed border-box width now, and it is the widest reading the control can
+   hold rather than a floor under a stretching one. */
 .appearance-readout {
-  flex: 1 1 0%;
-  min-width: 46px;
-  padding: 8px 0;
+  flex: 0 0 auto;
+  width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
-  text-align: center;
   font-family: var(--mono);
   font-size: var(--fs-micro);
   font-variant-numeric: tabular-nums;
