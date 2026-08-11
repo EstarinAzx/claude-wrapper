@@ -476,7 +476,10 @@ tags: [context, overview]
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
   also **three `gui-*.source.mjs` sidecars** (`gui-96`, `gui-98`, `gui-136`),
-  which are NOT drivers and are excluded from that count. The DOM phase launches
+  which are NOT drivers and are excluded from that count, and since #142 one
+  plain module, `inspect-workspace.mjs`, which is not executable at all.
+  `drivers.manifest.mjs` names all the non-members so their absence stays a
+  decision on the record. The DOM phase launches
   **30** of them, nine being accounted skips. **`gui-136` launches on a private
   `--user-data-dir`** — it pins bounds and zoom, both of which outlive the
   process, and reded two later drivers until it stopped sharing the profile
@@ -522,10 +525,28 @@ tags: [context, overview]
   `main.chat` and would move the boxes of surfaces it has nothing to do with.
   **All three docks wear the class `agents-dock`**, so they are selected by
   `aside[aria-label="…"]`; a class selector matches whichever dock is open and
-  files it under the wrong name. **`titlebar.png` is the one capture that is NOT
-  byte-stable** — `.session-title` renders `basename(cwd)` and the fixture
-  workspace is `mkdtemp`'d, so six random characters change the pixels while the
-  box and text length stay fixed (measured across seven runs; #142)
+  files it under the wrong name. **Every capture is byte-stable as of #142.**
+  `.session-title` renders `basename(cwd)` and the fixture workspace used to be
+  `mkdtemp`'d, so six random characters moved the pixels while the box and text
+  length stayed fixed — every signal the driver printed said nothing was moving.
+  The name is now pinned by **`inspect-workspace.mjs`**, a module the driver
+  imports, which also owns the **clean-if-stale** rule: a directory that is
+  already there is removed and the removal announced through the driver's own
+  `log` vocabulary, **never refused**, because a refusal would turn one crash's
+  residue into a permanent failure of an unattended instrument. Its **accepted
+  ceiling** is that two CONCURRENT runs now fight over that directory — there is
+  no lock, so run `inspect.mjs` one at a time.
+  `tests/inspect-fixture-workspace.test.ts` **runs** that module instead of
+  reading it as text, because the constraint is behavioural and "never refuses"
+  is not a property source text can honestly check; its last two assertions are
+  text only as the drift guard that keeps the driver actually calling it.
+  Verified by three consecutive runs plus a fourth seeded with crash residue:
+  eleven of eleven captures byte-identical, `titlebar.png` constant at 8239
+  against a prior spread of 8980 to 9538.
+  **`sidebar.png` and `window-session.png` comparing clean across back-to-back
+  runs is a FALSE NEGATIVE on #148** — that instability is across machines and
+  across time, and its premise shows instead in the sidebar capture's ~7125
+  characters of rail content against a fixture that seeds exactly one session
   (`.welcome`, `header.titlebar`, `aside.sidebar`, `main.chat`,
   `footer.input-bar`) or to the shape `transcript.ts` parses
 - `scripts/spike-81-background-tasks.mjs` — the CLI-measurement harness (#81),

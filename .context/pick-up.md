@@ -7,6 +7,8 @@ tags: [context, pick-up]
 
 # Pick up
 
+Start: read [[overview]] + [[active-work]].
+
 ## Chain 7 is draining the queue, with gauntlet chained behind it
 
 An autonomous `/preset vibe` pass ran while the owner was away, under an explicit
@@ -24,17 +26,17 @@ git rev-list --count origin/main..main
 
 ## The queue
 
-**Ten tickets left. Leg 1 landed #149, leg 2 landed #146** (`ed9a490`) — every
-driver honours `SCREENSHOT_DIR`, the captures are untracked, and a test reds if
-either half regresses. **Next is #142.** Recommended order, and the reasons are
-not cosmetic:
+**Nine tickets left. Leg 1 landed #149, leg 2 landed #146, leg 3 landed #142**
+(`ef664cf`) — the fixture workspace name is pinned, all eleven captures are
+byte-stable, and a stale directory is cleaned rather than refused. **Next is
+#148.** Recommended order, and the reasons are not cosmetic:
 
 | Order | # | Why here |
 |---|---|---|
 | ~~1~~ | ~~149~~ | **DONE, leg 1.** Bar README + `SKILL.md` at nine surfaces, drift now gated |
 | ~~2~~ | ~~146~~ | **DONE, leg 2.** Producers honour `SCREENSHOT_DIR`; the phase no longer dirties the tree |
-| 3 | 142 | Fixture pin; independent and measured |
-| 4 | 148 | Fixture the sessions list; removes the second instability source |
+| ~~3~~ | ~~142~~ | **DONE, leg 3.** Workspace name pinned; `titlebar.png` is diffable |
+| 4 | 148 | Fixture the sessions list; the last known source of capture drift |
 | 5 | 143 | Driver-first, but **verify AFTER 148** so the fix is the driver's, not the rail's |
 | 6 | 147 | Private profile per driver, dedicated shared profile for the opt-out pair |
 | 7 | 145 | Quarantine accepted; phase must not report clean green |
@@ -44,25 +46,40 @@ not cosmetic:
 | 11 | 139 | Tool-card label to 400 |
 | 12 | 140 | Named scoped exception for the state stripe |
 
+**No ticket in this queue carries a native blocking edge** — checked on all nine.
+The ordering above lives only in this table, so it is the chain's plan rather than
+something the tracker will enforce. Every leg so far has followed it.
+
 **#144 stays `needs-triage` on purpose.** Its settled half is #150. Closing #144
 because #150 landed is the exact failure the split was reviewed against.
 
-## Next ticket, #142, and the constraint that changes its design
+## Next ticket, #148, and the trap leg 3 just measured
 
-Pin the fixture workspace directory name so `titlebar.png` stops moving. #137
-already ran that exact change and recorded that it *"made `titlebar.png`
-byte-identical"*, so this is measured rather than proposed.
+Fixture the sessions list so `sidebar.png` and `window-session.png` can be
+byte-compared.
 
-**Do not refuse to run when the fixed directory already exists.** That converts
-crash residue and any parallel run into a deterministic failure. **Clean it when
-stale, and only then**, stated in the instrument's existing loud-failure
-vocabulary so the cleanup is visible rather than silent.
+**READ THIS BEFORE WRITING ITS ACCEPTANCE.** Leg 3 ran `inspect.mjs` four times
+and byte-compared everything. **`sidebar.png` and `window-session.png` came back
+byte-identical across all four.** The obvious acceptance check for #148 — run it
+twice, diff — **passes today, on unfixed code.**
 
-**Acceptance is repeated runs, not one comparison.** One byte-identical run
-proves the fixture helped once, not that every volatile input is pinned.
+The rail's instability is not run-to-run within one sitting. It is across machines
+and across time. The premise is visible in the driver's own log instead:
 
-`sidebar.png` and `window-session.png` do **not** stabilise from this fix. That
-is #148, a genuinely independent cause.
+```
+SURFACE  {"name":"sidebar","box":{"x":0,"y":48,"w":383,"h":852},"text":7125,...}
+```
+
+7125 characters of rail content against a fixture that seeds exactly **one**
+session. The rest is this machine's real sessions. Argue the surface's stability
+from **what feeds it**, not from a comparison. A comment saying this is already on
+the ticket.
+
+#137 measured the same rail at 100 rows, 99 of them `session-row-btn-foreign`,
+with the whole cross-run diff being four `.session-row-meta` spans ticking
+`8m`→`9m` at **identical character length** — which is exactly why the driver's
+`textLength` guard saw nothing. That is the mechanism; it is also a provenance
+leak, since those captures carry real session titles into `.gauntlet/bar/`.
 
 ## What was decided while you were out, in one line each
 
@@ -114,12 +131,21 @@ the bar is human-owned.
 seed, so a seed picks a subset. That is a budget, not a statement that the
 unpicked surfaces lack a standard; the bar README now says so in the file.
 
+**Wave-to-wave byte comparison of the captures is now meaningful** for every
+surface except the two #148 owns. Before #142 `titlebar.png` moved on its own.
+
 ## Landmines
 
 **Do not read the DOM phase's verdict off a compound command.** It has reported
 **exit 0 while its own text said `DOM PHASE FAIL`**, with no pipe involved — the
 command merely ended in `; echo`. **Any trailing command replaces the status.**
 Read `$?` on its own line, or grep the redirected file.
+
+**Run `inspect.mjs` one at a time** (#142). Its workspace directory name is fixed
+now, so a second concurrent run deletes the first's workspace and the first's
+`cleanup()` then deletes the second's. Both produce garbage rather than an error.
+There is no lock; this was accepted knowingly as the price of a diffable capture,
+and the reasoning sits beside the code in `inspect-workspace.mjs`.
 
 **Cleaning `scripts/` after a phase run is no longer needed** (#146, `ed9a490`).
 Every driver honours `SCREENSHOT_DIR`, the phase writes only under
@@ -140,6 +166,11 @@ authorises `-D`.
 **A 0-byte subagent transcript is not a dead agent.** An earlier run diagnosed one
 that way and was wrong: the file flushes only at completion, so "not started yet"
 and "died on spawn" look identical by size. Cost two wasted spawns.
+
+**A mutation that reds fewer tests than you expected is a finding about the
+tests** (#142), not a pass. `Math.random()` at module scope is stable within one
+process, so a "the value is stable across calls" assertion cannot see it; only a
+per-call mutation can. Read what the mutation actually mutated before scoring it.
 
 ## Standing constraints for the renderer
 
@@ -171,6 +202,10 @@ fallback that points back inside the repo. Use
 **Do not broaden the `scripts/gui-*-shots/` ignore rule** to `scripts/**/*.png` —
 that swallows `scripts/spike-117-shots/`, which `spike-117-findings.json` and
 `spike-117-findings.md` cite by path as recorded evidence.
+
+**A new `.mjs` in `.claude/skills/run-desktop/` that is neither a `gui-*` driver
+nor a `*.source.mjs` sidecar gets a line in `drivers.manifest.mjs`** (#142), which
+enumerates the non-members so their absence stays a decision on the record.
 
 ## Chain rules
 
