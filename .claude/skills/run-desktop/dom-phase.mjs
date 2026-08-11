@@ -31,7 +31,7 @@ import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { DOM_SKIP, DRIVER_DIR, domPhaseDrivers, listDrivers } from './drivers.manifest.mjs'
+import { DOM_SKIP, DRIVER_DIR, domPhaseDrivers, listDrivers, phaseVerdict, uncoveredContracts } from './drivers.manifest.mjs'
 
 const APP_DIR = path.resolve(DRIVER_DIR, '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-dom-phase')
@@ -205,8 +205,27 @@ for (const driver of queue) {
 // ── report ────────────────────────────────────────────────────────────────
 const bad = results.filter((r) => r.status !== 'PASS')
 
-console.log(`\n=== ${results.length - bad.length}/${results.length} passed ===`)
-for (const r of bad) console.log(`  ${r.status.padEnd(8)} ${r.driver}${r.failLine ? ` — ${r.failLine.trim()}` : ''}`)
+// #145 — the quarantine, carried by the verdict instead of printed underneath it.
+//
+// An `--only` run is scoped by construction: it left twenty-nine other contracts
+// unchecked too, and singling out the quarantined one there would be noise
+// dressed as rigour. The deficit is a claim about a FULL run, which is the only
+// run that otherwise gets to say "everything passed".
+const outstanding = only ? [] : uncoveredContracts()
+
+const deficit = outstanding.length
+  ? ` + ${outstanding.length} uncovered contract${outstanding.length === 1 ? '' : 's'} (${outstanding
+      .map(([d, reason]) => `${d}, ${reason.slice(0, reason.indexOf(':'))}`)
+      .join('; ')})`
+  : ''
+console.log(`\n=== ${results.length - bad.length}/${results.length} passed${deficit} ===`)
+for (const r of bad) console.log(`  ${r.status.padEnd(9)} ${r.driver}${r.failLine ? ` — ${r.failLine.trim()}` : ''}`)
+// Named with the same column width as a real verdict, because that is what it
+// is: a driver whose contract this run did not settle either way.
+for (const [d] of outstanding) {
+  console.log(`  ${'UNCOVERED'.padEnd(9)} ${d} — not launched here. Run it alone on an idle desktop:`)
+  console.log(`      npm run test:dom -- --only ${d}`)
+}
 if (!only) {
   console.log(`\nnot launched (${DOM_SKIP.size}), each for a stated reason:`)
   for (const [d, reason] of DOM_SKIP) console.log(`  ${d} — ${reason}`)
@@ -233,7 +252,26 @@ try {
   console.log(`(left behind: ${PROFILE_ROOT})`)
 }
 
-console.log(
-  `\n${bad.length === 0 ? 'DOM PHASE PASS' : `DOM PHASE FAIL: ${bad.map((r) => `${r.driver} (${r.status})`).join(', ')}`}`
-)
+// The last line, which is the only line most readers see. `INCOMPLETE` exists so
+// that "nothing broke" and "everything was checked" cannot be collapsed into one
+// green word — the composition is `phaseVerdict`, in the manifest, where the
+// fast gate can execute it (this file spawns drivers at import and cannot be
+// imported at all).
+const notes = []
+if (bad.length) notes.push(bad.map((r) => `${r.driver} (${r.status})`).join(', '))
+if (outstanding.length)
+  notes.push(`${outstanding.length} contract(s) never checked: ${outstanding.map(([d]) => d).join(', ')}`)
+console.log(`\nDOM PHASE ${phaseVerdict(bad.length, outstanding.length)}${notes.length ? `: ${notes.join(' — and ')}` : ''}`)
+
+// THE EXIT CODE ANSWERS A NARROWER QUESTION THAN THE WORD ABOVE IT, deliberately:
+// "did anything that ran break", not "was everything checked". An uncovered
+// `desktop-exclusive` contract is a permanent structural fact about a batch — a
+// batch can never hand a driver the desktop foreground — so failing on it would
+// make this phase red forever, and an exit code that is always 1 carries exactly
+// as much information as one that is always 0. That is the laundering hazard
+// #145 closes, running the other way.
+//
+// FOR #150, WHICH WILL WIRE CI: read the verdict word, not just `$?`. `PASS`,
+// `INCOMPLETE` and `FAIL` are three different claims and only the last is a
+// defect. (And read `$?` on its own line — any trailing command replaces it.)
 process.exit(bad.length === 0 ? 0 : 1)

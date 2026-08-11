@@ -45,6 +45,8 @@ interface Manifest {
   listSidecars: () => string[]
   driverOf: (sidecar: string) => string
   domPhaseDrivers: () => string[]
+  uncoveredContracts: () => [string, string][]
+  phaseVerdict: (badCount: number, uncoveredCount: number) => 'PASS' | 'FAIL' | 'INCOMPLETE'
 }
 
 const REPO = path.resolve(import.meta.dirname, '..')
@@ -137,6 +139,62 @@ describe('the DOM phase accounts for every driver', () => {
       ([, reason]) => reason.length < 40 || !/^(api-cost|no-verdict|desktop-exclusive):/.test(reason)
     )
     expect(bad).toEqual([])
+  })
+})
+
+// #145 — a skip the phase's own verdict has to carry, not just list.
+//
+// The hazard, in the words of the review that named it: a printed postscript
+// "converts a failing phase assertion into optional operator behaviour and
+// launders the main phase green". `gui-119` is quarantined as
+// `desktop-exclusive` — a contract that CAN be checked, by a human, on an idle
+// desktop — and until somebody does, the phase has not checked it. So the last
+// line a reader skims may not read as an unqualified pass while one is
+// outstanding.
+//
+// WHY ONLY `desktop-exclusive` COUNTS, since the other two categories are also
+// unlaunched: a deficit a reader can close is a deficit, and one they cannot is
+// wallpaper. `desktop-exclusive` closes with one command. `api-cost` needs a
+// key, network and credits and is a standing cost decision; `no-verdict` has no
+// contract to leave uncovered, because the driver computes no pass/fail at all.
+// Counting all nine would put a number on the last line that nobody can ever
+// drive to zero, which is how a warning becomes furniture.
+describe('an uncovered contract is stated in the verdict, not beneath it (#145)', () => {
+  // NOT named `uncovered` — that word is already taken in this file for drivers
+  // with no source-level sidecar, which is a different claim entirely.
+  const outstanding = manifest.uncoveredContracts()
+
+  test('the uncovered set is exactly the desktop-exclusive skips', () => {
+    const byCategory = [...manifest.DOM_SKIP.entries()].filter(([, r]) => r.startsWith('desktop-exclusive:'))
+    expect(outstanding).toEqual(byCategory)
+  })
+
+  // The quarantine this ticket accepted. If somebody launches `gui-119` in the
+  // batch, or reclassifies it, that is a real decision and it should have to
+  // edit a test that says so out loud.
+  test('gui-119 is the outstanding one, and it is not launched', () => {
+    expect(outstanding.map(([d]) => d)).toContain('gui-119.mjs')
+    expect(manifest.domPhaseDrivers()).not.toContain('gui-119.mjs')
+  })
+
+  // The hazard itself, as one assertion: no combination of "nothing failed" and
+  // "something was never checked" is allowed to produce a green word.
+  test('a run where nothing broke is INCOMPLETE, not PASS, while a contract is uncovered', () => {
+    expect(manifest.phaseVerdict(0, 1)).toBe('INCOMPLETE')
+    expect(manifest.phaseVerdict(0, 9)).toBe('INCOMPLETE')
+  })
+
+  // Precedence, and it is the honest way round: a contract that was checked and
+  // broke outranks one that was not checked at all.
+  test('a real failure outranks an uncovered contract', () => {
+    expect(manifest.phaseVerdict(1, 1)).toBe('FAIL')
+    expect(manifest.phaseVerdict(1, 0)).toBe('FAIL')
+  })
+
+  // And the deficit is closeable rather than decorative: running the
+  // quarantined driver alone is what earns the clean word back.
+  test('PASS requires both zero — it is reachable, and only that way', () => {
+    expect(manifest.phaseVerdict(0, 0)).toBe('PASS')
   })
 })
 

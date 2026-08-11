@@ -193,6 +193,61 @@ That is fixed, and the shape is now caught by the phase, because the next driver
 to do it will not announce itself either. Exit `2` reports as `UNSCORED` — a
 driver that could not measure what it came to measure is not a pass.
 
+### The phase has three verdicts, and only one of them is a defect (#145)
+
+The last line of a run is one of these. Read the word, not just `$?`:
+
+| verdict | means | exit |
+|---|---|---|
+| `DOM PHASE PASS` | everything the phase covers ran, and passed | 0 |
+| `DOM PHASE INCOMPLETE` | nothing that ran broke, but a contract was never checked | 0 |
+| `DOM PHASE FAIL` | something that ran broke | 1 |
+
+**`INCOMPLETE` exists because "nothing broke" and "everything was checked" are
+different claims**, and a green word that collapses them is how a quarantine
+turns into coverage nobody notices is missing. A skip printed *underneath* a
+`PASS` is exactly that: it "converts a failing phase assertion into optional
+operator behaviour and launders the main phase green". So the deficit is stated
+in the verdict line instead, and in the count above it:
+
+```text
+=== 29/30 passed + 1 uncovered contract (gui-119.mjs, desktop-exclusive) ===
+  UNCOVERED gui-119.mjs — not launched here. Run it alone on an idle desktop:
+      npm run test:dom -- --only gui-119.mjs
+
+DOM PHASE INCOMPLETE: 1 contract(s) never checked: gui-119.mjs
+```
+
+**Only `desktop-exclusive` counts toward the deficit**, and the reason is whether
+a reader can act on it. That category closes with one command. `api-cost` is a
+standing decision about money and credentials, not an errand anybody clears by
+remembering; `no-verdict` has no contract to leave uncovered. A number on the
+last line that nobody can ever drive to zero stops being a warning and becomes
+furniture.
+
+**The exit code deliberately answers the narrower question** — *did anything that
+ran break* — and stays 0 for `INCOMPLETE`. A batch can never hand a driver the
+desktop foreground, so failing on it would make this phase red forever, and an
+exit code that is always 1 carries exactly as much information as one that is
+always 0. That is the same laundering hazard running the other way.
+
+**An `--only` run does not report a deficit.** It is scoped by construction: it
+left every other contract unchecked too, and naming one of them there would be
+noise dressed as rigour.
+
+### The release step this phase cannot run for you
+
+**Before a release, run the quarantined driver alone on an idle desktop:**
+
+```bash
+npm run test:dom -- --only gui-119.mjs     # desktop-exclusive; needs the foreground
+```
+
+Idle means no other app launching or closing while it runs — that is the
+condition the batch cannot provide, not a superstition. This is the run that
+clears the `INCOMPLETE`, and it is the only way this phase's report reaches a
+clean `DOM PHASE PASS`.
+
 **What the phase does NOT launch is a list with reasons**, in
 `drivers.manifest.mjs`, and the fast gate asserts that list covers the whole
 driver set — so a driver that is neither launched nor skipped reds `npm test` in
@@ -207,7 +262,10 @@ milliseconds, naming itself. Two reasons exist and they are genuinely different:
 - **`desktop-exclusive`** — the driver's witness *is* the desktop foreground: a
   genuine focus loss, and a screen capture of the window rectangle. A batch
   cannot hand it that while other apps are opening and closing. Run these alone
-  on an idle desktop: `npm run test:dom -- --only gui-119.mjs`.
+  on an idle desktop: `npm run test:dom -- --only gui-119.mjs`. **This is the
+  only category the phase counts as an uncovered contract** (#145) — see the
+  three verdicts above; until somebody runs it, the phase reports `INCOMPLETE`
+  rather than a clean pass.
 
   This is the category that could quietly become "reds we gave up on", so it
   carries the highest bar: an entry needs the driver **passing alone and failing

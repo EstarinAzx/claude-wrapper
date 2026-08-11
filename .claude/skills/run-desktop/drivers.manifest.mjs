@@ -133,3 +133,47 @@ export const DOM_SKIP = new Map([
 
 /** Drivers the DOM phase launches: the whole set minus the accounted skips. */
 export const domPhaseDrivers = () => listDrivers().filter((d) => !DOM_SKIP.has(d))
+
+// ── #145: the skips the phase's VERDICT has to carry, not merely list ─────
+// The quarantine was accepted for `gui-119`, and the objection that came with
+// the acceptance is the part that shapes this: a printed postscript "converts a
+// failing phase assertion into optional operator behaviour and launders the main
+// phase green". Listing the skip below a `DOM PHASE PASS` is exactly that
+// postscript. So the deficit moves INTO the verdict line.
+//
+// ONLY `desktop-exclusive` COUNTS, and the distinction is not squeamishness
+// about the other two — it is whether a reader can act:
+//
+//   desktop-exclusive  a contract that CAN be checked, by a human, with one
+//                      command on an idle desktop. Until somebody runs it, the
+//                      phase has not checked it, and the reader can close it.
+//   api-cost           a standing decision about money, a key and a network, not
+//                      an oversight anybody clears by remembering.
+//   no-verdict         no contract to leave uncovered — the driver computes no
+//                      pass/fail, which is why it is not launched.
+//
+// Counting all nine would print a number on the last line that nobody can ever
+// drive to zero, and a warning nobody can clear becomes furniture. This one is
+// closeable, which is the only reason it is worth interrupting a green for.
+const UNCOVERED_CATEGORY = 'desktop-exclusive:'
+
+/**
+ * Skips that represent a contract a human can still go and check.
+ * `[driver, reason]` pairs, in `DOM_SKIP` order.
+ */
+export const uncoveredContracts = () => [...DOM_SKIP.entries()].filter(([, r]) => r.startsWith(UNCOVERED_CATEGORY))
+
+/**
+ * The phase's own verdict word, given what failed and what was never checked.
+ *
+ * Lives here rather than in `dom-phase.mjs` for the reason #142 and #148 both
+ * hit: that file spawns drivers at import, so the fast gate cannot execute a
+ * line of it. A rule the gate cannot run is a rule that goes quietly wrong —
+ * which is the whole subject of the phase this rule belongs to.
+ *
+ * The precedence is deliberate: a contract that WAS checked and broke outranks
+ * one that was never checked, because the first is a defect and the second is
+ * an errand.
+ */
+export const phaseVerdict = (badCount, uncoveredCount) =>
+  badCount > 0 ? 'FAIL' : uncoveredCount > 0 ? 'INCOMPLETE' : 'PASS'
