@@ -36,11 +36,18 @@
 // phase 3 reports opacity 0 under hover. Verified red by stashing chat.css's
 // rules and Chat.tsx's button and rebuilding.
 //
+// Its source-level half is `gui-123.source.mjs`, which runs in the fast gate and
+// holds #143's one text-level criterion: this driver's Tab traversal counts its
+// budget off the document instead of hardcoding one. That check cannot live down
+// here, because a hardcoded budget is invisible in the configuration the DOM
+// phase normally runs in — see the sidecar's header for the measurements.
+//
 //   node .claude/skills/run-desktop/gui-123.mjs
 //
 // Needs `npm run build` first, plus `npm i --no-save playwright-core`.
 
 import { _electron as electron } from 'playwright-core'
+import { checks as sourceChecks } from './gui-123.source.mjs'
 import path from 'node:path'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -144,6 +151,92 @@ await page.evaluate(() => {
 await page.waitForSelector('.message-input', { timeout: 20000 })
 log('WORKSPACE', { dir: path.basename(WORK_DIR) })
 
+// ---- phase 1b: the rail this run is going to measure against ----------------
+//
+// #143. Every phase below reads something off a live renderer, and until this
+// block existed each of them inherited a sidebar nobody here had set. The rail
+// lists this machine's real session store, and how much of it reaches the DOM is
+// decided by a scope toggle that PERSISTS in the shared Electron profile (#147
+// is the ticket about that profile). Measured on this machine, same build, with
+// the message already sent:
+//
+//   scope "This project", mkdtemp workspace ->   0 rows,  17 focusables, control on press 16
+//   scope "All projects"                    -> 100 rows, 218 focusables, control on press 218
+//
+// and a second launch against a brand new workspace still came up on "All
+// projects", so it is genuinely persisted rather than per-run.
+//
+// Those focusable counts drift by a stop or two between runs even at a pinned
+// scope — this driver has logged 18 where the table says 17, because the rail's
+// background-sessions section offers a retry control only sometimes. That drift
+// is small and it is exactly why phase 4 counts per run instead of trusting any
+// number written here.
+//
+// Scope is forced to `project` against a workspace `mkdtemp` made seconds ago,
+// which no stored session can name, so the rail is empty BY CONSTRUCTION rather
+// than by luck. Then it is READ BACK — #148's lesson, that a fixture nobody
+// verifies is only a hope: if the pin does not take, this run says so instead of
+// quietly measuring the machine again.
+//
+// IT SITS HERE, AHEAD OF PHASE 3, AND THAT POSITION IS LOAD-BEARING. It was
+// written inside phase 4 first, and phase 3 then read a mid-transition
+// `opacity: 0.823757` under hover on a run whose rail still held 100 rows — a
+// 150ms transition read after a fixed 300ms wait, on a renderer busy laying out
+// a hundred rows it did not need. That is the same defect as the tab budget
+// wearing different clothes, and moving the pin above every measurement is what
+// removes it rather than another hardcoded wait.
+//
+// THIS WRITES TO THE SHARED PROFILE, deliberately, and #147 should know it. The
+// toggle is persisted, so pinning it leaves "This project" behind for whatever
+// runs next. Restoring the previous value was considered and rejected: the only
+// value there is to restore is the one that made this driver red, and handing it
+// to the next driver is the failure #147 is about. A private profile per driver
+// is the real fix, and it is that ticket's rather than this one's.
+const scope = await page.evaluate(() => {
+  const btns = [...document.querySelectorAll('.session-scope-btn')]
+  const project = btns.find((b) => /this project/i.test(b.textContent || ''))
+  if (!project) return { found: false, labels: btns.map((b) => (b.textContent || '').trim()) }
+  const already = project.getAttribute('aria-pressed') === 'true'
+  if (!already) project.click()
+  return { found: true, already }
+})
+if (!scope.found) {
+  fails.push(
+    `the rail has no "This project" scope control (saw ${JSON.stringify(scope.labels)}) — this run cannot pin the rail, so every phase below would be measuring whatever this machine's store and persisted scope happen to be; UNSCORED`
+  )
+  await finish()
+}
+
+// WAITED FOR, NOT SLEPT THROUGH. A fixed settle here would be the same bug this
+// block exists to remove, one scope smaller: the click has to reach a React
+// re-render, and how long that takes is a property of how many rows are being
+// torn down. The condition is the state the run needs, so a slow machine waits
+// longer and a fast one does not wait at all. A timeout is not scored here —
+// whatever the rail actually shows is read back below and reported from there.
+await page
+  .waitForFunction(
+    () =>
+      document.querySelectorAll('.session-row-btn').length === 0 &&
+      /this project/i.test(
+        document.querySelector('.session-scope-btn[aria-pressed="true"]')?.textContent || ''
+      ),
+    null,
+    { timeout: 8000 }
+  )
+  .catch(() => {})
+
+const rail = await page.evaluate(() => ({
+  scope: document.querySelector('.session-scope-btn[aria-pressed="true"]')?.textContent?.trim() ?? null,
+  rows: document.querySelectorAll('.session-row-btn').length
+}))
+log('RAILPIN', { ...rail, pinnedHere: !scope.already })
+if (rail.rows !== 0) {
+  fails.push(
+    `the rail rendered ${rail.rows} row(s) for a workspace created by mkdtemp seconds ago (scope reads ${JSON.stringify(rail.scope)}) — the pin did not take, so this run would be measuring this machine's session store rather than the app; UNSCORED`
+  )
+  await finish()
+}
+
 // ---- phase 2: one user message, and the control on it -----------------------
 
 const composer = page.locator('.message-input')
@@ -238,17 +331,57 @@ if (Number(hovered) !== 1) {
 await page.mouse.move(4, 4)
 
 // ---- phase 4: keyboard reach and the ring -----------------------------------
+//
+// #143 — THE PREMISE THIS TRAVERSAL RUNS ON, and the reason it now establishes
+// one instead of inheriting it.
+//
+// This phase used to spend a fixed 60 Tab presses and call the control
+// unreachable if it had not landed. That number was never a property of the
+// product: the sessions rail sits ahead of the transcript in the tab order, and
+// its length is decided by the machine's session store and by a persisted scope
+// toggle this driver did not set. Phase 1b has the measurements and pins the
+// rail; this is the other half.
+//
+// THE BUDGET IS DERIVED. One full cycle of the document's own focusable elements
+// reaches anything that is in the tab order at all, so the bound is counted
+// rather than guessed. That is what keeps this driver honest on a machine unlike
+// this one, and `gui-123.source.mjs` pins it in the fast gate, because a
+// reverted constant would pass the DOM phase on any machine whose toggle happens
+// to sit on "This project".
+//
+// What this phase now claims is therefore narrower and true: the control is in
+// the tab order of a rail this run established. Whether a keyboard user can
+// reach it on a rail of a hundred sessions is a PRODUCT question about where the
+// rail sits in the tab order, and it is not this driver's to answer.
+
+// Counted here rather than in phase 1b: the control itself is one of these, and
+// it does not exist until phase 2 has sent the message.
+const focusables = await page.evaluate(() => {
+  const SEL =
+    'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+  return [...document.querySelectorAll(SEL)].filter((el) => {
+    const cs = getComputedStyle(el)
+    return cs.display !== 'none' && cs.visibility !== 'hidden'
+  }).length
+})
 
 // Tabbed to, never `.focus()`d: Chromium only paints `:focus-visible` for a
 // keyboard-shaped focus, so a programmatic focus would read the ring as absent
 // and fail this check for the wrong reason.
+//
+// The budget is one full cycle plus slack for the wrap through the document
+// itself. Start position therefore does not matter, which is the other thing a
+// fixed count got wrong: focus sits wherever phase 3 left it.
+const budget = focusables + 10
 await page.evaluate(() => {
   document.activeElement?.blur?.()
   document.body.focus()
 })
 let reached = false
-for (let i = 0; i < 60 && !reached; i++) {
+let presses = 0
+for (let i = 0; i < budget && !reached; i++) {
   await page.keyboard.press('Tab')
+  presses = i + 1
   reached = await page.evaluate(
     () => document.activeElement?.classList.contains('bubble-reuse') ?? false
   )
@@ -277,9 +410,17 @@ const ring = reached
       }
     })
   : null
-log('KEYBOARD', { reached, onLand, ring })
+// `presses` is recorded on a PASS too, as a DIAGNOSTIC and not as a distance any
+// user walks: the traversal starts wherever phase 3 left focus, so this number
+// moves with the phase above it — it read 16 on one run and 1 on the next. What
+// it is good for is `focusables`, beside it: that one is the size of the tab
+// order this run measured, and it is the number that would show the document
+// quietly growing under this driver.
+log('KEYBOARD', { reached, presses, budget, focusables, onLand, ring })
 if (!reached) {
-  fails.push('the reuse control could not be reached with Tab in 60 presses — it is not keyboard reachable')
+  fails.push(
+    `the reuse control was not reached in ${budget} Tab presses — one full cycle of the ${focusables} focusable elements this document holds, on a rail pinned to 0 rows, so it is not in the tab order`
+  )
 } else {
   // The half a hover rule cannot deliver: a control focused by keyboard and
   // still at opacity 0 is a tab stop pointing at nothing.
@@ -360,5 +501,17 @@ await page.waitForTimeout(250)
 await page
   .screenshot({ path: path.join(SHOT_DIR, 'revealed.png') })
   .catch(() => {})
+
+// ---- the SOURCE-level criterion ---------------------------------------------
+// #143's text-level half, in `gui-123.source.mjs` because
+// `tests/gui-source-assertions.test.ts` runs that array in the gate (#132). This
+// loop drives the SAME array, so there is one definition and the gated copy
+// cannot drift from the driven one.
+console.log('--- source-level (also run by `npm test`) ---')
+for (const c of sourceChecks) {
+  const { ok, detail } = c.run()
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${c.name} ${JSON.stringify(detail)}`)
+  if (!ok) fails.push(`${c.name}: ${JSON.stringify(detail)}`)
+}
 
 await finish()
