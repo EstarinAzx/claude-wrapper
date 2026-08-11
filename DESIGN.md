@@ -53,6 +53,8 @@ Never `#000`/`#fff`. Backgrounds under the acrylic must stay translucent; `html,
 
 One family (Segoe UI Variable, native Win11). Weights: 400 body, 600 app name, headings and bubble-less emphasis.
 
+**A tool-card label is none of those three, so it carries no weight of its own (#139).** It sits at 400 like the prose around it, and its emphasis is carried by size and colour instead: colour separates the label from the rest of its card (`--text` against the `--text-muted` its siblings take), and size separates the card from the transcript (13 against prose at 15). Read this before re-raising it as a missing weight step — three review waves did. The old 600 delivered a ratio of only 1.208 against 15/400 prose, where this app's own 400-to-600 step measures 1.391 at a constant size, because the label is two rungs *smaller* and the size drop ate most of the weight difference. The fix was to stop asserting a weight the document never granted, not to widen the set. `gui-96` pins it: criteria 7 to 9 measure the rendered label in `npm run test:dom`, 10 and 11 read the source in `npm test`.
+
 **One scale, and it is stated as a ratio rather than as a list.** Scale ratio ~1.15 off a 15px body, fixed rem-equivalents, no fluid type. A size belongs to this system when it lands within half a pixel of `15 x 1.15^k` for a whole number k. That half pixel is not slack: the authored rungs are rounded to whole px and already carry it (11 is 11.34 rounded, 13 is 13.04, the display rung is 45.89), so no tolerance tighter than 0.35 can keep the rungs this document already names.
 
 **The rungs the app paints, and the role each one holds** (#138). A rung earns its place here by having a caller and a job, not by rendering somewhere:

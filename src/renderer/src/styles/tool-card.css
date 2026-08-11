@@ -27,9 +27,17 @@
   min-width: 0;
 }
 
+/* 400, not 600, and the reason is a licence rather than a taste (#139).
+   `DESIGN.md`'s Type section grants 600 to exactly three things: the app name,
+   headings, and bubble-less emphasis. A tool-card label is none of them, so the
+   600 that used to sit here was asserting a weight the document never granted
+   this element. What separates the label from the rest of its card is COLOUR -
+   `--text` against the `--text-muted` its siblings take - and what separates the
+   card from the transcript around it is SIZE, 13 against prose at 15.
+   Pinned by gui-96 criteria 7 to 9, which run in `npm run test:dom`. */
 .tool-card-name {
   color: var(--text);
-  font-weight: 600;
+  font-weight: 400;
   flex-shrink: 0;
 }
 

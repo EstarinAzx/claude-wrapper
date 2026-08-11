@@ -23,6 +23,7 @@ import fs from 'node:fs'
 
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
 const STYLE_DIR = path.join(APP_DIR, 'src/renderer/src/styles')
+const DESIGN_MD = path.join(APP_DIR, 'DESIGN.md')
 
 // Recursive because `styles/` is allowed to grow subdirectories; a flat
 // `readdirSync` would silently stop covering them the day one appears.
@@ -88,6 +89,75 @@ export const checks = [
           hasX: slideBody?.includes('translateX') ?? null,
           stops: slideBody ? (slideBody.match(/\{/g) || []).length : null,
           hint: 'stops should be 2 (from + to) — a 1 here means the body was truncated at the first close brace'
+        }
+      }
+    }
+  },
+  {
+    // #139, ACCEPTANCE 2's second half. Criterion 2 above bans ONE value, and it
+    // was written for the one drift that had actually happened. The acceptance
+    // is wider than that: the documented set is `{400, 600}` and no new rung may
+    // be added, which a grep for a single number cannot say. So this reads the
+    // VALUE rather than a value — 350, 700, `bold` and `lighter` are all caught
+    // by the same line, and criterion 2 stays because the ticket names it.
+    //
+    // Matched as `[^;}]+` rather than `\d+` on purpose: a keyword weight is the
+    // easy way to leave the documented set without ever writing a number, and a
+    // digit-only pattern would not see it.
+    name: 'criterion 10 (#139): every font-weight in src/renderer/src/styles/ is 400 or 600 (SOURCE)',
+    run() {
+      const allowed = new Set(['400', '600'])
+      const hits = []
+      for (const p of cssFiles(STYLE_DIR)) {
+        fs.readFileSync(p, 'utf8')
+          .split(/\r?\n/)
+          .forEach((line, i) => {
+            const m = /font-weight:\s*([^;}]+)/.exec(line)
+            const value = m?.[1].trim()
+            if (value && !allowed.has(value))
+              hits.push(`${path.relative(APP_DIR, p)}:${i + 1} -> ${value}`)
+          })
+      }
+      return { ok: hits.length === 0, detail: { hits, allowed: [...allowed] } }
+    }
+  },
+  {
+    // #139, ACCEPTANCE 3. The ruling's whole risk is that the next reviewer
+    // measures the label against the prose, finds no weight step, and files it
+    // again — which is what happened three times before it was measured. The
+    // document is the only thing that can stop that, so the document is checked.
+    //
+    // `\r?` everywhere: DESIGN.md is CRLF in this checkout, and an LF-only
+    // pattern matches nothing and reports the sentence missing — a red for the
+    // wrong reason that reads exactly like the sentence having been deleted.
+    //
+    // The discriminator is `weight`, not `tool card`: the Type section's rung
+    // table already lists tool cards as a 13px role, so a check keyed on the
+    // noun alone would pass against that row and never see the sentence go.
+    //
+    // WHAT IT CAN AND CANNOT SEE, measured by mutation rather than asserted.
+    // It reds when the sentence is deleted, and it reds when `colour` leaves
+    // the line entirely. It does NOT red when one of the line's two `colour`
+    // mentions is reworded away while the other survives — and that is the
+    // honest reading, not a hole: the claim is still on the record. This is a
+    // keyword check on prose, so it pins that the claim is PRESENT and cannot
+    // grade how well it is argued. Tightening it to exact wording would buy
+    // that at the price this repo already pays for its literal-text pins (D3).
+    name: 'criterion 11 (#139): DESIGN.md Type section records tool-card emphasis as size and colour (SOURCE)',
+    run() {
+      const md = fs.readFileSync(DESIGN_MD, 'utf8')
+      const section = /\r?\n## Type\r?\n([\s\S]*?)\r?\n## /.exec(md)
+      const candidates = (section?.[1] ?? '')
+        .split(/\r?\n/)
+        .filter((l) => /tool[- ]cards?/i.test(l) && /weight/i.test(l))
+      const stated = candidates.filter((l) => /\bsize\b/i.test(l) && /colou?r/i.test(l))
+      return {
+        ok: stated.length > 0,
+        detail: {
+          sectionFound: !!section,
+          candidates: candidates.length,
+          stated: stated.length,
+          hint: 'the Type section needs a line naming the tool-card label, its weight, and both size and colour as what carries its emphasis instead'
         }
       }
     }

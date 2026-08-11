@@ -53,6 +53,19 @@
 // centred popup and turned the entry into a Y rise while KEEPING the keyframe
 // name, so nothing here could see the axis change: the premise and criterion 3
 // stay green whichever way the pane moves. Criterion 6 is the only pin on it.
+//
+// #139 ADDED CRITERIA 7-11, which are the tool-card label's weight. They land
+// here rather than in a new driver because this file already owns computed
+// font-weight as a subject and already grows a tool card as a fixture, so the
+// whole addition costs one more `page.evaluate` and no second Electron launch.
+// 7 is the value (the label computes 400), 9 is the warrant it rests on (the
+// label is not one of the three things `DESIGN.md` licenses 600 for), and 8 is
+// the pin that keeps 7 honest on a machine where two weights can render
+// identically. 10 and 11 are source-level and live in the sidecar with 2 and 6.
+//
+// RED-VERIFIED for #139 before the fix: 7 failed (600), 8 and 9 passed - the
+// warrant held and the two weights were genuinely different renderings, which
+// is what made the fix worth making rather than a no-op.
 
 import { _electron as electron } from 'playwright-core'
 import path from 'node:path'
@@ -75,6 +88,8 @@ const WORK_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gui96-'))
 const ITEM = '.model-menu-item'
 const DRAWER = '.subagent-drawer'
 const ROW = '.subagent-row'
+const TOOL_NAME = '.tool-card-name'
+const ASSISTANT_BODY = '.assistant-body'
 const PARENT_TOOL_USE_ID = 'gui96-task'
 
 const fails = []
@@ -235,6 +250,101 @@ const rowThere = await page.evaluate((s) => !!document.querySelector(s), ROW)
 check('premise: synthetic push grew a running subagent row', rowThere, {
   hint: 'no row means the chat:event push never reached useChat'
 })
+
+// ---- phase 3b: criteria 7-9, the tool-card label's weight (#139) ----------
+// The card pushed above is the fixture, and it costs nothing extra: the row
+// checked just above is a CHILD of the tool card, so a present row is a present
+// `.tool-card-name`. Measured BEFORE the drawer opens, so nothing overlays it.
+//
+// WHY THREE CHECKS RATHER THAN ONE. #139 lands on a value (400) that rests on a
+// warrant: `DESIGN.md` licenses 600 for the app name, headings and bubble-less
+// emphasis, and a tool-card label is none of the three, so the stylesheet was
+// asserting a weight the document never granted that element. A check on the
+// value alone stays green through the one refactor that would make 600
+// legitimate again - moving tool cards inside the bubble-less prose region - so
+// criterion 9 measures the warrant rather than trusting it.
+//
+// And criterion 8 exists because THIS TICKET'S CENTRAL TRAP IS A WEIGHT THAT
+// MOVES NO PIXELS: `500` renders byte-identically to `600` on this machine
+// because the family snaps to named instances, so anyone "fixing" this at 500
+// changes nothing while believing otherwise. The ticket says to assume the same
+// hazard below 400. Criterion 7 alone would inherit it - it reads the computed
+// value, which is the declaration handed back. So the label is driven through
+// both weights in-run and the rendered widths compared, which is the same
+// device-pixel technique criterion 5 uses one property over, and it is the only
+// check here that can tell a real fix from a believed one.
+const label = await page.evaluate(
+  ([sel, bodySel, dpr]) => {
+    const el = document.querySelector(sel)
+    if (!el) return { present: false }
+    const prior = el.style.fontWeight
+    const widthAt = (w) => {
+      el.style.fontWeight = w
+      void el.offsetHeight // force reflow before reading
+      return el.getBoundingClientRect().width * dpr
+    }
+    const at400 = widthAt('400')
+    const at600 = widthAt('600')
+    el.style.fontWeight = prior
+    void el.offsetHeight
+    return {
+      present: true,
+      text: el.textContent,
+      weight: getComputedStyle(el).fontWeight,
+      size: getComputedStyle(el).fontSize,
+      color: getComputedStyle(el).color,
+      inAssistantBody: !!el.closest(bodySel),
+      isAppName: el.classList.contains('app-name'),
+      isHeading: el.matches('h1,h2,h3,h4,h5,h6') || el.getAttribute('role') === 'heading',
+      at400,
+      at600
+    }
+  },
+  [TOOL_NAME, ASSISTANT_BODY, motion.dpr]
+)
+
+check(`premise: the tool card grown above carries a ${TOOL_NAME}`, label.present === true, {
+  hint: `${ROW} is a child of the tool card, so a missing label here means the card itself never rendered`
+})
+
+// Criterion 9 — the ruling's warrant, measured rather than assumed. All THREE
+// licensed roles are tested, not the two that were argued: leaving the third
+// unmeasured would make this check's own name wider than what it checks.
+check(
+  `criterion 9 (#139): ${TOOL_NAME} is none of the three roles 600 is licensed for`,
+  label.present === true &&
+    label.inAssistantBody === false &&
+    label.isAppName === false &&
+    label.isHeading === false,
+  {
+    isAppName: label.isAppName,
+    isHeading: label.isHeading,
+    inAssistantBody: label.inAssistantBody,
+    hint: `600 is licensed for the app name, headings and bubble-less emphasis. Move tool cards inside ${ASSISTANT_BODY} and the label becomes bubble-less emphasis, which would invert #139 rather than merely break it`
+  }
+)
+
+// Criterion 7 — the value the ruling lands on.
+check(`criterion 7 (#139): ${TOOL_NAME} computes font-weight 400`, label.weight === '400', {
+  weight: label.weight,
+  size: label.size,
+  color: label.color,
+  text: label.text
+})
+
+// Criterion 8 — the anti-vacuity pin on criterion 7.
+const dLabel = Math.abs(label.at600 - label.at400)
+check(
+  `criterion 8 (#139): 400 and 600 are different renderings of ${TOOL_NAME} on this machine`,
+  label.present === true && dLabel >= 0.5,
+  {
+    at400: label.at400,
+    at600: label.at600,
+    deltaDevicePx: Number.isFinite(dLabel) ? +dLabel.toFixed(3) : null,
+    dpr: motion.dpr,
+    hint: 'a zero here means the family snapped both weights to one named instance, and criterion 7 would then be green while changing no pixels at all'
+  }
+)
 
 await page.evaluate((s) => document.querySelector(s)?.click(), ROW)
 await page.waitForSelector(DRAWER, { timeout: 10000 }).catch(() => {})
