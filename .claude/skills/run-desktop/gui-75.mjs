@@ -51,6 +51,7 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
 import { profileArgs } from './driver-profile.mjs'
+import { checks as sourceChecks } from './gui-75.source.mjs'
 
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
@@ -85,16 +86,17 @@ setTimeout(() => {
 // runtime. Reading the shipped bundle is the honest remaining check, and it
 // catches the regression that matters: someone deleting the call because "the
 // notification code does not use it". On Windows it does — silently.
-const mainBundle = path.join(APP_DIR, 'out/main/index.js')
-const bundleText = fs.existsSync(mainBundle) ? fs.readFileSync(mainBundle, 'utf8') : ''
-const hasIdentity = bundleText.includes('setAppUserModelId')
-log('IDENTITY', { staticCheck: true, bundle: fs.existsSync(mainBundle), hasIdentity })
-if (!bundleText) {
-  fails.push(`could not drive: ${mainBundle} is missing — run \`npm run build\` first`)
-} else if (!hasIdentity) {
-  fails.push(
-    'the built main bundle never calls setAppUserModelId — on Windows an unpackaged app without an identity shows NO toast and reports NO error, so every assertion below can pass while the user sees nothing'
-  )
+//
+// Since #141 the criterion itself lives in `gui-75.source.mjs`, declaring
+// `needsBuild` — so it is EXECUTED by `npm run test:dom` even though this
+// driver is never launched there (`api-cost`: everything below drives real CLI
+// turns). What it needed was a build, not an API key, and those are different
+// costs. Driving the same array here keeps one definition, so the executed copy
+// cannot drift from the driven one.
+for (const c of sourceChecks) {
+  const { ok, detail } = c.run()
+  log('IDENTITY', detail)
+  if (!ok) fails.push(`${c.name} — ${detail.why}`)
 }
 
 const electronBin =

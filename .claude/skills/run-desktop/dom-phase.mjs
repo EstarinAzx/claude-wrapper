@@ -4,6 +4,7 @@
 //   npm run test:dom                      the whole phase
 //   npm run test:dom -- --only gui-91.mjs one driver (use this to prove a red is real)
 //   npm run test:dom -- --list            what would run, and what is skipped and why
+//   npm run test:dom -- --build-only      just the declared build requirements (#141), seconds
 //
 // Needs `npm run build` first (the drivers launch `out/`), plus
 // `npm i --no-save playwright-core`.
@@ -31,7 +32,16 @@ import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { DOM_SKIP, DRIVER_DIR, domPhaseDrivers, listDrivers, phaseVerdict, uncoveredContracts } from './drivers.manifest.mjs'
+import {
+  DOM_SKIP,
+  DRIVER_DIR,
+  buildRequirementStatus,
+  buildRequiringChecks,
+  domPhaseDrivers,
+  listDrivers,
+  phaseVerdict,
+  uncoveredContracts
+} from './drivers.manifest.mjs'
 
 const APP_DIR = path.resolve(DRIVER_DIR, '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-dom-phase')
@@ -128,6 +138,83 @@ if (argv.includes('--list')) {
   process.exit(0)
 }
 
+// ── #141: the checks that declare a build requirement ─────────────────────
+// A sidecar check carrying `needsBuild` reads `out/` rather than `src/`. The
+// fast gate cannot honestly run one — `npm test` does not build, and a clean
+// checkout has no `out/` at all, so gating on one would red for a reason that
+// has nothing to do with the contract. It reports each as a named skip instead.
+// This phase already refuses to start without a build, so it is the runner that
+// can execute them.
+//
+// They are NOT drivers and are deliberately not folded into `results`: no
+// Electron launch, milliseconds rather than minutes, and counting them in the
+// "N/M drivers passed" line would inflate a number people read as coverage.
+// What they DO share is the verdict word and the exit code, because a broken
+// contract is a broken contract wherever it was measured.
+//
+// BEFORE ANY DRIVER, for the reason the staleness rule makes obvious: if the
+// build is older than the sources then every driver below is also launching the
+// wrong bytes, and finding that out after twenty minutes is finding it out too
+// late.
+//
+// `--build-only` exists because these take milliseconds and the phase around
+// them takes twenty minutes. A check reachable only through a twenty-minute
+// command is one nobody runs before pushing, and this repo has already written
+// down what an unrun check is worth.
+//
+// Scoped out of an `--only` run, the same way `uncoveredContracts()` is: that
+// run left every other contract unmeasured too, and a full run is the only one
+// that gets to claim everything passed.
+const buildOnly = argv.includes('--build-only')
+// Refused rather than resolved, because both readings are defensible and the
+// silent one is a lie: `--build-only --only gui-93.mjs` printed
+// `BUILD REQUIREMENTS PASS (0 checked)` — a green word over an empty set, which
+// is the precise failure this whole phase exists to prevent. Scoping to a
+// driver and asking for the build checks are different requests; say so.
+if (buildOnly && only) {
+  console.error('--build-only and --only are mutually exclusive: --only scopes to a driver, --build-only runs no drivers at all')
+  process.exit(1)
+}
+const buildChecks = only ? [] : await buildRequiringChecks()
+const buildResults = []
+if (buildChecks.length) {
+  console.log(`=== ${buildChecks.length} declared build requirement(s) — run here because \`npm test\` does not build ===`)
+  for (const { driver, check } of buildChecks) {
+    const req = buildRequirementStatus(check.needsBuild)
+    // A stale build is a FAILED check, never a skipped one. A grep that passes
+    // against yesterday's bundle is the exact silent green this field exists to
+    // prevent, and downgrading it to a warning hands that green straight back.
+    if (!req.ok) {
+      const why =
+        req.reason === 'missing'
+          ? `${req.artifact} is missing — run \`npm run build\``
+          : `${req.artifact} is OLDER than ${req.stale.join(', ')} — rebuild; this result would be about the previous build`
+      // The status word carries the reason rather than flattening both into
+      // "STALE": a build that is missing and a build that is out of date need
+      // different actions from whoever is reading, and this is the line they
+      // read.
+      const status = req.reason.toUpperCase()
+      buildResults.push({ driver, name: check.name, status, why })
+      console.log(`  ${status.padEnd(5)} ${driver} › ${check.name}`)
+      console.log(`        ${why}`)
+      continue
+    }
+    const { ok, detail } = check.run()
+    buildResults.push({ driver, name: check.name, status: ok ? 'PASS' : 'FAIL', detail })
+    console.log(`  ${ok ? 'PASS ' : 'FAIL '}${driver} › ${check.name}`)
+    if (!ok) console.log(`        ${JSON.stringify(detail)}`)
+  }
+  console.log()
+}
+const badBuild = buildResults.filter((r) => r.status !== 'PASS')
+
+if (buildOnly) {
+  // Its own verdict line, in the phase's own vocabulary, so a reader who runs
+  // this alone gets a word rather than only an exit code.
+  console.log(`BUILD REQUIREMENTS ${badBuild.length === 0 ? 'PASS' : 'FAIL'} (${buildResults.length} checked)`)
+  process.exit(badBuild.length === 0 ? 0 : 1)
+}
+
 if (only && !all.includes(only)) {
   console.error(`--only ${only} is not a driver. One of: ${all.join(', ')}`)
   process.exit(1)
@@ -218,8 +305,15 @@ const deficit = outstanding.length
       .map(([d, reason]) => `${d}, ${reason.slice(0, reason.indexOf(':'))}`)
       .join('; ')})`
   : ''
-console.log(`\n=== ${results.length - bad.length}/${results.length} passed${deficit} ===`)
+// Counted separately from the drivers, and said out loud rather than merged:
+// "18/20 drivers passed" and "18/21 things passed" are different claims, and
+// the second one quietly changes what a reader thinks an Electron launch proved.
+const buildLine = buildResults.length
+  ? `, ${buildResults.length - badBuild.length}/${buildResults.length} build requirement(s)`
+  : ''
+console.log(`\n=== ${results.length - bad.length}/${results.length} drivers passed${buildLine}${deficit} ===`)
 for (const r of bad) console.log(`  ${r.status.padEnd(9)} ${r.driver}${r.failLine ? ` — ${r.failLine.trim()}` : ''}`)
+for (const r of badBuild) console.log(`  ${r.status.padEnd(9)} ${r.driver} › ${r.name}${r.why ? ` — ${r.why}` : ''}`)
 // Named with the same column width as a real verdict, because that is what it
 // is: a driver whose contract this run did not settle either way.
 for (const [d] of outstanding) {
@@ -259,9 +353,15 @@ try {
 // imported at all).
 const notes = []
 if (bad.length) notes.push(bad.map((r) => `${r.driver} (${r.status})`).join(', '))
+// #141 — a declared build requirement that failed or ran against a stale build
+// is a FAILURE, not a deficit: it was checked, and the check did not hold. The
+// `INCOMPLETE` word is reserved for contracts nobody measured at all.
+if (badBuild.length) notes.push(badBuild.map((r) => `${r.driver} §build (${r.status})`).join(', '))
 if (outstanding.length)
   notes.push(`${outstanding.length} contract(s) never checked: ${outstanding.map(([d]) => d).join(', ')}`)
-console.log(`\nDOM PHASE ${phaseVerdict(bad.length, outstanding.length)}${notes.length ? `: ${notes.join(' — and ')}` : ''}`)
+console.log(
+  `\nDOM PHASE ${phaseVerdict(bad.length + badBuild.length, outstanding.length)}${notes.length ? `: ${notes.join(' — and ')}` : ''}`
+)
 
 // THE EXIT CODE ANSWERS A NARROWER QUESTION THAN THE WORD ABOVE IT, deliberately:
 // "did anything that ran break", not "was everything checked". An uncovered
@@ -274,4 +374,4 @@ console.log(`\nDOM PHASE ${phaseVerdict(bad.length, outstanding.length)}${notes.
 // FOR #150, WHICH WILL WIRE CI: read the verdict word, not just `$?`. `PASS`,
 // `INCOMPLETE` and `FAIL` are three different claims and only the last is a
 // defect. (And read `$?` on its own line — any trailing command replaces it.)
-process.exit(bad.length === 0 ? 0 : 1)
+process.exit(bad.length + badBuild.length === 0 ? 0 : 1)

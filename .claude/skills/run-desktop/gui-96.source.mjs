@@ -4,8 +4,11 @@
 // contributes its source-level assertions by shipping a sibling
 // `gui-<n>.source.mjs` whose named export `checks` is an array of
 // `{ name, run() }`. `run()` returns `{ ok, detail }` and MUST be pure: no
-// browser, no Electron, no `out/` build artifact, no network, no clock. Nothing
-// else has to be wired anywhere — `tests/gui-source-assertions.test.ts` globs
+// browser, no Electron, no `out/` build artifact, no network, no clock. (#141
+// adds one opt-in exception: a check that declares `needsBuild` may read a
+// build artifact, and is then skipped by name here and executed by the DOM
+// phase instead. Neither check in this file does — both read `src/` as text.)
+// Nothing else has to be wired anywhere — `tests/gui-source-assertions.test.ts` globs
 // for `*.source.mjs` and turns every entry into a real gate test, and the
 // driver imports the same array so the assertion has ONE definition.
 //

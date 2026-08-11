@@ -140,6 +140,47 @@ export const checks = [
 network, no clock. It returns `{ ok, detail }`; `detail` is printed on failure,
 so put the offending value in it.
 
+### The one exception: a declared build requirement (#141)
+
+Some assertions read `out/` on purpose, because the build output *is* their
+subject — `gui-75` §0 greps the built main bundle for `setAppUserModelId`
+(Electron exposes no getter, so there is nothing to read back at runtime, and on
+Windows an unpackaged app without an identity shows **no toast and no error**).
+Those used to be reported as skips and executed nowhere.
+
+A check may **declare** what it needs instead of being left out:
+
+```js
+{
+  name: 'criterion 0: the built main bundle still calls setAppUserModelId (BUILD ARTIFACT grep)',
+  needsBuild: { artifact: 'out/main/index.js', covers: ['src/main'] },
+  run() { /* … */ }
+}
+```
+
+**The gate still does not build**, and that is the decision rather than an
+omission: building inside `npm test` taxes every run for two assertions, and a
+separate `test:built` script nobody is forced to run rebuilds the exact hole
+#132 exists to close, one level up. So the two runners read the declaration in
+opposite directions — `npm test` reports it as a **named skip saying where it
+does run**, and `npm run test:dom` executes it, since that phase already refuses
+to start without a build.
+
+**`covers` is the load-bearing half.** Before running the check, the phase
+proves `artifact` is at least as new as everything under `covers`; a build older
+than its sources reports **STALE** and fails. Without it the declaration is
+decoration — a grep against last week's bundle passes exactly as happily as one
+against the current build. Name a **directory** rather than an entry file: the
+mtime walk is recursive, and pinning `src/main/index.ts` alone would let an edit
+to any sibling module count as a fresh build.
+
+They take milliseconds, so they have their own entry point — you do not need the
+twenty-minute phase to run them:
+
+```bash
+npm run test:dom -- --build-only
+```
+
 Nothing else needs wiring. `tests/gui-source-assertions.test.ts` globs for
 `*.source.mjs` and turns every entry into a real gate test named
 `<driver> › <criterion>`. The driver imports the same array and feeds it to its
@@ -148,12 +189,23 @@ cannot drift from the driven one.
 
 **Drivers without a sidecar are reported, not omitted** — each appears in the
 vitest run as a named skip with its reason, so `npm test` states which contracts
-it is *not* checking. Two reasons exist: browser-level (needs a live window —
-that is #135) and build-artifact (`gui-75`, `gui-93` read `out/`, and the gate
-does not build).
+it is *not* checking. The reason is browser-level: it needs a live window, which
+is #135.
 
-Live today: `gui-96.source.mjs` (criteria 2 and 6), `gui-98.source.mjs`
-(criterion 5c).
+**And two narrower skips, both named for the same discipline:**
+
+- **A check with a declared build requirement** — reported with its artifact and
+  where it runs instead (#141, above).
+- **A driver whose sidecar runs but which is itself never launched** — `gui-75`
+  is the first, and until #141 the two claims were the same thing. Its §0 now
+  executes; everything else in it drives real CLI turns and is `api-cost`
+  skipped, so *"has a sidecar"* stopped implying *"is executed"*. It gets its
+  own named skip rather than dropping quietly out of the list above.
+
+Live today: `gui-75.source.mjs` (criterion 0, build-artifact),
+`gui-96.source.mjs` (criteria 2 and 6), `gui-98.source.mjs` (criterion 5c),
+plus `gui-123.source.mjs` and `gui-136.source.mjs`. The gate globs for them, so
+this list is a courtesy — `npm test` is the authority.
 
 ## DOM-level assertions run in a named phase (#135)
 
@@ -164,6 +216,7 @@ need a real window run here, one Electron launch per driver:
 npm run build                             # the phase launches out/
 npm run test:dom                          # every driver that can run unattended
 npm run test:dom -- --only gui-91.mjs     # one driver — use this to prove a red is real
+npm run test:dom -- --build-only          # just the declared build requirements (#141), seconds
 npm run test:dom -- --list                # what runs, what does not, and why
 ```
 

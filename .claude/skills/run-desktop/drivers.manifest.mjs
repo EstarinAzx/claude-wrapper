@@ -10,10 +10,12 @@
 // `npm run test:dom` launches a real Electron window per driver and takes about
 // twenty minutes. Neither covers the other, and the fast gate says so out loud.
 
-import { readdirSync } from 'node:fs'
+import { readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 export const DRIVER_DIR = path.resolve(import.meta.dirname)
+const APP_DIR = path.resolve(DRIVER_DIR, '../../..')
 
 // A `.source.mjs` file is a sidecar, not a driver. Excluded from the driver list
 // so a covered driver is never also counted as one of its own sidecars.
@@ -72,6 +74,89 @@ export const listSidecars = () =>
 
 /** `gui-96.source.mjs` → `gui-96.mjs`. */
 export const driverOf = (sidecar) => sidecar.replace(/\.source\.mjs$/, '.mjs')
+
+// ── #141: loading the checks, in ONE place ────────────────────────────────
+// The gate used to glob the sidecars here and then import them itself. That was
+// two enumerations of "the check set", and this file exists precisely because
+// two enumerations of a set drift. Now both readers call `loadChecks()`: the
+// fast gate to turn the pure ones into tests, the DOM phase to execute the ones
+// that declare a build requirement.
+
+/**
+ * Every sidecar's checks, flattened and tagged with where each came from.
+ * `[{ sidecar, driver, check }]`, in sidecar order.
+ */
+export const loadChecks = async () => {
+  const out = []
+  for (const f of listSidecars()) {
+    const mod = await import(pathToFileURL(path.join(DRIVER_DIR, f)).href)
+    for (const check of mod.checks) out.push({ sidecar: f, driver: driverOf(f), check })
+  }
+  return out
+}
+
+/**
+ * The checks that declare `needsBuild` — the ones the fast gate reports as
+ * named skips and the DOM phase runs. The same shape as `domPhaseDrivers()`
+ * one level down: a named set both runners agree on rather than each deciding.
+ */
+export const buildRequiringChecks = async () => (await loadChecks()).filter((c) => c.check.needsBuild)
+
+/**
+ * The newest mtime at `abs`: the file's own, or the newest anywhere beneath it
+ * when `abs` is a directory. `null` when nothing is there.
+ *
+ * Recursive because a bundle is built from a TREE. `covers: ['src/main']` has
+ * to mean every module the bundle contains — pinning one entry file would let
+ * an edit to any sibling pass as fresh, which is most of the tree.
+ */
+export const latestMtime = (abs) => {
+  let st
+  try {
+    st = statSync(abs)
+  } catch {
+    return null
+  }
+  if (!st.isDirectory()) return st.mtimeMs
+  let newest = st.mtimeMs
+  for (const e of readdirSync(abs)) {
+    const m = latestMtime(path.join(abs, e))
+    if (m !== null && m > newest) newest = m
+  }
+  return newest
+}
+
+/**
+ * Is a declared build requirement satisfied — `{ artifact, covers }`, both
+ * repo-relative — and if not, why?
+ *
+ * THE POINT, because without this the declaration is decoration: a grep against
+ * a stale `out/` passes exactly as happily as one against the current build. So
+ * the artifact has to be at least as new as every source it claims to cover,
+ * and a check whose build predates its sources FAILS rather than passing
+ * quietly on yesterday's bytes.
+ *
+ * `mtimeOf` is injectable so the rule itself is testable without a build —
+ * a staleness rule that can only be exercised when the tree happens to be stale
+ * is one nobody ever watches work.
+ *
+ * `>` and not `>=`: a build produced in the same filesystem tick as the last
+ * edit is fresh. A coarse clock would otherwise call every good build stale,
+ * and a check that reds on correct input gets switched off.
+ *
+ * A `covers` path that does not exist is IGNORED rather than treated as newer.
+ * It is a typo or a deleted directory, and failing on it would red every run
+ * with nothing to act on.
+ */
+export const buildRequirementStatus = (req, mtimeOf = (p) => latestMtime(path.join(APP_DIR, p))) => {
+  const artifactMs = mtimeOf(req.artifact)
+  if (artifactMs === null) return { ok: false, reason: 'missing', artifact: req.artifact, stale: [] }
+  const stale = req.covers.filter((c) => {
+    const m = mtimeOf(c)
+    return m !== null && m > artifactMs
+  })
+  return { ok: stale.length === 0, reason: stale.length ? 'stale' : 'fresh', artifact: req.artifact, stale }
+}
 
 // Drivers the DOM phase does NOT launch, each with the reason it cannot be
 // launched unattended. Every entry here is a contract nobody is checking, so the

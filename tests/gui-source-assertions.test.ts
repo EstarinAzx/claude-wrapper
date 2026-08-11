@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -25,6 +27,13 @@ import { describe, expect, test } from 'vitest'
 // driver imports the same array, so each assertion has exactly one definition
 // and the gate copy cannot drift from the driven copy.
 //
+// #141 adds ONE opt-in exception to the purity clause, and only that one: a
+// check may carry `needsBuild: { artifact, covers }` and read a build artifact.
+// This gate does not run those — it does not build, and a clean checkout has no
+// `out/` — so it reports each as a named skip and the DOM phase executes it
+// against a build proved newer than `covers`. The block near the bottom of this
+// file is where that split is asserted rather than assumed.
+//
 // THE SPLIT, stated here so nobody assumes the fast gate covers everything:
 // this file runs the PURE half in milliseconds. The browser half needs a live
 // Electron window and runs in `npm run test:dom` (`dom-phase.mjs`), which takes
@@ -34,9 +43,28 @@ import { describe, expect, test } from 'vitest'
 // stated reason. A suite that quietly runs half its checks is the exact failure
 // both tickets exist to close, so the accounting is itself a test.
 
+interface BuildRequirement {
+  artifact: string
+  covers: string[]
+}
+
 interface SourceCheck {
   name: string
+  needsBuild?: BuildRequirement
   run: () => { ok: boolean; detail: unknown }
+}
+
+interface LoadedCheck {
+  sidecar: string
+  driver: string
+  check: SourceCheck
+}
+
+interface BuildStatus {
+  ok: boolean
+  reason: 'fresh' | 'missing' | 'stale'
+  artifact: string
+  stale: string[]
 }
 
 interface Manifest {
@@ -47,6 +75,10 @@ interface Manifest {
   domPhaseDrivers: () => string[]
   uncoveredContracts: () => [string, string][]
   phaseVerdict: (badCount: number, uncoveredCount: number) => 'PASS' | 'FAIL' | 'INCOMPLETE'
+  loadChecks: () => Promise<LoadedCheck[]>
+  buildRequiringChecks: () => Promise<LoadedCheck[]>
+  buildRequirementStatus: (req: BuildRequirement, mtimeOf?: (p: string) => number | null) => BuildStatus
+  latestMtime: (abs: string) => number | null
 }
 
 const REPO = path.resolve(import.meta.dirname, '..')
@@ -64,21 +96,33 @@ const drivers = manifest.listDrivers()
 const sidecars = manifest.listSidecars()
 const driverOf = manifest.driverOf
 
-// Top-level await: the sidecars must be loaded before `describe` can name their
-// checks, and vitest test files are ESM.
-const loaded = await Promise.all(
-  sidecars.map(
-    async (f) =>
-      [f, (await import(pathToFileURL(path.join(DRIVER_DIR, f)).href)) as { checks: SourceCheck[] }] as const
-  )
-)
+// Top-level await: the checks must be loaded before `describe` can name them,
+// and vitest test files are ESM. Loaded THROUGH the manifest rather than by a
+// second glob-and-import here — the same reason the driver list comes from
+// there. Two enumerations of "the check set" is how the gate and the DOM phase
+// would come to disagree about which checks exist.
+const loaded = await manifest.loadChecks()
 
 const covered = new Set(sidecars.map(driverOf))
 const uncovered = drivers.filter((d) => !covered.has(d))
 
-for (const [sidecar, mod] of loaded) {
+// #141 — a check may DECLARE that it reads a build artifact. `npm test` does not
+// build, so this gate cannot honestly run those: on a clean checkout there is no
+// `out/` at all, and gating on one would red for a reason that has nothing to do
+// with the contract. They run in the DOM phase, which does require a build. The
+// split is reported below rather than assumed, and the accounting that the phase
+// really runs them is itself a test.
+const pure = loaded.filter((c) => !c.check.needsBuild)
+const needBuild = loaded.filter((c) => c.check.needsBuild)
+
+for (const sidecar of sidecars) {
+  const mine = pure.filter((c) => c.sidecar === sidecar)
+  // A sidecar whose every check declares a build requirement contributes no
+  // gate test at all — it is reported in the skip block below instead of
+  // producing an empty, falsely reassuring describe.
+  if (mine.length === 0) continue
   describe(`${driverOf(sidecar)} (source-level)`, () => {
-    for (const c of mod.checks) {
+    for (const { check: c } of mine) {
       test(c.name, () => {
         const { ok, detail } = c.run()
         // The detail rides in the failure message so a red gate names the
@@ -198,6 +242,136 @@ describe('an uncovered contract is stated in the verdict, not beneath it (#145)'
   })
 })
 
+// #141 — a check that reads `out/`, declared rather than left out.
+//
+// #132 shipped the sidecar convention with `run()` specified PURE: no browser,
+// no Electron, no `out/` artifact. That left two driver assertions homeless,
+// because their subject IS the build output — `gui-75` §0 greps the built main
+// bundle for `setAppUserModelId` (Electron exposes no getter, so there is
+// nothing to read back at runtime, and on Windows an unpackaged app without an
+// identity shows no toast and reports NO error), and `gui-93` reads the built
+// stylesheet. They were reported as named skips and executed nowhere.
+//
+// THE SHAPE, and it is the deliberate part: the gate does NOT grow a build step.
+// Building inside `npm test` taxes every run for two assertions, and a separate
+// `test:built` script nobody is forced to run rebuilds the exact hole #132
+// exists to close, one level up. Instead a check DECLARES what it needs:
+//
+//   { name, needsBuild: { artifact, covers }, run() }
+//
+// and the two runners read that declaration in opposite directions — this gate
+// skips it by name and says where it runs, the DOM phase (which already
+// requires `npm run build`) executes it. `gui-93` needed none of this: its
+// built-CSS assertion is inline in the driver, and the driver is launched by
+// the phase, so that half was already covered and is not duplicated here.
+//
+// AND THE PART WITHOUT WHICH THE REST IS THEATRE: a declared requirement must
+// not be satisfiable by a STALE `out/`. A grep against last week's bundle
+// passes just as happily as one against the current build, so the artifact has
+// to be at least as new as every source it claims to cover. That comparator is
+// pure, lives in the manifest, and is red-verified below against fake mtimes —
+// deliberately, because a rule about staleness that only runs when the tree
+// happens to be stale is a rule nobody ever sees work.
+describe('a declared build requirement is executed, and cannot be satisfied by a stale build (#141)', () => {
+  const req = { artifact: 'out/main/index.js', covers: ['src/main'] }
+  const at = (m: Record<string, number>) => (p: string) => (p in m ? m[p] : null)
+
+  test('an artifact newer than everything it covers is fresh', () => {
+    const s = manifest.buildRequirementStatus(req, at({ 'out/main/index.js': 2000, 'src/main': 1000 }))
+    expect(s).toEqual({ ok: true, reason: 'fresh', artifact: 'out/main/index.js', stale: [] })
+  })
+
+  // The whole point of the field. Edit a source, forget to rebuild, and the
+  // grep still passes against the old bundle — silently, which is the worst
+  // kind of green this repo keeps finding.
+  test('a source newer than the artifact is STALE, and the source is named', () => {
+    const s = manifest.buildRequirementStatus(req, at({ 'out/main/index.js': 1000, 'src/main': 2000 }))
+    expect(s.ok).toBe(false)
+    expect(s.reason).toBe('stale')
+    expect(s.stale).toEqual(['src/main'])
+  })
+
+  // Built in the same tick as the last edit is not stale. `>` and not `>=`,
+  // because a coarse filesystem clock would otherwise report every fresh build
+  // as stale and the check would be switched off within a week.
+  test('an artifact exactly as new as its sources is fresh, not stale', () => {
+    const s = manifest.buildRequirementStatus(req, at({ 'out/main/index.js': 1000, 'src/main': 1000 }))
+    expect(s.ok).toBe(true)
+  })
+
+  test('a missing artifact is `missing`, distinct from stale', () => {
+    const s = manifest.buildRequirementStatus(req, at({ 'src/main': 1000 }))
+    expect(s.ok).toBe(false)
+    expect(s.reason).toBe('missing')
+  })
+
+  // A `covers` entry that does not exist cannot make anything stale — it is a
+  // typo or a deleted directory, and treating it as "newer" would red every
+  // run with no way to tell why.
+  test('a covered path that does not exist is ignored, not treated as newer', () => {
+    const s = manifest.buildRequirementStatus(req, at({ 'out/main/index.js': 1000 }))
+    expect(s.ok).toBe(true)
+  })
+
+  // `latestMtime` is what makes `covers: ['src/main']` mean the whole TREE
+  // rather than one file. A flat read would miss a sibling module the bundle
+  // also contains, which is most of them.
+  //
+  // Built on a fixture with a stamped mtime rather than on `src/main`, and that
+  // is a correction rather than a preference: the first version of this test
+  // compared two real paths in the repo and PASSED with the recursion deleted.
+  // A directory's own mtime moves when entries are added or removed, not when a
+  // file inside is edited, so on any given checkout it can happen to be new
+  // enough for a loose comparison — the test measured the checkout, not the
+  // walk. Stamping one nested file to a fixed far-future time makes the answer
+  // exact and makes deleting the recursion impossible to miss.
+  test('latestMtime walks NESTED files, not just the directory own mtime', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'latest-mtime-'))
+    try {
+      fs.mkdirSync(path.join(root, 'nested'))
+      const deep = path.join(root, 'nested/deep.ts')
+      fs.writeFileSync(deep, 'x')
+      // 2100-01-01, comfortably past any real directory mtime, so the assertion
+      // is an equality rather than a comparison that a slow clock could flip.
+      const FIXED = 4102444800000
+      fs.utimesSync(deep, FIXED / 1000, FIXED / 1000)
+      expect(manifest.latestMtime(root)).toBe(FIXED)
+      expect(manifest.latestMtime(deep)).toBe(FIXED)
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  test('latestMtime answers null for a path that is not there', () => {
+    expect(manifest.latestMtime(path.join(REPO, 'src/main/does-not-exist.ts'))).toBeNull()
+  })
+
+  // The accounting, same discipline as the driver set above: the phase's own
+  // list of build-requiring checks is the one this gate skipped, so a check
+  // cannot fall between the two runners.
+  test('every check this gate skipped for a build requirement is one the DOM phase runs', async () => {
+    const phase = await manifest.buildRequiringChecks()
+    expect(phase.map((c) => `${c.driver} › ${c.check.name}`).sort()).toEqual(
+      needBuild.map((c) => `${c.driver} › ${c.check.name}`).sort()
+    )
+  })
+
+  test('a declared requirement names both an artifact and what it covers', () => {
+    for (const { check } of needBuild) {
+      expect(check.needsBuild!.artifact, check.name).toBeTruthy()
+      expect(check.needsBuild!.covers.length, check.name).toBeGreaterThan(0)
+    }
+  })
+
+  // The one that exists today, pinned the way `gui-119` is: growing this set is
+  // a real decision about what the fast gate stops covering, and it should have
+  // to edit a test that says so out loud.
+  test('gui-75 §0 is the declared build requirement, and this gate does not run it', () => {
+    expect(needBuild.map((c) => c.driver)).toEqual(['gui-75.mjs'])
+    expect(pure.map((c) => c.driver)).not.toContain('gui-75.mjs')
+  })
+})
+
 // Reported, never omitted. Each of these appears in the vitest run as a named
 // skip, so `npm test` states which contracts it is NOT checking — and, since
 // #135, where each one IS checked instead.
@@ -208,4 +382,41 @@ describe('drivers with no source-level sidecar (reported, not omitted)', () => {
       : 'browser-level: executes in `npm run test:dom` (#135), not in this gate'
     test.skip(`${d} — ${reason}`, () => {})
   }
+})
+
+describe('checks this gate declines to run for a stated build requirement (#141)', () => {
+  for (const { driver, check } of needBuild) {
+    test.skip(
+      `${driver} › ${check.name} — build-artifact: reads ${check.needsBuild!.artifact}, ` +
+        `executed by \`npm run test:dom\` against a build proven newer than ${check.needsBuild!.covers.join(', ')}`,
+      () => {}
+    )
+  }
+})
+
+// #141 opened a gap that did not exist before it: `gui-75` is the FIRST driver
+// to have a sidecar AND sit in `DOM_SKIP`. Every earlier sidecar belonged to a
+// driver the phase launches, so "has a sidecar" and "is executed somewhere"
+// were the same claim and nothing had to distinguish them.
+//
+// They are now different claims, and the block above this one would quietly
+// stop mentioning `gui-75` — it lists drivers with NO sidecar, and `gui-75` has
+// one. Its browser half is still executed nowhere. Under #145's rule that a
+// deficit belongs where the reader is looking rather than in a footnote, it
+// gets its own named skip instead of disappearing into a green.
+describe('drivers whose sidecar runs but whose own assertions do not (reported, not omitted)', () => {
+  const partial = sidecars.map(driverOf).filter((d) => manifest.DOM_SKIP.has(d))
+  for (const d of partial) {
+    test.skip(
+      `${d} — its sidecar's checks run, but the driver itself is NOT launched anywhere: ${manifest.DOM_SKIP.get(d)}`,
+      () => {}
+    )
+  }
+
+  // Not a formality: if this set ever empties by accident — someone deletes a
+  // sidecar, or un-skips a driver — the skips above vanish silently, which is
+  // the exact shape of omission this whole file exists to make loud.
+  test('the partially-covered set is exactly gui-75, which is where #141 put it', () => {
+    expect(partial).toEqual(['gui-75.mjs'])
+  })
 })
