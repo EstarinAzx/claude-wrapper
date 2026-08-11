@@ -236,6 +236,23 @@ about its own coverage is what this ticket could actually deliver.
   required. `tests/driver-screenshot-dir.test.ts` reds if a new driver hardcodes
   its output or defaults it back inside the repo, so this is a checked property
   rather than a convention.
+- **Every driver gets its own Electron profile** (#147), so pinning window
+  bounds or a zoom factor no longer leaks into whatever runs next. Both outlive
+  a process, and `gui-136` pinning them for a good reason is what made `gui-69`
+  and `gui-70` fail in the batch while passing alone — three phase runs went into
+  attributing that, because the contaminating driver passes and only its
+  neighbours red. Spread `...profileArgs()` from `driver-profile.mjs` into a new
+  driver's `electron.launch({ args })`; `tests/driver-profile.test.ts` reds one
+  that does not. **There is no opt-out list, and that is measured rather than
+  assumed**: `gui-78`, `gui-79` and `gui-110` mint their own profile inside their
+  probe, and `app.setPath('userData', …)` beats the switch
+  (`scripts/spike-147-driver-profile-isolation.mjs`, gap C), so the three drivers
+  whose subject is profile persistence keep working untouched. A run by hand is
+  isolated too — the helper mints a throwaway when the phase has not handed one
+  over, so a manual driver run never writes into the profile your own app uses.
+  The phase also fingerprints the real profile around each driver and **names any
+  driver that wrote to it**; that line is a report, not a failure, because your
+  app being open writes there as well.
 - **Driver must stay under the project tree.** ESM resolves the bare
   `playwright-core` import by walking up to the project's `node_modules`; run it
   from `$TEMP` and the import fails (`ERR_MODULE_NOT_FOUND`).

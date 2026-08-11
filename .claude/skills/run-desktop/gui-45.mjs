@@ -26,6 +26,7 @@ import { _electron as electron } from 'playwright-core'
 import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
+import { profileArgs } from './driver-profile.mjs'
 
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
@@ -47,7 +48,7 @@ const electronBin =
 
 const app = await electron.launch({
   executablePath: electronBin,
-  args: ['--no-sandbox', '--disable-gpu', '.'],
+  args: ['--no-sandbox', '--disable-gpu', ...profileArgs(), '.'],
   cwd: APP_DIR,
   env: process.env,
   timeout: 30000

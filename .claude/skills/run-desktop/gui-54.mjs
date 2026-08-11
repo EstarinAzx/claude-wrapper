@@ -27,6 +27,7 @@ import { _electron as electron } from 'playwright-core'
 import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
+import { profileArgs } from './driver-profile.mjs'
 
 // The pill to exercise, as an argument: `model` (default) or `permission`.
 // BOTH matter — `permission:set` and `model:set` build their resume target with
@@ -53,7 +54,7 @@ const electronBin =
 
 const app = await electron.launch({
   executablePath: electronBin,
-  args: ['--no-sandbox', '--disable-gpu', '.'],
+  args: ['--no-sandbox', '--disable-gpu', ...profileArgs(), '.'],
   cwd: APP_DIR,
   env: process.env,
   timeout: 30000

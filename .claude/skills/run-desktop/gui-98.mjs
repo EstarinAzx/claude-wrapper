@@ -103,6 +103,7 @@ import fs from 'node:fs'
 // #132 — criterion 5c moved to this sidecar so the GATE runs it too. It is
 // still driven here; the array is the single definition of the check.
 import { checks as sourceChecks } from './gui-98.source.mjs'
+import { profileArgs } from './driver-profile.mjs'
 
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
@@ -167,7 +168,7 @@ const electronBin =
 
 const app = await electron.launch({
   executablePath: electronBin,
-  args: ['--no-sandbox', '--disable-gpu', '.'],
+  args: ['--no-sandbox', '--disable-gpu', ...profileArgs(), '.'],
   cwd: APP_DIR,
   env: process.env,
   timeout: 30000

@@ -141,6 +141,7 @@ import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { prepareWorkspace } from './inspect-workspace.mjs'
 import { buildSessionsFixture } from './inspect-sessions.mjs'
+import { profileArgs } from './driver-profile.mjs'
 
 // `fileURLToPath`, never `URL.pathname` — this repo's own path contains a space.
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -799,7 +800,7 @@ const captureWindow = async (name) => {
 try {
   app = await electron.launch({
     executablePath: electronBin,
-    args: ['--no-sandbox', '--disable-gpu', '.'],
+    args: ['--no-sandbox', '--disable-gpu', ...profileArgs(), '.'],
     cwd: APP_DIR,
     env: process.env,
     timeout: 30000
@@ -939,12 +940,15 @@ try {
   // "minimum". `tests/inspect-welcome-min.test.ts` holds that shape.
   //
   // The restore is in a `finally` because a resize is BORROWED STATE: window
-  // bounds are remembered across launches (#79, #110) in a profile this run
-  // shares with every other driver, so a throw between here and the restore
-  // would leave the next process to launch at the minimum for no reason it
-  // could trace. That is the #147 class of bug, and a `finally` is a promise rather
-  // than a guarantee — the real fix is a private `--user-data-dir`, which is
-  // #147's job and not this capture's.
+  // bounds are remembered across launches (#79, #110), so a throw between here
+  // and the restore used to leave the NEXT process to launch at the minimum for
+  // no reason it could trace.
+  //
+  // #147 has since taken that half away — this run launches with its own
+  // `userData` (`...profileArgs()` above), so nothing it resizes outlives it and
+  // a human's own window is no longer collateral. The `finally` stays because it
+  // was always doing a second job as well: every capture AFTER this block needs
+  // the standard frame back, and that is within this run rather than beyond it.
   try {
     const min = await app.evaluate(({ BrowserWindow }) => {
       const w = BrowserWindow.getAllWindows()[0]

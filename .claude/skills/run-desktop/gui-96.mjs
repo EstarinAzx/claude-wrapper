@@ -62,6 +62,7 @@ import fs from 'node:fs'
 // #132 — criteria 2 and 6 moved to this sidecar so the GATE runs them too.
 // They are still driven here; the array is the single definition of both.
 import { checks as sourceChecks } from './gui-96.source.mjs'
+import { profileArgs } from './driver-profile.mjs'
 
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
@@ -105,7 +106,7 @@ const electronBin =
 
 const app = await electron.launch({
   executablePath: electronBin,
-  args: ['--no-sandbox', '--disable-gpu', '.'],
+  args: ['--no-sandbox', '--disable-gpu', ...profileArgs(), '.'],
   cwd: APP_DIR,
   env: process.env,
   timeout: 30000

@@ -61,6 +61,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
+import { profileArgs } from './driver-profile.mjs'
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
@@ -149,7 +150,7 @@ const cliInvocations = (root) => {
 
 const app = await electron.launch({
   executablePath: path.join(APP_DIR, 'node_modules/electron/dist/electron.exe'),
-  args: ['--no-sandbox', '.'],
+  args: ['--no-sandbox', ...profileArgs(), '.'],
   cwd: APP_DIR,
   env: process.env,
   timeout: 45000

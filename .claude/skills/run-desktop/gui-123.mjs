@@ -52,6 +52,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
+import { profileArgs } from './driver-profile.mjs'
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
@@ -73,7 +74,7 @@ const MESSAGE = 'explain this diff\n\nand keep the & < > characters intact'
 
 const app = await electron.launch({
   executablePath: path.join(APP_DIR, 'node_modules/electron/dist/electron.exe'),
-  args: ['--no-sandbox', '.'],
+  args: ['--no-sandbox', ...profileArgs(), '.'],
   cwd: APP_DIR,
   env: process.env,
   timeout: 45000
@@ -82,15 +83,25 @@ const app = await electron.launch({
 const page = await app.firstWindow()
 await page.waitForLoadState('domcontentloaded')
 
+// A PREMISE that did not hold is not a FAIL, and this driver is the first in the
+// set to say so with the exit code the phase already reads. `dom-phase.mjs` maps
+// exit 2 to `UNSCORED` — "a driver that could not measure what it came to
+// measure is not a pass" — and until now all 39 drivers ended on `0 or 1`, so
+// every broken precondition in the set has been reported as a finding about the
+// thing it never got to look at. Noted on #145; #147 is what made it matter
+// here, by taking away the inherited profile that was hiding the premise break.
+const unscored = []
+
 const finish = async () => {
-  console.log(fails.length === 0 ? 'PASS' : 'FAIL')
+  console.log(unscored.length ? 'UNSCORED' : fails.length === 0 ? 'PASS' : 'FAIL')
+  for (const u of unscored) console.log('  ? ' + u)
   for (const f of fails) console.log('  - ' + f)
   console.log(`SHOTS       ${SHOT_DIR.replace(/\\/g, '/')}`)
   await app.close().catch(() => {})
   try {
     fs.rmSync(WORK_DIR, { recursive: true, force: true })
   } catch {}
-  process.exit(fails.length === 0 ? 0 : 1)
+  process.exit(unscored.length ? 2 : fails.length === 0 ? 0 : 1)
 }
 
 // ---- phase 0: the origin this run is actually measuring ---------------------
@@ -186,12 +197,16 @@ log('WORKSPACE', { dir: path.basename(WORK_DIR) })
 // wearing different clothes, and moving the pin above every measurement is what
 // removes it rather than another hardcoded wait.
 //
-// THIS WRITES TO THE SHARED PROFILE, deliberately, and #147 should know it. The
-// toggle is persisted, so pinning it leaves "This project" behind for whatever
-// runs next. Restoring the previous value was considered and rejected: the only
-// value there is to restore is the one that made this driver red, and handing it
-// to the next driver is the failure #147 is about. A private profile per driver
-// is the real fix, and it is that ticket's rather than this one's.
+// THIS USED TO WRITE TO THE SHARED PROFILE, and #147 has since closed that: the
+// pin now lands in this driver's own `userData`, handed out by `dom-phase.mjs`
+// and thrown away with the run. Nothing downstream inherits it.
+//
+// THE PIN AND ITS READ-BACK BOTH STAY. A private profile makes the pin
+// unnecessary for the reason it was written — no foreign scope can leak in — but
+// it is what turns a fresh profile's default into a value this driver STATES
+// rather than assumes, and the read-back below is the only thing that would
+// notice a private profile failing to apply. #147 removed the contamination, not
+// the need to know what scope was measured.
 const scope = await page.evaluate(() => {
   const btns = [...document.querySelectorAll('.session-scope-btn')]
   const project = btns.find((b) => /this project/i.test(b.textContent || ''))
@@ -251,10 +266,33 @@ if (!arrived) {
   const seen = await page.evaluate(() => ({
     userMessages: document.querySelectorAll('.msg-user').length,
     bubbles: document.querySelectorAll('.msg-user .bubble').length,
-    controls: document.querySelectorAll('.bubble-reuse').length
+    controls: document.querySelectorAll('.bubble-reuse').length,
+    // The composer keeps its text when `submit()` returns without sending, so
+    // this separates "the send never happened" from "it did and rendered wrong".
+    composerStillHolds: (document.querySelector('.message-input')?.value ?? '') !== ''
   }))
+  // TWO DIFFERENT ANSWERS, and conflating them is how a driver lies about a
+  // subject it never reached. NO user message at all means the app did not send,
+  // which says nothing whatever about the reuse control — the control cannot
+  // appear on a row that does not exist.
+  //
+  // #147 is what exposed this. Run against the machine's real profile, the send
+  // works and this driver has always passed. Run against a profile the app has
+  // never started in — which is now every run — no message appears at all, and
+  // it is NOT this driver's technique: measured on 2026-08-11 across a cold
+  // profile with the zoom factor forced to 1, a cold profile seeded with every
+  // localStorage key a warm one carried, and a cold profile with the `chat:send`
+  // listener left in place. Zero user messages in all three, and the Send BUTTON
+  // is as dead as the Enter key, so it is not the key path either. Filed
+  // separately; see the ticket named below.
+  if (seen.userMessages === 0) {
+    unscored.push(
+      `the app rendered no user message at all after 15s (${JSON.stringify(seen)}) — this run never reached the reuse control, so it is UNSCORED rather than a finding about it. A first-run profile not sending is #155, not this driver's subject`
+    )
+    await finish()
+  }
   fails.push(
-    `no reuse control appeared on a user message in the built app after 15s (${JSON.stringify(seen)}) — the control is not reaching the shipped bundle`
+    `a user message rendered but carried no reuse control after 15s (${JSON.stringify(seen)}) — the control is not reaching the shipped bundle`
   )
   await finish()
 }

@@ -1,0 +1,34 @@
+{
+  "platform": "win32",
+  "electron": "D:\\.claude\\claude projects\\playground\\4\\node_modules\\electron\\dist\\electron.exe",
+  "findings": {
+    "D": {
+      "verdict": "YES",
+      "why": "both launches used C:\\Users\\S.D\\AppData\\Roaming\\Electron and launch 2 read launch 1's marker",
+      "userData": "C:\\Users\\S.D\\AppData\\Roaming\\Electron",
+      "appData": "C:\\Users\\S.D\\AppData\\Roaming",
+      "seenByLaunch2": "from-launch-1"
+    },
+    "A": {
+      "verdict": "YES",
+      "why": "asked for C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\argv-5ZtQxC, got C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\argv-5ZtQxC",
+      "asked": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\argv-5ZtQxC",
+      "got": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\argv-5ZtQxC"
+    },
+    "B": {
+      "verdict": "NO",
+      "why": "set APPDATA=C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\env-zaaNaD, appData resolved to C:\\Users\\S.D\\AppData\\Roaming, userData to C:\\Users\\S.D\\AppData\\Roaming\\Electron",
+      "envKey": "APPDATA",
+      "asked": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\env-zaaNaD",
+      "appData": "C:\\Users\\S.D\\AppData\\Roaming",
+      "got": "C:\\Users\\S.D\\AppData\\Roaming\\Electron"
+    },
+    "C": {
+      "verdict": "YES",
+      "why": "phase asked C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\phase-iEnUo9, probe asked C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\own-8XbbTU, got C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\own-8XbbTU",
+      "phaseAsked": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\phase-iEnUo9",
+      "probeAsked": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\own-8XbbTU",
+      "got": "C:\\Users\\S.D\\AppData\\Local\\Temp\\spike147-rPgj6B\\own-8XbbTU"
+    }
+  }
+}

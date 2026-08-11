@@ -35,6 +35,67 @@ import { DOM_SKIP, DRIVER_DIR, domPhaseDrivers, listDrivers } from './drivers.ma
 
 const APP_DIR = path.resolve(DRIVER_DIR, '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-dom-phase')
+
+// ── #147: one profile per driver, and a witness that it held ──────────────
+// Every driver used to launch against the machine's real `userData`. Window
+// bounds and the per-origin zoom factor both outlive a process, so a driver that
+// pinned either for a good reason handed it to every driver that ran after it —
+// `gui-136` did exactly that and `gui-69` and `gui-70` failed in the batch for
+// it, passing alone. Three phase runs went into attributing that, because the
+// contaminating driver passes and only its neighbours red.
+//
+// The phase cannot simply add `--user-data-dir` itself: it spawns `node
+// gui-<n>.mjs`, and the driver owns the Electron argv. An environment variable
+// that moves `userData` with no argv change would have needed no driver to
+// cooperate, and `scripts/spike-147-driver-profile-isolation.mjs` measured that
+// no such variable exists on this platform — Chromium resolves `appData` through
+// the shell's known-folder API and ignores `APPDATA`. So the phase hands each
+// driver a DIRECTORY here, `driver-profile.mjs` turns it into the switch, and
+// `tests/driver-profile.test.ts` reds a driver that does not spread it in.
+//
+// The directory itself is minted further down, past the `--list` and accounting
+// exits: `--list` launches nothing, and a run that leaves an empty temp
+// directory behind every time somebody asks what would run is litter.
+
+// Where the app's real profile lives — Electron's documented default for an app
+// whose `package.json` name is `claude-wrapper` and which sets no productName.
+// Derived rather than asked, because asking costs an Electron launch to answer a
+// question with a documented answer.
+const SHARED_PROFILE =
+  process.platform === 'win32'
+    ? path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData/Roaming'), 'claude-wrapper')
+    : process.platform === 'darwin'
+      ? path.join(os.homedir(), 'Library/Application Support', 'claude-wrapper')
+      : path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config'), 'claude-wrapper')
+
+// The two halves of the profile that carry the state this ticket is about:
+// `Preferences` holds the per-origin zoom factor, `Local Storage` holds the
+// bounds the renderer reports back. Deliberately NOT the whole directory —
+// caches and log files churn on their own and would accuse every driver.
+//
+// WHAT THIS CANNOT SEE, stated so the check is not overread: it detects that the
+// shared profile was WRITTEN, not that a driver read it, and it covers bounds
+// and zoom rather than sessions, storage or permissions state. It narrows
+// attribution; it does not prove isolation.
+const WATCHED = ['Preferences', 'Local Storage']
+
+const fingerprint = (root) => {
+  const parts = []
+  const walk = (p, rel) => {
+    let st
+    try {
+      st = fs.statSync(p)
+    } catch {
+      return
+    }
+    if (st.isDirectory()) {
+      for (const e of fs.readdirSync(p).sort()) walk(path.join(p, e), `${rel}/${e}`)
+    } else parts.push(`${rel}:${st.size}:${st.mtimeMs}`)
+  }
+  for (const w of WATCHED) walk(path.join(root, w), w)
+  return parts.join('\n')
+}
+
 // Generous: the slowest driver still running here budgets 180s internally, and a
 // driver that hangs past its own timeout is a failure worth seeing rather than
 // one worth waiting out.
@@ -78,6 +139,8 @@ if (!fs.existsSync(path.join(APP_DIR, 'out/main/index.js'))) {
   process.exit(1)
 }
 fs.mkdirSync(SHOT_DIR, { recursive: true })
+// Past every exit that launches nothing — see the #147 block above.
+const PROFILE_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'dom-phase-profiles-'))
 
 // ── run ───────────────────────────────────────────────────────────────────
 // Serial, deliberately. Several drivers pin window bounds, zoom factor or focus,
@@ -86,9 +149,14 @@ fs.mkdirSync(SHOT_DIR, { recursive: true })
 const runOne = (driver) =>
   new Promise((resolve) => {
     const started = Date.now()
+    const stem = driver.replace(/\.mjs$/, '')
     const child = spawn(process.execPath, [path.join(DRIVER_DIR, driver)], {
       cwd: APP_DIR,
-      env: { ...process.env, SCREENSHOT_DIR: path.join(SHOT_DIR, driver.replace(/\.mjs$/, '')) },
+      env: {
+        ...process.env,
+        SCREENSHOT_DIR: path.join(SHOT_DIR, stem),
+        DOM_DRIVER_PROFILE: path.join(PROFILE_ROOT, stem)
+      },
       stdio: ['ignore', 'pipe', 'pipe']
     })
 
@@ -114,12 +182,16 @@ const runOne = (driver) =>
   })
 
 console.log(`=== DOM phase: ${queue.length} driver(s), ${DOM_SKIP.size} skipped, timeout ${TIMEOUT_MS}ms ===`)
-console.log(`screenshots: ${SHOT_DIR}\n`)
+console.log(`screenshots: ${SHOT_DIR}`)
+console.log(`profiles:    ${PROFILE_ROOT} (one per driver, removed on exit)\n`)
 
 const results = []
+const touched = []
 for (const driver of queue) {
   process.stdout.write(`${driver} ... `)
+  const beforeShared = fingerprint(SHARED_PROFILE)
   const r = await runOne(driver)
+  if (fingerprint(SHARED_PROFILE) !== beforeShared) touched.push(driver)
   results.push(r)
   console.log(`${r.status} (exit ${r.code}, ${(r.ms / 1000).toFixed(1)}s)`)
   if (r.status !== 'PASS') {
@@ -139,6 +211,28 @@ if (!only) {
   console.log(`\nnot launched (${DOM_SKIP.size}), each for a stated reason:`)
   for (const [d, reason] of DOM_SKIP) console.log(`  ${d} — ${reason}`)
 }
+
+// #147's attribution aid. Under per-driver isolation this list should be empty,
+// so a name on it is the useful signal: that driver's launch escaped the profile
+// it was handed, and it is the one to suspect when a LATER driver reds.
+//
+// REPORTED, NOT FAILED, and the reason is a fact rather than timidity: the
+// human's own copy of the app writes to this same directory, so a phase run with
+// the app open would red on someone else's keystroke. The isolation itself is
+// asserted where it can be asserted honestly — `tests/driver-profile.test.ts`,
+// in the fast gate, on every driver's source.
+if (touched.length) {
+  console.log(`\nWROTE TO THE SHARED PROFILE (${SHARED_PROFILE}):`)
+  for (const d of touched) console.log(`  ${d} — its isolation did not hold; suspect it first if a later driver reds`)
+  console.log('  (the app being open during the run writes here too, so confirm before accusing a driver)')
+}
+
+try {
+  fs.rmSync(PROFILE_ROOT, { recursive: true, force: true })
+} catch {
+  console.log(`(left behind: ${PROFILE_ROOT})`)
+}
+
 console.log(
   `\n${bad.length === 0 ? 'DOM PHASE PASS' : `DOM PHASE FAIL: ${bad.map((r) => `${r.driver} (${r.status})`).join(', ')}`}`
 )

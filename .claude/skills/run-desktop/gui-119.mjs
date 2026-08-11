@@ -43,6 +43,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import os from 'node:os'
 import { execFileSync } from 'node:child_process'
+import { profileArgs } from './driver-profile.mjs'
 
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
@@ -58,7 +59,7 @@ setTimeout(() => {
 
 const app = await electron.launch({
   executablePath: path.join(APP_DIR, 'node_modules/electron/dist/electron.exe'),
-  args: ['--no-sandbox', '.'],
+  args: ['--no-sandbox', ...profileArgs(), '.'],
   cwd: APP_DIR,
   env: process.env,
   timeout: 45000

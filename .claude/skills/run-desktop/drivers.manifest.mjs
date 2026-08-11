@@ -20,7 +20,7 @@ export const DRIVER_DIR = path.resolve(import.meta.dirname)
 const isSidecar = (f) => f.endsWith('.source.mjs')
 
 // The set is `gui-*.mjs`, which is #132's convention and not an accident of
-// globbing. Four other `.mjs` files live in this directory and are deliberately
+// globbing. Five other `.mjs` files live in this directory and are deliberately
 // NOT members, named here so their absence is a decision on the record rather
 // than something nobody noticed:
 //
@@ -31,6 +31,10 @@ const isSidecar = (f) => f.endsWith('.source.mjs')
 //                and a shortfall exits non-zero), but it exists to PRODUCE the
 //                captures a critic grades, and the phase would double its
 //                runtime to re-prove what the next gauntlet wave proves anyway.
+//                It takes a private profile like every driver (#147) even though
+//                it is not one, because it normalises zoom and resizes the window
+//                and a human runs it by hand; `tests/driver-profile.test.ts`
+//                carries that as its own case.
 //   inspect-workspace.mjs
 //                #142. Not an executable at all — a module `inspect.mjs`
 //                imports, holding the fixture workspace's fixed name and its
@@ -45,6 +49,14 @@ const isSidecar = (f) => f.endsWith('.source.mjs')
 //                Outside the driver for the same reason as the file above, and
 //                run by the fast gate in `tests/inspect-sessions-fixture.test.ts`
 //                against the app's real `groupSessions`.
+//   driver-profile.mjs
+//                #147. Not an executable either — the module every driver spreads
+//                into its `electron.launch({ args })` to get a private `userData`
+//                directory. It is not a driver because it launches nothing and
+//                asserts nothing; what it does is make isolation a property of
+//                the launch rather than of whether an author remembered. The
+//                convention it carries IS executed, by
+//                `tests/driver-profile.test.ts` in the fast gate.
 //
 /** Every `gui-*.mjs` driver, sorted. The definition of "the driver set". */
 export const listDrivers = () =>

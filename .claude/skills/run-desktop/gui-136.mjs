@@ -37,29 +37,23 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
 import { checks as sourceChecks } from './gui-136.source.mjs'
+import { profileArgs } from './driver-profile.mjs'
 
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
 const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
 fs.mkdirSync(SHOT_DIR, { recursive: true })
 
-// A PRIVATE `userData`, and this is the batch-safety half of the driver rather
-// than a tidiness preference. This driver has to pin the window's size and zoom
-// to make `setContentSize(640)` mean the 640css minimum the ticket names — and
-// both of those OUTLIVE the process: bounds are remembered (#79, #110) and the
-// zoom factor is persisted per origin in `userData` as well as in the renderer's
-// own localStorage, which is the trap inspect.mjs documents. Measured, not
-// assumed: with this driver in the batch writing to the shared profile, gui-69
-// and gui-70 both failed waiting for the composer to become visible — twice,
-// reproducibly — while a run of the same batch with this file removed and the
-// CSS fix still in place was 28/29 with only the known gui-123 red.
+// A PRIVATE `userData` — this driver's own `mkdtemp`, until #147 made the same
+// thing the default for every driver. The argument that started here now lives
+// in `driver-profile.mjs`, which is where `...profileArgs()` below gets the
+// directory from; the short version is that this driver must pin the window's
+// size and zoom to make `setContentSize(640)` mean the 640css minimum its ticket
+// names, both of those outlive the process, and writing them into the shared
+// profile is what made gui-69 and gui-70 fail in the batch while passing alone.
 //
-// Restoring the borrowed values on the way out was the obvious alternative and
-// is weaker: a teardown is a promise that is not kept precisely when the run
-// crashes or times out, which is when contamination matters most. A separate
-// profile makes the isolation a property of the launch instead. Nothing this
-// driver measures reads `userData` — the titlebar's geometry does not — and the
-// two values it would have inherited are ones it overwrites on purpose anyway.
-const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'gui136-profile-'))
+// Nothing here needs a directory of its own any more, and keeping one would mean
+// this driver was the only member of the set opting out of the mechanism it
+// argued for.
 
 // A long folder name, built to length rather than typed to it so the number in
 // the assertion and the number on disk cannot drift apart. 60 chars is gui-72's
@@ -97,7 +91,7 @@ const electronBin =
 
 const app = await electron.launch({
   executablePath: electronBin,
-  args: ['--no-sandbox', '--disable-gpu', `--user-data-dir=${USER_DATA}`, '.'],
+  args: ['--no-sandbox', '--disable-gpu', ...profileArgs(), '.'],
   cwd: APP_DIR,
   env: process.env,
   timeout: 30000
@@ -391,7 +385,7 @@ setTimeout(() => process.exit(fails.length === 0 ? 0 : 1), 4000).unref?.()
 await app.close().catch(() => {})
 // Best-effort, and only after the app is down: the engine holds the fixture as
 // its cwd, so an EBUSY here is ordinary and must never decide the verdict.
-for (const dir of [path.dirname(LONG_DIR), USER_DATA]) {
+for (const dir of [path.dirname(LONG_DIR)]) {
   try {
     fs.rmSync(dir, { recursive: true, force: true })
   } catch {
