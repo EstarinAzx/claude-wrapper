@@ -20,6 +20,9 @@ pieces:
   # Wave 10: held BAR WINS, change SAME. Critic-only / collision A.
   # Wave 11: held BAR WINS, change SAME (pixel-identical to wave 10). Critic-only.
   # Gap restates left-edge / Explore compact child row — still collision A.
+  # Wave 12: held BAR WINS, change SAME (pixel-identical to wave 11). Critic-only.
+  # Gap: shorten Explore branch rule to child content height + tighten desc-to-meta.
+  # Still collision A — do not build shells.
   - name: AgentsDock
     verdict: BAR WINS
     open: true
@@ -71,6 +74,8 @@ pieces:
   # Wave 9: held BAR WINS, change SAME. Critic-only. Still collision A.
   # Wave 10: held BAR WINS, change BETTER inside band (Appearance Zoom). Still A.
   # Wave 11: held BAR WINS, change SAME (pixel-identical). Critic-only. Still A.
+  # Wave 12: held BAR WINS, change SAME (pixel-identical). Critic-only. Still A.
+  # Gap: top-level agent spacing + nested Explore subordinate via type/indent alone.
   - name: DocksAsOne
     verdict: BAR WINS
     open: true
@@ -90,10 +95,11 @@ pieces:
 critic: sonnet                 # FAMILY name only — re-resolve live every wave, never carry the target
 critic_degraded: false
 branch: gauntlet/docks-and-min-window
-wave: 11
-# 0 -> 1. Critic-only stall. No ordinal improved. All 11 captures SHA256-identical
-# to wave 10. Agents/DocksAsOne held BAR WINS + SAME. Collision A still blocks.
-plateau: 1
+wave: 12
+# 1 -> 2. Critic-only stall. No ordinal improved. All 11 captures SHA256-identical
+# to wave 11. Agents/DocksAsOne held BAR WINS + SAME. Collision A still blocks.
+# wave == max_waves after this score — next firing halts on budget backstop.
+plateau: 2
 max_waves: 12
 page: false
 stop: false
@@ -264,6 +270,70 @@ this file. Every one of them has already cost this repo a false finding.
 | 11 | WelcomeMinWindow | YOURS WINS | *(closed — no critic this wave; capture pixel-identical; headroom still 69.71/70)* |
 | 11 | DocksAsOne | BAR WINS | *(held — change SAME; critic-only; all three dock captures pixel-identical to wave 10)* Agents still breaks the cross-dock finish: regularize spacing between top-level entries and make nested Explore visibly subordinate with smaller, quieter type and indentation alone. **Still collision A — do not build Agents shells without a human pick.** |
 | 11 | IconHousing | YOURS WINS | *(closed — no critic this wave; capsule kept; collision B held)* |
+| 12 | AgentsDock | BAR WINS | *(no builder — collision A / owner call 19; capture pixel-identical to wave 11)* Shorten the Explore branch rule to the child content height and tighten the description-to-metadata gap so the nested item reads as one compact unit rather than a loose text stack. **Still collision A if read as resting shells — do not build shells without owner call 19.** |
+| 12 | CommandsDock | YOURS WINS | *(closed — no critic this wave; capture pixel-identical)* |
+| 12 | AppearanceDock | YOURS WINS | *(closed — no critic this wave; capture pixel-identical; Theme-descriptor polish still not a reopen)* |
+| 12 | WelcomeMinWindow | YOURS WINS | *(closed — no critic this wave; capture pixel-identical; headroom still 69.71/70)* |
+| 12 | DocksAsOne | BAR WINS | *(held — change SAME; critic-only; all three dock captures pixel-identical to wave 11)* In Agents, increase the spacing between top-level agent entries and make the nested Explore block visibly subordinate through smaller type and stronger indentation alone. **Still collision A — do not build Agents shells without a human pick.** |
+| 12 | IconHousing | YOURS WINS | *(closed — no critic this wave; capsule kept; collision B held)* |
+
+## Wave 12 adjudications — critic-only stall, ordinals held, plateau 1 -> 2
+
+**Zero builders, two open-piece critics, zero smoothing edits.** Gate green (D7); **zero `SPEC BREAK`s**; critic family re-resolved live to `sonnet` -> `codex/gpt-5.6-sol`; `critic_degraded: false`. Final CSS bundle **still `index-DOI17h8g.css`** (unchanged from waves 10–11 — no `src/` edit).
+
+### 1. THE PLATEAU ADVANCES — NO ORDINAL IMPROVED, NO PIXELS MOVED
+
+| piece | before | after | builder? | change |
+|---|---|---|---|---|
+| AgentsDock | BAR WINS | BAR WINS | no — collision A | SAME |
+| DocksAsOne | BAR WINS | BAR WINS | no — collision A | SAME |
+| AppearanceDock | YOURS WINS | YOURS WINS | closed | — |
+| CommandsDock | YOURS WINS | YOURS WINS | closed | — |
+| WelcomeMinWindow | YOURS WINS | YOURS WINS | closed | — |
+| IconHousing | YOURS WINS | YOURS WINS | closed | — |
+
+On the preset's literal rule none improved, so **`plateau` 1 -> 2**. Halt still at `plateau: 3` — **one clean wave away** — OR at the next firing's stop check because **`wave` is now 12 (`max_waves`)**. Owner call 19 still open, still default build-nothing on Agents/DocksAsOne shells. Owner call 20 still open, still not acted on.
+
+### 2. WAVE 12 WAS HONESTLY CRITIC-ONLY — NO CLEAN PRIMARY BUILD
+
+Wave 11 left only Agents + DocksAsOne open, both still collision A / owner call 19. Default taken: capture + critic only. All eleven captures **SHA256-identical** to wave 11 (including null controls `titlebar.png` and `sidebar.png`). Critics both answered `change: SAME`, matching the bytes.
+
+### 3. GAPS RESTATE THE SAME BLOCKED LEVER — STILL NO NON-SHELL BUILD WITHOUT OWNER CALL 19
+
+- **AgentsDock:** shorten Explore branch rule to child content height + tighten description-to-metadata gap so nested item reads as one compact unit. Same family as waves 9–11 (Explore compact child). Still collides with resting-shell reads of owner call 19 if converted into shells.
+- **DocksAsOne:** increase top-level agent entry spacing; make nested Explore subordinate via smaller type and stronger indentation **alone**. Same family as waves 10–11. Still collision A if converted to shells. Critic notes Commands and Appearance look finished; Agents still prevents the three docks reading as one equally resolved system.
+
+No non-colliding, non-inverting lever appeared. Do not invent one off Appearance's post-close Theme-descriptor polish.
+
+### 4. BOTH COLLISIONS HELD AT THE DEFAULT
+
+**Collision A:** no builder on Agents, no builder on DocksAsOne. Default remains build nothing.
+**Collision B:** IconHousing stays YOURS WINS with the capsule. Do not remove it.
+
+### 5. SMOOTHING PASS MOVED ZERO PIXELS
+
+No edit. Piece list full at six of six. **NO_NEW_PIECE.**
+
+### 6. Verification that was run rather than trusted
+
+- **Build before capture.** Bundle confirmed `index-DOI17h8g` (wave 10/11 hash) — correct for a no-edit wave. No `npm run build` required.
+- **Inspect PASS**, headroom 69.71 / claimed 70, overflow 0, 11/11 files under `.gauntlet/waves/docks-and-min-window/12/`.
+- **SHA256: all 11 SAME vs wave 11**, including null controls.
+- **Drivers wave2..wave10 ALL GREEN** (exit 0 each). No wave12 driver (no build). Wave9 has no driver either.
+- **Gate:** typecheck clean; **96 files / 1406 passed + 44 skipped**; no `src/` change.
+- **Critic routing re-resolved live** this wave: `sonnet` -> `codex/gpt-5.6-sol`. Thirteen consecutive waves, each read fresh.
+
+### 7. What the next firing inherits
+
+| piece | next posture | trap |
+|---|---|---|
+| AgentsDock / DocksAsOne | **still collision A** — only open pieces | row shell; owner call 19 — default remains build nothing |
+| AppearanceDock | closed YOURS | Theme descriptor is post-close polish — do not reopen; do not invert shells |
+| CommandsDock | closed YOURS | optional horizontal padding only if re-opened |
+| WelcomeMinWindow | closed YOURS | preserve 24; do not tighten |
+| IconHousing | closed YOURS | zoom-minus only if re-opened; **do not remove the capsule** |
+
+**Stop check on the NEXT firing:** `wave: 12` and `max_waves: 12` → **`wave >= max_waves` budget backstop fires before any wave 13.** Plateau is 2 (one shy of 3). Expected exit: budget halt with four YOURS WINS closed and Agents/DocksAsOne still BAR WINS behind owner call 19.
 
 ## Wave 11 adjudications — critic-only stall, ordinals held, plateau 0 -> 1
 
@@ -1811,6 +1881,22 @@ verdict to improve on, so it cannot be a plateau wave — the same call run 1 ma
 recorded. Wave 2 is the first wave that can move it.
 
 ## Log
+- [wave 12] **CRITIC-ONLY STALL, ORDINALS HELD, PLATEAU 1 -> 2.** Zero builders,
+  two open-piece critics, zero smoothing edits. Agents + DocksAsOne stayed BAR
+  WINS with change SAME. All eleven captures SHA256-identical to wave 11 (null
+  controls alive). Bundle still **`index-DOI17h8g.css`**. Critic re-resolved live:
+  `sonnet` -> `codex/gpt-5.6-sol` (thirteenth consecutive, fresh). `plateau` **1 -> 2**.
+  `wave` now **12 == max_waves** — next firing halts on budget backstop (or one more
+  stall would hit plateau 3).
+- [wave 12] **NO CLEAN PRIMARY BUILD — DEFAULT HELD.** Only open pair still
+  collision A / owner call 19. Gaps restate Explore compact child (branch-rule
+  height + desc-to-meta) and Agents top-level spacing / subordinate Explore type+indent
+  without shells — no new non-shell lever. Appearance Theme descriptor still
+  post-close polish, not a reopen.
+- [wave 12] **BOTH COLLISIONS HELD.** Owner call 19 default. Capsule kept. Smooth:
+  NO_NEW_PIECE, zero pixels. Drivers wave2..wave10 GREEN. Gate: typecheck clean,
+  **96 files / 1406 passed + 44 skipped**. Nothing pushed. Next leg boots at
+  wave=12 → stop on `wave >= max_waves` before building anything.
 - [wave 11] **CRITIC-ONLY STALL, ORDINALS HELD, PLATEAU 0 -> 1.** Zero builders,
   two open-piece critics, zero smoothing edits. Agents + DocksAsOne stayed BAR
   WINS with change SAME. All eleven captures SHA256-identical to wave 10 (null
