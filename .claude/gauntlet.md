@@ -96,13 +96,14 @@ critic: sonnet                 # FAMILY name only — re-resolve live every wave
 critic_degraded: false
 branch: gauntlet/docks-and-min-window
 wave: 12
-# 1 -> 2. Critic-only stall. No ordinal improved. All 11 captures SHA256-identical
-# to wave 11. Agents/DocksAsOne held BAR WINS + SAME. Collision A still blocks.
-# wave == max_waves after this score — next firing halts on budget backstop.
+# CLOSED 2026-08-12 leg 14 — budget backstop. wave 12 >= max_waves 12.
+# No wave 13 ran. plateau sat at 2 (one shy of 3). Final ordinals unchanged
+# from wave 12: 4 YOURS WINS closed, Agents/DocksAsOne still BAR WINS behind
+# owner call 19 / collision A. Bundle still index-DOI17h8g.css. Nothing pushed.
 plateau: 2
 max_waves: 12
 page: false
-stop: false
+stop: true
 ---
 
 ## Where things are
@@ -1881,6 +1882,15 @@ verdict to improve on, so it cannot be a plateau wave — the same call run 1 ma
 recorded. Wave 2 is the first wave that can move it.
 
 ## Log
+- [closeout] **BUDGET BACKSTOP — RUN CLOSED.** `wave: 12 >= max_waves: 12`.
+  Stop check fired before any wave 13. No build, no capture, no critic.
+  `plateau` held at **2** (one shy of 3). Final table unchanged from wave 12:
+  AppearanceDock / CommandsDock / WelcomeMinWindow / IconHousing = **YOURS WINS**
+  (closed); AgentsDock / DocksAsOne = **BAR WINS** (open, collision A / owner
+  call 19 — default build-nothing still holds). Bundle still
+  **`index-DOI17h8g.css`**. Owner call 19 and 20 remain open for a human.
+  Capsule kept. Nothing pushed — D6. Branch
+  `gauntlet/docks-and-min-window` at `c1bebbf` + this closeout commit.
 - [wave 12] **CRITIC-ONLY STALL, ORDINALS HELD, PLATEAU 1 -> 2.** Zero builders,
   two open-piece critics, zero smoothing edits. Agents + DocksAsOne stayed BAR
   WINS with change SAME. All eleven captures SHA256-identical to wave 11 (null
