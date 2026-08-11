@@ -172,12 +172,16 @@ const BackendPill = ({
 // for it: the clearance has to buy one clean background pixel, so it wants about
 // 2.0 per side rather than 0.85. Interior 10.4 + 4.0 = 14.4 puts the grid near
 // 19-20, which renders these glyphs at 18-20px inside the 28px housing against
-// today's ~10. That housing is declared jointly with the rail's FIVE — Refresh,
-// Open project, New chat and Collapse in the expanded head, Expand in the
-// collapsed rail — and not with the three 14-grid glyphs named further up this
-// block, which are a subset of them. Growing the housing moves all eight
-// tenants of that rule, so it is not this surface's call to make alone. The
-// bracket and the bare-rule verdicts survive re-derivation; only their
+// today's ~10. That housing is declared jointly, and with far more than this
+// surface: THIRTEEN buttons across three glyph grids wear it, and the count is
+// no longer kept here. It said EIGHT — these three plus the rail's five — which
+// was already short by the three dock closes when it was written, and the agents
+// dock has since moved its mode switch onto the same rule. The one inventory now
+// lives on the `.agents-toggle, .sidebar-toggle` rule in styles/titlebar.css,
+// beside the declarations it is the blast radius of; a second copy here is how it
+// went stale the first time. Growing the housing moves all thirteen, so it is
+// still not this surface's call to make alone — more so than when the number was
+// eight. The bracket and the bare-rule verdicts survive re-derivation; only their
 // intermediate numbers were off.
 const glyph = {
   width: 16,

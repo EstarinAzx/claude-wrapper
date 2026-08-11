@@ -301,10 +301,38 @@
    RANK BY INTERVAL. The gap is replaced by three authored ones, taken from the
    rhythm the chat column already keeps (24px between messages, 40px around the
    date divider) so this screen is measured in the app's own units: 24 under
-   the mark, 8 under the title, 40 above the action. The title and its
-   supporting line now sit closer to each other than either sits to anything
-   else, so they read as one editorial pair with the identity above and the
-   action below.
+   the mark, 8 under the title, 24 above the action. The title and its
+   supporting deck sit closer to each other than either sits to anything else,
+   so they read as one editorial pair with the identity above and the action
+   below.
+
+   THE ACTION'S GAP CAME DOWN FROM 40, because at 40 it was the LARGEST
+   interval on the screen and the thing it held off was supposed to be inside
+   the group. MEASURED gaps understate what the eye reads here, and by
+   different amounts at each end: `--fs-display` at 1.25 leading is a line box
+   TIGHTER than the glyph box it holds, which puts the headline's cap about
+   15.5px below its own box top, while the deck at 1.6 leaves only about 6.6px
+   under its last baseline. So 24 under the mark reads as about 39.6px of air,
+   8 under the headline as about 26.6px, and 40 above the button read as about
+   46.6px: the action stood further off than the identity did. That is the
+   whole of why headline, explanation and action read as three centred objects
+   rather than one lockup, and it is why the fix is one interval rather than a
+   new composition. At 24 the last gap reads as about 30.7px — still the wider
+   of the two inside the group, so the deck stays attached to the headline
+   rather than floating between two equals, and still clearly under the
+   identity's 39.6px, which is the boundary the lockup is bounded BY.
+
+   THE 8 IS HELD, AND HOLDING IT IS ALSO A DECISION. The obvious second move is
+   to open the headline-to-deck gap now that the deck is two lines and carries
+   more mass. It is the wrong one: at 8 that interval reads as about 26.6px
+   against the deck's own 15.5px baseline-to-cap leading, a ratio of 1.7, which
+   is what makes a two-line block read as hanging off the headline. At 16 the
+   ratio goes to 2.2 and the deck detaches. The tempting version of that move
+   is the one that costs no height at all — 8 up to 16, 40 down to 32, net zero
+   — and it is the worst of the three: the run reads 39.6 / 34.6 / 38.7, three
+   near-equal intervals, which is the uniform stack this whole comment was
+   written against, rebuilt one wave later. The deck locks to the headline by
+   gaining mass, not by gaining air.
 
    THE STACK IS LIFTED OFF TRUE CENTRE, and the lift is exactly half the
    padding difference: centring inside the remainder moves the block up by
@@ -343,17 +371,24 @@
    subagent.css already clamps a width with min. DESIGN.md's Type section bans fluid
    TYPE; every type size on this screen stays fixed.
 
-   THE SUM, REDONE. Content is 253px — a 44px mark and 24 under it, a 46px
-   title at 1.25 leading for a 57.5px line box and 8 under it, a 17.25px hint at
-   1.6, then 40 above a 52px button. (#138 rounded the title from 46.26 to 46
-   when it re-pointed `--fs-display` at what it paints. The line box lost
-   0.33px, the content total went 253.4 to 253.1, and both still read 253 at
-   whole-pixel terms, so `CLAIMED_HEADROOM_PX` in `inspect.mjs` stays 65 — the
-   sum moved first and the number did not have to.) At the 480px minimum the reserve resolves
-   to 82, so 253 plus 114 of padding needs 367px against the pane's 432: 65px of
-   headroom, up from 16. The stack clears every window down to about 402px tall,
+   THE SUM, REDONE AGAIN, THIS TIME IN EXACT TERMS. Content is 264.69px — a
+   44px mark and 24 under it, a 46px title at 1.25 leading for a 57.5px line
+   box and 8 under it, a 17.25px deck at 1.6 leading over TWO lines for 55.2px,
+   then 24 above a 51.99px button. (#138 rounded the title from 46.26 to 46
+   when it re-pointed `--fs-display` at what it paints; the line box lost
+   0.33px. The button is 32px of padding around a 19.99px line box, Chromium's
+   `normal` leading on the body rung, which is why it is not a round 52.) At the
+   480px minimum the reserve resolves to 81.6, so 264.69 plus 113.6 of padding
+   needs 378.29px against the pane's 432: 53.71px of headroom. `inspect.mjs`
+   carries that as `CLAIMED_HEADROOM_PX = 54`, and measures it first-hand.
+
+   THE DECK COST LESS THAN ITS SECOND LINE. Wave 2 measured 65.31px of headroom
+   here and warned that a second line would spend 27.6 of it. It does, but the
+   action's gap gave 16 back in the same change, so the reserve fell by 11.6
+   and not by 27.6. The stack clears every window down to about 415px tall,
    which is below the enforced minimum. THE NEXT BUILDER TO ENLARGE ANYTHING
-   HERE MUST STILL REDO THIS SUM — the headroom is large now, not infinite.
+   HERE MUST STILL REDO THIS SUM — a third deck line spends another 27.6 of
+   what is left, and there is less left than there was.
 
    RUNG 8 AND NOT RUNG 7. Under the old fixed reserve the lower step left 10px
    and this one left 2px, at which the reserve below IS the clip it was written
@@ -410,29 +445,53 @@
    not a label; body was the correction, and the rung above it is what keeps a
    supporting line legible under a 46px headline instead of shrinking to a
    caption by contrast. Stated as arithmetic on the token, like the title, so
-   the step is greppable and adds no fifth token to `@theme`. No measure is set:
-   the copy is one 56-character line and runs about 410px at this size, so any
-   `max-width` large enough not to widow it would never bind, and a declaration
-   that never binds is not a composition.
+   the step is greppable and adds no fifth token to `@theme`.
 
-   THE COPY GREW AND THE REASONING SURVIVED, with less room than it had. The
-   line was 44 characters at about 320px while it restated the button; saying
-   what opening a folder gives you instead costs twelve characters. The
-   narrowest field this line is ever painted in is the 640px enforced minimum
-   window less 32px of padding a side, which is 576px, so the natural width
-   still clears it by about 165px and the no-measure argument holds unchanged.
-   It holds by margin, not by law: a rewrite past roughly 570px wraps to a
-   second line at that window and spends 28px of the 65px of vertical headroom
-   the sum above reserves, so the next editor of that string owns this figure
-   and the sum both. */
+   A MEASURE IS SET NOW, AND THE ARGUMENT FOR HAVING NONE IS WHAT RETIRED IT.
+   Two waves declined one on the same reasoning: at 44 characters and then at
+   56 the copy painted about 320px and about 410px, inside the 576px field the
+   640px minimum window leaves after 32px of padding a side, so any `max-width`
+   large enough not to widow the line would never bind, and a declaration that
+   never binds is not a composition. That reasoning was sound and it expired
+   with its premise. The copy is 112 characters and paints about 820px, which
+   overruns that field by about 245px, so the line wraps whether or not this
+   rule says anything. The question stopped being WHETHER it wraps and became
+   WHERE, and a wrap nobody placed is the one thing a measure exists to stop.
+   Every width here is scaled off the 410px this file already recorded for the
+   56-character line, so they are estimates of the same provenance as that one.
+
+   480px, AND THE WRAP LANDS ON THE SENTENCE'S OWN COMMA. The first clause
+   paints about 410px; a measure above that and below the 576px field breaks
+   between the two clauses at every window size. Left to the minimum window's
+   field the break falls after "keeps working" for a 549/234 split, which is a
+   clamp with a widow on it rather than a deck. `text-wrap: balance` then holds
+   the pair even: it minimises the LONGEST line, and for this string that
+   minimum is the comma break itself, about 410px against about 403px, ahead of
+   the next-best split after "you" at about 447px. 480 sits well clear of both
+   bounds on purpose — the balanced pair needs about 410 and one line needs
+   about 820 — so a font metric several percent off these estimates can push
+   the wrap to neither one line nor three.
+
+   CENTRED, WHICH ONE LINE NEVER HAD TO BE. A single line is its own box and
+   its alignment is unobservable; two lines are not, and the inherited value is
+   the left the rest of the app sets, which would hang a ragged edge under a
+   centred headline and a centred mark. */
 .welcome-hint {
   font-size: calc(var(--fs-body) * 1.15);
   color: var(--text-muted);
   line-height: 1.6;
+  max-width: 480px;
+  text-wrap: balance;
+  text-align: center;
 }
 
 .pick-folder-btn {
-  margin-top: 40px;
+  /* 24 where it was 40. See `.welcome`'s RANK BY INTERVAL note above for the
+     optical arithmetic; the short version is that at 40 the action stood
+     further off the deck than the identity mark stands off the headline, so
+     headline, deck and action read as three centred objects instead of one
+     lockup. */
+  margin-top: 24px;
   border: none;
   border-radius: var(--r-pill);
   background: var(--mint);

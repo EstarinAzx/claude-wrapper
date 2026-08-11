@@ -62,10 +62,11 @@
   display: flex;
   flex-direction: column;
   /* Deliberately small, and deliberately NOT the interval a name sits at from
-     its sentence. The theme rows join this rule as a single-line row, where this
-     stops being the space under a title and becomes the minimum space between a
-     name and its swatch. So the air a description needs is added on the
-     description below, not here, where it would also reach rows carrying none. */
+     its sentence. It is the space between an option's title line and whatever
+     sits under it, which today is only the Backdrop description: a theme card
+     holds its title line and nothing else, so this gap never resolves there. The
+     air a description needs is still added on the description below rather than
+     widened here, where it would also reach rows carrying none. */
   gap: 3px;
   padding: 8px 10px;
   border: 1px solid var(--border);
@@ -90,16 +91,54 @@
 }
 
 /* The selected option is the only mint in the panel, so the state reads at a
-   glance without a tick glyph competing with the label. Two attributes because
-   the panel holds two pick-one controls with different roles: Backdrop is a
-   radiogroup, Theme a listbox — see the comment on ThemeChoices for why. */
+   glance. This used to be the WHOLE of it, and the note here said a tick glyph
+   would only compete with the label. What that missed is the other job an end
+   mark does: with nothing ending either control's rows, Theme and Backdrop read
+   as two unrelated stacks of labelled boxes rather than one family of controls.
+   The mark below answers that, and it is drawn only on the selected row so the
+   colour here is still what carries the state rather than being doubled by four
+   glyphs. Two attributes because the panel holds two pick-one controls with
+   different roles: Backdrop is a radiogroup, Theme a listbox — see the comment
+   on ThemeChoices for why. */
 .appearance-choice[aria-checked='true'],
 .appearance-choice[aria-selected='true'] {
   border-color: var(--mint);
   background: var(--mint-wash);
 }
 
+/* Every option's title line, in BOTH pick-one controls: the name takes the
+   slack and whatever ends the row is flush right. Shared rather than authored
+   per control, which is the point — a theme row ends with its swatch and then
+   the mark, a backdrop row ends with the mark alone, and because the line and
+   the card padding are the same in both, the marks land in one column down the
+   whole dock instead of two controls each inventing an end. */
+.appearance-choice-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The selection mark's slot, held open on every option and filled only on the
+   selected one. Fixed 12px so the swatch column and the card's right edge stay
+   put as the selection moves; 12px is the icon box the three docks already use,
+   so nothing here introduces a second size.
+
+   Mint, like the name beside it: this marks the same state that rule marks, and
+   a muted tick sitting next to a mint name would read as a second, weaker
+   signal rather than the same one. Two glyphs at most are ever lit, which is
+   nothing against DESIGN.md's accent budget. */
+.appearance-choice-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--mint);
+}
+
 .appearance-choice-name {
+  flex: 1 1 auto;
   font-size: var(--fs-ui);
   color: var(--text);
 }
@@ -109,13 +148,12 @@
   color: var(--mint);
 }
 
-/* Theme (#70): name left, swatch right, on one line — a palette needs no
-   sentence of explanation because picking it IS the explanation. */
-.appearance-choice--theme {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-}
+/* Theme (#70): name left, then swatch, then the mark, on one line — a palette
+   needs no sentence of explanation because picking it IS the explanation.
+   `.appearance-choice--theme` carries no rule of its own any more: the row it
+   used to declare is now `.appearance-choice-line`, which both controls share.
+   The class stays in the markup as the theme row's hook, and the driver counts
+   it. */
 
 /* Painted by the palette it selects. The swatch wears `data-theme`, the same
    attribute the document element wears, so its own block in themes.css applies
@@ -144,12 +182,36 @@
 
    On the description rather than on the card because only a card that carries
    one has it: the single-line theme rows never match this selector, so they
-   keep the tight row they were tuned for. */
+   keep the tight row they were tuned for.
+
+   --text-muted, WHICH IS WHAT THE OTHER THREE OF THESE SAY. The app grows a
+   name-plus-description pair in four places: the agent row, the command row,
+   the composer's slash option and this card. The first three paint the
+   description --text-muted and this one alone painted --text-faint, which is
+   one question answered two ways rather than a local call — and the two
+   answers were in the same repo arguing opposite sides of the same sentence.
+   shared.css's clamp group already reasons about THIS line specifically to
+   justify letting it run full length: "a reader who cannot finish it cannot
+   choose, and unlike these two it hangs no title attribute behind itself to
+   recover the rest." A line held to be the MOST load-bearing of the three
+   cannot also be the dimmest of the three. --text-faint is the app's tertiary
+   rung and it is spent on meta, not on prose: .agent-row-meta, the model and
+   depth string; .command-row-hint, a fragment of a signature;
+   .bg-session-state, a raw status word. This is a sentence, and a sentence is
+   the secondary rung.
+
+   Nothing was load-bearing about the faint. The card's ground is --tint-1, or
+   --mint-wash when selected, so the brighter ink raises contrast rather than
+   spending it — the selected card was the panel's dimmest text on its
+   brightest ground. And the pair's hierarchy does not thin out: name to
+   description keeps the 13-to-11 size step and, on the selected card, a mint
+   name against neutral prose, which is one more separator than the dock rows
+   carry for the identical step. */
 .appearance-choice-desc {
   font-size: var(--fs-micro);
   line-height: 1.45;
   margin-top: 5px;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 /* Minus / readout / plus as one segmented unit, so the readout reads as the

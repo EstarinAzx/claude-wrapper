@@ -247,10 +247,18 @@ const AgentsDock = ({
       />
       <div className="agents-dock-head">
         <span className="agents-dock-title">Agents</span>
-        <div className="agents-dock-modes">
+        {/* ONE run of three, not a 22px switch plus a 28px close. Every button
+            here wears `.sidebar-toggle` — the app's single icon-button housing,
+            already worn by the close beside them and by the two docks that share
+            this head — so the hit area, the radius, the resting colour, the hover
+            wash and the focus ring are matched by construction rather than by
+            three rules agreeing today. `.agents-dock-mode` survives on the pair
+            for the one thing the housing has no opinion on: the pressed fill.
+            The wrapper is the mirrored rail's own action run, at its 4px rhythm. */}
+        <div className="sidebar-head-actions">
           <button
             type="button"
-            className="agents-dock-mode"
+            className="sidebar-toggle agents-dock-mode"
             aria-label="List view"
             aria-pressed={mode === 'list'}
             onClick={() => setMode('list')}
@@ -267,41 +275,67 @@ const AgentsDock = ({
           </button>
           <button
             type="button"
-            className="agents-dock-mode"
+            className="sidebar-toggle agents-dock-mode"
             aria-label="Map view"
             aria-pressed={mode === 'map'}
             onClick={() => setMode('map')}
           >
+            {/* An org-chart bracket: one node above, a rail, two hanging off its
+                ends. Judged by rasterising it at 12px rather than by eye at 4x,
+                because everything wrong with the mark it replaces only shows at
+                actual size. That one was a Y of 45-degree legs between three
+                r1.1 dots, and almost none of it survived: the stem was buried
+                under the parent dot, each diagonal ran about 2px before vanishing
+                into a child dot, and stem plus both legs met in a blob at the
+                fork. What painted was a small filled triangle, which is why a
+                reader has to be told it means a tree.
+
+                Three things changed, each for a measured reason. The legs went
+                ORTHOGONAL, so the longest run in the box is now the 6.6-unit rail
+                and the silhouette is the sitemap shape rather than an arrowhead.
+                The dots went to r1.4, because a 1.1 dot is 2.2 across against a
+                1.4 stroke and cannot bulge past its own stalk at this size — the
+                children read as bare legs. And the connectors were given 1.2px of
+                clear stroke at both ends, so each dot sits ON a stalk instead of
+                swallowing it.
+
+                Weight now matches its twin: 34.6px^2 of ink against the list
+                glyph's 38.3, where the old mark's 23.5 made this button read
+                lighter than the one beside it. Vocabulary is untouched — same 12
+                viewBox at 12px, same 1.4 stroke, same filled-circle accent.
+                strokeLinejoin is new to this glyph only because it is the first
+                one here with a corner to join. */}
             <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
               <path
-                d="M6 3.4v2.2M6 5.6L3.4 8M6 5.6L8.6 8"
+                d="M6 4.5V6M2.7 7.7V6h6.6v1.7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="6" cy="2.7" r="1.4" fill="currentColor" stroke="none" />
+              <circle cx="2.7" cy="9.3" r="1.4" fill="currentColor" stroke="none" />
+              <circle cx="9.3" cy="9.3" r="1.4" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="sidebar-toggle"
+            aria-label="Close agents panel"
+            onClick={onClose}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path
+                d="M3 3l6 6M9 3l-6 6"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.4"
                 strokeLinecap="round"
               />
-              <circle cx="6" cy="2.6" r="1.1" fill="currentColor" stroke="none" />
-              <circle cx="3" cy="9" r="1.1" fill="currentColor" stroke="none" />
-              <circle cx="9" cy="9" r="1.1" fill="currentColor" stroke="none" />
             </svg>
           </button>
         </div>
-        <button
-          type="button"
-          className="sidebar-toggle"
-          aria-label="Close agents panel"
-          onClick={onClose}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-            <path
-              d="M3 3l6 6M9 3l-6 6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
       </div>
       {rows.length === 0 && state.status === 'loading' ? (
         <div className="agents-dock-empty" role="status">

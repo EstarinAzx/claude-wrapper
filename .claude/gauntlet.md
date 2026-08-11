@@ -31,11 +31,19 @@ pieces:
   - name: DocksAsOne
     verdict: BAR WINS
     open: true
+  # Added by wave 3's smoothing pass, on its one-new-piece budget. THE SIXTH AND
+  # LAST SLOT — the piece list is now FULL and no further piece may be proposed.
+  # CRITIC ONLY on wave 4, for wave 1's rule: no critic has named a gap for it,
+  # and a builder handed no gap is redesigning. Its wave-4 verdict is a BASELINE
+  # and cannot count toward plateau, exactly as wave 1's and DocksAsOne's could not.
+  - name: IconHousing
+    verdict: BAR WINS
+    open: true
 critic: sonnet                 # FAMILY name only — re-resolve live every wave, never carry the target
 critic_degraded: false
 branch: gauntlet/docks-and-min-window
-wave: 2
-plateau: 1
+wave: 3
+plateau: 2
 max_waves: 12
 page: false
 stop: false
@@ -152,6 +160,220 @@ this file. Every one of them has already cost this repo a false finding.
 | 2 | CommandsDock | BAR WINS | Group the commands by purpose and give each full-row target a restrained leading icon, so the dock has a scan architecture instead of a uniformly formatted text stack. |
 | 2 | AppearanceDock | BAR WINS | Give Theme and Backdrop one consistent, restrained selection icon or end-affordance so their stacked options read as a designed control family rather than labelled boxes. |
 | 2 | WelcomeMinWindow | BAR WINS | Turn the supporting sentence into a deliberately measured two-line deck and rebalance its adjoining vertical gaps, so headline, explanation and action read as one editorial lockup rather than three centred objects. |
+| 3 | AgentsDock | BAR WINS | Give each agent row a more deliberate vertical rhythm and stronger name-purpose-metadata separation so the list reads as polished hierarchy rather than loose diagnostic text. |
+| 3 | CommandsDock | BAR WINS | Establish a roomier, consistent full-width row rhythm with stronger vertical padding and subtle separators so the variable command shapes read as deliberate clickable controls rather than a compact text stack. |
+| 3 | AppearanceDock | BAR WINS | The surface still reads as generic bordered settings rows, so give Theme, Backdrop and Zoom distinct section-specific grouping and iconography rather than repeating the same rounded-rectangle treatment. |
+| 3 | WelcomeMinWindow | BAR WINS | The headline treatment remains generic compared with Linear's authored editorial hierarchy; give it a more distinctive scale and weight relationship to the supporting copy. |
+| 3 | DocksAsOne | BAR WINS | *(baseline — cannot count toward plateau)* Its stated gap (Commands breaks the shared type scale) was **measured FALSE** and must not be handed to a builder as written; see adjudication 3. The surviving in-scope gap is the one the smoothing pass fixed: the docks' secondary lines disagreed on colour. |
+
+## Wave 3 adjudications — a recorded finding was refuted, a gap was refused as unbuildable, and the plateau is now one wave from the halt
+
+**Three builders, five critics, one smoothing pass — nine agents, not ten.** The fourth
+builder was deliberately not run; see adjudication 2. Gate green (D7); zero `SPEC BREAK`s;
+zero out-of-scope rulings; 5/5 critics verified against a first-hand read to have seen real
+pixels.
+
+### 1. Wave 2's headline finding was WRONG, and it was refuted before it could spend a wave
+
+Wave 2 recorded that *"the app has no icon vocabulary"* and called it the seed's named
+shell-risk firing. **That is false.** Measured two independent ways this wave — a census
+script and a mechanical sweep check written separately — **every icon in all three docks
+renders 1:1 viewBox-to-pixel** (a 12x12 viewBox at 12px, a 10x10 at 10px) at
+`strokeWidth="1.4"`, `fill="none" stroke="currentColor"`, round caps, `aria-hidden="true"`,
+with filled accents as `<circle fill="currentColor" stroke="none">`. Seven of seven at wave
+2's tree; **eight of eight after this wave**, because the one glyph added landed inside the
+vocabulary rather than beside it.
+
+The dock icon counts were **identical at the seed commit** (3 / 1 / 3), so wave 2 added no
+icons at all and the vocabulary predates the entire run.
+
+**What actually differed was button CHROME, not glyph geometry** — AgentsDock's head carried
+a 22px/5px-radius mode pair beside a 28px/6px close, two hit areas and two hover languages
+in ~90px. That is a far smaller and more tractable problem than "invent an icon system", and
+it is what the wave-2 critic had actually named. **The lesson transfers: a critic naming
+"iconography" may be naming chrome. Measure the glyphs before concluding the system is
+absent.**
+
+`D4.8` in the sweep now enforces the vocabulary mechanically, so this cannot regress
+silently.
+
+### 2. CommandsDock got NO BUILDER, because its gap is not honestly buildable — owner call 15
+
+Its wave-2 gap asked to *"group the commands by purpose"* and give each row *"a restrained
+leading icon"*. **Both halves need a semantic taxonomy the app cannot have:**
+
+- `SlashCommandInfo` (`src/shared/command-types.ts`) carries `name`, `description`,
+  `argumentHint`, `aliases`. **No category, group or kind field.**
+- The list is supplied at runtime by an external CLI; a user or a plugin can add arbitrary
+  commands at any time, so any hardcoded map goes stale by construction.
+- The captured set has **zero namespaced entries**, so even the `plugin:command` prefix that
+  exists in the wild offers nothing to group on here.
+- Decisively: **the seven commands are a HAND-AUTHORED FIXTURE.** `inspect.mjs`'s own header
+  states COMMANDS is *"the one surface whose content this file cannot reach honestly"* and
+  that the set is chosen for **ROW SHAPE** — *"a fixture of seven identical rows would
+  photograph one shape out of four."* Authoring groups into it would make the capture show a
+  structure the real app cannot produce.
+
+A uniform leading icon on every row satisfies the gap's letter and defeats its stated purpose
+("a scan architecture instead of a uniformly formatted text stack"), which is precisely the
+rationalisation this preset exists to prevent. **The honest default was taken — build
+nothing, keep the critic, escalate.** `commands-dock.png` is byte-identical to wave 2's,
+which corroborates the refusal independently.
+
+**A wave-1 finding falls out of the same fixture header:** `/wrap-up` carrying no description,
+which wave 1's critic called *"a collapsed entry"*, is **deliberate coverage of the fourth row
+shape**. It was a ruling on the fixture's design, not on the product.
+
+### 3. The DocksAsOne baseline named a gap that is measurably FALSE, and it was caught before a builder saw it
+
+Its critic reported that Commands uses a *"substantially larger and heavier"* primary name
+than the other two docks, *"breaking the shared type scale"*. **Measured:**
+
+| dock | selector | size token |
+|---|---|---|
+| Agents | `.agent-row-type` | `var(--fs-ui)` |
+| Commands | `.command-row-name` | `var(--fs-ui)` **+ `var(--mono)`** |
+| Appearance | `.appearance-choice-name` | `var(--fs-ui)` |
+
+**All three are the same token. The type scale is not broken.** The difference is the mono
+face, which reads wider and heavier at identical pixel size — and it is deliberate and
+grouped, since a slash command is literal text a user types and `.command-row-name` shares a
+group with `.command-row-hint`, `.command-option-desc` and `.tool-card-key`.
+
+Handing this to a builder verbatim would have changed a `font-size` that is already correct.
+**This is binding constraint 3's neighbour and deserves its own line: a critic's perception
+can be real while its stated cause is wrong. Check the declaration before forwarding a gap
+that names one.** If anyone ever acts on it, the lever is the face, never the size.
+
+### 4. The smoothing pass found a comment asserting a measurement that was false
+
+Its one rendered change was small and well-argued — `.appearance-choice-desc` moved
+`--text-faint` -> `--text-muted`, making all four "secondary line of a name-plus-description
+pair" surfaces agree, on the reasoning that `--text-faint` is the app's **tertiary/meta**
+rung everywhere else it is spent and this line is prose. `shared.css` was already arguing
+both sides: it calls this specific sentence the most load-bearing of the three, and a line
+held to be the most load-bearing cannot also be the dimmest.
+
+**The bigger result was the inventory.** The shared 28px icon housing
+(`.agents-toggle, .sidebar-toggle`) had its blast radius written down in two places and
+**both were wrong**: `titlebar.css` said *"ONE housing, TWO glyph grids"*; `Titlebar.tsx`
+said *"Growing the housing moves all eight tenants"* and used that count to escalate a real
+decision. **Counted and verified first-hand this leg: 13 tenants, 3 grids** — 16@1.3 x3
+(Titlebar), 14@1.4 x3 (Sidebar), 12@1.4 x7 (two rail chevrons + five dock-head buttons). It
+was already short by three before this wave; AgentsDock moving two buttons onto the rule made
+it short by five. **The 12 grid, which neither note mentioned, is now the majority.**
+
+It also falsified the note's claim that *"both land at ~10px optical extent"*: the 16 and 14
+grids do (~10.4), but **the 12 grid runs 7.4 to 9.4**, the close X being 7.4 square. Recorded
+and deliberately **not acted on** — closing it moves a grid spanning three docks and the
+mechanical check with it.
+
+**Nine findings declined with reasons**, which is the harder half. Two worth carrying:
+
+- **The 2px name-to-description gap is a measured inversion by the app's own argument**, and
+  the smoothing pass **beat wave 2's stated reason for declining it** (blast radius onto the
+  sessions rail) by pointing out the right lever is `shared.css`'s clamp group, which never
+  touches the rail. It declined anyway on a better reason: the Appearance card is a
+  **two-child** stack while the agent row is a **three-child** one, so fixing the gap at the
+  top regroups the meta line at the bottom. The honest fix re-rhythms the whole agent row,
+  which is that piece's builder's job. **This is the strongest live candidate for wave 4.**
+- **Two answers to "this option is active"** (`--tint-3` vs `--mint-wash`) is **not drift**
+  but a coherent split: mint-wash = the thing currently in effect, tint-3 = the pressed
+  segment of a view switch. **A future critic will re-raise this; decline it on the split.**
+
+### 5. New piece accepted — `IconHousing`. The piece list is now FULL
+
+Sixth of six slots. **No further piece may be proposed.**
+
+Its warrant is strong: this wave moved five buttons onto a rule **no piece in the run can
+see**. AgentsDock's critic sees 3 of 13 tenants; the titlebar and sessions rail are not
+pieces; DocksAsOne spans the docks but not the titlebar or the rail. The codebase escalated
+this question twice in its own comments and **both escalations reasoned from a tenant count
+that was wrong**.
+
+**Scope fence, binding on its critic.** It MAY rule on: the 28px housing's dimensions,
+radius, resting colour, hover wash and focus ring; the three glyph grids and their optical
+extents inside that box; whether 13 buttons across five surfaces should share one housing at
+all; and whether the pressed fill belongs on the housing or stays local to
+`.agents-dock-mode`. It MAY NOT rule on: which glyph any button draws (icon *meaning* stays
+with the surface that owns it), any dock's rows, type, copy or colour, the titlebar's
+window-control run or its pills, or the mint `--on` tint, which `DESIGN.md` names in Layout.
+**Any verdict moving the 12@1.4 dock vocabulary must state that it moves all three docks and
+the mechanical check with them.**
+
+### 6. `plateau` is 2 — one wave from the halt — but the scale is behaving BETTER than wave 2
+
+| piece | wave 2 | wave 3 | critic's own change answer |
+|---|---|---|---|
+| AgentsDock | BAR WINS | BAR WINS | BETTER |
+| CommandsDock | BAR WINS | BAR WINS | BETTER |
+| AppearanceDock | BAR WINS | BAR WINS | **SAME** |
+| WelcomeMinWindow | BAR WINS | BAR WINS | BETTER |
+| DocksAsOne | *(none)* | BAR WINS | WORSE *(baseline — excluded)* |
+
+No verdict moved, so **`plateau` 1 -> 2**, incremented honestly rather than adjusted.
+
+**But this is NOT a repeat of wave 2's shape, and that matters for owner call 13.** Wave 2
+was **4/4 BETTER** with nothing moving, which is what made the counter look like a broken
+scale. Wave 3 is **3/4 BETTER + 1/4 SAME**. The critics' own change answers have begun to
+converge with the counter, which is evidence the plateau is becoming **real** rather than an
+instrument artifact. One more wave of this and the run halts at `plateau: 3` — and on this
+wave's evidence, halting would be closer to correct than it looked last wave.
+
+### 7. Verification that was run rather than trusted
+
+- **The wave-3 driver `gui-gauntlet-wave3.mjs` was RED-VERIFIED by three mutations**, each
+  producing a **distinct, targeted** red: stripping the deck's `max-width` reds W1+W2 only;
+  removing one mode button from the shared housing reds A1 only (16x19/0px against
+  28x28/6px); drawing the selection mark on every option reds B1+B2 only (`glyphsDrawn: 6`
+  against `selectedOptions: 2`). Restored from a `cp` backup, never `git checkout` — and the
+  restore was proven exact by the **CSS bundle hash returning to `index-B8z1G3Bt`**.
+- **The D3/D4 sweep was validated on a pristine `HEAD` export BEFORE being trusted** (8/8
+  green) and then **mutation-probed 9/9**. One check was **vacuous as first written** — it
+  located `.bubble {` with `indexOf`, so "is it first" was true by construction and it could
+  not fail; replaced with an exactly-once assertion that genuinely reds. Sweep green on the
+  final tree.
+- **The builder's Welcome arithmetic was confirmed to two decimal places by the instrument.**
+  It derived content `264.69` and headroom `53.71` **by hand, without running `inspect.mjs`**;
+  the instrument then measured `{"measured":53.71,"claimed":54,"content":264.69,"overflow":0}`.
+- **The instrument edit was adjudicated, not waved through.** The Welcome builder changed
+  `CLAIMED_HEADROOM_PX` 65 -> 54, outside its brief, and flagged it. **Permitted**, and the
+  distinction is worth keeping: `gui-94`'s probe *reconstructs pre-change geometry* so it
+  cannot be dragged by the fix, and rebuilding it is forbidden; `CLAIMED_HEADROOM_PX` is a
+  documented **mirror of a prose claim** that the instrument compares against a first-hand
+  measurement. Its own comment states the rule — *"never move this number to match a
+  measurement without also moving the sum in `chat.css` that it is a copy of"* — and the
+  `chat.css` sum was moved in the same change. Moving it alone would have hidden drift.
+- **Deleted-class safety was checked, not assumed:** `.agents-dock-modes` has zero references
+  repo-wide; `.agents-dock-mode` survives because `gui-agents-dock.mjs` queries it as a DOM
+  selector for `aria-label`, and both labels are unchanged.
+- **Blast radius measured: exactly FIVE captures moved, SIX byte-identical.** Moved:
+  `agents-dock`, `appearance-dock`, `welcome-min-window`, `welcome`, `window-welcome`.
+  Identical: `chat`, `commands-dock`, `input-bar`, `sidebar`, `titlebar`, `window-session`.
+- **Gate green (D7)** from three separate log files, never a pipeline: typecheck clean,
+  **96 files / 1406 passed + 38 skipped**, build clean. Test count unchanged at 1406; the
+  **+1 skip is attributed by name** to `gui-gauntlet-wave3.mjs — browser-level: executes in
+  npm run test:dom (#135)`. **CSS bundle hash moved three times** across the wave
+  (`index-zgbU0lqM` -> `DytnOl2M` after the builders -> `B8z1G3Bt` after the smoothing pass).
+
+## Owner calls raised by wave 3
+
+**15. Should the app ship a hand-maintained taxonomy over CLI-supplied slash commands?**
+CommandsDock's gap cannot be closed without one. Default taken, reversible: **build nothing,
+keep the piece and its critic, record it here.** The options are (a) accept that the dock can
+only ever improve as a row system and re-aim the piece's gaps there, which is what this wave
+did; (b) ship a hardcoded name-to-category and name-to-icon map, accepting that it goes stale
+whenever a user or plugin adds a command and that the instrument's fixture would then have to
+be authored to match; (c) ask the CLI for a category field, which is upstream and not this
+app's call. **(a) is what is in effect and it needs a human to confirm or overturn.** Note
+that #161 is already filed against this dock's data path.
+
+**Owner call 13 is UPDATED, not re-raised.** The verdict scale produced `plateau: 2` this
+wave, but with 3/4 BETTER + 1/4 SAME rather than wave 2's 4/4 BETTER. See adjudication 6:
+the counter and the critics are converging, which is evidence *against* the "scale cannot
+resolve progress" reading. **The counter was still not adjusted.**
+
+**Owner call 12 (`gui-94` red) is unchanged and untouched.** No wave 3 change went near it.
 
 ## Wave 2 adjudications — every gap closed, every verdict held, and the scale failure run 1 predicted has fired
 
@@ -474,6 +696,75 @@ verdict to improve on, so it cannot be a plateau wave — the same call run 1 ma
 recorded. Wave 2 is the first wave that can move it.
 
 ## Log
+- [wave 3] **Three builders, five critics, one smoothing pass — nine agents, and the fourth
+  builder was deliberately NOT run.** Gate green (D7), zero `SPEC BREAK`s, zero out-of-scope
+  rulings, 5/5 critics verified against a first-hand read to have seen real pixels.
+- [wave 3] **Wave 2's headline finding was REFUTED before it could spend a wave.** "The app
+  has no icon vocabulary" is false: measured two independent ways, every dock icon renders
+  1:1 viewBox-to-pixel at `strokeWidth 1.4`, and the dock icon counts were **identical at the
+  seed** (3/1/3), so wave 2 added none and the vocabulary predates the run. What differed was
+  button **chrome**, not glyph geometry. `D4.8` now enforces it mechanically: 7 icons before,
+  **8 after, all uniform**.
+- [wave 3] **CommandsDock got NO BUILDER — owner call 15.** Its gap needs a semantic taxonomy
+  the data cannot supply: `SlashCommandInfo` has no category field, the list comes from an
+  external CLI a user or plugin can extend, and the seven commands are a **hand-authored
+  fixture** whose own header calls it *"the one surface whose content this file cannot reach
+  honestly"* and states it is chosen for **row shape**. Authoring groups in would photograph a
+  structure the real app cannot produce. `commands-dock.png` is **byte-identical** to wave 2's,
+  corroborating the refusal. Same header settles a wave-1 finding: `/wrap-up`'s missing
+  description is deliberate fourth-row-shape coverage, not a collapsed entry.
+- [wave 3] **The DocksAsOne baseline named a MEASURABLY FALSE gap and it was caught before a
+  builder saw it.** It claimed Commands breaks the shared type scale; all three docks' primary
+  names are `var(--fs-ui)` and the difference is `var(--mono)`, which is deliberate and grouped.
+  Forwarding it would have changed a `font-size` that is already correct. **A critic's
+  perception can be real while its stated cause is wrong.**
+- [wave 3] **Smoothing pass earned its slot twice over.** One rendered change
+  (`.appearance-choice-desc` `--text-faint` -> `--text-muted`, making all four secondary-line
+  surfaces agree) and one **falsified comment**: the shared icon housing's blast radius was
+  written as "8 tenants, 2 grids" in two places; **counted and verified first-hand as 13
+  tenants, 3 grids**, with the unmentioned 12@1.4 grid now the majority. It also disproved the
+  note's "both land at ~10px optical extent" — the 12 grid runs 7.4 to 9.4 — and deliberately
+  did **not** act on it. **Nine findings declined with reasons**, one of them beating wave 2's
+  stated reason and then declining on a better one.
+- [wave 3] **New piece accepted: `IconHousing`. The piece list is now FULL at six of six** and
+  no further piece may be proposed. Critic-only on wave 4; its first verdict is a baseline and
+  cannot count toward `plateau`.
+- [wave 3] **`plateau` 1 -> 2, one wave from the halt — but the scale behaved BETTER than wave
+  2.** Wave 2 was 4/4 BETTER with nothing moving; wave 3 is **3/4 BETTER + 1/4 SAME**. The
+  critics' change answers are converging with the counter, which is evidence the plateau is
+  becoming real rather than an artifact. Counter incremented honestly; owner call 13 updated
+  rather than re-raised.
+- [wave 3] Critic **re-resolved live** rather than carried: `wisp routing` gives first
+  non-Anthropic family `sonnet` -> `codex/gpt-5.6-sol`. Fourth consecutive reading of the same
+  value, read fresh each time. `critic_degraded: false`.
+- [wave 3] **The slim critic prompt shape was used for ALL FIVE critics, not just Welcome, and
+  none crashed.** Wave 2 lost one to `Prompt is too long`; inlining the spec verbatim and
+  forbidding all repo reading removes the failure mode at no cost to the bar. **Keep doing this.**
+- [wave 3] **D4 discharged by a red-verified driver.** New `gui-gauntlet-wave3.mjs`, 9 checks
+  across Welcome + two docks, each carrying its reconstructed OLD value. **Three mutations,
+  three DISTINCT targeted reds**: `max-width` stripped reds W1+W2 only; one mode button off the
+  shared housing reds A1 only; the mark drawn on every option reds B1+B2 only. Restored from a
+  **`cp` backup, never `git checkout`**, and the restore proven exact by the **CSS hash
+  returning to `index-B8z1G3Bt`**. Welcome is measured FIRST, before a folder is opened, because
+  that surface stops existing afterwards.
+- [wave 3] **The Welcome builder's arithmetic was confirmed to two decimal places.** It derived
+  content `264.69` and headroom `53.71` **by hand without running the instrument**; `inspect.mjs`
+  then measured `{"measured":53.71,"claimed":54,"content":264.69,"overflow":0}`.
+- [wave 3] **An instrument edit was adjudicated rather than waved through.** `CLAIMED_HEADROOM_PX`
+  65 -> 54 is **permitted**: unlike `gui-94`'s probe (which reconstructs pre-change geometry and
+  must never be rebuilt), this constant is a documented **mirror of a prose claim** the
+  instrument compares against a first-hand measurement, and its own comment requires the
+  `chat.css` sum to move with it — which it did. Moving it alone would have hidden drift.
+- [wave 3] **The D3/D4 sweep was validated on a pristine `HEAD` export before being trusted**
+  (8/8) and **mutation-probed 9/9**. One check was **vacuous as written** — `indexOf` made "is
+  `.bubble {` first" true by construction — and was replaced with an exactly-once assertion that
+  genuinely reds.
+- [wave 3] **Blast radius: exactly FIVE captures moved, SIX byte-identical.** Zero unintended
+  reach. **Gate green (D7)** from three separate log files: typecheck clean, **96 files / 1406
+  passed + 38 skipped**, build clean. Test count unchanged; the **+1 skip attributed by name**
+  to `gui-gauntlet-wave3.mjs`. **CSS hash moved three times** across the wave.
+- [wave 3] **Nothing pushed — D6.** Read the real gap with
+  `git rev-list --count origin/main..main`.
 - [wave 2] **The first wave that BUILDS.** Four builders, one pin agent, four critics, one
   smoothing pass. All four wave-1 gaps closed and visible in the captures; **zero
   `SPEC BREAK`s**, zero out-of-scope rulings, **4/4 critics verified against a first-hand read

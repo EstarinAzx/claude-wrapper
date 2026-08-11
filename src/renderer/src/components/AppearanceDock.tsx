@@ -14,6 +14,44 @@ const nextInRing = <T,>(ring: readonly T[], current: T, key: string): T | null =
   return ring[(i + (forward ? 1 : ring.length - 1)) % ring.length] as T
 }
 
+// The panel's ONE selection mark, worn by both pick-one controls so Theme and
+// Backdrop read as a single control family instead of two sets of labelled
+// boxes. It ends the option's title line in both, at the same inset, so the
+// marks line up down the whole dock across the two groups.
+//
+// Geometry is the docks' existing icon vocabulary, not a new one: a 12x12
+// viewBox painted at 12x12 (1:1, like every other icon in the three docks),
+// `strokeWidth="1.4"`, `fill="none"`, `stroke="currentColor"`, round caps. The
+// path itself is the check already drawn in Chat.tsx's copy button, reused
+// rather than redrawn — only its stroke changes, from that surface's 1.6 to the
+// 1.4 every dock icon carries.
+//
+// The slot is rendered on EVERY option and the glyph only on the selected one.
+// Two reasons, and both are load-bearing: reserving the 12px keeps the theme
+// swatches in one column and the card's right edge still as the selection
+// moves, and drawing nothing on the rest is the restraint DESIGN.md's colour
+// strategy asks for — the mint border, wash and name already say "selected",
+// so a mark on every row would be four glyphs saying nothing.
+//
+// `aria-hidden` because it is decorative twice over: `aria-selected` and
+// `aria-checked` are what actually announce the state.
+const SelectionMark = ({ on }: { on: boolean }) => (
+  <span className="appearance-choice-mark" aria-hidden="true">
+    {on ? (
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+        <path
+          d="M2.4 6.3l2.4 2.5 4.8-5.4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ) : null}
+  </span>
+)
+
 // The name each palette shows (#70). Keyed by Theme and rendered by mapping over
 // THEMES, the shape BACKDROP_COPY established: "exactly four options" is then a
 // type constraint rather than a counted assertion — a fifth palette without a
@@ -68,8 +106,11 @@ const ThemeChoices = ({
           onClick={() => onPick(name)}
           onKeyDown={onKeyDown}
         >
-          <span className="appearance-choice-name">{THEME_NAMES[name]}</span>
-          <span className="appearance-swatch" data-theme={name} aria-hidden="true" />
+          <span className="appearance-choice-line">
+            <span className="appearance-choice-name">{THEME_NAMES[name]}</span>
+            <span className="appearance-swatch" data-theme={name} aria-hidden="true" />
+            <SelectionMark on={value === name} />
+          </span>
         </button>
       ))}
     </div>
@@ -155,7 +196,10 @@ const BackdropChoices = ({
             onClick={() => onPick(material)}
             onKeyDown={onKeyDown}
           >
-            <span className="appearance-choice-name">{label}</span>
+            <span className="appearance-choice-line">
+              <span className="appearance-choice-name">{label}</span>
+              <SelectionMark on={value === material} />
+            </span>
             <span className="appearance-choice-desc" id={descId}>
               {description}
             </span>

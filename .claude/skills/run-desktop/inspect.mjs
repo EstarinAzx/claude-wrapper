@@ -159,8 +159,11 @@ const WANT_HEIGHT = 900
 const MIN_DENSITY_RATIO = 1
 
 // What the `.welcome` comment in `src/renderer/src/styles/chat.css` CLAIMS is
-// left over at the minimum window: content of 253px plus 114px of padding
-// against the pane's 432px. Restated here rather than derived because the claim
+// left over at the minimum window: content of 264.69px plus 113.6px of padding
+// against the pane's 432px, which is 53.71 and rounds to the 54 below. (It was
+// 65 while the supporting line took ONE line; wave 3 made it a two-line deck,
+// costing 27.6, and took 16 back off the action's gap in the same change.)
+// Restated here rather than derived because the claim
 // lives in prose and a regex over prose is a worse pin than a number with a
 // pointer to its source.
 //
@@ -169,7 +172,7 @@ const MIN_DENSITY_RATIO = 1
 // being read wrongly — and the run says so instead of quietly picking a side.
 // Never move this number to match a measurement without also moving the sum in
 // `chat.css` that it is a copy of.
-const CLAIMED_HEADROOM_PX = 65
+const CLAIMED_HEADROOM_PX = 54
 
 const log = (label, m) => console.log(String(label).padEnd(12) + JSON.stringify(m))
 const fails = []
