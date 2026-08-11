@@ -7,14 +7,15 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, relay chain 7 leg 6 — owner away_
-_At commit: `81de29d` on `main`_
+_Last updated: 2026-08-11 by Opus 5, relay chain 7 leg 7 — owner away_
+_At commit: `40135ec` on `main`_
 
 ## Current focus
 
 **Chain 7 is draining a ticket queue, with `/preset gauntlet` chained behind it.**
 Leg 1 landed **#149**, leg 2 **#146**, leg 3 **#142**, leg 4 **#148**, leg 5
-**#143**, leg 6 **#147**. **Six tickets remain at `ready-for-agent`.**
+**#143**, leg 6 **#147**, leg 7 **#145**. **Five tickets remain at
+`ready-for-agent`.**
 
 The queue was filled by an autonomous `/preset vibe` pass run under the owner's
 AFK autonomy grant. Every ruling, warrant and cross-model objection is in
@@ -22,124 +23,105 @@ AFK autonomy grant. Every ruling, warrant and cross-model objection is in
 
 ## State
 
-- **In flight:** nothing. `ticket/147-private-profile-per-driver` was
+- **In flight:** nothing. `ticket/145-uncovered-contract-deficit` was
   squash-merged and deleted (content diffed against `main` first — a squash merge
   does not mark a branch merged, so `git branch -d` refuses and the empty diff is
   what makes `-D` safe). Tree clean on `main`.
-- **Closed 2026-08-11 (leg 6):** **#147** (`81de29d`). **Filed #155** at
-  `needs-triage`, and commented on **#145**.
-- **Open and agent-ready (6):** #138, #139, #140, #141, #145, #150.
-  **#144, #151, #152, #153, #154, #155 are all `needs-triage`** and none may be
-  promoted by a leg.
-- **Next:** **#145** — `gui-119`'s batch quarantine. Leg 6 changed what this
-  ticket is deciding against; see below and [[pick-up]].
-- **Gate on `main` after the merge:** typecheck clean, **94 files / 1368 passed +
-  35 skipped** (was 93 / 1362 + 35). The +1 file and +6 tests are exactly
-  `tests/driver-profile.test.ts`. Ran on the branch and again on `main`.
+- **Closed 2026-08-11 (leg 7):** **#145** (`40135ec`). **Filed #156** at
+  `needs-triage`.
+- **Open and agent-ready (5):** #138, #139, #140, #141, #150.
+  **#144, #151, #152, #153, #154, #155, #156 are all `needs-triage`** and none
+  may be promoted by a leg.
+- **Next:** **#150** — CI for the headless gate only. Leg 7 changed what this
+  ticket must not do; see below.
+- **Gate on `main` after the merge:** typecheck clean, **94 files / 1373 passed +
+  35 skipped** (was 94 / 1368 + 35). The +5 tests are exactly the new
+  `#145` describe block. Ran on the branch and again on `main`.
   **Read the number off `main`, never off this file.**
-- **NOT PUSHED**, now 12 commits ahead. D6 stands. Read the real gap:
+- **NOT PUSHED**, now 15 commits ahead. D6 stands. Read the real gap:
   `git rev-list --count origin/main..main`.
 
-## The one thing that changes what the next ticket means
+## What #145 built, and the one line #150 must not get wrong
 
-**`npm run test:dom` cannot be all-green, and that is now the honest reading
-rather than a broken gate.**
+The `desktop-exclusive` quarantine for `gui-119` is **accepted**. What the ticket
+actually delivered is the half the cross-model objection asked for: the deficit
+moved **into** the verdict rather than being printed under it.
 
-`gui-123.mjs` reports **`UNSCORED` (exit 2)** — the first driver in the set ever
-to emit it. `dom-phase.mjs` has always defined that verdict and no driver
-produced one, so every broken precondition in the set has historically been
-reported as a `FAIL` about the thing the run never got to look at.
+**The phase now has three verdicts, and only one is a defect:**
 
-**#145 is the next ticket and it owns exactly this question** — what the phase
-may report as clean, and how high the bar is for the `desktop-exclusive`
-category. Two consequences to carry into it:
+| verdict | means | exit |
+|---|---|---|
+| `DOM PHASE PASS` | everything the phase covers ran, and passed | 0 |
+| `DOM PHASE INCOMPLETE` | nothing that ran broke, but a contract was never checked | 0 |
+| `DOM PHASE FAIL` | something that ran broke | 1 |
 
-1. `UNSCORED` and `FAIL` are now different claims **in practice**, not just in
-   the harness. Any CI wiring (#150) must not read a non-zero exit as "quarantine
-   it".
-2. A driver that cannot reach its subject has a way to say so that is not a
-   quarantine. That is a third option #145's framing did not have.
+**#150 must read the verdict WORD, not just `$?`.** `INCOMPLETE` deliberately
+exits 0 — a batch can never hand a driver the desktop foreground, so failing on
+it would make the phase red permanently, and an exit code that is always 1
+carries as much information as one always 0. Full reasoning, including how to
+overturn it in one line, in
+[[2026-08-11-a-deficit-a-reader-cannot-close-is-furniture]].
 
-## What #147 actually was
+**Only `desktop-exclusive` counts toward the deficit.** A deficit a reader can
+close is a deficit; one they cannot is wallpaper. `api-cost` is a standing
+decision about money and credentials; `no-verdict` has no contract to leave
+uncovered.
 
-Every driver launched against the machine's real `userData`. Bounds and the
-per-origin zoom factor outlive a process, so a driver pinning either handed it to
-everything that ran next.
+**`npm run test:dom -- --only gui-119.mjs` is now a named release step** in
+`SKILL.md`, and it is the only way this phase's report reaches a clean
+`DOM PHASE PASS`.
 
-**The triage's own option could not be built, and that is measured.** The phase
-spawns `node gui-<n>.mjs`; the driver owns the Electron argv. An env-only
-redirect would have needed no driver to cooperate —
-`scripts/spike-147-driver-profile-isolation.mjs` gap **B**: Chromium resolves
-`appData` through the shell's known-folder API and **ignores `APPDATA`**. So
-isolation appears in 36 driver argvs and needs a gate, not a convention.
+## The DOM phase's current reds — one is new and one is now filed
 
-**There is no opt-out list.** `gui-78`, `gui-79` and `gui-110` already mint their
-own `mkdtemp` profile in their probe, and `setPath('userData')` beats the switch
-(gap **C**). That answers cross-model review's objection that opt-outs would
-preserve the very channel being closed.
+A full run on the branch was **25/30**, same count as leg 6 but a **different
+set**:
 
-## The transferable half
-
-**A green inherited from the machine is not evidence.**
-
-`gui-123` had always passed. Under isolation it cannot score: on a profile the
-app has never started in, **no message sends at all**. Its green was never
-evidence about the reuse control — it was evidence that this machine had been
-used before.
-
-Full reasoning in
-[[2026-08-11-a-green-inherited-from-the-machine-is-not-evidence]].
-
-## Two rules this leaves behind
-
-**A driver's profile is per PROCESS, not per launch.** `gui-69`, `gui-70` and
-`gui-110` each launch three times and assert on what launch N+1 inherits. A fresh
-directory per call would isolate those drivers from themselves and make every
-persistence assertion a vacuous first-launch reading.
-
-**Reproduce the contamination, do not infer it.** `gui-72` checked out in place:
-at HEAD it **PASSES and writes to the real profile**; with the helper, same
-verdict, profile untouched. A *passing* driver contaminating is the ticket's
-"silent at the source" property, summoned rather than argued.
-
-## Carried forward for the next leg
-
-**Three DOM-phase reds are NOT this leg's and were not investigated.** Attributed
-by running each alone at HEAD and on the branch:
-
-| driver | HEAD | isolated | |
+| driver | this leg, in batch | this leg, alone | verdict |
 |---|---|---|---|
-| `gui-95` | FAIL | FAIL | pre-existing |
-| `gui-49` | FAIL | FAIL | pre-existing |
-| `gui-93` | PASS | PASS | batch-only, both arms |
-| `gui-124` | **FAIL** | **PASS** | isolation fixed it |
-| `gui-123` | PASS | UNSCORED | #155 |
+| `gui-95` | FAIL | — | pre-existing, uninvestigated |
+| `gui-49` | FAIL | — | pre-existing, uninvestigated |
+| `gui-123` | UNSCORED | — | **#155**, as designed |
+| `gui-94` | FAIL | **PASS** | load artifact, not filed |
+| `gui-91` | FAIL | **FAIL once, then PASS ×3** | **#156, intermittent ~1 in 7** |
+| `gui-93` | **PASS** | — | was batch-red at leg 6 |
+| `gui-124` | **PASS** | — | was batch-red at leg 6 |
 
-**The nine `DOM_SKIP` drivers took the change and nothing ran it.** One import
-and one spread, textually identical to the 30 that did run and pinned by the fast
-gate — but not executed. `gui-119` can be run alone on an idle desktop if a leg
-wants to close that.
+**A confound this leg introduced, stated rather than buried:** a batch of five
+single-file vitest mutation runs ran concurrently with part of that phase. That
+is load, and both new reds are `TimeoutError` on `page.screenshot()`. The
+`gui-91` isolated failure happened afterwards with nothing else running, which is
+why it is filed and `gui-94` is not.
 
-**#155 is the biggest thing this leg found and it is not a driver bug.** If a
-first-run profile really cannot send, that is every new user's first message. It
-was measured only through the driver harness with a stubbed dialog — **opening
-the app by hand on a clean profile is the one run that settles it**, and no agent
-has done it.
+**`gui-93` and `gui-124` flipping to green without explanation** is the standing
+gap: there is still **no full-phase baseline on an unmodified tree**, so
+batch-only behaviour in this set remains unattributed rather than understood.
+
+## Carried forward, unchanged from leg 6
+
+**#155 is the biggest open finding and it is not a driver bug.** On a profile the
+app has never started in, **no message sends at all** — measured one variable at
+a time (not the zero-turn trick, not the Enter path, not zoom, not localStorage).
+A profile the app has never started in is every new user's first launch. **What
+has not been done, and it is one run:** open the app **by hand** on a clean
+profile and type a message. Everything so far went through `playwright-core` with
+a stubbed `dialog.showOpenDialog`, so nobody has ruled out the harness.
+
+**`main` is intermittently red on `session-title-enrichment` (#153)** — 4 of 7
+full runs at leg 5, green on all three at leg 6 and both at leg 7. Not evidence
+it is fixed. A single red is not evidence your change broke something.
 
 **The bar discrepancy #149 left open is still open.** `.context/` prose has said
 the three docks *"share the Sidebar's reference"*, but `.gauntlet/bar/README.md`'s
 own "What each reference judges" table already assigns `linear/linear-features.png`
-to *"Titlebar + docks"*. **Read the table, not the prose.** Owner-owned artifact;
-no agent has rewritten it. **Settle it before the gauntlet seed reads it.**
-
-**Wave captures across the #148 boundary compare two different fixtures.** And
-`inspect.mjs` now launches on a private profile (#147), so a wave's captures no
-longer inherit whatever zoom or bounds the machine last had — another boundary,
-and a deliberate one.
+to *"Titlebar + docks"*. **Read the table, not the prose.** Owner-owned artifact.
+**Settle it before the gauntlet seed reads it.**
 
 **#138 before the gauntlet seed** remains the sharpest ordering constraint:
 `bar_win` requires *"one type scale holds across all of them"* and the app ships
 two, so every per-surface verdict is confounded until #138 lands.
+
+**Wave captures across the #148 and #147 boundaries compare different fixtures
+and different profiles.** Byte comparison is not meaningful across either.
 
 ## Pick up here
 
@@ -167,29 +149,33 @@ Carried from earlier legs, unchanged:
 
 - **`inspect.mjs`'s surface list is gated in three places** — `SURFACES`,
   `SKILL.md` **and** `.gauntlet/bar/README.md`, inside their
-  `surfaces:begin` / `surfaces:end` markers.
+  `surfaces:begin` / `surfaces:end` markers. Only that delimited region of
+  `SKILL.md` is pinned; the rest of the document is free.
 - **A driver's capture destination is a checked property**
   (`tests/driver-screenshot-dir.test.ts`), and `scripts/gui-*-shots/` stays
   narrowly gitignored — do not broaden it to `scripts/**/*.png`.
 - **Run `inspect.mjs` one at a time.** Its workspace directory name is fixed.
-- **`drivers.manifest.mjs` enumerates the non-driver `.mjs` files. There are now
-  FIVE**, `driver-profile.mjs` being the newest. A `*.source.mjs` sidecar is
-  exempt.
-- **The rail's two IPC channels are stubbed in `inspect.mjs`**, so a capture says
-  nothing about them; the real listing is covered by `session-store.test.ts`,
-  `session-store-live.test.ts` and **`gui-63.mjs`**.
-- **A driver that pins persisted app state must read it back** (#143). Still true,
-  and now doing a second job: the read-back is what would catch a private profile
-  failing to apply.
+- **`drivers.manifest.mjs` enumerates the non-driver `.mjs` files. There are
+  FIVE.** A `*.source.mjs` sidecar is exempt.
+- **Isolation is a property of the launch** (#147). New driver → spread
+  `...profileArgs()` from `driver-profile.mjs`, or the fast gate reds it. **No
+  opt-out list, and do not add one.** The profile is per driver **PROCESS**, not
+  per launch.
+- **A driver may decline to answer.** Exit 2 → `UNSCORED`. Use it when the premise
+  broke and the run never reached its subject.
+- **A driver that pins persisted app state must read it back** (#143).
+- **Do not read the phase's verdict off a compound command.** It has reported
+  exit 0 while its text said `DOM PHASE FAIL` — any trailing command replaces the
+  status.
 
 New from this leg:
 
-- **A driver may decline to answer.** Exit 2 → `UNSCORED`. Use it when the
-  premise broke and the run never reached its subject; a `FAIL` there is a claim
-  about something that was never measured.
-- **Isolation is a property of the launch.** New driver → spread
-  `...profileArgs()` from `driver-profile.mjs` into its args, or the fast gate
-  reds it.
+- **A quarantine that the verdict does not carry is a green.** If a future skip
+  category becomes closeable by a human, it belongs in `UNCOVERED_CATEGORY` in
+  `drivers.manifest.mjs` — and if it is not closeable, it does not.
+- **Logic the fast gate must execute cannot live in `dom-phase.mjs`.** Same rule
+  as `inspect.mjs` (#142, #148): the file spawns drivers at import. Put it in
+  `drivers.manifest.mjs`, which both sides already import.
 
 ## Open questions
 
@@ -199,13 +185,14 @@ reversible with the default already taken: the git history on the wave captures
 ones live in `.claude/vibe-130.md`.** Owner calls 14–20 are in
 `.claude/gauntlet-core-surfaces.md`, the archived five-wave run.
 
-**#144 stands unanswered**, and #150 is its settled half sitting in the queue.
-**#151, #152, #153, #154 and #155 are all `needs-triage`.** #155 is new this leg
-and is the one worth reading first.
+**#144 stands unanswered**, and #150 is its settled half, now at the front of the
+queue. **#151, #152, #153, #154, #155 and #156 are all `needs-triage`.** #155
+remains the one worth reading first, and it needs a human at a keyboard.
 
 ## Related
 
 - [[overview]] · [[pick-up]] · [[decisions]] · [[stack]] · [[happy-path]] · [[flows]]
+- [[2026-08-11-a-deficit-a-reader-cannot-close-is-furniture]]
 - [[2026-08-11-a-green-inherited-from-the-machine-is-not-evidence]]
 - [[2026-08-11-a-symptom-that-left-is-not-a-defect-that-was-fixed]]
 - [[2026-08-11-the-premise-is-what-feeds-the-surface-not-what-two-runs-agree-on]]
