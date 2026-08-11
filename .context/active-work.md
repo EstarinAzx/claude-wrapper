@@ -7,14 +7,14 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, relay chain 7 leg 4 — owner away_
-_At commit: `f60b40a` on `main`_
+_Last updated: 2026-08-11 by Opus 5, relay chain 7 leg 5 — owner away_
+_At commit: `1c42d3c` on `main`_
 
 ## Current focus
 
 **Chain 7 is draining a ticket queue, with `/preset gauntlet` chained behind it.**
-Leg 1 landed **#149**, leg 2 landed **#146**, leg 3 landed **#142**, leg 4 landed
-**#148**. **Eight tickets remain at `ready-for-agent`.**
+Leg 1 landed **#149**, leg 2 **#146**, leg 3 **#142**, leg 4 **#148**, leg 5
+**#143**. **Seven tickets remain at `ready-for-agent`.**
 
 The queue was filled by an autonomous `/preset vibe` pass run under the owner's
 AFK autonomy grant. Every ruling, warrant and cross-model objection is in
@@ -22,114 +22,120 @@ AFK autonomy grant. Every ruling, warrant and cross-model objection is in
 
 ## State
 
-- **In flight:** nothing. `ticket/148-fixture-sessions-list` was squash-merged and
-  deleted (content diffed against `main` first — a squash merge does not mark a
-  branch merged, so `git branch -d` refuses and the empty diff is what makes `-D`
-  safe). Tree clean on `main`.
-- **Closed 2026-08-11 (leg 4):** **#148** (`f60b40a`). **Filed #151** at
-  `needs-triage` — the fixture workspace lives under the user profile, so every
-  rail capture carries a Windows username.
-- **Open and agent-ready (8):** #138, #139, #140, #141, #143, #145, #147, #150.
-  **#144 stays `needs-triage` deliberately** — its settled half is #150, and
-  closing #144 because #150 landed is the exact failure the split was reviewed
-  against. **#151 is new and also `needs-triage`.**
-- **Next:** **#143** — the reuse control is not reachable by keyboard. The plan
-  deliberately ordered it *after* #148 so the fix is proven to be the driver's
-  rather than the rail's. See [[pick-up]].
+- **In flight:** nothing. `ticket/143-gui-123-keyboard-premise` was squash-merged
+  and deleted (content diffed against `main` first — a squash merge does not mark
+  a branch merged, so `git branch -d` refuses and the empty diff is what makes
+  `-D` safe). Tree clean on `main`.
+- **Closed 2026-08-11 (leg 5):** **#143** (`1c42d3c`). **Filed #152, #153, #154**
+  at `needs-triage`, and commented on **#145**.
+- **Open and agent-ready (7):** #138, #139, #140, #141, #145, #147, #150.
+  **#144, #151, #152, #153, #154 are all `needs-triage`** and none may be
+  promoted by a leg.
+- **Next:** **#147** — DOM phase drivers share one Electron profile. Leg 5 handed
+  it a measured example: the sessions rail's scope toggle persists across
+  relaunch, and pinning it is now a documented write to that shared profile. See
+  [[pick-up]].
 - **Gate on `main` after the merge:** typecheck clean, build clean,
-  **93 files / 1361 passed + 36 skipped** (was 92 / 1348; the +1 file and +13
-  tests are exactly `tests/inspect-sessions-fixture.test.ts`). Ran on the branch
-  and again on `main`. **Read the number off `main`, never off this file.**
-- **NOT PUSHED**, now 8 commits ahead. D6 stands. Read the real gap:
+  **93 files / 1362 passed + 35 skipped** (was 93 / 1361 + 36; the +1 test and
+  −1 skip are exactly the new `gui-123.source.mjs` sidecar). Ran on the branch and
+  again on `main`. **Read the number off `main`, never off this file.**
+- **`main` is intermittently red, and it is not this leg's change.** See the
+  warning below before trusting any gate result.
+- **NOT PUSHED**, now 10 commits ahead. D6 stands. Read the real gap:
   `git rev-list --count origin/main..main`.
 
-## What #148 actually was
+## Read this before you trust a green gate
 
-`inspect.mjs`'s header claims the whole instrument is fixture-driven. The sessions
-rail was the one surface where that was false — it read `session:list`, which
-enumerates this machine's real store.
+**`tests/session-title-enrichment.test.tsx` fails intermittently under full-suite
+load — 4 of 7 complete runs, including one on the unmodified `main` tree with all
+work stashed.** It passes every time the file is run alone. The cause is a
+`findByText` on Testing Library's default 1000ms while the test renders a 100-row
+sidebar page. Filed as **#153** at `needs-triage`.
 
-Both of the rail's lists are now replaced in main: the stored transcripts, and the
-CLI's live agent view (`background-sessions:list`, whose `[]` was only ever an
-accident of the fixture workspace being fresh, and which renders a *failed look*
-on a machine with no `claude` on PATH).
+Practical consequence for the next leg: **a single red run is not evidence your
+change broke something.** Re-run, and if it is that test, stash and run against
+the bare tree the way leg 5 did — that is the measurement that settles it.
 
-The decision lives in **`inspect-sessions.mjs`**, not the driver — #142's split
-applied a second time, because the driver launches Electron at import and nothing
-in it can be run by the fast gate.
+## What #143 actually was
+
+The driver spent a fixed 60 Tab presses hunting the reuse control and called it
+unreachable if it had not landed. That budget was a guess about a document the
+driver can count.
+
+| rail scope | rows | focusables | control lands on press |
+|---|---|---|---|
+| `This project`, mkdtemp workspace | 0 | 17 | 16 |
+| `All projects` | 100 | 218 | **218** |
+
+The rail sits ahead of the transcript in tab order, caps at 100 rows, and carries
+two stops per row. **The scope toggle persists across relaunch**, so the verdict
+was a function of a setting left in the shared Electron profile.
+
+`gui-123.mjs` now pins the rail and reads it back ahead of every measurement, and
+derives its traversal budget per run. `gui-123.source.mjs` pins the derived-budget
+rule in the fast gate.
 
 ## The transferable half
 
-**The premise is what feeds the surface, not what two runs agree on.**
+**A symptom that left is not a defect that was fixed.**
 
-The obvious acceptance here — run it twice and byte-compare — **passes on unfixed
-code**. #142's leg ran exactly that, four times, and got a clean result off a rail
-still listing 953 real sessions. Two runs minutes apart on one machine see the
-same store; the instability is across machines and across time.
+The stock driver **passed on the first run of this leg**. Closing on that green
+would have been the phantom fix the triage explicitly forbade — #148 had just made
+the rail deterministic elsewhere, so the green was #148's and the driver would
+have kept its dependency on machine state with the ticket marked done.
 
-So the premise was measured off what supplies the surface:
+The red was **reproduced on demand** instead: flip the persisted toggle, and the
+original driver reds with the ticket's text verbatim while the new one passes from
+the identical state. A defect whose symptom is controlled by state you can set is
+one you can summon; until you have summoned it you do not know what you fixed.
 
-- The footer's real count reads **950, 951, 952, 953** in waves 2 to 5, and
-  **976** on a run today. Wave 4's value was predicted before opening it.
-- The sidebar surface's own log inverts from **7125 characters** of rail content
-  to **550**.
-
-Three clean runs afterwards gave 11/11 byte-identical captures. That is recorded
-as corroboration and explicitly **not** as the evidence, because it is the same
-check that passed on the defect.
-
-## Which check catches what, measured rather than assumed
-
-The driver reads the rail back and compares it to the fixture **before any
-capture**. Disabling the stub showed the four checks are not interchangeable:
-
-- The **row count** catches a stub that did not install (red at 1 row against 5,
-  footer reading 976).
-- The **stray-title** check — which my first draft of the ticket comment called
-  *"the one that matters"* — **never fires there**. Under `project` scope the real
-  store can only contribute the seeded session, whose title the fixture also
-  carries. It guards the **scope pin** instead, and the comment was corrected to
-  what the red run showed.
-- The **footer** catches a list of the right length and the wrong set.
-- The **background rows** catch the second stub alone.
+Full reasoning in
+[[2026-08-11-a-symptom-that-left-is-not-a-defect-that-was-fixed]].
 
 ## Two rules this leaves behind
 
-**A relative age needs an offset, not a timestamp.** A fixed epoch renders a
-different string every day. Every fixture row sits ≥20 minutes from its `relTime`
-bucket edge, and the seeded row is deliberately **not `now`** — a 60-second
-bucket is the one label a slow run ticks through under itself, and it is exactly
-what the old seeded row rendered.
+**A check can run and still be blind in the configuration it runs in.** A reverted
+60-press constant does not red the DOM phase on a normal machine, because at the
+default scope the rail contributes 0 rows and 60 is generous. That is why the rule
+moved to the fast gate rather than staying in the driver — the same argument
+`tests/driver-screenshot-dir.test.ts` makes for output paths.
 
-**A fixture must not leave the surface less representative than what it
-replaced.** The rail carries five rows rather than one, because it is
-photographed to be judged on row rhythm. Shrinking what a surface can be graded
-on would look exactly like the fix working.
+**Do not fix a load-sensitive read by lengthening the wait.** The pin was written
+inside phase 4 first, and phase 3 then read a mid-transition `opacity: 0.823757`
+under hover on a renderer still laying out 100 rail rows. Moving the pin above
+every measurement removed the cause; no wait was lengthened, and the settle after
+the scope click is a `waitForFunction` on the state the run needs.
 
 ## Carried forward for the next leg
 
-**#143 is next and the plan put it here on purpose.** Verifying it after #148 is
-what makes a green result attributable to the driver rather than to the rail.
-`gui-123` is currently red in the DOM phase with #143's text verbatim; that is
-expected, not a regression.
+**#147 is next, and leg 5 fed it evidence.** `gui-123.mjs` now deliberately writes
+`This project` into the shared profile and says so where it happens. Restoring the
+previous value was considered and rejected — the only value there is to restore is
+the one that made the driver red. A private profile per driver is #147's fix.
+
+**#154 says the same defect is still live in `gui-122.mjs:292`**, which tabs to
+`.code-copy`, also behind the rail, on the identical `i < 60` budget. It is passing
+today for the same reason gui-123 was passing today. `gui-48.mjs` (two loops),
+`gui-52.mjs` and `gui-54.mjs` also carry `i < 60` Tab loops and were **not**
+examined.
+
+**#152 is the product question #143 refused to answer with an instrument.** The
+control is reachable; whether 208 rail tab stops ahead of the transcript is
+acceptable is a design decision.
 
 **The bar discrepancy #149 left open is still open.** `.context/` prose has said
 the three docks *"share the Sidebar's reference"*, but `.gauntlet/bar/README.md`'s
 own "What each reference judges" table already assigns `linear/linear-features.png`
-to *"Titlebar + docks: control grouping, iconography"*. **Read the table, not the
-prose.** The table is the owner-confirmed half of a human-owned artifact, so no
-agent has rewritten it. **Settle it before the gauntlet seed reads it**, since the
-seed picks references from that table.
+to *"Titlebar + docks"*. **Read the table, not the prose.** It is the
+owner-confirmed half of a human-owned artifact, so no agent has rewritten it.
+**Settle it before the gauntlet seed reads it.**
 
 **Wave captures across the #148 boundary compare two different fixtures.** Waves
-1 to 5 photographed a one-row rail fed by the real store; every future wave
-photographs the five-row fixture. That is the intended trade — before it, those
-two files could not be compared at all — but a wave-to-wave diff spanning the
-boundary is meaningless for those two surfaces.
+1–5 photographed a one-row rail fed by the real store; every future wave
+photographs the five-row fixture.
 
 **The `pieces` cap is a budget, not a scope statement.** Nine captured surfaces,
-`pieces` capped at 6 and fixed at seed, so one run cannot take all nine. A seed
-picking a subset is not evidence the unpicked surfaces lack a standard.
+`pieces` capped at 6 and fixed at seed.
 
 ## Pick up here
 
@@ -148,45 +154,45 @@ of them"* and the app ships two, so every per-surface verdict is confounded unti
 
 Unchanged, and all still hold: no em dashes in user-visible strings
 (`tests/copy-em-dash.test.ts` compiles `src/`); the stylesheet pins are
-literal-text and brittle (D3); any CSS change owes a driver pin that **runs**,
-naming which gate runs it (D4) — jsdom loads no CSS, so the fast gate
-structurally cannot see layout; the titlebar's centring is load-bearing (#136);
-the identity mark is solid by design; colour and translucency are instrument
-artifacts in any capture; `DESIGN.md` is read literally by
-`tests/subagent-material.test.ts`, which splits on `\n## Bans in force\n` — #140
-edits that section, so the split token must survive verbatim. Full text in
-[[pick-up]].
+literal-text and brittle (D3); any CSS change owes a driver pin that **runs**
+(D4) — jsdom loads no CSS, so the fast gate structurally cannot see layout; the
+titlebar's centring is load-bearing (#136); the identity mark is solid by design;
+colour and translucency are instrument artifacts in any capture; `DESIGN.md` is
+read literally by `tests/subagent-material.test.ts`, which splits on
+`\n## Bans in force\n` — #140 edits that section, so the split token must survive
+verbatim. Full text in [[pick-up]].
 
 Carried from earlier legs, unchanged:
 
-- **`inspect.mjs`'s surface list is gated in three places.** Adding or removing a
-  surface means editing `SURFACES`, `SKILL.md` **and** `.gauntlet/bar/README.md`,
-  inside their `surfaces:begin` / `surfaces:end` markers. The bar's edit is a
-  deliberate change to the standard, not bookkeeping.
+- **`inspect.mjs`'s surface list is gated in three places** — `SURFACES`,
+  `SKILL.md` **and** `.gauntlet/bar/README.md`, inside their
+  `surfaces:begin` / `surfaces:end` markers. The bar's edit is a deliberate change
+  to the standard, not bookkeeping.
 - **A driver's capture destination is a checked property.**
-  `tests/driver-screenshot-dir.test.ts` reds if any driver hardcodes its output
-  or defaults it back inside the repo. A new driver must use
-  `process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')`.
+  `tests/driver-screenshot-dir.test.ts` reds if any driver hardcodes its output or
+  defaults it back inside the repo.
 - **`scripts/gui-*-shots/` is gitignored, narrowly and on purpose.** Do not
-  broaden it to `scripts/**/*.png` — that swallows `scripts/spike-117-shots/`,
-  which two findings files cite by path.
+  broaden it to `scripts/**/*.png`.
 - **Run `inspect.mjs` one at a time.** Its workspace directory name is fixed, so
-  two concurrent runs delete each other's workspace. No lock, accepted knowingly.
-- **`drivers.manifest.mjs` enumerates the non-driver `.mjs` files** in that
-  directory so their absence from the driver set is a decision on the record.
-  There are now **four**.
+  two concurrent runs delete each other's workspace.
+- **`drivers.manifest.mjs` enumerates the non-driver `.mjs` files.** There are
+  **four**. A `*.source.mjs` sidecar is exempt — it is globbed by
+  `tests/gui-source-assertions.test.ts` and needs no wiring anywhere.
+- **The rail's two IPC channels are stubbed in `inspect.mjs`, so a capture says
+  nothing about them.** The real listing is covered by
+  `tests/session-store.test.ts`, `tests/session-store-live.test.ts` and
+  **`gui-63.mjs`**.
 
 New from this leg:
 
-- **The rail's two IPC channels are stubbed, so a capture says nothing about
-  them.** A green `sidebar.png` is no evidence that `session:list` works, exactly
-  as a green `commands-dock.png` is none that the CLI serves commands. The real
-  listing is covered by `tests/session-store.test.ts`,
-  `tests/session-store-live.test.ts` and **`gui-63.mjs`**, which drives the built
-  app through the real handler with no stub.
-- **The stubs install before `app.firstWindow()`.** A renderer that called
-  `session:list` earlier than that would paint once from the real list. It does
-  not today, and the read-back would catch it. Written beside the code.
+- **A driver may pin persisted app state, and if it does it must read it back.**
+  `gui-123.mjs` is the worked example: pin, read back, halt loudly if the pin did
+  not take. Pinning without reading back is how a driver silently measures the
+  machine.
+- **The DOM phase defines an `UNSCORED` verdict (exit 2) that no driver emits.**
+  All 39 end `process.exit(fails.length === 0 ? 0 : 1)`, so a premise failure
+  reads as FAIL. Noted on **#145**, which already owns what the phase may report
+  as clean.
 
 ## Open questions
 
@@ -197,13 +203,15 @@ ones live in `.claude/vibe-130.md`.** Owner calls 14–20 are in
 `.claude/gauntlet-core-surfaces.md`, the archived five-wave run.
 
 **#144 stands unanswered**, and #150 is its settled half sitting in the queue.
-**#151 is new** and overlaps the first owner call above: the exposure it names is
-the one already recorded there, now measured across all five waves rather than
-wave 5 alone.
+**#151, #152, #153 and #154 are all new and all `needs-triage`.** #151 overlaps
+the first owner call above; #152 is a product a11y decision; #153 is why `main`
+goes red without anyone changing it; #154 is #143's defect still live one driver
+over.
 
 ## Related
 
 - [[overview]] · [[pick-up]] · [[decisions]] · [[stack]] · [[happy-path]] · [[flows]]
+- [[2026-08-11-a-symptom-that-left-is-not-a-defect-that-was-fixed]]
 - [[2026-08-11-the-premise-is-what-feeds-the-surface-not-what-two-runs-agree-on]]
 - [[2026-08-11-a-behavioural-constraint-cannot-be-pinned-as-text]]
 - [[2026-08-11-a-convention-nothing-executes-is-a-style-preference]]
