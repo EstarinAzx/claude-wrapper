@@ -26,19 +26,13 @@ git rev-list --count origin/main..main
 
 ## The queue
 
-**Seven tickets left. Leg 1 landed #149, leg 2 #146, leg 3 #142, leg 4 #148,
-leg 5 #143** (`1c42d3c`). **Next is #147.** Recommended order, and the reasons are
-not cosmetic:
+**Six tickets left. Leg 1 landed #149, leg 2 #146, leg 3 #142, leg 4 #148, leg 5
+#143, leg 6 #147** (`81de29d`). **Next is #145.** Recommended order:
 
 | Order | # | Why here |
 |---|---|---|
-| ~~1~~ | ~~149~~ | **DONE, leg 1.** Bar README + `SKILL.md` at nine surfaces, drift now gated |
-| ~~2~~ | ~~146~~ | **DONE, leg 2.** Producers honour `SCREENSHOT_DIR` |
-| ~~3~~ | ~~142~~ | **DONE, leg 3.** Workspace name pinned; `titlebar.png` is diffable |
-| ~~4~~ | ~~148~~ | **DONE, leg 4.** Rail fixtured in `inspect.mjs` |
-| ~~5~~ | ~~143~~ | **DONE, leg 5.** `gui-123` pins the rail it measures and counts its own budget |
-| 6 | 147 | Private profile per driver, dedicated shared profile for the opt-out pair. **Leg 5 handed it a worked example — see below** |
-| 7 | 145 | Quarantine accepted; phase must not report clean green |
+| ~~1–6~~ | ~~149, 146, 142, 148, 143, 147~~ | **DONE, legs 1–6** |
+| 7 | 145 | Quarantine accepted; phase must not report clean green. **Leg 6 changed what this ticket decides against — read the next section first** |
 | 8 | 150 | Headless-gate CI, must not read as full coverage |
 | 9 | 141 | Build-artifact assertions; verify `gui-93` is already covered first |
 | 10 | 138 | Type scale. **Gauntlet is confounded until this lands** |
@@ -46,156 +40,121 @@ not cosmetic:
 | 12 | 140 | Named scoped exception for the state stripe |
 
 **No ticket in this queue carries a native blocking edge** — checked on all nine
-at leg 3, and #148 and #143 closing changed none of them. The ordering above lives
-only in this table, so it is the chain's plan rather than something the tracker
-will enforce. Every leg so far has followed it.
+at leg 3, and nothing closed since has changed that. The ordering lives only in
+this table, so it is the chain's plan rather than something the tracker enforces.
 
-**Five tickets sit at `needs-triage` and none may be promoted by a leg:** #144
-(its settled half is #150 — closing it because #150 landed is the exact failure
-the split was reviewed against), #151, and the three leg 5 filed: **#152**, **#153**,
-**#154**.
+**Six tickets sit at `needs-triage` and none may be promoted by a leg:** #144
+(its settled half is #150), #151, #152, #153, #154, and **#155** (new, leg 6).
+
+## Next ticket, #145 — and leg 6 handed it a third option
+
+#145 asks whether `gui-119` gets made batch-safe or accepted into the
+`desktop-exclusive` quarantine, and it owns the broader question of what the DOM
+phase may report as clean.
+
+**The framing has changed and you must read this before ruling.**
+
+`gui-123.mjs` now emits **`UNSCORED` (exit 2)** — the first driver in the set ever
+to do so. `dom-phase.mjs` has always defined that verdict and **no driver
+produced one**, so every broken precondition in the whole set has historically
+been reported as a `FAIL` about the thing the run never reached.
+
+That gives #145 an option its framing did not have: a driver that cannot reach
+its subject can now **say so** without being quarantined and without lying. Ask
+explicitly whether `gui-119` in a batch is a *quarantine* case or an *UNSCORED*
+case — they are different claims, and the second is cheaper and more honest.
+
+**Consequence you will hit immediately: `npm run test:dom` cannot be all-green**
+while #155 is open, because one driver honestly cannot score. That is the correct
+reading, not a broken gate, and #150's CI wiring must not read a non-zero exit as
+"quarantine it".
 
 ## Before you trust a gate result
 
 **`main` goes red on its own.** `tests/session-title-enrichment.test.tsx` fails
-intermittently under full-suite load — **4 of 7** complete runs at leg 5,
-including **one on the unmodified `main` tree with all work stashed**, and green
-every time the file runs alone. Cause: a `findByText` on its 1000ms default while
-100 sidebar rows render. Filed as **#153**.
+intermittently under full-suite load — 4 of 7 complete runs at leg 5, including
+one on the unmodified tree with all work stashed, and green every time it runs
+alone. Cause: a `findByText` on its 1000ms default while 100 sidebar rows render.
+Filed as **#153**. It passed on all three full runs at leg 6, which is not
+evidence it is fixed.
 
-**So a single red run is not evidence your change broke something.** Re-run. If it
-is that test, stash and run against the bare tree — that is the measurement that
-settles it, and it is what leg 5 did before landing.
+**So a single red run is not evidence your change broke something.** Re-run, and
+if it is that test, stash and run against the bare tree.
 
-## Next ticket, #147
+## The DOM phase's current reds, already attributed
 
-DOM phase drivers share one Electron profile, so pinning bounds or zoom silently
-reds later drivers.
+Do not re-investigate these from scratch. Each was run alone at HEAD and on the
+branch at leg 6:
 
-**Leg 5 gave this ticket its sharpest example, measured.** The sessions rail's
-scope toggle (`This project` / `All projects`) **persists across relaunch** — a
-second launch, new process, brand-new workspace, still came up on `All projects`.
-That one setting moved `gui-123`'s tab order from **17 focusables to 218** and was
-the entire cause of #143.
+| driver | HEAD | isolated | verdict |
+|---|---|---|---|
+| `gui-95` | FAIL | FAIL | **pre-existing**, untouched, uninvestigated |
+| `gui-49` | FAIL | FAIL | **pre-existing**, untouched, uninvestigated |
+| `gui-93` | PASS | PASS | passes alone both ways, red in the batch |
+| `gui-124` | FAIL | **PASS** | isolation fixed it alone; still red in the batch |
+| `gui-123` | PASS | **UNSCORED** | **#155** |
 
-**And `gui-123.mjs` now deliberately writes to that shared profile**, pinning
-`This project` and leaving it there. Restoring the previous value was considered
-and rejected: the only value there is to restore is the one that made the driver
-red, and handing it to the next driver is the failure #147 is about. The comment
-sits where the write happens. **A private profile per driver removes the need for
-that pin** — but do not delete the pin's read-back when you do, because the
-read-back is what catches a private profile that failed to apply.
+A full batch on `main` at leg 6 was **25/30**. There is still **no full-phase
+baseline taken on an unmodified tree**, so the batch-only behaviour of `gui-93`
+and `gui-124` is unexplained rather than attributed.
 
-**Scope, bounds and zoom are not the only persisted state.** #147's title names
-bounds and zoom; leg 5 found a third. Look for what else the app persists before
-assuming the list is two long.
+## #155 is the biggest thing leg 6 found, and it is not a driver bug
 
-## What leg 5 measured that changes how a fix gets proven
+On a profile the app has never started in, **no message sends at all**. Measured
+one variable at a time: not the driver's zero-turn trick (reproduces with the
+`chat:send` listener intact), not the Enter key path (the Send button is equally
+dead in the same run), not zoom (forcing the factor to 1 changes nothing), not
+localStorage (seeding all four keys the warm and cold profiles disagreed about
+changes nothing).
 
-**A symptom that left is not a defect that was fixed.** The stock `gui-123`
-**passed on first run** this leg. Closing on that green would have credited #148's
-fix and left the driver's dependency on machine state in place with the ticket
-marked done — which the triage had predicted and forbidden in advance.
+**A profile the app has never started in is every new user's first launch.**
 
-The red was **reproduced on demand** instead: flip the persisted toggle, and the
-original driver reds with the ticket's text verbatim while the new driver passes
-from the identical state and reports the pin it applied.
-
-**A check can run and still be blind in the configuration it runs in.** A reverted
-60-press constant does not red the DOM phase on a normal machine. That is why the
-rule went to the fast gate (`gui-123.source.mjs`), not the driver.
-
-**Do not fix a load-sensitive read by lengthening the wait.** A pin written in the
-wrong phase made phase 3 read a mid-transition `opacity: 0.823757`. Moving the pin
-above every measurement removed the cause.
-
-## What was decided while you were out, in one line each
-
-- **#138** — restrike the em-set markdown headings onto the one ladder, document
-  the rungs with roles, retire or re-point `--fs-display`.
-- **#139** — **the tool-card label goes to 400, not the prose.** This reversed
-  twice; read the ticket.
-- **#140** — keep the stripe, amend the ban with a named scoped exception in
-  #125's form.
-
-## Still yours — nothing here blocks the chain
-
-Both live entries are in `.claude/vibe.md` under `## Needs you`:
-
-1. **Git history on the wave captures.** The repo is **public** and 35 wave PNGs
-   are in `origin/main`. Leg 4's audit found **no real session title in any
-   capture in any wave**; what is exposed is a **Windows username** in the fixture
-   temp path and the foreign-session **count**. Fix-forward taken; a history
-   rewrite is irreversible and outward-facing so it was **not** done. The residual
-   username half is **#151**.
-2. **gauntlet owner call 14, the stop signal.** Two agent-reachable answers were
-   attempted and both were refuted cross-model as post-hoc goalpost movement.
-
-Seven older owner-calls remain in `.claude/vibe-130.md`, unchanged. **#152** is
-new and also yours in spirit: 208 rail tab stops ahead of the transcript is a
-design decision, not a bug.
-
-## Gauntlet
-
-`.claude/gauntlet.md` was **archived to `.claude/gauntlet-core-surfaces.md`** so a
-fresh run seeds instead of halting on the old `stop: true` at `plateau: 3`. That
-file is five waves of adjudication and is worth reading before the next run —
-especially owner calls 14 to 20.
-
-**One reference question is still open, and it is an owner call.** Earlier
-`.context/` prose said the bar holds only five Linear references and that the
-three docks therefore share the Sidebar's. But `.gauntlet/bar/README.md`'s own
-"What each reference judges" table already assigns `linear/linear-features.png` to
-*"Titlebar + docks"*. **Read the table, not the prose**, and if the table is wrong
-that is yours to say. New bar references cannot be invented by an agent.
-
-**A run cannot take all nine surfaces at once.** `pieces` is capped at 6 and fixed
-at seed. That is a budget, not a statement that the unpicked surfaces lack a
-standard.
-
-**Wave-to-wave byte comparison is meaningful for all nine surfaces, but not across
-the #148 boundary:** waves 1 to 5 photographed a one-row rail fed by the real
-store, and every future wave photographs the five-row fixture.
+**What has NOT been done, and it is one run:** open the app **by hand** on a
+clean profile and type a message. Everything above went through `playwright-core`
+with a stubbed `dialog.showOpenDialog`, so nobody has ruled out the harness. That
+single run decides whether #155 is a shipping bug or an artifact.
 
 ## Landmines
 
-**`main` is intermittently red on `session-title-enrichment` (#153).** Re-run
-before believing it, and stash-and-compare before blaming your change.
+**Every driver now launches on a private `userData`** (#147). New driver → spread
+`...profileArgs()` from `driver-profile.mjs` into its `electron.launch({ args })`,
+or `tests/driver-profile.test.ts` reds it. **There is no opt-out list and do not
+add one** — `gui-78`/`gui-79`/`gui-110` already mint their own profile and
+`setPath('userData')` beats the switch, so an opt-out would reopen the exact
+channel the ticket closed.
+
+**The profile is per driver PROCESS, not per launch.** `gui-69`, `gui-70` and
+`gui-110` launch three times each and assert on what launch N+1 inherits.
+
+**A cold profile is not the same app as a warm one.** Leg 6's whole finding. If a
+driver behaves differently than you expect, ask what the profile used to be
+carrying before you blame your change.
+
+**`main` is intermittently red on `session-title-enrichment` (#153).**
 
 **Do not read the DOM phase's verdict off a compound command.** It has reported
-**exit 0 while its own text said `DOM PHASE FAIL`**, with no pipe involved — the
-command merely ended in `; echo`. **Any trailing command replaces the status.**
-Read `$?` on its own line, or grep the redirected file.
+**exit 0 while its own text said `DOM PHASE FAIL`** — any trailing command
+replaces the status. Read `$?` on its own line, or grep the redirected file.
 
-**A driver that pins persisted app state must READ IT BACK** (#143). Pinning
-without a read-back is how a driver silently measures the machine anyway. The
-read-back is also what would catch #147's private profile failing to apply.
+**A driver that pins persisted app state must READ IT BACK** (#143). Still true,
+and the read-back is now also what catches a private profile failing to apply.
 
-**A byte comparison that passes is not evidence a capture is stable** (#148). Two
-runs on one machine share the machine. Argue from what feeds the surface.
+**A byte comparison that passes is not evidence a capture is stable** (#148).
 
-**Run `inspect.mjs` one at a time** (#142). Its workspace directory name is fixed,
-so a second concurrent run deletes the first's workspace.
-
-**Cleaning `scripts/` after a phase run is no longer needed** (#146, `ed9a490`).
-Any doc still telling you to run `git checkout -- scripts/` is stale.
+**Run `inspect.mjs` one at a time** (#142). Its workspace directory name is fixed.
 
 **Point `SCREENSHOT_DIR` outside the repo** when running `inspect.mjs`.
 
 **A squash merge does not mark the branch merged.** `git branch -d` refuses after
 one. Diff the branch against `main` first, and let an empty diff authorise `-D`.
 
-**A 0-byte subagent transcript is not a dead agent.** The file flushes only at
-completion.
+**A driver copied outside the repo cannot resolve `playwright-core`.** To run an
+old version, check it out **in place** with `git checkout HEAD -- <path>` and
+restore afterwards. Leg 6 used this for every attribution run.
 
-**A mutation that reds fewer tests than you expected is a finding about the
-tests** (#142), not a pass.
-
-**A driver copied outside the repo cannot resolve `playwright-core`** and its
-`APP_DIR` (computed from `import.meta.url`) points at the wrong tree. To run an
-old version of a driver, check it out **in place** with
-`git checkout HEAD -- <path>` and restore afterwards. Leg 5 lost a 6-minute
-timeout learning this.
+**`.context/` picks up line-ending churn.** Leg 6 found `decisions.md` staged with
+no content diff. Keep `.context/` off the ticket branch and check
+`git diff --cached --name-only` before committing.
 
 ## Standing constraints for the renderer
 
@@ -213,25 +172,55 @@ edits that section, so the split token must survive verbatim.
 `CLAIMED_HEADROOM_PX` in `inspect.mjs` is a copy of a sum argued in prose in
 `chat.css`. **Never move it to match a measurement without moving that sum too.**
 
-**Adding or removing a capture surface costs three edits, and the gate says so**
-(#149): `SURFACES` in `inspect.mjs`, the `surfaces:begin` / `surfaces:end` region
-in `.claude/skills/run-desktop/SKILL.md`, and the same region in
-`.gauntlet/bar/README.md`. The bar's copy is hand-authored on purpose.
+**Adding or removing a capture surface costs three edits** (#149): `SURFACES` in
+`inspect.mjs`, the `surfaces:begin`/`surfaces:end` region in
+`.claude/skills/run-desktop/SKILL.md`, and the same region in
+`.gauntlet/bar/README.md`.
 
-**A new driver's capture destination is gated** (#146):
-`tests/driver-screenshot-dir.test.ts` reds on a hardcoded output path *and* on a
-fallback that points back inside the repo. Use
+**A new driver's capture destination is gated** (#146): use
 `process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')`.
-**Do not broaden the `scripts/gui-*-shots/` ignore rule** to `scripts/**/*.png`.
+**Do not broaden the `scripts/gui-*-shots/` ignore rule.**
 
-**A new `.mjs` in `.claude/skills/run-desktop/` that is neither a `gui-*` driver
-nor a `*.source.mjs` sidecar gets a line in `drivers.manifest.mjs`** (#142). There
-are **four**. A sidecar needs no wiring at all — `gui-source-assertions.test.ts`
-globs `*.source.mjs`, and the phase's own accounting proves it is not miscounted
-as a driver.
+**`drivers.manifest.mjs` enumerates the non-driver `.mjs` files. There are FIVE**
+(#147 added `driver-profile.mjs`). A `*.source.mjs` sidecar needs no wiring.
 
 **Anything the fast gate must RUN has to live outside `inspect.mjs`** (#142,
 #148). The driver launches Electron at import.
+
+## Still yours — nothing here blocks the chain
+
+Both live entries are in `.claude/vibe.md` under `## Needs you`:
+
+1. **Git history on the wave captures.** The repo is **public** and 35 wave PNGs
+   are in `origin/main`. Leg 4's audit found no real session title in any capture;
+   what is exposed is a **Windows username** in the fixture temp path and the
+   foreign-session **count**. Fix-forward taken; the residual half is **#151**.
+2. **gauntlet owner call 14, the stop signal.** Two agent-reachable answers were
+   attempted and both were refuted cross-model as post-hoc goalpost movement.
+
+Seven older owner-calls remain in `.claude/vibe-130.md`. **#152** and **#155** are
+new and both are yours in spirit — 208 rail tab stops ahead of the transcript is
+a design decision, and #155 needs one manual run only a human can do properly.
+
+## Gauntlet
+
+`.claude/gauntlet.md` was **archived to `.claude/gauntlet-core-surfaces.md`** so a
+fresh run seeds instead of halting on the old `stop: true` at `plateau: 3`.
+Especially worth reading: owner calls 14 to 20.
+
+**One reference question is still open, and it is an owner call.** Earlier
+`.context/` prose said the bar holds only five Linear references and that the
+three docks therefore share the Sidebar's. But `.gauntlet/bar/README.md`'s own
+"What each reference judges" table already assigns `linear/linear-features.png`
+to *"Titlebar + docks"*. **Read the table, not the prose.**
+
+**A run cannot take all nine surfaces at once.** `pieces` is capped at 6 and fixed
+at seed. That is a budget, not a statement that the unpicked surfaces lack a
+standard.
+
+**`inspect.mjs` now launches on a private profile** (#147), so a wave's captures
+no longer inherit whatever zoom or bounds the machine last had. Another boundary
+across which byte comparison is not meaningful — and a deliberate one.
 
 ## Chain rules
 

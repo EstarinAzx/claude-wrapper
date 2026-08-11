@@ -476,19 +476,27 @@ tags: [context, overview]
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
   also **three `gui-*.source.mjs` sidecars** (`gui-96`, `gui-98`, `gui-136`),
-  which are NOT drivers and are excluded from that count, and **two** plain
+  which are NOT drivers and are excluded from that count, and **three** plain
   modules that are not executable at all — `inspect-workspace.mjs` (#142, the
-  fixture workspace's fixed name and its clean-if-stale rule) and
+  fixture workspace's fixed name and its clean-if-stale rule),
   `inspect-sessions.mjs` (#148, the sessions rail's fixture rows and age
-  offsets). Both live outside the driver for the same reason: the driver cannot
-  be imported without launching Electron, so anything the fast gate must RUN has
-  to leave it.
+  offsets) and `driver-profile.mjs` (#147, the one place that decides where a
+  driver's `userData` lives). The first two live outside the driver for the same
+  reason: the driver cannot be imported without launching Electron, so anything
+  the fast gate must RUN has to leave it.
   `drivers.manifest.mjs` names all the non-members so their absence stays a
   decision on the record. The DOM phase launches
-  **30** of them, nine being accounted skips. **`gui-136` launches on a private
-  `--user-data-dir`** — it pins bounds and zoom, both of which outlive the
-  process, and reded two later drivers until it stopped sharing the profile
-  (#147). **Every driver writes its captures to `SCREENSHOT_DIR`** and the phase
+  **30** of them, nine being accounted skips. **Every driver launches on a
+  private `--user-data-dir`** (#147) — bounds and the per-origin zoom factor both
+  outlive a process, and `gui-136` pinning them reded two later drivers until it
+  stopped sharing the profile. The phase hands each driver a directory and
+  `driver-profile.mjs` turns it into the switch; there is **no opt-out list**,
+  because `gui-78`/`gui-79`/`gui-110` already mint their own profile in their
+  probe and `setPath('userData')` beats the switch. `tests/driver-profile.test.ts`
+  reds a driver that does not take it, and the phase fingerprints the real
+  profile around each driver and **names any that wrote to it**. `inspect.mjs`
+  takes a private profile too. **Every driver writes its captures to
+  `SCREENSHOT_DIR`** and the phase
   hands each one its own directory; that is gated by
   `tests/driver-screenshot-dir.test.ts`, which reds both on a hardcoded path and
   on a fallback pointing back inside the repo (#146). **Two standing
