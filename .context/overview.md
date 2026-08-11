@@ -459,6 +459,13 @@ tags: [context, overview]
 ## How to run
 - `npm run dev` — electron-vite dev (Electron window)
 - `npm run typecheck` / `npm test` / `npm run build` — the merge gate
+- **CI runs that gate and nothing else** (#150) — `.github/workflows/fast-gate.yml`,
+  on push, `windows-latest`. Named `fast-gate` rather than `ci` because a green
+  tick must read as partial on sight: the DOM phase is a local win32 step and no
+  runner can host it. The exclusion is carried in the workflow name, the job name
+  that appears in the checks list, and an `always()` job summary, and
+  `tests/fast-gate-workflow.test.ts` pins all three. **Never observed running** —
+  nothing has been pushed from this checkout
 - **GUI check (agent/headless):** `run-desktop` skill —
   `node .claude/skills/run-desktop/driver.mjs [--cycle]` launches the built app,
   reads the titlebar pills, screenshots the window (needs `npm run build` +
