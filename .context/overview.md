@@ -486,11 +486,11 @@ tags: [context, overview]
   deliberately not restated here — it moves every leg, and a number sitting
   beside a pointer is the thing that rots (#149). Run the frontier query; it is
   the authority and this line has been wrong before.
-  **39 `gui-*.mjs` assertion drivers** — 38 plus the observational
+  **40 `gui-*.mjs` assertion drivers** — 39 plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
   also `gui-*.source.mjs` **sidecars** (`gui-75`, `gui-96`, `gui-98`, `gui-123`,
-  `gui-136` — deliberately uncounted here, since a number beside a list is what
+  `gui-136`, `gui-138` — deliberately uncounted here, since a number beside a list is what
   rots, #149; the gate globs them and is the authority), which are NOT drivers
   and are excluded from that count, and **three** plain
   modules that are not executable at all — `inspect-workspace.mjs` (#142, the
@@ -502,7 +502,7 @@ tags: [context, overview]
   the fast gate must RUN has to leave it.
   `drivers.manifest.mjs` names all the non-members so their absence stays a
   decision on the record. The DOM phase launches
-  **30** of them, nine being accounted skips. **Every driver launches on a
+  **31** of them, nine being accounted skips. **Every driver launches on a
   private `--user-data-dir`** (#147) — bounds and the per-origin zoom factor both
   outlive a process, and `gui-136` pinning them reded two later drivers until it
   stopped sharing the profile. The phase hands each driver a directory and
@@ -951,7 +951,26 @@ tags: [context, overview]
   the driver's `SURFACES` — **the bar keeping its own hand-authored copy on
   purpose**, since a standard generated from the code it polices inherits that
   code's omissions and would let a deleted driver entry silently delete the
-  obligation. Legs 1–5 of chain 6 landed **#131–#136**. Leg 5's **#136**
+  obligation.
+  Leg 10 landed **#138** (`b2a3fd0`): **one type scale, enforced as a RATIO
+  rather than as an allow-list.** The markdown headings were set in `em`,
+  multipliers on inherited text rather than rungs, painting 18.75 and 16.5
+  against a ladder whose nearest rungs are 19.8375 and 17.25; they were
+  **restruck**, not documented into compliance, and the count of distinct
+  painted sizes went **down**, seven from eight. `--fs-display` was re-pointed
+  at what it paints, having read 23px while its only caller consumed it through
+  `calc(... * 1.15^5)` and painted 46.26, so the name said 23 and nothing
+  rendered 23. **The tolerance is fixed by the rungs already documented rather
+  than chosen:** 11px sits 0.34px off `15/1.15^2`, so nothing tighter keeps
+  `--fs-micro` on its own scale, which is why the sweep's discovery of a
+  **seventh size nobody had counted** (`.win-btn` inheriting Chromium's UA
+  13.3333px button default, 0.29px from rung -1) is named in `DESIGN.md` and
+  filed as **#159** instead of being called a violation. `gui-138.mjs`
+  (`npm run test:dom`) sweeps every painted box in real Chromium;
+  `gui-138.source.mjs` (`npm test`) bans `em` and literal px sizes in `styles/`
+  and cross-reads `tokens.css` against `DESIGN.md`. See
+  [[2026-08-11-a-ratio-rule-is-tested-as-a-ratio-and-its-tolerance-is-set-by-the-rungs-it-already-admits]].
+  Legs 1–5 of chain 6 landed **#131–#136**. Leg 5's **#136**
   (`ed81559`) centred the session title on the window rather than on the space
   its neighbours leave over: `flex: 1` on both flanks, `flex: 0 1 auto` on the
   slot, and the 14px inset moved onto `.logo-mark` because padding on a
