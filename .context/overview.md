@@ -480,9 +480,9 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **relay chain 7
-  is RUNNING, draining the `ready-for-agent` queue with `/preset gauntlet`
-  chained behind it. `ready-for-human` is BANNED for this batch; use
-  `needs-info` + a comment + a PushNotification**. The remaining count is
+  is COMPLETE — the `ready-for-agent` queue is DRY and `/preset gauntlet` was
+  fired as its successor. `ready-for-human` was BANNED for that batch; blockers
+  went to `needs-info` + a comment + a PushNotification**. The remaining count is
   deliberately not restated here — it moves every leg, and a number sitting
   beside a pointer is the thing that rots (#149). Run the frontier query; it is
   the authority and this line has been wrong before.
@@ -943,9 +943,10 @@ tags: [context, overview]
   17 days were all still rewindable. The build was then one field carried
   through `transcript.ts` behind the same `isMessageUuid` guard. See
   [[2026-08-08-a-checkpoint-outlives-its-process-and-rewindability-tracks-position]].
-  **Chain 6 is COMPLETE**, legs 1–6 landing **#131–#137**. **Chain 7 is RUNNING**
-  a twelve-ticket queue filled by an autonomous `/preset vibe` pass, with
-  `/relay N=1 /preset gauntlet` chained behind it on the queue draining. Leg 1
+  **Chain 6 is COMPLETE**, legs 1–6 landing **#131–#137**. **Chain 7 is COMPLETE**
+  — twelve legs draining a twelve-ticket queue filled by an autonomous
+  `/preset vibe` pass, ending on **#140** (`b30a4b3`) at leg 12 and firing
+  `/relay N=1 /preset gauntlet` as its chained successor. Leg 1
   landed **#149** (`6067a12`): the published surface list restated in `SKILL.md`
   and `.gauntlet/bar/README.md`, plus the test that reds when either drifts from
   the driver's `SURFACES` — **the bar keeping its own hand-authored copy on
@@ -970,6 +971,20 @@ tags: [context, overview]
   `gui-138.source.mjs` (`npm test`) bans `em` and literal px sizes in `styles/`
   and cross-reads `tokens.css` against `DESIGN.md`. See
   [[2026-08-11-a-ratio-rule-is-tested-as-a-ratio-and-its-tolerance-is-set-by-the-rungs-it-already-admits]].
+  Leg 12 closed the chain with **#140** (`b30a4b3`): the selected session row's
+  mint side-stripe **stays**, and `## Bans in force` gains one named, scoped
+  exception beside #125's glass exception, stating it is not a precedent — a
+  document edit plus a test, with the stripe byte-identical to `HEAD` and the
+  built CSS bundle keeping its content hash, so **D4 is not engaged**. The
+  finding is which direction an amendment protects: prose stops a conformance
+  pass deleting the stripe, but **nothing in the repo asserted the stripe
+  existed** (`rails.css:548`, read by no test and no driver), so deleting the
+  rule left every check green while the document went on granting an exception
+  for a declaration that was gone. The discriminator is geometric and therefore
+  parsed rather than grepped — a side stripe is a **nonzero horizontal offset**,
+  while the `inset 0 0 0 1px` idiom on fifteen surfaces is offset zero and paints
+  a full outline. See
+  [[2026-08-11-a-permission-outlives-the-thing-it-permits-unless-both-are-pinned]].
   Legs 1–5 of chain 6 landed **#131–#136**. Leg 5's **#136**
   (`ed81559`) centred the session title on the window rather than on the space
   its neighbours leave over: `flex: 1` on both flanks, `flex: 0 1 auto` on the
