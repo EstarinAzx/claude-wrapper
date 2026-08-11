@@ -126,6 +126,7 @@ import os from 'node:os'
 import fs from 'node:fs'
 import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
+import { prepareWorkspace } from './inspect-workspace.mjs'
 
 // `fileURLToPath`, never `URL.pathname` — this repo's own path contains a space.
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -174,7 +175,15 @@ const written = []
 // a critic nothing.
 
 const SID = crypto.randomUUID()
-const WORKSPACE = fs.mkdtempSync(path.join(os.tmpdir(), 'inspect-ws-'))
+// #142 — FIXED, not `mkdtemp`'d, because the app renders `basename(cwd)` as the
+// session title and this directory is that cwd. Six random characters moved
+// `titlebar.png`'s pixels every run while its box and text length stayed put,
+// which made that one capture impossible to byte-compare. `inspect-workspace.mjs`
+// owns the whole decision, including why a directory that is already there is
+// cleaned rather than refused, and what that costs concurrent runs.
+const WORKSPACE = prepareWorkspace(os.tmpdir(), (m) => log('WORKSPACE', m))
+// Random, and staying random: nothing renders this name, so it is not a source
+// of pixel drift, and the suffix keeps two runs' seeded transcripts apart.
 const STORE_DIR = path.join(os.homedir(), '.claude', 'projects', `inspect-${SID.slice(0, 8)}`)
 
 const FIRST_PROMPT = 'Why does the sessions rail go empty after I flip the backend pill?'

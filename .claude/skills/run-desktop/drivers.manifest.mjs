@@ -20,7 +20,7 @@ export const DRIVER_DIR = path.resolve(import.meta.dirname)
 const isSidecar = (f) => f.endsWith('.source.mjs')
 
 // The set is `gui-*.mjs`, which is #132's convention and not an accident of
-// globbing. Two other executables live in this directory and are deliberately
+// globbing. Three other `.mjs` files live in this directory and are deliberately
 // NOT members, named here so their absence is a decision on the record rather
 // than something nobody noticed:
 //
@@ -31,6 +31,13 @@ const isSidecar = (f) => f.endsWith('.source.mjs')
 //                and a shortfall exits non-zero), but it exists to PRODUCE the
 //                captures a critic grades, and the phase would double its
 //                runtime to re-prove what the next gauntlet wave proves anyway.
+//   inspect-workspace.mjs
+//                #142. Not an executable at all — a module `inspect.mjs`
+//                imports, holding the fixture workspace's fixed name and its
+//                clean-if-stale rule. It runs in the FAST gate instead
+//                (`tests/inspect-fixture-workspace.test.ts`), which is the
+//                whole reason those three lines live outside the driver: the
+//                driver cannot be imported without launching Electron.
 //
 /** Every `gui-*.mjs` driver, sorted. The definition of "the driver set". */
 export const listDrivers = () =>
