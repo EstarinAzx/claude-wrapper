@@ -7,8 +7,8 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, gauntlet relay leg 2 (run 2, wave 1) — owner away_
-_At commit: `002f98e` on `gauntlet/docks-and-min-window`; `main` still at `46e2fce`_
+_Last updated: 2026-08-11 by Opus 5, gauntlet relay leg 3 (run 2, wave 2) — owner away_
+_At commit: `dcef5be` on `gauntlet/docks-and-min-window`; `main` still at `46e2fce` plus this note_
 
 > **Run-2 capture landmine.** `.gauntlet/waves/1/`…`5/` hold **run 1's git-tracked**
 > captures, and `inspect.mjs` writes the **same filenames**. Run 2 therefore writes
@@ -16,22 +16,45 @@ _At commit: `002f98e` on `gauntlet/docks-and-min-window`; `main` still at `46e2f
 > `.gauntlet/waves/<N>/` would silently overwrite the archived run's evidence — do not
 > "correct" the namespaced path back.
 
+> **New driver as of leg 3: `gui-gauntlet-wave2.mjs`.** 15 checks across the three docks,
+> each carrying the reconstructed OLD value beside the new one. It is auto-enumerated into
+> the driver set, so it runs in `npm run test:dom` and reports as a **named skip** in the
+> fast gate (this is the 36 -> 37 skip change; the test count is unchanged at 1406). It has
+> no `.source.mjs` sidecar and needs none.
+
+> **`gui-94` is red on purpose now — read the DOM-phase section before "fixing" it.**
+
 ## Current focus
 
-**THE TICKET QUEUE IS DRY, and the successor is now RUNNING. Gauntlet run 2
-(`docks-and-min-window`) landed WAVE 1 as `002f98e` on
+**THE TICKET QUEUE IS DRY, and the successor is RUNNING. Gauntlet run 2
+(`docks-and-min-window`) landed WAVE 2 as `dcef5be` on
 `gauntlet/docks-and-min-window`.** Its record is `.claude/gauntlet.md` **on that
 branch** — `main`'s copy is the seed's and is stale by design. Chain 7 finished at
-leg 12 and fired `/relay N=1 /preset gauntlet`; that chain is at leg 3.
+leg 12 and fired `/relay N=1 /preset gauntlet`; that chain is at leg 4.
 
-Wave 1 judged and did not build (a builder gets only the gap named last wave, and
-wave 1 has none). Four cross-model critics, all `BAR WINS`, **zero `SPEC BREAK`s**,
-4/4 verified against a first-hand read to have seen real pixels. **The finding that
-outranks the four individual gaps: all three docks render the same "name + secondary
-description" row in a 248px column three different ways** — Agents truncates to one
-line, Commands truncates *and* drops it entirely for `/wrap-up`, Appearance wraps and
-reads cramped. Three blind critics each named it their dock's weakest point. Wave 2
-should fix the pattern once in the shared shell.
+**Wave 2 was the first wave that built, and every named gap closed.** Four builders,
+one pin agent, four cross-model critics, one smoothing pass. All four verdicts hold at
+`BAR WINS`, **zero `SPEC BREAK`s**, 4/4 critics verified against a first-hand read to
+have seen real pixels. Gate green **twice** (D7), before and after smoothing.
+
+**The cross-piece lever wave 1 identified landed.** `AgentsDock` wrote a named two-line
+clamp group in `shared.css`; `CommandsDock`, serialized behind it on the same file,
+**joined it** rather than inventing a third treatment. Serializing those two is now
+proven necessary rather than predicted.
+
+**`plateau` is 1, and it is the failure run 1 predicted in advance.** 4/4 critics
+answered BETTER; 0/4 verdicts moved, because the ordinal has three states and Linear is
+a deliberately hard bar. Run 1 ruled ahead of time that this is **an owner call, not
+something a leg may fix by adjusting the counter** — so the counter was incremented
+honestly. Two more waves like this and the run halts at `plateau: 3` while still
+improving. **Owner call 13** in the state file.
+
+**The seed's named risk fired for the first time.** All three dock gaps now converge on
+one systemic absence — the app has no icon vocabulary (header glyph group, leading row
+icons, selection affordance). Three different elements, not the same defect, so the
+decomposition still stands. What it means is that no existing piece owns the question,
+which is why the smoothing pass's new piece was accepted: **`DocksAsOne`, five of six
+slots used, critic-only on wave 3**, and its first verdict cannot count toward `plateau`.
 
 Leg 1 landed **#149**, leg 2 **#146**, leg 3 **#142**, leg 4 **#148**, leg 5
 **#143**, leg 6 **#147**, leg 7 **#145**, leg 8 **#150's work**, leg 9 **#141**,
@@ -55,15 +78,17 @@ AFK autonomy grant. Every ruling, warrant and cross-model objection is in
   follow-up ticket filed**; nothing in the work produced one.
 - **Open and agent-ready: NONE.** **#144, #151–#160 are `needs-triage`** and none
   may be promoted by a leg.
-- **Next:** gauntlet run 2 **wave 2** — the first wave that builds, and the first
-  that can move `plateau`. There is no next ticket.
-- **Wave 2's fan-out shape is already decided, and it is run 1's exact trap.**
+- **Next:** gauntlet run 2 **wave 3**, at `plateau: 1`. There is no next ticket.
+- **Wave 2's fan-out shape was run 1's exact trap, and serializing worked.**
   **`CommandsDock` has NO stylesheet of its own** (zero `.commands-dock` rules in
   `styles/`); it rides the shared `agents-dock` shell in `rails.css`, which
-  `AgentsDock` also owns. **Serialize those two inside the fan-out**, exactly as run 1
-  serialized Welcome/Chat on `chat.css`. `AppearanceDock` owns `appearance.css` (but
-  it holds 2 `.agents-dock` refs — confirm before letting it run free);
-  `WelcomeMinWindow` writes `chat.css`, clear of the docks.
+  `AgentsDock` also owns. They were serialized inside the fan-out, exactly as run 1
+  serialized Welcome/Chat on `chat.css`, **and the second builder joined the first's
+  shared group instead of inventing a rival one** — which is the whole return on
+  serializing rather than merely the collision avoided. **Any future wave touching both
+  pieces must do the same.** `AppearanceDock` owns `appearance.css` and its 2
+  `.agents-dock` refs were confirmed not to reach the shell (a comment and a
+  resize-handle override); `WelcomeMinWindow` writes `Welcome.tsx` + `chat.css`.
 - **A `bar_win` clause no wave can currently judge:** empty states. `AgentsDock` has
   three `agents-dock-empty` branches (`AgentsDock.tsx:307`, `:311`, `:315`) and a
   `background-tasks` footer (`:407`), but **the instrument photographs only the
@@ -158,7 +183,20 @@ quarantine stated rather than hidden, not a break.
 
 **The DOM phase's reds are attributed; do not re-investigate from scratch.**
 `gui-95` and `gui-49` pre-existing and uninvestigated; `gui-123` is #155 working
-as designed; `gui-94` a load artifact; `gui-91` intermittent ~1 in 7 (#156).
+as designed; `gui-91` intermittent ~1 in 7 (#156).
+
+**`gui-94` NOW REDS FOR A SECOND, DELIBERATE REASON — measured at gauntlet leg 3, not
+predicted.** It was previously listed here as a load artifact. It now also **exits 1 on
+AC3 and AC4**: `.command-row-desc` line box `12px -> 31.9px`, row height `60px -> 65.1px`.
+Gauntlet wave 2 gave that description a two-line clamp and a new leading, which is a
+deliberate change to the box `#94` pinned as no-change. **Its guarding half still passes**
+— AC1, AC2 and surface 2 are green, so the composer's slash popover is untouched and
+`#94`'s actual promise held. **Reverting the line-height alone does NOT clear it**: AC3
+measures element height, so a two-line clamp at 1.1 is still ~24.2px against a 12px probe.
+Clearing it means reverting the clamp, i.e. abandoning the CommandsDock piece. **Owner
+call 12** in `.claude/gauntlet.md` on the branch. Do not "fix" `gui-94` by rebuilding its
+probe — its own header names that trap, and binding constraint 5 forbids softening a check
+to clear a red.
 **Legs 8 through 12 ran no full phase** — leg 11 ran only `gui-96`, and leg 12
 ran none at all, correctly: #140 moved no pixels, so D4 was not engaged. The
 table is still leg 7's, and there is still **no full-phase baseline on an
@@ -239,7 +277,28 @@ ones live in `.claude/vibe-130.md`.** Owner calls 14–20 are in
 **A third is still live and it is one command:** push `main` and watch
 `fast-gate`, so #150 can close.
 
-**#144 stands unanswered** and was deliberately not touched. **#151 through #160
+**TWO NEW OWNER CALLS from gauntlet wave 2**, both in `.claude/gauntlet.md` **on the
+branch**, both with a reversible default already taken:
+
+- **Owner call 12 — `gui-94` is red and there is no cheap fix.** Default taken: keep the
+  work, leave the driver red, record it. The honest resolution is to retire AC3/AC4 as a
+  no-change criterion that has been deliberately superseded while keeping AC1, AC2 and the
+  popover surface, which all still pass. Editing the probe is forbidden; reverting the
+  clamp costs the CommandsDock piece.
+- **Owner call 13 — the verdict scale has stopped resolving real progress.** 4/4 critics
+  said BETTER, 0/4 verdicts moved, `plateau` rose on a wave where every gap closed. Two
+  more like it and the run halts while still improving. Options, none taken: widen the
+  ordinal, count the critics' own change answer, or accept that halting-while-improving is
+  what an unreachable bar is for. **The counter was not adjusted** — run 1 named this as
+  the owner's call specifically so a leg could not quietly rule on it.
+
+**#161 is new**, filed by leg 3 at `needs-triage`: `CommandsDock` fetches once on mount
+with no retry, so a dock opened before the CLI handshake shows **0 rows while a direct
+`listCommands()` returns 126**, and stays empty for as long as it is open. Found by the
+gauntlet instrument; not fixable by a wave, since gauntlet grades design and this is
+correctness.
+
+**#144 stands unanswered** and was deliberately not touched. **#151 through #161
 are all `needs-triage`, and with the queue dry they are the whole remaining
 backlog** — promoting any of them is an owner decision, never a leg's. #155
 remains the one worth reading first, and it needs a human at a keyboard. **#160
