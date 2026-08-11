@@ -34,10 +34,11 @@ const nextInRing = <T,>(ring: readonly T[], current: T, key: string): T | null =
 // so a mark on every row would be four glyphs saying nothing.
 //
 // This sentence used to name a mint BORDER as a third signal, and a card that
-// the border was drawn on. Neither exists: the option is a bare row on the
-// shared shell now, it owns no edges, and appearance.css carries both the
-// arithmetic for what the wash replaced and the reason a mint edge cannot come
-// back. Two signals, not three.
+// the border was drawn on. Neither exists: every option now carries the same
+// resting --tint-2 inset shell, matching Commands' target-weight boundary rather
+// than a container edge at --border, while selection adds the mint wash beneath
+// it. The shell is anatomy, not state; selection still reads through the wash,
+// mint name, and mint mark.
 //
 // `aria-hidden` because it is decorative twice over: `aria-selected` and
 // `aria-checked` are what actually announce the state.

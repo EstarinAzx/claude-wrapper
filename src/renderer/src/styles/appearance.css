@@ -217,13 +217,12 @@
 /* ── the option rows ──────────────────────────────────────────────────────
 
    THE THREE DOCKS DRAW ONE BODY ROW, and this file was the odd one out. The
-   agents dock, the commands dock and the sessions rail all draw theirs the same
-   way: a transparent box on an 8px radius, 2px from its neighbour, sitting in a
-   6px gutter, painted only while the pointer is on it or it is the current one.
-   This panel drew the same content as rows inside a bordered, 8px-rounded,
-   --tint-1 slab divided by hairlines. Two grammars for one object inside one
-   248px slot, so a reader crossing the three docks met a different thing in
-   each of them.
+   agents dock, the commands dock and the sessions rail established the shared
+   8px radius, 2px rhythm, 6px gutter and state grounds; Commands has since made
+   the target visible at rest with one inset --tint-2 hairline. This panel drew
+   the same content as rows inside a bordered, 8px-rounded, --tint-1 slab divided
+   by hairlines. Two grammars for one object inside one 248px slot, so a reader
+   crossing the three docks met a different thing in each of them.
 
    THE DIRECTION IS THE DOCKS', AND THE REASON IS THAT ONLY ONE OF THE TWO
    TRAVELS. Boxing the agent and command lists to match this panel cannot be
@@ -232,9 +231,9 @@
    the sessions rail and the agents dock as one object mirrored, naming the row
    shell as one of the four things that make them one. Boxing two of the three
    right-hand lists would break that mirror to close a smaller gap, and the rail
-   is not this pass's to move. The bare row travels the other way with nothing
-   left over: a bounded set of options is a list with one member lit, which is
-   precisely what the sessions rail's active row has always been.
+   is not this pass's to move. The uncontained row travels the other way with
+   nothing left over: a bounded set of options is a list with one member lit,
+   which is precisely what the sessions rail's active row has always been.
 
    WHAT THE BORDER SAID IS ALREADY SAID DIRECTLY ABOVE IT. The section header —
    mark, micro-caps name, and at the time a hairline running out to the column's
@@ -246,11 +245,14 @@
    group is the header sitting 4px above them against 24px of clear ground
    behind it, and a container drawn round them would still be saying it twice. What the container was
    holding is held, and more of it: with no ground painted under the options,
-   hover and selection are the only things that paint a row anywhere in the
-   panel. The one filled shell left in the dock is the zoom stepper, which is a
-   control and not a body row — and a control that states its own shell is
-   vocabulary the rails already carry, in the bordered retry button and in the
-   filled pressed scope chip.
+   hover and selection are the only things that fill a row anywhere in the panel.
+   The options now carry only a target-weight boundary at rest, matching
+   Commands' --tint-2 inset shell rather than the container-weight --border edge;
+   they still borrow the dock's ground until hover or selection fills it. The one
+   filled shell left in the dock is the zoom stepper, which is a control and not
+   a body row — and a control that states its own shell is vocabulary the rails
+   already carry, in the bordered retry button and in the filled pressed scope
+   chip.
 
    --tint-1 IS THE ROWS' HOVER AND THIS FILE WAS SPENDING IT AS A RESTING
    GROUND. tokens.css names that step "row + menu-item hover" and shared.css
@@ -285,9 +287,13 @@
 .appearance-choices {
   display: flex;
   flex-direction: column;
-  /* The lists' own row rhythm, from the three-selector group in rails.css. It
-     is what replaces the hairline dividers: rows are told apart by the ground
-     showing between them, exactly as they are in the other two docks. */
+  /* 2px is the shared list rhythm from rails.css's three-selector group. It is
+     what replaced the hairline dividers: ground between rows, not a rule. Wave 7
+     gave every option a resting --tint-2 shell, so this gap is now ground BETWEEN
+     shells rather than between open rows. Commands went dock-local to 6px for the
+     same reason (shell + ground + shell); Agents still shares the 2. Wave 7's
+     Appearance critic named 4px as the next lever if 2 reads corrugated under the
+     new shells — leave that to a builder, do not silently open it here. */
   gap: 2px;
 }
 
@@ -308,6 +314,10 @@
      with its text, and a pill on a growable box becomes a lozenge. */
   border-radius: 8px;
   background: transparent;
+  /* The resting target shell, matching Commands' --tint-2 boundary rather than
+     the stronger --border edge reserved for containers. Inset paint adds no
+     layout cost, so the 235px row and its 215px text column stay unchanged. */
+  box-shadow: inset 0 0 0 1px var(--tint-2);
   text-align: left;
   cursor: pointer;
   transition: background 150ms var(--ease);
@@ -322,14 +332,15 @@
   box-shadow: inset 0 0 0 1px var(--tint-6);
 }
 
-/* The selected option is the only mint in the panel, so the state reads at a
-   glance. It used to be the mint wash PLUS a mint border on the card, and the
-   border is what this row cannot keep: it owns no edges at all any more, and a
-   mint one drawn back on would be a ring the other two docks never draw round
-   their own current row. The wash alone is what the sessions rail's active row
+/* Each pick-one control's selected option is its only mint row, so the state
+   reads at a glance. Every option now owns the same resting --tint-2 inset shell, matching
+   Commands' target-weight boundary rather than a container edge at --border;
+   selection lays the mint wash under that unchanged hairline. The old mint
+   border does not return: a state-coloured ring would add a boundary signal the
+   other dock rows do not use. The wash is what the sessions rail's active row
    has always used, minus the stripe that row carries under a named exception.
 
-   Losing it costs nothing, and the arithmetic says why. A theme row measures
+   Losing the old mint border costs nothing, and the arithmetic says why. A theme row measures
    ~30px, not the 33px this note first used.
 
    THE DERIVATION OF THAT ~30 LIVES HERE NOW. It used to live in the zoom note

@@ -15,10 +15,12 @@
 // taken in its own layout state.
 //
 // ── the four changes, and what each is pinned by ──────────────────────────
-//   WelcomeMinWindow  the stack went 16/8/32 -> 8/8/32: the mark closes into the
+//   WelcomeMinWindow  the stack went 16/8/24 -> 8/8/32: the mark closes into the
 //                     editorial block and the action stands off as a final beat.
-//                     Pinned by W1..W2. W2 is the one that proves it cost no
-//                     height.
+//                     Pinned by W1..W2 at wave 6. **Wave 7 superseded both**: the
+//                     action gap is 24 again (critic: 32 was one beat too wide),
+//                     so W2's net-zero claim is false and W1's beat>=16 threshold
+//                     no longer discriminates 24 from 32. Successor: wave7 W1.
 //   AgentsDock        the two view controls became a bound two-segment switch and
 //                     the close was isolated, so the head stopped reading as one
 //                     undifferentiated icon run. Pinned by A1..A3.
@@ -217,52 +219,37 @@ const W = await page.evaluate(() => {
   return { now, before, restored }
 })
 
-// W1 — THE COMPOSITION CLAIM, ASSERTED WITH A STRICT MARGIN IN BOTH DIRECTIONS.
-//
-// The claim is not "the last gap is biggest" — that was ALREADY TRUE at wave 5
-// (16/8/24), so a check phrased that way would have been green before the wave
-// ran, which is wave 5's W6 defect exactly. The claim is that the mark now joins
-// the editorial block: the first two intervals close to within 4px of each other,
-// AND the action's interval clears the larger of them by at least 16px.
-//
-// wave 5  16 / 8 / 24  ->  |16-8| = 8, fails clause 1; 24-16 = 8, fails clause 2
-// wave 6   8 / 8 / 32  ->  |8-8|  = 0, clears;         32-8  = 24, clears
-//
-// Both clauses discriminate, so reverting EITHER declaration reds this check.
-{
-  const n = W?.now
-  const b = W?.before
-  const lockup = n ? Math.abs(n.markToTitle - n.titleToHint) : null
-  const beat = n ? n.hintToAction - Math.max(n.markToTitle, n.titleToHint) : null
-  const oldLockup = b ? Math.abs(b.markToTitle - b.titleToHint) : null
-  const oldBeat = b ? b.hintToAction - Math.max(b.markToTitle, b.titleToHint) : null
-  check(
-    'W1 the mark joins the editorial lockup and the action stands off as a final beat',
-    n !== undefined && n !== null && lockup <= 4 && beat >= 16,
-    {
-      nowGaps: n ? [px(n.markToTitle), px(n.titleToHint), px(n.hintToAction)] : null,
-      lockupSpread: px(lockup),
-      beatMargin: px(beat),
-      reconstructedGaps: b ? [px(b.markToTitle), px(b.titleToHint), px(b.hintToAction)] : null,
-      reconstructedLockupSpread: px(oldLockup),
-      reconstructedBeatMargin: px(oldBeat),
-      reconstructionWouldFail: oldLockup > 4 || oldBeat < 16
-    }
-  )
-}
-
-// W2 — AND IT COST NOTHING. The 8px taken off the mark went to the action, so the
-// reconstruction is the SAME TOTAL HEIGHT. This is the check that makes the
-// builder's net-zero claim falsifiable rather than asserted: if a later edit pays
-// for this composition in height, the pane's headroom is what absorbs it.
+// W1 — SUPERSEDED by wave 7, not softened.
+// Wave 6 claimed lockup<=4 AND beat>=16 on an 8/8/32 stack. Wave 7 pulled the
+// action to 24 (beat exactly 16), which still clears those thresholds — so the
+// pin would stay green over the design it no longer describes, and would also
+// stay green if the action went back to 32. Successor: gui-gauntlet-wave7.mjs W1,
+// which pins ~[8,8,24] with an UPPER bound on the beat so 32 reds.
 check(
-  'W2 the new stack is exactly as tall as the one it replaced',
-  near(W?.now?.stackHeight, W?.before?.stackHeight, 0.5) && near(W?.now?.stackHeight, W?.restored?.stackHeight, 0.01),
+  'W1 SUPERSEDED by wave7 W1 — wave6 beat floor no longer discriminates 24 from 32',
+  true,
   {
+    supersededBy: 'gui-gauntlet-wave7.mjs W1',
+    reason:
+      'wave7 set .pick-folder-btn margin-top 32->24; a beat>=16 floor is met by both',
+    nowGaps: W?.now
+      ? [px(W.now.markToTitle), px(W.now.titleToHint), px(W.now.hintToAction)]
+      : null
+  }
+)
+
+// W2 — SUPERSEDED by wave 7, not softened.
+// Wave 6's net-zero (8 off mark, 8 onto action) is exactly what wave 7 undoes on
+// the action side only. now.stackHeight is ~8px shorter than the wave-5
+// reconstruction; asserting equality would be a permanent red or a lie.
+check(
+  'W2 SUPERSEDED by wave7 W1 — net-zero height was true only while action stayed at 32',
+  true,
+  {
+    supersededBy: 'gui-gauntlet-wave7.mjs W1',
     nowHeight: px(W?.now?.stackHeight),
     reconstructedHeight: px(W?.before?.stackHeight),
-    restoredHeight: px(W?.restored?.stackHeight),
-    note: 'restored must equal now to the hundredth, or the reconstruction leaked'
+    restoredHeight: px(W?.restored?.stackHeight)
   }
 )
 

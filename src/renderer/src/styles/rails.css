@@ -1102,6 +1102,12 @@
   padding-bottom: calc(8px + 2px + 1.45 * var(--fs-micro));
 }
 
+/* Separate the outlined targets optically: 1px shell + 6px ground + 1px shell.
+   The shared 2px list gap deliberately stays untouched for sessions and agents. */
+.command-list {
+  gap: 6px;
+}
+
 /* THE ROW'S OWN BOUNDARY — the thing that makes this a picker rather than a
    printed list, and the reason it was missing is structural rather than sloppy.
    Every other list in the app paints a row only to report a STATE: the sessions

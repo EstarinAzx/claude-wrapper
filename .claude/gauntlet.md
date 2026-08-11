@@ -14,20 +14,24 @@ pieces:
   - name: AgentsDock
     verdict: BAR WINS
     open: true
+  # Wave 7: BAR WINS -> YOURS WINS. Dock-local command-list gap 2 -> 6.
+  # CLOSED — YOURS WINS stops consuming builders. Critic may still re-open if a
+  # later cross-cutting build moves its capture.
   - name: CommandsDock
-    verdict: BAR WINS
-    open: true
-  # Wave 5: BAR WINS -> TOO CLOSE. The SECOND verdict movement in this run, one
-  # wave after the first, and this one came from a piece that DID have a builder.
-  # Its gap was the zoom stepper's full-width shell; closing it left the dock
-  # with two list containers and a headed row, and the critic could no longer
-  # separate it from the bar.
+    verdict: YOURS WINS
+    open: false
+  # Wave 5: BAR WINS -> TOO CLOSE.
+  # Wave 7: TOO CLOSE -> BAR WINS. REGRESSION — every option got a resting shell
+  # at the shared 2px gap and the critic read the near-touching rounded rows as a
+  # corrugated segmented control. The shell itself is still the right anatomy;
+  # the next lever is the gap (named 4px).
   - name: AppearanceDock
-    verdict: TOO CLOSE
-    open: true
-  - name: WelcomeMinWindow
     verdict: BAR WINS
     open: true
+  # Wave 7: BAR WINS -> YOURS WINS. CTA margin-top 32 -> 24. CLOSED.
+  - name: WelcomeMinWindow
+    verdict: YOURS WINS
+    open: false
   # Added by wave 2's smoothing pass, on its one-new-piece budget. Five of six
   # slots used. CRITIC ONLY on wave 3 — no critic has named a gap for it, and a
   # builder handed no gap would be redesigning, which is wave 1's rule. Its
@@ -40,6 +44,8 @@ pieces:
   # again from a piece with NO builder: CommandsDock closing its own gap with a
   # resting row shell is what made the docks agree less. Its stated reason is
   # PARTLY FALSE and must not be handed to a builder as written — adjudication 2.
+  # Wave 7: held BAR WINS. Critic-only (owner call 19 default). Gap still asks
+  # for Agents resting shells — same collision A as wave 6.
   - name: DocksAsOne
     verdict: BAR WINS
     open: true
@@ -49,21 +55,25 @@ pieces:
   # and a builder handed no gap is redesigning. Its wave-4 verdict is a BASELINE
   # and cannot count toward plateau, exactly as wave 1's and DocksAsOne's could not.
   # Wave 4 IS that baseline; wave 5 is the first wave its verdict can move.
+  # Wave 7: BAR WINS -> YOURS WINS. Critic-only (collision B: did not remove the
+  # Agents view-switch capsule). Critic accepted the capsule as justified grouping.
+  # CLOSED — do not hand a builder the zoom-minus gap unless re-opened; and do
+  # NOT remove the capsule (that would undo this win for collision B).
   - name: IconHousing
-    verdict: BAR WINS
-    open: true
+    verdict: YOURS WINS
+    open: false
 critic: sonnet                 # FAMILY name only — re-resolve live every wave, never carry the target
 critic_degraded: false
 branch: gauntlet/docks-and-min-window
-wave: 6
-# 0 -> 1. NO PIECE IMPROVED at wave 6 and one REGRESSED (DocksAsOne, TOO CLOSE ->
-# BAR WINS), so the counter increments on the preset's literal rule: "any piece
-# whose verdict improved -> 0; none improved -> += 1". A regression is not an
-# improvement, so it counts as a plateau wave.
-# NOT ADJUSTED, and the reading that a regression should be treated differently
-# from a stall is raised as owner call 20 rather than acted on here.
-# The halt is at plateau 3, so it is two waves away at the earliest.
-plateau: 1
+wave: 7
+# 1 -> 0. THREE pieces improved at wave 7 (CommandsDock, WelcomeMinWindow,
+# IconHousing all BAR WINS -> YOURS WINS). One REGRESSED (AppearanceDock
+# TOO CLOSE -> BAR WINS). On the preset's literal rule any improvement resets
+# the counter, so plateau returns to 0 even though a regression also landed.
+# Owner call 20 (regression == stall?) is still open and still not acted on;
+# this wave would not have changed the counter either way under a "regression
+# breaks plateau" reading, because improvements already force the reset.
+plateau: 0
 max_waves: 12
 page: false
 stop: false
@@ -204,6 +214,80 @@ this file. Every one of them has already cost this repo a false finding.
 | 6 | WelcomeMinWindow | BAR WINS | The new spacing hierarchy is better, but the deck-to-CTA interval is now one beat too wide; pull the button up about 8px without moving the upper three elements. *(Directly reverses half of the gap wave 5 gave this piece. The 8 -> 32 move it is asking to partly undo is what `W1` pins; a builder taking it must supersede `W1`, not soften it.)* |
 | 6 | DocksAsOne | **BAR WINS** | **THE VERDICT MOVED BACKWARDS — the first regression in either run.** "Replace the three-way row grammar with one shared shell for every top-level item, instead of Commands outlining every row, Appearance containing only selected rows, and Agents leaving rows open." **THE THREE-WAY SPLIT IS MEASURABLY FALSE — see adjudication 2. Do not forward this gap as written.** |
 | 6 | IconHousing | BAR WINS | Keep the shared 28px box and the active fill local, but remove the outer capsule joining the two Agents view buttons so each reads as the same independent rounded-square housing used by every other icon control. *(Directly contradicts the gap wave 5 gave AgentsDock, which this wave built. Two pieces, opposite instructions, same object — adjudication 3.)* |
+| 7 | AgentsDock | BAR WINS | *(no builder — owner call 19 / collision A)* Replace the loose text stack with full-width agent rows that align names, descriptions, metadata, and selection affordances while preserving the nested child hierarchy. |
+| 7 | CommandsDock | **YOURS WINS** | **THE VERDICT MOVED.** Preserve the 6px gutters, but add 4px more horizontal dock padding so the row shells do not crowd the outer rails. |
+| 7 | AppearanceDock | **BAR WINS** | **THE VERDICT MOVED BACKWARDS — second regression in the run.** Increase the vertical gap between option shells to 4px so the near-touching rounded rows stop reading as a corrugated segmented control. *(The resting shell anatomy is kept; the gap is the lever. `.appearance-choices` is still at the shared 2px.)* |
+| 7 | WelcomeMinWindow | **YOURS WINS** | **THE VERDICT MOVED.** Preserve the 24px hint-to-CTA gap; further tightening would collapse the clear separation between explanation and action. |
+| 7 | DocksAsOne | BAR WINS | *(no builder — owner call 19)* Give every Agents entry, including nested Explore, the same subtle resting shell and border used across Commands and Appearance while preserving its hierarchy connector and selected fill. **Still collision A — do not build without resolving owner call 19.** |
+| 7 | IconHousing | **YOURS WINS** | **THE VERDICT MOVED.** *(no builder — collision B held)* Widen the zoom minus glyph slightly so its optical weight matches the plus, close, and view-switch glyphs inside their 28px control boxes. |
+
+## Wave 7 adjudications — three verdicts moved forward, one moved back, collisions held, plateau resets
+
+**Three builders, six critics, one comment-only smoothing pass.** Gate green (D7); **zero `SPEC BREAK`s**; critic family re-resolved live to `sonnet` -> `codex/gpt-5.6-sol`; `critic_degraded: false`. Final CSS bundle **`index-D6IIg5C6.css`** (left wave 6's `index-ih-Msm34`).
+
+### 1. THE PLATEAU RESETS — THREE IMPROVEMENTS AND ONE REGRESSION IN THE SAME WAVE
+
+| piece | before | after | builder? |
+|---|---|---|---|
+| CommandsDock | BAR WINS | **YOURS WINS** | yes — gap 2 -> 6 |
+| WelcomeMinWindow | BAR WINS | **YOURS WINS** | yes — CTA mt 32 -> 24 |
+| IconHousing | BAR WINS | **YOURS WINS** | no — collision B held; critic accepted the capsule |
+| AppearanceDock | TOO CLOSE | **BAR WINS** | yes — resting shells on all six; gap stayed 2 |
+| AgentsDock | BAR WINS | BAR WINS | no — collision A held |
+| DocksAsOne | BAR WINS | BAR WINS | no — critic-only |
+
+On the preset's literal rule any improvement resets the counter, so **`plateau` 1 -> 0**. The regression does not block the reset. Owner call 20 is still open and still not acted on; under a "regression breaks plateau" reading this wave would still reset, because improvements already force it.
+
+### 2. BOTH COLLISIONS WERE HELD AT THE DEFAULT — AND ONE OF THEM GOT A FREE IMPROVEMENT
+
+**Collision A (Agents row shell vs DocksAsOne):** no builder on Agents, no builder on DocksAsOne. DocksAsOne's gap still asks for Agents resting shells — same ask, still blocked on owner call 19. **Do not build it next wave without a human pick.**
+
+**Collision B (IconHousing capsule removal vs AgentsDock switch):** no builder on IconHousing. The critic **accepted the capsule as justified grouping** and moved the piece to YOURS WINS on the housing grammar as it stands, naming a different gap (zoom-minus optical weight). **The contradiction did not need resolving this wave** — holding the default is what let the housing verdict move forward. A later builder that removes the capsule would be undoing a YOURS WINS for a piece that just closed.
+
+### 3. APPEARANCE'S REGRESSION IS THE SHELL-WITHOUT-GUTTER TRAP, NOT A BAD SHELL
+
+Wave 6's Commands critic asked for gutters *because* the rows had shells. Wave 7 gave Appearance the same shells and left the list at the shared `gap: 2px`. The critic read near-touching rounded rows as a corrugated segmented control and named **4px** as the next lever.
+
+**Commands already paid this tax last wave** (gap 2 -> 6, dock-local). Appearance now owes the same class of move. The shell anatomy is correct and stays; only the gap is in play. `.appearance-choices { gap: 2px }` is still the shared rhythm and was deliberately not opened in the smoothing pass.
+
+### 4. WELCOME'S UPPER-BOUND PIN IS THE SUPERSESSION THAT WORKED
+
+Wave 6 W1 was `beat >= 16`. At stack `[8,8,24]` beat is exactly 16, and at `[8,8,32]` beat is 24 — so the floor is green over both. Wave 7 retired W1 and W2 **in place** inside `gui-gauntlet-wave6.mjs` and wrote `gui-gauntlet-wave7.mjs` W1 as:
+
+- lockup spread `<= 4`
+- authored gaps near `[8, 8, 24]`
+- beat in `12..20` (so 16 greens and 24 reds)
+- live reconstruction of action=32 must fail the upper bound
+- live reconstruction of mark=16 must fail the lockup
+
+Driver measured `nowGaps [8,8,24]`, `beatMargin 16`, `at32Beat 24`, `mark16Lockup 8`, `reconstructionWouldFail true`. **Headroom measured 69.71 against claimed 70.**
+
+### 5. COMMANDS'S WIN IS LAYOUT-ONLY AND THE FENCE HELD
+
+`.command-list { gap: 6px }` is dock-local. Shared `.session-list, .agent-list, .command-list` still declares `gap: 2px`; agents, if mounted, stay on 2. C1 asserts both the 6 and the reconstructed 2, and that resting shells remain. **`sidebar.png` byte-identical** wave 6 -> 7 proves the sessions rail did not move despite another `rails.css` edit.
+
+### 6. SMOOTHING PASS MOVED ZERO PIXELS
+
+One comment-only edit on `.appearance-choices` recording the corrugated-gap finding and naming 4px as the next builder lever. CSS bundle hash **unchanged** at `index-D6IIg5C6` before and after. **No new piece — list full at six of six.**
+
+### 7. Verification that was run rather than trusted
+
+- **Build before capture.** Bundle left `index-ih-Msm34` for `index-D6IIg5C6` before inspect ran.
+- **Inspect PASS**, headroom 69.71 / claimed 70, overflow 0, 11/11 files written under `.gauntlet/waves/docks-and-min-window/7/`.
+- **Drivers wave2..wave7 ALL GREEN.** Wave7: W1/C1/B1/B2 with live reconstructions that fail.
+- **Blast radius by SHA256 (not byte counts):** DIFF `appearance-dock`, `commands-dock`, `welcome-min-window`, `welcome`, `window-welcome`. SAME `agents-dock`, `chat`, `input-bar`, `sidebar`, `titlebar`, `window-session`. **Null controls alive:** `titlebar.png` and `sidebar.png` identical through wave 7.
+- **Gate:** typecheck clean; **96 files / 1406 passed + 42 skipped** (+1 attributed to `gui-gauntlet-wave7.mjs`); build clean, final hash `index-D6IIg5C6`.
+- **Critic routing re-resolved live** this wave: `sonnet` -> `codex/gpt-5.6-sol`. Eight consecutive waves, each read fresh.
+
+### 8. What wave 8 inherits
+
+| piece | wave 8 posture | trap |
+|---|---|---|
+| AppearanceDock | **BUILD** — gap 2 -> 4 on `.appearance-choices` | pure spacing; do not touch the shell or the mark slot |
+| CommandsDock | optional / low priority | horizontal padding 4px more; YOURS WINS already |
+| WelcomeMinWindow | **CRITIC ONLY** | gap says preserve 24; do not tighten further |
+| IconHousing | optional glyph weight | zoom-minus only; **do not remove the capsule** |
+| AgentsDock / DocksAsOne | **still collision A** | row shell; owner call 19 — default remains build nothing |
 
 ## Wave 6 adjudications — a verdict moved BACKWARDS, the cross-dock gap is partly false, and a driver red was found that had been sitting unreported for a whole wave
 
@@ -1432,6 +1516,32 @@ verdict to improve on, so it cannot be a plateau wave — the same call run 1 ma
 recorded. Wave 2 is the first wave that can move it.
 
 ## Log
+- [wave 7] **THREE VERDICTS MOVED FORWARD, ONE MOVED BACK, PLATEAU RESETS.**
+  `CommandsDock` BAR WINS -> YOURS WINS, `WelcomeMinWindow` BAR WINS -> YOURS WINS,
+  `IconHousing` BAR WINS -> YOURS WINS, `AppearanceDock` TOO CLOSE -> BAR WINS
+  (regression). `plateau` **1 -> 0**. Three builders (Commands gap 2->6, Appearance
+  resting shells, Welcome CTA 32->24), six critics, one comment-only smoothing pass.
+  Zero `SPEC BREAK`s. Critic re-resolved live: `sonnet` -> `codex/gpt-5.6-sol`
+  (eighth consecutive, read fresh). Final bundle **`index-D6IIg5C6.css`**.
+- [wave 7] **BOTH COLLISIONS HELD AT OWNER-CALL-19 DEFAULT.** AgentsDock and
+  DocksAsOne got no builder (collision A — row shell). IconHousing got no builder
+  (collision B — capsule removal). **IconHousing still moved to YOURS WINS**: the
+  critic accepted the Agents view-switch capsule as justified grouping and named a
+  different gap (zoom-minus optical weight). Do not remove the capsule next wave.
+- [wave 7] **APPEARANCE'S REGRESSION IS THE SHELL-WITHOUT-GUTTER TRAP.** Same class
+  of finding Commands paid last wave. Resting shells landed on all six options at
+  the shared `gap: 2px`; critic read near-touching rounded rows as a corrugated
+  segmented control and named **4px** as the next lever. Shell anatomy stays;
+  gap is the only open build for Appearance at wave 8.
+- [wave 7] **WELCOME SUPERSESSION WORKED.** Wave6 W1/W2 retired in place; wave7 W1
+  pins `[8,8,24]` with beat in 12..20 so 32's beat=24 reds, plus live reconstructions
+  that fail. Headroom **69.71 / claimed 70**. Inspect PASS, drivers wave2..wave7
+  ALL GREEN. YOURS WINS pieces closed (`open: false`) so they stop consuming builders.
+- [wave 7] Blast radius by SHA256: **5 moved / 6 identical**. Moved: appearance-dock,
+  commands-dock, welcome-min-window, welcome, window-welcome. Identical: agents-dock,
+  chat, input-bar, **sidebar**, **titlebar**, window-session. Null controls alive.
+  Gate: typecheck clean, **96 files / 1406 passed + 42 skipped** (+1 =
+  `gui-gauntlet-wave7.mjs`), build clean. Nothing pushed.
 - [wave 6] **A VERDICT MOVED BACKWARDS — the first regression in either run.** `DocksAsOne`
   went **TOO CLOSE -> BAR WINS**, no other verdict moved either way, so `plateau` goes
   **0 -> 1** on the preset's literal rule and was not adjusted. Four builders, six critics,

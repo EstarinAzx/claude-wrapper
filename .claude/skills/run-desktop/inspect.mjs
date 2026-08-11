@@ -175,7 +175,8 @@ const MIN_DENSITY_RATIO = 1
 // Never move this number to match a measurement without also moving the sum in
 // `chat.css` that it is a copy of. Wave 5 moved the sum first, in the same
 // change, which is the only order this rule permits.
-const CLAIMED_HEADROOM_PX = 62
+// wave7: welcome action gap 32 -> 24 banks ~8px into headroom (61.71 -> ~69.71).
+const CLAIMED_HEADROOM_PX = 70
 
 const log = (label, m) => console.log(String(label).padEnd(12) + JSON.stringify(m))
 const fails = []
