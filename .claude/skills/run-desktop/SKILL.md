@@ -76,6 +76,15 @@ comparing composition needs a comparable unit.
 - **Zero CLI turns, no engine, no API key.** The transcript is a fixture on
   disk (gui-63's mechanism), so the same command gives the same surfaces on
   any machine.
+- **The sessions rail is a fixture too, since #148.** Both of its lists are
+  replaced in main: the stored transcripts (`session:list`) and the CLI's live
+  agent view (`background-sessions:list`). Before #148 the rail listed this
+  machine's real store, which is why `sidebar.png` and `window-session.png` were
+  the only two captures that could not be byte-compared — the footer's "N
+  sessions outside this project" is a real count, and it reads 950, 951, 952 and
+  953 across the four committed waves that render it. The rail is read back and
+  compared to the fixture before capture, because a stub that failed to install
+  would photograph real session data with every other check still green.
 - **Deterministic.** Window forced to 1440x900 and `setZoomFactor(1)` — both are
   otherwise remembered across launches and would silently change the scale.
 - **A capture failure is loud.** Each surface is proven present, painted, on

@@ -20,7 +20,7 @@ export const DRIVER_DIR = path.resolve(import.meta.dirname)
 const isSidecar = (f) => f.endsWith('.source.mjs')
 
 // The set is `gui-*.mjs`, which is #132's convention and not an accident of
-// globbing. Three other `.mjs` files live in this directory and are deliberately
+// globbing. Four other `.mjs` files live in this directory and are deliberately
 // NOT members, named here so their absence is a decision on the record rather
 // than something nobody noticed:
 //
@@ -38,6 +38,13 @@ const isSidecar = (f) => f.endsWith('.source.mjs')
 //                (`tests/inspect-fixture-workspace.test.ts`), which is the
 //                whole reason those three lines live outside the driver: the
 //                driver cannot be imported without launching Electron.
+//   inspect-sessions.mjs
+//                #148. Also not an executable — the sessions rail's fixture,
+//                holding the row set and the age offsets that replace this
+//                machine's real store in `sidebar.png` and `window-session.png`.
+//                Outside the driver for the same reason as the file above, and
+//                run by the fast gate in `tests/inspect-sessions-fixture.test.ts`
+//                against the app's real `groupSessions`.
 //
 /** Every `gui-*.mjs` driver, sorted. The definition of "the driver set". */
 export const listDrivers = () =>

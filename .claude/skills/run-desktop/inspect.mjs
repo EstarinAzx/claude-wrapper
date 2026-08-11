@@ -83,9 +83,12 @@
 // produces the same surfaces on a machine with no Claude Code session, no
 // network and no API key.
 //
-// THE WHOLE INSTRUMENT IS FIXTURE-DRIVEN, and the docks did not change that —
-// they only added two more fixtures to the one that was already here. Stated
-// plainly because a capture cannot show a reader where its content came from:
+// THE WHOLE INSTRUMENT IS FIXTURE-DRIVEN, and #148 is what finally made that
+// true. It was written when the docks arrived and was wrong about one surface
+// for two tickets: the sessions rail listed this machine's real store, which is
+// why `sidebar.png` and `window-session.png` were the only captures that could
+// never be byte-compared and why #137 had to exclude them. Stated plainly here
+// because a capture cannot show a reader where its content came from:
 //
 //   * CHAT replays a transcript this file wrote to the CLI's own store.
 //   * AGENTS reads `.meta.json` sidecars this file wrote next to that
@@ -96,6 +99,16 @@
 //     with no engine the dock's truthful answer is its empty state. The handler
 //     is therefore REPLACED IN MAIN with a fixture list, exactly as
 //     `dialog.showOpenDialog` is replaced above it.
+//   * The SESSIONS RAIL is #148, and it carries TWO lists that both had to be
+//     replaced. `session:list` is the stored transcripts, and unstubbed it
+//     answers with this machine's whole store — the rail's "N sessions outside
+//     this project" footer is a real count, and it reads 950, 951, 952 and 953
+//     across the four committed waves that render it. `background-sessions:list`
+//     is the CLI's live agent view, one ~893ms process per look, whose answer
+//     depends on what is running on the machine. Both are REPLACED IN MAIN, and
+//     the rail is then read back and compared to the fixture before any capture,
+//     because a stub that silently failed to install would photograph real
+//     session data while every other check stayed green.
 //   * APPEARANCE needs no fixture at all. Its content is local state.
 //
 // So a green `commands-dock.png` says NOTHING about whether the CLI serves
@@ -127,6 +140,7 @@ import fs from 'node:fs'
 import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { prepareWorkspace } from './inspect-workspace.mjs'
+import { buildSessionsFixture } from './inspect-sessions.mjs'
 
 // `fileURLToPath`, never `URL.pathname` — this repo's own path contains a space.
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -372,6 +386,23 @@ const COMMANDS = [
   { name: 'wrap-up', description: '', argumentHint: '' },
   { name: 'hp', description: 'Map the golden path before any code exists', argumentHint: '' }
 ]
+
+// ---- the sessions fixture ---------------------------------------------------
+//
+// #148. Installed over `session:list` in MAIN, at the same boundary and for the
+// same reason as the commands list above it: main owns the answer, and here the
+// real answer is this machine's own store. `inspect-sessions.mjs` holds the whole
+// decision — why the ages are offsets rather than timestamps, why the seeded row
+// is not "now", and why the rail carries five rows instead of one.
+//
+// Built once, at script start, so every row's age is measured from one instant
+// rather than from whenever the handler happened to be called.
+const SESSIONS = buildSessionsFixture({
+  sid: SID,
+  title: FIRST_PROMPT,
+  workspace: WORKSPACE,
+  now: Date.now()
+})
 
 let cleaned = false
 const cleanup = () => {
@@ -791,6 +822,33 @@ try {
     ipcMain.handle('commands:list', async () => commands)
   }, COMMANDS)
 
+  // #148 — the sessions rail, both of its lists, at the same boundary.
+  //
+  // STORED TRANSCRIPTS. Without this the rail lists this machine's real store,
+  // which is what made `sidebar.png` and `window-session.png` the only two
+  // captures that could never be byte-compared: the footer's "N sessions outside
+  // this project" is a real count that only goes up, measured at 950, 951, 952
+  // and 953 across the four committed waves that render it.
+  //
+  // LIVE BACKGROUND SESSIONS. `background-sessions:list` shells out to the CLI
+  // (~893ms per look, #90) and answers for whatever is running on the machine.
+  // The fixture workspace is fresh, so the honest answer today is `[]` and every
+  // committed wave duly shows "None running here" — but that stability is an
+  // accident of the workspace being new, and on a machine with no `claude` on
+  // PATH the same section renders a FAILED look instead (`null` is a failed look,
+  // `[]` an empty workspace). `[]` is therefore stated rather than relied upon,
+  // which also takes a real CLI process out of a run that advertises spending
+  // none.
+  await app.evaluate(
+    ({ ipcMain }, sessions) => {
+      ipcMain.removeHandler('session:list')
+      ipcMain.handle('session:list', async () => sessions)
+      ipcMain.removeHandler('background-sessions:list')
+      ipcMain.handle('background-sessions:list', async () => [])
+    },
+    SESSIONS.sessions
+  )
+
   page = await app.firstWindow()
   await page.waitForLoadState('domcontentloaded')
   await page.waitForSelector('[aria-label="Backend mode"]', { timeout: 20000 })
@@ -817,7 +875,17 @@ try {
   // The key is versioned and its own comment says to bump it again on the next
   // default change, so this copy WILL drift. `tests/inspect-docks.test.ts` pins
   // the two spellings together for the day that happens.
-  await page.evaluate(() => window.localStorage.setItem('zoom-level-v2', '1'))
+  //
+  // The rail's scope is pinned here for the same class of reason, and #148 is
+  // what made it matter: `sidebar-scope` persists like the zoom level and the
+  // dock width, so a human who once clicked "All projects" on this profile would
+  // change what every later run's rail lists. `project` is the app's own default,
+  // stated rather than assumed, and it is the scope the fixture's foreign rows
+  // are counted-not-drawn under.
+  await page.evaluate(() => {
+    window.localStorage.setItem('zoom-level-v2', '1')
+    window.localStorage.setItem('sidebar-scope', 'project')
+  })
   await page.reload()
   await page.waitForLoadState('domcontentloaded')
   await page.waitForSelector('[aria-label="Backend mode"]', { timeout: 20000 })
@@ -1074,6 +1142,72 @@ try {
   if (replayed < 2) {
     fails.push(
       `the opened session replayed ${replayed} tool card(s), expected 2 — the fixture did not reach the pane, so the chat capture would not show what it claims to`
+    )
+    await finish()
+  }
+
+  // #148 — THE RAIL IS PROVEN FIXTURE-FED BEFORE IT IS PHOTOGRAPHED, and this is
+  // the assertion the ticket actually turns on.
+  //
+  // The obvious acceptance check here is "run it twice and byte-compare", and it
+  // gives the WRONG ANSWER: two runs minutes apart on one machine see the same
+  // real store, so the comparison passes on unfixed code. #142's leg measured
+  // exactly that and left a warning on the ticket. What has to be argued instead
+  // is what FEEDS the surface, so the run reads the rail back and compares it to
+  // the fixture it installed.
+  //
+  // FOUR CHECKS, AND THEY CATCH DIFFERENT FAILURES — measured by disabling the
+  // stub and watching which one fired, rather than assumed:
+  //
+  //   * the ROW COUNT is what catches a stub that did not install. Verified red:
+  //     with `session:list` left real the rail rendered 1 row against the
+  //     fixture's 5, and its footer read "976 sessions outside this project" —
+  //     the same real count that reads 953 in wave 5 and 950 in wave 2.
+  //   * the STRAY TITLES catch a rail that widened its scope. Under `project`
+  //     scope the real store can only ever contribute the seeded session, whose
+  //     title the fixture also carries, so this check stays quiet there and earns
+  //     its place against the scope pin failing instead.
+  //   * the FOOTER catches a list that is the right length and the wrong set,
+  //     since that count is derived from the whole array rather than the rows.
+  //   * the BACKGROUND ROWS catch the second stub alone.
+  const rail = await page.evaluate(() => ({
+    rows: [...document.querySelectorAll('.session-row-btn')].map(
+      (b) => b.querySelector('.session-row-title')?.textContent ?? ''
+    ),
+    foot: document.querySelector('.sidebar-foot-count')?.textContent ?? '',
+    bgRows: document.querySelectorAll('.bg-session-row').length
+  }))
+  log('RAIL', {
+    rows: rail.rows.length,
+    foot: rail.foot,
+    bgRows: rail.bgRows,
+    expect: { rows: SESSIONS.inProject, outside: SESSIONS.outside }
+  })
+
+  const fixtureTitles = new Set(SESSIONS.sessions.map((s) => s.title))
+  const strays = rail.rows.filter((t) => !fixtureTitles.has(t))
+  if (strays.length) {
+    fails.push(
+      `the sessions rail rendered ${strays.length} row(s) that are not in the fixture (first: ${JSON.stringify(strays[0])}) — the session:list stub did not take, so the rail is listing this machine's real store and the two rail captures would carry real session data`
+    )
+    await finish()
+  }
+  if (rail.rows.length !== SESSIONS.inProject) {
+    fails.push(
+      `the sessions rail rendered ${rail.rows.length} rows, expected the fixture's ${SESSIONS.inProject} — every row is a fixture row, so the rail is being filtered or capped by something this run did not set`
+    )
+    await finish()
+  }
+  const wantFoot = `${SESSIONS.outside} sessions outside this project`
+  if (rail.foot !== wantFoot) {
+    fails.push(
+      `the rail's footer reads ${JSON.stringify(rail.foot)}, expected ${JSON.stringify(wantFoot)} — that count is derived from the whole list, so a disagreement means the rail is counting sessions the fixture did not supply`
+    )
+    await finish()
+  }
+  if (rail.bgRows !== 0) {
+    fails.push(
+      `the rail listed ${rail.bgRows} live background session(s) — the background-sessions:list stub answers [], so any row here is a real one from this machine`
     )
     await finish()
   }
