@@ -1,281 +1,216 @@
 ---
-target: init
+target: rulings+triage
 idea: >
-  Make claude-wrapper reach the Linear bar confirmed by the owner on 2026-08-10
-  across the five core surfaces — Welcome, Titlebar, Sidebar, Chat, InputBar —
-  without drifting off `docs/design/frost-mono-reference.png`. The tracker is
-  empty; this is new work, and the owner's words were "make this app polished
-  well and complete and improved" with the scope resolved to the whole app end
-  to end.
-
-  KNOWN TICKET ZERO, established before this run and not up for grilling: the
-  consolidated `inspect:` command. `.claude/skills/run-desktop/driver.mjs`
-  reaches only Welcome + Titlebar — it waits for the two titlebar pills,
-  screenshots and exits, never picking a project folder. Nine of eleven surfaces
-  cannot be captured by any single command. About twenty ticket-specific
-  `gui-*.mjs` drivers in the same directory DO open workspaces and drive live
-  sessions, so the machinery exists and has never been consolidated. Gauntlet
-  cannot judge what it cannot see.
-
-  KNOWN DEFECTS from the 2026-08-10 capture
-  (`.gauntlet/bar/identity/current-welcome-2026-08-10.png`): the identity mark
-  renders as a blank mint rounded square with no glyph, in BOTH the titlebar and
-  the Welcome hero; the two mode pills crowd the app name with no separation
-  from identity; the Welcome composition floats in dead space.
-
-  HARD CONSTRAINT on every judgment in this run: material, translucency and
-  colour are OUT OF SCOPE for any driver-based verdict. The wash is
-  `oklch(0.12 0.008 210 / 0.64)`, composited by Windows over OS acrylic, and
-  DESIGN.md states no driver can see a DWM backdrop. The flat mid-grey ground in
-  the capture is an instrument artifact, not a defect. This repo has paid the
-  read-an-artifact-as-a-finding bill eight times.
-idea_correction: >
-  THE `idea:` FIELD ABOVE CONTAINS A FACTUAL ERROR. It is left intact because
-  vibe's contract writes the seed once and never rewrites it — this field is the
-  correction, and it wins.
-
-  "KNOWN DEFECTS ... the identity mark renders as a blank mint rounded square
-  with no glyph" is WRONG. The mark is solid **by design**: `.logo-mark`
-  (`titlebar.css:26`) and `.welcome-mark` (`chat.css:199`) are each a bare
-  `background: var(--mint)`; both elements are self-closing and
-  `aria-hidden="true"` (`Titlebar.tsx:175`, `Welcome.tsx:3`); DESIGN.md spends
-  the accent on the mark AS an accent and prescribes size, radius and fill but
-  never content; and `frost-mono-reference.png` shows the same solid mark. No
-  wave may add a glyph — see the `## Needs you` entry.
-
-  The other two items in that block ("pills crowd the app name", "composition
-  floats in dead space") are the main agent's unverified impressions from one
-  screenshot. They are NOT findings and must not be handed to a builder or a
-  critic. The bar file's defect list was deleted for the same reason: naming gaps
-  there hands the critic the verdict it exists to reach independently.
-
-  The HARD CONSTRAINT paragraph in the seed is correct and still binds.
+  Resolve every open issue on the tracker without the owner: rule the three
+  ready-for-human design questions (#138 type scale, #139 prose/label weight
+  pair, #140 mint side-stripe against the ban), triage the nine needs-triage
+  follow-ups (#141-#149) into an agent-ready queue, then fire the execution
+  chain with gauntlet chained behind it.
 partner: opus                 # anthropic/claude-opus-5
-pressure: opencode-go/kimi-k3
-pressure_via: sonnet          # first non-Claude family; no slot rebind, no restore owed
+pressure: codex/gpt-5.6-sol
+pressure_via: sonnet          # first non-Claude family in live `wisp routing`
 pressure_rationale: >
-  Resolved by vibe's own order: no prose override on the invocation, no
-  `pressure:` carried in a state file (the prior run was archived to
-  `.claude/vibe-130.md`), so the first non-Claude family in live `wisp routing`
-  wins — `sonnet` -> `opencode-go/kimi-k3`. Recorded risk, carried openly: the
-  archived chain-3 record says this Target "died three times on gateway 502/503
-  and judged nothing", which is why the #130 run overrode it by prose. The rule
-  has no flakiness clause, so it is followed. On failure the fallback is
-  `haiku` -> `xai/grok-4.5` — still cross-model — BEFORE same-model degraded,
-  because the invariant this preset protects is cross-model separation and
-  same-model is the last resort rather than the second.
+  Resolved by vibe's own order, run live this session: no prose override on the
+  invocation, no `pressure:` carried in a fresh file (the prior run was archived
+  to `.claude/vibe-131.md`), so the first non-Claude family in `wisp routing`
+  wins — `sonnet` -> `codex/gpt-5.6-sol`. NOTE the route MOVED since the #131
+  run, which recorded `sonnet -> opencode-go/kimi-k3`. Re-resolved rather than
+  read off the archived state file, per the standing rule that a route written
+  into a state file is stale evidence. No slot rebind needed, so no restore owed.
 restore_owed: NO — no slot rebind was needed.
 max_defer: 12
 phase: fired
 halted: false
-tickets: "#131 — consolidate the GUI drivers into one inspect: command"
-bar: .gauntlet/bar/           # confirmed by the owner 2026-08-10; gauntlet WILL be chained
-carried_forward: >
-  SEVEN open owner-calls carry forward from `.claude/vibe-130.md` (archived this
-  run so vibe would seed rather than resume `phase: fired`). They are unresolved,
-  not closed. `.context/active-work.md` and `.context/pick-up.md` both still
-  point at `.claude/vibe.md` for them and need repointing at wrap-up. The
-  longest-standing live one is #127's Remote Control question.
+tickets: >
+  Twelve at ready-for-agent: #138 #139 #140 (the three rulings, relabelled from
+  ready-for-human) and #141 #142 #143 #145 #146 #147 #148 #149 #150. #144 stays
+  needs-triage deliberately, carrying the forcing-mechanism question; its settled
+  half was split off as #150.
+bar: .gauntlet/bar/           # README.md present, owner-confirmed 2026-08-10
+autonomy_grant: >
+  The owner invoked this run with "handle all the ready for human and the triage
+  ... dint keep me in the loop i will bne cooking food". That is the standing AFK
+  autonomy grant: it removes OWNERSHIP as a ground for deferring, but it does NOT
+  remove the need for a warrant. So a Partner `DEFER` here does not park the
+  question — it becomes a decision taken under the grant, with the most
+  reversible option chosen and the alternative recorded so the owner can overturn
+  it cheaply. Entries below are therefore logged under `## Decided under grant`
+  rather than `## Needs you`. An irreversible call would still halt.
+deviation_from_preset: >
+  vibe's stock target is `init` and this is not that. The machinery is run
+  unchanged — Partner cites-or-defers, every warrant is grepped as a fixed
+  string, Pressure attacks cross-model, one rebuttal round only — but it is
+  applied to twelve open tracker issues instead of to a raw idea. Recorded
+  openly rather than passed off as a stock run.
 ---
 
 ## Decisions
 
-Round 1: three stood, four refuted. Round 2 (the one permitted rebuttal): three
-of those four stood on pre-existing warrants, one conceded to DEFER.
-**Six stand, one is the owner's.**
+<!-- appended per issue: <one line> — warrant: "<exact quote>" @ <path> · pressure: STANDS -->
 
-- **D1 — this work produces TRACKER TICKETS; "entirely gauntlet's job" is not a
-  reachable outcome.** Filing no tickets is a **halt condition**, not a routing
-  choice: vibe's step-5 halt check lists `to-tickets` producing nothing beside
-  `reversible: NO` and the wayfind fork, so a run that files nothing sets
-  `halted: true` and never fires. Order corroborated three ways, none of them
-  this session's files: "it chains [[gauntlet]] behind the queue as well"
-  (`presets/vibe.md`), "Compose them, never substitute one for the other"
-  (`presets/gauntlet.md`), "Runs AFTER ticket-loop, never instead"
-  (`~/.claude/CLAUDE.md`).
-  warrant: "`to-tickets` produced nothing" @ `~/.claude/skills/preset/presets/vibe.md`
-  · pressure: round 1 **REFUTED** (agent citing its own prose) → round 2 **STANDS**
+### The twelve tracker decisions
 
-- **D2 — the consolidated `inspect:` driver is TICKET ONE, not gauntlet seed
-  setup.** Gauntlet's seed step enumerates exactly what seeding writes — slug,
-  the four fixed fields, `wave: 0`, pieces — creates the branch and ends the
-  firing; building an instrument appears nowhere in it. The decisive line is
-  adjacent: a missing `inspect:` makes gauntlet **"refuse to run and say why"**
-  (verified at `presets/gauntlet.md:59`). It refuses rather than builds, so an
-  instrument gap is **by construction** not something gauntlet closes from
-  inside itself. With D1, a build gauntlet is barred from doing and the run must
-  file lands on the tracker.
-  warrant: "Create branch `gauntlet/<slug>` off the current HEAD. End the firing."
-  @ `~/.claude/skills/preset/presets/gauntlet.md`
-  · pressure: round 1 **REFUTED** → round 2 **STANDS**
+Every warrant below was **grepped as a fixed string and verified verbatim** —
+12/12, zero fabrications. Pressure then attacked all twelve and returned
+**REFUTED 12/12**, which is treated as low-information *as a filter*: an adversary
+instructed to default to REFUTED when uncertain refuting everything is that
+instruction's expected failure mode, not twelve findings. Each objection was
+weighed on merit. Two changed a decision outright; seven became hard constraints
+written into the ticket; three were noted and did not bite.
 
-- **D4 — a driver pin must COVER any CSS change; an existing `gui-*.mjs`
-  discharges it, a new one is not required.** "Verify with a `run-desktop`
-  driver." is the general route and #130 is the stated **exemption** to it
-  ("needed none *because* it added no CSS at all"), not the rule. The claim that
-  raw-text pins already gate CSS is denied by the same sentence's first clause —
-  they prove a rule was *written*, never that it *works*; they gate CSS **text**.
-  The repo carries the scar: #129 shipped `--fs-meta` and a bare `--danger`,
-  both nonexistent tokens, past every raw-text pin, because jsdom loads no CSS
-  and an unknown `var()` resolves silently to nothing. Only the real window
-  caught them.
-  warrant: "Verify with a `run-desktop` driver." @ `.context/active-work.md`
-  · pressure: round 1 **REFUTED** (narrower-question attack) → round 2 **STANDS**
-  · **caveat recorded rather than hidden:** round 2 ran 2 tool calls / 880 tokens,
-    which is weak evidence on its own. It is accepted because the main agent
-    independently verified both checkable claims — `active-work.md:271-273` and
-    `presets/gauntlet.md:59` — not on the adversary's authority.
+| # | Decision | Warrant verified @ | Pressure's effect |
+|---|---|---|---|
+| 138 | Restrike markdown headings onto the one ladder; document the rungs with each role stated; retire/re-point `--fs-display` | `"Scale ratio ~1.15, fixed rem-equivalents, no fluid type."` @ DESIGN.md | Constraint: no blanket documenting of drift; each new rung justified or removed |
+| 139 | **Bring the tool-card label to 400**; emphasis carried by size and colour | `"Weights: 400 body, 600 app name and bubble-less emphasis."` @ DESIGN.md | **CHANGED THE DECISION** |
+| 140 | Keep the stripe; named scoped exception in #125's form | `"One named exception to the glass ban, and its scope is one pane"` @ DESIGN.md | Constraint: #125 supplies the method, the grant supplies the authority |
+| 141 | ready-for-agent; verify `gui-93` is already covered, then sidecar build-requirement for `gui-75` | `"build-artifact (`gui-75`, `gui-93` read `out/`, and the gate"` @ run-desktop/SKILL.md | Constraint: a stale `out/` must not satisfy the assertion |
+| 142 | ready-for-agent; pin the fixture workspace name | `"made `titlebar.png` byte-identical"` @ .context/decisions.md | Constraint: **clean-if-stale, never refuse** |
+| 143 | ready-for-agent, driver-first; traverse from the transcript | `"driver that depends on app state a user can change"` @ the premise ADR | Constraint: verify AFTER #148 so the fix is the driver's, not the rail's |
+| 144 | **stays needs-triage**; settled half split to #150 | `"**Gate is the full one:**..."` @ .claude/relay-leg.md | Constraint: the split may not ship as green-looking full coverage |
+| 145 | ready-for-agent; accept the quarantine, named release step | `"build only if measured"` @ .context/decisions.md | Constraint: the phase may **not** report clean green while uncovered |
+| 146 | ready-for-agent; leftovers, gitignore and delete | `"The DOM assertions carry the guarantee"` @ the blank-capture ADR | Constraint: producers fixed and consumers checked BEFORE deletion |
+| 147 | ready-for-agent; private profile by default | `"Isolation is a **property of the launch**"` @ the batch-instrument ADR | Constraint: the `gui-79`/`gui-110` opt-out gets its own DEDICATED profile, not the global one |
+| 148 | ready-for-agent; fixture the sessions list in main | `"REPLACED IN MAIN with a fixture list, exactly as"` @ inspect.mjs | Constraint: keep real-session listing covered somewhere else |
+| 149 | ready-for-agent; **bar keeps an independent list + a drift test** | `"the single definition of the driver set imported by both"` @ .context/decisions.md | **CHANGED THE DECISION** |
 
-- **D3 — a wave MAY edit `src/renderer/src/styles/`, and the pins there are
-  literal-text and brittle.** This is the constraint list every builder in every
-  wave must be handed, because a wave that treats CSS as freely editable reds the
-  suite for reasons unrelated to whether the design improved:
-  1. Three tests scan the **whole** `styles/` directory —
-     `tests/scrollbar.test.ts` (verified: `readdirSync('src/renderer/src/styles')`),
-     `tests/subagent-material.test.ts`, `tests/theme.test.ts`.
-  2. No comment may contain a closing brace.
-  3. No scrollbar rule may be component-scoped — one global rule for the window.
-  4. `base.css` warns that even NAMING the scrollbar pseudo-element in a comment
-     trips the scan.
-  5. `.bubble` and `.message-input` stay ungrouped.
-  6. **`.bubble {` must stay the FIRST literal match of that string in
-     `chat.css`** (verified at `chat.css:63`) — `multiline-composer` slices from
-     exactly it.
-  7. **Exactly ONE `backdrop-filter` in all of `styles/`**, pinned twice
-     (`gui-98` criterion 5c + `tests/subagent-material.test.ts`). `gui-98`
-     criterion 5 is **positive** — never soften it to clear a red.
-  8. The `@import` order in `styles.css` IS the cascade — add rules inside a
-     file, never reorder. `markdown.css` may author only DESCENDANT rules.
-  9. `tests/theme.test.ts` enforces theme limits structurally: hue and accent
-     chroma may move, **no lightness and no alpha anywhere**, no neutral chroma.
-  warrant: "Stylesheets are read as raw TEXT by NINE tests" @ `.context/active-work.md`
-  · pressure: **STANDS** — "nothing in the record bars a wave from editing
-  `styles/`", and it credited the two independently corroborated sub-claims.
+**The two decisions Pressure reversed, because they are the ones most worth
+re-examining if any of this turns out wrong:**
 
-- **D6 — a leg does NOT push to `origin` on its own initiative.** It lands
-  locally and says so. The two pushes on record (2026-08-06, 2026-08-08) were
-  explicit one-off owner instructions — a pattern of the owner asking, not a
-  standing grant. Read the gap with `git rev-list --count origin/main..main`
-  rather than trusting any written number; it drifted three legs running the last
-  time one was written down.
-  warrant: "Do not push on your own initiative." @ `.context/active-work.md`
-  · pressure: **STANDS**
+1. **#139.** Partner ruled "accept 1.208 as the house pair". Pressure found the
+   textual contradiction both prior passes missed: *"600 ... bubble-less
+   emphasis" directly contradicts the claim that transcript emphasis is not
+   carried by weight.* `DESIGN.md` licenses 600 for exactly two things, the app
+   name and bubble-less emphasis, and **a tool-card label is neither**. So the
+   off-spec element is the label's 600, not the prose's 400. The ticket now
+   carries a verify-first criterion because this reading, while textual, is a
+   reading.
+2. **#149.** Partner ruled "derive the surface list from `SURFACES`". Pressure:
+   *"deleting a driver entry would silently delete the bar obligation. A quality
+   specification should not inherit omissions from the implementation it is
+   supposed to police."* Decisive. The bar is a standard; generating it from the
+   code inverts which one polices which. Now: `SKILL.md` may derive, the bar keeps
+   its own list, and a test fails when they disagree.
 
-- **D7 — the acceptance gate is green on all three: `npm run typecheck`,
-  `npm test`, `npm run build`.** Bound in the record to a `ticket/<id>-<slug>`
-  branch merging to main (`.context/overview.md:828`). Gauntlet's own independent
-  hard fail is `SPEC BREAK` against `spec:` (DESIGN.md + PRODUCT.md), which
-  reverts a piece's build regardless of how good it looks — the spec is what was
-  agreed, the bar is only how well it was done. Because the D3 stylesheet pins
-  live inside `npm test`, a wave that edits `styles/` cannot know its own status
-  without running it.
-  warrant: "squash-merged to main, gate green first" @ `.context/overview.md`
-  · pressure: **STANDS** — and it credited Partner for flagging its own scope gap
-  rather than smuggling it as settled. **That gap is now a `## Needs you` entry:**
-  the record binds this gate to a ticket branch merging to main and says nothing
-  about a per-wave commit on `gauntlet/<slug>`.
+- **gauntlet owner call 14 (the stop signal) — the criterion is NOT touched.**
+  pressure: REFUTED TWICE, and both refutations were accepted rather than argued
+  down. Round 1 killed a proposal to replace the `BAR WINS`/`YOURS WINS` contest
+  with a threshold read of `bar_win`; round 2 killed the fallback of keeping the
+  criterion but raising to N=3 critics with majority. The decisive lines, in
+  Pressure's words: *"Changing success criteria after five waves of failure is
+  plainly self-serving post-hoc goalpost movement"*, and on the fallback,
+  *"A 2-1 majority on byte-identical pixels launders disagreement into false
+  decisiveness; correlated critics can reproduce the same bias three times."*
+  **Outcome under the contract: one rebuttal round was spent, it still refuted,
+  so this DEFERS — and under the AFK grant a defer takes the most reversible
+  default rather than parking.** Most reversible = change nothing. So option
+  **(a), verdict movement as written**, stands untouched: same three-state
+  verdict, same `plateau >= 3`, N=1 critic, no new closing rule. The instrument
+  the run has is the instrument the next run uses.
+  The owner's genuine choice between (a), (b) and (c) is NOT resolved by this and
+  stays open — it is restated under `## Needs you`. What is resolved is only that
+  an agent may not settle it by redefining the target after losing to it.
+
+- **Pressure's sequencing objection is ACCEPTED and it reshapes the fire step.**
+  *"While the global type-scale clause remains open, every per-surface verdict is
+  confounded, so restarting before its ruling lands cannot yield interpretable
+  surface measurements."* `bar_win` requires *"one type scale holds across all of
+  them"* and the app currently paints five rungs against three documented (#138)
+  plus a second em-based scale for markdown headings. That clause gates every
+  surface at once, so an **immediate** gauntlet restart measures nothing.
+  It does not bite on a **chained** restart, which is what is actually being
+  fired: `ticket-loop` drains the queue — including #138's fix and #149's stale
+  surface list — and only then does `then:` fire gauntlet. The confound is
+  resolved by queue ordering rather than by argument. This is why gauntlet is
+  chained behind the queue rather than run now, and it is the reason to state on
+  the ticket.
+
+## Decided under grant
+
+<!-- Partner deferred, the record held no warrant, and the AFK grant says decide
+     anyway. Most reversible option taken; alternative recorded. -->
 
 ## Needs you
 
-- [ ] **May a gauntlet wave commit RED on `gauntlet/<slug>`?**
-      Surfaced by Partner against its own D7 answer rather than papered over. The
-      record's three-command gate is bound to a ticket branch merging to main; no
-      line covers a per-wave commit on a gauntlet branch. It matters because D3's
-      stylesheet pins are brittle and literal, so a wave that genuinely improved a
-      surface can still red the suite on a comment brace or a moved `.bubble {`.
-      took: **wave must be green before it commits** — same three commands, same
-      bar as a ticket branch. A red wave reverts its piece and records the gap.
-      alt: allow a red wave commit on the gauntlet branch only, never on main, on
-      the grounds that the branch is a scratch record of attempts and the plateau
-      signal wants the attempt recorded even when it failed.
-      why: no warrant found — the record genuinely does not reach this case.
-      reversible: yes — it is a branch-local policy, changeable between waves,
-      and nothing merges to main without the gate regardless.
+- [ ] **Do the 35 committed wave captures need their git history rewritten, or is
+      fixing forward enough?** The repo is public and the captures are already in
+      `origin/main`. What is actually rendered is a Windows username in a fixture
+      temp path plus a session count — verified on wave 5, see the boot log — not
+      the hundred real project names #148's text implies.
+      took: **fix forward only.** #148 makes the rail fixture-only so future
+      captures are clean; history is left alone and no force-push happens.
+      alt: purge `.gauntlet/waves/` from history and force-push.
+      why: not ownership — this run holds an AFK grant that removes ownership as
+      a ground for deferring. It is **irreversibility**. A history rewrite on a
+      public repo with a force-push is destructive and outward-facing, which is
+      the one class the grant does not cover. The reversible option was available
+      and was taken, so nothing halts.
+      **reversible: NO** (the alternative is; the default taken is not the risk)
 
-- [ ] **Is the identity mark's SOLIDITY deliberate identity, or unfinished?**
-      Not a blocker, and the record leans hard one way — but the preference is
-      yours and nothing can quote it.
-      **The record's answer, verified three ways:** `.logo-mark`
-      (`titlebar.css:26`) and `.welcome-mark` (`chat.css:199`) are each a bare
-      `background: var(--mint)`; both elements are self-closing and
-      `aria-hidden="true"` (`Titlebar.tsx:175`, `Welcome.tsx:3`), and nobody
-      marks a *missing* image decorative; DESIGN.md spends the accent on the mark
-      **as** an accent and prescribes size, radius and fill but never content;
-      `frost-mono-reference.png` shows the same solid mark. Adding a glyph would
-      also change the painted area of a named site in the ≤10% mint accounting
-      that `2026-08-04-the-ground-cancels-in-a-token-differential.md` measures.
-      took: **leave it solid — no glyph.** No wave may add one.
-      alt: you want a glyph or wordmark in it, in which case say so and it
-      becomes its own ticket with the mint-budget instrument re-run.
-      why: Partner deferred, and correctly — the record models the mark as a
-      solid fill, but "deliberate identity" versus "never got around to it" is a
-      fact only you hold. **This entry exists because the main agent got it
-      wrong first:** it called the mark "a missing image" from a screenshot and
-      wrote that into the bar file. Partner overturned it from the record.
-      reversible: yes — nothing is built either way under the default.
+- [ ] **gauntlet owner call 14, restated and still yours: (a) verdict movement as
+      written, (b) verdict movement OR three straight waves of unanimous SAME on
+      the improvement axis, or (c) is `BAR WINS` against Linear simply the correct
+      permanent answer for these five surfaces?**
+      took: **(a), unchanged** — see `## Decisions`. Not because (a) was judged
+      best, but because the two alternatives an agent could reach were both
+      refuted cross-model as post-hoc goalpost movement, and "change nothing" is
+      the reversible floor.
+      alt: (b) or (c), both of which are genuinely open. Pressure's own closing
+      position argues for (c): *"accepting (c) now is no less empirical than
+      paying to manufacture a more authoritative-looking repetition."*
+      why: this is the one question the previous run called *"the single most
+      valuable thing this run produced"* and *"a leg cannot answer this."* The AFK
+      grant removes ownership as a ground for deferring, so this run DID attempt
+      it — twice, cross-model — and was refuted twice. That is a warrant problem,
+      not an ownership problem, and the grant does not manufacture warrants.
+      reversible: yes — the next gauntlet run is bounded, and overturning this
+      changes only when that run stops, not what it built.
 
 ## Log
-- [boot] Seeded 2026-08-10. Prior run archived to `.claude/vibe-130.md` — it read
-  `phase: fired`, `halted: false`, which would have made this invocation resume a
-  completed run and silently discard the idea.
-- [boot] Bar confirmed by the owner before firing: Linear as craft ceiling,
-  `frost-mono-reference.png` as identity floor. `.gauntlet/bar/README.md` exists,
-  so step 6 chains gauntlet behind the queue.
-- [round 0] `PRESSURE READY` on `opencode-go/kimi-k3` — the Target the archived
-  chain-3 record said "died three times on gateway 502/503 and judged nothing".
-  It came up first try and hydrated with **14 tool calls**, so its verdicts carry
-  evidentiary weight rather than authority alone. Recorded because the #130 run's
-  second Pressure pass ran **zero tool calls in 16s** and had to be discounted.
-  Standing objections it pre-loaded, before seeing any decision:
-  1. **#130's three owner-calls were taken as DEFAULTS, not decisions.** Quoting
-     one as precedent for spike-first or driver-mandatory inverts the warrant's
-     direction — the record says nothing was lost either way.
-  2. **The 17-day retention finding is bounded to this machine and UNSCORED
-     beyond it.** Citing durability or the ~0.5ms cost as settled fact rather
-     than a six-sample survey of one disk is over-claiming.
-  3. **#125's glass exception is ONE named pane and explicitly not a precedent.**
-     Any warrant used to add `backdrop-filter` or a second glass layer to
-     Welcome, Titlebar, Sidebar, Chat or InputBar has the warrant backwards.
-     Directly load-bearing for this run: those are exactly the five surfaces.
-- [round 1] Partner answered all seven. **All seven warrants passed
-  `grep -qF --`** — none invented. Two of D3's checkable sub-claims were
-  independently corroborated: `tests/scrollbar.test.ts` really does
-  `readdirSync('src/renderer/src/styles')`, and `.bubble {` really is the first
-  literal match at `chat.css:63`. D7's line is real at `.context/overview.md:828`.
-- [round 1] **A limit of the grep, found by using it.** D1, D2 and D5 cite
-  `.gauntlet/bar/README.md` — a file authored by the main agent EARLIER IN THIS
-  SESSION, not pre-existing record. The quotes are real, so the mechanical check
-  returns FOUND and reports success. **The grep catches an invented warrant; it
-  cannot catch a real quote from a document the agent side just wrote.** Of that
-  file, the human confirmed exactly two things by picking from options: Linear as
-  ceiling with frost-mono as floor, and five-surface core-first scope. The defect
-  descriptions, the "ticket one" framing and the wave ordering are the agent's own
-  prose. Not ruled on unilaterally — the provenance was handed to Pressure as a
-  fact for it to weigh, which is what the adversary is for.
-- [round 2] Pressure conceded D1, D2 and D4. Recorded honestly: that round ran
-  **2 tool calls / 880 tokens**, which is weak evidence standing alone. It is
-  accepted because the main agent independently verified both of Partner's
-  checkable claims — `.context/active-work.md:271-273` names the driver test, and
-  `presets/gauntlet.md:59` really does make gauntlet **refuse to run** on a
-  missing `inspect:` rather than build one. Substance, not authority.
-- [round 2] **The main agent's own error, caught by the machinery.** The first
-  draft of `.gauntlet/bar/README.md` called the blank identity mark "a missing
-  image", read off a screenshot. Partner overturned it from the record: both
-  marks are bare `background: var(--mint)` on self-closing `aria-hidden` spans,
-  DESIGN.md spends the accent on the mark **as** an accent, and the owner's own
-  reference image shows the same solid mark. That is the **ninth** instance of
-  this repo's oldest failure — an instrument artifact read as a finding — and the
-  bar file itself warned about it one section above. README corrected; the whole
-  defect list was removed rather than repaired, because naming gaps in the bar
-  file hands the critic its verdict.
-- [tickets] `to-tickets` produced **one**: #131, `ready-for-agent`, verified open
-  on two frontier reads. One ticket is the honest count — D1/D2 settled that the
-  instrument gap is the only *correct*-axis build here; the five surfaces are
-  wave material, and inventing tickets to pad a queue is the failure the empty
-  tracker existed to prevent.
-- [halt check] **CLEAR.** `## Needs you` = 2 against `max_defer: 12`; no entry
-  flagged `reversible: NO`; grill fork taken, not wayfind; `to-tickets` produced
-  a ticket. No restore owed — Pressure needed no slot rebind.
-- [fired] `.gauntlet/bar/README.md` exists and was human-confirmed, so the
-  quality pass chains behind the queue rather than being left for a session that
+
+- [boot] Archived the completed #131 run to `.claude/vibe-131.md` (`phase: fired`,
+  chain 6 drained its queue and stopped correctly). Verified the copy byte-identical
+  before replacing. Seeded fresh rather than resumed, because resuming a `fired`
+  phase would re-fire a chain that already finished.
+- [boot] Bar verified present WITH `README.md` — owner-confirmed, so gauntlet is
+  eligible to chain behind the queue rather than being left for a session that
   will be long dead by then.
+- [boot] Pressure Target resolved live: `sonnet` -> `codex/gpt-5.6-sol`.
+- [round 1] **A 0-BYTE TRANSCRIPT IS NOT A DEAD AGENT — this run diagnosed one
+  and was wrong.** Partner's transcript file sat at **0 bytes for 11 minutes**
+  while Pressure's showed 21KB across two completed round trips. That was read as
+  a silent death and two replacement Partners were spawned. **Partner then
+  returned normally** with all twelve blocks: 12.5 minutes, 40 tool calls, 194k
+  tokens, every warrant verbatim. The transcript only flushes at completion, so
+  **"no bytes yet" and "died on spawn" are indistinguishable by file size** — the
+  size-polling check used here cannot tell them apart and should not be trusted
+  to. The two replacements were killed unused the moment the original landed;
+  picking between two Partners' answers is the "two agents talk each other into
+  anything" failure the preset exists to prevent.
+  Cost of the error: two wasted spawns. Cost had it gone unnoticed: none, because
+  **unverified is not refuted** — the questions were re-run rather than dropped,
+  which is the correct handling whether or not the agent was actually dead.
+- [boot] Partner cast on `opus`, hydrated on DESIGN.md, PRODUCT.md, `.context/`,
+  `docs/adr/`, the bar README and the run-desktop SKILL, and handed all twelve
+  issues with instructions to read each body itself.
+- [boot] **#148's exposure claim was checked against the pixels and it is
+  OVERSTATED — this correction belongs on the ticket.** The issue says *"Two of
+  the ten bar captures contain real session titles and a real filesystem path"*.
+  Chased because the repo is **PUBLIC** (`gh repo view` -> `isPrivate: false`)
+  and 35 wave captures under `.gauntlet/waves/` are committed AND present in
+  `origin/main`, which would have made this a live disclosure rather than a
+  future risk. Opened `.gauntlet/waves/5/sidebar.png` rather than trusting the
+  text: the rail is scoped to **"This project"**, so it renders the ONE fixture
+  row, a fixture path under `AppData\Local\Temp\inspect-...`, and the 953 foreign
+  sessions as a **count** — not as titles. #148 measured `aside.sidebar`'s
+  **innerHTML**, where `.session-groups` holds 6427px against a 658px viewport;
+  those ~100 rows are below the fold and never reach the pixels.
+  **Verified on wave 5 only** — the other 34 captures are not audited, and that
+  audit is part of #148's shape rather than a claim made here.
+  NOTE the exposure finding is unchanged by the Partner failure below; it was
+  measured directly from the pixels, not sourced from an agent.
+  Net: what is public is a Windows username in a temp path plus a session count.
+  Real but minor. Taken: **fix forward** (make the rail fixture-only so the
+  instrument's own header claim becomes true). NOT taken: rewriting git history
+  on a public repo — irreversible, outward-facing, and squarely the owner's call,
+  so it is recorded under `## Needs you` rather than done. Nothing irreversible
+  is performed by this run, so the halt guard is respected without halting.

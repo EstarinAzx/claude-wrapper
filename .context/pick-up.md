@@ -7,101 +7,99 @@ tags: [context, pick-up]
 
 # Pick up
 
-## queue empty
+## Chain 7 is running a twelve-ticket queue, with gauntlet chained behind it
 
-**Relay chain 6 has STOPPED, and it stopped correctly rather than by failing.**
+An autonomous `/preset vibe` pass ran while the owner was away, under an explicit
+AFK autonomy grant. It **ruled the three design questions**, **triaged the nine
+follow-ups**, filed one new ticket, and fired the execution chain. The full
+reasoning, every warrant, and every cross-model objection is in `.claude/vibe.md`
+— read that before overturning anything here.
 
-Leg 6 landed **#137** and closed it, which emptied the `ready-for-agent` queue —
-the chain's declared stop condition. No leg 7 was spawned.
-`.claude/relay/ticket-loop.md` carries `stop: true`.
-
-**There is no agent-ready work in this repo right now.** Confirm rather than
-trust this file; the tracker is the authority and this file has been wrong
-before:
+**Verify rather than trust this file. It has been wrong before:**
 
 ```text
 gh issue list --state open --label ready-for-agent
+git rev-list --count origin/main..main
 ```
 
-If that returns nothing, **the next move belongs to a human**, not to another
-leg. Everything open is either a design ruling (`ready-for-human`) or untriaged.
+## The queue
 
-## The state you are picking up
+**Twelve tickets at `ready-for-agent`.** Recommended order, and the reasons are
+not cosmetic:
 
-`main` = `b35e799`. Tree clean. typecheck clean, build clean,
-**89 files / 1329 passed + 36 skipped**. DOM phase **29/30**, the single red the
-documented `gui-123` (#143).
-
-**Nineteen commits sit UNPUSHED.** D6 stands — a leg does not push on its own
-initiative. Read the real gap rather than that number:
-`git rev-list --count origin/main..main`.
-
-## What is waiting on you
-
-| # | Label | What it needs |
+| Order | # | Why here |
 |---|---|---|
-| 138 | ready-for-human | Rule on the type scale: five rendered sizes against three documented |
-| 139 | ready-for-human | Rule on the transcript's prose/label weight pair |
-| 140 | ready-for-human | Rule on the selected row's mint side-stripe against the ban |
-| 141–149 | needs-triage | Nine follow-ups, six of them about the instruments |
+| 1 | 149 | The bar README's surface list is stale (5 vs 9). **The gauntlet seed reads it.** |
+| 2 | 146 | Producers must honour `SCREENSHOT_DIR` before anything else touches captures |
+| 3 | 142 | Fixture pin; independent and measured |
+| 4 | 148 | Fixture the sessions list; removes the second instability source |
+| 5 | 143 | Driver-first, but **verify AFTER 148** so the fix is the driver's, not the rail's |
+| 6 | 147 | Private profile per driver, dedicated shared profile for the opt-out pair |
+| 7 | 145 | Quarantine accepted; phase must not report clean green |
+| 8 | 150 | Headless-gate CI, must not read as full coverage |
+| 9 | 141 | Build-artifact assertions; verify `gui-93` is already covered first |
+| 10 | 138 | Type scale. **Gauntlet is confounded until this lands** |
+| 11 | 139 | Tool-card label to 400 |
+| 12 | 140 | Named scoped exception for the state stripe |
 
-Plus **two live owner-calls** in `.claude/vibe.md` under `## Needs you`, both
-reversible with the default already taken, and **seven older ones in
-`.claude/vibe-130.md`** — every reference pointing at `.claude/vibe.md` for those
-is stale.
+**#144 stays `needs-triage` on purpose.** Its settled half is #150. Closing #144
+because #150 landed is the exact failure the split was reviewed against.
 
-**Do not restart the gauntlet before #138–#140 are answered.**
-`.claude/gauntlet.md` carries `stop: true` at `plateau: 3`, so `/preset gauntlet`
-halts at its own seed guard — correctly. Restarting also needs the stop-signal
-question recorded there as owner call 14.
+## What was decided while you were out, in one line each
 
-**The `needs-triage` pile is itself the signal.** Six of the nine are about the
-instruments rather than the app: #142 and #148 (captures that are not
-reproducible), #144 (nothing runs the DOM phase), #145 (a driver that cannot run
-in a batch), #146 (the phase dirties tracked files), #147 (drivers share one
-Electron profile), #149 (the published surface list is stale). The app's tests
-are in better shape than the things that test it.
+- **#138** — restrike the em-set markdown headings onto the one ladder, document
+  the rungs with roles, retire or re-point `--fs-display`.
+- **#139** — **the tool-card label goes to 400, not the prose.** `DESIGN.md`
+  licenses 600 for the app name and bubble-less emphasis only, and a tool-card
+  label is neither. This reversed twice; read the ticket.
+- **#140** — keep the stripe, amend the ban with a named scoped exception in
+  #125's form. #125 supplies the method; the grant supplies the authority.
 
-**#144 is the sharpest.** #137 added a measurement that only the DOM phase can
-run, and nothing runs that phase because the repo has no CI. The executing pins
-exist; the thing that would make them bite on every push does not.
+## Still yours — nothing here blocks the chain
 
-## If you restart a relay chain
+Both live entries are in `.claude/vibe.md` under `## Needs you`:
 
-The owner's standing pacing instruction for chain 6 was: **call `ScheduleWakeup`
-with `delaySeconds: 900` as the first action of each leg**, passing the `/relay`
-input back verbatim as `prompt`, then get straight on with the ticket — it is a
-pacing instruction, not a condition to wait on. That instruction was scoped to
-chain 6, which has ended. Re-confirm it before applying it to a new chain.
+1. **Git history on the wave captures.** The repo is **public** and 35 wave PNGs
+   are in `origin/main`. Checked against the pixels rather than the issue text:
+   what is actually rendered is a Windows username in a fixture temp path plus a
+   session count, **not** the hundred project names #148 implied. Fix-forward
+   taken; a history rewrite is irreversible and outward-facing so it was **not**
+   done. Verified on wave 5 only; #148 carries the audit of the other 34.
+2. **gauntlet owner call 14, the stop signal.** Two agent-reachable answers were
+   attempted and both were refuted cross-model as post-hoc goalpost movement, so
+   the criterion was left **untouched**. The genuine (a)/(b)/(c) choice is still
+   yours.
 
-Chain rules that were live and would apply again unchanged:
+Seven older owner-calls remain in `.claude/vibe-130.md`, unchanged.
 
-- **Do not push on your own initiative** (D6).
-- **Do not apply `ready-for-human`** — a blocker becomes `needs-info` + a comment
-  + a `PushNotification`.
-- **File follow-ups at `needs-triage`, never `ready-for-agent`.** The chain stops
-  on an empty frontier; a leg promoting its own follow-up there makes the stop
-  condition unreachable by construction.
+## Gauntlet
 
-## Landmines for anyone touching the instruments
+`.claude/gauntlet.md` was **archived to `.claude/gauntlet-core-surfaces.md`** so a
+fresh run seeds instead of halting on the old `stop: true` at `plateau: 3`. That
+file is five waves of adjudication and is worth reading before the next run —
+especially owner calls 14 to 20.
 
-**Do not read the DOM phase's verdict off a compound command.** It reported
-**exit 0 while its own text said `DOM PHASE FAIL`** this leg, with no pipe
-involved — the command ended in `; echo`. Leg 5 recorded this as "do not pipe
-through `tail`", which is narrower than the defect: **any trailing command
-replaces the status.** Read `$?` on its own line, or grep the redirected file.
+The chained run is intended to cover **all nine captured surfaces**, not the five
+the last run used. The bar holds only five Linear references, so the three docks
+share the Sidebar's reference on the strength of `DESIGN.md` specifying them as
+*"mirroring the Sessions rail"*. **Label that comparison as the weaker one it is.**
+New bar references cannot be invented by an agent — the bar is human-owned.
+
+## Landmines, carried forward unchanged
+
+**Do not read the DOM phase's verdict off a compound command.** It has reported
+**exit 0 while its own text said `DOM PHASE FAIL`**, with no pipe involved — the
+command merely ended in `; echo`. **Any trailing command replaces the status.**
+Read `$?` on its own line, or grep the redirected file.
 
 **Clean `scripts/` after any phase run** (#146): `git checkout -- scripts/` then
-`git clean -fdq scripts/`. It rewrote five tracked PNGs this leg.
+`git clean -fdq scripts/`.
 
-**Do not trust a capture comparison without a baseline.** Three of `inspect.mjs`'s
-ten files differ between two runs of the *unmodified* driver. Pinning the fixture
-isolates `titlebar.png` (#142); `sidebar.png` and `window-session.png` move for a
-different reason (#148) — the rail photographs 100 real sessions, 99 of them
-foreign, whose relative ages tick at identical character length.
+**Point `SCREENSHOT_DIR` outside the repo** when running `inspect.mjs`.
 
-**Point `SCREENSHOT_DIR` outside the repo** when running `inspect.mjs`, or the
-captures land in the tree.
+**A 0-byte subagent transcript is not a dead agent.** This run diagnosed one that
+way and was wrong: the file flushes only at completion, so "not started yet" and
+"died on spawn" look identical by size. Cost two wasted spawns.
 
 ## Standing constraints for the renderer
 
@@ -111,20 +109,22 @@ brittle: no comment in `styles/` may contain a closing brace, `.bubble` and
 `.message-input` stay ungrouped, `.bubble {` must stay the first literal
 occurrence in `chat.css`, exactly one `backdrop-filter` in all of `styles/`, and
 the `@import` order in `styles.css` IS the cascade. D4 — any CSS change owes a
-driver pin that **executes**, naming which gate runs it; jsdom loads no CSS, so
-the fast gate structurally cannot see layout. The titlebar's centring is
-load-bearing (#136): horizontal padding on `.titlebar`, `.titlebar-left` or
-`.titlebar-right` reds `gui-136` by half its width, as does `min-width: 0` on
-`.titlebar-left` or letting `.titlebar-center` grow. The identity mark is solid
-by design. Colour, translucency and material are instrument artifacts in any
-capture. `DESIGN.md` is read literally by `tests/subagent-material.test.ts`,
-which splits on `\n## Bans in force\n`.
+driver pin that **executes**, naming which gate runs it; jsdom loads no CSS. The
+titlebar's centring is load-bearing (#136). `DESIGN.md` is read literally by
+`tests/subagent-material.test.ts`, which splits on `\n## Bans in force\n` — #140
+edits that section, so the split token must survive verbatim.
 
-**New from #137:** `CLAIMED_HEADROOM_PX` in `inspect.mjs` is a copy of a sum
-argued in prose in `chat.css`. **Never move it to match a measurement without
-moving that sum too** — that converts the check into a rubber stamp.
+`CLAIMED_HEADROOM_PX` in `inspect.mjs` is a copy of a sum argued in prose in
+`chat.css`. **Never move it to match a measurement without moving that sum too.**
+
+## Chain rules
+
+- **Do not push on your own initiative** (D6).
+- **Do not apply `ready-for-human`** — a blocker becomes `needs-info` + a comment
+  + a `PushNotification`.
+- **File follow-ups at `needs-triage`, never `ready-for-agent`.** A leg promoting
+  its own follow-up makes the chain's stop condition unreachable by construction.
 
 ## Related
 
 - [[active-work]] · [[overview]] · [[decisions]] · [[stack]]
-- [[2026-08-11-the-noise-floor-is-part-of-the-instrument]]
