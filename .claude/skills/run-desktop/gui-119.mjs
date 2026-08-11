@@ -41,10 +41,11 @@
 import { _electron as electron } from 'playwright-core'
 import path from 'node:path'
 import fs from 'node:fs'
+import os from 'node:os'
 import { execFileSync } from 'node:child_process'
 
 const APP_DIR = path.resolve(import.meta.dirname, '../../..')
-const SHOT_DIR = path.join(APP_DIR, 'scripts', 'gui-119-shots')
+const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
 fs.mkdirSync(SHOT_DIR, { recursive: true })
 
 const log = (l, m) => console.log(String(l).padEnd(13) + JSON.stringify(m))
@@ -487,5 +488,5 @@ await app
   .evaluate(({ BrowserWindow }, id) => BrowserWindow.fromId(id)?.setAlwaysOnTop(false), setup.targetId)
   .catch(() => {})
 
-console.log(`SHOTS       ${path.relative(APP_DIR, SHOT_DIR).replace(/\\/g, '/')}`)
+console.log(`SHOTS       ${SHOT_DIR.replace(/\\/g, '/')}`)
 await finish()

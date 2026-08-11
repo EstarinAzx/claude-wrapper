@@ -11,3 +11,15 @@ dist/
 # `worktree.bgIsolation: "none"`, which a fresh clone now has to set itself.
 .claude/settings.json
 .claude/settings.local.json
+
+# Driver captures (#146). These were tracked, and a single `npm run test:dom`
+# rewrote them, so a real change got lost in a diff full of regenerated PNGs.
+# They were never a reference anybody compared against: #142 and #148 establish
+# two independent sources of run-to-run drift, and a capture nobody can diff is
+# not a baseline. The captures a critic actually grades come from `inspect.mjs`
+# into `SCREENSHOT_DIR`, and the drivers' own assertions carry the guarantee.
+#
+# Deliberately narrow, not `scripts/**/*.png`. `scripts/spike-117-shots/` is
+# cited by path in `spike-117-findings.json` and `spike-117-findings.md` as the
+# evidence behind a recorded finding, and a broad rule would conceal it.
+scripts/gui-*-shots/

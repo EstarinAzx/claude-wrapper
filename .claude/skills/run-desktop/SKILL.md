@@ -220,12 +220,13 @@ about its own coverage is what this ticket could actually deliver.
 
 ## Gotchas
 
-- **The phase dirties the working tree.** Several drivers hardcode
-  `scripts/gui-<n>-shots/` instead of honouring `SCREENSHOT_DIR`, and those
-  directories are tracked — so a phase run rewrites committed PNGs and adds new
-  ones. Check `git status` after a run and `git checkout -- scripts/` before
-  committing anything else; a diff full of regenerated screenshots is how a
-  real change gets lost.
+- **The phase no longer dirties the working tree** (#146), and the workaround it
+  used to need is gone. Every driver honours `SCREENSHOT_DIR`, so a phase run
+  writes only under `%TEMP%/claude-wrapper-dom-phase/<driver>/` and leaves the
+  repo untouched. `git checkout -- scripts/` before committing is no longer
+  required. `tests/driver-screenshot-dir.test.ts` reds if a new driver hardcodes
+  its output or defaults it back inside the repo, so this is a checked property
+  rather than a convention.
 - **Driver must stay under the project tree.** ESM resolves the bare
   `playwright-core` import by walking up to the project's `node_modules`; run it
   from `$TEMP` and the import fails (`ERR_MODULE_NOT_FOUND`).

@@ -63,7 +63,7 @@ import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
-const SHOT_DIR = path.join(APP_DIR, 'scripts', 'gui-124-shots')
+const SHOT_DIR = process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')
 fs.mkdirSync(SHOT_DIR, { recursive: true })
 const WORK_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gui124-'))
 
@@ -162,7 +162,7 @@ const mainPid = await app.evaluate(() => process.pid)
 const finish = async () => {
   console.log(fails.length === 0 ? 'PASS' : 'FAIL')
   for (const f of fails) console.log('  - ' + f)
-  console.log(`SHOTS       ${path.relative(APP_DIR, SHOT_DIR).replace(/\\/g, '/')}`)
+  console.log(`SHOTS       ${SHOT_DIR.replace(/\\/g, '/')}`)
   await app.close().catch(() => {})
   try {
     fs.rmSync(WORK_DIR, { recursive: true, force: true })
@@ -173,7 +173,7 @@ const finish = async () => {
 const shot = async (name) => {
   const file = path.join(SHOT_DIR, `${name}.png`)
   await page.screenshot({ path: file }).catch(() => {})
-  console.log(`SHOT        ${path.relative(APP_DIR, file).replace(/\\/g, '/')}`)
+  console.log(`SHOT        ${file.replace(/\\/g, '/')}`)
 }
 
 // ---- phase 0: the origin this run is actually measuring ---------------------
