@@ -466,10 +466,12 @@ tags: [context, overview]
 
 ## Where to look first
 - `.context/pick-up.md` — current frontier + landmines (currently: **relay chain 7
-  is RUNNING a twelve-ticket queue with `/preset gauntlet` chained behind it.
-  #149 landed on leg 1; eleven remain. `ready-for-human` is BANNED for this
-  batch; use `needs-info` + a comment + a PushNotification**; run the frontier
-  query anyway, it is the authority and this line has been wrong before.
+  is RUNNING, draining the `ready-for-agent` queue with `/preset gauntlet`
+  chained behind it. `ready-for-human` is BANNED for this batch; use
+  `needs-info` + a comment + a PushNotification**. The remaining count is
+  deliberately not restated here — it moves every leg, and a number sitting
+  beside a pointer is the thing that rots (#149). Run the frontier query; it is
+  the authority and this line has been wrong before.
   **39 `gui-*.mjs` assertion drivers** — 38 plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
@@ -478,7 +480,11 @@ tags: [context, overview]
   **30** of them, nine being accounted skips. **`gui-136` launches on a private
   `--user-data-dir`** — it pins bounds and zoom, both of which outlive the
   process, and reded two later drivers until it stopped sharing the profile
-  (#147). **Two standing environmental reds**,
+  (#147). **Every driver writes its captures to `SCREENSHOT_DIR`** and the phase
+  hands each one its own directory; that is gated by
+  `tests/driver-screenshot-dir.test.ts`, which reds both on a hardcoded path and
+  on a fallback pointing back inside the repo (#146). **Two standing
+  environmental reds**,
   `gui-75` (focus-dependent) and `gui-52` (the CLI returning an empty model
   list); both are premise failures, not regressions, and both were reproduced on
   clean `main` before being called so)
