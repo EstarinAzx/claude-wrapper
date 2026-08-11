@@ -15,7 +15,7 @@ bar_win:  Every surface of the running app survives side by side with Linear —
           frost-mono-reference.png: near-black, one mint accent under 10% of
           surface, no decorative glass beyond the single named exception.
 inspect:  SCREENSHOT_DIR=<dir> node .claude/skills/run-desktop/inspect.mjs
-          # All five core surfaces. Closed by #131 — see "The inspect gap".
+          # Every captured surface. Closed by #131 — see "The inspect gap".
 spec:     DESIGN.md (design system, source of truth for the renderer)
           PRODUCT.md (purpose, single user, anti-references)
 ```
@@ -73,21 +73,21 @@ under a loop is not a bar.
 
 **One of the two limits below is CLOSED. The other is permanent.**
 
-1. **~~It reaches two surfaces.~~ CLOSED by #131, 2026-08-10.** `driver.mjs`
-   never picked a project folder, so Welcome and Titlebar were all it could see.
-   `inspect.mjs` now captures all five core surfaces into `SCREENSHOT_DIR` —
-   `welcome.png`, `titlebar.png`, `sidebar.png`, `chat.png`, `input-bar.png`,
-   plus `window-welcome.png` and `window-session.png` as whole-window frames for
-   composition questions a clipped surface cannot answer. It seeds a
-   conversation into the CLI's store and replays it, so the chat carries real
-   message rhythm and two tool cards at **zero CLI turns**.
+1. **~~It reaches two surfaces.~~ CLOSED by #131, 2026-08-10, and widened twice
+   since.** `driver.mjs` never picked a project folder, so Welcome and Titlebar
+   were all it could see. `inspect.mjs` now captures every surface in the list
+   below into `SCREENSHOT_DIR`, plus `window-welcome.png` and
+   `window-session.png` as whole-window frames for composition questions a
+   clipped surface cannot answer. It seeds a conversation into the CLI's store
+   and replays it, so the chat carries real message rhythm and two tool cards at
+   **zero CLI turns**.
 
    **A missing surface is a loud failure, never a silently absent file** — every
    surface is proven present, painted and non-empty before it is photographed,
-   and the run prints `CAPTURED n/7`. **If a file you expected is not in the
+   and the run prints `CAPTURED n/11`. **If a file you expected is not in the
    directory, the run failed; read its output rather than judging the surface.**
-   The six remaining surfaces are still unreachable and are a second run's
-   problem, as scoped.
+   Three surfaces are still unreachable — AgentMap, SubagentDrawer, ToolCard —
+   and are a later run's problem, as scoped.
 
 2. **No driver can see the material.** The app's wash is
    `oklch(0.12 0.008 210 / 0.64)` — translucent by design, composited by Windows
@@ -102,21 +102,42 @@ under a loop is not a bar.
    (`.context/active-work.md`, "UNSCORED IS NOT REFUTED"). This is the ninth
    waiting to happen.
 
-## The five core surfaces, in wave order
+## The captured surfaces, in wave order
 
-Confirmed scope: core first. The remaining six need their **own gauntlet run
-under a separate slug** — `pieces` is capped at 6 and fixed at seed, and the
-smoothing pass may add only one per wave, so they cannot be a widening inside
-this run.
+**This list is the bar's own, and it is deliberately not generated from the
+driver.** Making `inspect.mjs`'s `SURFACES` array the authority would invert the
+contract: deleting a driver entry would silently delete the obligation to meet a
+standard on that surface, and a standard that inherits omissions from the
+implementation it polices has stopped being one. So the list is restated here by
+hand, and `tests/inspect-published-list.test.ts` reds when it and the driver
+disagree (#149). A surface leaving the code does not leave the bar until a human
+takes it out of this list.
 
-1. **Welcome**
-2. **Titlebar**
-3. **Sidebar** — sessions rail
-4. **Chat** — message rhythm, tool cards, date divider
-5. **InputBar** — composer, attach, send
+<!-- surfaces:begin - the bar's own surface list. Held equal to inspect.mjs's
+     SURFACES array by tests/inspect-published-list.test.ts. Editing this list is
+     a change to the standard; make it deliberately. -->
 
-Then, as a second run: AgentsDock, AppearanceDock, CommandsDock, AgentMap,
-SubagentDrawer, ToolCard.
+1. **Welcome** — `welcome.png`
+2. **Welcome at the minimum window** — `welcome-min-window.png`; the same pane at
+   the shortest permitted window, where its height budget is actually spent
+3. **Titlebar** — `titlebar.png`
+4. **Sidebar** — sessions rail; `sidebar.png`
+5. **Chat** — message rhythm, tool cards, date divider; `chat.png`
+6. **InputBar** — composer, attach, send; `input-bar.png`
+7. **AgentsDock** — `agents-dock.png`
+8. **CommandsDock** — `commands-dock.png`
+9. **AppearanceDock** — `appearance-dock.png`
+
+<!-- surfaces:end -->
+
+**A run cannot take all nine at once.** `pieces` is capped at 6 and fixed at
+seed, and the smoothing pass may add only one per wave, so a seed picks its
+subset and the rest need their own run under a separate slug. That is a budget,
+not a statement about which surfaces have a standard: every surface above has
+one.
+
+Still uncaptured, and so out of reach of any wave: AgentMap, SubagentDrawer,
+ToolCard.
 
 **No defect list is supplied, on purpose.** Naming the gaps here hands the critic
 its verdict, and the critic ruling independently is the one thing this loop

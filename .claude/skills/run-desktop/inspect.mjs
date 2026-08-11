@@ -1,5 +1,13 @@
-// The consolidated `inspect:` command (#131, #133) — capture the eight surfaces
-// of the BUILT app into one directory, in one run, with no human present.
+// The consolidated `inspect:` command (#131, #133) — capture every surface of
+// the BUILT app into one directory, in one run, with no human present.
+//
+// THE SURFACE LIST IS PUBLISHED IN THREE PLACES and #149 pinned them together.
+// `SURFACES` below is the one that executes; `SKILL.md` documents this
+// instrument and follows it; `.gauntlet/bar/README.md` keeps its own
+// independent list, because a standard generated from the code it polices
+// inherits that code's omissions. `tests/inspect-published-list.test.ts` reds
+// when any of the three drifts. Adding a surface here means editing both
+// documents, and the gate now says so instead of a reader having to notice.
 //
 //   SCREENSHOT_DIR=<dir> node .claude/skills/run-desktop/inspect.mjs
 //
@@ -7,7 +15,7 @@
 // `.gauntlet/bar/`, and it refuses to start without a command that can show it
 // the app. `driver.mjs` waits for the two titlebar pills and exits without ever
 // picking a project folder, so it sees Welcome and Titlebar and nothing else —
-// two of eleven surfaces. About twenty ticket-specific `gui-*.mjs` drivers in
+// two surfaces out of the nine below. About twenty ticket-specific `gui-*.mjs` drivers in
 // this directory already open workspaces and drive live sessions; this is a
 // HARVEST of what they solved, not a new mechanism. Everything below was taken
 // from a driver that already worked:
@@ -24,10 +32,11 @@
 // WHAT IT PRODUCES, one PNG per surface, named for the surface so a wave can
 // address exactly one of them:
 //
-//   welcome.png     titlebar.png    sidebar.png    chat.png    input-bar.png
-//   agents-dock.png commands-dock.png               appearance-dock.png
-//   window-welcome.png              window-session.png
-//   welcome-min-window.png
+//   welcome.png       welcome-min-window.png   titlebar.png    sidebar.png
+//   chat.png          input-bar.png
+//   agents-dock.png   commands-dock.png        appearance-dock.png
+//
+//   window-welcome.png   window-session.png    ← whole-window frames, not surfaces
 //
 // `welcome-min-window.png` is #137 and is the ONE surface photographed twice.
 // It is the same `.welcome` pane as `welcome.png`, at the window's enforced
@@ -37,7 +46,7 @@
 // directory listing.
 //
 // The two `window-*.png` frames are the whole window at each stage. They are not
-// a ninth and tenth surface — they exist because a surface clipped to its own
+// two more surfaces — they exist because a surface clipped to its own
 // bounding box cannot answer a composition question ("does this float in dead
 // space"), and every reference in `.gauntlet/bar/linear/` is a whole-page frame.
 // A critic comparing composition needs a comparable unit.
@@ -71,7 +80,7 @@
 //
 // WHAT IT DOES NOT DO, deliberately: it spends ZERO CLI turns and needs no
 // engine. The transcript is seeded on disk and replayed, so the same command
-// produces the same eight surfaces on a machine with no Claude Code session, no
+// produces the same surfaces on a machine with no Claude Code session, no
 // network and no API key.
 //
 // THE WHOLE INSTRUMENT IS FIXTURE-DRIVEN, and the docks did not change that —
@@ -366,7 +375,7 @@ const cleanup = () => {
   }
 }
 
-// ---- the eight surfaces -----------------------------------------------------
+// ---- the surfaces -----------------------------------------------------------
 //
 // `requires` is what makes the surface itself rather than an empty shell of it.
 // Each entry is asserted inside the surface's own subtree, so a chat column that
@@ -766,8 +775,8 @@ try {
   // reason: main owns the answer, and with no engine the honest answer is empty.
   // `removeHandler` first because `ipcMain.handle` throws on a second
   // registration for one channel rather than replacing it, so without this the
-  // whole run would die here instead of capturing seven surfaces and refusing
-  // one. The list travels as an argument, like the path above.
+  // whole run would die here instead of capturing every other surface and
+  // refusing this one. The list travels as an argument, like the path above.
   await app.evaluate(({ ipcMain }, commands) => {
     ipcMain.removeHandler('commands:list')
     ipcMain.handle('commands:list', async () => commands)
@@ -1020,7 +1029,7 @@ try {
     .catch(() => false)
   if (!opened) {
     fails.push(
-      'the workspace never opened after the folder pick — four of the five surfaces only exist once a folder is open, so none of them were captured'
+      'the workspace never opened after the folder pick — every surface but the two Welcome captures only exists once a folder is open, so none of them were captured'
     )
     await finish()
   }

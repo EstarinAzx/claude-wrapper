@@ -25,7 +25,7 @@ dependency (matches the `dev-run-only` decision). It lands in node_modules
 node .claude/skills/run-desktop/driver.mjs           # read both pills + screenshot
 node .claude/skills/run-desktop/driver.mjs --cycle   # also click each pill once, re-read
 
-SCREENSHOT_DIR=<dir> node .claude/skills/run-desktop/inspect.mjs   # all five core surfaces
+SCREENSHOT_DIR=<dir> node .claude/skills/run-desktop/inspect.mjs   # every surface, one run
 ```
 
 Output (stdout): `BACKEND {…}` / `PERMISSION {…}` JSON with each pill's
@@ -39,27 +39,49 @@ Expected on a wisp-routed launch shell, fresh state:
 
 `--cycle` then shows `Native` and `Accept Edits` (both neutral classes).
 
-## `inspect.mjs` — the five core surfaces in one run (#131)
+## `inspect.mjs` — every surface in one run (#131, #133, #137)
 
 `driver.mjs` never picks a project folder, so it sees **Welcome and Titlebar
 only**. `inspect.mjs` is the consolidated command: it seeds a conversation
 straight into the CLI's store, opens a workspace, replays it, and captures each
 surface into its own file.
 
+<!-- surfaces:begin - the list `inspect.mjs` captures. Held equal to its SURFACES
+     array by tests/inspect-published-list.test.ts; edit both together, and edit
+     .gauntlet/bar/README.md too, which keeps its own independent copy. -->
+
 ```
-welcome.png  titlebar.png  sidebar.png  chat.png  input-bar.png
-window-welcome.png  window-session.png     ← whole-window frames, for composition
+welcome.png       welcome-min-window.png   titlebar.png    sidebar.png
+chat.png          input-bar.png
+agents-dock.png   commands-dock.png        appearance-dock.png
 ```
 
+<!-- surfaces:end -->
+
+Plus two whole-window frames, `window-welcome.png` and `window-session.png`.
+They are **not surfaces**: a surface clipped to its own bounding box cannot
+answer a composition question ("does this float in dead space"), and every
+reference in `.gauntlet/bar/linear/` is a whole-page frame, so a critic
+comparing composition needs a comparable unit.
+
+- **The three docks are #133**, and they exist because a mirror with one side
+  unwatched drifts. `DESIGN.md` defines the Agents dock as the sessions rail's
+  mirror; through five gauntlet waves the rail was photographed every time and
+  the dock never was. They are captured **last**, after the window frames,
+  because a dock is an in-flow aside and opening one narrows `main.chat`.
+- **`welcome-min-window.png` is #137**, and is the one surface photographed
+  twice — the same `.welcome` pane as `welcome.png`, at the window's enforced
+  minimum, because that pane's height budget is arithmetic about that size and
+  nothing had ever photographed it.
 - **Zero CLI turns, no engine, no API key.** The transcript is a fixture on
-  disk (gui-63's mechanism), so the same command gives the same five surfaces on
+  disk (gui-63's mechanism), so the same command gives the same surfaces on
   any machine.
 - **Deterministic.** Window forced to 1440x900 and `setZoomFactor(1)` — both are
   otherwise remembered across launches and would silently change the scale.
 - **A capture failure is loud.** Each surface is proven present, painted, on
   screen and carrying the content that makes it that surface *before* it is
   photographed; anything missing exits non-zero naming the surface, and prints
-  `CAPTURED n/7` so a half-empty output directory cannot pass for a complete one.
+  `CAPTURED n/11` so a half-empty output directory cannot pass for a complete one.
 - Cleans up its fixture and its Electron process on both the pass and fail path.
 
 `SCREENSHOT_DIR` is required in practice — it defaults to
