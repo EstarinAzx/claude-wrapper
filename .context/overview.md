@@ -453,6 +453,13 @@ tags: [context, overview]
   the gated copy cannot drift from the driven one. Drivers with no sidecar are
   reported as named SKIPS carrying their reason, never omitted — a suite quietly
   running half its checks is the failure #132 exists to close.
+  **#141 adds one opt-in exception to the purity clause**: a check may carry
+  `needsBuild: { artifact, covers }` and read a build artifact. The gate does not
+  build, so it reports those as named skips carrying the artifact *and where they
+  do run*; `npm run test:dom` executes them, after proving the artifact is at
+  least as new as everything under `covers` (`npm run test:dom -- --build-only`
+  runs just those, in seconds). The check set is enumerated **once**, by
+  `loadChecks()` in `drivers.manifest.mjs`, for the same reason the driver set is.
 - `DESIGN.md` / `PRODUCT.md` — Frost Mono design system + product context (impeccable reads these)
 - `docs/design/frost-mono-reference.png` — canonical visual reference
 
@@ -482,8 +489,10 @@ tags: [context, overview]
   **39 `gui-*.mjs` assertion drivers** — 38 plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
-  also **three `gui-*.source.mjs` sidecars** (`gui-96`, `gui-98`, `gui-136`),
-  which are NOT drivers and are excluded from that count, and **three** plain
+  also `gui-*.source.mjs` **sidecars** (`gui-75`, `gui-96`, `gui-98`, `gui-123`,
+  `gui-136` — deliberately uncounted here, since a number beside a list is what
+  rots, #149; the gate globs them and is the authority), which are NOT drivers
+  and are excluded from that count, and **three** plain
   modules that are not executable at all — `inspect-workspace.mjs` (#142, the
   fixture workspace's fixed name and its clean-if-stale rule),
   `inspect-sessions.mjs` (#148, the sessions rail's fixture rows and age

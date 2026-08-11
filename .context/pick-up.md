@@ -26,13 +26,13 @@ git rev-list --count origin/main..main
 
 ## The queue
 
-**Four tickets left. Leg 1 landed #149, leg 2 #146, leg 3 #142, leg 4 #148, leg 5
-#143, leg 6 #147, leg 7 #145, leg 8 #150's work** (`622bb8d`). **Next is #141.**
+**Three tickets left. Leg 1 landed #149, leg 2 #146, leg 3 #142, leg 4 #148, leg
+5 #143, leg 6 #147, leg 7 #145, leg 8 #150's work, leg 9 #141** (`388959b`,
+**closed**). **Next is #138.**
 
 | Order | # | Why here |
 |---|---|---|
-| ~~1–8~~ | ~~149, 146, 142, 148, 143, 147, 145, 150~~ | **DONE, legs 1–8** |
-| 9 | 141 | Build-artifact assertions. **Leg 8 landed something that constrains it — read the next section** |
+| ~~1–9~~ | ~~149, 146, 142, 148, 143, 147, 145, 150, 141~~ | **DONE, legs 1–9** |
 | 10 | 138 | Type scale. **Gauntlet is confounded until this lands** |
 | 11 | 139 | Tool-card label to 400 |
 | 12 | 140 | Named scoped exception for the state stripe |
@@ -44,78 +44,111 @@ this table, so it is the chain's plan rather than something the tracker enforces
 **#150 is OPEN at `needs-info` and is NOT queue work.** Its code landed in full;
 what it waits on is a human pushing and watching the first CI run. Leave it.
 
-**Eight tickets sit at `needs-triage` and none may be promoted by a leg:** #144
-(its settled half was #150), #151, #152, #153, #154, #155, #156, and **#157**
-(new, leg 8).
+**Nine tickets sit at `needs-triage` and none may be promoted by a leg:** #144,
+#151, #152, #153, #154, #155, #156, #157, and **#158** (new, leg 9).
 
-## Next ticket, #141 — and leg 8 handed it a hard constraint
+## Next ticket, #138 — and it is the one the gauntlet is waiting on
 
-#141 executes the two build-artifact driver assertions (`gui-75` §0, `gui-93`)
-that read `out/` rather than `src/`. It is explicitly **triage, not a spec**: it
-offers three shapes and asks which. It already carries **one comment — read it.**
+The app paints **five** type sizes (11 / 13 / 15 / 17.25 / 46.26) against three
+documented in `DESIGN.md`. **It already carries a ruling comment — read it, it
+is more constraining than the body.**
 
-**Leg 8 changed the calculus of all three options, because this repo now has CI.**
+**Ruled: restrike the markdown headings onto the one ladder, document the rungs
+the app actually paints, retire or re-point `--fs-display`.**
 
-`.github/workflows/fast-gate.yml` runs `npm run typecheck`, `npm test`,
-`npm run build` on push — and **`tests/fast-gate-workflow.test.ts` pins that
-command set**. So:
+**The rung count is not the violation.** `DESIGN.md` states the rule as a
+*ratio* (~1.15), and all five sizes are legal rungs on it. The violation is that
+there are **two scales**: markdown headings are set in `em` and render 16.5 /
+18.75 against the 15px body, which are not ~1.15 rungs, and they ship on a
+photographed surface. The bar's win condition requires *"one type scale holds
+across all of them"*.
 
-- **Option 2 (a separate `test:built` script)** is no longer defeated by "nothing
-  forces anyone to run it" — CI can. But CI currently runs `build` **last**, so a
-  `test:built` step has to come after it, and **that is a fourth command, which
-  reds the pin**.
-- **The pin is meant to be updated deliberately, not worked around.** If #141
-  decides the gate grows, edit `GATE` in `tests/fast-gate-workflow.test.ts` and
-  say why in the commit. Do not delete the assertion to make a red go away —
-  that assertion exists so the gate cannot quietly grow into claiming more than
-  it covers.
-- **A red from `fast-gate-workflow.test.ts` after touching CI is the pin working**,
-  not a regression you introduced elsewhere.
+**The objection the ruling did NOT fully survive, and it constrains you:** a
+cross-model adversary refuted it as *"the ratio statement does not authorize
+documenting drift into compliance."* So —
 
-Note the ticket's own closing warning still stands: the `gui-<n>.source.mjs`
-convention does **not** fit as-is, because `run()` is specified pure with no
-`out/` artifact. Extending it is part of the design, not an afterthought.
+- **Do not blanket-document five rungs.** Each new rung (17.25, 46.26) must be
+  justified in the edit as serving a stated role, or removed. *"It renders,
+  therefore it is spec"* is the move this repo forbids.
+- The 17.25 rung sits **0.75px** from both markdown headings. Restriking must
+  **resolve** that collision, not preserve it one step over.
+
+**Four acceptance criteria, and the fourth is the expensive one:** headings on
+the documented ladder with no second scale on any photographed surface;
+`DESIGN.md` stating each rung with its role; `--fs-display` naming a size
+something paints or gone; and **D4 — this moves rendered prose, so it owes a
+driver pin that EXECUTES, naming which gate runs it.** jsdom loads no CSS and
+structurally cannot see this, so the fast gate cannot be that gate.
+
+**Read the D3 stylesheet landmines below before touching `styles/`.** They are
+literal-text pins and they are brittle.
 
 ## Before you trust a gate result
 
 **`main` goes red on its own.** `tests/session-title-enrichment.test.tsx` fails
 intermittently under full-suite load — 4 of 7 complete runs at leg 5, including
-one on the unmodified tree with all work stashed. Filed as **#153**. Green on all
-runs at legs 6, 7 and 8, which is not evidence it is fixed.
+one on the unmodified tree with all work stashed. Filed as **#153**. Green on
+every run at legs 6, 7, 8 and 9, which is not evidence it is fixed.
 
 **So a single red run is not evidence your change broke something.** Re-run, and
 if it is that test, stash and run against the bare tree.
 
 **`npm run test:dom` cannot be all-green while #155 is open**, because `gui-123`
 honestly reports `UNSCORED`. A full run also reports `INCOMPLETE` — the accepted
-`gui-119` quarantine stated rather than hidden. Both are correct readings, not
-broken gates.
+`gui-119` quarantine stated rather than hidden. Both are correct readings.
 
 **Do not run the fast gate concurrently with the DOM phase.** Leg 7 did, and it
 cost two ambiguous reds and five attribution runs to unpick. The drivers time out
 on `page.screenshot()` under load.
 
-**`npm run x | tail` then `echo $?` gives you `tail`'s exit code.** Leg 8 did this
-and briefly believed a gate result it had not actually read. Redirect to a file
-and read `$?` on its own line — same class as the standing warning about the DOM
-phase verdict on a compound command.
+**`npm run x | tail` then `echo $?` gives you `tail`'s exit code.** Leg 8 did
+this and briefly believed a gate result it had not read. Redirect to a file and
+read `$?` on its own line.
 
-## CI exists now, and has never once run
+**A clean checkout runs four fewer tests than your working tree** — 1378 vs 1382
+at leg 8's commit — because `tests/transcript-rewind-real-store.test.ts` skips
+without a stored transcript whose `cwd` is this repo. **#157.** Not a regression.
+
+## What leg 9 added to the gate (#141)
+
+**A sidecar check may declare the build artifact it reads:**
+
+```js
+needsBuild: { artifact: 'out/main/index.js', covers: ['src/main'] }
+```
+
+`npm test` reports it as a named skip carrying its artifact **and where it does
+run**; `npm run test:dom` executes it, after proving the artifact is at least as
+new as everything under `covers`. **The gate still does not build** — that is the
+ruling, not an omission.
+
+```bash
+npm run test:dom -- --build-only     # seconds, no Electron. Refuses to combine with --only.
+```
+
+**Carry the habit this leg learned: mutation-verify the TEST, not only the
+code.** The test written for the recursive mtime walk compared two real repo
+paths and **passed with the recursion deleted** — it was measuring the checkout,
+not the function. Rebuilt on a fixture with a stamped mtime. Full reasoning in
+[[2026-08-11-a-test-built-on-ambient-state-measures-the-ambient-state]]. #138
+owes an executing driver pin, so this applies directly to it.
+
+## CI exists, and has still never run
 
 `.github/workflows/fast-gate.yml`, on push, `windows-latest`, exactly
 `typecheck` + `test` + `build`. **Nothing has ever been pushed from this
-checkout, so no run has ever happened.** That is why #150 is open.
+checkout.** That is why #150 is open.
 
-**A clean checkout runs four fewer tests than your working tree** — 1378 vs 1382,
-one whole file. `tests/transcript-rewind-real-store.test.ts` skips unless it
-finds a stored transcript whose recorded `cwd` is this repo, and a clone (or a
-runner) has none. Working as designed; filed as **#157**. Do not chase it as a
-regression.
+**#158 (new) asks whether CI should also host the build-artifact checks** —
+`--build-only` needs no Electron and no key, but the workflow pin bans any
+workflow invoking `test:dom`, a fourth command reds the command-set pin, and the
+job name is the coverage boundary. Three standing decisions collide, so a leg
+filed it rather than answering it.
 
 ## The DOM phase's current reds, already attributed
 
-**Leg 8 did not run the phase** — #150 touched no renderer code — so this table
-is leg 7's and nothing has moved it.
+**Legs 8 and 9 ran no full phase** — leg 9 ran only `gui-93` alone, twice — so
+this table is leg 7's and nothing has moved it.
 
 | driver | in batch | alone | verdict |
 |---|---|---|---|
@@ -124,11 +157,11 @@ is leg 7's and nothing has moved it.
 | `gui-123` | UNSCORED | UNSCORED | **#155**, working as designed |
 | `gui-94` | FAIL | **PASS** | load artifact, not filed |
 | `gui-91` | FAIL | **FAIL 1×, PASS 3×** | **#156**, intermittent ~1 in 7 |
-| `gui-93` | **PASS** | PASS | was batch-red at leg 6, unexplained |
+| `gui-93` | **PASS** | PASS (leg 9, twice) | green; red-verified under mutation |
 | `gui-124` | **PASS** | PASS | was batch-red at leg 6, unexplained |
 
-There is still **no full-phase baseline on an unmodified tree**, so the batch-only
-behaviour in this set stays unattributed rather than understood.
+There is still **no full-phase baseline on an unmodified tree**, so the
+batch-only behaviour in this set stays unattributed rather than understood.
 
 ## #155 is still the biggest open finding, and it needs a human
 
@@ -147,6 +180,15 @@ with a stubbed `dialog.showOpenDialog`, so nobody has ruled out the harness.
 **The workflow is pinned as text** (#150). `tests/fast-gate-workflow.test.ts`
 reds on: a changed job name, a changed command **set** (order is free), losing
 `if: always()` on the summary step, or **any** workflow invoking `test:dom`.
+**#141 did not touch it** — no npm script and no workflow were added.
+
+**`gui-75` is the first driver with a sidecar that is ALSO in `DOM_SKIP`** (#141).
+"Has a sidecar" and "is executed somewhere" are now different claims. It carries
+its own named skip plus a pin; un-skipping it or deleting its sidecar reds that.
+
+**The check set is enumerated ONCE**, in `drivers.manifest.mjs` (`loadChecks()`).
+Do not re-glob sidecars in the test file — that is how the gate and the phase
+drift, and it is the same rule the driver list already follows.
 
 **A quarantine the verdict does not carry is a green** (#145). A skip category a
 human can close with one command belongs in `UNCOVERED_CATEGORY` in
@@ -154,7 +196,8 @@ human can close with one command belongs in `UNCOVERED_CATEGORY` in
 
 **Logic the fast gate must execute cannot live in `dom-phase.mjs`** — it spawns
 drivers at import, same rule as `inspect.mjs` (#142, #148). Put it in
-`drivers.manifest.mjs`, which both sides already import.
+`drivers.manifest.mjs`, which both sides already import. #141's staleness
+comparator lives there for exactly this reason.
 
 **Every driver launches on a private `userData`** (#147). New driver → spread
 `...profileArgs()` from `driver-profile.mjs` into its `electron.launch({ args })`,
@@ -211,15 +254,16 @@ edits that section, so the split token must survive verbatim.
 `inspect.mjs`, the `surfaces:begin`/`surfaces:end` region in
 `.claude/skills/run-desktop/SKILL.md`, and the same region in
 `.gauntlet/bar/README.md`. **Only that delimited region of `SKILL.md` is pinned**
-by `tests/inspect-published-list.test.ts`; the rest is free to edit, and legs 7
-and 8 both did.
+by `tests/inspect-published-list.test.ts`; the rest is free to edit, and legs 7,
+8 and 9 all did.
 
 **A new driver's capture destination is gated** (#146): use
 `process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')`.
 **Do not broaden the `scripts/gui-*-shots/` ignore rule.**
 
 **`drivers.manifest.mjs` enumerates the non-driver `.mjs` files. There are FIVE.**
-A `*.source.mjs` sidecar needs no wiring.
+A `*.source.mjs` sidecar needs no wiring — which is why #141 added one and
+touched no list.
 
 ## Still yours — nothing here blocks the chain
 
@@ -232,9 +276,9 @@ Live entries in `.claude/vibe.md` under `## Needs you`:
 2. **gauntlet owner call 14, the stop signal.** Two agent-reachable answers were
    attempted and both were refuted cross-model as post-hoc goalpost movement.
 
-**New, and it is one command:** `git push origin main`, then watch the first
-`fast-gate` run and close **#150** on green. `main` is 16 commits ahead and has
-never been pushed.
+**Still one command:** `git push origin main`, then watch the first `fast-gate`
+run and close **#150** on green. `main` is **18 commits ahead** and has never
+been pushed.
 
 Seven older owner-calls remain in `.claude/vibe-130.md`. **#152** and **#155** are
 yours in spirit — 208 rail tab stops ahead of the transcript is a design decision,
@@ -271,6 +315,9 @@ standard.
   + a `PushNotification`.
 - **File follow-ups at `needs-triage`, never `ready-for-agent`.** A leg promoting
   its own follow-up makes the chain's stop condition unreachable by construction.
+- **A leg may leave a ticket open** (leg 8's precedent, #150) or close it (leg
+  9's, #141). Landing the work and closing the ticket are separate decisions:
+  close when everything the acceptance asks for was verifiable without a push.
 
 ## Related
 
