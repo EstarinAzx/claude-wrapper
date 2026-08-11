@@ -7,157 +7,147 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, relay chain 6 leg 6 — owner away_
-_At commit: `b35e799` on `main`_
+_Last updated: 2026-08-11 by Opus 5, relay chain 7 leg 1 — owner away_
+_At commit: `6067a12` on `main`_
 
 ## Current focus
 
-**None. The `ready-for-agent` queue is EMPTY and relay chain 6 has stopped.**
+**Chain 7 is draining a twelve-ticket queue, with `/preset gauntlet` chained
+behind it.** Leg 1 landed **#149** and closed it. **Eleven tickets remain at
+`ready-for-agent`.**
 
-Leg 6 landed **#137** and closed it, which drained the frontier. That was the
-chain's declared stop condition, so no leg 7 was spawned and
-`.claude/relay/ticket-loop.md` carries `stop: true`.
-
-**Everything still open needs a human before an agent can touch it.** Nine
-tickets sit at `needs-triage` and three at `ready-for-human`. An agent picking
-work from here would be choosing its own scope, which this batch bans.
+The queue was filled by an autonomous `/preset vibe` pass run under the owner's
+AFK autonomy grant. Every ruling, warrant and cross-model objection is in
+`.claude/vibe.md`; read it before overturning anything.
 
 ## State
 
-- **In flight:** nothing. `ticket/137-capture-welcome-minimum-window` was
-  squash-merged and deleted. Tree clean on `main`.
-- **Closed 2026-08-11 (leg 6):** **#137** (`b35e799`). **Filed: #148, #149**,
-  both `needs-triage`.
-- **Open:** #138, #139, #140 (`ready-for-human`) · #141–#149 (`needs-triage`).
-  **Frontier: empty.**
+- **In flight:** nothing. `ticket/149-published-surface-list` was squash-merged
+  and deleted. Tree clean on `main`.
+- **Closed 2026-08-11 (leg 1):** **#149** (`6067a12`). Nothing filed — the
+  ticket's own follow-up was a discrepancy raised in a comment, not a new issue.
+- **Open and agent-ready (11):** #138, #139, #140, #141, #142, #143, #145, #146,
+  #147, #148, #150. **#144 stays `needs-triage` deliberately** — its settled half
+  is #150, and closing #144 because #150 landed is the exact failure the split
+  was reviewed against.
+- **Next:** **#146** — producers must honour `SCREENSHOT_DIR` before anything
+  else touches captures. See the ordering table in [[pick-up]].
 - **Gate on `main` after the merge:** typecheck clean, build clean,
-  **89 files / 1329 passed + 36 skipped** (was 88 / 1325 + 36; the +1 file and
-  +4 tests are exactly `tests/inspect-welcome-min.test.ts`). Ran on the branch
+  **90 files / 1337 passed + 36 skipped** (was 89 / 1329; the +1 file and +8
+  tests are exactly `tests/inspect-published-list.test.ts`). Ran on the branch
   and again on `main`. **Read the number off `main`, never off this file.**
-- **DOM phase: 29/30**, the single red the documented `gui-123` (#143).
-  `gui-69` and `gui-70` both pass — #147's private profile held.
-- **NOT PUSHED. Nineteen commits sit local.** D6 stands. Read the real gap:
+- **NOT PUSHED.** D6 stands. Read the real gap:
   `git rev-list --count origin/main..main`.
 
-## What #137 actually was
+## What #149 actually was
 
-The Welcome hero's layout is a height budget argued entirely in the `.welcome`
-comment in `chat.css`, and **nothing had ever photographed it**.
-`inspect.mjs` now writes an eleventh file, `welcome-min-window.png`, at the
-window's enforced minimum.
+`inspect.mjs` publishes its surface list in **three** places and two had drifted
+to **five against nine**. #133 added the three docks and #137 added
+`welcome-min-window`; both updated the driver's own header, because that is the
+file being edited, and neither touched `SKILL.md` or `.gauntlet/bar/README.md`.
 
-| term | the comment claims | measured |
-|---|---|---|
-| pane | 432 | 640x**432** |
-| padding top / bottom | 32 / 82 | 32 / **81.6** |
-| content | 253 | **253.42** |
-| **headroom** | **65** | **64.98** |
+**The obvious fix was rejected and the objection is the shape of the change.**
+Generating both lists from `SURFACES` inverts the contract: deleting a driver
+entry would silently delete the obligation to meet a standard on that surface. So
+`SKILL.md` follows the instrument (correct, it documents one) while the bar keeps
+its **own hand-authored list** and says in the file why.
+`tests/inspect-published-list.test.ts` asserts only that the three **agree** —
+membership held, order deliberately not, since the bar's order is wave order and
+the driver's has the docks last.
 
-Drift **-0.02px**, identical across three runs. `scrollHeight == clientHeight`,
-hero 32.48px clear at the top and 32.49 at the bottom. **The sum was right.**
-AC4's disagreement clause did not fire.
+Mutation-verified twice. Adding a surface reds both documents plus the file
+count; **renaming one out of `SURFACES` while the bar still lists it reds the
+same three**, which is the standard catching the implementation rather than the
+other way round. A discrimination control runs first, because a parse returning
+nothing would otherwise pass by agreeing all three publish an empty set.
 
-The claim is now restated in the driver as `CLAIMED_HEADROOM_PX` and a
-disagreement beyond 1px **fails the run**. That constant is a copy of prose and
-copies drift: **never move it to match a measurement without moving the sum in
-`chat.css` too**, or the check becomes a rubber stamp.
+## The transferable half
 
-The size is **asked for**, via `getMinimumSize()`, not restated from
-`src/main/index.ts`. The test asserts neither literal appears in the driver —
-and it caught two of my own comments during the build.
+**A count sitting beside a list is what rots.** Four more stale counts were found
+in the driver's own comments — section header, zero-CLI-turns claim,
+commands-fixture note, and a runtime message reading *"four of the five surfaces
+only exist once a folder is open"*. All were written at five surfaces or eight;
+**#133 and #137 each walked past every one**. Three are now numeral-free rather
+than corrected. Deleting the thing that rots beats re-pinning it.
 
-## The finding, which is bigger than the ticket
+**They were found by restoring the file after a mutation**, not by reading it —
+the restore put the whole header back in view. Mutation testing paid twice here:
+once for the verdict it was run for, once for what it made visible.
 
-**AC2 wanted every other surface byte-identical. Six runs of the UNMODIFIED
-instrument show three of ten files already unstable** — not the one #142 names.
+## Carried forward for the next leg
 
-Pinning the fixture (fixed `SID`, fixed workspace path in place of `mkdtemp`)
-makes `titlebar.png` byte-identical, **confirming #142's mechanism**.
-`sidebar.png` still moves, so there is a second, independent source:
+**A discrepancy in the bar, deliberately not resolved by #149.**
+`.context/pick-up.md` says the three docks *"share the Sidebar's reference"* and
+asks for that to be labelled the weaker comparison. But `.gauntlet/bar/README.md`'s
+own "What each reference judges" table **already** assigns
+`linear/linear-features.png` to *"Titlebar + docks: control grouping,
+iconography"*. Those disagree.
 
-**The sessions rail is not fixture-driven, though `inspect.mjs`'s own header
-says the whole instrument is.** `aside.sidebar` holds **100 rows, 99 of them
-`session-row-btn-foreign`** — real sessions off the machine that ran it — and
-the entire cross-run diff is four `.session-row-meta` spans ticking `8m`→`9m`,
-`19m`→`20m`, `49m`→`50m`, `1h`→`2h`. **Identical character length**, which is
-why the driver's own `textLength` guard read 7524 every run and saw nothing.
-`window-session.png` inherits it. Filed **#148** — and it is a provenance leak
-as much as an instability, because those two captures carry real session titles
-and an absolute path into `.gauntlet/bar/` for a critic to read.
+The table is the owner-confirmed half of a human-owned artifact, so it was left
+untouched and raised on #149 instead. **Worth settling before the gauntlet seed
+reads it**, since the seed picks its references from that table.
 
-Three obvious answers were killed by measurement rather than argument:
-byte-identical when shot twice 2.5s apart inside one run (not a settling race),
-`animationName` `none` on every descendant (not `rails.css`'s `subagent-pulse`),
-`scrollTop` 0 in both (not a scroll offset).
-
-**Result: 8 of 10 byte-identical with the fixture pinned, `titlebar.png`
-included; 2 excluded with a cause that predates the change.** 7 of 10 unpinned.
-No capture was adjusted to green a hash.
+**The `pieces` cap is a budget, not a scope statement.** With nine captured
+surfaces and `pieces` capped at 6 and fixed at seed, one run cannot take all
+nine. `.gauntlet/bar/README.md` now says so explicitly, so a seed picking a
+subset is not evidence that the unpicked surfaces lack a standard.
 
 ## The correction to carry
 
 **The DOM phase reported exit 0 while its own text said `DOM PHASE FAIL`, with
-no pipe involved.** The command ended in `; echo`.
-
-Leg 5 recorded this as *"do not pipe the phase through `tail`"*. That is
-narrower than the defect: **any trailing command replaces the status**,
-including the `echo` you added to print it. Read `$?` on its own line, or grep
-the redirected file. The phase exits 1 correctly and always did.
+no pipe involved.** The command ended in `; echo`. **Any trailing command
+replaces the status**, including the `echo` you added to print it. Read `$?` on
+its own line, or grep the redirected file. The phase exits 1 correctly and always
+did.
 
 ## Pick up here
 
-**There is no agent-ready work.** Confirm rather than trust that:
-
 ```text
 gh issue list --state open --label ready-for-agent
+git rev-list --count origin/main..main
 ```
 
-Empty means the batch is done and the next move is a human's. The three
-`ready-for-human` tickets (**#138–#140**) are design rulings, and the
-`needs-triage` pile has grown to nine — **#141** through **#149** — which is
-itself worth reading as a signal: five of them (#142, #144, #145, #146, #147,
-plus now #148) are about the instruments rather than the app.
-
-Restarting quality work needs **#138–#140** answered plus the gauntlet
-stop-signal question recorded as owner call 14 in `.claude/gauntlet.md`. Do not
-restart the gauntlet before that: it carries `stop: true` at `plateau: 3` and
-would halt at its own seed guard, correctly.
+The tracker is the authority; this file has been wrong before. Recommended order
+and its reasons are in [[pick-up]] — two entries there are load-bearing rather
+than cosmetic, and **#138 before the gauntlet seed** is the sharper one: `bar_win`
+requires *"one type scale holds across all of them"* and the app ships two, so
+every per-surface verdict is confounded until #138 lands.
 
 ## Standing constraints for any leg touching the renderer
 
-Unchanged from leg 5, and all still hold: no em dashes in user-visible strings
+Unchanged, and all still hold: no em dashes in user-visible strings
 (`tests/copy-em-dash.test.ts` compiles `src/`); the stylesheet pins are
 literal-text and brittle (D3); any CSS change owes a driver pin that **runs**,
 naming which gate runs it (D4) — jsdom loads no CSS, so the fast gate
 structurally cannot see layout; the titlebar's centring is load-bearing (#136);
 the identity mark is solid by design; colour and translucency are instrument
 artifacts in any capture; `DESIGN.md` is read literally by
-`tests/subagent-material.test.ts`. Full text in [[pick-up]].
+`tests/subagent-material.test.ts`, which splits on `\n## Bans in force\n` — #140
+edits that section, so the split token must survive verbatim. Full text in
+[[pick-up]].
 
-Two additions from this leg:
+One addition from this leg:
 
-- **A driver that resizes the window owes a restore in a `finally`** — and that
-  is a promise, not a guarantee, since it does not run if the process dies.
-  #147's private `--user-data-dir` is the real fix and now has one more reason.
-- **`inspect.mjs` publishes its surface list in three places and two are
-  stale** (#149). The header in the driver is the accurate one.
+- **`inspect.mjs`'s surface list is now gated in three places.** Adding or
+  removing a surface means editing `SURFACES`, `SKILL.md` **and**
+  `.gauntlet/bar/README.md`, inside their `surfaces:begin` / `surfaces:end`
+  markers. The bar's edit is a deliberate change to the standard, not
+  bookkeeping.
 
 ## Open questions
 
 **TWO** live owner-calls in `.claude/vibe.md` under `## Needs you`, both
-reversible with the default already taken. **SEVEN older ones live in
-`.claude/vibe-130.md`** — every reference pointing at `.claude/vibe.md` for those
-is stale. Plus **#138–#140** and the gauntlet stop-signal question in
-`.claude/gauntlet.md`.
+reversible with the default already taken: the git history on the wave captures
+(the repo is public), and gauntlet owner call 14, the stop signal. **SEVEN older
+ones live in `.claude/vibe-130.md`.** Owner calls 14–20 are in
+`.claude/gauntlet-core-surfaces.md`, the archived five-wave run.
 
-**#144 stands unanswered and is now the sharpest of them.** #137 added a
-measurement that only the DOM phase can run, and nothing runs the DOM phase
-because the repo has no CI. The executing pins exist; the thing that would make
-them bite on every push does not.
+**#144 stands unanswered**, and #150 is its settled half sitting in the queue.
 
 ## Related
 
 - [[overview]] · [[pick-up]] · [[decisions]] · [[stack]] · [[happy-path]] · [[flows]]
+- [[2026-08-11-a-standard-generated-from-the-code-it-polices-inherits-its-omissions]]
 - [[2026-08-11-the-noise-floor-is-part-of-the-instrument]]
 - [[2026-08-11-the-batch-is-the-instrument-and-a-teardown-is-a-promise]]
 - [[2026-08-11-a-check-nobody-runs-is-not-a-check]]

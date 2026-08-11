@@ -465,12 +465,11 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **relay chain 6
-  is RUNNING. #136 landed and closed; the frontier is #137 ALONE, and taking it
-  empties the queue, which is this chain's stop condition. `ready-for-human` is
-  BANNED for this batch; use `needs-info` + a comment + a PushNotification**; run
-  the frontier query anyway, it is the authority and this line has been wrong
-  before.
+- `.context/pick-up.md` — current frontier + landmines (currently: **relay chain 7
+  is RUNNING a twelve-ticket queue with `/preset gauntlet` chained behind it.
+  #149 landed on leg 1; eleven remain. `ready-for-human` is BANNED for this
+  batch; use `needs-info` + a comment + a PushNotification**; run the frontier
+  query anyway, it is the authority and this line has been wrong before.
   **39 `gui-*.mjs` assertion drivers** — 38 plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
@@ -484,12 +483,23 @@ tags: [context, overview]
   list); both are premise failures, not regressions, and both were reproduced on
   clean `main` before being called so)
 - `.claude/skills/run-desktop/inspect.mjs` — **the consolidated `inspect:`
-  command (#131, #133), and the one to copy when a run must produce EVIDENCE
-  rather than a verdict.** `SCREENSHOT_DIR=<dir> node …/inspect.mjs` captures
-  **eight** surfaces — Welcome, Titlebar, Sidebar, Chat, InputBar, and since #133
-  the three right-hand docks (Agents, Commands, Appearance) — plus two
+  command (#131, #133, #137), and the one to copy when a run must produce
+  EVIDENCE rather than a verdict.** `SCREENSHOT_DIR=<dir> node …/inspect.mjs`
+  captures **nine** surfaces — Welcome, Titlebar, Sidebar, Chat, InputBar, the
+  three right-hand docks (Agents, Commands, Appearance) since #133, and
+  `welcome-min-window` since #137 — plus two
   whole-window frames, because a surface clipped to its own box cannot answer a
-  composition question. It spends **zero CLI turns**: the chat is a transcript
+  composition question. **That list is published in three places and #149 pinned
+  them together**: `SURFACES` in the driver executes, `SKILL.md` follows it, and
+  `.gauntlet/bar/README.md` keeps its OWN hand-authored copy, because a standard
+  generated from the code it polices inherits that code's omissions — deleting a
+  driver entry would silently delete the obligation to meet a standard on that
+  surface. `tests/inspect-published-list.test.ts` reds when any of the three
+  drifts, holding **membership but deliberately not order** (the bar's order is
+  wave order, the driver's is constrained by the docks coming last). Adding a
+  surface now means editing both documents, and the gate says so. See
+  [[2026-08-11-a-standard-generated-from-the-code-it-polices-inherits-its-omissions]].
+  It spends **zero CLI turns**: the chat is a transcript
   **fixture seeded into the CLI store** and replayed (gui-63's mechanism), so it
   carries real message rhythm and two tool cards on a machine with no session and
   no API key. Determinism is bought explicitly — the window is pinned to 1440x900,
@@ -498,7 +508,7 @@ tags: [context, overview]
   remembered width is cleared; all three are otherwise remembered across launches
   and would silently rescale or resize a capture. **Every surface is proven
   present, painted, on screen and non-empty BEFORE it is photographed**, and a
-  green run asserts it wrote all **ten** files, so a half-empty output directory
+  green run asserts it wrote all **eleven** files, so a half-empty output directory
   cannot read as a complete one. `driver.mjs` is untouched and still owns the
   two-pill read. Re-run it after any change to a surface's root class.
   **The docks are captured LAST, after the window frames, and that order is
@@ -866,7 +876,15 @@ tags: [context, overview]
   17 days were all still rewindable. The build was then one field carried
   through `transcript.ts` behind the same `isMessageUuid` guard. See
   [[2026-08-08-a-checkpoint-outlives-its-process-and-rewindability-tracks-position]].
-  **Chain 6 is RUNNING.** Legs 1–5 landed **#131–#136**. Leg 5's **#136**
+  **Chain 6 is COMPLETE**, legs 1–6 landing **#131–#137**. **Chain 7 is RUNNING**
+  a twelve-ticket queue filled by an autonomous `/preset vibe` pass, with
+  `/relay N=1 /preset gauntlet` chained behind it on the queue draining. Leg 1
+  landed **#149** (`6067a12`): the published surface list restated in `SKILL.md`
+  and `.gauntlet/bar/README.md`, plus the test that reds when either drifts from
+  the driver's `SURFACES` — **the bar keeping its own hand-authored copy on
+  purpose**, since a standard generated from the code it polices inherits that
+  code's omissions and would let a deleted driver entry silently delete the
+  obligation. Legs 1–5 of chain 6 landed **#131–#136**. Leg 5's **#136**
   (`ed81559`) centred the session title on the window rather than on the space
   its neighbours leave over: `flex: 1` on both flanks, `flex: 0 1 auto` on the
   slot, and the 14px inset moved onto `.logo-mark` because padding on a
