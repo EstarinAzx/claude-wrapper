@@ -28,34 +28,114 @@
   gap: 16px;
 }
 
-/* One control per row: label left, control right — the shape the next two
-   controls in this panel land in. */
+/* ── sections ─────────────────────────────────────────────────────────────
+
+   THE PANEL IS THREE GROUPS, and until this pass it did not look like three of
+   anything. Six options were drawn as six identically rounded, identically
+   bordered boxes stacked 6px apart, each label floated above its stack in the
+   same 13px the option names are set in, and Zoom alone was laid out
+   label-left / control-right. What that produced at 248px is a single
+   undifferentiated column: nothing marked where Theme ended and Backdrop
+   began, and nothing distinguished one group from another except the word.
+
+   Every rule below is one move — each section becomes a HEADED, GROUPED unit —
+   and the move has three parts because the old shape failed in three places:
+
+   1. the section gets a header: a 12px mark, the name dropped to the micro-caps
+      rung, and a hairline running out to the panel's edge;
+   2. its options stop being loose boxes and become rows inside ONE bordered
+      container, divided by hairlines;
+   3. Zoom joins them — same header, and its stepper widens from a 100px pill
+      hanging off the right edge to a strip of three equal segments filling the
+      same column the two lists occupy.
+
+   The `--stacked` variant is gone rather than left behind. All three fields are
+   the same shape now, so a variant with no counterpart is dead markup, and the
+   base rule states that shape once. */
 .appearance-field {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-/* A control whose options each carry a sentence cannot sit beside its label in
-   a fixed-width panel, so this variant stacks them. Same row group otherwise. */
-.appearance-field--stacked {
   flex-direction: column;
   align-items: stretch;
-  justify-content: flex-start;
   gap: 8px;
 }
 
-.appearance-label {
-  font-size: var(--fs-ui);
+.appearance-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The section's mark. One rung ABOVE the word beside it, which inverts the
+   usual icon-supports-label order on purpose: the three words are three
+   ordinary nouns in identical type, so the thing that actually separates one
+   header from the next at a glance is the silhouette, and the word confirms it.
+   12px is the icon box the three docks already use — no second size. */
+.appearance-head-mark {
+  display: flex;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
   color: var(--text-muted);
 }
 
-/* Backdrop (#69): pick one of two, each stating what it costs. */
+/* The hairline that turns a label into a header band. It is the same weight and
+   the same token as the container's border 8px below it, and they do not read
+   as a doubled line because they are different lengths: this one starts after
+   the name, the container spans the full column. */
+.appearance-rule {
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Micro-caps, which is the whole point of the change to this rule: at
+   `--fs-ui` in `--text-muted` the section name sat on the SAME typographic rung
+   as the option names underneath it, so it read as one more row rather than as
+   their heading.
+
+   THE FOUR VALUES ARE NOT HERE. This selector JOINED shared.css's micro-caps
+   group — `--fs-micro`, 600, uppercase, `--text-faint` — which is the follow-up
+   the first draft of this rule named and deferred. Nothing rendered moves: the
+   group states the same four values this rule stated, and it is a single-class
+   rule in a file that loads first, so the tracking below still wins.
+
+   Tracking is the one thing that stays local, as it is for every other tenant
+   of that group. 0.08em is a section INSIDE a pane, one rung under the 0.12em a
+   whole pane's own title takes. The full ladder and its five rungs live with
+   the group in shared.css rather than being re-derived here — this rule reached
+   0.08em from "the two rungs already in use" and four were in use, which is the
+   drift that put the ladder in one place. */
+.appearance-label {
+  letter-spacing: 0.08em;
+}
+
+/* ── grouped options ──────────────────────────────────────────────────────
+
+   ONE container per control, not one box per option. Six free-floating rounded
+   rectangles said "six things"; a bordered group with divided rows says "one
+   control, six ways", which is what both of these actually are.
+
+   The width is unchanged by construction, and that matters because the Backdrop
+   sentence's two-line wrap is a premise other pins measure. Before: the card was
+   the full 215px column, minus its own 1px side borders, minus 10px of padding
+   each side = 193px of text. After: the container is the 215px column, minus its
+   1px side borders = 213px inner, and the row inside it carries no side border
+   of its own, so 213 - 20 = 193px. The same number, reached the other way.
+
+   The ground moved off the option and onto the group for the same reason: a
+   filled group with transparent rows leaves hover and selection as the ONLY
+   things that paint a row, so a lit row is the only lit thing in the panel. */
 .appearance-choices {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  border: 1px solid var(--border);
+  /* Literal 8px like the session rows, not --r-pill: this box grows with its
+     rows, and a pill on a growable box becomes a lozenge. */
+  border-radius: 8px;
+  background: var(--tint-1);
+  /* So a row's hover wash and a stepper segment's take the group's corners
+     instead of squaring them off. */
+  overflow: hidden;
 }
 
 .appearance-choice {
@@ -63,22 +143,24 @@
   flex-direction: column;
   /* Deliberately small, and deliberately NOT the interval a name sits at from
      its sentence. It is the space between an option's title line and whatever
-     sits under it, which today is only the Backdrop description: a theme card
+     sits under it, which today is only the Backdrop description: a theme row
      holds its title line and nothing else, so this gap never resolves there. The
      air a description needs is still added on the description below rather than
      widened here, where it would also reach rows carrying none. */
   gap: 3px;
   padding: 8px 10px;
-  border: 1px solid var(--border);
-  /* Literal 8px like the session rows, not --r-pill: this box grows with its
-     description, and a pill on a growable box becomes a lozenge. */
-  border-radius: 8px;
-  background: var(--tint-1);
+  border: none;
+  background: transparent;
   text-align: left;
   cursor: pointer;
-  transition:
-    background 150ms var(--ease),
-    border-color 150ms var(--ease);
+  transition: background 150ms var(--ease);
+}
+
+/* The divider, on the row's leading edge so the first row never draws one and
+   the container's own border is never doubled. This is what keeps four names in
+   a filled box reading as four OPTIONS rather than as four lines of a list. */
+.appearance-choice + .appearance-choice {
+  border-top: 1px solid var(--border);
 }
 
 .appearance-choice:hover {
@@ -91,18 +173,28 @@
 }
 
 /* The selected option is the only mint in the panel, so the state reads at a
-   glance. This used to be the WHOLE of it, and the note here said a tick glyph
-   would only compete with the label. What that missed is the other job an end
-   mark does: with nothing ending either control's rows, Theme and Backdrop read
-   as two unrelated stacks of labelled boxes rather than one family of controls.
-   The mark below answers that, and it is drawn only on the selected row so the
-   colour here is still what carries the state rather than being doubled by four
-   glyphs. Two attributes because the panel holds two pick-one controls with
-   different roles: Backdrop is a radiogroup, Theme a listbox — see the comment
-   on ThemeChoices for why. */
+   glance. It used to be the mint wash PLUS a mint border on the card, and the
+   border is what a grouped list cannot keep: the only edges a row owns now are
+   the dividers it shares with its neighbours, and minting one of those paints a
+   bar above the selection rather than around it — the exact side-stripe form
+   DESIGN.md bans everywhere but one named row.
+
+   Losing it costs nothing, and the arithmetic says why. A theme row measures
+   ~30px, not the 33px this note first used — see the zoom note below, which
+   carried the same figure from the same wrong line box and now records the
+   correction. The conclusion is unmoved and the margin is wide. The old outline
+   was a 1px line around a 215 x 30px box: (215 + 30) x 2 = 490px^2 of mint at
+   full strength. The wash now fills the whole 213 x 30px band — 6390px^2 at the
+   0.1 alpha `--mint-wash` carries, so ~639px^2 equivalent. That is more mint,
+   in one solid block instead of a hairline ring, which is the difference
+   between spotting a colour on an edge and spotting a filled row. The mint name
+   and the mint mark are unchanged and still ride on top of it.
+
+   Two attributes because the panel holds two pick-one controls with different
+   roles: Backdrop is a radiogroup, Theme a listbox — see the comment on
+   ThemeChoices for why. */
 .appearance-choice[aria-checked='true'],
 .appearance-choice[aria-selected='true'] {
-  border-color: var(--mint);
   background: var(--mint-wash);
 }
 
@@ -110,7 +202,7 @@
    slack and whatever ends the row is flush right. Shared rather than authored
    per control, which is the point — a theme row ends with its swatch and then
    the mark, a backdrop row ends with the mark alone, and because the line and
-   the card padding are the same in both, the marks land in one column down the
+   the row padding are the same in both, the marks land in one column down the
    whole dock instead of two controls each inventing an end. */
 .appearance-choice-line {
   display: flex;
@@ -119,7 +211,7 @@
 }
 
 /* The selection mark's slot, held open on every option and filled only on the
-   selected one. Fixed 12px so the swatch column and the card's right edge stay
+   selected one. Fixed 12px so the swatch column and the row's right edge stay
    put as the selection moves; 12px is the icon box the three docks already use,
    so nothing here introduces a second size.
 
@@ -171,22 +263,22 @@
 
 /* The trade, not a tagline: it is the reason to pick the other one.
 
-   Which is why the top margin is here and not left to the card's 3px gap. The
+   Which is why the top margin is here and not left to the row's 3px gap. The
    sentence wraps to two lines in a 248px dock, and 1.45 already opens ~5px of
    leading between those two lines — more than the 3px above them. That inverts
    the grouping a reader needs: the name stopped reading as the heading of the
    sentence and started reading as one more line of it. 3px + 5px lands the pair
    at 8px, which is the interval this panel already uses twice over — what
-   `.appearance-field--stacked` puts between a label and its control, and what
-   the card itself pads top and bottom — rather than a number from nowhere.
+   `.appearance-field` puts between a header and its group, and what the row
+   itself pads top and bottom — rather than a number from nowhere.
 
-   On the description rather than on the card because only a card that carries
-   one has it: the single-line theme rows never match this selector, so they
-   keep the tight row they were tuned for.
+   On the description rather than on the row because only a row that carries one
+   has it: the single-line theme rows never match this selector, so they keep
+   the tight row they were tuned for.
 
    --text-muted, WHICH IS WHAT THE OTHER THREE OF THESE SAY. The app grows a
    name-plus-description pair in four places: the agent row, the command row,
-   the composer's slash option and this card. The first three paint the
+   the composer's slash option and this one. The first three paint the
    description --text-muted and this one alone painted --text-faint, which is
    one question answered two ways rather than a local call — and the two
    answers were in the same repo arguing opposite sides of the same sentence.
@@ -200,11 +292,11 @@
    .bg-session-state, a raw status word. This is a sentence, and a sentence is
    the secondary rung.
 
-   Nothing was load-bearing about the faint. The card's ground is --tint-1, or
+   Nothing was load-bearing about the faint. The row's ground is --tint-1, or
    --mint-wash when selected, so the brighter ink raises contrast rather than
-   spending it — the selected card was the panel's dimmest text on its
+   spending it — the selected row was the panel's dimmest text on its
    brightest ground. And the pair's hierarchy does not thin out: name to
-   description keeps the 13-to-11 size step and, on the selected card, a mint
+   description keeps the 13-to-11 size step and, on the selected row, a mint
    name against neutral prose, which is one more separator than the dock rows
    carry for the identical step. */
 .appearance-choice-desc {
@@ -214,25 +306,66 @@
   color: var(--text-muted);
 }
 
-/* Minus / readout / plus as one segmented unit, so the readout reads as the
-   value between its two steppers rather than as a third button. */
+/* ── zoom ─────────────────────────────────────────────────────────────────
+
+   Minus / readout / plus as one segmented unit, so the readout reads as the
+   value between its two steppers rather than as a third button.
+
+   It now fills the section's column instead of sitting at the end of a label
+   row, and it wears the two lists' 8px corner rather than `--r-pill`. Both are
+   the same argument: Zoom is the panel's third GROUP, and a 100px pill floating
+   right of a 13px word was the one element saying otherwise.
+
+   Its height is derived, not picked. The readout is a span, so it inherits
+   body's 1.6 and its line box is `--fs-micro` 11px x 1.6 = 17.6px; the 8px it
+   is padded top and bottom is the same padding every option row carries.
+   8 + 17.6 + 8 = 33.6px of content. The two buttons carry no height of their
+   own and stretch to meet it.
+
+   THE ROW IT IS MATCHED TO DOES NOT MEASURE WHAT THIS COMMENT FIRST CLAIMED,
+   and the correction is recorded rather than quietly patched. The claim was
+   that an option row comes to 8 + a 13px name's ~17.3px line box + 8, landing
+   within 0.3px of the strip so that the three groups share one rhythm. A 13px
+   name reaches ~17.3px only inside a button carrying `font: inherit` AND
+   `line-height: normal` — the pair rails.css spells out on `.command-row-btn`,
+   where a bare `font: inherit` is recorded as moving that subtree by +5.6px
+   because the shorthand also resets the leading. `.appearance-choice` carries
+   NEITHER, and nothing supplies them from above: styles.css imports Tailwind's
+   theme and utilities but not its preflight, and styles/ holds no bare `button`
+   rule, so this button keeps the UA font and the UA `normal` leading. On the
+   ratios rails.css measured for that same repaint, 1.09 for the UA face against
+   1.31 for the app's, the name's box is ~14.2px and not ~17.3px.
+
+   So a theme row is the tallest of that ~14.2px box, the 14px swatch and the
+   12px mark, plus its two 8px insets: ~30.2px against this strip's 33.6px. The
+   two are about 3.4px apart, not 0.3, and the three groups do not yet share one
+   rhythm. Left as measured rather than closed by moving the 8px, because the
+   honest lever is the missing `font: inherit` and that repaints the family under
+   a two-line wrap this file records as a premise other pins measure — a builder
+   with the instrument in hand, not a comment.
+
+   Widths: the column is 215px, less the strip's 1px side borders = 213px inner.
+   All three children are `flex: 1 1 0%`, so the free space splits three ways
+   after each child's borders come out — the readout's two dividers are the only
+   ones — giving (213 - 2) / 3 = 70.33px per share: 70.33px per button and
+   72.33px for the readout including its dividers. The two buttons are equal,
+   which is the pair a reader compares. */
 .appearance-stepper {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   flex-shrink: 0;
   border: 1px solid var(--border);
-  border-radius: var(--r-pill);
+  border-radius: 8px;
   background: var(--tint-1);
+  overflow: hidden;
 }
 
 .appearance-step {
+  flex: 1 1 0%;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 24px;
   border: none;
-  border-radius: var(--r-pill);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -259,9 +392,16 @@
   cursor: default;
 }
 
-/* Tabular so stepping 90 to 100 does not shuffle the two buttons sideways. */
+/* Tabular so stepping 90 to 100 does not shuffle the two buttons sideways. The
+   dividers are the same hairlines the option rows are separated by, so the
+   strip reads as a three-segment control of the same family as the lists above
+   it rather than as a lone pill. */
 .appearance-readout {
+  flex: 1 1 0%;
   min-width: 46px;
+  padding: 8px 0;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   text-align: center;
   font-family: var(--mono);
   font-size: var(--fs-micro);

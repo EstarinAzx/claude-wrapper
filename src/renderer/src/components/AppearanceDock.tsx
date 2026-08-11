@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { MAX_ZOOM, MIN_ZOOM, type ZoomAction } from '../../../shared/zoom'
 import { BACKDROPS, type Backdrop } from '../../../shared/backdrop'
 import { THEMES, type Theme } from '../../../shared/theme'
@@ -50,6 +50,137 @@ const SelectionMark = ({ on }: { on: boolean }) => (
       </svg>
     ) : null}
   </span>
+)
+
+// ── section marks ─────────────────────────────────────────────────────────
+//
+// One per group, and the reason the three groups stop being interchangeable.
+// Geometry is the docks' EXISTING 12-grid vocabulary, not a new one: a 12x12
+// viewBox painted at 12x12 (1:1, like every other dock icon), `strokeWidth`
+// 1.4, `fill="none"`, `stroke="currentColor"`, round caps, and a filled accent
+// only ever as a circle — the same construction AgentsDock's map glyph already
+// uses for its three nodes.
+//
+// Judged by rasterising at actual size and by ink area against the two glyphs
+// already in the family (list 38.3px^2, map 34.6): chip 41.4, sheets 35.7, lens
+// 33.4. Optical extent runs 8.8 to 9.4px, inside the 7.4-9.4 the 12-grid
+// already spans, so nothing here widens the grid.
+//
+// They are section IDENTITY rather than decoration, which is why each one is
+// the group's own subject and not a generic bullet: Theme is a colour chip,
+// Backdrop two stacked sheets, Zoom a lens. Painted one rung ABOVE the word
+// beside them (--text-muted against --text-faint) because the mark is what
+// differs between the three headers and the word only confirms it.
+
+// A chip: the ring is the swatch, the dot the colour in it. Clearance between
+// the dot's edge (r 1.4) and the ring's inner edge (r 3.3) is 1.9px, above the
+// 1.2px minimum the map glyph established for this grid.
+const ThemeMark = (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+    <circle
+      cx="6"
+      cy="6"
+      r="4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+    <circle cx="6" cy="6" r="1.4" fill="currentColor" stroke="none" />
+  </svg>
+)
+
+// Two sheets seen edge-on — the window's material sitting over what is behind
+// it. Straight segments only, no curve: the diamond is 7.4 wide by 4.2 tall,
+// and the tightest approach between the two shapes is 2.78 units, from the
+// chevron's left cap perpendicular to the diamond's lower-left edge. At a 1.4
+// stroke that leaves 1.38px of clear ground, above the 1.2px the map glyph
+// established as the minimum that survives at 12px.
+const BackdropMark = (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+    <path
+      d="M6 2.3L9.7 4.4 6 6.5 2.3 4.4z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M2.3 7.6L6 9.7 9.7 7.6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+// A lens. Its handle starts at 7.7,7.7 — inside the ring's outer stroke edge at
+// 7.89 — so the two read as one object rather than a circle beside a tick.
+const ZoomMark = (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+    <circle
+      cx="5.2"
+      cy="5.2"
+      r="3.1"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+    <line
+      x1="7.7"
+      y1="7.7"
+      x2="10"
+      y2="10"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+// The panel's ONE section header, worn by all three groups.
+//
+// What it replaces is the reason it exists: three labels floating in the same
+// 13px the option names are set in, over three stacks of identically rounded
+// boxes. Nothing said where Theme ended and Backdrop began except a 16px gap,
+// and nothing distinguished one group from another except the word.
+//
+// So the header does three things at once and they are one move, not three: the
+// mark gives the section an identity, the word drops to the micro-caps rung the
+// dock's own title already uses so it stops competing with the option names it
+// heads, and the rule runs the header out to the panel's edge so the group
+// below reads as its content rather than as the next four boxes down.
+//
+// `id` stays on the WORD, because that is the string both pick-one controls
+// point `aria-labelledby` at. `text-transform` does not touch the DOM text, so
+// the accessible name is still "Theme" and not "THEME".
+const Section = ({
+  id,
+  title,
+  mark,
+  children
+}: {
+  id: string
+  title: string
+  mark: ReactNode
+  children: ReactNode
+}) => (
+  <div className="appearance-field">
+    <span className="appearance-head">
+      <span className="appearance-head-mark" aria-hidden="true">
+        {mark}
+      </span>
+      <span className="appearance-label" id={id}>
+        {title}
+      </span>
+      <span className="appearance-rule" aria-hidden="true" />
+    </span>
+    {children}
+  </div>
 )
 
 // The name each palette shows (#70). Keyed by Theme and rendered by mapping over
@@ -249,27 +380,20 @@ const AppearanceDock = ({
       </button>
     </div>
     <div className="appearance-body">
-      {/* Stacked for the same reason as Backdrop below — four named rows do not
-          sit beside a label in a fixed-width panel. Each row shows the palette
-          it selects, so the choice is legible before it is made. */}
-      <div className="appearance-field appearance-field--stacked">
-        <span className="appearance-label" id="appearance-theme-label">
-          Theme
-        </span>
+      {/* Each row shows the palette it selects, so the choice is legible before
+          it is made. */}
+      <Section id="appearance-theme-label" title="Theme" mark={ThemeMark}>
         <ThemeChoices value={theme} onPick={onPickTheme} />
-      </div>
-      {/* Stacked rather than label-left/control-right: each option carries a
-          sentence of trade, and the panel is fixed-width. */}
-      <div className="appearance-field appearance-field--stacked">
-        <span className="appearance-label" id="appearance-backdrop-label">
-          Backdrop
-        </span>
+      </Section>
+      <Section id="appearance-backdrop-label" title="Backdrop" mark={BackdropMark}>
         <BackdropChoices value={backdrop} onPick={onPickBackdrop} />
-      </div>
-      <div className="appearance-field">
-        <span className="appearance-label" id="appearance-zoom-label">
-          Zoom
-        </span>
+      </Section>
+      {/* Zoom was the one field laid out label-left / control-right, which is
+          why it read as a stray setting rather than the panel's third group. It
+          takes the same header as the other two, and the stepper widens to the
+          same column they occupy — one strip of three equal segments instead of
+          a 100px pill hanging off the right edge. */}
+      <Section id="appearance-zoom-label" title="Zoom" mark={ZoomMark}>
         {/* Minus / readout / plus, stepping through the same helper the
             keyboard shortcuts use. No reset button — stepping reaches the
             default — and no slider or select, either of which would invent a
@@ -332,7 +456,7 @@ const AppearanceDock = ({
             </svg>
           </button>
         </div>
-      </div>
+      </Section>
     </div>
   </aside>
 )

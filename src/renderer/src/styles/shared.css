@@ -133,11 +133,36 @@
   color: var(--text);
 }
 
-/* Micro-caps: section labels in the rails and field keys on a card are the same
-   typographic role. Only the tracking differs, so only the tracking is local. */
+/* Micro-caps: section labels in the rails, section headers in a dock, and field
+   keys on a card are the same typographic role. Only the tracking differs, so
+   only the tracking is local.
+
+   THE TRACKING LADDER IS WRITTEN HERE, ONCE, because two files were separately
+   deriving it and neither had the whole set. Counted first-hand across styles/:
+
+     0.12em  the thing a whole pane is called — the two rail titles, and the
+             date divider, which names a whole run of the transcript
+     0.08em  a section INSIDE a pane — the appearance dock's three headers and
+             the agents dock's background-tasks strip
+     0.06em  a field key naming ONE value on a card — the tool-card trio
+     0.02em  the titlebar pills and the composer's effort readout, which are
+             chips rather than labels
+    -0.02em  the Welcome headline, the one negative and the only display-end
+             correction in the app
+
+   A tenant picks its rung from that list rather than from whichever neighbour
+   its author happened to be reading. `.appearance-label` is the reason the list
+   exists: it arrived deriving 0.08em from "the two rungs already in use", and
+   four rungs were in use.
+
+   `.appearance-label` states these four values HERE rather than locally for the
+   same reason every other member does — the four values are this group's four
+   values, and a section header that re-declares them is a second answer waiting
+   to drift from the first. */
 .sidebar-title,
 .agents-dock-title,
 .background-tasks-title,
+.appearance-label,
 .tool-card-toggle,
 .tool-card-change-label,
 .tool-card-arg-key {

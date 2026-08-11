@@ -183,6 +183,20 @@
   border-top: 1px solid var(--border);
 }
 
+/* This strip's name was the one member of shared.css's micro-caps group with no
+   tracking of its own: every other tenant states a rung and this one stated
+   nothing, so an 11px uppercase 600 label sat at `normal` while
+   `.agents-dock-title` — the same role, in the same dock, at the other end of
+   it — sat at 0.12em. One question answered twice.
+
+   0.08em rather than that 0.12em, off the ladder shared.css now states: 0.12em
+   names a whole pane and this names a SECTION inside one, which is the rung the
+   appearance dock's three headers take for exactly this relationship. Local, as
+   tracking is for every tenant of that group. */
+.background-tasks-title {
+  letter-spacing: 0.08em;
+}
+
 .background-task-list {
   list-style: none;
   display: flex;
@@ -702,7 +716,25 @@
 
 /* ── agents dock (right-hand aside, mirrors the sessions rail) ── */
 
+/* THE ROW STATES EVERY ONE OF ITS OWN VERTICAL INTERVALS, which is why `gap` is
+   zeroed here instead of taken from the three-row group near the top of this
+   file. That group's single 2px is right for a session row and a command row —
+   both are two children, one interval, nothing to rank. This row is up to FOUR:
+   an identity line, a purpose sentence, a model-and-depth string and a live
+   stats line. One interval repeated three times gives four children and no
+   grouping, so the row read as a loose column of text rather than as name,
+   purpose, metadata. The ladder that replaces it is derived on .agent-row-desc
+   and on the metadata band below.
+
+   Zeroed rather than kept and topped up with margins, which is how the same
+   relationship is expressed on the Appearance card: one rung of this ladder is
+   NOTHING AT ALL, and a nonzero gap can only reach zero through a negative
+   margin. Every interval is stated once, as a margin, in the positive.
+
+   Dock-scoped on purpose: .session-row-btn and .command-row-btn keep the shared
+   2px untouched, and nothing in the sessions rail moves. */
 .agent-row-btn {
+  gap: 0;
   transition: background 150ms var(--ease);
 }
 
@@ -726,9 +758,27 @@
    each inventing one; this rule owns only the size and the colour. The lines
    either side of it stay in shared.css's ONE-line group on purpose: .agent-row-type
    above is a label and .agent-row-meta below is a model and depth string, and a
-   label that wraps spends a second row saying nothing new. */
+   label that wraps spends a second row saying nothing new.
+
+   THE BAND INTERVAL IS 8px AND IT IS NOT A NEW NUMBER. appearance.css derives it
+   for this exact relationship — a name above a wrapped 11px sentence in a 248px
+   dock — and the derivation transfers verbatim because every input is the same
+   here: the clamp group leads this sentence at 1.45, so 11 x 1.45 = 15.95 and
+   the leading INSIDE it is 15.95 - 11 = 4.95px. The space ABOVE a wrapped
+   sentence has to out-rank the space between its own lines or the name stops
+   reading as the heading of the sentence and becomes one more line of it. This
+   row shipped 2px above 4.95px — the inversion appearance.css named, measured in
+   the narrower column. 8px clears it at the same 1.62x that card settled on, and
+   answering one relationship with two numbers is the drift these files exist to
+   stop.
+
+   It sits on the description rather than on the button because only a row that
+   HAS one takes it — a row with no description hands the same 8px to whichever
+   metadata line comes first, so every band break in this dock is 8px whatever
+   the row happens to carry. */
 .agent-row-desc {
   font-size: var(--fs-micro);
+  margin-top: 8px;
   color: var(--text-muted);
 }
 
@@ -755,6 +805,46 @@
   font-size: var(--fs-micro);
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
+}
+
+/* THE METADATA BAND. The model-and-depth string and the live stats line are two
+   facts about one agent, not two more lines of its purpose, so they are bound
+   into ONE block and that block is opened at the row's 8px band interval —
+   whichever of the two happens to be present, since either can be absent on its
+   own. The pair is what made the top gap uncloseable alone: opening the name
+   above the sentence while leaving 2px under it hands the tighter interval to
+   the bottom of the row, and the metadata re-groups onto the sentence instead.
+
+   INSIDE the band the interval is nothing at all, and it lands on the number the
+   sentence above already uses. 1.45 shrinks each box from 11 x 1.6 = 17.6 to
+   11 x 1.45 = 15.95, which leaves 15.95 - 11 = 4.95px of leading; with the two
+   boxes touching, the air between the two metadata lines is that same 4.95px the
+   two lines of the wrapped description have between them. One "inside a block"
+   interval, derived once and used twice, against an 8px band break and an 18px
+   row break — 8px of row padding at each end plus the list's 2px.
+
+   1.45 is the sessions rail's own answer to this question in this column:
+   .bg-sessions-empty-hint records that body's 1.6 spaces two 11px lines "far
+   enough apart to read as two separate remarks", and closes them into one. Two
+   metadata lines are one remark. Unitless, so it still tracks --fs-micro.
+
+   Written on the two dock-only selectors rather than as a group in shared.css:
+   both are members of that file's one-line truncation list, which also paints
+   .session-row-meta and .bg-session-state, and a leading declared there would
+   move the sessions rail's scrolling list. There is exactly one metadata strip
+   in the app, and a shared group with one member is indirection, not a system. */
+.agent-row-meta,
+.agent-row-stats {
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+/* The stats line only opens the band when it is the one opening it. Stats always
+   render immediately after meta when both are present, so the adjacency is the
+   whole test, and the higher specificity makes it independent of where these two
+   rules sit relative to each other. */
+.agent-row-meta + .agent-row-stats {
+  margin-top: 0;
 }
 
 /* Only live rows carry a dot — a disk row has no status to show. The dock row

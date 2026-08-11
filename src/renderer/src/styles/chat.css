@@ -431,12 +431,66 @@
 }
 
 /* Leading tightens as size grows: 1.4 is a reading value and leaves a display
-   line looking loosely set even on one line. */
+   line looking loosely set even on one line.
+
+   THE DISPLAY RUNG NOW TAKES A DISPLAY CUT, AND THAT IS A CORRECTION RATHER
+   THAN A FLOURISH. `--font` names "Segoe UI Variable Text" first, and Text is
+   an OPTICAL SIZE, not a style: Windows 11 ships this family as three masters
+   — Small, Text and Display — drawn for different sizes and enumerable as
+   three separate family names. Text is drawn for READING sizes. So every
+   string in the app was set in the reading master, including the one thing
+   that paints at 46px, which is three times body. That is the specific reason
+   the headline read as the UI face enlarged rather than as authored display
+   type: it WAS the UI face enlarged, sharing a cut, a fit and a tracking
+   policy with the deck beneath it and differing only in size and leading.
+   Display is the master Microsoft draws for this size — finer strokes, lower
+   x-height ratio, tighter sidebearings — so naming it selects a size the
+   family already has. DESIGN.md's "one family" is untouched; three optical
+   masters are what a family ships INSTEAD of a second family.
+
+   THE FALLBACK IS WHY THE TRACKING IS HERE TOO. `var(--font)` still trails
+   this stack, so a machine without the Display master gets the old face and
+   would otherwise get none of the correction. -0.02em is 0.92px per gap at
+   46px: enough to fit the reading master to display size on the fallback
+   path, small enough that it is not a second correction stacked on the
+   Display master where that resolves. The app has tracked its SMALL end since
+   the first pass — 0.12em on the date divider, 0.06em on tool-card labels,
+   0.02em in the titlebar — and left the large end on a default authored for
+   15px text. The policy now runs in one direction at both ends of the ladder.
+
+   THE PAIR IS THE POINT, NOT THE HEADLINE ALONE. Against the deck below, this
+   rule now differs on FOUR axes that all push the same way: 46 against 17.25
+   for a ratio of 2.667, 1.25 leading against 1.6, the Display master against
+   Text, and -0.02em against normal. Two of those four were previously
+   IDENTICAL, and the pair that differed was size and leading. A headline
+   separated from its deck by size alone is the generic case this replaces.
+
+   WEIGHT AND SIZE ARE DELIBERATELY UNTOUCHED, and both refusals are on the
+   record rather than on taste. DESIGN.md's Type section grants exactly two
+   weights, 400 and 600, and #139 is the precedent: a review asked the
+   tool-card label for a weight step and the answer was to stop asserting a
+   weight the document never granted rather than to widen the set. 700 here
+   widens it. The size stays a bare token read because #138 moved the
+   multiplier OUT of this rule — a `calc()` at this call site made the token
+   name a size nothing painted, and re-adding one to enlarge the headline
+   rebuilds precisely that defect.
+
+   NONE OF THIS COSTS THE HEIGHT BUDGET. `line-height: 1.25` is a NUMBER, so
+   this box is 46 x 1.25 = 57.5px whatever the face's own ascent and descent
+   are; swapping optical masters cannot move it, and tracking is horizontal.
+   The sum in `.welcome` above still holds at 264.69px of content and 53.71px
+   of headroom. Width moves, and only inward: 15 characters shed 15 x 0.92px
+   of advance, about 13.8px off a line painting roughly 300px — scaled off the
+   410px this file already records for a 56-character line — inside the 576px
+   field the 640px minimum window leaves. One line at every size, which is
+   what the 57.5px term assumes. */
 .welcome-title {
+  font-family: "Segoe UI Variable Display", var(--font);
   font-size: var(--fs-display);
   font-weight: 600;
   color: var(--text);
   line-height: 1.25;
+  letter-spacing: -0.02em;
   margin-bottom: 8px;
 }
 

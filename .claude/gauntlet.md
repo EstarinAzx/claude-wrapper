@@ -28,22 +28,28 @@ pieces:
   # builder handed no gap would be redesigning, which is wave 1's rule. Its
   # wave-3 verdict is its BASELINE and cannot count toward plateau, for the same
   # reason wave 1's could not.
+  # Wave 4: BAR WINS -> TOO CLOSE. The first verdict movement in the run, and it
+  # came from a piece with NO builder — the other pieces' builders moved the
+  # docks under it. That is what a cross-cutting piece is for.
   - name: DocksAsOne
-    verdict: BAR WINS
+    verdict: TOO CLOSE
     open: true
   # Added by wave 3's smoothing pass, on its one-new-piece budget. THE SIXTH AND
   # LAST SLOT — the piece list is now FULL and no further piece may be proposed.
   # CRITIC ONLY on wave 4, for wave 1's rule: no critic has named a gap for it,
   # and a builder handed no gap is redesigning. Its wave-4 verdict is a BASELINE
   # and cannot count toward plateau, exactly as wave 1's and DocksAsOne's could not.
+  # Wave 4 IS that baseline; wave 5 is the first wave its verdict can move.
   - name: IconHousing
     verdict: BAR WINS
     open: true
 critic: sonnet                 # FAMILY name only — re-resolve live every wave, never carry the target
 critic_degraded: false
 branch: gauntlet/docks-and-min-window
-wave: 3
-plateau: 2
+wave: 4
+# RESET at wave 4 by a REAL verdict movement: DocksAsOne BAR WINS -> TOO CLOSE,
+# the first verdict to move in either run of this gauntlet. See adjudication 1.
+plateau: 0
 max_waves: 12
 page: false
 stop: false
@@ -165,6 +171,224 @@ this file. Every one of them has already cost this repo a false finding.
 | 3 | AppearanceDock | BAR WINS | The surface still reads as generic bordered settings rows, so give Theme, Backdrop and Zoom distinct section-specific grouping and iconography rather than repeating the same rounded-rectangle treatment. |
 | 3 | WelcomeMinWindow | BAR WINS | The headline treatment remains generic compared with Linear's authored editorial hierarchy; give it a more distinctive scale and weight relationship to the supporting copy. |
 | 3 | DocksAsOne | BAR WINS | *(baseline — cannot count toward plateau)* Its stated gap (Commands breaks the shared type scale) was **measured FALSE** and must not be handed to a builder as written; see adjudication 3. The surviving in-scope gap is the one the smoothing pass fixed: the docks' secondary lines disagreed on colour. |
+| 4 | AgentsDock | BAR WINS | *(its `SPEC BREAK` was REFUSED against source — see wave 4 adjudication 3)* Add the missing model and depth metadata beneath `cavecrew-reviewer` so every row completes the same three-level hierarchy and cadence. **Not buildable as written: `model` and `spawnDepth` are DISK-ONLY, so a live agent legitimately has no metadata line.** |
+| 4 | CommandsDock | BAR WINS | Preserve a consistent minimum row block height across all row shapes so the descriptionless `/wrap-up` entry does not pull `/hp` visibly closer than the evenly paced rows above. |
+| 4 | AppearanceDock | BAR WINS | Move the Zoom stepper into a compact right-aligned control on its header row, because the third full-width rounded shell makes all three families resolve to the same silhouette despite their different content. |
+| 4 | WelcomeMinWindow | BAR WINS | Reduce the mark-to-headline gap to match the tighter rhythm below the headline, because the mark currently reads as detached from the otherwise cohesive text-and-action stack. |
+| 4 | DocksAsOne | **TOO CLOSE** | **THE VERDICT MOVED — `plateau` resets to 0.** Standardize the body-row containment grammar, since Agents and Commands use open text stacks while Appearance encloses every control set in bordered full-width groups. |
+| 4 | IconHousing | BAR WINS | *(baseline — cannot count toward plateau)* Normalize the 12px-grid glyphs to the roughly 10.4px optical extent established by the 14px and 16px grids; this moves all three docks and requires a mechanical check in Agents, Commands and Appearance, plus both rail chevrons. |
+
+## Wave 4 adjudications — the plateau BROKE, the change-answer instrument was tested with a control, and a `SPEC BREAK` was refused
+
+**Three builders, six critics, one smoothing pass — ten agents.** Gate green (D7); **one
+`SPEC BREAK` raised and REFUSED against source**; zero out-of-scope rulings; **6/6 critics
+verified against a first-hand read to have seen real pixels.**
+
+### 1. THE PLATEAU BROKE. `DocksAsOne` moved `BAR WINS` -> `TOO CLOSE`, and `plateau` resets 2 -> 0
+
+This is the first verdict movement in **either run** of this gauntlet — run 1 closed at
+`plateau: 3` with all five pieces never moving off `BAR WINS`, and run 2's waves 1 to 3 did
+the same. The handoff into this leg expected the opposite: *"if wave 4 moves no verdict, it
+goes to 3 and the run HALTS at the start of leg 6."* It moved one.
+
+**The movement is legitimate under the preset's own rule** (step 6: *"Any piece whose verdict
+improved -> `plateau: 0`"*). The exclusion that applied to `DocksAsOne` at wave 3 was the
+BASELINE rule — a first verdict has no prior to improve on. At wave 4 it has one, recorded in
+`## Verdicts`, and it improved. `IconHousing` is this wave's baseline and is excluded for
+exactly the same reason.
+
+**The interesting part is WHERE it came from: a piece with NO BUILDER.** `DocksAsOne` was
+critic-only this wave. Nothing was built for it. What moved it was the other pieces' builders
+changing the docks underneath it — which is precisely what a cross-cutting piece exists to
+detect, and it is the strongest evidence so far that adding it was right.
+
+**Read the verdict and the gap together, because they point opposite ways and both are true.**
+The critic rated the three docks collectively closer to the bar (`TOO CLOSE`) while naming
+their *divergence* as the biggest gap: Appearance now encloses its controls in bordered groups
+while Agents and Commands leave rows on the bare surface. The docks each got better; their
+agreement with each other got worse. That is a coherent pair, not a contradiction — and the
+divergence is the direct consequence of this wave's AppearanceDock build.
+
+### 2. The change-answer column was tested with a NULL CONTROL, and wave 3's reading of it was wrong
+
+The handoff promoted the critics' own BETTER/SAME/WORSE answer to *"the run's best instrument
+for owner call 13."* **That promotion was not safe, and this wave has the measurement.**
+
+`commands-dock.png` is **byte-identical across waves 2, 3 and 4** — verified first-hand with
+`cmp` at this leg, not inferred. CommandsDock has had no builder since wave 2. So its critic's
+change answer is a controlled probe of the instrument itself: the correct answer is `SAME`, by
+construction, and anything else is the instrument reporting movement that did not happen.
+
+| wave | commands-dock.png | critic's change answer | correct? |
+|---|---|---|---|
+| 3 | byte-identical to wave 2 | **BETTER** | **NO** |
+| 4 | byte-identical to wave 3 | **SAME** | **yes** |
+
+**So wave 3's headline "3/4 BETTER + 1/4 SAME" contained a false BETTER**, and its conclusion
+that *"the critics' change answers have started converging with the counter"* rested partly on
+a critic reporting improvement in pixels that never moved.
+
+**What separates the two waves is the prompt, and this is the transferable part.** Wave 4's
+critic contract states outright: *"Compare the CURRENT capture against the PREVIOUS one listed
+for you. Answer only about what you can SEE between those two images. If you cannot see a
+difference, the honest answer is SAME. Do not infer that effort was spent and therefore
+something improved."* With that instruction the null control came back correct.
+
+**The column is usable, but only with the anti-inference clause in the prompt, and only
+alongside a null control that can catch it drifting.** Keep CommandsDock's unbuilt capture as
+that control for as long as it stays unbuilt. Do not quote wave 3's 3/4 figure again without
+this correction attached.
+
+### 3. A `SPEC BREAK` was raised and REFUSED — on four independent grounds
+
+AgentsDock's critic returned `SPEC BREAK: The cavecrew-reviewer row omits the required
+metadata line.` It is refused, and none of the four grounds is an argument — each is a read:
+
+1. **No spec requires it.** `grep -i "metadata\|spawnDepth"` over `DESIGN.md` and `PRODUCT.md`
+   returns **zero hits**. There is no such requirement to violate.
+2. **The code states the opposite rule.** `AgentsDock.tsx:357` — *"Absent fields are dropped,
+   never rendered as a zero or a blank — a sidecar that never recorded a model must not read
+   as 'no model'."*
+3. **The fixture carries that row on purpose.** `inspect.mjs`'s AGENTS fixture comments the
+   third agent: *"No model, no depth: the sidecar recorded neither, and the row must read as
+   'not recorded' rather than as a zero."* This is a ruling on the fixture's design, exactly
+   like wave 1's `/wrap-up` finding.
+4. **NEW, and it settles it: `model` and `spawnDepth` are DISK-ONLY.** `mergeAgents` in
+   `src/shared/subagent-types.ts` takes both from the disk sidecar `d` and never from the live
+   stream `l`, the same way it treats parentage. A real agent therefore has **no metadata line
+   at all** until its sidecar lands. Making the line "required" would force rendering the blank
+   that ground 2 forbids.
+
+This was found the hard way rather than reasoned to: the wave-4 driver pushed `model` and
+`spawnDepth` in a live payload, and `.agent-row-meta` came back null while `.agent-row-stats`
+rendered fine. **The critic's perception was real — that row does look different — but its
+stated cause is wrong, which is wave 3 adjudication 3's lesson repeating on a new surface.**
+
+### 4. Every builder's hand arithmetic was confirmed by the instrument, again
+
+The run's proven method held for a third wave, and this time on three builders at once:
+
+| builder's hand-derived claim | instrument's measurement |
+|---|---|
+| AgentsDock: band 8px over 4.95px leading = **1.616x** | driver A2: `ratio 1.616` |
+| AgentsDock: metadata leading 17.6 -> **15.95px** | driver A5: `15.95px`, old reconstructed `17.594px` |
+| AppearanceDock: Theme group **-21px** | driver B1: `shrankBy 21` |
+| AppearanceDock: steps **70.33px** each | driver B4: `70.328` |
+| AppearanceDock: text column **193px** reached the other way | driver B5: `193px` |
+| Welcome: content **264.69**, headroom **53.71**, unchanged | `inspect.mjs`: `{"measured":53.71,"content":264.69,"overflow":0}` |
+
+The Welcome builder derived its budget **without running the instrument** and was right to two
+decimals, which is now the third consecutive wave that has happened.
+
+### 5. The smoothing pass caught the disagreement-between-blind-builders defect it exists for
+
+**Two wave-4 builders each wrote a `letter-spacing` census in a comment, and the two disagree.**
+`appearance.css` cited {rails 0.12em, tool-card 0.06em}; `chat.css:456` cited {date-divider
+0.12em, tool-card 0.06em, titlebar 0.02em}. Neither names the other's third item, neither
+names the composer's 0.02em, and chat's — written the same wave — cannot know about its
+co-wave builder's brand-new 0.08em. **Neither builder could have caught this; each saw one
+file.**
+
+It also found a **false measurement** and corrected it: `appearance.css` claimed the zoom
+strip's 33.6px was *"within 0.3px"* of an option row's height, *"so the three groups share one
+row rhythm."* The real gap is **~3.4px**, because `.appearance-choice` carries neither
+`font: inherit` nor `line-height: normal`, and **Tailwind preflight is never imported** — a
+claim independently corroborated by `DESIGN.md`, which states preflight is *"intentionally
+off."* So the button keeps the UA face and UA leading, and the name's box is ~14.2px rather
+than ~17.3px.
+
+It **re-verified wave 3's tenant correction at this wave's tree**: 13 tenants, 3 grids
+(16@1.3 x3, 14@1.4 x3, 12@1.4 x7), matching both corrected notes exactly. **That count was
+wrong twice before and is now right in both places.**
+
+**Five changes, exactly ONE of which renders** (`.background-tasks-title` gains
+`letter-spacing: 0.08em` — it was the one micro-caps tenant with no rung of its own). **Nine
+findings declined with reasons.** It proposed **no new piece**, correctly: the list is full.
+
+### 6. The smoothing pass moved ZERO captured pixels, so the verdicts are not stale
+
+A real risk this wave, because the critics judged the post-builder captures while the smoothing
+pass was still editing. **Checked rather than assumed:** the instrument was re-run on the final
+tree and all eleven PNGs came back at byte sizes **identical** to the ones the critics were
+given. The pass's one rendered change lands on the background-tasks footer, which renders only
+when non-agent tasks exist, and the capture reports `bgRows: 0`. **Every verdict above was
+returned against the exact bytes that ship in this commit.**
+
+### 7. Verification that was run rather than trusted
+
+- **The sweep was validated on a pristine `HEAD` export BEFORE being trusted, and it caught
+  THREE bugs in its own checks** — none of which were defects in the tree: D3.4 collided with
+  its own selector (a comment shifts the match start, so the rule flagged itself); D4.8
+  over-scoped past the docks into run-1 surfaces (Titlebar's window-control run, InputBar's
+  24x24-at-18px send glyph); and D4.8 demanded `fill="none"` on `<line>` elements, which have
+  no fill region. Fixed, then **8/8 green** on the pristine export and on the final tree.
+- **The sweep was mutation-probed 9/9, and TWO probes were themselves vacuous at first.** One
+  searched with `\n` against files that are **CRLF**, so the edit silently no-opped; the other
+  mutated the first `strokeWidth="1.4"` in `AppearanceDock.tsx`, which sits at line 24 **inside
+  a comment**. Both "passed" a check they had never exercised. Fixed to throw when a mutation
+  fails to apply. **The lesson repeats: check that your checks can fail, and then check that
+  your probes actually mutate.**
+- **`D4.8` independently counts the icon vocabulary**: 8 icons before this wave, **11 after,
+  all 1:1 and uniform** — corroborating the AppearanceDock builder's "8 -> 11" from a separate
+  direction.
+- **The instrument was run at HEAD before any builder touched the tree**, and all eleven
+  captures came back **byte-identical to wave 3's committed set** — capture determinism proven
+  at this leg rather than inherited.
+- **`gui-gauntlet-wave4.mjs` is red-verified by three mutations giving three DISTINCT targeted
+  red sets**: reverting `.agent-row-desc`'s margin reds **A2 alone**; removing
+  `.appearance-choices`' border reds **B1 + B5** (both correct and causally linked — losing the
+  container's two side borders widens the text column 193 -> 195px, which is exactly what B5
+  guards); reverting the headline's `font-family` reds **W2 + W3**. Restored from a **`cp`
+  backup, never `git checkout`**, and the restore proven exact by the **CSS bundle hash
+  returning to `index-su8voxjt`**.
+- **W3 was strengthened after the mutation exposed it as half-vacuous.** As first written it
+  compared a `Display` probe against a `Text` probe — which measures whether the FONT IS
+  INSTALLED, not whether the headline wears it, and it stayed **green** under M3. It now also
+  requires the title's own box to move when forced back to `Text`
+  (`titleMovedWhenForcedBack: 0` is what caught the mutation). A CSS font stack fails silently;
+  `getComputedStyle` returns the authored stack, never the face that won.
+- **The Welcome font swap is REAL, not a silent fallback.** `Segoe UI Variable Display` is
+  installed (enumerated first-hand), and the driver measures the headline at **285.594px**
+  against **283.609px** forced to `Text` and **267.328px** for an unresolvable control.
+- **Blast radius measured: exactly FIVE captures moved, SIX byte-identical.** Moved:
+  `agents-dock`, `appearance-dock`, `welcome-min-window`, `welcome`, `window-welcome`.
+  Identical: `chat`, `commands-dock`, `input-bar`, `sidebar`, `titlebar`, `window-session`.
+  **`sidebar.png` being byte-identical independently proves the AgentsDock builder's fence
+  held** — it edited `rails.css`, which also paints the sessions rail, and the rail did not
+  move.
+- **Gate green (D7)** from three separate log files, never a pipeline: typecheck clean,
+  **96 files / 1406 passed + 39 skipped**, build clean. Test count unchanged at 1406; the
+  **+1 skip attributed by name** to `gui-gauntlet-wave4.mjs — browser-level: executes in
+  npm run test:dom (#135)`. **CSS bundle hash moved three times** across the wave
+  (`index-B8z1G3Bt` -> `DXHmfcR3` after the builders -> `su8voxjt` after the smoothing pass).
+
+## Owner calls raised by wave 4
+
+**Owner call 13 is now ANSWERED IN PART, and should not be re-raised as originally framed.**
+The question was whether the ordinal verdict scale can resolve real progress. **It can: a
+verdict moved this wave.** What wave 2 and 3 read as "the scale is broken" is better read as
+"three waves of genuine improvement inside one ordinal band, then a band change." The
+`plateau >= 3` halt was never reached, so no counter was ever adjusted and none needs to be.
+**What DOES need recording is the correction in adjudication 2**: the critics' change-answer
+column, which owner call 13 was drifting toward adopting as a substitute signal, returned a
+**false BETTER on a byte-identical image at wave 3**. It is usable only with the anti-inference
+clause and the null control. **No owner action is required to keep the run going.**
+
+**Owner call 15 (CommandsDock's taxonomy) is unchanged and still (a).** Wave 4 gave it no
+builder for the second consecutive wave. Its wave-4 gap is a ROW-RHYTHM gap — a consistent
+minimum row block height — which is buildable within option (a) and needs no taxonomy. **It is
+the natural wave-5 build for that piece.**
+
+**Owner call 12 (`gui-94` red) is unchanged and untouched.** No wave 4 change went near it;
+`commands-dock.png` is byte-identical, which corroborates that independently.
+
+**NEW — 16. `IconHousing`'s first gap asks for a change no single piece can own.** Its baseline
+gap is to normalize the 12px glyph grid up to the 16/14 grids' ~10.4px optical extent. The
+critic stayed inside its fence and stated the blast radius itself: **all three docks, both rail
+chevrons, and the mechanical check with them** — 7 of the 13 tenants. Default taken,
+reversible: **record it, build nothing this wave.** This is the question that had no owner for
+three waves and now has one; wave 5 is where it becomes buildable, and it will need the
+`D4.8` sweep check updated in the same change.
 
 ## Wave 3 adjudications — a recorded finding was refuted, a gap was refused as unbuildable, and the plateau is now one wave from the halt
 
@@ -696,6 +920,76 @@ verdict to improve on, so it cannot be a plateau wave — the same call run 1 ma
 recorded. Wave 2 is the first wave that can move it.
 
 ## Log
+- [wave 4] **THE PLATEAU BROKE.** `DocksAsOne` moved **BAR WINS -> TOO CLOSE**, the first
+  verdict movement in either run of this gauntlet, so **`plateau` resets 2 -> 0** and the run
+  does NOT halt. It came from a piece with **no builder** — the other pieces' builders moved
+  the docks underneath it, which is exactly what a cross-cutting piece is for. Its verdict and
+  its gap point opposite ways and both hold: the docks each got better, their agreement with
+  each other got worse.
+- [wave 4] **The change-answer column was tested with a NULL CONTROL and wave 3's reading of it
+  is CORRECTED.** `commands-dock.png` is **byte-identical across waves 2, 3 and 4** (verified
+  with `cmp` at this leg). Wave 3's critic answered **BETTER** on those unmoved pixels; wave
+  4's answered **SAME**. So wave 3's "3/4 BETTER" contained a false BETTER, and the handoff's
+  promotion of this column to "the run's best instrument" was not safe. **What fixed it was the
+  prompt** — an explicit "if you cannot see a difference, the honest answer is SAME; do not
+  infer that effort was spent." Keep the clause AND the unbuilt control.
+- [wave 4] **A `SPEC BREAK` was raised and REFUSED on four grounds.** AgentsDock's critic
+  called the metadata-less `cavecrew-reviewer` row a spec violation. `DESIGN.md`/`PRODUCT.md`
+  mention metadata **zero times**; `AgentsDock.tsx:357` states absent fields are dropped by
+  design; `inspect.mjs`'s fixture carries that row deliberately; and — found the hard way while
+  building the driver — **`model` and `spawnDepth` are DISK-ONLY in `mergeAgents`**, so a live
+  agent legitimately has no metadata line. Perception real, stated cause wrong.
+- [wave 4] **Three builders, six critics, one smoothing pass — ten agents, zero errors** (two
+  builders were retried mid-flight by the runner and returned). **6/6 critics verified against a
+  first-hand read to have seen real pixels**, including detail no model could guess: CommandsDock
+  named exactly the three fixture entries carrying an `argumentHint` and `/wrap-up` as the sole
+  name-only row; IconHousing **saw by eye** that the dock-head marks under-fill their housings,
+  which is the 12-grid figure wave 3 measured numerically.
+- [wave 4] **Every builder's hand arithmetic confirmed by the instrument, third wave running.**
+  AgentsDock's `1.616x` band ratio and `15.95px` metadata leading, AppearanceDock's `-21px`
+  group and `70.33px` steps and `193px` text column, and Welcome's `264.69 / 53.71` budget
+  derived **without running the instrument** — all matched to the decimal.
+- [wave 4] **Smoothing pass caught the disagreement-between-blind-builders defect.** Two
+  builders each wrote a `letter-spacing` census this wave and **the two disagree**; neither
+  could have seen the other. It wrote the five-rung ladder down once in `shared.css`, joined
+  `.appearance-label` to the micro-caps group its own builder flagged as a follow-up, and
+  **corrected a false measurement**: the zoom strip's "within 0.3px" row-rhythm claim is really
+  **~3.4px**, because `.appearance-choice` carries neither `font: inherit` nor
+  `line-height: normal` and **Tailwind preflight is never imported** (corroborated by
+  `DESIGN.md` calling preflight "intentionally off"). **Five changes, exactly ONE renders.
+  Nine declines. No new piece — the list is full.**
+- [wave 4] **The smoothing pass moved ZERO captured pixels, so no verdict is stale.** Checked
+  rather than assumed: the instrument was re-run on the final tree and all eleven PNGs came back
+  at byte sizes identical to the ones the critics were handed.
+- [wave 4] **The sweep was validated on a pristine `HEAD` export and caught THREE bugs in its
+  own checks** — a self-colliding selector match, an over-scoped icon sweep reaching run-1
+  surfaces, and `fill="none"` demanded of `<line>` elements that have no fill region. **None was
+  a defect in the tree.** Then mutation-probed **9/9** — after **two probes were themselves
+  vacuous**: one searched with `\n` against **CRLF** files, the other mutated a `strokeWidth`
+  **inside a comment**. Both had "passed" checks they never exercised.
+- [wave 4] **D4 discharged by `gui-gauntlet-wave4.mjs`, red-verified by three mutations giving
+  three DISTINCT targeted red sets**: the description's margin reds **A2** alone; the container
+  border reds **B1 + B5** (correct and causally linked — the lost side borders widen the text
+  column 193 -> 195px); the headline's `font-family` reds **W2 + W3**. Restored from a **`cp`
+  backup, never `git checkout`**, restore proven exact by the **CSS hash returning to
+  `index-su8voxjt`**.
+- [wave 4] **W3 was strengthened after a mutation exposed it as half-vacuous.** Comparing a
+  `Display` probe against a `Text` probe measures whether the font is INSTALLED, not whether the
+  headline wears it — it stayed **green** under the mutation that deleted the rule. It now also
+  requires the title's own box to move when forced back. **A CSS font stack fails silently and
+  `getComputedStyle` returns the authored stack, never the face that won.** The swap is real:
+  headline **285.594px** vs **283.609px** forced to `Text` vs **267.328px** unresolvable.
+- [wave 4] **Blast radius: exactly FIVE captures moved, SIX byte-identical.** `sidebar.png`
+  being identical **independently proves the AgentsDock builder's fence held** — it edited
+  `rails.css`, which also paints the sessions rail, and the rail did not move.
+- [wave 4] Critic **re-resolved live** rather than carried: `wisp routing` gives first
+  non-Anthropic family `sonnet` -> `codex/gpt-5.6-sol`. **Fifth** consecutive reading of the
+  same value, read fresh each time. `critic_degraded: false`.
+- [wave 4] **Gate green (D7)** from three separate log files: typecheck clean, **96 files /
+  1406 passed + 39 skipped**, build clean. Test count unchanged; **+1 skip attributed by name**
+  to `gui-gauntlet-wave4.mjs`. **CSS hash moved three times** across the wave.
+- [wave 4] **Nothing pushed — D6.** Read the real gap with
+  `git rev-list --count origin/main..main`.
 - [wave 3] **Three builders, five critics, one smoothing pass — nine agents, and the fourth
   builder was deliberately NOT run.** Gate green (D7), zero `SPEC BREAK`s, zero out-of-scope
   rulings, 5/5 critics verified against a first-hand read to have seen real pixels.
