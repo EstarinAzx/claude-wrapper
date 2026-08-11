@@ -7,13 +7,31 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, relay chain 7 leg 12 — owner away_
-_At commit: `2ab67f1` on `main`_
+_Last updated: 2026-08-11 by Opus 5, gauntlet relay leg 2 (run 2, wave 1) — owner away_
+_At commit: `002f98e` on `gauntlet/docks-and-min-window`; `main` still at `46e2fce`_
+
+> **Run-2 capture landmine.** `.gauntlet/waves/1/`…`5/` hold **run 1's git-tracked**
+> captures, and `inspect.mjs` writes the **same filenames**. Run 2 therefore writes
+> `.gauntlet/waves/docks-and-min-window/<N>/`. Following the gauntlet preset's flat
+> `.gauntlet/waves/<N>/` would silently overwrite the archived run's evidence — do not
+> "correct" the namespaced path back.
 
 ## Current focus
 
-**THE TICKET QUEUE IS DRY. Chain 7 finished at leg 12 and fired its successor,
-`/relay N=1 /preset gauntlet`.**
+**THE TICKET QUEUE IS DRY, and the successor is now RUNNING. Gauntlet run 2
+(`docks-and-min-window`) landed WAVE 1 as `002f98e` on
+`gauntlet/docks-and-min-window`.** Its record is `.claude/gauntlet.md` **on that
+branch** — `main`'s copy is the seed's and is stale by design. Chain 7 finished at
+leg 12 and fired `/relay N=1 /preset gauntlet`; that chain is at leg 3.
+
+Wave 1 judged and did not build (a builder gets only the gap named last wave, and
+wave 1 has none). Four cross-model critics, all `BAR WINS`, **zero `SPEC BREAK`s**,
+4/4 verified against a first-hand read to have seen real pixels. **The finding that
+outranks the four individual gaps: all three docks render the same "name + secondary
+description" row in a 248px column three different ways** — Agents truncates to one
+line, Commands truncates *and* drops it entirely for `/wrap-up`, Appearance wraps and
+reads cramped. Three blind critics each named it their dock's weakest point. Wave 2
+should fix the pattern once in the shared shell.
 
 Leg 1 landed **#149**, leg 2 **#146**, leg 3 **#142**, leg 4 **#148**, leg 5
 **#143**, leg 6 **#147**, leg 7 **#145**, leg 8 **#150's work**, leg 9 **#141**,
@@ -37,7 +55,20 @@ AFK autonomy grant. Every ruling, warrant and cross-model objection is in
   follow-up ticket filed**; nothing in the work produced one.
 - **Open and agent-ready: NONE.** **#144, #151–#160 are `needs-triage`** and none
   may be promoted by a leg.
-- **Next:** the gauntlet run, seeded fresh. There is no next ticket.
+- **Next:** gauntlet run 2 **wave 2** — the first wave that builds, and the first
+  that can move `plateau`. There is no next ticket.
+- **Wave 2's fan-out shape is already decided, and it is run 1's exact trap.**
+  **`CommandsDock` has NO stylesheet of its own** (zero `.commands-dock` rules in
+  `styles/`); it rides the shared `agents-dock` shell in `rails.css`, which
+  `AgentsDock` also owns. **Serialize those two inside the fan-out**, exactly as run 1
+  serialized Welcome/Chat on `chat.css`. `AppearanceDock` owns `appearance.css` (but
+  it holds 2 `.agents-dock` refs — confirm before letting it run free);
+  `WelcomeMinWindow` writes `chat.css`, clear of the docks.
+- **A `bar_win` clause no wave can currently judge:** empty states. `AgentsDock` has
+  three `agents-dock-empty` branches (`AgentsDock.tsx:307`, `:311`, `:315`) and a
+  `background-tasks` footer (`:407`), but **the instrument photographs only the
+  populated state**, so no critic has ruled or can rule on them. Closing that needs an
+  instrument change — a ticket, not a wave.
 - **#150 is still OPEN at `needs-info` and is NOT queue work.** Its code landed
   in full at leg 8; it waits on a human pushing and watching the first CI run.
 - **Gate on `main` after the merge:** typecheck clean, **96 files / 1406 passed +
@@ -137,11 +168,13 @@ unmodified tree**.
 (#157). `tests/transcript-rewind-real-store.test.ts` skips unless it finds a
 stored transcript whose recorded `cwd` is this repo. Do not chase it.
 
-**The bar discrepancy #149 left open is still open.** `.context/` prose has said
-the three docks *"share the Sidebar's reference"*, but `.gauntlet/bar/README.md`'s
-own "What each reference judges" table already assigns `linear/linear-features.png`
-to *"Titlebar + docks"*. **Read the table, not the prose.** Owner-owned artifact.
-**Settle it before the gauntlet seed reads it.**
+**The bar discrepancy #149 left open is SETTLED, and the prose above it was the
+wrong half.** `.context/` prose said the three docks *"share the Sidebar's
+reference"*; `.gauntlet/bar/README.md`'s "What each reference judges" table assigns
+`linear/linear-features.png` to *"Titlebar + docks"*, and `linear/manifest.json`
+carries the **same `judges` string independently**. Two artifacts agree against the
+prose, so this is settled by evidence rather than by preference. **Read the table.**
+The run-2 seed and wave 1 both took this reading; do not reopen it.
 
 **Mutation testing is routine here, and the revert must be `cp` from a backup.**
 `git checkout -- <file>` on an uncommitted tree destroys finished work; leg 10
