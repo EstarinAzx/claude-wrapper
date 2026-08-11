@@ -19,6 +19,20 @@ That is the body-signaled done condition, so the chain set `stop: true` and fire
 its successor: **`/relay N=1 /preset gauntlet`**, seeded fresh. If a gauntlet run
 is live in `claude agents`, that is why.
 
+**That gauntlet is now at wave 3, `plateau: 2`, and is ONE WAVE FROM HALTING.**
+Waves are commits on `gauntlet/docks-and-min-window`: `002f98e` (1), `dcef5be`
+(2), `379c3b1` (3). **Read `.claude/gauntlet.md` ON THAT BRANCH** — `main` carries
+the seed's copy reading `wave: 0` and it is stale by design. A branch switch makes
+the harness report that file as "modified"; it is not.
+
+**Do not act on two claims that this run has since refuted or refused:**
+- *"The app has no icon vocabulary"* (wave 2) is **false** — measured 1:1
+  viewBox-to-pixel at `strokeWidth 1.4` across every dock icon, counts identical
+  at the seed.
+- *"Group the commands by purpose / give each row a leading icon"* is **not
+  buildable** — no category field exists and the captured list is a hand-authored
+  fixture chosen for row shape. Owner call 15.
+
 **Verify rather than trust this file. It has been wrong before:**
 
 ```text

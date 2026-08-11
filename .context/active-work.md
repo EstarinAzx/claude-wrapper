@@ -7,8 +7,8 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, gauntlet relay leg 3 (run 2, wave 2) — owner away_
-_At commit: `dcef5be` on `gauntlet/docks-and-min-window`; `main` still at `46e2fce` plus this note_
+_Last updated: 2026-08-11 by Opus 5, gauntlet relay leg 4 (run 2, wave 3) — owner away_
+_At commit: `379c3b1` on `gauntlet/docks-and-min-window`; `main` still at `46e2fce` plus these notes_
 
 > **Run-2 capture landmine.** `.gauntlet/waves/1/`…`5/` hold **run 1's git-tracked**
 > captures, and `inspect.mjs` writes the **same filenames**. Run 2 therefore writes
@@ -24,30 +24,56 @@ _At commit: `dcef5be` on `gauntlet/docks-and-min-window`; `main` still at `46e2f
 
 > **`gui-94` is red on purpose now — read the DOM-phase section before "fixing" it.**
 
+> **Second new driver as of leg 4: `gui-gauntlet-wave3.mjs`.** 9 checks across Welcome
+> and two docks, each carrying its reconstructed OLD value. **Red-verified by three
+> mutations producing three distinct targeted reds.** Same auto-enumeration as its wave-2
+> sibling, so it is the **37 -> 38 skip change**; test count still 1406. No sidecar, needs
+> none. It measures Welcome FIRST, before a folder is opened, because that surface stops
+> existing afterwards.
+
+> **"The app has no icon vocabulary" (recorded by wave 2) is REFUTED.** Every icon in the
+> three docks renders **1:1 viewBox-to-pixel at `strokeWidth 1.4`**, and the dock icon
+> counts were **identical at the seed commit**, so wave 2 added none. What actually
+> differed was button **chrome**. A mechanical sweep check now enforces the vocabulary.
+
 ## Current focus
 
-**THE TICKET QUEUE IS DRY, and the successor is RUNNING. Gauntlet run 2
-(`docks-and-min-window`) landed WAVE 2 as `dcef5be` on
-`gauntlet/docks-and-min-window`.** Its record is `.claude/gauntlet.md` **on that
-branch** — `main`'s copy is the seed's and is stale by design. Chain 7 finished at
-leg 12 and fired `/relay N=1 /preset gauntlet`; that chain is at leg 4.
+**THE GAUNTLET IS RUNNING AND IS ONE WAVE FROM ITS HALT.** Run 2
+(`docks-and-min-window`) landed **WAVE 3** as `379c3b1` on
+`gauntlet/docks-and-min-window`, at **`plateau: 2`**. Its record is
+`.claude/gauntlet.md` **on that branch** — `main`'s copy is the seed's and is stale by
+design. Chain 7 fired `/relay N=1 /preset gauntlet`; that chain is at leg 5.
 
-**Wave 2 was the first wave that built, and every named gap closed.** Four builders,
-one pin agent, four cross-model critics, one smoothing pass. All four verdicts hold at
-`BAR WINS`, **zero `SPEC BREAK`s**, 4/4 critics verified against a first-hand read to
-have seen real pixels. Gate green **twice** (D7), before and after smoothing.
+**Wave 3's result is two refusals and a refutation, not four closed gaps.** Three
+builders, five cross-model critics, one smoothing pass — **nine agents, not ten**,
+because the fourth builder was deliberately not run. All five verdicts hold at
+`BAR WINS`, **zero `SPEC BREAK`s**, 5/5 critics verified against a first-hand read.
+Gate green (D7).
 
-**The cross-piece lever wave 1 identified landed.** `AgentsDock` wrote a named two-line
-clamp group in `shared.css`; `CommandsDock`, serialized behind it on the same file,
-**joined it** rather than inventing a third treatment. Serializing those two is now
-proven necessary rather than predicted.
+**`CommandsDock` got no builder, and that is owner call 15.** Its gap asked to group
+commands by purpose and give each a leading icon; both need a semantic taxonomy the data
+cannot supply. `SlashCommandInfo` has no category field, the list comes from an external
+CLI a user or plugin can extend, and **the seven commands are a hand-authored fixture**
+whose own header calls it *"the one surface whose content this file cannot reach
+honestly"* and states it is chosen for **row shape**. Authoring groups in would photograph
+a structure the real app cannot produce. `commands-dock.png` is byte-identical, which
+corroborates the refusal independently.
 
-**`plateau` is 1, and it is the failure run 1 predicted in advance.** 4/4 critics
-answered BETTER; 0/4 verdicts moved, because the ordinal has three states and Linear is
-a deliberately hard bar. Run 1 ruled ahead of time that this is **an owner call, not
-something a leg may fix by adjusting the counter** — so the counter was incremented
-honestly. Two more waves like this and the run halts at `plateau: 3` while still
-improving. **Owner call 13** in the state file.
+**A critic named a measurably false gap and it was caught before a builder saw it.** The
+`DocksAsOne` baseline claimed Commands "breaks the shared type scale"; all three docks'
+primary names are `var(--fs-ui)` and the difference is `var(--mono)`, which is deliberate
+and grouped. **A critic's perception can be real while its stated cause is wrong.**
+
+**`plateau` is 2, but the scale behaved BETTER than wave 2.** Wave 2 was 4/4 BETTER with
+nothing moving — the shape that made the counter look broken. Wave 3 is **3/4 BETTER +
+1/4 SAME**, so the critics' own change answers are converging with the counter. That is
+evidence the plateau is becoming **real** rather than an instrument artifact. The counter
+was still not adjusted. **Owner call 13 is updated, not re-raised.**
+
+**The piece list is now FULL at six of six.** The smoothing pass spent the last slot on
+**`IconHousing`** — the shared 28px icon button and its three glyph grids across five
+surfaces, a rule **no existing piece can see**. Critic-only on wave 4; its first verdict
+is a baseline and cannot count toward `plateau`. No further piece may be proposed.
 
 **The seed's named risk fired for the first time.** All three dock gaps now converge on
 one systemic absence — the app has no icon vocabulary (header glyph group, leading row
