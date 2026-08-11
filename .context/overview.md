@@ -476,8 +476,13 @@ tags: [context, overview]
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
   also **three `gui-*.source.mjs` sidecars** (`gui-96`, `gui-98`, `gui-136`),
-  which are NOT drivers and are excluded from that count, and since #142 one
-  plain module, `inspect-workspace.mjs`, which is not executable at all.
+  which are NOT drivers and are excluded from that count, and **two** plain
+  modules that are not executable at all — `inspect-workspace.mjs` (#142, the
+  fixture workspace's fixed name and its clean-if-stale rule) and
+  `inspect-sessions.mjs` (#148, the sessions rail's fixture rows and age
+  offsets). Both live outside the driver for the same reason: the driver cannot
+  be imported without launching Electron, so anything the fast gate must RUN has
+  to leave it.
   `drivers.manifest.mjs` names all the non-members so their absence stays a
   decision on the record. The DOM phase launches
   **30** of them, nine being accounted skips. **`gui-136` launches on a private
@@ -543,10 +548,21 @@ tags: [context, overview]
   Verified by three consecutive runs plus a fourth seeded with crash residue:
   eleven of eleven captures byte-identical, `titlebar.png` constant at 8239
   against a prior spread of 8980 to 9538.
-  **`sidebar.png` and `window-session.png` comparing clean across back-to-back
-  runs is a FALSE NEGATIVE on #148** — that instability is across machines and
-  across time, and its premise shows instead in the sidebar capture's ~7125
-  characters of rail content against a fixture that seeds exactly one session
+  **The sessions rail is a fixture too as of #148**, and that closed the last
+  surface where the header's fixture-driven claim was false. Both of its lists
+  are replaced in main — `session:list` and `background-sessions:list` — and the
+  rail is **read back and compared to the fixture before any capture**, because a
+  stub that silently failed to install would photograph real session data with
+  every other check still green. The premise was argued from what FEEDS the
+  surface, never from a byte comparison: that comparison passes on unfixed code,
+  as #142's leg demonstrated by getting a clean four-run result off a rail still
+  listing 953 real sessions. The evidence is the footer's real count reading
+  **950, 951, 952, 953** across waves 2 to 5 and **976** today, and the sidebar
+  capture's own log inverting from **7125 characters** of rail content to **550**.
+  Ages are offsets from run time rather than timestamps, each ≥20 minutes from its
+  `relTime` bucket edge, and `sidebar-scope` is pinned alongside the zoom level.
+  A residual **Windows username** in the fixture temp path is #151, not this: it
+  is a property of where the workspace lives, not of the listing
   (`.welcome`, `header.titlebar`, `aside.sidebar`, `main.chat`,
   `footer.input-bar`) or to the shape `transcript.ts` parses
 - `scripts/spike-81-background-tasks.mjs` — the CLI-measurement harness (#81),

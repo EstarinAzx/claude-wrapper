@@ -7,14 +7,14 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-11 by Opus 5, relay chain 7 leg 3 — owner away_
-_At commit: `ef664cf` on `main`_
+_Last updated: 2026-08-11 by Opus 5, relay chain 7 leg 4 — owner away_
+_At commit: `f60b40a` on `main`_
 
 ## Current focus
 
 **Chain 7 is draining a ticket queue, with `/preset gauntlet` chained behind it.**
-Leg 1 landed **#149**, leg 2 landed **#146**, leg 3 landed **#142**. **Nine
-tickets remain at `ready-for-agent`.**
+Leg 1 landed **#149**, leg 2 landed **#146**, leg 3 landed **#142**, leg 4 landed
+**#148**. **Eight tickets remain at `ready-for-agent`.**
 
 The queue was filled by an autonomous `/preset vibe` pass run under the owner's
 AFK autonomy grant. Every ruling, warrant and cross-model objection is in
@@ -22,99 +22,96 @@ AFK autonomy grant. Every ruling, warrant and cross-model objection is in
 
 ## State
 
-- **In flight:** nothing. `ticket/142-fixture-workspace-pin` was squash-merged
-  and deleted (content diffed against `main` first — a squash merge does not mark
-  a branch merged, so `git branch -d` refuses and the empty diff is what makes
-  `-D` safe). Tree clean on `main`.
-- **Closed 2026-08-11 (leg 3):** **#142** (`ef664cf`). Nothing filed; one comment
-  left on **#148** warning about a false negative it will otherwise hit.
-- **Open and agent-ready (9):** #138, #139, #140, #141, #143, #145, #147, #148,
-  #150. **#144 stays `needs-triage` deliberately** — its settled half is #150, and
+- **In flight:** nothing. `ticket/148-fixture-sessions-list` was squash-merged and
+  deleted (content diffed against `main` first — a squash merge does not mark a
+  branch merged, so `git branch -d` refuses and the empty diff is what makes `-D`
+  safe). Tree clean on `main`.
+- **Closed 2026-08-11 (leg 4):** **#148** (`f60b40a`). **Filed #151** at
+  `needs-triage` — the fixture workspace lives under the user profile, so every
+  rail capture carries a Windows username.
+- **Open and agent-ready (8):** #138, #139, #140, #141, #143, #145, #147, #150.
+  **#144 stays `needs-triage` deliberately** — its settled half is #150, and
   closing #144 because #150 landed is the exact failure the split was reviewed
-  against.
-- **Next:** **#148** — fixture the sessions list. See [[pick-up]]; leg 3 measured
-  something that changes how its acceptance must be written.
+  against. **#151 is new and also `needs-triage`.**
+- **Next:** **#143** — the reuse control is not reachable by keyboard. The plan
+  deliberately ordered it *after* #148 so the fix is proven to be the driver's
+  rather than the rail's. See [[pick-up]].
 - **Gate on `main` after the merge:** typecheck clean, build clean,
-  **92 files / 1348 passed + 36 skipped** (was 91 / 1340; the +1 file and +8 tests
-  are exactly `tests/inspect-fixture-workspace.test.ts`). Ran on the branch and
-  again on `main`. **Read the number off `main`, never off this file.**
-- **NOT PUSHED**, now 6 commits ahead. D6 stands. Read the real gap:
+  **93 files / 1361 passed + 36 skipped** (was 92 / 1348; the +1 file and +13
+  tests are exactly `tests/inspect-sessions-fixture.test.ts`). Ran on the branch
+  and again on `main`. **Read the number off `main`, never off this file.**
+- **NOT PUSHED**, now 8 commits ahead. D6 stands. Read the real gap:
   `git rev-list --count origin/main..main`.
 
-## What #142 actually was
+## What #148 actually was
 
-`inspect.mjs` opened its fixture workspace with `fs.mkdtempSync`. The app renders
-`.session-title` as `basename(cwd)` and that directory **is** the cwd, so six
-random characters changed `titlebar.png`'s pixels every run.
+`inspect.mjs`'s header claims the whole instrument is fixture-driven. The sessions
+rail was the one surface where that was false — it read `session:list`, which
+enumerates this machine's real store.
 
-The reason it hid for two tickets: **the box stayed `0,0,1440,48` and the text
-length stayed 43.** Every signal the driver already printed said nothing was
-moving. Only the bytes did — 8980 to 9538 across seven runs, against every other
-surface byte-identical.
+Both of the rail's lists are now replaced in main: the stored transcripts, and the
+CLI's live agent view (`background-sessions:list`, whose `[]` was only ever an
+accident of the fixture workspace being fresh, and which renders a *failed look*
+on a machine with no `claude` on PATH).
 
-The name is now fixed at `inspect-ws`, and a directory that is already there is
-**cleaned, not refused**.
+The decision lives in **`inspect-sessions.mjs`**, not the driver — #142's split
+applied a second time, because the driver launches Electron at import and nothing
+in it can be run by the fast gate.
 
 ## The transferable half
 
-**Where the code lives is a testability decision.**
+**The premise is what feeds the surface, not what two runs agree on.**
 
-The other three `inspect-*.test.ts` files assert against `inspect.mjs` as *text*,
-and each says why: it launches Electron at import. That is sound and still true.
-But this ticket's constraint is behavioural — *do not refuse; clean when stale,
-and only then* — and **"never refuses" is not a property source text can honestly
-check.** Grepping for the absence of a `process.exit` proves nothing about a
-refusal form nobody thought to grep for; it would look like coverage and be close
-to vacuous.
+The obvious acceptance here — run it twice and byte-compare — **passes on unfixed
+code**. #142's leg ran exactly that, four times, and got a clean result off a rail
+still listing 953 real sessions. Two runs minutes apart on one machine see the
+same store; the instability is across machines and across time.
 
-The fix is not a better regex. It is to move the three deciding lines **out of the
-file that cannot be imported** into `inspect-workspace.mjs`, which imports nothing
-from Electron, so the gate runs the real path against a real temp directory.
+So the premise was measured off what supplies the surface:
 
-The two remaining text assertions exist only as the drift guard — that
-`inspect.mjs` actually calls it and no longer `mkdtemp`s. Without them the module
-would be dead code passing its own tests, which is the two-copies-of-one-contract
-failure #132's sidecar convention exists to prevent.
+- The footer's real count reads **950, 951, 952, 953** in waves 2 to 5, and
+  **976** on a run today. Wave 4's value was predicted before opening it.
+- The sidebar surface's own log inverts from **7125 characters** of rail content
+  to **550**.
 
-## Why refusing on collision was rejected
+Three clean runs afterwards gave 11/11 byte-identical captures. That is recorded
+as corroboration and explicitly **not** as the evidence, because it is the same
+check that passed on the defect.
 
-It is the obvious reading of "fixed name" and cross-model review killed it.
+## Which check catches what, measured rather than assumed
 
-**This instrument is unattended.** A run that dies between `mkdirSync` and
-`cleanup()` leaves residue, and a refusal converts that residue into a
-deterministic failure of *every later run*, with no message a reader could act on
-and no reason to go looking in a temp directory nobody told them about. One crash
-takes the instrument off the air until a human guesses why.
+The driver reads the rail back and compares it to the fixture **before any
+capture**. Disabling the stub showed the four checks are not interchangeable:
 
-The cleanup is announced through the driver's own `log` vocabulary and **only when
-something was actually removed**. Removing and re-creating unconditionally is
-simpler and would announce a cleanup on every run — at which point the
-announcement carries no information and real crash residue is indistinguishable
-from the ordinary case.
+- The **row count** catches a stub that did not install (red at 1 row against 5,
+  footer reading 976).
+- The **stray-title** check — which my first draft of the ticket comment called
+  *"the one that matters"* — **never fires there**. Under `project` scope the real
+  store can only contribute the seeded session, whose title the fixture also
+  carries. It guards the **scope pin** instead, and the comment was corrected to
+  what the red run showed.
+- The **footer** catches a list of the right length and the wrong set.
+- The **background rows** catch the second stub alone.
 
-## The mutation worth carrying
+## Two rules this leaves behind
 
-Six mutations, six distinct reds, control green, verdicts **parsed from the
-reporter output** rather than read off an exit code (#125's trap).
+**A relative age needs an offset, not a timestamp.** A fixed epoch renders a
+different string every day. Every fixture row sits ≥20 minutes from its `relTime`
+bucket edge, and the seeded row is deliberately **not `now`** — a 60-second
+bucket is the one label a slow run ticks through under itself, and it is exactly
+what the old seeded row rendered.
 
-Restoring the random suffix reded **one** test, not the two expected:
-`Math.random()` at module scope is evaluated once, so it is stable *within* a
-process and the identity check could not see it. A second mutation moving
-`mkdtemp` **inside** the function reds four, including that one.
-
-**A mutation that reds fewer tests than expected is a finding about the tests, not
-a pass.** Without the second one, that assertion was dead weight that looked
-exactly like coverage.
+**A fixture must not leave the surface less representative than what it
+replaced.** The rail carries five rows rather than one, because it is
+photographed to be judged on row rhythm. Shrinking what a surface can be graded
+on would look exactly like the fix working.
 
 ## Carried forward for the next leg
 
-**A false negative that is easy to walk into.** Across leg 3's four verification
-runs, `sidebar.png` and `window-session.png` were **also** byte-identical. That is
-not evidence #148 is fixed, and "run it twice and diff" is the natural check to
-reach for there. #148's instability is across machines and across time. Its
-premise shows in the driver's own log instead: the sidebar capture reports **7125
-characters** of rail content against a fixture that seeds exactly **one** session.
-A comment saying so is on the ticket.
+**#143 is next and the plan put it here on purpose.** Verifying it after #148 is
+what makes a green result attributable to the driver rather than to the rail.
+`gui-123` is currently red in the DOM phase with #143's text verbatim; that is
+expected, not a regression.
 
 **The bar discrepancy #149 left open is still open.** `.context/` prose has said
 the three docks *"share the Sidebar's reference"*, but `.gauntlet/bar/README.md`'s
@@ -123,6 +120,12 @@ to *"Titlebar + docks: control grouping, iconography"*. **Read the table, not th
 prose.** The table is the owner-confirmed half of a human-owned artifact, so no
 agent has rewritten it. **Settle it before the gauntlet seed reads it**, since the
 seed picks references from that table.
+
+**Wave captures across the #148 boundary compare two different fixtures.** Waves
+1 to 5 photographed a one-row rail fed by the real store; every future wave
+photographs the five-row fixture. That is the intended trade — before it, those
+two files could not be compared at all — but a wave-to-wave diff spanning the
+boundary is meaningless for those two surfaces.
 
 **The `pieces` cap is a budget, not a scope statement.** Nine captured surfaces,
 `pieces` capped at 6 and fixed at seed, so one run cannot take all nine. A seed
@@ -167,17 +170,23 @@ Carried from earlier legs, unchanged:
 - **`scripts/gui-*-shots/` is gitignored, narrowly and on purpose.** Do not
   broaden it to `scripts/**/*.png` — that swallows `scripts/spike-117-shots/`,
   which two findings files cite by path.
+- **Run `inspect.mjs` one at a time.** Its workspace directory name is fixed, so
+  two concurrent runs delete each other's workspace. No lock, accepted knowingly.
+- **`drivers.manifest.mjs` enumerates the non-driver `.mjs` files** in that
+  directory so their absence from the driver set is a decision on the record.
+  There are now **four**.
 
 New from this leg:
 
-- **Run `inspect.mjs` one at a time.** Its workspace directory name is now fixed,
-  so two concurrent runs delete each other's workspace. There is no lock; this
-  was accepted knowingly as the price of a diffable capture, and it is recorded
-  beside the code in `inspect-workspace.mjs`.
-- **`drivers.manifest.mjs` enumerates the non-driver `.mjs` files in that
-  directory** so their absence from the driver set is a decision on the record. A
-  new `.mjs` there that is neither a `gui-*` driver nor a `*.source.mjs` sidecar
-  gets a line in that comment.
+- **The rail's two IPC channels are stubbed, so a capture says nothing about
+  them.** A green `sidebar.png` is no evidence that `session:list` works, exactly
+  as a green `commands-dock.png` is none that the CLI serves commands. The real
+  listing is covered by `tests/session-store.test.ts`,
+  `tests/session-store-live.test.ts` and **`gui-63.mjs`**, which drives the built
+  app through the real handler with no stub.
+- **The stubs install before `app.firstWindow()`.** A renderer that called
+  `session:list` earlier than that would paint once from the real list. It does
+  not today, and the read-back would catch it. Written beside the code.
 
 ## Open questions
 
@@ -188,10 +197,14 @@ ones live in `.claude/vibe-130.md`.** Owner calls 14–20 are in
 `.claude/gauntlet-core-surfaces.md`, the archived five-wave run.
 
 **#144 stands unanswered**, and #150 is its settled half sitting in the queue.
+**#151 is new** and overlaps the first owner call above: the exposure it names is
+the one already recorded there, now measured across all five waves rather than
+wave 5 alone.
 
 ## Related
 
 - [[overview]] · [[pick-up]] · [[decisions]] · [[stack]] · [[happy-path]] · [[flows]]
+- [[2026-08-11-the-premise-is-what-feeds-the-surface-not-what-two-runs-agree-on]]
 - [[2026-08-11-a-behavioural-constraint-cannot-be-pinned-as-text]]
 - [[2026-08-11-a-convention-nothing-executes-is-a-style-preference]]
 - [[2026-08-11-a-standard-generated-from-the-code-it-polices-inherits-its-omissions]]

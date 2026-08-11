@@ -26,18 +26,18 @@ git rev-list --count origin/main..main
 
 ## The queue
 
-**Nine tickets left. Leg 1 landed #149, leg 2 landed #146, leg 3 landed #142**
-(`ef664cf`) — the fixture workspace name is pinned, all eleven captures are
-byte-stable, and a stale directory is cleaned rather than refused. **Next is
-#148.** Recommended order, and the reasons are not cosmetic:
+**Eight tickets left. Leg 1 landed #149, leg 2 landed #146, leg 3 landed #142,
+leg 4 landed #148** (`f60b40a`) — the sessions rail is a fixture, both of its
+lists replaced in main, and the rail is read back and compared before any
+capture. **Next is #143.** Recommended order, and the reasons are not cosmetic:
 
 | Order | # | Why here |
 |---|---|---|
 | ~~1~~ | ~~149~~ | **DONE, leg 1.** Bar README + `SKILL.md` at nine surfaces, drift now gated |
 | ~~2~~ | ~~146~~ | **DONE, leg 2.** Producers honour `SCREENSHOT_DIR`; the phase no longer dirties the tree |
 | ~~3~~ | ~~142~~ | **DONE, leg 3.** Workspace name pinned; `titlebar.png` is diffable |
-| 4 | 148 | Fixture the sessions list; the last known source of capture drift |
-| 5 | 143 | Driver-first, but **verify AFTER 148** so the fix is the driver's, not the rail's |
+| ~~4~~ | ~~148~~ | **DONE, leg 4.** Rail fixtured; the last known source of capture drift |
+| 5 | 143 | Driver-first, and **now verifiable** — #148 has landed, so a green result is the driver's rather than the rail's |
 | 6 | 147 | Private profile per driver, dedicated shared profile for the opt-out pair |
 | 7 | 145 | Quarantine accepted; phase must not report clean green |
 | 8 | 150 | Headless-gate CI, must not read as full coverage |
@@ -46,40 +46,48 @@ byte-stable, and a stale directory is cleaned rather than refused. **Next is
 | 11 | 139 | Tool-card label to 400 |
 | 12 | 140 | Named scoped exception for the state stripe |
 
-**No ticket in this queue carries a native blocking edge** — checked on all nine.
-The ordering above lives only in this table, so it is the chain's plan rather than
-something the tracker will enforce. Every leg so far has followed it.
+**No ticket in this queue carries a native blocking edge** — checked on all nine
+at leg 3, and #148 closing changed none of them. The ordering above lives only in
+this table, so it is the chain's plan rather than something the tracker will
+enforce. Every leg so far has followed it.
 
 **#144 stays `needs-triage` on purpose.** Its settled half is #150. Closing #144
 because #150 landed is the exact failure the split was reviewed against.
 
-## Next ticket, #148, and the trap leg 3 just measured
+**#151 is new, also `needs-triage`, and must not be promoted by a leg.** Filed by
+leg 4 from the wave-capture audit: the fixture workspace lives under the user
+profile, so every rail capture renders a Windows username in its group heading.
+It is a decision about *where the workspace lives* and every reliable fix is
+platform-specific, so it is the owner's call.
 
-Fixture the sessions list so `sidebar.png` and `window-session.png` can be
-byte-compared.
+## Next ticket, #143
 
-**READ THIS BEFORE WRITING ITS ACCEPTANCE.** Leg 3 ran `inspect.mjs` four times
-and byte-compared everything. **`sidebar.png` and `window-session.png` came back
-byte-identical across all four.** The obvious acceptance check for #148 — run it
-twice, diff — **passes today, on unfixed code.**
+`gui-123`: the reuse control is not reachable by keyboard, and the DOM phase is
+red on it. Its failure text is #143 verbatim — *"the reuse control could not be
+reached with Tab in 60 presses"* — so expect that red until it lands and do not
+read it as a regression.
 
-The rail's instability is not run-to-run within one sitting. It is across machines
-and across time. The premise is visible in the driver's own log instead:
+**Why the plan put it after #148.** The concern was that a keyboard-reachability
+fix verified against an unstable rail could be credited to the wrong change. The
+rail is now a fixture with five deterministic rows, so a tab order measured
+through it is measuring the driver's own fix.
 
-```
-SURFACE  {"name":"sidebar","box":{"x":0,"y":48,"w":383,"h":852},"text":7125,...}
-```
+## What leg 4 measured that changes how a stability claim gets written
 
-7125 characters of rail content against a fixture that seeds exactly **one**
-session. The rest is this machine's real sessions. Argue the surface's stability
-from **what feeds it**, not from a comparison. A comment saying this is already on
-the ticket.
+**Do not accept "run it twice and byte-compare" as evidence for any capture
+surface.** It passes on unfixed code. Leg 3 ran `inspect.mjs` four times and
+byte-compared everything, getting a clean result on a rail that was still listing
+953 real sessions, because two runs minutes apart on one machine see the same
+store.
 
-#137 measured the same rail at 100 rows, 99 of them `session-row-btn-foreign`,
-with the whole cross-run diff being four `.session-row-meta` spans ticking
-`8m`→`9m` at **identical character length** — which is exactly why the driver's
-`textLength` guard saw nothing. That is the mechanism; it is also a provenance
-leak, since those captures carry real session titles into `.gauntlet/bar/`.
+Argue from **what feeds the surface**. For #148 that was the footer's real count
+reading 950, 951, 952, 953 across waves 2 to 5 and **976** today, plus the
+sidebar surface's own log inverting from **7125 characters** of rail content to
+**550**.
+
+**A capture surface fed by a stub says nothing about the stub's real channel.** A
+green `sidebar.png` is no evidence `session:list` works, exactly as a green
+`commands-dock.png` is none that the CLI serves commands.
 
 ## What was decided while you were out, in one line each
 
@@ -96,11 +104,14 @@ leak, since those captures carry real session titles into `.gauntlet/bar/`.
 Both live entries are in `.claude/vibe.md` under `## Needs you`:
 
 1. **Git history on the wave captures.** The repo is **public** and 35 wave PNGs
-   are in `origin/main`. Checked against the pixels rather than the issue text:
-   what is actually rendered is a Windows username in a fixture temp path plus a
-   session count, **not** the hundred project names #148 implied. Fix-forward
-   taken; a history rewrite is irreversible and outward-facing so it was **not**
-   done. Verified on wave 5 only; #148 carries the audit of the other 34.
+   are in `origin/main`. **Leg 4 finished the audit this call was waiting on** —
+   all five waves opened, not just wave 5. Findings: **no real session title
+   appears in any capture, in any wave**; the rail exists only in `sidebar.png`
+   and `window-session.png`, and `window-welcome.png` has no rail at all. What is
+   exposed is a **Windows username** in the fixture temp path (all five waves) and
+   the foreign-session **count** (waves 2 to 5, now fixed forward). Fix-forward
+   remains taken; a history rewrite is irreversible and outward-facing so it was
+   **not** done. The residual username half is now tracked as **#151**.
 2. **gauntlet owner call 14, the stop signal.** Two agent-reachable answers were
    attempted and both were refuted cross-model as post-hoc goalpost movement, so
    the criterion was left **untouched**. The genuine (a)/(b)/(c) choice is still
@@ -131,8 +142,12 @@ the bar is human-owned.
 seed, so a seed picks a subset. That is a budget, not a statement that the
 unpicked surfaces lack a standard; the bar README now says so in the file.
 
-**Wave-to-wave byte comparison of the captures is now meaningful** for every
-surface except the two #148 owns. Before #142 `titlebar.png` moved on its own.
+**Wave-to-wave byte comparison of the captures is now meaningful for all nine
+surfaces** — #142 pinned the titlebar and #148 pinned the rail. **But not across
+the #148 boundary:** waves 1 to 5 photographed a one-row rail fed by the real
+store, and every future wave photographs the five-row fixture. Comparing
+`sidebar.png` or `window-session.png` across that line compares two different
+fixtures.
 
 ## Landmines
 
@@ -141,36 +156,33 @@ surface except the two #148 owns. Before #142 `titlebar.png` moved on its own.
 command merely ended in `; echo`. **Any trailing command replaces the status.**
 Read `$?` on its own line, or grep the redirected file.
 
+**A byte comparison that passes is not evidence a capture is stable** (#148).
+Two runs on one machine share the machine. Argue from what feeds the surface.
+
 **Run `inspect.mjs` one at a time** (#142). Its workspace directory name is fixed
 now, so a second concurrent run deletes the first's workspace and the first's
 `cleanup()` then deletes the second's. Both produce garbage rather than an error.
-There is no lock; this was accepted knowingly as the price of a diffable capture,
-and the reasoning sits beside the code in `inspect-workspace.mjs`.
 
 **Cleaning `scripts/` after a phase run is no longer needed** (#146, `ed9a490`).
 Every driver honours `SCREENSHOT_DIR`, the phase writes only under
 `%TEMP%/claude-wrapper-dom-phase/<driver>/`, and `scripts/gui-*-shots/` is
-gitignored. Verified live: three phase runs left `git status` on `scripts/`
-clean. Any doc still telling you to run `git checkout -- scripts/` is stale.
+gitignored. Any doc still telling you to run `git checkout -- scripts/` is stale.
 
 **Point `SCREENSHOT_DIR` outside the repo** when running `inspect.mjs`.
 
 **`gui-123` is red in the DOM phase and it is not your change.** Its failure text
-is #143 verbatim: *"the reuse control could not be reached with Tab in 60
-presses."* Expect it until #143 lands; do not read it as a regression.
+is #143 verbatim. Expect it until #143 lands.
 
 **A squash merge does not mark the branch merged.** `git branch -d` refuses after
 one. Diff the branch against `main` first, and let an empty diff be what
 authorises `-D`.
 
-**A 0-byte subagent transcript is not a dead agent.** An earlier run diagnosed one
-that way and was wrong: the file flushes only at completion, so "not started yet"
-and "died on spawn" look identical by size. Cost two wasted spawns.
+**A 0-byte subagent transcript is not a dead agent.** The file flushes only at
+completion, so "not started yet" and "died on spawn" look identical by size.
 
 **A mutation that reds fewer tests than you expected is a finding about the
-tests** (#142), not a pass. `Math.random()` at module scope is stable within one
-process, so a "the value is stable across calls" assertion cannot see it; only a
-per-call mutation can. Read what the mutation actually mutated before scoring it.
+tests** (#142), not a pass. Read what the mutation actually mutated before
+scoring it.
 
 ## Standing constraints for the renderer
 
@@ -200,12 +212,17 @@ editing it is a deliberate change to the standard, not bookkeeping.
 fallback that points back inside the repo. Use
 `process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')`.
 **Do not broaden the `scripts/gui-*-shots/` ignore rule** to `scripts/**/*.png` —
-that swallows `scripts/spike-117-shots/`, which `spike-117-findings.json` and
-`spike-117-findings.md` cite by path as recorded evidence.
+that swallows `scripts/spike-117-shots/`, which two findings files cite by path.
 
 **A new `.mjs` in `.claude/skills/run-desktop/` that is neither a `gui-*` driver
-nor a `*.source.mjs` sidecar gets a line in `drivers.manifest.mjs`** (#142), which
-enumerates the non-members so their absence stays a decision on the record.
+nor a `*.source.mjs` sidecar gets a line in `drivers.manifest.mjs`** (#142). There
+are now **four**: `driver.mjs`, `inspect.mjs`, `inspect-workspace.mjs` and
+`inspect-sessions.mjs`.
+
+**Anything the fast gate must RUN has to live outside `inspect.mjs`** (#142,
+#148). The driver launches Electron at import, so a behavioural constraint stated
+inside it can only ever be pinned as text — and "never refuses" or "this age
+renders a stable label" are not properties source text can honestly check.
 
 ## Chain rules
 
