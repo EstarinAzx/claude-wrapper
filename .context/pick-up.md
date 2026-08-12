@@ -134,7 +134,17 @@ correctly, since #140 moved no pixels. This table is leg 7's and nothing has mov
 
 There is still **no full-phase baseline on an unmodified tree.**
 
-## CI exists, has still never run, and main is 49 commits ahead
+## CI exists, has still never run, and main has never been pushed
+
+**Do not trust a commit-count written in this file.** It increments with every
+commit, including the commit that corrects it — an earlier draft said 35, then 49,
+and both were stale before the file was saved. Read it:
+
+```bash
+git rev-list --count origin/main..main
+```
+
+It was in the high forties when this baton was written.
 
 `.github/workflows/fast-gate.yml`, on push, `windows-latest`, exactly `typecheck` +
 `test` + `build`. **Nothing has ever been pushed from this checkout.** That is why
