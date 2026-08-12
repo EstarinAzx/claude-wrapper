@@ -13,150 +13,120 @@ Start: read [[overview]] + [[active-work]].
 here. This file is the baton: what just landed, what is next, and the one rule the
 loop body will try to break.
 
-## Next: `queue empty` — and the successor is already running
+## Next: gauntlet **run 3** is seeded and its wave 1 leg is running
 
-**The `ready-for-agent` queue is DRY.** Chain 8 drained it in three legs — #153
-(`5267ede`), #154 (`454e8de`), #156 (`0e63253`) — and leg 3 set `stop: true` and
-fired its `then:` as its last act: **`/relay N=1 /preset gauntlet`**, a fresh
-gauntlet run. So **the next session is most likely a gauntlet leg, not a ticket
-leg**, and the section below is for it.
+**`/relay N=1 /preset gauntlet` is live.** Chain 8 drained the ticket queue in three
+legs and fired its `then:` as its last act; that successor seeded **run 3, slug
+`core-after-docks`**, at `ea37a10` and spawned leg 2 for wave 1.
 
-**No leg may promote a ticket to refill this queue.** Fifteen issues are open;
-thirteen sit at `needs-triage` and two at `needs-info`, and five of the thirteen
-were filed *by* legs (#162, #163, #164, #165, #166). Promoting any of them makes
-a chain's stop condition unreachable by construction. They are the owner's to
-triage.
+- Run state: **`.claude/gauntlet.md` on `gauntlet/core-after-docks`** — the run's
+  memory, and the file to read before touching anything. The seed commit is on
+  `main` too, so a leg booting on `main` cannot re-seed; **`main`'s copy goes stale
+  the moment wave 1 commits.**
+- Relay machinery: `.claude/relay/gauntlet.md`. Closed chains (run 2's gauntlet,
+  chain 8's ticket-loop, the older relay-leg chain) were moved to
+  `.claude/relay/archive/` so boot cannot match a stopped chain and **`/relay stop`
+  with no slug unambiguously stops the live run.**
+- Pieces: **Welcome, Titlebar, Sidebar, Chat, InputBar.** The sixth slot is
+  deliberately empty — the smoothing pass's one-new-piece budget is where run 2's
+  only verdict movements from a builder-less piece came from.
 
-Verify rather than trust this file. **It has been wrong before** — a prior pass
-claimed 12 open issues when there were 13, and 24 commits ahead when there were
-34. And use the **API**, not the label filter:
+**Why re-grading run 1's five surfaces is legitimate, and how it was established.**
+Run 1 closed all five at `BAR WINS` with `plateau: 3`, so this needed proof rather
+than an argument. The instrument was controlled first: chain 8's tickets touched no
+`src/`, so a fresh capture of `main` should reproduce run 2 wave 12 exactly — **all
+eleven files came back SHA256-identical**, across a rebuild and two days, which is
+cross-run determinism run 2 had only ever shown *within* a run. Against that
+control, all five surfaces differ from the pixels run 1 judged: **the sessions rail
+narrowed 254 → 248px**, chat and input-bar each absorbed the 6px, and Welcome and
+Titlebar changed content inside unchanged boxes. Full derivation in
+`.claude/gauntlet.md` under "Why this run exists"; **do not re-derive it.**
+
+**`AgentsDock` and `DocksAsOne` are excluded on purpose** — both blocked on **owner
+call 19**, whose default is *build nothing*, and they cost run 2 **six consecutive
+waves** of pixel-identical captures and restated gaps.
+
+## The one rule the loop body will try to break
+
+**The critic must not be a Claude family, and the builder never grades.** Everything
+this preset is worth rests on that one separation. Two ways it breaks quietly:
+
+1. **`binary:` falling back to `claude`.** A fresh relay init that auto-detects
+   instead of reading the pin bypasses the Wisp gateway, and the "cross-model"
+   critic silently becomes a Claude model. `binary: claude-wisp` is pinned in
+   `.claude/relay/gauntlet.md`; verified at seed (`$env:CLAUDE_BINARY`,
+   `claude-wisp.cmd` present, gateway live on `127.0.0.1:41184`).
+2. **Carrying `critic:` forward instead of re-resolving it.** It is a *rule* —
+   `wisp routing` live, first non-Anthropic family — not the value `sonnet`. It
+   landed on `codex/gpt-5.6-sol` at seed and in both prior runs; that is luck, and
+   the routes have moved in under a day.
+
+**Second rule, and run 2 lost five waves to it: a critic's named gap is not an
+instruction.** When it collides with `DESIGN.md`, the gap loses — that is what owner
+call 19 *is*. And per the bar, **a critic may not rule on colour, translucency or
+material** (the wash is composited by Windows over OS acrylic; no driver sees it).
+A builder handed a colour gap drifts the app off its identity floor, which is a
+failed wave even if it looks better.
+
+## Ticket queue: still dry, and no leg may refill it
+
+**`ready-for-agent` is empty.** Fifteen issues open — thirteen `needs-triage`, two
+`needs-info`; five of the thirteen were filed *by* legs (#162–#166). **Promoting any
+of them makes a chain's stop condition unreachable by construction.** They are the
+owner's to triage.
+
+Verify rather than trust this file — **it has been wrong before** (claimed 12 open
+issues when there were 13, 24 commits ahead when there were 34). Use the **API**,
+not the label filter:
 
 ```bash
 gh api "repos/EstarinAzx/claude-wrapper/issues?state=open&labels=ready-for-agent" --jq 'length'
 git rev-list --count origin/main..main
 ```
 
-**`gh issue list --state open --label ready-for-agent` is not trustworthy
-immediately after a close.** Measured this leg: it returned #156 as `CLOSED`
-*within* a `--state open` query, because the label filter reads GitHub's search
-index and that index lags. The API call above answered `0` correctly at the same
-moment.
-
-## The one rule the loop body will try to break
-
-**Never apply the `ready-for-human` label.** The owner banned it while away and
-the ban is recorded in memory (`afk-autonomy-grant.md`): *"never tag anything
-ready for human as i will be away from home"*.
-
-**`/preset ticket-loop` steps 4 and 6 both tell you to apply it** — on a branch
-collision and on a failed gate. The body ranks **below** this rule. It is pinned
-here rather than in a leg file because a fresh chain writes a fresh leg file and
-loses the override; step 1 of every firing reads *this* file.
-
-Instead: label **`needs-info`**, comment with exactly where you stopped and what a
-cold reader needs, `PushNotification`, and **stop the chain**. The relabel only
-ever existed to stop the next leg re-picking a stuck ticket forever — stopping the
-chain achieves that without the banned label.
-
-## What leg 3 landed
-
-**#156 as `0e63253` on `main`, CLOSED on its blast-radius half only.** A stalled
-screenshot in `gui-91` now costs the artifact and nothing else. One driver file
-plus a harness; no `src/` change.
-
-**The part worth carrying:** the defect that was *provable* is not the one the
-ticket describes, and finding that out cost nothing but reading.
-
-1. **A capture here is evidence, never an assertion.** Nothing in `bad` reads
-   either screenshot — yet the bare `await` threw in a top-level-await module and
-   aborted the run, so **one missing artifact cost eight assertions it has no
-   bearing on**, and with no verdict line printed `dom-phase.mjs` read it as a
-   plain `FAIL`, indistinguishable from a real product break. That is the harm the
-   ticket was actually filed over.
-2. **The renderer cannot see a stalled compositor.** With frames withheld the
-   capture hangs for 30000ms while the page reports `visibilityState: "visible"`,
-   `document.hidden: false` and fires `requestAnimationFrame` at **0ms**. Only
-   `win.isVisible()` in **main** moved. This **killed the leg's own first candidate
-   remedy** — awaiting a real frame — before it shipped. Validate a detector
-   against a deliberately induced instance before you build a guard on it.
-3. **Both directions the ticket proposed are refuted.** A working capture costs
-   32–41ms idle and 40–60ms with eleven cores saturated, against a **30000ms**
-   inherited default — so ~500x, and load moves the cost by tens of milliseconds,
-   never tens of seconds. A 30000ms capture is a different *mode*, not this
-   distribution's tail.
-
-Full reasoning:
-[[2026-08-12-evidence-may-not-destroy-the-verdict-and-the-renderer-cannot-see-a-stalled-compositor]].
-
-**Evidence:** baseline `PASS`/exit 0 with both captures written; frames withheld
-for the first capture only → `UNSCORED`/exit 2 **with all eight assertions still
-run** and the window state reported; that stall compounded with a real assertion
-failure → `FAIL`/exit 1, stall still reported, product red winning. Mutants built
-**outside the repo** with re-rooted imports so no glob or manifest could see a
-stray `gui-*.mjs`; `gui-91.mjs` hash-checked unchanged after each. Gate: typecheck
-clean, **96 files / 1408 passed / 43 skipped** (zero delta — a driver and a
-`scripts/` harness are invisible to the fast gate), build clean with
-`index-DOI17h8g.css` unchanged.
-
-**Two follow-ups filed at `needs-triage`: #165** (the stall has no cause and did
-not reproduce in 28 runs; the open question is how much machine time an
-unreproduced ~3% instrument stall is worth) and **#166** (26 of 39 capture calls
-repo-wide share the hole — but *not* a mechanical sweep: where a capture's bytes
-feed an assertion, continuing past a stall would be worse than throwing). **A leg
-must not promote either.**
+`gh issue list --state open --label ready-for-agent` is **not trustworthy right
+after a close** — measured returning a `CLOSED` issue inside a `--state open` query,
+because the label filter reads GitHub's search index and that index lags.
 
 ## Chain rules
 
-- **Do not push on your own initiative** (D6). Not even when a ticket's own
-  acceptance asks for it — leg 8 hit exactly that and left the ticket open instead.
-- **Do not apply `ready-for-human`** — see above. Standing owner ban, not a
-  preference.
-- **File follow-ups at `needs-triage`, never `ready-for-agent`.** A leg promoting
-  its own follow-up makes the chain's stop condition unreachable by construction.
-- **A leg may leave a ticket open or close it.** Landing the work and closing the
-  ticket are separate decisions.
-- **Closing a ticket must not retire live tracking.** #156's own text warned that
-  an unproven fix to an intermittent is *worse* than the intermittent, because it
-  retires the ticket that was tracking it. Both obvious readings were wrong:
-  closing outright retires the tracking, and leaving it `ready-for-agent` refills
-  the queue the chain stops on and hands the next leg unreproducible work. The way
-  out is that the halves are separable — close what was proven, re-file the rest
-  under text that matches what is actually known (#165).
-- **An acceptance criterion written as a stop gate is read first and answered with
-  evidence.** Discharging it honestly may widen the finding beyond the ticket —
-  **file the widening, do not detour into it.** #153 → #162, #154 → #163/#164,
-  #156 → #165/#166.
-- **Read a cited form for what it DID, not only what it said** — and extend that to
-  the ticket's own claims. #156 named two candidate causes and measurement refuted
-  both; #154 named three drivers as carrying Tab loops and none did.
-- **An unproven fix to an intermittent is worse than the intermittent.** #156 was
-  the instance: 28 runs bought no reproduction, so no fix was claimed.
+- **Never apply the `ready-for-human` label.** Standing owner ban recorded in memory
+  (`afk-autonomy-grant.md`). `/preset ticket-loop` steps 4 and 6 both tell you to;
+  the body ranks **below** this rule. Instead: `needs-info` + a comment + a
+  `PushNotification` + **stop the chain**.
+- **Do not push on your own initiative** (D6). Not `main`, not a gauntlet branch,
+  not when a ticket's own acceptance asks for it — leg 8 hit exactly that and left
+  the ticket open instead. D6 was written and pressure-tested *under* the AFK grant,
+  so the grant does not override it.
+- **File follow-ups at `needs-triage`, never `ready-for-agent`.**
+- **`.context/` commits ride `main`; wave commits ride the gauntlet branch.** Leave
+  the tree on the branch when spawning a wave leg.
+- **A capture is evidence, never an assertion**, and a missing capture is a **failed
+  run**, not an absent surface — `inspect` prints `CAPTURED n/11`; if a file is
+  absent, read the output rather than judging the surface.
+- **An unproven fix to an intermittent is worse than the intermittent** (#156: 28
+  runs bought no reproduction, so no fix was claimed). Closing a ticket must not
+  retire live tracking — close what was proven, re-file the rest (#165).
+- **Read a cited claim for what it DID, not what it said.** #156 named two candidate
+  causes and measurement refuted both; #154 named three drivers as carrying Tab
+  loops and none did; run 2's "the app has no icon vocabulary" is measurably false.
 
-## For the gauntlet run now chained behind this queue
+## What chain 8 landed
 
-**`then:` has FIRED.** `/relay N=1 /preset gauntlet` was spawned by leg 3 and
-`then:` was cleared in `.claude/relay/ticket-loop.md` in the same edit, so a
-revived ticket-loop chain cannot fire it twice.
+| leg | ticket | landed on `main` |
+|---|---|---|
+| 1 | #153 | `5267ede` |
+| 2 | #154 | `454e8de` |
+| 3 | #156 | `0e63253` |
 
-Its preconditions were checked at seed and **legs 1–3 changed none of them** —
-all three touched only test and driver files:
-
-- **`.claude/gauntlet.md` is absent** — archived to
-  `.claude/gauntlet-docks-and-min-window.md` (`wave: 12`, `max_waves: 12`,
-  `stop: true`). Left in place it would seed-guard the new run onto the closed one
-  and halt it immediately.
-- **`.gauntlet/bar/` exists and is intact** — `README.md`, five `linear/`
-  references, two `identity/` references, `manifest.json`.
-- **The `inspect:` command is present** in `.gauntlet/bar/README.md`.
-- **The new run seeds off merged `main`**, which carries run 2's twelve waves
-  (`25d13e0`), so unlike run 2 it grades an app that already has that work in it.
-
-Read the run-2 record and the archived owner calls before wave 1 — especially the
-adjudication recording the collision between the critic's repeated ask and
-`DESIGN.md`'s rails group, which is what stalled five waves. The refuted claims
-and the settled bar reference are listed in [[active-work]] under **Open
-questions**; **owner call 14, the stop signal, is still unanswered and still (a)**,
-so run 2 was cut off by budget rather than converged.
+**#156 closed on its blast-radius half only.** A stalled screenshot in `gui-91` now
+costs the artifact and nothing else; the unreproduced stall itself moved to **#165**
+rather than dying with the ticket, and the repo-wide version is **#166**. The part
+worth carrying: **the renderer cannot see a stalled compositor** — with frames
+withheld the page still reports `visibilityState: "visible"` and fires `rAF` at 0ms;
+only `win.isVisible()` in **main** moved. That killed the leg's own first candidate
+remedy before it shipped. Full reasoning:
+[[2026-08-12-evidence-may-not-destroy-the-verdict-and-the-renderer-cannot-see-a-stalled-compositor]].
 
 ## Related
 
