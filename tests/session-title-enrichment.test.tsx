@@ -71,11 +71,34 @@ describe('lazy title enrichment', () => {
     harness.api.titleHint.mockResolvedValue('wire the sessions rail')
     await startSession()
 
-    await screen.findByText('wire the sessions rail')
+    // Awaited via the mechanism rather than the rendered label (#153). Reading
+    // the DOM here made a 100-row page's enrichment round trip — hint resolve,
+    // React commit, then a text query across the page — all fit inside Testing
+    // Library's 1000ms `asyncUtilTimeout`, and full-suite contention outran it
+    // in 4 of 7 measured runs. This assertion waits on strictly less: only that
+    // the read was requested. Per the file header that is also the test's
+    // actual subject, which rows asked and how many times.
+    //
+    // `waitFor` shares that same 1000ms default, so the explicit timeout is
+    // what keeps the residual race closed rather than merely narrowed. It is
+    // bounded at BOTH ends. Above 1000ms for headroom against the observed
+    // contention (one run reported `environment 1346s` against a 193s wall
+    // clock); below vitest's 5000ms `testTimeout`, which this repo does not
+    // override, because a wait allowed to reach the test-level cap loses the
+    // diagnostic — the failure degrades from this assertion naming the call it
+    // wanted into a bare 'Test timed out' pointing at the test declaration.
+    // Mutation-verified in both directions.
+    //
+    // Nothing is given up: the label reaching the row is pinned by 'the
+    // enriched label is what the row shows and filters on', and a
+    // re-render-triggered second read by 'remounting the rail does not read the
+    // transcript again'.
+    await waitFor(() => expect(harness.api.titleHint).toHaveBeenCalledWith('cmd', FOLDER), {
+      timeout: 3000
+    })
 
     expect(idsAsked()).toEqual(['cmd'])
     expect(harness.api.titleHint).toHaveBeenCalledTimes(1)
-    expect(harness.api.titleHint).toHaveBeenCalledWith('cmd', FOLDER)
     // The off-page row qualifies on its title and is still never asked about:
     // the page cap, not the predicate, is what keeps this off the whole store.
     expect(screen.queryByText('/model')).toBe(null)
