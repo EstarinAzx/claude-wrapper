@@ -559,6 +559,61 @@
   transition: background 150ms var(--ease), opacity 150ms var(--ease);
 }
 
+/* THE CORNER, AND WHY IT IS NO LONGER THE GROUP'S 8px. This row grew from 57px to
+   74px when its title took a second line, and the radius did not move with it —
+   which is how a corner ends up unowned rather than chosen: heights change for
+   content reasons, and the bare-literal radii in these sheets change for none.
+   Measured off the rendered active row, it paints a 207x74 box on an 8px arc, so
+   8 / 74 = 0.108, flatter than the tool card's 12 / 108 = 0.111 and the flattest
+   box in the app. Nobody picked that.
+
+   THE NUMBER IS DERIVED FROM THIS RAIL, not from the chat column. `.session-more`
+   is the last child of `.session-groups`, directly under these rows: 8px of inset
+   at each end around one 13px line at body's 1.6 leading is 8 + 20.8 + 8 = 36.8px,
+   on the SAME 8px radius, so 8 / 36.8 = 0.217. One list, one corner, and the row
+   is twice the height of the control beneath it, so the row's corner reads half as
+   round as its own list's. 74 x 0.217 = 16.09px closes that. The user bubble
+   arrives at the same place from the other direction — 456x72 on 16px is 0.222, and
+   74 x 0.222 = 16.44 — which is the cross-check and not the reason: two boxes of
+   near-identical height wearing one corner.
+
+   SO IT TAKES `--r-bubble`, AND THE NAME IS A STRETCH THIS RULE OWNS. That token
+   is named for the surface that first needed it and had exactly ONE caller, which
+   tokens.css itself calls indirection rather than a system. A second caller, at
+   the value two independent derivations land on, is how a one-off becomes a step;
+   a tenth bare literal reading 16px would paint the same and buy none of it. Read
+   the token as the app's block radius whose canonical caller is the bubble.
+
+   REJECTED: 12px, the tool card's. 12 / 74 = 0.162 matches nothing — not this
+   rail's 0.217, not the card's own 0.111 — so it would be a value taken because it
+   exists elsewhere rather than because anything derives it. That card is a 568x108
+   container in a 760px column; this is a 207x74 target in a 248px rail.
+
+   THE MINT STRIPE IS UNTOUCHED AND ITS SHAPE DOES CHANGE, which is worth stating
+   because DESIGN.md grants it as a named exception. An inset shadow offset 2px with
+   no blur paints where the rounded rect is and its own 2px-right copy is not,
+   clipped to that same rect — so at the box's leftmost column it survives only
+   along the STRAIGHT part of the left edge, height - 2r, which goes 74 - 16 = 58px
+   to 74 - 32 = 42px. The bar keeps its 2px, its offset and its mint token; the
+   16px at each end stops being a butt end and tapers into the corner. Rejected
+   holding 8px to protect the longer run: that spends the row's corner on the
+   indicator's end cap, and either way the indicator is a bar down the whole left
+   edge of the one selected row.
+
+   `.session-delete` KEEPS THE GROUP'S 8px, AND THAT IS NOT AN OVERSIGHT. It is the
+   sibling that stretches to this row's full height, so it is a 235 - 207 = 28px by
+   74px box, and a browser clamps a radius to half the shorter side: 16px on a 28px
+   width renders as 14px and the control reads as a lozenge instead of a rounded
+   square. A narrow box and a wide one cannot share one corner. Their grounds are
+   co-visible only on the active row with the pointer on that control, since
+   `.session-row-btn:hover` is false while the pointer sits on a sibling.
+
+   Session-scoped for the reason the transition above is: the three-row group at the
+   top of this file also paints the agent and command rows, and neither moves. */
+.session-row-btn {
+  border-radius: var(--r-bubble);
+}
+
 /* Busy = blocked (#14): a streaming turn disables switching + New chat. Dim to
    the same measure as .send-btn:disabled and go inert so hover/focus never
    imply interactivity; the active row's mint bar stays visible, just dimmed. */

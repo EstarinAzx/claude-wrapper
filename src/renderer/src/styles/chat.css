@@ -474,20 +474,31 @@
    holding the pair together; here nothing is bought — the surplus beat is
    returned. The deck still locks to the headline by mass, not air.
 
-   THE FOUR ITEMS REGISTER TO ONE LEFT EDGE NOW, AND THE BLOCK DID NOT MOVE.
-   The critic read this field as a small centred stack and asked for a
+   THE FOUR ITEMS REGISTER TO ONE LEFT EDGE NOW, AND THE BLOCK IS CENTRED ON
+   ITS INK. The critic read this field as a small centred stack and asked for a
    two-column hero: headline, deck and action left-aligned, with a large
    identity mark set opposite them. Half of that is built here and half is
-   refused two paragraphs down. What is built is the axis — `justify-items:
-   start` inside a single `max-content` column, which comes out 480px wide
-   because the deck's own measure is the widest thing in it, and
-   `justify-content: center` puts that column exactly where the centred items
-   already sat. The hint WAS that 480px box, so the hero's bounding box is
-   unchanged at every window size: the mark, the headline and the button slide
-   left to the deck's left edge and nothing slides out. A centred stack has an
-   axis of symmetry and no measure; this one has a measure, and four objects of
-   very different widths now differ against a shared EDGE instead of around a
-   shared centre.
+   refused two paragraphs down. What is built is the axis: `justify-items:
+   start` inside a single `max-content` column, which comes out 415px wide
+   because the deck's contribution is the widest thing in it, and
+   `justify-content: center` puts that column in the pane. The mark, the
+   headline and the button slide left to the deck's left edge and nothing slides
+   out. A centred stack has an axis of symmetry and no measure; this one has a
+   measure, and four objects of very different widths now differ against a
+   shared EDGE instead of around a shared centre.
+
+   415px AND NOT 480, WHICH IS THE WHOLE OF THE CENTRING. A `max-content` column
+   takes the widest max-content CONTRIBUTION among its items, and a contribution
+   is a MARGIN box. Every item here paints what it contributes except the deck,
+   which caps its measure at 480 and paints a balanced pair of about 410 and 403
+   inside it, so a column sized to that 480 carried 65px of empty measure and
+   centred it along with the ink. The block sat 32.5px, half of the 65, left of
+   centre: at 1440 the ink was 415 wide with 480px of pane to its left and 545px
+   to its right. `.welcome-hint` now hands 65 of its measure back with a negative
+   right margin, so it contributes 415 while still wrapping inside 480, the
+   column is the ink, and both margins read 512.5. The arithmetic for the 65, why
+   it is px and not an `em`, and why lowering the cap instead would be the
+   fragile version are all in that rule.
 
    GRID, AND NOT ONE MORE ELEMENT. Flex cannot say "left-aligned inside a
    centred block" on a column axis: `align-items` centres or starts every item
@@ -761,12 +772,56 @@
    above true: alignment moves ink inside a line box and moves no line box.
    Width is still 480, the balanced break is still the sentence's own comma, and
    `gui-gauntlet-wave3.mjs` W1 and W2 read the same two line boxes and the same
-   binding measure they were written against. */
+   binding measure they were written against.
+
+   THE NEGATIVE RIGHT MARGIN BUYS THE CENTRING WITHOUT SPENDING THE TOLERANCE.
+   `.welcome` sizes its one column to the widest max-content CONTRIBUTION among
+   the four items, and a contribution is a MARGIN box, not a content box. So
+   this rule can spend 480px of measure while contributing only 415px of track:
+   480 plus the negative 65 is 415. The column then centres at 415 wide instead
+   of 480, and because every item registers to its left edge the whole hero
+   moves right by half the difference, 32.5px, which was exactly the ink's
+   displacement. Measured at 1440 the ink is 415 wide and sat with 480px of pane
+   to its left and 545px to its right; it now reads 512.5 on both sides.
+
+   THE MEASURE ITSELF DOES NOT MOVE, so nothing above is falsified. A grid item
+   under a non-stretch `justify-items` is shrink-to-fit inside its area, and the
+   space available to it is the area MINUS its margins: 415 minus the negative
+   65 gives back exactly 480. The content box is still 480 at 1440 and still 480
+   at the 640px minimum, where the column is 415 in a 576px field. The balanced
+   break is still the sentence's own comma, the pair is still two line boxes,
+   and the entire clearance the paragraph above argues for is still held. What
+   overflows the column is the empty 65px to the right of the shorter line.
+   Nothing paints there, `.welcome` does not clip, and the column holds one item
+   per row so there is no neighbour to overlap.
+
+   65px AND NOT AN `em`, BECAUSE THE `em` WOULD TRACK THE WRONG TERM. The
+   quantity is the cap minus the painted line, 480 minus 415, and those two
+   scale differently: the cap is a fixed px, the painted line moves with the
+   font metric. If the metric moved by a factor k the value wanted is 480 minus
+   415k, which is not proportional to k, so an `em` would scale the 65 itself
+   and read 71.5 where 23.5 was wanted at k of 1.1. Held in px the column stays
+   415 and the residual asymmetry is only the ink's own drift, 415 times k minus
+   1: about 21px at a 5 percent metric error, against the flat 65px this
+   replaces, and it does not reach today's error until the metric is off by
+   15.7 percent. The wrap tolerance is not in that trade at all, which is the
+   point of paying with the margin rather than the measure.
+
+   REJECTED, ALL FOR THE SAME REASON. Lowering the cap to 415 centres the ink
+   and then wraps the text inside 415, which is BELOW the band the paragraph
+   above reserves on purpose, so a font a few percent wide flips the deck to
+   three lines and spends another 27.6px of the vertical reserve. `min-content`
+   sizes the column to the longest word; `fit-content(480px)` and `auto` both
+   resolve through this same 480px contribution and change nothing; dropping the
+   cap sizes it to the 820px unwrapped sentence; centring the items inside the
+   column throws away the shared left edge. Only the margin separates the number
+   that sizes the column from the number that wraps the text. */
 .welcome-hint {
   font-size: calc(var(--fs-body) * 1.15);
   color: var(--text-muted);
   line-height: 1.6;
   max-width: 480px;
+  margin-right: -65px;
   text-wrap: balance;
 }
 
