@@ -31,11 +31,18 @@
 // the sibling spike (`scripts/spike-122-clipboard.mjs`), which is how the
 // "route 1 is dead" false negative got caught instead of shipped.
 //
+// Its source-level half is `gui-122.source.mjs`, which runs in the fast gate and
+// holds #154's one text-level criterion: this driver's Tab traversal counts its
+// budget off the document instead of hardcoding one. That check cannot live down
+// here, because a hardcoded budget is invisible in the configuration the DOM
+// phase runs in — see the sidecar's header for why that is now always true.
+//
 //   node .claude/skills/run-desktop/gui-122.mjs
 //
 // Needs `npm run build` first, plus `npm i --no-save playwright-core`.
 
 import { _electron as electron } from 'playwright-core'
+import { checks as sourceChecks } from './gui-122.source.mjs'
 import path from 'node:path'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -119,6 +126,88 @@ await page.evaluate(() => {
 })
 await page.waitForSelector('.message-input', { timeout: 20000 })
 log('WORKSPACE', { dir: path.basename(WORK_DIR) })
+
+// ---- phase 1b: the rail every phase below measures against -------------------
+//
+// #154, and it is #143's phase 1b ported with one premise corrected rather than
+// copied.
+//
+// WHAT #143 MEASURED, on `gui-123`. The sessions rail sits ahead of the
+// transcript in the tab order, its length is decided by this machine's real
+// session store, and a scope toggle decides how much of that store renders. Same
+// build, same driver, only the app's persisted state differing:
+//
+//   scope "This project", mkdtemp workspace ->   0 rows,  17 focusables, press 16
+//   scope "All projects"                    -> 100 rows, 218 focusables, press 218
+//
+// WHY THIS IS A PREMISE CHECK HERE AND NOT A REPAIR. #143 read that toggle out of
+// the profile every driver shared, so a human who left the rail on "All projects"
+// handed it to the next driver — that is what made 60 presses a live flake one
+// flip away. #147 closed the channel: `profileArgs()` gives this process a
+// `--user-data-dir` that `mkdtemp` just made, one per driver process, and
+// `dom-phase.mjs` mints its own root per run. `Sidebar.tsx` keeps the toggle in
+// `localStorage` under `sidebar-scope` and falls back to `project` when it is
+// absent, and in a throwaway profile it is always absent. So the toggle can no
+// longer arrive pre-flipped, and this driver passed before this block existed.
+//
+// What the block buys is that the empty rail stops being something this run
+// INHERITED. It is read back, which is #148's rule that a fixture nobody verifies
+// is only a hope: if #147 is reverted, if the stored default changes, or if a
+// phase below ever clicks that toggle, this run says so instead of quietly
+// measuring this machine's session store and reporting the answer as a fact about
+// the app.
+//
+// ITS POSITION IS LOAD-BEARING, and that is the half of #143 the ticket does not
+// mention. The block was written inside `gui-123`'s traversal phase first, and a
+// phase ABOVE it then read a mid-transition opacity off a renderer busy laying
+// out a hundred rows it did not need. Everything below here reads something live
+// — a 15s wait for the control to arrive, a clipboard round trip, a 2600ms wait
+// for the confirmation to fall back to rest, two geometry reads and a screenshot
+// — and every one of them would inherit the same rail.
+const scope = await page.evaluate(() => {
+  const btns = [...document.querySelectorAll('.session-scope-btn')]
+  const project = btns.find((b) => /this project/i.test(b.textContent || ''))
+  if (!project) return { found: false, labels: btns.map((b) => (b.textContent || '').trim()) }
+  const already = project.getAttribute('aria-pressed') === 'true'
+  if (!already) project.click()
+  return { found: true, already }
+})
+if (!scope.found) {
+  fails.push(
+    `the rail has no "This project" scope control (saw ${JSON.stringify(scope.labels)}) — this run cannot establish the rail it measures against, so every phase below would be reading whatever this machine's session store happens to hold; UNSCORED`
+  )
+  await finish()
+}
+
+// WAITED FOR, NOT SLEPT THROUGH. A fixed settle here would be the same guess this
+// block exists to remove, one scope smaller: a click has to reach a React
+// re-render, and how long that takes is a property of how many rows are being
+// torn down. The condition is the state the run needs, so a slow machine waits
+// longer and a fast one does not wait at all. A timeout is not scored here —
+// whatever the rail actually shows is read back below and reported from there.
+await page
+  .waitForFunction(
+    () =>
+      document.querySelectorAll('.session-row-btn').length === 0 &&
+      /this project/i.test(
+        document.querySelector('.session-scope-btn[aria-pressed="true"]')?.textContent || ''
+      ),
+    null,
+    { timeout: 8000 }
+  )
+  .catch(() => {})
+
+const rail = await page.evaluate(() => ({
+  scope: document.querySelector('.session-scope-btn[aria-pressed="true"]')?.textContent?.trim() ?? null,
+  rows: document.querySelectorAll('.session-row-btn').length
+}))
+log('RAILPIN', { ...rail, pinnedHere: !scope.already })
+if (rail.rows !== 0) {
+  fails.push(
+    `the rail rendered ${rail.rows} row(s) for a workspace \`mkdtemp\` created seconds ago (scope reads ${JSON.stringify(rail.scope)}) — the premise did not hold, so this run would be measuring this machine's session store rather than the app; UNSCORED`
+  )
+  await finish()
+}
 
 // ---- phase 2: a real assistant message with a fenced block ------------------
 
@@ -283,6 +372,45 @@ if (restLabel !== 'Copy code') {
 }
 
 // ---- phase 5: keyboard reach and the ring, off the BUILT stylesheet ----------
+//
+// #154 — THE BUDGET IS COUNTED, NOT GUESSED.
+//
+// This phase used to spend a fixed number of Tab presses and, if the control had
+// not landed, call it not keyboard reachable. That figure was never a property of
+// the product. `.code-copy` sits inside the transcript, so everything the rail
+// puts in the tab order comes first, and how many stops that is depends on this
+// machine's session store, on the scope phase 1b established, and on however many
+// controls the app has grown since somebody wrote the number down. It is a guess
+// about a document this driver can simply count — and the accusation it printed on
+// failure was about the product, while the arithmetic behind it was the
+// instrument's.
+//
+// THE BOUND IS DERIVED. One full cycle of the document's own focusable elements
+// reaches anything that is in the tab order at all, so the traversal below is
+// bounded by a count taken off this run's live document. What the phase then
+// claims is narrower and true: the control is in the tab order of a rail this run
+// established. Whether a keyboard user can reach it past a hundred sessions is a
+// PRODUCT question about where the rail sits in that order, and it is not this
+// driver's to answer.
+//
+// `gui-122.source.mjs` pins this in the fast gate, and after #147 that sidecar is
+// the only thing that can: with a throwaway profile the rail is empty on every
+// run, so a reverted constant passes the DOM phase on every machine.
+
+// Counted here rather than in phase 1b: the control itself is one of these, and it
+// does not exist until phase 2 has pushed the message that carries it.
+const focusables = await page.evaluate(() => {
+  const SEL =
+    'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+  return [...document.querySelectorAll(SEL)].filter((el) => {
+    const cs = getComputedStyle(el)
+    return cs.display !== 'none' && cs.visibility !== 'hidden'
+  }).length
+})
+// One full cycle plus slack for the wrap through the document itself, so where
+// focus happens to sit when this phase starts does not matter — the other thing a
+// fixed count got wrong.
+const budget = focusables + 10
 
 // Tabbed to, never `.focus()`d: Chromium only paints `:focus-visible` for a
 // keyboard-shaped focus, so a programmatic focus would read the ring as absent
@@ -290,8 +418,10 @@ if (restLabel !== 'Copy code') {
 await page.evaluate(() => document.querySelector('.message-input')?.blur())
 await page.evaluate(() => document.body.focus())
 let reached = false
-for (let i = 0; i < 60 && !reached; i++) {
+let presses = 0
+for (let i = 0; i < budget && !reached; i++) {
   await page.keyboard.press('Tab')
+  presses = i + 1
   reached = await page.evaluate(() =>
     document.activeElement?.classList.contains('code-copy') ?? false
   )
@@ -308,9 +438,16 @@ const ring = reached
       }
     })
   : null
-log('KEYBOARD', { reached, ring })
+// `presses` is recorded on a PASS too, as a DIAGNOSTIC and not as a distance any
+// user walks: the traversal starts wherever the phases above left focus, so this
+// number moves with them. The one beside it is the one worth watching —
+// `focusables` is the size of the tab order this run measured, so it is what would
+// show the document quietly growing under this driver.
+log('KEYBOARD', { reached, presses, budget, focusables, ring })
 if (!reached) {
-  fails.push('the copy control could not be reached with Tab in 60 presses — it is not keyboard reachable')
+  fails.push(
+    `the copy control was not reached in ${budget} Tab presses — one full cycle of the ${focusables} focusable elements this document holds, on a rail pinned to 0 rows, so it is not in the tab order`
+  )
 } else {
   if (!ring.matchesFocusVisible) {
     fails.push('tabbing to the control did not put it in :focus-visible — the ring below is unscored')
@@ -510,5 +647,17 @@ if (bounds) {
     .catch(() => {})
 }
 if (!shots['in-context']) fails.push('the app could not be screenshotted — nothing here has been eyeballed')
+
+// ---- the SOURCE-level criterion ---------------------------------------------
+// #154's text-level half, in `gui-122.source.mjs` because
+// `tests/gui-source-assertions.test.ts` runs that array in the fast gate (#132).
+// This loop drives the SAME array, so there is one definition and the gated copy
+// cannot drift from the driven one.
+console.log('--- source-level (also run by `npm test`) ---')
+for (const c of sourceChecks) {
+  const { ok, detail } = c.run()
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${c.name} ${JSON.stringify(detail)}`)
+  if (!ok) fails.push(`${c.name}: ${JSON.stringify(detail)}`)
+}
 
 await finish()
