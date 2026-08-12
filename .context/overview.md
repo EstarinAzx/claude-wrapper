@@ -616,6 +616,26 @@ tags: [context, overview]
   transfer to any harness: a `null` status classified as terminal (matching
   `engine.ts`, an absent status is a progress tick), and a filter on a field that
   was never recorded, which made its own predicate unconditionally true
+- `scripts/spike-156-screenshot-stall.mjs` — the newest harness (#156) and **the
+  one to copy when your own DETECTOR might be blind.** Its mechanism is a
+  deliberately induced instance: it takes the window's frames away on purpose, so
+  the failure it is trying to explain is reproducible without waiting on an
+  intermittent, and the witnesses can then be graded against a case whose answer
+  is known. Two of three failed — `document.visibilityState` read `"visible"` and
+  `requestAnimationFrame` fired at **0ms** while `page.screenshot()` blocked for
+  its full 30000ms, leaving `win.isVisible()` in **main** as the only witness that
+  moved. That killed the leg's candidate remedy (await a real frame) *before it
+  shipped*, which is the transferable half: **a guard is only as good as the
+  witness it keys on, so validate the witness first.** Split into a CONSEQUENCE
+  phase (deterministic, one launch, needs no luck) and a REACHABILITY phase
+  (repetition, needs the intermittent to land) after #108's shape, so a night when
+  the wild stall never appears still returns a finding. Also the one to copy for
+  **pricing an operation against its budget**: it reports the cost distribution of
+  the *successful* runs, which refutes "the timeout is too tight" with no failure
+  in hand at all. Phase A costs nothing and takes no launch; arm L saturates the
+  CPU to test the ticket's own "load makes it likelier" clause. `SPIKE156_PHASES`,
+  `SPIKE156_RUNS`, `SPIKE156_ARMS`. Mints a **fresh profile per iteration**, which
+  is load-bearing — a reused profile makes runs 2..N warm and moves the premise
 - `scripts/spike-105-model-pick-channels.mjs` — the newest harness (#105) and
   **the one to copy when an empty result has more than one possible cause**. Its
   design is a cause-separation rather than a measurement: three phases, each
@@ -999,7 +1019,19 @@ tags: [context, overview]
   the ticket's +21. Its driver reded two neighbours until it took a private
   `--user-data-dir`; see
   [[2026-08-11-the-batch-is-the-instrument-and-a-teardown-is-a-promise]].
-  Run the frontier query rather than trusting any line in this file
+  **Chain 8 is COMPLETE**, three legs landing **#153** (`5267ede`), **#154**
+  (`454e8de`) and **#156** (`0e63253`), every leg gate-green and none of them
+  touching `src/`. Leg 3's **#156** closed on its blast-radius half only: a
+  screenshot in `gui-91` is *evidence, not an assertion*, yet a bare `await` threw
+  and aborted the run, so one missing artifact cost eight assertions it has no
+  bearing on, and with no verdict line printed `dom-phase.mjs` read it as a plain
+  `FAIL` indistinguishable from a product break. The stall itself was **never
+  reproduced** (28 runs) and is tracked at **#165**; the repo-wide version of the
+  same hole (26 of 39 capture calls) is **#166**. See
+  [[2026-08-12-evidence-may-not-destroy-the-verdict-and-the-renderer-cannot-see-a-stalled-compositor]].
+  Run the frontier query rather than trusting any line in this file — and use the
+  **API**, not `gh issue list --label`, which reads a search index measured lagging
+  by enough to return a closed issue as open
 
 ## Conventions
 - One ticket per branch `ticket/<id>-<slug>`, squash-merged to main, gate green first
