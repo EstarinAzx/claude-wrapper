@@ -34,18 +34,23 @@ pieces:
     open: true
 critic: sonnet                 # THE RULE, NOT THE VALUE. Re-resolve with live
                                # `wisp routing` every wave and take the first
-                               # non-Anthropic family. Re-resolved at wave 1 to
-                               # `codex/gpt-5.6-sol` — third run at that landing,
-                               # which is luck. Routes have moved in under a day.
+                               # non-Anthropic family. Re-resolved again at wave 2 to
+                               # `codex/gpt-5.6-sol` — third consecutive wave at that
+                               # landing, which is luck. Routes have moved in under a day.
 critic_degraded: false         # wave 1: one critic died on context length and was
                                # recovered on a uniformly changed instrument, NOT a
-                               # trimmed one. Scrutiny never weakened. Adjudication 1.
+                               # trimmed one. Wave 2: all five returned first time at
+                               # the half-scale payload. Scrutiny never weakened.
 branch: gauntlet/core-after-docks
-wave: 1
-plateau: 0                     # consecutive waves in which no verdict improved.
-                               # Wave 1 is a BASELINE and cannot count: there was no
-                               # prior in-run verdict to improve on. Wave 2 is the
-                               # first wave whose verdicts can move this number.
+wave: 2
+plateau: 1                     # consecutive waves in which no verdict improved.
+                               # Wave 1 was a BASELINE and could not count. Wave 2 is
+                               # the first wave whose verdicts could move it, and none
+                               # did: 5/5 BAR WINS again. Note what this number does
+                               # NOT say — four of the five surfaces measurably
+                               # improved this wave. The counter tracks the VERDICT
+                               # column only, which is the written contract (owner
+                               # call 20, still open, still followed as-is).
 max_waves: 12                  # budget backstop
 page: false
 stop: false
@@ -275,6 +280,11 @@ applied to its wave 1 and run 2 applied twice (wave 1, and wave 4 for a piece ad
 | 1 | Sidebar | BAR WINS | Replace the one-line session-title clamp with a consistent two-line title area above the timestamp, so the five rows reveal enough distinguishing text instead of all collapsing into ellipsis stubs while most of the rail stays empty. *(NEW axis, and the strongest gap of the wave — it spends the empty rail on legibility instead of treating emptiness and truncation as two problems.)* |
 | 1 | Chat | BAR WINS | *(as returned)* "Set transcript body copy to regular weight with the specified 1.6 leading, reserving semibold for true headings or explicit emphasis." **REFUTED AGAINST SOURCE — adjudication 2. Do not hand this to a wave-2 builder.** Substitute gap, from the independent native-resolution critic on identical pixels: **render each assistant turn as one contiguous block with a single avatar, indent its tool cards beneath that block, and tighten internal gaps instead of restarting full message spacing and a new avatar for every prose-and-tool segment.** |
 | 1 | InputBar | BAR WINS | Recompose Effort and Model as one evenly spaced utility row aligned to the input pill's inner edges instead of a tight cluster floating under only its right half, and pull the disclaimer upward to remove the resulting dead vertical space. *(Both critics converged on this axis independently, and it is the third independent raising across runs — run 1 wave 4 named the same strip.)* |
+| 2 | Welcome | BAR WINS | *(as returned)* "Recompose the welcome as a centered 480px stack by center-aligning the mark, headline, supporting copy, and button and placing the stack's midpoint at y426, because the current left-anchored cluster leaves the visual weight above and left of the window's center." **CONFIRMED BY MEASUREMENT on the horizontal, REFUSED on the vertical — adjudication 2.1.** The horizontal half is real and is this wave's headline finding; the vertical half re-raises the authored placement wave 1's FINDING 5 proved deliberate. **Wave 3's gap is neither: it is the root-caused fix that satisfies BOTH critics at once** — size the hero's grid track to the hint's *painted* width instead of its 480px `max-width`, which keeps wave 2's shared left edge and restores centring. |
+| 2 | Titlebar | BAR WINS | **NEW axis — the wave-1 gap closed and the critic moved off it.** "Separate the `Wisped` and `Bypass` pills from the app-name lockup with a 16–24px group gap or relocate them to the utility side, because their current near-touching sequence makes identity, backend state, and action read as one undifferentiated cluster." **CONFIRMED BY MEASUREMENT:** the left-side ink groups are mark `x14..35`, app name `x46..142`, `Wisped` `x152..209`, `Bypass` `x220..275` — gaps of **10 / 9 / 10px**, three identical intervals, so nothing separates identity from state. ⚠️ Carry adjudication 2.2 (the rung-role spec conflict) into any Titlebar work. |
+| 2 | Sidebar | BAR WINS | *(as returned)* "Clamp every session title to two lines and place it with its timestamp in one fixed-height row shell, so the five entries share a consistent vertical rhythm instead of jumping between two- and three-line heights." **REFUTED BY MEASUREMENT — adjudication 2.3. Do not hand this to a wave-3 builder.** Every row carries exactly two title lines, and the rhythm got *more* uniform, not less. Substitute gap, from the smoothing pass's finding 3: **give the session row a corner proportionate to its new height** — it grew 17px to 74px while its 8px radius did not move, making it the app's flattest-cornered box at r/h 0.108 and overtaking the tool card's 0.111 with no radius decision ever taken. |
+| 2 | Chat | BAR WINS | *(as returned)* "Set all conversational prose and user-bubble copy to the specified 400 body weight..." **REFUTED — the FIFTH raising of this thread across three runs, now refuted on pixels as well as source. Adjudication 2.4.** **No substitute gap exists, so Chat gets NO BUILDER in wave 3** — the smoothing pass measured the piece as coherent after this wave and returned no Chat finding, and a builder handed no gap is redesigning. |
+| 2 | InputBar | BAR WINS | *(as returned)* "Center the Effort and Model controls in one compact row... instead of pinning two tiny clusters to opposite edges across a large empty span." **REFUSED on the smoothing pass's cross-surface measurement — adjudication 2.5.** The 492px middle is real, but the change *fixed* a 235.5px off-centre error and made the strip share the transcript's 760px measure to the pixel. The residual is **content density — two controls in a correct 760px measure — which is a product question, not a layout one, and is an owner call.** Third distribution asked for by the third critic on this strip; the axis is exhausted. |
 
 ## Wave 1 adjudications
 
@@ -545,8 +555,319 @@ smoothing work. Default taken meanwhile: **leave it empty, handle the seam as sm
 | Chat | one contiguous assistant block per turn, tool cards indented beneath | **Do not touch prose weight or leading** (adjudication 2). `.bubble {` must stay the first literal match of that string in `chat.css`. |
 | InputBar | one evenly spaced Effort/Model row aligned to the pill's inner edges | `.message-input` stays ungrouped; the disclaimer is already centred on its own line, which was run 1's `SPEC BREAK` and is fixed. |
 
+## Wave 2 adjudications
+
+**Verdict spread: 5/5 `BAR WINS`. Zero `SPEC BREAK`s returned. `critic_degraded: false`.**
+Eleven agents: five builders, five critics, one smoothing pass — all eleven returned, zero errors.
+`plateau: 0 -> 1`, because no verdict improved. **Four of the five surfaces measurably improved
+anyway**, which is the gap between what this counter tracks and what happened.
+
+**Nothing was reverted, and the committed tree matches the captures the critics judged.** That is
+deliberate: this run leans on SHA-comparison controls between waves, and a tree that differs from
+its own capture set would poison wave 3's "did my change cause this" comparison. Where a wave-2
+build is now known to be wrong (Welcome), the fix is wave 3's named gap rather than a quiet revert,
+and `.gauntlet/waves/core-after-docks/2/` is frozen evidence either way.
+
+### 2.1 THE WAVE'S HEADLINE FINDING — centring split the wave, two builders moved the same property in opposite directions, and the fix satisfies both critics
+
+Measured off-centre distance, wave 1 -> wave 2, across every content block in the app:
+
+| block | wave 1 | wave 2 | |
+|---|---|---|---|
+| composer footer strip | 235.5px | **0.0px** | FIXED by the InputBar builder |
+| Welcome hero block | 1.0px | **65.0px** | BROKEN by the Welcome builder |
+| Titlebar `.session-title` | 0.0 | 0.0 | |
+| composer pill | 0.0 | 0.0 | |
+| composer footer line | 0.0 | 0.0 | |
+| chat transcript column | ~5.0 | ~5.0 | the 4px scrollbar gutter at x1185..1188 |
+
+So the app holds "a content block is centred in its pane" to **0.0px in five places** and now breaks
+it by 65px in exactly one. Confirmed independently three ways: the smoothing pass's ink-bbox margins
+(left 480 / right 545 = 65px asymmetry), the leg's own mass-weighted ink centroid (**dx −1.6px ->
+−114.6px** against the pane centre, with ink count essentially unchanged at 20595 -> 20628, so it is
+the same content relocated), and the same 1px -> 65px delta reproducing in `welcome-min-window.png`.
+
+**ROOT CAUSE, which no critic could have seen** — `chat.css:608-617`. The builder used
+`grid-template-columns: max-content` with `justify-content: center` + `justify-items: start`. The
+column's `max-content` resolves to `.welcome-hint`'s **`max-width: 480px`** (`chat.css:769`), not to
+the ~415px the sentence actually paints when it wraps at its comma. So the 480px *column* is centred
+correctly (spanning x480..959) but **65px of it is empty, all on the right**, and `justify-items:
+start` then hugs every item to the left edge. The four items really do share one left edge — the
+stated goal was met — but the block they form sits left of the centre everything else holds.
+
+**Neither builder could see it, and both were locally right.** The InputBar builder made a row
+centre-true; the Welcome builder made four items left-true. This is precisely what the smoothing
+slot exists for, and it is why the slot is worth its agent.
+
+**The synthesis: wave 3's Welcome gap satisfies BOTH critics at once.** Size the grid track to the
+hint's *painted* width rather than its `max-width`, and the block is both left-registered (wave 1's
+ask, wave 2's build) and centred (wave 2's critic's ask). The arithmetic predicts the left edge
+lands at `32 + (1376 − 415)/2 ≈ 512` — which is exactly wave 1's measured left edge, x512. Two
+critics asking for opposite things turned out to be one buildable state, so **this is not an
+oscillation and must not be recorded as one.**
+
+⚠️ **Do NOT close it by reverting to `align-items: center`**, and do not touch `.welcome-hint`'s
+`max-width: 480px` — `gui-gauntlet-wave3.mjs` W1/W2 pins that measure and the hint's two line boxes.
+Change the *track*, not the hint.
+
+### 2.2 OWNER CALL — the Titlebar promotion put a UI label on the prose rung, and DESIGN.md says that rung is prose
+
+The wave-1 critic asked for the session title at the 15px rung. The builder delivered it with an
+existing token, on-ladder by construction, and `gui-138` (which sweeps every painted box against the
+ladder) passes. The wave-2 critic returned `NONE` for spec break and moved to a different axis.
+**And the change still contradicts DESIGN.md as written.** Verified first-hand:
+
+- `DESIGN.md:65` — rung **−1** (13px, `--fs-ui`): "**UI labels**: rail rows, dock headers, tool
+  cards, inline and block code"
+- `DESIGN.md:66` — rung **0** (15px, `--fs-body`): "**prose at 1.6 leading**: assistant text, user
+  bubbles, the composer, and markdown `h3`"
+- `.session-title` renders `basename(cwd)` (`Titlebar.tsx:305`) — the workspace folder name, or the
+  literal `New session`. That is a UI label. It carries no 1.6 leading. It is none of rung 0's four
+  named tenants.
+- `git status DESIGN.md` is empty: the spec was not updated.
+
+**Measured consequence, and it is the substantive half.** Titlebar title 15px at **6.71:1** contrast
+(`#929a9b` on `#0b0f11`) · Chat prose 15px at **17.10:1** · Sidebar row title 13px at **16.19:1**.
+Ambient chrome now sits on the *same rung* as the app's primary reading matter, separated only by
+contrast (2.55x), and a full rung *above* the rail's actual content — which is verbatim user prompts
+— while carrying 2.41x *less* contrast than it. Before the wave, size and colour agreed: chrome at
+13px/6.71:1 was subordinate on both axes. Now they disagree, and size is the axis that lost.
+
+**Why this is an owner call and not a revert.** It is a straight conflict between two human-owned
+artifacts — the bar (whose critic asked for the promotion, having judged the artifact) and the spec
+(which forbids it). A wave may not edit the bar; a wave should not edit the fence either. Both
+resolutions are one line, so reversibility does not break the tie. What tips it: the blind critic saw
+the promoted state, was asked for a spec break in PART D, and returned `NONE` — so the instrument
+judged this state clean and improved.
+
+**Default taken meanwhile: the promotion STANDS and the conflict is recorded.** For the owner, in one
+line: either grant rung 0 a chrome tenant and say so in DESIGN.md's role table, or return the session
+title to rung −1 and accept that the bar's critic will keep naming it. **Nothing catches this class of
+error** — `gui-138` checks that every size lands on a rung and never that a tenant belongs to its
+rung's stated role. That gap is filed (see log).
+
+### 2.3 The Sidebar gap is refuted by measurement, and the build it criticises made the rhythm *better*
+
+The critic asked for "one fixed-height row shell... instead of jumping between two- and three-line
+heights". Measured on the pixels, no row has three title lines and none ever did:
+
+- Rows 2–5 each carry **exactly two title lines plus one timestamp**. Ink bands at y312..325 /
+  y330..340 / y353..360, y388..400 / y406..419 / y429..436, and so on.
+- **Row pitch, off the timestamp line the CSS comment says must stay in column: 76 / 75 / 75px.**
+- The smoothing pass measured the same thing at subpixel precision and got mean pitch **58.40 ->
+  75.40**, growth **exactly +17.00px**, and spread **tightening from 1.76px to 1.41px**.
+
+So the reserved `min-height: 2.9em` did exactly what the builder claimed: rows got *more* uniform,
+not less. The verdict still stands — **a critic grades the artifact, and the soundness of its verdict
+does not depend on the soundness of its gap** (wave 1 adjudication 2's principle, applied a second
+time). Only the gap is refused, and finding 3 supplies a real substitute.
+
+### 2.4 The Chat weight gap is the FIFTH raising across three runs, and is now refuted on pixels as well as source
+
+Wave 1 refuted this exact request against source. It came back, with one new half — "and user-bubble
+copy" — which wave 1's refutation had not covered. So it was checked properly rather than dismissed:
+
+- `.assistant-body` sets `font-weight: 400` explicitly (`chat.css`).
+- `.bubble` declares **no** `font-weight` at all, and no ancestor sets one — `base.css` and
+  `tokens.css` contain no `font-weight` — so it inherits `normal`, i.e. 400.
+- **Measured on the capture**, both at 15px so a weight difference must show as stem thickness:
+  user-bubble mean horizontal ink run **3.937px** vs assistant prose **4.052px**, ratio **0.972**.
+  The bubble is marginally *thinner*. Median run 3px for both.
+
+So the request is indistinguishable from what already ships, in both halves. `DESIGN.md:56` carries
+an in-document warning against re-raising it ("three review waves did"); it is now five.
+
+**Consequence: Chat gets no builder in wave 3.** The smoothing pass measured the piece as coherent
+after this wave (intervals all multiples of 8, gutter proven intact) and returned no Chat finding, so
+there is no substitute gap. A builder handed no gap redesigns, which the preset forbids. If wave 3's
+critic raises prose weight a sixth time, that is Chat plateauing on the instrument's inability to
+find a new axis on this surface, and it should be reported as such rather than absorbed.
+
+### 2.5 The InputBar gap is refused on a cross-surface measurement, and the axis is now exhausted
+
+The critic's observation is true: two clusters at `x216..389` and `x881..975`, a **492px empty
+middle**. But the smoothing pass, which is the only agent that could compare surfaces, measured what
+the change actually did:
+
+- All three composer rows now share one centre — off-centre **0.0 / 0.0 / 0.0**, where wave 1 was
+  **0.0 / 235.5 / 0.0**. The change *fixed* a 235.5px error.
+- The strip spans `x216..975` = **760px**, flush with the pill's `x217..974`, and the transcript
+  column spans `x211..970` = **760px**. Two surfaces, one measure, offset only by the 5px scrollbar
+  gutter. In the smoothing pass's words: it "made the app's content measure VISIBLE for the first
+  time, and the measure it revealed is correct."
+
+Centring the two controls compactly would re-hide that measure to fill a void. **The residual problem
+is real but it is not distribution — it is density: two controls cannot fill a 760px measure that is
+itself correct.** That is a product question (what else belongs in the composer's utility row), not a
+layout one, and it is an owner call.
+
+**This strip has now been moved three ways by three independent critics across two runs** — run 1
+wave 4 and run 3 wave 1 both named it, wave 2 moved it, and wave 2's critic wants it moved again. The
+distribution axis is exhausted; do not spend a fourth builder on it.
+
+### 2.6 The rendered-half gate was ALREADY RED on this branch, and wave 1 never found out because it never ran it
+
+Wave 1's recorded gate was `typecheck` + `test` + `build`. This wave added **`npm run test:dom`** —
+the rendered half, where the type ladder, the titlebar flanks and the Welcome intervals are actually
+measured in real Chromium — because a wave that promotes a type rung and rewrites a hero's layout is
+exactly the wave those drivers exist for.
+
+It came back **`DOM PHASE FAIL`: 35/39 drivers passed**, three failing plus one unscored. Rather than
+attribute any of it to a builder, the wave was stashed, rebuilt at clean HEAD (reproducing wave 1's
+bundle hash `index-DOI17h8g.css` exactly) and the four re-run. **All four fail identically at clean
+HEAD, byte-for-byte the same messages**, so wave 2 caused none of them:
+
+| driver | message, identical in both trees | cause |
+|---|---|---|
+| `gui-49.mjs` | `read 2 sessions but only 0 rows qualify` | reads the developer's real store, which reports **995 sessions** — environment-dependent |
+| `gui-94.mjs` | `AC3 .command-row-desc line box moved: 12px -> 31.9px \| AC4 row height 60px -> 65.1px` | pre-existing |
+| `gui-95.mjs` | `Timeout 20000ms` waiting for `.session-group-head` | downstream of gui-49's empty row set |
+| `gui-123.mjs` | UNSCORED, and self-names its cause: "A first-run profile not sending is **#155**" | pre-existing |
+
+The pins that actually govern this wave's changes all **PASS** under it: `gui-138` (type-ladder
+sweep), `gui-136` (flank equality and title truncation), `gui-gauntlet-wave3` (the hint's 480px
+measure and two line boxes), `gui-gauntlet-wave7` (the hero's 8±0.75px intervals),
+`gui-gauntlet-wave4` (the rail's 2px row gap).
+
+**Wave 3 must not read `DOM PHASE FAIL` as its own doing.** Re-establish the baseline by stashing
+before attributing. The honest state of this branch is: the fast gate is green, and the rendered gate
+has four pre-existing environment-dependent failures that predate run 3.
+
+### 2.7 A D4 debt the builder identified and could not pay, paid by the leg and verified by mutation
+
+The Chat builder reported its own gap rather than papering it: **no `gui-*.mjs` driver renders a
+prose -> card -> prose sequence**, so nothing in the DOM phase covers the grouping. `inspect.mjs`
+renders exactly that sequence in real Chromium but is not a `gui-*.mjs`, so the phase never launches
+it. The builder could not write a driver (outside its file list) and instead **exported `avatarRun`
+specifically so the fast gate could drive the logic**, naming `tests/chat.test.tsx` as where the pin
+belonged — a file it did not own.
+
+The leg owns it, so the leg paid it: four cases in `tests/chat.test.tsx` pinning the contract that a
+tool card must not end a turn, that any other speaker must, that an empty streaming row cannot claim
+the avatar, and what `trailing` reports for the typing row. **Verified as a real pin by mutation** —
+making a tool card end the turn (`drawn = false`) reds three of the four; the mutation was then
+reverted and the file confirmed byte-identical to its backup. Suite: 1408 -> **1412 passed**.
+
+### 2.8 The smoothing pass earned the wave again, and its best work was proving a builder's load-bearing claim to zero
+
+`SEAMS VISIBLE`. Identity floor **HOLDS** — one hue at all eight mint sites (`#a1e4d6`, alpha 255,
+zero hue drift), and **mint went DOWN 3.6%** this wave (15795 -> 15233px across the five surfaces,
+−629 of it exactly the one hidden avatar), worst-case surface share 4.087% against the 10% ceiling.
+Type scale **HOLDS as numbers** — seven distinct rendered sizes, max deviation 0.342px against a
+0.35 tolerance, zero off-ladder — but see 2.2 for the rung *role* table, which does not.
+
+Its four findings are 2.1 (centring), 2.2's measured contrast consequence, finding 3 (the sidebar row
+became the app's flattest-cornered box at r/h **0.108**, overtaking the tool card's 0.111, purely
+because the row grew 17px while its 8px literal radius did not follow — the seam's *mechanism*:
+heights move for content reasons, the 9 bare-literal radii never move with them, so every layout
+change silently re-sorts the ratio table), and finding 4 (**the same sentence now paints at two
+leadings** — an enriched rail row's title is the session's first user prompt verbatim, rendering at
+15px/1.6 in a chat bubble, measured pitch 24.17/23.90, and at 13px/1.45 in the rail, measured
+18.92/18.70/19.06; a leading authored for 11px descriptions now governs 13px text).
+
+**Its most valuable result is a NOT-finding.** The Chat builder's load-bearing claim was that
+`visibility: hidden` on a continuation avatar preserves the 40px gutter where removing the element
+would collapse `max-width: 75%` and lose the shared left edge. The smoothing pass matched the
+continuation prose band against wave 1 at nine dx/dy offsets: **mean absolute RGB difference 0.00 at
+dx0/dy0 and 61–126 at every neighbour** — pixel-identical, gutter ink 650px over turn 1 in both waves
+and 0px over the continuation. It also caught and corrected its *own* first-pass error (an apparent
+251->252px shift, from sampling two different prose lines). One avatar removed, alignment untouched,
+proven rather than asserted.
+
+Also recorded so nobody hunts a phantom: the whole upper transcript sits **8px lower** in wave 2 while
+everything below y376 is byte-identical — a bottom-anchored viewport absorbing an 8px content shrink,
+not a spacing regression. And one correction to wave 1's record: **9 distinct bare-literal radii**
+in-frame, not eleven; the other four reach a token.
+
+**No new piece proposed, and the reason is worth more than a sixth piece.** The seam in 2.1 is not an
+unowned *surface*, it is an unowned *invariant* — every surface already has a builder, and what
+nothing owns is the sentence "a content block is centred in its pane." A sixth builder would not have
+caught it. **The missing artifact is a test, not a piece.** `ToolCard` remains parked from wave 1.
+
+### 2.9 What wave 3 inherits
+
+| piece | wave 3 gap | trap |
+|---|---|---|
+| Welcome | **The synthesis fix (2.1).** Size the hero's grid track to the hint's painted width (~415px) rather than its `max-width: 480px`, restoring 0.0px centring while keeping the shared left edge. Predicted left edge x512. | Do NOT revert to `align-items: center` — that discards wave 1's gap. Do NOT touch `.welcome-hint`'s `max-width: 480px`; `gui-gauntlet-wave3` W1/W2 pins it. Do NOT re-raise the vertical placement — FINDING 5 measured it as authored. The 760px column and the 96px mark remain refuted (min window + `gui-gauntlet-wave7` W1's 8±0.75px pin). |
+| Titlebar | Give the identity lockup a group break: gaps are **10 / 9 / 10px** between mark, app name, `Wisped` and `Bypass`, so a 16–24px break after the app name (x142) is the buildable form. | Read adjudication 2.2 first — this surface carries an unresolved spec conflict. Do not "fix" it by moving the title back to 13px without the owner's call, and do not edit DESIGN.md. |
+| Sidebar | Finding 3: give the session row a corner proportionate to its new 74px height (currently r8, ratio **0.108**, the flattest box in the app). | The radius vocabulary is 13 values with 9 bare literals and `.session-row`'s 8px is one of them (`rails.css:143`) — there is no `--r-*` token to move. Adding one is a system change; say so if you make it. Do not undo the two-line clamp: it is measured as an improvement. |
+| Chat | **NONE. No builder this wave** (adjudication 2.4). | If wave 3's critic raises prose weight a sixth time, report it as a plateau signal on this surface rather than refuting it a sixth time. |
+| InputBar | **NONE from the distribution axis** (adjudication 2.5) — it is exhausted and the residual is density, an owner call. | Do not centre the strip compactly: it would re-hide the 760px measure the change revealed and undo a 235.5px centring fix. |
+
+Cost for wave 3 at three open builders: **3 + 5 + 1 = 9 agents.**
+
 ## Log
 
+- [wave 2] **FIRST WAVE WITH BUILDERS — 5/5 `BAR WINS` again, so `plateau: 0 -> 1`, while four of
+  the five surfaces measurably improved.** Eleven agents, zero errors: five builders on provably
+  disjoint file ownership (Welcome and Chat serialized on `chat.css` at the `── welcome ──` marker,
+  run 1's precedent), five blind critics on `codex/gpt-5.6-sol`, one smoothing pass. Every builder
+  closed its one named gap in **one declaration** except Chat, and every builder updated the authored
+  comments its change falsified rather than leaving false evidence for the next reader. Capture `PASS`
+  11/11. **Control: the three docks no builder touched are byte-identical between waves** (25019 /
+  23442 / 39070) — which independently proves file ownership held, because the Sidebar builder edited
+  `shared.css`, whose two-line clamp group is shared with `.agent-row-desc` and `.command-row-desc`.
+- [wave 2] **THE HEADLINE FINDING IS A SEAM ONLY THE SMOOTHING PASS COULD SEE: two builders moved
+  centring in opposite directions.** The composer footer went **235.5px -> 0.0px off-centre** (fixed)
+  while the Welcome hero went **1.0px -> 65.0px** (broken), against an app that holds 0.0px in five
+  other places. Root-caused to `grid-template-columns: max-content` resolving to `.welcome-hint`'s
+  **`max-width: 480px`** instead of the ~415px it paints, leaving 65px of empty track on the right
+  that `justify-items: start` then hugs away from. **Both builders were locally correct and neither
+  could see it.** The payoff: wave 1's critic wanted the hero left-registered, wave 2's wants it
+  centred, and sizing the track to painted width delivers **both** — so this is a synthesis, not an
+  oscillation. Predicted left edge x512, which is wave 1's measured x512. Adjudication 2.1.
+- [wave 2] **THREE OF THE FIVE RETURNED GAPS DID NOT SURVIVE MEASUREMENT, AND EACH WAS CHECKED
+  RATHER THAN DISMISSED.** Sidebar's ("rows jump between two- and three-line heights") is **false** —
+  every row carries exactly two title lines and pitch spread *tightened* from 1.76px to 1.41px, so
+  the build it criticises made the rhythm better. Chat's is the **fifth raising across three runs** of
+  a thread `DESIGN.md:56` warns about in the document itself, and its one new half ("user-bubble
+  copy") was measured too: bubble stem runs **3.937px** vs prose **4.052px**, ratio 0.972, both
+  inheriting 400. InputBar's is **refused on cross-surface evidence** — the 492px middle is real, but
+  the change fixed a 235.5px centring error and made the strip share the transcript's 760px measure to
+  the pixel. **All five verdicts stand regardless**: a critic grades the artifact, not its own gap.
+- [wave 2] **OWNER CALL — the Titlebar promotion put a UI label on the prose rung.** `DESIGN.md:65`
+  assigns "UI labels" to rung −1 (13px); `:66` defines rung 0 (15px) as "prose at 1.6 leading" and
+  names four tenants. `.session-title` renders `basename(cwd)` (`Titlebar.tsx:305`) — a UI label, no
+  1.6 leading, none of the four — and now paints at rung 0. `git status DESIGN.md` is empty. Measured
+  consequence: ambient chrome now shares a rung with primary reading matter (15px at **6.71:1** vs
+  **17.10:1**) and sits a rung *above* the rail's verbatim user prompts while carrying 2.41x less
+  contrast. Before the wave, size and colour agreed; now they disagree and size lost. **Default taken:
+  the promotion stands**, because the blind critic saw this state, was asked for a spec break, and
+  returned `NONE`. The owner picks: grant rung 0 a chrome tenant in the role table, or send the title
+  back to rung −1 and accept that the bar's critic will keep naming it. Adjudication 2.2.
+- [wave 2] **THE RENDERED-HALF GATE WAS ALREADY RED, AND WAVE 1 NEVER LEARNED THAT BECAUSE IT NEVER
+  RAN IT.** This wave added `npm run test:dom` to the gate — the half that measures the type ladder and
+  hero intervals in real Chromium, i.e. exactly what this wave's changes touch. It returned
+  `DOM PHASE FAIL`, 35/39. The wave was then **stashed and clean HEAD rebuilt** (reproducing wave 1's
+  `index-DOI17h8g.css` exactly) and all four re-run: **all four fail byte-identically without the
+  wave** — `gui-49` reads the developer's real 995-session store, `gui-95` is downstream of it,
+  `gui-94` pre-existing, `gui-123` self-names **#155**. Every pin that governs this wave passes:
+  `gui-138`, `gui-136`, `gui-gauntlet-wave3`, `gui-gauntlet-wave7`, `gui-gauntlet-wave4`. Restore was
+  verified byte-identical against a backup of all seven files. Adjudication 2.6.
+- [wave 2] **A D4 DEBT WAS DECLARED BY THE BUILDER THAT COULD NOT PAY IT, AND PAID BY THE LEG.** The
+  Chat builder reported that no `gui-*.mjs` renders a prose->card->prose sequence, so nothing in the
+  DOM phase covers its grouping, and **exported `avatarRun` specifically so the fast gate could drive
+  it** — naming a test file it did not own. The leg added four cases there and **verified them by
+  mutation**: making a tool card end the turn reds three of four; the mutation was reverted and the
+  file confirmed byte-identical to backup. Suite 1408 -> **1412 passed, 96 files, 43 skipped**.
+- [wave 2] **THE SMOOTHING PASS PROVED A BUILDER'S LOAD-BEARING CLAIM TO ZERO.** The Chat builder kept
+  the continuation avatar as `visibility: hidden` rather than removing the element, arguing the 28px
+  avatar box *is* the 40px gutter that tool cards indent to and that `max-width: 75%` resolves against
+  the row. Verified by matching the continuation band against wave 1 at nine offsets: **mean absolute
+  RGB difference 0.00 at dx0/dy0, 61–126 at every neighbour** — pixel-identical, gutter ink 650px over
+  turn 1 in both waves, 0px over the continuation. It also caught and corrected its own first-pass
+  sampling error. Identity floor **HOLDS** with mint *down* 3.6% (the hidden avatar is −629px of it);
+  type scale **HOLDS as numbers**, max deviation 0.342px against a 0.35 tolerance. Two further
+  findings for wave 3: the sidebar row is now the app's **flattest-cornered box** (r/h 0.108, past the
+  tool card's 0.111) purely because it grew 17px while its bare-literal 8px radius did not follow; and
+  **the same sentence now paints at two leadings** — a session title is the user's first prompt
+  verbatim, set 15px/1.6 in a bubble and 13px/1.45 in the rail. **No new piece: the seam is an unowned
+  invariant, not an unowned surface, so the missing artifact is a test.**
+- [wave 2] **Nothing was reverted, on purpose, and nothing was pushed (D6).** The committed tree
+  matches the captures the critics judged, because this run's controls are SHA comparisons between
+  waves and a tree that disagreed with its own capture set would poison wave 3's attribution. Where a
+  build is now known wrong (Welcome), the correction is wave 3's named gap. Wave 3 opens with **three
+  builders, not five** — Chat and InputBar have no surviving gap — so it costs 9 agents.
 - [wave 1] **BASELINE WAVE — five verdicts, zero builders, and the wave's real result is an
   instrument finding.** All five pieces `BAR WINS`, zero `SPEC BREAK`s, `plateau` stays 0
   (a baseline cannot count). Captures `PASS`, `CAPTURED 11/11`, frame 1440x900 @ zoom 1,

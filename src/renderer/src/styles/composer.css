@@ -244,16 +244,29 @@
    flex children of one space-between row shared with the disclaimer, which left
    the disclaimer packed against the left edge while DESIGN.md's Layout section asks for a
    CENTRED line under the input. A line cannot be centred and also be one column
-   of a three-column row, so the two jobs are two rows now.
+   of a three-column row, so the two jobs are two rows now. That is still true:
+   the disclaimer keeps its OWN row below and stays centred, and only the two
+   settings are distributed here — which is why space-between on this row is not
+   the old bug returning. It was the disclaimer's presence in the row that broke
+   the centring, never the spreading.
 
-   Right edge flush with the composer's own 760px measure, so the strip, the pill
-   above it and the centred line below all share one frame. Gaps do the grouping:
-   wide between the two settings, tight inside each, which is why no divider is
-   needed to keep "Effort" and "Model" from reading as one run of words. */
+   BOTH edges flush with the composer's own 760px measure, so the strip, the pill
+   above it and the centred line below all share one frame. Spread across that
+   measure rather than packed into its right end: at flex-end the two settings
+   bunched under the right half of the pill and read as a floating cluster
+   instead of the composer's own utility row, with the whole left half of the
+   measure empty under a full-width field. The frame does not move — the model
+   side keeps the right edge it always had, and the effort side takes the left
+   one.
+
+   Distribution does the grouping now: the measure itself between the two
+   settings, 6px inside each, so no divider is needed to keep "Effort" and
+   "Model" from reading as one run of words. The gap stays as a FLOOR for a
+   window narrow enough that the content no longer leaves slack to distribute. */
 .composer-controls {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 20px;
   width: 100%;
   max-width: 760px;
@@ -355,9 +368,12 @@
 /* ── effort control (#124) ──
 
    `margin-left: auto` used to live here to pack the control against the model
-   pill across the old space-between footer. The strip above does that with
-   layout, so the auto margin is gone: kept, it would eat the strip's gap and
-   shove the two settings apart. Applied to the unavailable span too, so the row
+   pill across the old space-between footer. The strip above owns where the two
+   settings sit now, so the auto margin is gone — and it would be actively wrong
+   under the strip's own space-between, where an auto margin on the first child
+   swallows all the free space and re-packs both settings into the right end,
+   which is the exact arrangement the strip exists to undo. Applied to the
+   unavailable span too, so the row
    does not reflow when a model that takes no effort level swaps the control out. */
 .effort-control,
 .effort-none {
@@ -373,9 +389,15 @@
 }
 
 /* The shell is `.control-value`; only the FLOOR is the effort side's own, and
-   only because its word changes under a pointer that is dragging. The strip is
-   right-aligned, so a value that widens pushes the slider LEFT and the control
-   reads as drifting mid-drag. The floor is the widest word ("Default"; the
+   only because its word changes under a pointer that is dragging. The floor was
+   first aimed at the SLIDER: with the strip packed into its right end, a value
+   that widened shoved the slider left and the control read as drifting mid-drag.
+   Spread across the measure (see the strip above), the control is anchored at
+   the left edge and the slider no longer moves, so what the floor holds still is
+   the readout's own right edge, which would otherwise step outward word by word
+   under the pointer. Same number, one less thing riding on it.
+
+   The floor is the widest word ("Default"; the
    levels are low/medium/high/xhigh/max) plus the shell: ~48px of text at
    11px/600 with 0.02em tracking, plus the 18px padding pair and the 2px border
    pair, so 68px border-box. It replaces a bare-span 46px that measured text

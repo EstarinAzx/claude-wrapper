@@ -7,7 +7,13 @@ import type { PermissionDecision, RewindResult } from '../../../shared/engine-ty
 import { isNearBottom } from '../autoscroll'
 import ToolCard from './ToolCard'
 
-const Avatar = () => <span className="avatar" aria-hidden="true" />
+// `lead` is false for a turn's SECOND and later segments. The box stays — it is
+// what holds the 40px gutter the prose and the tool cards both register to — and
+// only the mint stops being painted. See `avatarRun` below and
+// `.avatar--continued` in chat.css.
+const Avatar = ({ lead }: { lead: boolean }) => (
+  <span className={lead ? 'avatar' : 'avatar avatar--continued'} aria-hidden="true" />
+)
 
 const COPIED_MS = 1400
 
@@ -326,6 +332,60 @@ interface ChatProps {
   onRewind?: (userMessageId: string, dryRun: boolean) => Promise<RewindResult>
 }
 
+// ONE AVATAR PER TURN, not one per segment.
+//
+// `useChat` clears `assistantIdRef` on every tool call, so an answer of prose →
+// tool → prose arrives as three sibling rows rather than one, and every
+// `.msg-assistant` among them drew its own 28px mint circle. One turn announced
+// the same speaker two or three times, and whether the third row was a new
+// message or the same answer continuing had to be inferred from the words.
+//
+// The FIRST assistant row of a run keeps the avatar; the rest keep only its BOX.
+// HIDING RATHER THAN DROPPING IS THE DECISION, and it is about the right edge as
+// much as the left. `.assistant-body` resolves `max-width: 75%` against its ROW,
+// so a continuation with no avatar element would compute 75% of a 40px-narrower
+// container and pull its measure about 30px inside the tool cards it sits under —
+// losing the shared left AND right edge the prose and the cards currently hold
+// (567px of prose against a 568px card). Keeping the box makes the alignment
+// identical by construction instead of by a copied 40.
+//
+// A TOOL CARD DOES NOT END THE RUN — that is the whole point of this — and every
+// other role does. A user message, an error, a notice and a command block each
+// break the block visibly, so the assistant row after one is leading again. The
+// no-preamble turn falls out of that rather than being special-cased: when a turn
+// opens with a tool call, the run's first assistant row is the prose UNDER the
+// card and it draws the avatar, so a turn never ends up with none.
+//
+// An EMPTY assistant row cannot claim the avatar. Replay drops empty text blocks
+// at the parse boundary, but a live `text-delta` carrying '' would otherwise put
+// the turn's only avatar on a row that paints nothing and leave the typing dots
+// below it bare.
+//
+// `trailing` answers the same question for the typing row, which is not in
+// `messages`: it is the run's state at the end of the list. A typing indicator
+// that OPENS a turn keeps its avatar, which is the pairing DESIGN.md describes;
+// one that follows this turn's own tool card does not draw a second.
+//
+// Exported so the fast gate can drive the grouping directly — jsdom can read a
+// class name even though it can read no box.
+export const avatarRun = (
+  messages: ChatMessage[]
+): { lead: Set<string>; trailing: boolean } => {
+  const lead = new Set<string>()
+  let drawn = false
+  for (const m of messages) {
+    if (m.role === 'tool') continue
+    if (m.role !== 'assistant') {
+      drawn = false
+      continue
+    }
+    if (m.text === '') continue
+    if (!drawn) lead.add(m.id)
+    drawn = true
+  }
+  return { lead, trailing: drawn }
+}
+
 const Chat = ({
   messages,
   busy,
@@ -356,6 +416,8 @@ const Chat = ({
   const last = messages[messages.length - 1]
   const showTyping =
     busy && !(last?.role === 'assistant' && last.text !== '')
+
+  const { lead: avatarLead, trailing: turnHasAvatar } = avatarRun(messages)
 
   return (
     <main className="chat" ref={scrollerRef} onScroll={onScroll}>
@@ -489,7 +551,7 @@ const Chat = ({
           }
           return (
             <div key={m.id} className="msg msg-assistant">
-              <Avatar />
+              <Avatar lead={avatarLead.has(m.id)} />
               <div className="assistant-body">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
@@ -505,7 +567,7 @@ const Chat = ({
 
         {showTyping ? (
           <div className="msg msg-assistant">
-            <Avatar />
+            <Avatar lead={!turnHasAvatar} />
             <Typing />
           </div>
         ) : null}

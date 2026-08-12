@@ -660,8 +660,26 @@
   opacity: 0.55;
 }
 
+/* The title, and the rail's actual content: an enriched row carries the
+   session's first user prompt VERBATIM, so this line is a sentence and not a
+   name. Its WRAPPING and its LEADING live in shared.css's two-line clamp group
+   for the same reason `.agent-row-desc`'s do — one answer to "how does the line
+   that carries a row wrap in a 248px column", written once. This rule owns the
+   size, the colour, and the one thing that is the rail's alone.
+
+   THE TWO-LINE AREA IS RESERVED, not merely permitted. 2.9em is that group's
+   ceiling restated as a floor: two lines at its 1.45, in em so it tracks
+   `--fs-ui` instead of pinning the 37.7px that token happens to measure today.
+   Reserved rather than left as a ceiling because this list is read as a COLUMN
+   and the other two clamp tenants are not — the timestamps are the recency scan,
+   and a one-line row that shrank by a whole line would step every timestamp
+   under it out of line, so the rhythm the reader is scanning would encode title
+   length instead of anything true. Read off the real store all five visible
+   titles wrap, so slack is the exception and not the rule; an "Untitled session"
+   pays one empty line, 18.85px, to keep the column honest. */
 .session-row-title {
   font-size: var(--fs-ui);
+  min-height: 2.9em;
   color: var(--text);
 }
 

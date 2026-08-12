@@ -173,9 +173,35 @@
 }
 
 /* The span is blockified by being a flex item, which is what makes `overflow` /
-   `text-overflow` apply at all — they are inert on the inline box this was. */
+   `text-overflow` apply at all — they are inert on the inline box this was.
+
+   THE BODY RUNG, NOT THE UI RUNG. This names the open session — the one piece of
+   state in the bar a user reads to know WHERE THEY ARE — and at 13px regular in
+   `--text-muted` it was the quietest label on the strip: the app name tied it on
+   size and beat it on both weight and colour, and the two pills beat it on weight
+   while carrying only backend and permission state. 15px is the ladder's base
+   rung, `--fs-body` at 15 x 1.15^0, so the promotion spends no new number and
+   stays on the scale gui-138 sweeps. The pills deliberately keep `--fs-micro`:
+   what was wrong was the RANK between these two, not the size of the bar.
+
+   IT DOES NOT COST THE ELLIPSIS, and the headroom is worth writing down because
+   a further promotion would. Glyph advance in this stack runs ~6.5px per char at
+   13px — not measured here but recovered from the four pre-#72 collision
+   thresholds, 111 / 72 / 41 / 21 chars at 1280 / 1024 / 819 / 688css, which agree
+   at 6.48 / 6.51 / 6.56 / 6.56 within their own one-char quantisation. So
+   gui-136's 60-char fixture grows from ~391css to ~451css. Containment is
+   untouched by that: the slot is a flex item bounded by two min-content flanks,
+   so a wider title truncates instead of reaching a neighbour, and it still
+   truncates at the 640 minimum where the slot is 145css. What the extra 60css
+   actually spends is the room before the band in which the flanks can no longer
+   split the free space evenly WHILE THE TITLE STILL FITS — under `page - 2 x 262`
+   the wider flank freezes on its own content and gui-136's equal-flank assertion
+   would red on an unclipped title. At 1100, the narrowest width where this
+   fixture fits, that band opens at 576css against this title's 451. The band
+   belongs to the flex arrangement rather than to the type size and is equally
+   reachable at 13px; no width gui-136 samples enters it, at either size. */
 .session-title {
-  font-size: var(--fs-ui);
+  font-size: var(--fs-body);
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;

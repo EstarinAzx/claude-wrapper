@@ -1,6 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import App from '../src/renderer/src/App'
+import { avatarRun } from '../src/renderer/src/components/Chat'
+import type { ChatMessage } from '../src/renderer/src/useChat'
 import { fakeChatApi, SENT_UUID } from './chat-harness'
 
 let harness: ReturnType<typeof fakeChatApi>
@@ -187,5 +189,63 @@ describe('local command output (#37)', () => {
     const assistant = document.body.querySelector('.msg-assistant .assistant-body')
     expect(assistant?.textContent).toContain('model answer')
     expect(assistant?.textContent).not.toContain('command answer')
+  })
+})
+
+// The avatar run — the load-bearing half of "one assistant turn reads as one
+// block". `avatarRun` decides which assistant rows draw a mint avatar and which
+// are continuations of a turn already opened, and the whole grouping rests on
+// it: a tool card must NOT end a turn, while any other speaker must.
+//
+// Pinned here rather than through a rendered box because jsdom loads no CSS and
+// so cannot see the hidden avatar or the tightened interval. This is the D4 pin
+// for the grouping: `inspect.mjs` renders the real sequence in real Chromium but
+// is not a `gui-*.mjs`, so the DOM phase never launches it, which would otherwise
+// leave the run's own capture as the only thing covering this logic.
+describe('avatarRun', () => {
+  const prose = (id: string, text = 'x'): ChatMessage => ({ id, role: 'assistant', text })
+
+  const card = (id: string): ChatMessage => ({
+    id,
+    role: 'tool',
+    toolUseId: `t${id}`,
+    name: 'Read',
+    input: {},
+    result: null,
+    isError: false,
+    permission: null
+  })
+
+  test('a tool card does not end a turn: prose -> card -> prose draws ONE avatar', () => {
+    const { lead } = avatarRun([prose('a1'), card('c1'), prose('a2')])
+    expect(lead.has('a1')).toBe(true)
+    expect(lead.has('a2')).toBe(false)
+    expect(lead.size).toBe(1)
+  })
+
+  test('a user message ends the turn, so the next prose opens a new one', () => {
+    const { lead } = avatarRun([
+      prose('a1'),
+      card('c1'),
+      prose('a2'),
+      { id: 'u1', role: 'user', text: 'next' },
+      prose('a3')
+    ])
+    expect([...lead].sort()).toEqual(['a1', 'a3'])
+  })
+
+  test('an empty assistant row cannot claim the avatar', () => {
+    // The streaming row exists before its first delta arrives; if it took the
+    // avatar, the turn's real first line would render as a continuation.
+    const { lead } = avatarRun([prose('a1', ''), prose('a2', 'real text')])
+    expect(lead.has('a1')).toBe(false)
+    expect(lead.has('a2')).toBe(true)
+  })
+
+  test('trailing reports whether the open turn already drew, for the typing row', () => {
+    expect(avatarRun([]).trailing).toBe(false)
+    expect(avatarRun([{ id: 'u1', role: 'user', text: 'hi' }]).trailing).toBe(false)
+    // Typing after this turn's own card must not draw a second avatar.
+    expect(avatarRun([prose('a1'), card('c1')]).trailing).toBe(true)
   })
 })
