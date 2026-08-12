@@ -1,0 +1,366 @@
+{
+  "phases": {
+    "C": {
+      "takenAt": "2026-08-12T05:54:09.339Z",
+      "runs": 12,
+      "arms": {
+        "L": {
+          "rows": [
+            {
+              "run": 1,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 60,
+                "bytes": 37997
+              },
+              "totalMs": 12662
+            },
+            {
+              "run": 2,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 52,
+                "bytes": 38787
+              },
+              "totalMs": 13353
+            },
+            {
+              "run": 3,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 50,
+                "bytes": 38098
+              },
+              "totalMs": 13373
+            },
+            {
+              "run": 4,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 44,
+                "bytes": 38034
+              },
+              "totalMs": 13245
+            },
+            {
+              "run": 5,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 58,
+                "bytes": 38408
+              },
+              "totalMs": 13168
+            },
+            {
+              "run": 6,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 54,
+                "bytes": 38211
+              },
+              "totalMs": 13099
+            },
+            {
+              "run": 7,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 44,
+                "bytes": 38106
+              },
+              "totalMs": 13250
+            },
+            {
+              "run": 8,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 40,
+                "bytes": 38106
+              },
+              "totalMs": 13289
+            },
+            {
+              "run": 9,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 54,
+                "bytes": 38252
+              },
+              "totalMs": 13440
+            },
+            {
+              "run": 10,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 51,
+                "bytes": 38018
+              },
+              "totalMs": 13381
+            },
+            {
+              "run": 11,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 56,
+                "bytes": 38532
+              },
+              "totalMs": 13297
+            },
+            {
+              "run": 12,
+              "loadWorkers": 11,
+              "preCapture": {
+                "missing": false,
+                "text": "None running hereScoped to the open project.",
+                "rows": 0
+              },
+              "witnesses": {
+                "win": {
+                  "isVisible": true,
+                  "isMinimized": false,
+                  "isFocused": true,
+                  "isDestroyed": false
+                },
+                "doc": {
+                  "visibilityState": "visible",
+                  "hidden": false,
+                  "readyState": "complete"
+                }
+              },
+              "capture": {
+                "ok": true,
+                "ms": 44,
+                "bytes": 38051
+              },
+              "totalMs": 13337
+            }
+          ],
+          "summary": {
+            "attempted": 12,
+            "launchErrors": 0,
+            "ok": 12,
+            "stalls": 0,
+            "captureMs": {
+              "min": 40,
+              "median": 52,
+              "max": 60
+            },
+            "stallDetail": []
+          }
+        }
+      }
+    }
+  },
+  "meta": {
+    "platform": "win32",
+    "node": "v22.17.0"
+  }
+}

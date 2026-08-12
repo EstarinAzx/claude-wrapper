@@ -88,6 +88,72 @@ await page.waitForSelector('[aria-label="Backend mode"]', { timeout: 15000 })
 const bad = []
 const notes = []
 
+// ── #156 — a stalled capture may not cost the assertions ──────────────────
+// A CAPTURE HERE IS EVIDENCE, NEVER AN ASSERTION. Neither `shotEmpty` nor
+// `shotRows` is read by anything in `bad` — they are written, their paths are
+// printed, and that is all. Yet a bare `await page.screenshot(...)` threw out of
+// the first one, which in a top-level-await module aborts the run: phases 2 and 3
+// never ran, so ONE missing artifact cost eight assertions it has no bearing on
+// — the titlebar pin, the no-timer measurement, the row rendering and the accent
+// budget. It surfaced as a raw `TimeoutError` with no verdict line at all, which
+// `dom-phase.mjs` reads as plain FAIL (exit ≠ 0, no `FAIL` line to quote), so it
+// was also indistinguishable from a real product break.
+//
+// ── what was measured, in scripts/spike-156-screenshot-stall.mjs ──────────
+// A WORKING capture here costs **32-41ms** on an idle machine and **40-60ms**
+// with eleven cores saturated, against playwright-core's **30000ms** default —
+// which this driver inherits, because it passes no `timeout` and no driver in
+// this repo calls `setDefaultTimeout`. So a capture that spends the whole budget
+// is **hung, not slow**, and the ticket's "a timeout too tight for a cold
+// renderer" is refuted by a factor of 500 even under load.
+//
+// The stall reproduces deterministically when the window's frames are withheld
+// (minimise it): the capture blocks, and it recovers the moment they return. The
+// transferable half is which witnesses are BLIND to it — while the capture hung,
+// the renderer reported `visibilityState: "visible"`, `document.hidden: false`
+// and fired `requestAnimationFrame` at **0ms**. So no renderer-side settle can
+// see this condition, which refutes the ticket's other direction too: a
+// `waitForLoadState` gap is not what this is, and awaiting a frame would not
+// detect it. `win.isVisible()` in MAIN was the only witness that moved, which is
+// why the report below asks main rather than the page.
+//
+// NOT A RETRY, and the ticket forbids one for a good reason. The capture is
+// attempted exactly once. What changes is the blast radius and the vocabulary:
+// the stall is recorded with its attribution, the run continues to its real
+// verdict, and the artifact's absence is named. The ordering is deliberate — a
+// genuine product failure is read FIRST, so an instrument problem can never
+// soften a real red to UNSCORED, and a run whose only casualty is the evidence
+// declines to score (#143's vocabulary) rather than reporting a PASS that has
+// quietly stopped producing screenshots (#148's lesson).
+//
+// THE UNDERLYING STALL IS NOT FIXED HERE and was not reproduced in 28 runs on
+// this tree (16 idle, 12 saturated). This bounds its cost and makes the next
+// occurrence self-attributing; it does not claim the cause.
+const stalledCaptures = []
+const capture = async (file, label) => {
+  const t0 = Date.now()
+  try {
+    await page.screenshot({ path: file })
+    return true
+  } catch (e) {
+    const win = await app
+      .evaluate(({ BrowserWindow }) => {
+        const w = BrowserWindow.getAllWindows()[0]
+        if (!w) return { noWindow: true }
+        return { isVisible: w.isVisible(), isMinimized: w.isMinimized(), isFocused: w.isFocused() }
+      })
+      .catch((err) => ({ unreadable: String(err.message || err).split('\n')[0] }))
+    stalledCaptures.push({
+      label,
+      ms: Date.now() - t0,
+      error: e.name || 'Error',
+      message: String(e.message || '').split('\n')[0],
+      win
+    })
+    return false
+  }
+}
+
 // Open the temp workspace. DOM-dispatched: Playwright's actionability wait hangs
 // on the intro animation.
 await page.evaluate(() => {
@@ -208,7 +274,7 @@ if (REAL.missing) {
 }
 
 const shotEmpty = path.join(SHOT_DIR, 'gui-91-rail-empty.png')
-await page.screenshot({ path: shotEmpty })
+await capture(shotEmpty, 'empty, real look')
 
 // ── 2. structure, placement and the titlebar pin ──────────────────────────
 const S = await page.evaluate(() => {
@@ -392,7 +458,7 @@ if (R.error) {
 }
 
 const shotRows = path.join(SHOT_DIR, 'gui-91-rail-rows.png')
-await page.screenshot({ path: shotRows })
+await capture(shotRows, 'rows, scripted')
 
 // ── report ────────────────────────────────────────────────────────────────
 console.log('=== #91 background-sessions section in the sessions rail ===')
@@ -426,13 +492,29 @@ console.log('')
 for (const n of notes) console.log(`note: ${n}`)
 console.log(`screenshot (empty, real look): ${shotEmpty}`)
 console.log(`screenshot (rows, scripted)  : ${shotRows}`)
-console.log(bad.length === 0 ? 'PASS' : 'FAIL: ' + bad.join(' | '))
+for (const s of stalledCaptures) {
+  // Lower-case on purpose: `dom-phase.mjs` quotes the first line matching
+  // /^FAIL\b/, and a stalled capture is not the verdict.
+  console.log(
+    `capture STALLED (${s.label}): ${s.ms}ms ${s.error} — ${s.message}; window (from main) ${JSON.stringify(s.win)}`
+  )
+}
+// `bad` is read FIRST, so a real product red is never downgraded by a missing
+// artifact. 0 PASS / 1 FAIL / 2 UNSCORED is the protocol dom-phase already reads.
+const verdict = bad.length > 0 ? 1 : stalledCaptures.length > 0 ? 2 : 0
+console.log(
+  verdict === 1
+    ? 'FAIL: ' + bad.join(' | ')
+    : verdict === 2
+      ? `UNSCORED: every assertion held, but ${stalledCaptures.length} capture(s) stalled, so this run produced no eyeball evidence — see the window state above (#156)`
+      : 'PASS'
+)
 
-setTimeout(() => process.exit(bad.length === 0 ? 0 : 1), 4000).unref?.()
+setTimeout(() => process.exit(verdict), 4000).unref?.()
 await app.close().catch(() => {})
 try {
   fs.rmSync(WORK_DIR, { recursive: true, force: true })
 } catch {
   console.log(`(left behind: ${WORK_DIR})`)
 }
-process.exit(bad.length === 0 ? 0 : 1)
+process.exit(verdict)
