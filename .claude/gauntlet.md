@@ -1466,6 +1466,30 @@ Cost: **3 + 5 + 1 = 9 agents.**
 | Chat | **NONE — no builder.** The sixth prose-weight raising is reported as a **plateau signal** per 2.4's standing instruction, not refuted again. | ⚠️ **Do not read Chat as a converged surface.** Its critic provably cannot see the top ~89px of the transcript (4.7), including the date divider `linear-changelog` was chosen to judge — so its axis exhaustion partly measures the capture. Filed, not fixed: a wave does not sweep the instrument. |
 | InputBar | **The 5px seam, COMPOSER SIDE ONLY — `composer.css`.** Mirror the transcript's 10px scrollbar reserve on the composer's container so both 760px boxes centre in the same effective box. This is now the **only unrefuted form**. | ⚠️ **Do NOT touch `.chat`**: `gui-51` pins its gutter at 12.5dev and says "never widen", and `gui-98` pins `.subagent-drawer .chat-column` at exactly 760px in an 820px pane — **`.chat` is reused at a narrower width where the measure is already at its limit**. ⚠️ **Refuse a sixth distribution request**; the axis died at 2.5 and is refused against the spec's authorised "Chat column: max-width 760px, centered". `.message-input` stays ungrouped. |
 
+**THE DEFERRED ROW-VOCABULARY REPAIR IS WAVE 5'S, AND IT IS THE LEG'S OWN CHANGE, NOT A BUILDER'S.**
+Wave 3 split the row vocabulary — session row `r16` via `--r-bubble` against the dock rows' `r8`, where
+they were **identical at 8px** — while `DESIGN.md` calls the Agents dock the rail's mirror with the
+"**same 44px head, same row shell**". That sentence has been false since wave 3. Wave 3 planned wave 4 to
+fix it; **wave 4 deferred it deliberately**, because wave 4 ran three builders across two shared
+stylesheets and the dock byte-identity control was the only instrument proving that sharing held —
+spending it in the wave that most needed it is backwards. It has now held **four waves**, and a control
+that can never be spent is not an asset.
+
+So wave 5 pays it, with these terms:
+
+- **The leg does it, not a builder** — it is not a critic gap, it is spec-consistency debt this run's own
+  ownership instruction created, and the precedent is adjudication 2.7 (the leg paid a D4 debt a builder
+  could not). It costs no agent.
+- **After the Sidebar builder returns and before the capture**, so one owner touches `rails.css` at a
+  time and the committed tree still matches the captures the critics judge.
+- **Expected consequences, stated in advance so they are not read as regressions:** the three dock
+  captures will change **for the first time in the run**, and the diff should be **confined to corner
+  bands**. The change is radius-only and therefore layout-neutral, so **`gui-94`'s message must stay
+  byte-identical** — it already reds on `.command-row-desc`'s line box and row height, and if that
+  message moves, the change was not layout-neutral and should be reverted.
+- Propagate via the existing `--r-bubble` token to `.agent-row-btn` / `.command-row-btn`; do not mint a
+  tenth bare literal.
+
 **Standing instruction for the wave-5 leg, learned this wave:** the wave-3 lesson ("inline the source
 in the brief") is **necessary but not sufficient**. This wave's Sidebar builder died **twice** on the
 180s no-progress limit even with its CSS inlined, because the brief told it to *read* a 760-line
