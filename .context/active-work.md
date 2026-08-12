@@ -7,414 +7,269 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-12 by Opus 5, triage pass over the whole open queue — owner away_
-_At commit: `25d13e0` on `main`_
-
-> **STOP — the header below and much of this file describe a run that has since CLOSED
-> and MERGED.** Run 2 (`docks-and-min-window`) ended at wave 12 on its `max_waves`
-> backstop with `plateau: 2` — cut off, not converged — and the whole branch was merged
-> into `main` as `25d13e0`. So every "on that branch" pointer in this file now resolves
-> on `main`, and `.claude/gauntlet.md` has been **archived to
-> `.claude/gauntlet-docks-and-min-window.md`**. The wave-by-wave detail below is still
-> accurate as history and its landmines still hold; only the "is running" framing is dead.
->
-> **Current state lives in [[pick-up]] and `.claude/vibe.md`.** Queue is #153, #154, #156.
-
-> **This note covers wave 7.** Prior waves 5-6 live in `5a90b89`. If a leg's `.context/`
-> commit is missing, the branch log is the authority.
-
-> **Run-2 capture landmine.** `.gauntlet/waves/1/`…`5/` hold **run 1's git-tracked**
-> captures, and `inspect.mjs` writes the **same filenames**. Run 2 therefore writes
-> `.gauntlet/waves/docks-and-min-window/<N>/`. Following the gauntlet preset's flat
-> `.gauntlet/waves/<N>/` would silently overwrite the archived run's evidence — do not
-> "correct" the namespaced path back.
-
-> **New driver as of leg 3: `gui-gauntlet-wave2.mjs`.** 15 checks across the three docks,
-> each carrying the reconstructed OLD value beside the new one. It is auto-enumerated into
-> the driver set, so it runs in `npm run test:dom` and reports as a **named skip** in the
-> fast gate (this is the 36 -> 37 skip change; the test count is unchanged at 1406). It has
-> no `.source.mjs` sidecar and needs none.
-
-> **`gui-94` is red on purpose now — read the DOM-phase section before "fixing" it.**
-
-> **Second new driver as of leg 4: `gui-gauntlet-wave3.mjs`.** 9 checks across Welcome
-> and two docks, each carrying its reconstructed OLD value. **Red-verified by three
-> mutations producing three distinct targeted reds.** Same auto-enumeration as its wave-2
-> sibling, so it is the **37 -> 38 skip change**; test count still 1406. No sidecar, needs
-> none. It measures Welcome FIRST, before a folder is opened, because that surface stops
-> existing afterwards.
-
-> **"The app has no icon vocabulary" (recorded by wave 2) is REFUTED.** Every icon in the
-> three docks renders **1:1 viewBox-to-pixel at `strokeWidth 1.4`**, and the dock icon
-> counts were **identical at the seed commit**, so wave 2 added none. What actually
-> differed was button **chrome**. A mechanical sweep check now enforces the vocabulary —
-> **8 icons before wave 4, 11 after, all uniform.**
-
-> **Third new driver as of leg 5: `gui-gauntlet-wave4.mjs`.** 14 checks across Welcome and
-> two docks, each carrying its reconstructed OLD value. **Red-verified by three mutations
-> producing three distinct targeted red sets.** Same auto-enumeration, so it is the
-> **38 -> 39 skip change**; test count still 1406. Two hard-won facts live in its header:
-> `.agent-row-btn` does not exist without a session (push `subagent:changed` from MAIN), and
-> **`model`/`spawnDepth` can never arrive from a live push** — `mergeAgents` takes both from
-> the disk sidecar only.
-
-> **A CSS font stack fails SILENTLY.** `getComputedStyle` returns the **authored** stack,
-> never the face that won, so a `font-family` naming a missing family passes every string
-> check while rendering identically to before. Wave 4's `W3` compares the headline's rendered
-> advance width under both optical masters **and** requires the title's own box to move when
-> forced back. As first written it compared two detached probes — which measures whether the
-> font is *installed*, not whether the element wears it — and it stayed green under the
-> mutation that deleted the rule.
+_Last updated: 2026-08-12 by Opus 5, relay chain 8 leg 1 — owner away_
+_At commit: `5267ede` on `main`_
 
 ## Current focus
 
-**THE GAUNTLET RUN IS OVER AND MERGED.** Run 2 (`docks-and-min-window`) ran to **wave 12**
-and stopped on its **budget backstop** at `plateau: 2`, not on plateau 3 — so it was cut
-off rather than converged. Waves 8 through 12 were pixel-identical critic-only stalls,
-blocked on a collision between the critic's repeated ask and `DESIGN.md`'s rails group.
-The branch merged into `main` as **`25d13e0`** and is **not deleted**; each wave is its own
-commit, so "take wave 7 instead" is a checkout. Its record is
-`.claude/gauntlet-docks-and-min-window.md`, now on `main`.
+**Relay chain 8 is draining the three-ticket queue a 2026-08-12 triage pass promoted,
+one ticket per leg (`N=1`), with a fresh gauntlet run chained behind it via `then:`.**
 
-**What is running instead:** a fresh relay chain over the three tickets a 2026-08-12 triage
-pass promoted (#153, #154, #156), with a **new** gauntlet run chained behind it. That run
-seeds off merged `main`, so unlike run 2 it grades an app that already carries run 2's work.
+Leg 1 landed **#153** as `5267ede` and closed it. **Two tickets left: #154, then #156.**
+Both are instrument work. Say it out loud, because it sets expectations for the whole
+chain: **nothing in this queue changes the app.** Every user-facing item in the tracker
+is a design call and nine of them sit with the owner. The visible change is meant to
+come from the gauntlet chained behind this queue, not from these legs.
 
-The wave-7 detail below is retained as history.
+Verify rather than trust this file:
 
-**Wave 7 moved THREE verdicts forward and ONE back:**
-
-| piece | movement | builder? |
-|---|---|---|
-| CommandsDock | BAR WINS -> **YOURS WINS** (closed) | yes — list gap 2 -> 6 |
-| WelcomeMinWindow | BAR WINS -> **YOURS WINS** (closed) | yes — CTA mt 32 -> 24 |
-| IconHousing | BAR WINS -> **YOURS WINS** (closed) | no — capsule held; critic accepted it |
-| AppearanceDock | TOO CLOSE -> **BAR WINS** (regression) | yes — resting shells; gap stayed 2 |
-
-`plateau` **1 -> 0**. Open pieces left: AppearanceDock, AgentsDock, DocksAsOne. **Five
-waves of budget remain** (`max_waves: 12`); halt at `plateau: 3` is three clean waves away.
-
-**Wave 8's primary build is AppearanceDock gap 2 -> 4** on `.appearance-choices` only.
-Shells at 2px read as a corrugated segmented control; named lever is 4px. Do not touch the
-shell anatomy or the 12x12 mark slot.
-
-**Owner call 19 still open.** Both collisions held at default build-nothing. Collision B
-effectively settled itself (IconHousing YOURS WINS *because* the capsule stayed). Collision
-A (Agents row shell) is unchanged — do not build without a human pick.
-
-> **STANDING: run EVERY gauntlet driver every wave (wave2..wave7+).** Bundle before
-> capture. Wave 7 final CSS: **`index-D6IIg5C6.css`**. Null controls: titlebar + sidebar
-> byte-identical through wave 7. YOURS WINS pieces are `open: false`.
-
-**The critics' change-answer column was tested with a NULL CONTROL, and wave 3's reading of
-it is corrected.** `commands-dock.png` is **byte-identical across waves 2, 3 and 4**
-(verified with `cmp`). Wave 3's critic answered **BETTER** on those unmoved pixels; wave 4's
-answered **SAME**. So wave 3's "3/4 BETTER" contained a false BETTER, and that column is
-usable **only** with an explicit anti-inference clause in the critic prompt plus the unbuilt
-control. Keep CommandsDock's capture as that control for as long as it stays unbuilt.
-
-**Wave 4's result is one verdict movement, one refused `SPEC BREAK`, and three closed gaps.**
-Three builders, six cross-model critics, one smoothing pass — **ten agents, zero errors**.
-**6/6 critics verified against a first-hand read** to have seen real pixels. The `SPEC BREAK`
-(AgentsDock's metadata-less row) was **refused on four grounds**, the decisive one found
-while building the driver: `model`/`spawnDepth` are **disk-only**, so a live agent
-legitimately has no metadata line.
-Gate green (D7).
-
-**`CommandsDock` got no builder, and that is owner call 15.** Its gap asked to group
-commands by purpose and give each a leading icon; both need a semantic taxonomy the data
-cannot supply. `SlashCommandInfo` has no category field, the list comes from an external
-CLI a user or plugin can extend, and **the seven commands are a hand-authored fixture**
-whose own header calls it *"the one surface whose content this file cannot reach
-honestly"* and states it is chosen for **row shape**. Authoring groups in would photograph
-a structure the real app cannot produce. `commands-dock.png` is byte-identical, which
-corroborates the refusal independently.
-
-**A critic named a measurably false gap and it was caught before a builder saw it.** The
-`DocksAsOne` baseline claimed Commands "breaks the shared type scale"; all three docks'
-primary names are `var(--fs-ui)` and the difference is `var(--mono)`, which is deliberate
-and grouped. **A critic's perception can be real while its stated cause is wrong.**
-
-**`plateau` is 2, but the scale behaved BETTER than wave 2.** Wave 2 was 4/4 BETTER with
-nothing moving — the shape that made the counter look broken. Wave 3 is **3/4 BETTER +
-1/4 SAME**, so the critics' own change answers are converging with the counter. That is
-evidence the plateau is becoming **real** rather than an instrument artifact. The counter
-was still not adjusted. **Owner call 13 is updated, not re-raised.**
-
-**The piece list is now FULL at six of six.** The smoothing pass spent the last slot on
-**`IconHousing`** — the shared 28px icon button and its three glyph grids across five
-surfaces, a rule **no existing piece can see**. Critic-only on wave 4; its first verdict
-is a baseline and cannot count toward `plateau`. No further piece may be proposed.
-
-**The seed's named risk fired for the first time.** All three dock gaps now converge on
-one systemic absence — the app has no icon vocabulary (header glyph group, leading row
-icons, selection affordance). Three different elements, not the same defect, so the
-decomposition still stands. What it means is that no existing piece owns the question,
-which is why the smoothing pass's new piece was accepted: **`DocksAsOne`, five of six
-slots used, critic-only on wave 3**, and its first verdict cannot count toward `plateau`.
-
-Leg 1 landed **#149**, leg 2 **#146**, leg 3 **#142**, leg 4 **#148**, leg 5
-**#143**, leg 6 **#147**, leg 7 **#145**, leg 8 **#150's work**, leg 9 **#141**,
-leg 10 **#138**, leg 11 **#139**, leg 12 **#140**. Twelve legs, twelve tickets,
-zero human touches.
-
-`gh issue list --state open --label ready-for-agent` returns `[]`. Nothing else
-is promotable by a leg — the remaining twelve open issues are eleven at
-`needs-triage` plus **#150** at `needs-info`.
-
-The queue was filled by an autonomous `/preset vibe` pass run under the owner's
-AFK autonomy grant. Every ruling, warrant and cross-model objection is in
-`.claude/vibe.md`; read it before overturning anything.
+```bash
+gh issue list --state open --label ready-for-agent
+git rev-list --count origin/main..main
+```
 
 ## State
 
-- **In flight:** nothing. `ticket/140-session-stripe-exception` was squash-merged
-  and deleted (content diffed empty against `main` first). Tree clean on `main`.
-- **Landed 2026-08-11 (leg 12):** the whole of **#140** as `2ab67f1`. **#140 is
-  CLOSED** — every acceptance criterion was dischargeable without a push. **No
-  follow-up ticket filed**; nothing in the work produced one.
-- **Open and agent-ready: NONE.** **#144, #151–#160 are `needs-triage`** and none
-  may be promoted by a leg.
-- **Next:** gauntlet run 2 **wave 5**, at `plateau: 0` after the wave-4 reset. There is no
-  next ticket. Wave 5's shape is worked out in `.claude/relay/gauntlet.md`: **five builders,
-  one critic-only.** `AgentsDock` gets no builder (its gap is refused as unbuildable);
-  `IconHousing` becomes buildable and is **owner call 16** — its gap moves 7 of 13 tenants
-  and the `D4.8` sweep check must move with it, so serialize it against the dock builders.
-- **Merge-time follow-up (do NOT fix early):** `.context/overview.md:215` names
-  `.appearance-field--stacked`. Wave 4 deleted that class **on the branch only** — on `main`
-  it still exists, so the line is correct today and goes stale the moment the branch merges.
-- **Wave 2's fan-out shape was run 1's exact trap, and serializing worked.**
-  **`CommandsDock` has NO stylesheet of its own** (zero `.commands-dock` rules in
-  `styles/`); it rides the shared `agents-dock` shell in `rails.css`, which
-  `AgentsDock` also owns. They were serialized inside the fan-out, exactly as run 1
-  serialized Welcome/Chat on `chat.css`, **and the second builder joined the first's
-  shared group instead of inventing a rival one** — which is the whole return on
-  serializing rather than merely the collision avoided. **Any future wave touching both
-  pieces must do the same.** `AppearanceDock` owns `appearance.css` and its 2
-  `.agents-dock` refs were confirmed not to reach the shell (a comment and a
-  resize-handle override); `WelcomeMinWindow` writes `Welcome.tsx` + `chat.css`.
-- **A `bar_win` clause no wave can currently judge:** empty states. `AgentsDock` has
-  three `agents-dock-empty` branches (`AgentsDock.tsx:307`, `:311`, `:315`) and a
-  `background-tasks` footer (`:407`), but **the instrument photographs only the
-  populated state**, so no critic has ruled or can rule on them. Closing that needs an
-  instrument change — a ticket, not a wave.
-- **#150 is still OPEN at `needs-info` and is NOT queue work.** Its code landed
-  in full at leg 8; it waits on a human pushing and watching the first CI run.
-- **Gate on `main` after the merge:** typecheck clean, **96 files / 1406 passed +
-  36 skipped** (was 95 / 1398 + 36). The +1 file and +8 tests are exactly this
-  ticket's new test file. Build clean. Ran on the branch and again on `main`.
+- **In flight:** nothing. `ticket/153-title-enrichment-flake` was squash-merged and
+  deleted after `git diff --quiet` confirmed it byte-identical to `main`. Tree clean.
+- **Landed 2026-08-12 (chain 8 leg 1):** **#153** as `5267ede`, **CLOSED**. One line of
+  one test file; no source change. Full reasoning in
+  [[2026-08-12-awaiting-the-mechanism-is-half-a-fix-and-the-timeout-is-bounded-at-both-ends]].
+- **Filed this leg:** **#162** at `needs-triage` — the repo-wide version of #153's cause.
+  A leg must not promote it; that is what makes the chain's stop condition reachable.
+- **Open and agent-ready:** **#154** (next), **#156**. Nothing else is promotable by a leg.
+- **Gate on `main` at `5267ede`:** typecheck clean, **96 files / 1406 passed + 44
+  skipped**, build clean (`index-DOI17h8g.css`). Six sequential full suites, all green.
   **Read the number off `main`, never off this file.**
-- **NOT PUSHED**, now 24 commits ahead. D6 stands. Read the real gap:
-  `git rev-list --count origin/main..main`.
+- **NOT PUSHED**, 52 commits ahead at the time of writing. D6 stands, and the count in
+  this sentence is already stale — read it with the command above.
+- **Gauntlet run 2 is over and merged.** `docks-and-min-window` merged as `25d13e0`,
+  stopped on its `max_waves` backstop at wave 12 with `plateau: 2` — **cut off, not
+  converged.** One verdict moved backwards at wave 7; waves 8-12 were pixel-identical
+  critic-only stalls. `CommandsDock` and `WelcomeMinWindow` and `IconHousing` reached
+  `YOURS WINS`; `AgentsDock` held `BAR WINS` the whole run. The branch is **not deleted**
+  and each wave is its own commit, so "take wave 7 instead" is a checkout. Record:
+  `.claude/gauntlet-docks-and-min-window.md`. `.claude/gauntlet.md` is **archived** so a
+  chained run cannot seed-guard onto the closed one.
 
-## What #140 changed, and the one thing worth carrying forward
+## What #153 changed, and the one thing worth carrying forward
 
-The selected session row's mint stripe **stays**, and `## Bans in force` gained
-one named, scoped exception beside #125's glass exception. The stripe itself is
-untouched — this was a document edit plus a test.
+The transferable rule is about **a fix that treats the symptom's location instead of its
+size**. Swapping `findByText` for `waitFor` reads like removing a fixed 1000ms window. It
+does not: both read the same `asyncUtilTimeout`, which is `1000`
+(`node_modules/@testing-library/dom/dist/config.js:15`). What changes is the work inside
+the window, from *hint resolve + React commit + text query over 100 rows* down to *the
+read was requested*. Strictly less, and also what the file header names as that test's
+subject — so the swap is correct, and on its own it still only narrows the race.
 
-**The transferable rule is about which direction an amendment protects.** Prose
-protects the stripe from a conformance pass, which is the direction #125 argued
-and it is real here: two reviewers have now read this stripe against the spec,
-one backwards as a full outline and one correctly as a spec break.
-
-The other direction was wide open. **Before this commit nothing in the repo
-asserted the stripe existed** — `rails.css:548` was its only occurrence, read by
-no test and no driver. Delete the rule and every check stays green while
-`DESIGN.md` goes on granting an exception for a declaration that is gone.
-
-`subagent-material.test.ts` already names that failure for #125 in its own
-comment: rule-without-amendment and amendment-without-rule must **both** red. So
-"in #125's form" was read to include its **pin**, not only its sentence.
-
-| half | holds | gate |
-|---|---|---|
-| code | the row declares `inset 2px 0 0 0 var(--color-mint)` over `--mint-wash` | `npm test` |
-| scope | exactly ONE box-shadow in `styles/` has a nonzero horizontal offset | `npm test` |
-| anti-vacuity | every `box-shadow` value is one the parser can actually read | `npm test` |
-| document | the ban survives, and names surface + declaration + scope + not-a-precedent | `npm test` |
-
-Full reasoning in
-[[2026-08-11-a-permission-outlives-the-thing-it-permits-unless-both-are-pinned]].
-It is the sibling of #139's rule one turn out: there a value's *reason* went
-unchecked, here a permission's *subject* does.
+**The timeout that finishes the fix is bounded at BOTH ends, and the upper bound is the
+part nobody expects.** Above 1000ms for headroom; strictly below vitest's 5000ms
+`testTimeout`, which this repo does not override. A first attempt at 5000ms was caught by
+the mutation run: the test-level cap fires before `waitFor` can report itself, and the
+failure degrades from an assertion naming the call it wanted into a bare `Test timed out`
+pointing at the test declaration. **A wait must leave room for its own error message.**
 
 ## New landmines from this leg
 
-**`styles/` may now contain exactly ONE box-shadow with a nonzero horizontal
-offset**, and it is `rails.css`'s mint stripe. Any second surface growing a side
-stripe reds `tests/session-stripe-exception.test.ts`. The `inset 0 0 0 1px`
-hairline idiom is unaffected — its offset is zero, which is the whole
-discriminator.
+**`waitFor` and `findBy*` share one timeout budget, and vitest's `testTimeout` caps
+both.** Any new async wait in this repo lives inside 1000ms by default and inside 5000ms
+absolutely. A per-assertion timeout at or above 5000ms is not "generous", it is
+unreachable, and it trades the assertion's own error message for a useless one.
 
-**A `box-shadow` that check cannot parse also reds.** Writing
-`box-shadow: var(--some-stripe)` fails the anti-vacuity test rather than being
-skipped. If a token-indirected shadow is ever genuinely wanted, the check must be
-widened deliberately; deleting it silently stops the scope scan covering anything.
+**390 async waits across 34 test files all sit on that same 1000ms default**, there are
+**zero `configure()` calls anywhere in the repo**, and `vitest.config.ts` has **no
+`setupFiles`** for a global Testing Library config to live in. So there is currently no
+one-line lever for this class. **#162.**
 
-**`DESIGN.md`'s `## Bans in force` now has FOUR pinned properties**, and they
-are split across two files. `subagent-material.test.ts` holds the glass half
-(#125); `session-stripe-exception.test.ts` holds the side-stripe ban itself plus
-the new exception's surface, declaration, scope phrase and precedent disclaimer.
+**`.appearance-field--stacked` no longer exists** anywhere in `src/`. Gauntlet wave 4
+deleted it and `25d13e0` merged that; `overview.md` was corrected this leg. The current
+vocabulary is `.appearance-field` with its `--control` modifier plus the
+`.appearance-choices` cards.
 
-**The `.subagent-drawer` extractor idiom does not transfer to grouped selectors.**
-`.session-row-btn-active` is paired with its `:hover`, so the anchored
-`^\.class\s*\{` pattern matches nothing — the next character is a comma. Use
-`^\.class(?![\w-])[^{]*\{([^}]*)\}` and strip comments first. Two probes prove it
-reads the real rule: renaming the class reds, and `.session-row-btn-active-x` is
-refused by the lookahead.
+## Before you trust a gate result
 
-**A content-hashed build artifact is a second witness that no pixels moved.**
-`npm run build` kept `index-B83pCap1.css`, which corroborated the git byte-identity
-check independently and is cheap to read off the build log.
+**A gate can go RED with ZERO failing tests.** Measured 2026-08-12: 95 of 96 files
+reporting, one worker process exited unexpectedly (`Worker exited unexpectedly` /
+`[vitest-pool]`), `npm test` exit 1, and **no `FAIL` line anywhere**. The immediate
+re-run was 96 of 96. The default reporter does not name the file that vanished — use
+`--reporter=json` or diff the file count against the 96 on disk. **It did not recur once
+across this leg's six sequential runs.**
 
-## Carried forward, unchanged
+With #153 fixed, that worker-crash shape is now the **only** known "red that is not your
+change" in the fast gate. Re-run before believing it.
 
-**#155 is the biggest open finding and it is not a driver bug.** On a profile the
-app has never started in, **no message sends at all** — measured one variable at
-a time. That is every new user's first launch. **What has not been done, and it
-is one run:** open the app **by hand** on a clean profile and type a message.
-Everything so far went through `playwright-core`, so nobody has ruled out the
-harness.
+**`npm run test:dom` cannot be all-green while #155 is open** — `gui-123` honestly
+reports `UNSCORED`, and a full run also reports `INCOMPLETE` for the accepted `gui-119`
+quarantine. Both are correct readings, not breaks.
 
-**`main` is intermittently red on `session-title-enrichment` (#153)** — 4 of 7
-full runs at leg 5, green on every run at legs 6 through 12. Not evidence it is
-fixed. A single red is not evidence your change broke something.
+**Do not run the fast gate concurrently with the DOM phase** (leg 7 paid two ambiguous
+reds and five attribution runs for this).
 
-**`npm run test:dom` cannot be all-green while #155 is open** (`gui-123` reports
-`UNSCORED`), and a full run also reports `INCOMPLETE` — the accepted `gui-119`
-quarantine stated rather than hidden, not a break.
+**`npm run x | tail` then `echo $?` gives you `tail`'s exit code.** Redirect to a file
+and read `$?` on its own line. **Do not read the DOM phase's verdict off a compound
+command** — it has reported exit 0 while its own text said `DOM PHASE FAIL`.
 
-**The DOM phase's reds are attributed; do not re-investigate from scratch.**
-`gui-95` and `gui-49` pre-existing and uninvestigated; `gui-123` is #155 working
-as designed; `gui-91` intermittent ~1 in 7 (#156).
+**A clean checkout runs four fewer tests than your working tree**, forever (#157):
+`tests/transcript-rewind-real-store.test.ts` skips without a stored transcript whose
+`cwd` is this repo. Not a regression, do not chase it.
 
-**`gui-94` NOW REDS FOR A SECOND, DELIBERATE REASON — measured at gauntlet leg 3, not
-predicted.** It was previously listed here as a load artifact. It now also **exits 1 on
-AC3 and AC4**: `.command-row-desc` line box `12px -> 31.9px`, row height `60px -> 65.1px`.
-Gauntlet wave 2 gave that description a two-line clamp and a new leading, which is a
-deliberate change to the box `#94` pinned as no-change. **Its guarding half still passes**
-— AC1, AC2 and surface 2 are green, so the composer's slash popover is untouched and
-`#94`'s actual promise held. **Reverting the line-height alone does NOT clear it**: AC3
-measures element height, so a two-line clamp at 1.1 is still ~24.2px against a 12px probe.
-Clearing it means reverting the clamp, i.e. abandoning the CommandsDock piece. **Owner
-call 12** in `.claude/gauntlet.md` on the branch. Do not "fix" `gui-94` by rebuilding its
-probe — its own header names that trap, and binding constraint 5 forbids softening a check
-to clear a red.
-**Legs 8 through 12 ran no full phase** — leg 11 ran only `gui-96`, and leg 12
-ran none at all, correctly: #140 moved no pixels, so D4 was not engaged. The
-table is still leg 7's, and there is still **no full-phase baseline on an
-unmodified tree**.
+**Never revert a mutation with `git checkout -- <file>` on an uncommitted tree.** Leg 10
+lost two finished files that way. Back up with `cp` and restore from the backup, then
+hash-check. Mutation testing is routine here and this leg hash-checked its source back to
+`96fc85738a447b0c6659f77b9cd1c012`.
 
-**A clean checkout runs FOUR FEWER TESTS than your working tree, forever**
-(#157). `tests/transcript-rewind-real-store.test.ts` skips unless it finds a
-stored transcript whose recorded `cwd` is this repo. Do not chase it.
+**A squash merge does not mark the branch merged**, and it makes the branch hash a **dead
+reference** — the squash creates a new commit on `main`, so the branch hash is reachable
+from nothing once deleted. Read the hash off `main` after merging:
+`git log --oneline -1 main`. Leg 12 cited a branch hash in seven places before catching
+this.
 
-**The bar discrepancy #149 left open is SETTLED, and the prose above it was the
-wrong half.** `.context/` prose said the three docks *"share the Sidebar's
-reference"*; `.gauntlet/bar/README.md`'s "What each reference judges" table assigns
-`linear/linear-features.png` to *"Titlebar + docks"*, and `linear/manifest.json`
-carries the **same `judges` string independently**. Two artifacts agree against the
-prose, so this is settled by evidence rather than by preference. **Read the table.**
-The run-2 seed and wave 1 both took this reading; do not reopen it.
+## The DOM phase's current reds, already attributed
 
-**Mutation testing is routine here, and the revert must be `cp` from a backup.**
-`git checkout -- <file>` on an uncommitted tree destroys finished work; leg 10
-lost two files that way. Leg 11 backed up to the job tmp dir and restored from
-there, six mutations, no loss.
+Still leg 7's table. The wave commits merged into `main` did move pixels, so it is now
+also **pre-merge** evidence. #153 was a test-only change and moved none.
+
+| driver | in batch | alone | verdict |
+|---|---|---|---|
+| `gui-95` | FAIL | FAIL | **pre-existing**, uninvestigated |
+| `gui-49` | FAIL | FAIL | **pre-existing**, uninvestigated |
+| `gui-123` | UNSCORED | UNSCORED | **#155**, working as designed |
+| `gui-94` | FAIL | **PASS** | load artifact, plus a second deliberate cause (below) |
+| `gui-91` | FAIL | **FAIL 1x, PASS 3x** | **#156**, intermittent ~1 in 7 |
+| `gui-93` | **PASS** | PASS | green; red-verified under mutation |
+| `gui-124` | **PASS** | PASS | was batch-red at leg 6, unexplained |
+| `gui-96` | — | **PASS** (ALL GREEN) | 11 criteria, all mutation-verified |
+
+There is still **no full-phase baseline on an unmodified tree.**
+
+**`gui-94` reds for a second, deliberate reason.** Gauntlet wave 2 gave
+`.command-row-desc` a two-line clamp and new leading, changing a box `#94` pinned as
+no-change: line box `12px -> 31.9px`, row height `60px -> 65.1px`. Its guarding half
+still passes (AC1, AC2, surface 2), so the composer's slash popover is untouched.
+**Reverting the line-height alone does not clear it**, and clearing it means abandoning
+the CommandsDock work. Owner call 12. Do not "fix" it by rebuilding its probe — binding
+constraint 5 forbids softening a check to clear a red.
 
 ## Standing constraints for any leg touching the renderer
 
-Unchanged, and all still hold: no em dashes in user-visible strings
-(`tests/copy-em-dash.test.ts` compiles `src/`; comments are free, and so is
-anything outside `src/`); the stylesheet pins are literal-text and brittle (D3),
-so no comment in `styles/` may contain a closing brace; any CSS change owes a
-driver pin that **runs** (D4) — jsdom loads no CSS, so neither the fast gate nor
-CI can see layout; the titlebar's centring is load-bearing (#136); `DESIGN.md` is
-read literally by **two** tests now, `tests/subagent-material.test.ts` and
-`tests/session-stripe-exception.test.ts`, both splitting on
-`\n## Bans in force\n` — **that token must survive verbatim, and #140's exception
-sits INSIDE the section rather than under a new `##` heading**, since the split
-also terminates on `\n## `.
+No em dashes in user-visible strings (`tests/copy-em-dash.test.ts` compiles `src/`;
+comments are free, and so is anything outside `src/`). D3 — the stylesheet pins are
+literal-text and brittle: no comment in `styles/` may contain a closing brace, `.bubble`
+and `.message-input` stay ungrouped, `.bubble {` must stay the first literal occurrence
+in `chat.css`, exactly one `backdrop-filter` in all of `styles/`, and the `@import` order
+in `styles.css` **is** the cascade. D4 — any CSS change owes a driver pin that
+**executes**, naming which gate runs it; jsdom loads no CSS, so neither the fast gate nor
+CI can see layout. The titlebar's centring is load-bearing (#136).
 
-**`DESIGN.md` is CRLF.** Any section regex needs `\r?\n`; an LF-only pattern
-matches nothing and reports the content missing, which reads exactly like real
-drift. Both `gui-138.source.mjs` and `gui-96.source.mjs` depend on this.
+Note `styles/` means `src/renderer/src/styles/`. A grep against a bare `styles/` path
+silently finds nothing.
 
-**Since #138:** `styles/` may contain **no `em` font-size at all**, and exactly
-**one** literal px font-size, allow-listed by `file:line`. `DESIGN.md`'s
-`## Type` section must name every `--text-*` value `tokens.css` defines.
+**Stylesheet value bans.** Only `400` and `600` font-weights, keywords included (#139).
+No `em` font-size and exactly **one** literal px font-size, allow-listed by exact
+`file:line` (#138). Exactly **one** box-shadow with a nonzero horizontal offset (#140),
+the mint stripe in `rails.css` — the `inset 0 0 0 1px` hairline idiom is unaffected,
+offset zero is the discriminator, and a `box-shadow` the parser cannot read
+(`var(--x)`) **reds** rather than being skipped.
+
+**`DESIGN.md` is read by five checks and each wants something different.** `## Type`
+must name every `--text-*` value `tokens.css` defines (#138) **and** keep the tool-card
+weight sentence (#139). `## Bans in force` must survive as a split token and keep its
+glass exception (#125), its side-stripe ban, and #140's exception with surface,
+declaration, scope and precedent disclaimer — **#140's exception sits INSIDE that
+section**, and the split terminates on `\n## `, so a new `##` heading above it would
+hide it. **It is CRLF**: a section regex needs `\r?\n`. Do not cite `DESIGN.md` by line
+number (#138); name the section.
+
+**`.context/` is LF while `DESIGN.md` is CRLF — do not normalise either to match the
+other.** Keep `.context/` off the ticket branch and check `git diff --cached --name-only`
+before committing.
+
+**A grouped selector defeats the `.subagent-drawer` extractor idiom** (#140).
+`^\.class\s*\{` matches nothing when the class is paired with its `:hover`. Use
+`^\.class(?![\w-])[^{]*\{([^}]*)\}`, strip comments first, and prove it with a rename
+probe.
+
+**A content-hashed build artifact is a cheap second witness that no pixels moved**
+(#140): `npm run build` keeping the same `index-*.css` filename corroborates a git
+byte-identity check independently.
 
 Carried from earlier legs, unchanged:
 
 - **`inspect.mjs`'s surface list is gated in three places** — `SURFACES`,
-  `SKILL.md` **and** `.gauntlet/bar/README.md`, inside their
-  `surfaces:begin` / `surfaces:end` markers.
-- **A driver's capture destination is a checked property**
-  (`tests/driver-screenshot-dir.test.ts`); `scripts/gui-*-shots/` stays narrowly
-  gitignored — do not broaden it.
-- **Run `inspect.mjs` one at a time.** Its workspace directory name is fixed.
-- **`drivers.manifest.mjs` enumerates the non-driver `.mjs` files. There are
-  FIVE.** A `*.source.mjs` sidecar is exempt and needs no wiring.
-- **Isolation is a property of the launch** (#147). New driver → spread
-  `...profileArgs()` from `driver-profile.mjs`, or the fast gate reds it. **No
-  opt-out list, and do not add one.**
-- **A driver may decline to answer.** Exit 2 → `UNSCORED`.
-- **A driver that pins persisted app state must read it back** (#143).
-- **Do not read the phase's verdict off a compound command**, and do not read an
-  exit code off a pipeline — `npm run x | tail` then `echo $?` gives you
-  `tail`'s. Redirect to a file.
-- **Do not run the fast gate concurrently with the DOM phase** (leg 7's cost).
-- **A quarantine the verdict does not carry is a green** (#145).
-- **Logic the fast gate must execute cannot live in `dom-phase.mjs`** or
-  `inspect.mjs` — both spawn drivers at import. Put it in `drivers.manifest.mjs`.
-- **Do not cite `DESIGN.md` by line number** (#138). Name the section.
+  `run-desktop/SKILL.md` **and** `.gauntlet/bar/README.md`, inside their
+  `surfaces:begin` / `surfaces:end` markers (#149). **`CLAIMED_HEADROOM_PX` in
+  `inspect.mjs` is a copy of a sum argued in prose in `chat.css`** — never move it to
+  match a measurement without moving that sum too.
+- **A driver's capture destination is a checked property** (#146): use
+  `process.env.SCREENSHOT_DIR || path.join(os.tmpdir(), 'claude-wrapper-shots')`;
+  `scripts/gui-*-shots/` stays narrowly gitignored.
+- **Run `inspect.mjs` one at a time** (#142) and point `SCREENSHOT_DIR` outside the repo.
+- **`drivers.manifest.mjs` enumerates the non-driver `.mjs` files. There are FIVE.** A
+  `*.source.mjs` sidecar is exempt and needs no wiring — do not re-glob sidecars.
+- **Logic the fast gate must execute cannot live in `dom-phase.mjs`** or `inspect.mjs` —
+  both spawn drivers at import (#142, #148). Put it in `drivers.manifest.mjs`.
+- **Isolation is a property of the launch** (#147). New driver → spread `...profileArgs()`
+  from `driver-profile.mjs`. **No opt-out list, and do not add one.** The profile is per
+  driver **process**, not per launch.
+- **A cold profile is not the same app as a warm one** — leg 6's whole finding, and #155
+  is the consequence.
+- **A driver may decline to answer** (exit 2 → `UNSCORED`). **A driver that pins
+  persisted app state must read it back** (#143). **A quarantine the verdict does not
+  carry is a green** (#145). **A byte comparison that passes is not evidence a capture is
+  stable** (#148). **`gui-75` is the first driver with a sidecar that is ALSO in
+  `DOM_SKIP`** (#141) — "has a sidecar" and "is executed somewhere" are different claims.
+- **The workflow is pinned as text** (#150). `tests/fast-gate-workflow.test.ts` reds on a
+  changed job name, a changed command **set** (order is free), losing `if: always()` on
+  the summary step, or **any** workflow invoking `test:dom`.
 
 ## Open questions
 
-**TWO** live owner-calls in `.claude/vibe.md` under `## Needs you`, both
-reversible with the default already taken: the git history on the wave captures
-(the repo is public), and gauntlet owner call 14, the stop signal. **SEVEN older
-ones live in `.claude/vibe-130.md`.** Owner calls 14–20 are in
-`.claude/gauntlet-core-surfaces.md`, the archived five-wave run.
+**Nine tickets sit with the owner**, each with the choice narrowed on the ticket itself;
+`.claude/vibe.md` is only the index. **#155 is the most serious open finding** — one
+by-hand run on a cold profile decides whether every new user's first launch is broken,
+and the discriminator is simply whether the composer cleared. **#150 is one
+`git push origin main` plus watching the first `fast-gate` run.** **#161** is a live
+user-facing defect (Commands dock stuck empty). Then **#152**, **#151**, **#159** and
+**#160** (two separate questions, not one), **#157**, **#144**.
 
-**A third is still live and it is one command:** push `main` and watch
-`fast-gate`, so #150 can close.
+**#162 is new this leg**, at `needs-triage`: whether the repo should set a global
+`asyncUtilTimeout`, and the three options are laid out on the ticket. It needs new
+infrastructure (a `setupFiles` entry that does not exist), which is why it is an owner
+call rather than a leg's.
 
-**TWO NEW OWNER CALLS from gauntlet wave 2**, both in `.claude/gauntlet.md` **on the
-branch**, both with a reversible default already taken:
+**CI exists, has never run, and `main` has never been pushed.**
+`.github/workflows/fast-gate.yml`, on push, `windows-latest`, exactly `typecheck` +
+`test` + `build`. **Do not push on your own initiative** (D6) — leg 8 tested this against
+a ticket whose own acceptance asked for a push and left the ticket open rather than push.
+D6 was written and pressure-tested *under* the AFK grant, so the grant does not override
+it. When the first run happens, expect the worker-crash red; re-run the job before
+concluding anything about the runner.
 
-- **Owner call 12 — `gui-94` is red and there is no cheap fix.** Default taken: keep the
-  work, leave the driver red, record it. The honest resolution is to retire AC3/AC4 as a
-  no-change criterion that has been deliberately superseded while keeping AC1, AC2 and the
-  popover surface, which all still pass. Editing the probe is forbidden; reverting the
-  clamp costs the CommandsDock piece.
-- **Owner call 13 — the verdict scale has stopped resolving real progress.** 4/4 critics
-  said BETTER, 0/4 verdicts moved, `plateau` rose on a wave where every gap closed. Two
-  more like it and the run halts while still improving. Options, none taken: widen the
-  ordinal, count the critics' own change answer, or accept that halting-while-improving is
-  what an unreachable bar is for. **The counter was not adjusted** — run 1 named this as
-  the owner's call specifically so a leg could not quietly rule on it.
+**Gauntlet owner call 14 — the stop signal — is still unanswered and still (a).** Two
+agent-reachable answers were attempted and both were refuted cross-model as post-hoc
+goalpost movement. Under (a), run 2 was cut off by budget rather than converged. Owner
+calls 12-13 live in the archived run record; 14-20 in
+`.claude/gauntlet-core-surfaces.md`.
 
-**#161 is new**, filed by leg 3 at `needs-triage`: `CommandsDock` fetches once on mount
-with no retry, so a dock opened before the CLI handshake shows **0 rows while a direct
-`listCommands()` returns 126**, and stays empty for as long as it is open. Found by the
-gauntlet instrument; not fixable by a wave, since gauntlet grades design and this is
-correctness.
+**Two claims run 2 already refuted or refused — do not act on either.** *"The app has no
+icon vocabulary"* is **false** (measured 1:1 viewBox-to-pixel at `strokeWidth 1.4` across
+every dock icon, counts identical at the seed). *"Group the commands by purpose / give
+each row a leading icon"* is **not buildable** — no category field exists and the captured
+list is a hand-authored fixture chosen for row shape. Owner call 15.
 
-**#144 stands unanswered** and was deliberately not touched. **#151 through #161
-are all `needs-triage`, and with the queue dry they are the whole remaining
-backlog** — promoting any of them is an owner decision, never a leg's. #155
-remains the one worth reading first, and it needs a human at a keyboard. **#160
-is the direct sequel to #139**:
-is the 600 licence exhaustive or illustrative? Eight elements sit outside it on
-the reading #139 used, and #138 widened this very line one commit earlier rather
-than restriking code — so the precedents point opposite ways. **#159** is its
-sibling one property over, for sizes.
+**The bar's reference question (#149) is SETTLED by the artifact, against the prose.**
+`.gauntlet/bar/README.md`'s "What each reference judges" table assigns
+`linear/linear-features.png` to *"Titlebar + docks"*. Earlier `.context/` prose claimed
+the docks shared the Sidebar's reference. **Read the table.** The bar is intact: five
+`linear/` references, two `identity/`, plus `manifest.json`.
+
+**A gauntlet run cannot take all nine surfaces at once.** `pieces` is capped at 6 and
+fixed at seed — a budget, not a claim that the unpicked surfaces lack a standard.
 
 ## Related
 
 - [[overview]] · [[pick-up]] · [[decisions]] · [[stack]] · [[happy-path]] · [[flows]]
+- [[2026-08-12-awaiting-the-mechanism-is-half-a-fix-and-the-timeout-is-bounded-at-both-ends]]
 - [[2026-08-11-a-permission-outlives-the-thing-it-permits-unless-both-are-pinned]]
 - [[2026-08-11-a-value-check-outlives-its-warrant-unless-the-warrant-is-checked-too]]
 - [[2026-08-11-a-ratio-rule-is-tested-as-a-ratio-and-its-tolerance-is-set-by-the-rungs-it-already-admits]]

@@ -1,7 +1,7 @@
 ---
 type: overview
 project: claude-wrapper
-updated: 2026-08-11
+updated: 2026-08-12
 tags: [context, overview]
 ---
 
@@ -212,8 +212,12 @@ tags: [context, overview]
   `appearance` (#66) sits after `rails` because the Appearance dock JOINS the
   dock-shell groups that file owns (it carries `.agents-dock`) and its one
   override — dropping the inherited resize grip — has to come after them. It
-  also owns #69's Backdrop rows (`.appearance-field--stacked`, the choice
-  cards); every new panel control goes here, never into a shared group.
+  also owns #69's Backdrop rows (`.appearance-field` with its `--control`
+  modifier, plus the `.appearance-choices` cards); every new panel control goes
+  here, never into a shared group. **`.appearance-field--stacked` is gone** —
+  gauntlet run 2 wave 4 deleted it and that branch merged as `25d13e0`, so the
+  class this line used to name now exists nowhere in `src/`. Leg 12 flagged the
+  line as a merge-time follow-up and chain 8 leg 1 discharged it.
   **The import order IS the cascade**: `tokens` → `base` → `shared` must stay
   first, because the shared groups (truncation triad, focus ring, the two hover
   washes, micro-caps label) are single-class rules that every component override
