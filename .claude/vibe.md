@@ -1,216 +1,139 @@
 ---
-target: rulings+triage
+target: triage
 idea: >
-  Resolve every open issue on the tracker without the owner: rule the three
-  ready-for-human design questions (#138 type scale, #139 prose/label weight
-  pair, #140 mint side-stripe against the ban), triage the nine needs-triage
-  follow-ups (#141-#149) into an agent-ready queue, then fire the execution
-  chain with gauntlet chained behind it.
-partner: opus                 # anthropic/claude-opus-5
+  Triage every open issue in the tracker with the human removed, then fire the
+  execution chain. Seeded 2026-08-12 from "/preset pick-up -> rehydrate state
+  then address all that needs triage and vibe them in a relayed gauntlet".
+partner: opus
 pressure: codex/gpt-5.6-sol
-pressure_via: sonnet          # first non-Claude family in live `wisp routing`
-pressure_rationale: >
-  Resolved by vibe's own order, run live this session: no prose override on the
-  invocation, no `pressure:` carried in a fresh file (the prior run was archived
-  to `.claude/vibe-131.md`), so the first non-Claude family in `wisp routing`
-  wins — `sonnet` -> `codex/gpt-5.6-sol`. NOTE the route MOVED since the #131
-  run, which recorded `sonnet -> opencode-go/kimi-k3`. Re-resolved rather than
-  read off the archived state file, per the standing rule that a route written
-  into a state file is stale evidence. No slot rebind needed, so no restore owed.
-restore_owed: NO — no slot rebind was needed.
+pressure_via: sonnet
 max_defer: 12
 phase: fired
 halted: false
-tickets: >
-  Twelve at ready-for-agent: #138 #139 #140 (the three rulings, relabelled from
-  ready-for-human) and #141 #142 #143 #145 #146 #147 #148 #149 #150. #144 stays
-  needs-triage deliberately, carrying the forcing-mechanism question; its settled
-  half was split off as #150.
-bar: .gauntlet/bar/           # README.md present, owner-confirmed 2026-08-10
-autonomy_grant: >
-  The owner invoked this run with "handle all the ready for human and the triage
-  ... dint keep me in the loop i will bne cooking food". That is the standing AFK
-  autonomy grant: it removes OWNERSHIP as a ground for deferring, but it does NOT
-  remove the need for a warrant. So a Partner `DEFER` here does not park the
-  question — it becomes a decision taken under the grant, with the most
-  reversible option chosen and the alternative recorded so the owner can overturn
-  it cheaply. Entries below are therefore logged under `## Decided under grant`
-  rather than `## Needs you`. An irreversible call would still halt.
-deviation_from_preset: >
-  vibe's stock target is `init` and this is not that. The machinery is run
-  unchanged — Partner cites-or-defers, every warrant is grepped as a fixed
-  string, Pressure attacks cross-model, one rebuttal round only — but it is
-  applied to twelve open tracker issues instead of to a raw idea. Recorded
-  openly rather than passed off as a stock run.
 ---
+
+# vibe — triage pass over the whole open queue
+
+**This is not `vibe`'s documented target.** The preset accepts `init` and nothing
+else. What was applied here is vibe's *machinery* — Partner answers only with a
+grep-verified quoted warrant or `DEFER`, a cross-model Pressure agent attacks
+whatever survives, one rebuttal round, and every `DEFER` becomes a `## Needs you`
+entry with the most reversible default taken. The target was the tracker's
+thirteen open issues rather than a fresh idea.
+
+**Supersedes** the `## Needs you` list in `.claude/vibe-2026-08-11-chain7.md`
+(archived from `vibe.md` at boot, byte-preserved via `git mv`). Its two live
+entries are carried forward below, restated. Seven older owner calls remain in
+`.claude/vibe-130.md` and were not reopened — a broader grant does not reopen
+unrelated parked calls.
+
+## How the exchange actually went, in numbers
+
+| stage | count |
+|---|---|
+| issues triaged | 13 |
+| warrants Partner returned | 12 (one covering two issues) |
+| warrants that survived the grep check | **13 of 13** |
+| refuted by Pressure, round 1 | 6 |
+| Partner conceded on rebuttal | 4 |
+| Partner held on rebuttal | 2 (#155, #158) |
+| chosen-design overrides attempted after the concessions | 2 (#151, #161) |
+| overrides refuted, correctly | 2 |
+| promoted to `ready-for-agent` | **3** |
+| relabelled | 1 (#155 -> `needs-info`) |
+| left as owner calls | 9 |
+
+**The adversary earned its keep.** It killed six of twelve first-round calls, then
+killed both attempts to rescue concessions as labelled chosen designs. Not one
+promotion in the final queue is one Pressure objected to.
 
 ## Decisions
 
-<!-- appended per issue: <one line> — warrant: "<exact quote>" @ <path> · pressure: STANDS -->
-
-### The twelve tracker decisions
-
-Every warrant below was **grepped as a fixed string and verified verbatim** —
-12/12, zero fabrications. Pressure then attacked all twelve and returned
-**REFUTED 12/12**, which is treated as low-information *as a filter*: an adversary
-instructed to default to REFUTED when uncertain refuting everything is that
-instruction's expected failure mode, not twelve findings. Each objection was
-weighed on merit. Two changed a decision outright; seven became hard constraints
-written into the ticket; three were noted and did not bite.
-
-| # | Decision | Warrant verified @ | Pressure's effect |
-|---|---|---|---|
-| 138 | Restrike markdown headings onto the one ladder; document the rungs with each role stated; retire/re-point `--fs-display` | `"Scale ratio ~1.15, fixed rem-equivalents, no fluid type."` @ DESIGN.md | Constraint: no blanket documenting of drift; each new rung justified or removed |
-| 139 | **Bring the tool-card label to 400**; emphasis carried by size and colour | `"Weights: 400 body, 600 app name and bubble-less emphasis."` @ DESIGN.md | **CHANGED THE DECISION** |
-| 140 | Keep the stripe; named scoped exception in #125's form | `"One named exception to the glass ban, and its scope is one pane"` @ DESIGN.md | Constraint: #125 supplies the method, the grant supplies the authority |
-| 141 | ready-for-agent; verify `gui-93` is already covered, then sidecar build-requirement for `gui-75` | `"build-artifact (`gui-75`, `gui-93` read `out/`, and the gate"` @ run-desktop/SKILL.md | Constraint: a stale `out/` must not satisfy the assertion |
-| 142 | ready-for-agent; pin the fixture workspace name | `"made `titlebar.png` byte-identical"` @ .context/decisions.md | Constraint: **clean-if-stale, never refuse** |
-| 143 | ready-for-agent, driver-first; traverse from the transcript | `"driver that depends on app state a user can change"` @ the premise ADR | Constraint: verify AFTER #148 so the fix is the driver's, not the rail's |
-| 144 | **stays needs-triage**; settled half split to #150 | `"**Gate is the full one:**..."` @ .claude/relay-leg.md | Constraint: the split may not ship as green-looking full coverage |
-| 145 | ready-for-agent; accept the quarantine, named release step | `"build only if measured"` @ .context/decisions.md | Constraint: the phase may **not** report clean green while uncovered |
-| 146 | ready-for-agent; leftovers, gitignore and delete | `"The DOM assertions carry the guarantee"` @ the blank-capture ADR | Constraint: producers fixed and consumers checked BEFORE deletion |
-| 147 | ready-for-agent; private profile by default | `"Isolation is a **property of the launch**"` @ the batch-instrument ADR | Constraint: the `gui-79`/`gui-110` opt-out gets its own DEDICATED profile, not the global one |
-| 148 | ready-for-agent; fixture the sessions list in main | `"REPLACED IN MAIN with a fixture list, exactly as"` @ inspect.mjs | Constraint: keep real-session listing covered somewhere else |
-| 149 | ready-for-agent; **bar keeps an independent list + a drift test** | `"the single definition of the driver set imported by both"` @ .context/decisions.md | **CHANGED THE DECISION** |
-
-**The two decisions Pressure reversed, because they are the ones most worth
-re-examining if any of this turns out wrong:**
-
-1. **#139.** Partner ruled "accept 1.208 as the house pair". Pressure found the
-   textual contradiction both prior passes missed: *"600 ... bubble-less
-   emphasis" directly contradicts the claim that transcript emphasis is not
-   carried by weight.* `DESIGN.md` licenses 600 for exactly two things, the app
-   name and bubble-less emphasis, and **a tool-card label is neither**. So the
-   off-spec element is the label's 600, not the prose's 400. The ticket now
-   carries a verify-first criterion because this reading, while textual, is a
-   reading.
-2. **#149.** Partner ruled "derive the surface list from `SURFACES`". Pressure:
-   *"deleting a driver entry would silently delete the bar obligation. A quality
-   specification should not inherit omissions from the implementation it is
-   supposed to police."* Decisive. The bar is a standard; generating it from the
-   code inverts which one polices which. Now: `SKILL.md` may derive, the bar keeps
-   its own list, and a test fails when they disagree.
-
-- **gauntlet owner call 14 (the stop signal) — the criterion is NOT touched.**
-  pressure: REFUTED TWICE, and both refutations were accepted rather than argued
-  down. Round 1 killed a proposal to replace the `BAR WINS`/`YOURS WINS` contest
-  with a threshold read of `bar_win`; round 2 killed the fallback of keeping the
-  criterion but raising to N=3 critics with majority. The decisive lines, in
-  Pressure's words: *"Changing success criteria after five waves of failure is
-  plainly self-serving post-hoc goalpost movement"*, and on the fallback,
-  *"A 2-1 majority on byte-identical pixels launders disagreement into false
-  decisiveness; correlated critics can reproduce the same bias three times."*
-  **Outcome under the contract: one rebuttal round was spent, it still refuted,
-  so this DEFERS — and under the AFK grant a defer takes the most reversible
-  default rather than parking.** Most reversible = change nothing. So option
-  **(a), verdict movement as written**, stands untouched: same three-state
-  verdict, same `plateau >= 3`, N=1 critic, no new closing rule. The instrument
-  the run has is the instrument the next run uses.
-  The owner's genuine choice between (a), (b) and (c) is NOT resolved by this and
-  stays open — it is restated under `## Needs you`. What is resolved is only that
-  an agent may not settle it by redefining the target after losing to it.
-
-- **Pressure's sequencing objection is ACCEPTED and it reshapes the fire step.**
-  *"While the global type-scale clause remains open, every per-surface verdict is
-  confounded, so restarting before its ruling lands cannot yield interpretable
-  surface measurements."* `bar_win` requires *"one type scale holds across all of
-  them"* and the app currently paints five rungs against three documented (#138)
-  plus a second em-based scale for markdown headings. That clause gates every
-  surface at once, so an **immediate** gauntlet restart measures nothing.
-  It does not bite on a **chained** restart, which is what is actually being
-  fired: `ticket-loop` drains the queue — including #138's fix and #149's stale
-  surface list — and only then does `then:` fire gauntlet. The confound is
-  resolved by queue ordering rather than by argument. This is why gauntlet is
-  chained behind the queue rather than run now, and it is the reason to state on
-  the ticket.
-
-## Decided under grant
-
-<!-- Partner deferred, the record held no warrant, and the AFK grant says decide
-     anyway. Most reversible option taken; alternative recorded. -->
+- **#153 -> `ready-for-agent`** — warrant: "a single red run is not evidence your change broke something." @ `.context/pick-up.md` · pressure: STANDS
+- **#154 -> `ready-for-agent`** — warrant: "the budget is now counted off the document" @ `.context/decisions.md` · pressure: STANDS
+- **#156 -> `ready-for-agent`** — warrant: "build only if measured" @ `.context/decisions/2026-08-11-a-deficit-a-reader-cannot-close-is-furniture.md` · pressure: STANDS
+- **#155 `needs-triage` -> `needs-info`** — warrant: "so nobody has ruled out the harness." @ `.context/pick-up.md` · pressure: REFUTED, Partner HELD on rebuttal. `ready-for-human` is the obvious label and is **banned**: "never tag anything ready for human as i will be away from home" @ memory `afk-autonomy-grant.md`, grep-verified.
+- **#158 stays `needs-triage`, and the drafted `blocked by #150` edge was DROPPED** — warrant: "because that is the string rendered next to the green tick" @ `.context/decisions.md` · pressure: REFUTED the dependency, Partner CONCEDED it. No edge was added. The label holds on the coverage-boundary ground instead.
+- **#144 stays `needs-triage`** — warrant: "Gate is the full one:" @ `.claude/relay-leg.md` · pressure: STANDS
+- **#150 stays `needs-info`** — warrant: "Do not push on your own initiative" @ `.context/pick-up.md` · pressure: STANDS
+- **#152 stays `needs-triage`** — warrant: "about where the rail sits in the tab order, so it went to" @ `.context/decisions/2026-08-11-a-symptom-that-left-is-not-a-defect-that-was-fixed.md` · Partner refused my `ready-for-agent` draft before it reached Pressure: scoping it to a skip link was a design pick dressed as a finding.
+- **#151, #157, #159, #160, #161 stay `needs-triage`** — Partner conceded each to Pressure. Details on the tickets.
+- **#159 and #160 are NOT one paired call** — pressure: REFUTED the pairing, Partner CONCEDED. The handoff note's "same question one property apart" was a prior leg's shorthand, not a ruling. Two decisions; answering one does not answer the other.
+- **Merged `gauntlet/docks-and-min-window` into `main` as `25d13e0`** — pressure: STANDS. Reason taken: `main` held six commits *narrating* waves 1-12 while the waves themselves lived only on the branch, so every future ticket branch cut from the half without the work. Precedent: run 1's branch was merged as `4c3386d`. Reversible — never pushed, branch not deleted, each wave still its own commit.
+- **Archived `.claude/gauntlet.md` -> `.claude/gauntlet-docks-and-min-window.md`** — required, not cosmetic: the file carries `wave: 12 / max_waves: 12 / stop: true`, so a chained gauntlet would have seed-guarded onto the closed run and halted at step 3 immediately.
 
 ## Needs you
 
-- [ ] **Do the 35 committed wave captures need their git history rewritten, or is
-      fixing forward enough?** The repo is public and the captures are already in
-      `origin/main`. What is actually rendered is a Windows username in a fixture
-      temp path plus a session count — verified on wave 5, see the boot log — not
-      the hundred real project names #148's text implies.
-      took: **fix forward only.** #148 makes the rail fixture-only so future
-      captures are clean; history is left alone and no force-push happens.
-      alt: purge `.gauntlet/waves/` from history and force-push.
-      why: not ownership — this run holds an AFK grant that removes ownership as
-      a ground for deferring. It is **irreversibility**. A history rewrite on a
-      public repo with a force-push is destructive and outward-facing, which is
-      the one class the grant does not cover. The reversible option was available
-      and was taken, so nothing halts.
-      **reversible: NO** (the alternative is; the default taken is not the risk)
+Nine tickets and two carried-forward calls. **Every one is written up on its own
+issue with the choice narrowed to a short list** — the ticket comment is the real
+artifact, this is the index.
 
-- [ ] **gauntlet owner call 14, restated and still yours: (a) verdict movement as
-      written, (b) verdict movement OR three straight waves of unanimous SAME on
-      the improvement axis, or (c) is `BAR WINS` against Linear simply the correct
-      permanent answer for these five surfaces?**
-      took: **(a), unchanged** — see `## Decisions`. Not because (a) was judged
-      best, but because the two alternatives an agent could reach were both
-      refuted cross-model as post-hoc goalpost movement, and "change nothing" is
-      the reversible floor.
-      alt: (b) or (c), both of which are genuinely open. Pressure's own closing
-      position argues for (c): *"accepting (c) now is no less empirical than
-      paying to manufacture a more authoritative-looking repetition."*
-      why: this is the one question the previous run called *"the single most
-      valuable thing this run produced"* and *"a leg cannot answer this."* The AFK
-      grant removes ownership as a ground for deferring, so this run DID attempt
-      it — twice, cross-model — and was refuted twice. That is a warrant problem,
-      not an ownership problem, and the grant does not manufacture warrants.
-      reversible: yes — the next gauntlet run is bounded, and overturning this
-      changes only when that run stops, not what it built.
+- [ ] **#151 — the capture username.** One of three: env var + **fail closed**; basename group heading (changes the app); or accept it.
+      took: nothing — no code touched.
+      alt: a promotion was drafted and killed. Deriving the root from the repo location does not guarantee a username-free path, and a warning still lets contaminated captures be committed.
+      why: the fix that works needs the guard to fail closed, and making an unattended instrument halt on config is a real cost nobody has priced.
+      reversible: yes
+
+- [ ] **#152 — 208 tab stops ahead of the transcript.** One of four: skip link; roving `tabindex` listbox; rail after transcript in DOM order; or record the current behaviour as fine.
+      took: nothing — no DOM changed.
+      alt: skip link only.
+      why: a landed ADR already routed this here as a design decision, and nothing in the record ranks the four.
+      reversible: yes
+
+- [ ] **#157 — the four tests CI will never run.** Three questions; my read is no / yes-but-once / a comment in the test file.
+      took: nothing written, nothing closed.
+      alt: `wontfix` on the wallpaper rule — drafted and withdrawn.
+      why: the wallpaper rule governs a per-run read surface and does not reach whether the test should seed a fixture store.
+      reversible: yes
+
+- [ ] **#159 — window controls take Chromium's UA font-size.** Should a painted size be inheritable from the user agent at all? `.subagent-drawer-close`'s 20px rides the same answer.
+      took: nothing — no declaration added.
+      alt: `font-size: var(--fs-ui)` on `.win-btn`, which owes a `gui-136` re-run because the titlebar's centring is load-bearing.
+      reversible: yes
+
+- [ ] **#160 — is the weight licence exhaustive?** Either the stylesheet is off-spec in eight places, or `DESIGN.md` owes an amendment. Two landed precedents point opposite ways, one commit apart.
+      took: nothing — no stylesheet and no document changed.
+      why: no warranted answer exists in the record. This is the sharpest example in the queue of a question an agent must not settle.
+      reversible: yes
+
+- [ ] **#161 — CommandsDock mount race.** One of three: unbounded refetch while open and empty; build an engine-ready signal in `src/main`; or distinguish the two empty states in the UI. Not exclusive.
+      took: nothing — no code touched.
+      alt: bounded retry — drafted and killed, because a bound picked from one observed sample is invented and can still expire early.
+      why: `src/main` carries no engine-ready signal at all, so two of the three need architecture first.
+      reversible: yes — **but this is a live user-facing defect.** A fast user who opens Commands right after picking a folder gets the empty state permanently.
+
+- [ ] **#144 — what forces anyone to run the DOM phase.** Four candidates, none ranked by the record. Option 4 (write down that judgement is the mechanism) is what the project is already living, unstated.
+      took: nothing — no mechanism invented.
+      reversible: yes
+
+- [ ] **#158 — is a build-artifact check a third CI category?** Saying yes means deliberately editing three pins that exist to stop exactly this growth.
+      took: nothing — no pin edited.
+      reversible: yes
+
+- [ ] **#150 / #155 — the two that are one action each.**
+      **#150:** `git push origin main`, watch the first `fast-gate` run, close on green. `main` is now **35 commits ahead** and has never been pushed.
+      **#155:** open the app **by hand** on a profile it has never started in, type a message, and report whether the composer cleared. That single observation decides whether every new user's first launch is broken or whether it is an artifact of the driver harness.
+      took: neither. D6 bars the push; the picker ADR bars an agent adding a second harness.
+      reversible: the push is **NOT** — it is outward-facing and the repo is public. Taking no action was the reversible option and it was taken, so nothing halted.
+
+- [ ] **Carried forward — gauntlet owner call 14, the stop signal.** (a) verdict movement as written, (b) verdict movement OR three straight waves of unanimous SAME, or (c) is `BAR WINS` against Linear simply the correct permanent answer?
+      took: (a), unchanged.
+      why: two agent-reachable answers were attempted and both were refuted cross-model as post-hoc goalpost movement. A warrant problem, not an ownership problem — and the grant does not manufacture warrants.
+      reversible: yes. **Newly relevant:** run 2 closed on its `max_waves` backstop at `plateau: 2`, so under rule (a) it was cut off rather than converged. The chained run inherits the same rule.
+
+- [ ] **Carried forward — the committed wave captures' git history.** Settled as fix-forward; the residual is #151.
+      took: fix forward only. No history rewrite, no force-push.
+      reversible: **NO** for the alternative. A history rewrite plus force-push on a public repo is destructive and outward-facing — the one class the grant does not cover.
 
 ## Log
 
-- [boot] Archived the completed #131 run to `.claude/vibe-131.md` (`phase: fired`,
-  chain 6 drained its queue and stopped correctly). Verified the copy byte-identical
-  before replacing. Seeded fresh rather than resumed, because resuming a `fired`
-  phase would re-fire a chain that already finished.
-- [boot] Bar verified present WITH `README.md` — owner-confirmed, so gauntlet is
-  eligible to chain behind the queue rather than being left for a session that
-  will be long dead by then.
-- [boot] Pressure Target resolved live: `sonnet` -> `codex/gpt-5.6-sol`.
-- [round 1] **A 0-BYTE TRANSCRIPT IS NOT A DEAD AGENT — this run diagnosed one
-  and was wrong.** Partner's transcript file sat at **0 bytes for 11 minutes**
-  while Pressure's showed 21KB across two completed round trips. That was read as
-  a silent death and two replacement Partners were spawned. **Partner then
-  returned normally** with all twelve blocks: 12.5 minutes, 40 tool calls, 194k
-  tokens, every warrant verbatim. The transcript only flushes at completion, so
-  **"no bytes yet" and "died on spawn" are indistinguishable by file size** — the
-  size-polling check used here cannot tell them apart and should not be trusted
-  to. The two replacements were killed unused the moment the original landed;
-  picking between two Partners' answers is the "two agents talk each other into
-  anything" failure the preset exists to prevent.
-  Cost of the error: two wasted spawns. Cost had it gone unnoticed: none, because
-  **unverified is not refuted** — the questions were re-run rather than dropped,
-  which is the correct handling whether or not the agent was actually dead.
-- [boot] Partner cast on `opus`, hydrated on DESIGN.md, PRODUCT.md, `.context/`,
-  `docs/adr/`, the bar README and the run-desktop SKILL, and handed all twelve
-  issues with instructions to read each body itself.
-- [boot] **#148's exposure claim was checked against the pixels and it is
-  OVERSTATED — this correction belongs on the ticket.** The issue says *"Two of
-  the ten bar captures contain real session titles and a real filesystem path"*.
-  Chased because the repo is **PUBLIC** (`gh repo view` -> `isPrivate: false`)
-  and 35 wave captures under `.gauntlet/waves/` are committed AND present in
-  `origin/main`, which would have made this a live disclosure rather than a
-  future risk. Opened `.gauntlet/waves/5/sidebar.png` rather than trusting the
-  text: the rail is scoped to **"This project"**, so it renders the ONE fixture
-  row, a fixture path under `AppData\Local\Temp\inspect-...`, and the 953 foreign
-  sessions as a **count** — not as titles. #148 measured `aside.sidebar`'s
-  **innerHTML**, where `.session-groups` holds 6427px against a 658px viewport;
-  those ~100 rows are below the fold and never reach the pixels.
-  **Verified on wave 5 only** — the other 34 captures are not audited, and that
-  audit is part of #148's shape rather than a claim made here.
-  NOTE the exposure finding is unchanged by the Partner failure below; it was
-  measured directly from the pixels, not sourced from an agent.
-  Net: what is public is a Windows username in a temp path plus a session count.
-  Real but minor. Taken: **fix forward** (make the rail fixture-only so the
-  instrument's own header claim becomes true). NOT taken: rewriting git history
-  on a public repo — irreversible, outward-facing, and squarely the owner's call,
-  so it is recorded under `## Needs you` rather than done. Nothing irreversible
-  is performed by this run, so the halt guard is respected without halting.
+- [boot] Rehydrated from `.context/pick-up.md` and **verified rather than trusted it**, per its own instruction. Two claims were stale: the queue was 13 open, not 12 (#161 landed from the gauntlet run), and `main` was 34 commits ahead, not 24.
+- [cast] Pressure Target resolved live from `wisp routing` — first non-Claude family is `sonnet` -> `codex/gpt-5.6-sol`. No rebind needed, so no `slot:` restore is owed.
+- [grill] 13 issues through cite-or-defer. All 13 warrants grep-verified as fixed strings with an argument guard. Zero invented quotes.
+- [grill] Partner **overturned my own draft twice unprompted**: #152 (skip-link scoping was a design pick) and #155 (`ready-for-human` is banned by a standing owner instruction). Both were caught by the record, not by me.
+- [pressure] 6 of 12 refuted. On rebuttal Partner conceded 4 and held 2.
+- [override] Two concessions were re-attempted as labelled chosen designs, on the grant's own escape clause. **Both refuted, both accepted as refuted.** One rebuttal round only — iterating a design against an adversary with no human in the loop is how two agents talk each other into anything.
+- [finding] The full suite went **RED with ZERO failing tests**: 95 of 96 files reporting, one worker process exited unexpectedly, `npm test` exit 1. Green on the immediate re-run, 96 of 96, 1406 passed. A second red shape now competes for the same "just re-run it" reflex that #153 exists to remove, and CI runs `npm test`.
+- [merge] `gauntlet/docks-and-min-window` merged to `main` as `25d13e0`. Automatic merge, zero conflicts — `.context/` needed none because the run had been committing its breadcrumbs on `main` throughout.
+- [halt-check] `## Needs you` holds 11 entries against `max_defer: 12`. No entry's **taken default** is irreversible; the two `reversible: NO` markers are on alternatives *not* taken. So no halt, and firing is authorised.
+- [fired] `phase: fired`.

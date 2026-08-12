@@ -7,8 +7,18 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-12 by Opus 5, gauntlet relay leg 8 (run 2, wave 7) — owner away_
-_At commit: `d6748bd` on `gauntlet/docks-and-min-window`; `main` carries these notes only_
+_Last updated: 2026-08-12 by Opus 5, triage pass over the whole open queue — owner away_
+_At commit: `25d13e0` on `main`_
+
+> **STOP — the header below and much of this file describe a run that has since CLOSED
+> and MERGED.** Run 2 (`docks-and-min-window`) ended at wave 12 on its `max_waves`
+> backstop with `plateau: 2` — cut off, not converged — and the whole branch was merged
+> into `main` as `25d13e0`. So every "on that branch" pointer in this file now resolves
+> on `main`, and `.claude/gauntlet.md` has been **archived to
+> `.claude/gauntlet-docks-and-min-window.md`**. The wave-by-wave detail below is still
+> accurate as history and its landmines still hold; only the "is running" framing is dead.
+>
+> **Current state lives in [[pick-up]] and `.claude/vibe.md`.** Queue is #153, #154, #156.
 
 > **This note covers wave 7.** Prior waves 5-6 live in `5a90b89`. If a leg's `.context/`
 > commit is missing, the branch log is the authority.
@@ -58,10 +68,19 @@ _At commit: `d6748bd` on `gauntlet/docks-and-min-window`; `main` carries these n
 
 ## Current focus
 
-**THE GAUNTLET IS RUNNING. WAVE 7 RESET THE PLATEAU.** Run 2 (`docks-and-min-window`)
-landed **WAVE 7** as `d6748bd` on `gauntlet/docks-and-min-window`, now at **`wave: 7`,
-`plateau: 0`**. Its record is `.claude/gauntlet.md` **on that branch** — `main`'s copy is
-the seed's and is stale by design. Gauntlet relay is at **leg 9** (about to run wave 8).
+**THE GAUNTLET RUN IS OVER AND MERGED.** Run 2 (`docks-and-min-window`) ran to **wave 12**
+and stopped on its **budget backstop** at `plateau: 2`, not on plateau 3 — so it was cut
+off rather than converged. Waves 8 through 12 were pixel-identical critic-only stalls,
+blocked on a collision between the critic's repeated ask and `DESIGN.md`'s rails group.
+The branch merged into `main` as **`25d13e0`** and is **not deleted**; each wave is its own
+commit, so "take wave 7 instead" is a checkout. Its record is
+`.claude/gauntlet-docks-and-min-window.md`, now on `main`.
+
+**What is running instead:** a fresh relay chain over the three tickets a 2026-08-12 triage
+pass promoted (#153, #154, #156), with a **new** gauntlet run chained behind it. That run
+seeds off merged `main`, so unlike run 2 it grades an app that already carries run 2's work.
+
+The wave-7 detail below is retained as history.
 
 **Wave 7 moved THREE verdicts forward and ONE back:**
 
