@@ -234,7 +234,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--mint);
+  background: var(--mark-depth), var(--mint);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -627,9 +627,12 @@
   padding: 32px 32px min(152px, 17vh);
 }
 
-/* Solid by design and stays that way. 44px is exactly twice the titlebar mark,
-   which is the relationship that makes it read as the same identity enlarged
-   rather than a second shape.
+/* Solid by design and stays that way — solid meaning glyph-free and one
+   continuous fill, which is all that claim was ever about. That fill now
+   composites --mark-depth, the shared black ramp all three identity marks take;
+   its note in tokens.css carries the arithmetic and the hue guard. 44px is
+   exactly twice the titlebar mark, which is the relationship that makes it read
+   as the same identity enlarged rather than a second shape.
 
    The CORNER has to scale with it or the claim is only half true. This was a
    literal 12px against .logo-mark's 22px at --r-mark, which is a corner ratio
@@ -643,7 +646,7 @@
   width: 44px;
   height: 44px;
   border-radius: calc(var(--r-mark) * 2);
-  background: var(--mint);
+  background: var(--mark-depth), var(--mint);
   /* 8, where it was 16 and 24 before that. See `.welcome`'s THE MARK CAME DOWN
      FROM 24 AND THEN FROM 16 note above for the optical arithmetic. Short
      version: a gap here reads about 15.6px wider than it measures, because the

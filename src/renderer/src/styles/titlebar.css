@@ -72,7 +72,7 @@
   width: 22px;
   height: 22px;
   border-radius: var(--r-mark);
-  background: var(--mint);
+  background: var(--mark-depth), var(--mint);
   flex-shrink: 0;
 }
 

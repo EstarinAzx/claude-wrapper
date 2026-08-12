@@ -85,7 +85,10 @@
 }
 
 :root {
-  /* legacy aliases: existing component CSS keeps these short names, zero churn */
+  /* legacy aliases: existing component CSS keeps these short names, zero churn.
+     One entry — --mark-depth — is a composed value rather than an alias; it is
+     here and not in @theme because it names a LAYER, not a palette key, and
+     only palette keys are validated against @theme. */
   --wash: var(--color-wash);
   --surface: var(--color-surface);
   --bubble: var(--color-bubble);
@@ -104,6 +107,29 @@
   --mint-press: var(--color-mint-press);
   --mint-ink: var(--color-mint-ink);
   --mint-wash: var(--color-mint-wash);
+
+  /* The identity mark's ONE depth cue, composited over var(--mint) at all three
+     sites the mark paints: .logo-mark 22px, .welcome-mark 44px, .avatar 28px.
+     Three callers, so it is a system by the note above rather than indirection,
+     and it is one edit for all three — treating a single site would ship the
+     identity at two finishes.
+
+     BLACK, and deliberately not a second mint. Compositing black scales the
+     mint's RGB toward zero, so the hue angle stays at ~180deg exactly; a
+     --mint-press stop would introduce hue 182, and the app's mint floor is
+     counted by hue.
+
+     Arithmetic. A linear ramp's interior standard deviation is range / sqrt 12,
+     and range ~= alpha x 255 x L with L the mint's own lightness, 0.87. At
+     alpha 0.1 that is range 22.19 and stddev 6.41. The identity reference this
+     is judged against measures 9.02 / 7.01 / 3.65 and 9.40 / 7.33 / 3.83 at its
+     equivalent marks, so 6.41 is aimed at the MIDDLE of that band on purpose: a
+     ramp's stddev does not depend on the box it fills, so one alpha has to serve
+     a 22px chip and a 44px plate at once, and the middle is the value that reads
+     as lit at both instead of heavy at the small one. All three sites read
+     0.00-0.09 before this. */
+  --mark-depth: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.1));
+
   --danger-line: var(--color-danger-line);
   --danger-fill: var(--color-danger-fill);
   --danger-text: var(--color-danger-text);

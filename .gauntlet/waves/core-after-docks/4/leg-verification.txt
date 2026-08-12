@@ -1,0 +1,29 @@
+=== BYTE-IDENTITY CONTROL, wave 3 -> wave 4 ===
+  welcome.png                changed  expected changed  OK
+  welcome-min-window.png     changed  expected changed  OK
+  titlebar.png               changed  expected changed  OK
+  sidebar.png                same     expected same     OK
+  chat.png                   changed  expected changed  OK
+  input-bar.png              same     expected same     OK
+  window-welcome.png         changed  expected changed  OK
+  window-session.png         changed  expected changed  OK
+  agents-dock.png            same     expected same     OK
+  appearance-dock.png        same     expected same     OK
+  commands-dock.png          same     expected same     OK
+
+=== MARK DEPTH: interior stddev at every mint cluster ===
+    predicted 6.41 from a 0 -> 0.1 black ramp; reference band 3.65-9.40; wave 1 measured 0.00 / 0.05 / 0.09
+
+  titlebar.png (1440x48, ch=4)
+    58x21 at x155..212 y13..33             count=928 sdRGB=[42.36,57.98,53.77] topG=228 botG=223.8 bot/top=0.9816 n=650
+    22x22 at x14..35 y13..34               count=430 sdRGB=[3.04,4.12,4.03] topG=223.5 botG=210 bot/top=0.9396 n=196
+
+  welcome.png (1440x852, ch=4)
+    200x52 at x513..712 y438..489          count=9102 sdRGB=[32.48,44.81,41.67] topG=210.6 botG=211.4 bot/top=1.004 n=8448
+    44x44 at x513..556 y242..285           count=1757 sdRGB=[3.89,5.56,5.16] topG=225.9 botG=207 bot/top=0.916 n=1296
+
+  chat.png (1192x721, ch=4)
+    28x28 at x211..238 y111..138           count=606 sdRGB=[3.44,4.82,4.51] topG=224.4 botG=208.4 bot/top=0.9289 n=400
+    28x28 at x211..238 y660..687           count=606 sdRGB=[3.44,4.82,4.51] topG=224.4 botG=208.4 bot/top=0.9289 n=400
+(node:32596) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

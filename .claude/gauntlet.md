@@ -18,7 +18,12 @@ pieces:
     verdict: BAR WINS
     open: true
   - name: Titlebar
-    verdict: BAR WINS
+    verdict: TOO CLOSE          # WAVE 4 — the run's SECOND verdict movement, and the
+                                # mirror image of wave 3's: it landed on the ONE piece
+                                # whose own surface changed, and the change was 453
+                                # pixels inside a 22x22 mark. The critic's own gap names
+                                # that mark and asks for MORE depth, so the causal
+                                # reading is coherent. Read adjudication 4.1.
     open: true
   - name: Sidebar
     verdict: BAR WINS
@@ -41,8 +46,9 @@ pieces:
 critic: sonnet                 # THE RULE, NOT THE VALUE. Re-resolve with live
                                # `wisp routing` every wave and take the first
                                # non-Anthropic family. Re-resolved again at wave 3 to
-                               # `codex/gpt-5.6-sol` — FOURTH consecutive wave at that
-                               # landing, which is luck. Routes have moved in under a day.
+                               # `codex/gpt-5.6-sol` — re-resolved AGAIN at wave 4 to the
+                               # same landing, now FIVE consecutive waves, which is luck
+                               # and not stability. Routes have moved in under a day.
 critic_degraded: false         # wave 1: one critic died on context length and was
                                # recovered on a uniformly changed instrument, NOT a
                                # trimmed one. Wave 2: all five returned first time at
@@ -53,9 +59,19 @@ critic_degraded: false         # wave 1: one critic died on context length and w
                                # wave is the first with FACTUAL ERRORS in critic
                                # literals (two of five), which is an instrument fact
                                # worth carrying even though no verdict rests on them.
+                               # WAVE 4: all six agents returned FIRST TIME, zero deaths,
+                               # zero stalls — the only clean fan-out of the run. But the
+                               # Titlebar critic repeated wave 3's EXACT slip on the exact
+                               # same file (window-session.png as 1440x912, truth 900), so
+                               # that error is reproducible rather than random (4.8).
 branch: gauntlet/core-after-docks
-wave: 3
-plateau: 0                     # consecutive waves in which no verdict improved.
+wave: 4
+plateau: 0                     # WAVE 4 KEPT IT AT 0: Titlebar moved BAR WINS -> TOO
+                               # CLOSE, the run's second verdict movement in two waves.
+                               # So the run has now gone two consecutive waves without
+                               # plateauing, on two different pieces. It is NOT near its
+                               # stop: (a) needs plateau >= 3.
+                               # consecutive waves in which no verdict improved.
                                # Wave 1 was a BASELINE and could not count. Wave 2 was
                                # the first wave whose verdicts could move it and none
                                # did (5/5 BAR WINS), so it went 0 -> 1. WAVE 3 RESET IT
@@ -310,6 +326,11 @@ applied to its wave 1 and run 2 applied twice (wave 1, and wave 4 for a piece ad
 | 3 | Sidebar | BAR WINS | **The wave-2 gap CLOSED — r8 -> r16 confirmed twice by pixel (3.2).** New gap *(as returned)*: "The rail's primary content does not begin until about y=225, so roughly 26% of its 852px height is spent on pre-list status and controls; compress that stack to about 150–160px… so the first session moves up by roughly 65–75px." **NEW AXIS, third distinct one in three waves, arithmetic checks (225/852 = 26.4%).** Carry finding 1 (the row-vocabulary split this wave's own ownership rule bought) and finding 4 (the selection stripe lost 16 points of its run) into any Sidebar work. |
 | 3 | Chat | **TOO CLOSE** | **THE RUN'S FIRST VERDICT MOVEMENT, on a piece with NO BUILDER and byte-identical surface pixels — adjudication 3.1.** New gap *(as returned)*: "Increase the transcript's top inset from roughly 13px to 24px; the first user bubble currently crowds the titlebar." **NEW AXIS, BUILDABLE, AND ON THE SPEC'S OWN NUMBER** — DESIGN.md's Layout section sets the transcript rhythm at "24px vertical gaps". **This refutes adjudication 2.4's pessimistic prediction**: the critic did NOT raise prose weight a sixth time, so Chat's instrument was not exhausted. **Chat gets a builder in wave 4**, reversing wave 2's call. |
 | 3 | InputBar | BAR WINS | *(as returned)* "combine both groups into one right-aligned cluster no wider than about 300px, while leaving the disclaimer centered below." **REFUSED — this is the FOURTH distribution rearrangement asked by the FOURTH critic across two runs, and adjudication 2.5 already declared the axis exhausted.** It is now also refused against the **SPEC**, not merely a measurement: DESIGN.md's Layout section authorises "Chat column: max-width 760px, centered", so re-clustering to ~300px would hide the app's own authored measure. Substitute gap: **smoothing finding 3, the 5px seam** (below). |
+| 4 | Welcome | BAR WINS | *(as returned)* "The welcome stack is vertically under-anchored… move the entire stack down roughly 55–60px." **THE THIRD INDEPENDENT RAISING OF THE SAME OWNER CALL, by a third critic on a third wave, and the run's most-repeated single finding.** Its arithmetic reproduces exactly (hero ink y242..489, midpoint 366.0, capture centre 426, displacement **−60.00px**, measured identical in waves 3 and 4). Still **NOT a builder gap** — adjudication 3.3 escalated it and the default (the reserve stands) is unanswered. **Welcome gets no builder in wave 5 for the third wave running**, which is a piece blocked on a human rather than plateauing on the instrument. See 4.3. |
+| 4 | Titlebar | **TOO CLOSE** | **THE RUN'S SECOND VERDICT MOVEMENT, and the mirror image of wave 3's — it landed on the ONE piece whose own surface changed (adjudication 4.1).** New gap *(as returned)*: "give the square a restrained depth cue, such as a 1px inset edge plus a 2px soft shadow." The critic is still on the mark axis and wants MORE depth after getting some, which is coherent. **But do NOT read it as "raise the alpha": the smoothing pass proved the wave's own 6.41 target arithmetically unreachable and found a better gap — one alpha is painting THREE different finishes (4.4, finding 2).** Wave 5's Titlebar gap is equalising the finish across the three shapes, not deepening it globally. |
+| 4 | Sidebar | BAR WINS | *(as returned)* "Compress the background-session empty state into a single status/action row and tighten the filter, scope, and path stack so the first session begins near **170px**." **SAME AXIS as wave 3, sharper number, and the wave's build for it was REVERTED on a test fence (4.5).** What the reverted attempt proved: the critic's own named mechanism (fold onto the head row) is **refuted on width arithmetic** (224px content row; title ~105 + Refresh ~58 + gaps 16 = 179, leaving ~45, against ~92 needed for "None running here"), while **pure in-place tightening reaches ~175px** against the asked 170. That is wave 5's gap, and it needs no fenced relocation. |
+| 4 | Chat | **TOO CLOSE** | **HELD at TOO CLOSE on near-identical pixels — the first positive evidence that wave 3's movement was not a one-off (4.2).** New gap *(as returned)*: "make default assistant prose visibly regular-weight and reserve the heavier weight for intentional emphasis." **THIS IS THE SIXTH RAISING OF THE PROSE-WEIGHT THREAD, and adjudication 2.4 left a standing instruction for exactly this: report it as a PLATEAU SIGNAL on this surface rather than refuting it a sixth time.** Reported as such — but see 4.7, because the signal is CONFOUNDED: this critic provably cannot see the top ~89px of the transcript, so the axes available to it are narrower than the surface is. **No builder in wave 5.** |
+| 4 | InputBar | BAR WINS | *(as returned)* "Group Effort and Model into one right-aligned utility cluster… with about 20px between controls." **REFUSED — the FIFTH distribution rearrangement asked by the FIFTH critic across two runs, on an axis declared exhausted at 2.5 and refused against the spec at 3.8.** Its real gap remains the **5px seam**, whose canonical fix this wave built and lost: `scrollbar-gutter: stable both-edges` reddened `gui-51` and `gui-98` (4.5). **The surviving form is the COMPOSER side, in `composer.css`, and it is now the only unrefuted one.** |
 
 ## Wave 1 adjudications
 
@@ -1180,8 +1201,386 @@ succeeded, and re-running is what overwrites evidence. **Read the log for `PASS`
 before concluding anything from the exit code** — the same discipline this repo already applies to
 the DOM phase's verdict line.
 
+## Wave 4 adjudications
+
+**Verdict spread: 3 `BAR WINS` + 2 `TOO CLOSE`. One `SPEC BREAK` returned (4.3). `critic_degraded: false`.**
+`plateau` stays **0** — Titlebar improved. Nine agents planned, **nine spent, and the six-agent judging
+fan-out was the first of the run with zero deaths and zero stalls.** Three builders ran; **two of the
+three builds were REVERTED** (4.5), so the wave committed exactly ONE change.
+
+### 4.1 THE SECOND VERDICT MOVEMENT IS THE MIRROR IMAGE OF THE FIRST, AND THIS ONE IS ATTRIBUTABLE
+
+Wave 3's movement landed on the one piece with **no builder** and byte-identical surface pixels, which
+left it ambiguous between a cross-surface lift and inter-critic variance. Wave 4's movement landed on
+**the only piece whose own surface changed**, and the change is **453 pixels inside a 22x22 mark**.
+
+Three things make the causal reading coherent rather than merely available:
+
+- The changed element **is the subject of the critic's own gap** — it asks for *more* depth on the same
+  mark. A critic that moved its verdict up while pointing at the changed element is telling a
+  consistent story.
+- Wave 3's Titlebar critic asked for mark depth; wave 4's got mark depth and improved. Two waves, one
+  axis, verdict follows the change.
+- Attribution is exact: `titlebar.png`'s entire delta is ONE 22x22 component, 453px, and the whole
+  wave's delta across eleven captures is **9,350 pixels in 10 components, every one a mark interior**.
+
+**The honest counterweight, stated rather than buried:** 453px is **0.65%** of `titlebar.png`
+(1440x48 = 69,120px). A verdict moving on 0.65% of a surface is either a sensitive instrument or
+variance wearing a causal costume, and one wave cannot separate those. What is *new* against wave 3 is
+that the changed input is the piece's own surface rather than a neighbour's frame — so this movement is
+strictly better evidenced than the first, without being proof.
+
+### 4.2 CHAT HELD `TOO CLOSE`, WHICH IS THE FIRST POSITIVE EVIDENCE ON ADJUDICATION 3.1 — AND IT RULES OUT LESS THAN IT LOOKS
+
+Adjudication 3.1 set a decisive test: leave the window frame unchanged, and see whether Chat holds.
+The frame was **not** unchanged — but its delta is **1,765px in three mark interiors**, and `chat.png`'s
+own delta is **1,312px inside its two 28px avatars**. Chat's inputs moved by roughly 0.15% of the frame,
+all of it inside marks. It held `TOO CLOSE`.
+
+**What that establishes:** wave 3's movement was not a one-off fluke. Two independent critics, two
+waves apart, on near-identical pixels, returned the same verdict.
+
+**What it does NOT establish, and this is the part worth keeping:** it does not separate reading (a)
+from reading (b), because a *stable* inter-critic bias — this critic family reliably reading Chat as
+`TOO CLOSE` — is observationally identical to a real cross-surface lift that persists. Both predict
+exactly what happened. The test as written in 3.1 was under-specified: holding is consistent with (a)
+**and** with a reproducible (b), and only a *falling back* would have been decisive. Recorded so a
+later wave does not treat the hold as settling it.
+
+### 4.3 A `SPEC BREAK` CAME BACK, IT IS REAL, AND IT IS THE SECOND UNRESOLVED CONFLICT ON ONE ELEMENT
+
+The Chat critic returned: the centred titlebar shows `inspect-ws` while the selected session is
+"Why does the sessions rail go empty after I flip the backend pill?", so it is not showing the session
+title `DESIGN.md` requires. Checked rather than accepted:
+
+- `DESIGN.md`'s `## Layout` Titlebar bullet says **"Center: session title, `--text-muted`"**.
+- `.session-title` renders **`basename(cwd)`** (`Titlebar.tsx:305`, established at adjudication 2.2) —
+  the workspace folder name, or the literal `New session`. `inspect-ws` is the temp workspace basename.
+- The rail **simultaneously** shows real session titles, so the app clearly has the other value.
+
+So the element is *named* `.session-title`, the spec *calls* it the session title, and it paints the
+folder name. **The discrepancy is real and newly found.**
+
+**No revert is possible or warranted**, and that is not a dodge: Chat had no build this wave, the break
+is not in Chat's own surface but in the Titlebar's centre slot visible through the shared frame, and
+the behaviour **predates run 3 entirely**. A `SPEC BREAK` reverts a build; there is no build under it.
+
+**What makes it worth escalating loudly is the compounding.** This is the **second** unresolved
+spec conflict on the **same element**: adjudication 2.2 has `.session-title` sitting on the prose rung
+against `DESIGN.md`'s own role table, open since wave 2. One element, two independent conflicts, found
+two waves apart by two different critics, neither answered. Filed (see log). **Not decided by a wave** —
+either the spec means "workspace" and should say so, or the titlebar should paint the session's title.
+
+### 4.4 THE DEPTH LANDED EXACTLY AS AUTHORED, ITS TARGET WAS ARITHMETICALLY UNREACHABLE, AND ONE ALPHA IS PAINTING THREE FINISHES
+
+**It landed, and it is not a silent no-op.** Interior stddev, mint mask eroded 2px, wave 3 -> wave 4:
+
+| site | wave 3 | wave 4 (RGB) |
+|---|---|---|
+| `.logo-mark` 22px | `[0.00, 0.00, 0.00]` | `[3.63, 5.00, 4.83]` |
+| `.welcome-mark` 44px | `[0.00, 0.00, 0.00]` | `[4.04, 5.77, 5.38]` |
+| `.avatar` 28px (x2) | `[0.00, 0.00, 0.00]` | `[3.49, 4.90, 4.60]` |
+
+The strongest form of the result is not the stddev but the **back-fit**: solving for alpha from the
+actual per-row counts of the eroded mask gives **0.100–0.103 at every channel at every site** against
+an authored `0.1`. The CSS parsed and painted precisely what was written. Ten of twelve channel
+readings land inside the reference's `[3.65, 9.40]` band.
+
+**THE 6.41 TARGET WAS UNREACHABLE, SO THE MISS IS IN THE BRIEF'S FORMULA, NOT THE BUILD.** Two errors
+compound in `alpha x 255 x L`: **(i)** `L = 0.87` is the mint's **OKLCH lightness**, not an sRGB channel
+scale — the real per-channel ranges at `a=0.1` are `16.1 / 22.8 / 21.4`, so the true stddev ceilings are
+**R 4.65 / G 6.58 / B 6.18** and **the R channel could not reach 6.41 at any box size**; 22.19 happens
+to approximate the G channel alone. **(ii)** The measurable interior loses ~2px at each end, so the
+sampled alpha span is 81.8% / 90.9% / 85.7% of the box. ⚠️ **Do not carry 6.41 into wave 5 as an unmet
+target** — reaching it on R needs `alpha ~= 0.138`, which would darken G past the reference's own 9.09.
+
+⚠️ **This corrects the leg's own first reading.** The leg initially attributed the entire shortfall to
+its own 4px bbox erosion. Erosion is real but second-order; the dominant term is the unit conflation
+above. A measurement that misses a prediction indicts the prediction's units before the instrument.
+
+**FINDING 2 IS THE REAL WAVE-5 GAP: one alpha gives three finishes.** A ramp's stddev is
+size-invariant but **not shape-invariant**, because a disc weights mid-ramp rows more heavily than a
+near-square. Eroded row widths at first/last as a fraction of the widest row: 22px `0.56/0.56`, 44px
+`0.55/0.55`, 28px **`0.25/0.25`** — the avatar is `border-radius: 50%`, a true disc. Measured G stddev
+**5.00 / 5.77 / 4.90**: the avatar reads **flatter** than the 22px chip despite spanning more of its
+box, and the 44px plate reads **18% deeper** than the avatar off the single shared value. **The identity
+now paints at three finishes rather than one — the same kind of inconsistency the brief warned that
+treating one site would create, smaller but real.** That is a cross-surface seam only the whole-artifact
+pass could see, and it is the third wave running that the slot has earned its agent.
+
+**FINDING 3, informative and deliberately not acted on.** Measured with the identical method, the
+identity reference's three marks read `[11.68, 9.09, 4.76]`, `[11.31, 8.80, 4.59]`, `[11.29, 8.80, 4.57]`
+with range `[45, 35, 18]`. A pure black multiply over its mean would predict ranges `21.6 / 35 / 35.5`;
+it measures `45 / 35 / 18` — R varying **twice** what a multiply predicts and B **half**. So the
+reference's depth **shifts chroma across the face** while the app's is proportional by construction
+(`0.087 / 0.083 / 0.079`). Net: the app now **matches** the reference on B (4.60 vs 4.57) and is ~3x
+flatter on R. Note for whoever acts on it: the guard forbids a second **hue**, and `theme.test.ts`
+explicitly permits accent **chroma** movement — so a chroma-shifting ramp is not fenced, but it is a
+larger call than equalising the three finishes and should not be smuggled in alongside it.
+
+### 4.5 TWO BUILDS WERE REVERTED, AND BOTH REVERTS BOUGHT MORE THAN THE BUILDS WOULD HAVE
+
+D12 is literal — a red wave reverts its piece and records the gap — and both reverts were taken on that
+rule rather than argued around. **Neither fence was edited to pass.**
+
+**SIDEBAR — reverted on a named unit test.** The build relocated the live "Background sessions" section
+from between the rail head and the filter down to the rail's foot (one CSS declaration plus a JSX move).
+It reddened `tests/background-sessions.test.tsx`'s test **"it sits ABOVE the stored-transcript groups in
+the rail"** — a `compareDocumentPosition` pin from **#91**. The spec is silent on the section, so this is
+a **test fence, not a spec break** — and an executable fence is harder than prose, not softer. Both files
+restored; the reverted diff is kept at `.gauntlet/waves/core-after-docks/4/sidebar-build-REVERTED.diff`.
+
+Three things survive the revert, and together they are worth more than the build:
+
+1. **The critic's own recommended mechanism is refuted on width arithmetic.** The head row has
+   `248 - 16 - 8 = 224px` of content width; "Background sessions" is ~105px, the `Refresh` shell ~58px,
+   two 8px gaps 16px — **179px before any status text**, against ~92px needed for "None running here".
+   The fold cannot fit at a 248px rail, so the mechanism both critics named is unbuildable.
+2. **The critic's TARGET is reachable without it.** Pure in-place tightening: bg-sessions trimmed
+   without folding ~37 + filter ~7 + scope ~4 + group heading ~2 = **~50px off 225 -> ~175px**, against
+   the wave-4 critic's asked 170. That is wave 5's gap and it needs no relocation.
+3. ⚠️ **A CSS `order` dodge exists and was REFUSED — record it so a later wave does not "discover" it.**
+   `order: 1` on the section would leave DOM order untouched and therefore **pass** the
+   `compareDocumentPosition` test while moving the section visually. It was rejected for two concrete
+   reasons: `.sidebar-foot` is `order: 0` and not that builder's selector, so the section would land
+   *below* the rail's authored bottom edge; and it would put a tab stop at second position while the eye
+   finds it at the foot — **a focus order that lies**. Passing the letter of a test while defeating what
+   it protects, and adding an accessibility defect to do it, is worse than reverting.
+
+**INPUTBAR — reverted on two rendered driver pins, and the reason generalises.**
+`scrollbar-gutter: stable both-edges` on `.chat` reddened three drivers:
+
+| driver | what it returned |
+|---|---|
+| `gui-51` | `.chat gutter 19.2css / 24dev, expected 12.5dev` — and the driver's own comment reads **"Never widen these"** |
+| `gui-98` | criterion 2: `.subagent-drawer .chat-column` measured **751.2px against exactly 760** (`820 - 2 hairline - 48 padding = 770`; a 20px reserve leaves 750) |
+| `gui-118` | `FAIL` |
+
+**The generalisable finding: `.chat` is not one surface.** It is **reused inside the subagent drawer at
+a second, narrower width where the 760px measure is already at its limit** — so any change that spends
+horizontal room in `.chat` breaks a pinned measure on a surface no gauntlet piece captures. That is why
+the canonical fix is dead, and it is a fact worth more than the declaration was.
+
+**The revert produced clean attribution as a by-product:** DOM phase **35/39 baseline -> 32/39 with the
+seam fix -> 35/39 after the revert**, with `gui-94`'s message byte-identical throughout. The three reds
+were the gutter and nothing else; the mark depth caused zero.
+
+### 4.6 THE OWNERSHIP CONTROL IS THE CLEANEST OF THE RUN, AND THE ATTRIBUTION CLOSES AT ZERO REMAINDER FOR THE SECOND WAVE RUNNING
+
+- **The three dock captures are byte-identical across ALL FOUR WAVES** (`bd48b6dbded8` /
+  `acddc564b236` / `b9fa0168d66e`), 0 changed pixels.
+- `sidebar.png` and `input-bar.png` byte-identical wave 3 -> 4, with the hashes **proven live**
+  (sidebar differed at every earlier step: `ea6c090bfc25` / `e5def5dee10e` / `938b4c06c68b`). So both
+  reverts were complete, verified at the pixel level and not merely by `git checkout`.
+- **`welcome.png`'s changed pixels form exactly ONE 44x44 component** (1,789px, 92.4% of the box) — so
+  the reverted gutter declaration left **no trace** on the pane that renders outside the scroll
+  container, which is the independent proof that the two builders sharing `chat.css` did not leak.
+- Pixel attribution, zero remainder: `window-welcome` **2,242 = 1,789 + 453**; `window-session`
+  **1,765 = 656 + 656 + 453**.
+- Across all eleven captures: **9,350 changed pixels in 10 connected components, every component
+  exactly 22x22, 28x28 or 44x44. Not one changed pixel falls outside a mark interior.**
+
+The marks also did not move: bounding boxes identical at all three sites, and the per-row inset profile
+differs at exactly two bottom rows each on the 44px and 28px marks, by 1px inward — the pass's own
+chroma threshold releasing an antialiased rim pixel as the fill darkens. **Do not read those four rows
+as a radius change.**
+
+### 4.7 THE CHAT REFUTATION IS CONFIRMED BY INDEPENDENT MEASUREMENT, AND CHAT'S PLATEAU SIGNAL IS CONFOUNDED BY THE INSTRUMENT
+
+The leg refuted wave 3's Chat gap **before the wave ran**, on source: `.chat-column` already ships
+`padding: 24px 0 32px` — the spec's own 24px — and `Chat.tsx:409` autoscrolls (`scrollTo({top:
+scrollHeight})`), so the "~13px top inset" the wave-3 critic measured is a **scroll offset**, and raising
+a padding that has already scrolled past cannot move it. `DESIGN.md` sets the transcript rhythm at
+"24px vertical gaps, 40px around the date divider", and `.date-divider`'s 16px margins plus the column's
+24px flex gap **are** that 40px. The request was indistinguishable from what ships.
+
+**The smoothing pass confirmed it independently, having been asked only to measure** (the request was
+framed as a neutral instrument question with no conclusion attached): **~89px of transcript sits ABOVE
+the viewport**; rows `y0..y12` are completely empty; and the first visible element's rounded top corner
+is **fully visible** from y13 (ink width growing 434 -> 456 across eleven rows). **Nothing is cut by the
+top edge** — the absent ~89px is whole earlier content plus the column's top padding.
+
+**The consequence is bigger than one refuted gap.** A critic judging `chat.png` **cannot** see the top
+of the transcript at all: not a first-message treatment, not a session header, and **not the date
+divider** — which is one of the two criteria `linear-changelog` was chosen to judge
+(`.gauntlet/bar/README.md`). Wave 1 recorded this as not-finding (g); wave 3's critic then produced a
+**gap** out of it; wave 4 measured it. **The instrument gap has now cost a wave a builder.**
+
+**So Chat's sixth prose-weight raising is a plateau signal AND an artifact, and both readings are
+recorded.** Adjudication 2.4's standing instruction is followed — reported as a plateau signal, not
+refuted a sixth time. But the signal is confounded: the surface the critic can actually see is smaller
+than the surface, so "no new axis" partly measures the capture rather than the artifact. **A wave does
+not sweep the instrument** (#166's precedent: comment, do not act), so this is filed, not fixed.
+
+Two small slips in an otherwise exceptional pass, recorded because this run tracks instrument error
+rate rather than assuming it is zero: it reported the column's top padding as **32px** where the source
+says **24px** (32 is the bottom), and it read the second assistant turn as contributing "an avatar and
+nothing else" when that turn's single prose line sits **beside** the avatar rather than below it. No
+conclusion in this file rests on either.
+
+### 4.8 THE SAME CRITIC SLIP RECURRED ON THE SAME FILE, SO IT IS REPRODUCIBLE RATHER THAN RANDOM
+
+Wave 3's Titlebar critic reported `window-session.png` as `1440x912` against a true `1440x900`. **Wave
+4's Titlebar critic reported `1440x912` again** — same slip, same file, same piece slot, independent
+critics on the same family two waves apart. Wave 3 recorded its two errors as evidence that "this
+instrument does make dimension slips"; wave 4 upgrades that to a **specific, repeatable** one. Every
+other dimension checked out (Welcome reported `welcome.png` 1440x852, `window-welcome.png` 1440x900 and
+`linear-method.png` 1680x1050, all correct; Sidebar reported 248x852, correct; Chat reported
+`chat.png` 1192x721, correct). **No verdict rests on it**, and the rule stands: a claim resting on a
+critic's reported frame size must be re-measured.
+
+### 4.9 NO NEW PIECE, AND FOR THE THIRD WAVE RUNNING THE MISSING ARTIFACT IS A TEST — BUT THIS TIME THE TEST IS EXACT
+
+The pass proposed **none**, and refused on the merits rather than by deferral: the one genuinely
+cross-surface defect is the 5px seam, it lives in the boundary **between** Chat and InputBar (two panes
+of different effective width each correctly centring the same 760px measure), and a piece that could own
+it would have to take the shared column measure **away from two existing pieces** — redrawing the scope
+boundary of the decomposition from inside the loop. That is the identical objection that parked
+`ToolCard`. The seam needs an owner decision about which pane width is canonical, not a sixth critic.
+
+**And the wave produced the sharpest version yet of the run's recurring answer.** Finding 5: this
+wave's one landed change **has no test pin at all**, and the smoothing report is measurably its only
+one. Had `background: var(--mark-depth), var(--mint)` failed to parse, all three sites would have
+measured `[0.00, 0.00, 0.00]` exactly as wave 3 did **and every text-based pin in the repo would still
+be green** — jsdom loads no CSS, and `theme.test.ts` validates palette keys rather than layer values.
+
+The test, stated precisely enough to build: **assert interior stddev > 2.0 on the G channel at the three
+mark sites, with the mint mask eroded 2px** — the erosion is load-bearing, because a 4px *bounding-box*
+inset on a 22px mark truncates 18% of the ramp and reports ~20% low. **A floor, not a target. Do not pin
+6.41.** Expect three different values, because a disc and a rounded square do not carry a ramp alike.
+
+**Three consecutive waves have now concluded that the decomposition into SURFACES is complete while the
+missing artifacts are INVARIANTS.** That is the run's structural finding, and it is why the piece list
+has not churned.
+
+### 4.10 What wave 5 inherits
+
+**Three builders. Welcome and Chat are both blocked, for different reasons.**
+Cost: **3 + 5 + 1 = 9 agents.**
+
+| piece | wave 5 gap | trap |
+|---|---|---|
+| Welcome | **NONE — no builder, third wave running.** Its only surviving gap is the vertical-placement **owner call**, now raised by **three independent critics on three waves**, all computing the same destination (−60.00px, midpoint y366 against pane centre y426). | Do NOT build it without the owner. This piece is **blocked on a human, not plateauing on the instrument** — do not let its unchanged verdict be read as the artifact having converged. Do not refile the centring (FIXED at +0.50px, the arithmetic floor) or the mark's squareness (r/side 0.3182 at both sizes). |
+| Titlebar | **Equalise the mark's finish across the three shapes (4.4, finding 2).** One alpha yields G stddev **5.00 (22px square) / 5.77 (44px plate) / 4.90 (28px disc)**, so the identity paints three finishes; the 44px reads 18% deeper than the avatar. Make the three read as one finish. | ⚠️ **This is NOT "raise the alpha", and the critic's own "1px inset edge plus 2px soft shadow" is not the fix either.** 6.41 is unreachable (R ceiling 4.65) and `alpha ~= 0.138` would push G past the reference's 9.09. **Cross-file again**: `.logo-mark` in `titlebar.css`, `.welcome-mark` and `.avatar` in `chat.css`, plus `--mark-depth` in `tokens.css`. **Guard: no second mint hue** (chroma movement is permitted by `theme.test.ts`, hue is not). #140 allows only ONE box-shadow with a nonzero **horizontal** offset and it is the rail stripe. |
+| Sidebar | **Compress the pre-list stack IN PLACE to ~175px** (4.5): bg-sessions trimmed without folding ~37 + filter ~7 + scope ~4 + group heading ~2 = ~50px off the measured 225. Critic asked 170. **Also repair `.session-scope`'s false comment** while you are in that file. | ⚠️ **RELOCATION IS FENCED** by `tests/background-sessions.test.tsx` ("it sits ABOVE the stored-transcript groups in the rail", #91) and **the fold onto the head row is width-refuted** (224px row, 179px before status text, ~92px needed). ⚠️ **The `order: 1` dodge passes that test and must still be refused** — focus-order lie, and `.sidebar-foot` is `order: 0`. Do not touch `shared.css` (`gui-94` already red there). Do not remove or rename any class (`gui-49`/`gui-95` already red). Keep the empty state's copy AND its `Refresh`. `.sidebar-head`'s 44px is pinned by the spec's "same 44px head". |
+| Chat | **NONE — no builder.** The sixth prose-weight raising is reported as a **plateau signal** per 2.4's standing instruction, not refuted again. | ⚠️ **Do not read Chat as a converged surface.** Its critic provably cannot see the top ~89px of the transcript (4.7), including the date divider `linear-changelog` was chosen to judge — so its axis exhaustion partly measures the capture. Filed, not fixed: a wave does not sweep the instrument. |
+| InputBar | **The 5px seam, COMPOSER SIDE ONLY — `composer.css`.** Mirror the transcript's 10px scrollbar reserve on the composer's container so both 760px boxes centre in the same effective box. This is now the **only unrefuted form**. | ⚠️ **Do NOT touch `.chat`**: `gui-51` pins its gutter at 12.5dev and says "never widen", and `gui-98` pins `.subagent-drawer .chat-column` at exactly 760px in an 820px pane — **`.chat` is reused at a narrower width where the measure is already at its limit**. ⚠️ **Refuse a sixth distribution request**; the axis died at 2.5 and is refused against the spec's authorised "Chat column: max-width 760px, centered". `.message-input` stays ungrouped. |
+
+**Standing instruction for the wave-5 leg, learned this wave:** the wave-3 lesson ("inline the source
+in the brief") is **necessary but not sufficient**. This wave's Sidebar builder died **twice** on the
+180s no-progress limit even with its CSS inlined, because the brief told it to *read* a 760-line
+component and a 1313-line stylesheet in place. The attempt that landed used **bounded reads**
+(`Read` with `offset`/`limit`). **Inline what it must edit, and name the exact line ranges for anything
+it must open.**
+
 ## Log
 
+- [wave 4] **THE RUN'S SECOND VERDICT MOVEMENT IN TWO WAVES, AND THE MIRROR IMAGE OF THE FIRST:
+  Titlebar `BAR WINS -> TOO CLOSE`, on the ONE piece whose own surface changed.** `plateau` stays 0, so
+  the run has gone two consecutive waves without plateauing, on two different pieces, at wave 4 of 12.
+  Where wave 3's movement landed on a piece with no builder and byte-identical pixels, this one landed
+  on the only changed surface — **453 pixels inside a 22x22 mark** — and **the critic's own gap names
+  that mark and asks for more depth**, which is a consistent story rather than a coincidence. Counter-
+  weight recorded rather than buried: 453px is **0.65%** of `titlebar.png`, and one wave cannot separate
+  a sensitive instrument from stable variance. Adjudication 4.1.
+- [wave 4] **ONE BUILD LANDED OUT OF THREE, AND THE TWO REVERTS TAUGHT MORE THAN THE BUILDS WOULD HAVE.**
+  D12 was applied literally — a red wave reverts and records — and **neither fence was edited to pass.**
+  **Sidebar** relocated the live background-sessions section to the rail's foot and reddened a named
+  `compareDocumentPosition` test from **#91** ("it sits ABOVE the stored-transcript groups"); the spec is
+  silent, so it is a **test fence, not a spec break**, and an executable fence is the harder kind. Three
+  things survived it: the critic's own **fold mechanism is refuted on width arithmetic** (224px row, 179
+  before status text, ~92 needed for "None running here"), its **target IS reachable by pure in-place
+  tightening (~175px against the asked 170)**, and a **CSS `order: 1` dodge exists that would PASS the
+  test while lying about focus order — refused, and recorded so a later wave cannot "discover" it.**
+  **InputBar**'s `scrollbar-gutter: stable both-edges` reddened `gui-51` (gutter 24dev against a pinned
+  12.5dev, on a driver whose own comment says *"never widen these"*), `gui-98` (`.subagent-drawer
+  .chat-column` 751.2px against exactly 760) and `gui-118`. **The generalisable fact: `.chat` is not one
+  surface — it is reused in the subagent drawer at 820px where the 760px measure is already at its
+  limit**, so the canonical seam fix is dead and the composer side is the only unrefuted form.
+  Adjudication 4.5.
+- [wave 4] **THE MARK DEPTH LANDED EXACTLY AS AUTHORED, AND THE PROOF IS A BACK-FIT RATHER THAN A
+  THRESHOLD.** Interior stddev went from mathematically flat `[0.00, 0.00, 0.00]` at all three sites to
+  `[3.63, 5.00, 4.83]` (22px), `[4.04, 5.77, 5.38]` (44px) and `[3.49, 4.90, 4.60]` (28px), ten of twelve
+  channel readings inside the reference's `[3.65, 9.40]` band — and **solving alpha back out of the
+  pixels gives 0.100–0.103 at every channel at every site against an authored 0.1.** **The wave's own
+  6.41 target was arithmetically UNREACHABLE, so the miss is the brief's formula, not the build:**
+  `alpha x 255 x L` conflates the mint's **OKLCH lightness** with an sRGB channel scale, and the true
+  per-channel ceilings are **R 4.65 / G 6.58 / B 6.18** — R cannot reach 6.41 at any box size. Do not
+  carry 6.41 forward; `alpha ~= 0.138` would push G past the reference's own 9.09. **This also corrects
+  the leg's own first reading**, which blamed the whole shortfall on its 4px erosion — erosion is
+  second-order. Adjudication 4.4.
+- [wave 4] **THE BEST FINDING IS AGAIN A CROSS-SURFACE SEAM: ONE ALPHA IS PAINTING THREE FINISHES.** A
+  ramp's stddev is size-invariant but **not shape-invariant** — a disc weights mid-ramp rows more than a
+  near-square. Eroded end-row widths as a fraction of the widest: 22px `0.56`, 44px `0.55`, 28px
+  **`0.25`** (the avatar is `border-radius: 50%`, a true disc). Measured G: **5.00 / 5.77 / 4.90**, so the
+  avatar reads **flatter** than the 22px chip despite spanning more of its box and the 44px plate reads
+  **18% deeper** than the avatar. **The identity now paints at three finishes rather than one** — the
+  same class of inconsistency the brief said treating one site would create. That is wave 5's Titlebar
+  gap, and it is the third consecutive wave the smoothing slot has earned its agent.
+- [wave 4] **A `SPEC BREAK` CAME BACK AND IT IS REAL, BUT NOTHING CAN BE REVERTED UNDER IT.** The Chat
+  critic caught that the centred titlebar paints `inspect-ws` while the selected session is a different
+  string — and `DESIGN.md`'s Layout bullet says **"Center: session title"** while `.session-title`
+  renders **`basename(cwd)`** (`Titlebar.tsx:305`), the workspace folder, with the rail simultaneously
+  showing real session titles. Chat had no build, the break is in the Titlebar's centre slot seen through
+  the shared frame, and the behaviour **predates run 3**. **It is the SECOND unresolved conflict on the
+  SAME element** — adjudication 2.2 has it on the wrong type rung against the spec's own role table,
+  open since wave 2. One element, two conflicts, two waves apart, two different critics. Filed, escalated,
+  **not decided by a wave**. Adjudication 4.3.
+- [wave 4] **THE LEG'S PRE-WAVE CHAT REFUTATION WAS CONFIRMED BY INDEPENDENT MEASUREMENT, AND THE
+  CONSEQUENCE IS BIGGER THAN THE GAP.** The wave-3 Chat gap ("raise the transcript's top inset from ~13px
+  to 24px") was refuted **before the wave ran**: `.chat-column` already ships `padding: 24px 0 32px` and
+  `Chat.tsx:409` autoscrolls to `scrollHeight`, so the 13px is a **scroll offset** a padding cannot move;
+  the divider's 16px margins plus the 24px gap are exactly the spec's "40px around the date divider".
+  The smoothing pass, **asked only to measure and given no conclusion**, independently found **~89px of
+  transcript above the viewport**, rows `y0..y12` empty, and the first element's rounded corner **fully
+  visible** from y13 — nothing clipped. **So a Chat critic can never judge the top of the transcript,
+  including the date divider that `linear-changelog` was chosen to judge.** Wave 1 logged it as a
+  not-finding, wave 3's critic turned it into a gap, wave 4 measured it: **the instrument gap has now
+  cost a wave a builder.** Filed rather than fixed — a wave does not sweep the instrument (#166's
+  precedent). Adjudication 4.7.
+- [wave 4] **CHAT HELD `TOO CLOSE`, WHICH IS THE FIRST POSITIVE EVIDENCE ON 3.1 AND SETTLES LESS THAN IT
+  LOOKS.** Chat's inputs moved by ~0.15% of the frame (1,312px inside its two avatars; 1,765px frame-wide,
+  all mark interiors) and its verdict held, so wave 3's movement was **not a one-off fluke**. But holding
+  does **not** separate a real cross-surface lift from a *reproducible* inter-critic bias — both predict
+  exactly this. 3.1's test was under-specified: only a fall-back would have been decisive.
+  **AND CHAT'S SIXTH PROSE-WEIGHT RAISING ARRIVED**, so 2.4's standing instruction fires: reported as a
+  **plateau signal** on this surface rather than refuted a sixth time — while noting the signal is
+  confounded by 4.7's instrument gap. Adjudication 4.2.
+- [wave 4] **THE CLEANEST OWNERSHIP CONTROL OF THE RUN, AND ZERO-REMAINDER ATTRIBUTION FOR THE SECOND
+  WAVE RUNNING.** The three dock captures are **byte-identical across all four waves**; `sidebar.png` and
+  `input-bar.png` are byte-identical wave 3 -> 4 with the hashes **proven live** (sidebar differed at every
+  earlier step), so both reverts were complete at the pixel level and not merely by `git checkout`;
+  `welcome.png`'s delta is **exactly one 44x44 component** (1,789px), which independently proves the
+  reverted gutter left no trace on the pane outside the scroll container and that two builders sharing
+  `chat.css` did not leak. Diffs sum exactly: `window-welcome` **2,242 = 1,789 + 453**, `window-session`
+  **1,765 = 656 + 656 + 453**. Across all eleven captures, **9,350 changed pixels in 10 components, every
+  one exactly 22x22, 28x28 or 44x44 — not one changed pixel outside a mark interior.**
+- [wave 4] **D7 GREEN, AND THE PRE-WAVE BASELINE PAID FOR ITSELF A SECOND TIME BY MAKING A REVERT
+  DECIDABLE.** `typecheck` clean, `npm test` **96 files / 1412 passed / 43 skipped** (identical to wave 3),
+  `build` clean at bundle **`index-CFeKM2yi.css`** — the hash the captures were taken from, so the
+  committed tree renders exactly what the critics judged. The rendered half went **35/39 at the pre-wave
+  baseline -> 32/39 with the seam fix -> 35/39 after the revert**, with `gui-94`'s message byte-identical
+  at all three points and the same four non-PASS (`gui-123` UNSCORED, `gui-49`, `gui-94`, `gui-95`).
+  That sequence **is** the attribution: the three new reds were the gutter declaration and the mark depth
+  caused none. Capture `PASS`, 11/11, exit 124 — the documented post-`PASS` hang, not a failure.
+- [wave 4] **INSTRUMENT: THE SAME CRITIC SLIP RECURRED ON THE SAME FILE, so it is reproducible rather
+  than random.** Wave 3's Titlebar critic reported `window-session.png` as `1440x912`; wave 4's reported
+  `1440x912` again, against a true `1440x900` — same file, same piece slot, independent critics two waves
+  apart. Every other dimension across the five critics checked out. No verdict rests on it. Separately,
+  **the six-agent judging fan-out was the first of the run with zero deaths and zero stalls**, while the
+  **Sidebar builder died twice** on the 180s limit even with its CSS inlined, because the brief told it to
+  *read* a 760-line component and a 1313-line stylesheet; the attempt that landed used **bounded reads**.
+  **Inlining the source is necessary but not sufficient — name the line ranges too.** Adjudications 4.8, 4.10.
+- [wave 4] **NO NEW PIECE, AND FOR THE THIRD WAVE RUNNING THE MISSING ARTIFACT IS A TEST — now stated
+  exactly enough to build.** The pass refused a piece **on the merits**: the 5px seam lives in the
+  boundary *between* Chat and InputBar, so a piece owning it would take the shared 760px measure away
+  from two existing pieces — the identical objection that parked `ToolCard`. And this wave's one landed
+  change **has no test pin at all**: had the layered background failed to parse, all three sites would
+  read `[0.00, 0.00, 0.00]` exactly as wave 3 did **with every text pin still green**, because jsdom
+  loads no CSS and `theme.test.ts` validates palette keys rather than layer values. The test:
+  **interior stddev > 2.0 on G at the three mark sites, mint mask eroded 2px, as a FLOOR not a target**
+  — the erosion is load-bearing (a 4px bbox inset on a 22px mark truncates 18% of the ramp), and 6.41
+  must not be pinned. Commented on **#168**, which already carries two invariants of this class.
 - [wave 3] **THE RUN'S FIRST VERDICT MOVEMENT — `plateau: 1 -> 0` — AND IT LANDED ON THE ONE PIECE
   WITH NO BUILDER.** Chat went `BAR WINS -> TOO CLOSE` while `chat.png` stayed **sha256-identical to
   wave 2** (hash proven live: the same file DID change wave 1 -> wave 2). The only input that moved
