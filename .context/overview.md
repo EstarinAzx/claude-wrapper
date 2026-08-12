@@ -483,18 +483,18 @@ tags: [context, overview]
   `npm i --no-save playwright-core`)
 
 ## Where to look first
-- `.context/pick-up.md` — current frontier + landmines (currently: **relay chain 7
-  is COMPLETE — the `ready-for-agent` queue is DRY and `/preset gauntlet` was
-  fired as its successor. `ready-for-human` was BANNED for that batch; blockers
-  went to `needs-info` + a comment + a PushNotification**. The remaining count is
-  deliberately not restated here — it moves every leg, and a number sitting
-  beside a pointer is the thing that rots (#149). Run the frontier query; it is
-  the authority and this line has been wrong before.
+- `.context/pick-up.md` — current frontier + landmines. **Neither the queue's
+  state nor the chain's number is restated here**: both move every leg, and a
+  status sitting beside a pointer is the thing that rots (#149) — this line
+  claimed "chain 7 is COMPLETE, the queue is DRY" through two later chains. Read
+  the file, and run the frontier query, which is the authority.
+  **`ready-for-human` is BANNED while the owner is away**; blockers go to
+  `needs-info` + a comment + a PushNotification + stopping the chain.
   **40 `gui-*.mjs` assertion drivers** — 39 plus the observational
   `gui-scope-zoom-pill` — and **four `.cjs` probe entry points** (`gui-78-probe`,
   `gui-78-renderer-probe`, `gui-79-probe`, `gui-110-probe`). Since #132 there are
-  also `gui-*.source.mjs` **sidecars** (`gui-75`, `gui-96`, `gui-98`, `gui-123`,
-  `gui-136`, `gui-138` — deliberately uncounted here, since a number beside a list is what
+  also `gui-*.source.mjs` **sidecars** (`gui-75`, `gui-96`, `gui-98`, `gui-122`,
+  `gui-123`, `gui-136`, `gui-138` — deliberately uncounted here, since a number beside a list is what
   rots, #149; the gate globs them and is the authority), which are NOT drivers
   and are excluded from that count, and **three** plain
   modules that are not executable at all — `inspect-workspace.mjs` (#142, the

@@ -7,19 +7,20 @@ tags: [context, active-work]
 
 # Active Work
 
-_Last updated: 2026-08-12 by Opus 5, relay chain 8 leg 1 — owner away_
-_At commit: `5267ede` on `main`_
+_Last updated: 2026-08-12 by Opus 5, relay chain 8 leg 2 — owner away_
+_At commit: `454e8de` on `main`_
 
 ## Current focus
 
 **Relay chain 8 is draining the three-ticket queue a 2026-08-12 triage pass promoted,
 one ticket per leg (`N=1`), with a fresh gauntlet run chained behind it via `then:`.**
 
-Leg 1 landed **#153** as `5267ede` and closed it. **Two tickets left: #154, then #156.**
-Both are instrument work. Say it out loud, because it sets expectations for the whole
-chain: **nothing in this queue changes the app.** Every user-facing item in the tracker
-is a design call and nine of them sit with the owner. The visible change is meant to
-come from the gauntlet chained behind this queue, not from these legs.
+Legs 1-2 landed **#153** and **#154**. **One ticket left: #156**, then the queue is dry
+and `then:` fires the gauntlet. All of it is instrument work. Say it out loud, because
+it sets expectations for the whole chain: **nothing in this queue changes the app.**
+Every user-facing item in the tracker is a design call and they sit with the owner. The
+visible change is meant to come from the gauntlet chained behind this queue, not from
+these legs.
 
 Verify rather than trust this file:
 
@@ -30,18 +31,26 @@ git rev-list --count origin/main..main
 
 ## State
 
-- **In flight:** nothing. `ticket/153-title-enrichment-flake` was squash-merged and
+- **In flight:** nothing. `ticket/154-gui-122-derived-tab-budget` was squash-merged and
   deleted after `git diff --quiet` confirmed it byte-identical to `main`. Tree clean.
+- **Landed 2026-08-12 (chain 8 leg 2):** **#154** as `454e8de`, **CLOSED**. Two driver
+  files, one of them new; no `src/` change. Full reasoning in
+  [[2026-08-12-a-ban-is-satisfied-by-the-absence-of-what-it-bans]].
 - **Landed 2026-08-12 (chain 8 leg 1):** **#153** as `5267ede`, **CLOSED**. One line of
   one test file; no source change. Full reasoning in
   [[2026-08-12-awaiting-the-mechanism-is-half-a-fix-and-the-timeout-is-bounded-at-both-ends]].
-- **Filed this leg:** **#162** at `needs-triage` — the repo-wide version of #153's cause.
-  A leg must not promote it; that is what makes the chain's stop condition reachable.
-- **Open and agent-ready:** **#154** (next), **#156**. Nothing else is promotable by a leg.
-- **Gate on `main` at `5267ede`:** typecheck clean, **96 files / 1406 passed + 44
-  skipped**, build clean (`index-DOI17h8g.css`). Six sequential full suites, all green.
-  **Read the number off `main`, never off this file.**
-- **NOT PUSHED**, 52 commits ahead at the time of writing. D6 stands, and the count in
+- **Filed by legs so far, all at `needs-triage`:** **#162** (the repo-wide version of
+  #153's cause), **#163** (`gui-124` still hardcodes a 12-press Tab budget — the last of
+  #143's class), **#164** (the Tab-reach drivers start beside their target, and
+  `gui-123`'s sidecar has no vacuity guard). **A leg must not promote any of them**; that
+  is what makes the chain's stop condition reachable.
+- **Open and agent-ready:** **#156** only. Nothing else is promotable by a leg.
+- **Gate on `main` at `454e8de`:** typecheck clean, **96 files / 1408 passed + 43
+  skipped**, build clean (`index-DOI17h8g.css` unchanged). The `+2 / -1` against leg 1's
+  1406/44 is exactly #154 — two new sidecar tests, and `gui-122.mjs` leaving the "no
+  source-level sidecar" reported-skip list. **Read the number off `main`, never off this
+  file.**
+- **NOT PUSHED**, 54 commits ahead at the time of writing. D6 stands, and the count in
   this sentence is already stale — read it with the command above.
 - **Gauntlet run 2 is over and merged.** `docks-and-min-window` merged as `25d13e0`,
   stopped on its `max_waves` backstop at wave 12 with `plateau: 2` — **cut off, not
@@ -52,24 +61,48 @@ git rev-list --count origin/main..main
   `.claude/gauntlet-docks-and-min-window.md`. `.claude/gauntlet.md` is **archived** so a
   chained run cannot seed-guard onto the closed one.
 
-## What #153 changed, and the one thing worth carrying forward
+## What #154 changed, and the two things worth carrying forward
 
-The transferable rule is about **a fix that treats the symptom's location instead of its
-size**. Swapping `findByText` for `waitFor` reads like removing a fixed 1000ms window. It
-does not: both read the same `asyncUtilTimeout`, which is `1000`
-(`node_modules/@testing-library/dom/dist/config.js:15`). What changes is the work inside
-the window, from *hint resolve + React commit + text query over 100 rows* down to *the
-read was requested*. Strictly less, and also what the file header names as that test's
-subject — so the swap is correct, and on its own it still only narrows the race.
+**A ban is satisfied by the absence of what it bans.** #143's text criterion says "no Tab
+traversal in this driver is bounded by a hardcoded number". Delete the
+`keyboard.press('Tab')` line and leave the bound derived, and it reports `ok` forever —
+there are no traversals, so none is hardcoded. Proven rather than argued: criterion 1
+stays **green** under that mutation and only #154's new criterion 2 reds
+(`tabPresses: 0`). Same family as #145 and #146, one turn further — a check that runs and
+polices nothing. **`gui-123` carries this hole today (#164).**
 
-**The timeout that finishes the fix is bounded at BOTH ends, and the upper bound is the
-part nobody expects.** Above 1000ms for headroom; strictly below vitest's 5000ms
-`testTimeout`, which this repo does not override. A first attempt at 5000ms was caught by
-the mutation run: the test-level cap fires before `waitFor` can report itself, and the
-failure degrades from an assertion naming the call it wanted into a bare `Test timed out`
-pointing at the test declaration. **A wait must leave room for its own error message.**
+**A guard outlives the thing it guarded against, and porting it means re-deriving its
+premise.** #154's ticket says gui-122 is "one flip away" from #143's red because the
+rail's scope toggle survives relaunch. **#147 landed after #143 and closed that channel.**
+`profileArgs()` gives each driver process a `--user-data-dir` that `mkdtemp` just made,
+and `dom-phase.mjs` mints its own root per run, so the `localStorage` holding
+`sidebar-scope` is empty at every launch and `Sidebar.tsx` falls back to `project`. First
+run of the ported driver: `RAILPIN {"scope":"This project","rows":0,"pinnedHere":false}` —
+nothing to click. So phase 1b is a **premise check, not a repair**. Third instance of
+[[2026-08-11-a-value-check-outlives-its-warrant-unless-the-warrant-is-checked-too]].
 
 ## New landmines from this leg
+
+**`document.body.focus()` DOES NOT MOVE FOCUS.** `body` has no `tabindex`, so the call is
+silently ignored and `activeElement` stays wherever the phase above left it. Both
+`gui-122` and `gui-123` "reset" focus this way before a Tab traversal and neither reset
+does anything. In gui-122 that means phase 3's clicked copy button still holds focus and
+the first Tab lands on the *other* path's `.code-copy` — `presses: 1`. The ring assertion
+survives it; the reachability wording does not. #164.
+
+**A driver's Electron profile is a THROWAWAY, per process, and that is a premise other
+checks rest on.** `profileDir()` returns `DOM_DRIVER_PROFILE` when set (dom-phase mints
+`mkdtemp` per run, one dir per driver) and otherwise `mkdtemp`s its own and removes it on
+exit. So **no persisted renderer state survives into any driver run** — no zoom, no
+window bounds, no `localStorage`. Any driver comment claiming it inherits or contaminates
+persisted state is pre-#147 and stale.
+
+**Only THREE drivers tab-traverse: `gui-122`, `gui-123`, `gui-124`.** An `i < 60` loop is
+not a Tab loop — `gui-48`, `gui-52`, `gui-54` and `gui-80` all carry one and none of them
+presses Tab at all; theirs are `waitForTimeout` poll budgets (60 × 1000ms or 60 × 2000ms)
+waiting on a real CLI turn or on `.model-pill` to un-disable. A wall-clock timeout has
+nothing countable to derive from. **Do not re-open those four**; #154's comment records
+the measurement.
 
 **`waitFor` and `findBy*` share one timeout budget, and vitest's `testTimeout` caps
 both.** Any new async wait in this repo lives inside 1000ms by default and inside 5000ms
@@ -141,6 +174,11 @@ also **pre-merge** evidence. #153 was a test-only change and moved none.
 | `gui-96` | — | **PASS** (ALL GREEN) | 11 criteria, all mutation-verified |
 
 There is still **no full-phase baseline on an unmodified tree.**
+
+**`gui-122` was run standalone at `454e8de` and PASSes** — twice unmodified (once before
+the change, once after), plus four mutation runs that each red as intended. It is not in
+the table above and did not join it. Its run now also prints a `--- source-level ---`
+block, because the driver drives the same `checks` array the fast gate does.
 
 **`gui-94` reds for a second, deliberate reason.** Gauntlet wave 2 gave
 `.command-row-desc` a two-line clamp and new leading, changing a box `#94` pinned as
@@ -232,10 +270,15 @@ and the discriminator is simply whether the composer cleared. **#150 is one
 user-facing defect (Commands dock stuck empty). Then **#152**, **#151**, **#159** and
 **#160** (two separate questions, not one), **#157**, **#144**.
 
-**#162 is new this leg**, at `needs-triage`: whether the repo should set a global
-`asyncUtilTimeout`, and the three options are laid out on the ticket. It needs new
-infrastructure (a `setupFiles` entry that does not exist), which is why it is an owner
-call rather than a leg's.
+**Three tickets were filed by legs, all at `needs-triage`, and none is promotable by a
+leg.** **#162** (leg 1): whether the repo should set a global `asyncUtilTimeout`, three
+options on the ticket; it needs infrastructure that does not exist (a `setupFiles` entry),
+which is why it is an owner call. **#163** (leg 2): `gui-124` still bounds its Tab
+traversal with `hops < 12`, the last of #143's class — mechanical, but whether it also
+wants the phase-1b rail check is a real question, since its traversal may not cross the
+rail at all and that must be measured rather than copied. **#164** (leg 2): two findings
+about what the Tab-reach checks *claim* — the traversal starts one stop from its target
+(`document.body.focus()` is a no-op), and `gui-123`'s sidecar has no vacuity guard.
 
 **CI exists, has never run, and `main` has never been pushed.**
 `.github/workflows/fast-gate.yml`, on push, `windows-latest`, exactly `typecheck` +
@@ -269,6 +312,7 @@ fixed at seed — a budget, not a claim that the unpicked surfaces lack a standa
 ## Related
 
 - [[overview]] · [[pick-up]] · [[decisions]] · [[stack]] · [[happy-path]] · [[flows]]
+- [[2026-08-12-a-ban-is-satisfied-by-the-absence-of-what-it-bans]]
 - [[2026-08-12-awaiting-the-mechanism-is-half-a-fix-and-the-timeout-is-bounded-at-both-ends]]
 - [[2026-08-11-a-permission-outlives-the-thing-it-permits-unless-both-are-pinned]]
 - [[2026-08-11-a-value-check-outlives-its-warrant-unless-the-warrant-is-checked-too]]
