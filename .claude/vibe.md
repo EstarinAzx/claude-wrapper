@@ -111,7 +111,7 @@ artifact, this is the index.
       reversible: yes
 
 - [ ] **#150 / #155 — the two that are one action each.**
-      **#150:** `git push origin main`, watch the first `fast-gate` run, close on green. `main` is now **35 commits ahead** and has never been pushed.
+      **#150:** `git push origin main`, watch the first `fast-gate` run, close on green. `main` is now **49 commits ahead** and has never been pushed. (Counted after the merge and the triage commit — an earlier draft of this file said 35, which was the pre-merge count plus the pending commit and forgot that the merge brings 14 of its own.)
       **#155:** open the app **by hand** on a profile it has never started in, type a message, and report whether the composer cleared. That single observation decides whether every new user's first launch is broken or whether it is an artifact of the driver harness.
       took: neither. D6 bars the push; the picker ADR bars an agent adding a second harness.
       reversible: the push is **NOT** — it is outward-facing and the repo is public. Taking no action was the reversible option and it was taken, so nothing halted.
