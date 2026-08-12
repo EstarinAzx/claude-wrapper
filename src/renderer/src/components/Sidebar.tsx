@@ -83,10 +83,24 @@ const Refresh = () => (
   </svg>
 )
 
+// The rail's collapse and expand marks, and the only two tenants of the shared
+// 28px icon housing that live outside a dock head. They are sized by the same
+// rule as the five dock-head buttons and not by this file's own taste: a unit is
+// a pixel (12 viewBox at 12px), so extent is path plus one whole stroke, and the
+// housing's target is the 10.4 the 14 grid's plus lands on — the same 10.4 as
+// Refresh, Open project and New chat, which sit two buttons away in this very
+// head. These were 3.5 by 7 of path, inking 4.9 by 8.4, the second-smallest
+// marks on the housing.
+//
+// The change is a UNIFORM 9/7 scale about the grid centre and nothing else. The
+// arms stay at 45 degrees, the apex stays on the vertical centre line, and each
+// direction keeps the off-centre ink it already had (left reads 2.8 to 8.7,
+// right 3.3 to 9.2 — a chevron is optically centred on its mass, not its bbox,
+// and the two stay exact mirrors). Path is now 4.5 by 9, inking 5.9 by 10.4.
 const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
   <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
     <polyline
-      points={dir === 'left' ? '7.5,2.5 4,6 7.5,9.5' : '4.5,2.5 8,6 4.5,9.5'}
+      points={dir === 'left' ? '8,1.5 3.5,6 8,10.5' : '4,1.5 8.5,6 4,10.5'}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.4"

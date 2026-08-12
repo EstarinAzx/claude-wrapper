@@ -183,6 +183,20 @@
   border-top: 1px solid var(--border);
 }
 
+/* This strip's name was the one member of shared.css's micro-caps group with no
+   tracking of its own: every other tenant states a rung and this one stated
+   nothing, so an 11px uppercase 600 label sat at `normal` while
+   `.agents-dock-title` — the same role, in the same dock, at the other end of
+   it — sat at 0.12em. One question answered twice.
+
+   0.08em rather than that 0.12em, off the ladder shared.css now states: 0.12em
+   names a whole pane and this names a SECTION inside one, which is the rung the
+   appearance dock's three headers take for exactly this relationship. Local, as
+   tracking is for every tenant of that group. */
+.background-tasks-title {
+  letter-spacing: 0.08em;
+}
+
 .background-task-list {
   list-style: none;
   display: flex;
@@ -234,6 +248,22 @@
   align-items: center;
 }
 
+/* The run of icon buttons at the right end of a rail head. Shared by BOTH rails,
+   like every other head rule in this file. THIS GAP IS THE PEER INTERVAL and
+   nothing else: the sessions rail hangs four toggles on it, all of them equals,
+   and the agents dock hangs TWO children on it — its mode switch, which is bound
+   into a shell of its own further down this file, and its close.
+
+   It used to hang three, flat, and that is what changed: with one number between
+   all three the head had two identical intervals, so a two-option view switch and
+   a dismiss read as one run of icons. The fix is stated on the odd one out
+   (`.agents-dock-close`) rather than as a second gap here, because a gap widened
+   on this cluster would also move the sessions rail's four peers, which are
+   correctly spaced already.
+
+   The name keeps saying `sidebar` for the reason `.sidebar-toggle` does — these
+   two panes are one object mirrored, and the vocabulary is the rail's, not the
+   sessions list's. */
 .sidebar-head-actions {
   display: flex;
   align-items: center;
@@ -438,7 +468,12 @@
    third would be chrome competing with the rows. Sitting flush above the list
    reads correctly anyway, because these chips describe what the list contains.
    Chips rather than a boxed segmented track for the same reason — the rail
-   spends no border on a control the list itself can explain. Left padding 8px
+   spends no border on a control the list itself can explain. That is a
+   rail-local call and no longer an unopposed one: `.agents-dock-switch` below
+   boxes a two-option switch one pane over, and the conditions that separate the
+   two cases — words against icons, a lookalike neighbour or none — are derived
+   there and deliberately not restated here, since a second copy is how the
+   glyph census in titlebar.css went stale twice. Left padding 8px
    plus the chip's own 8px puts the label on the 16px edge the head, the filter
    placeholder, the group headings and the row titles all share. */
 .session-scope {
@@ -695,7 +730,25 @@
 
 /* ── agents dock (right-hand aside, mirrors the sessions rail) ── */
 
+/* THE ROW STATES EVERY ONE OF ITS OWN VERTICAL INTERVALS, which is why `gap` is
+   zeroed here instead of taken from the three-row group near the top of this
+   file. That group's single 2px is right for a session row and a command row —
+   both are two children, one interval, nothing to rank. This row is up to FOUR:
+   an identity line, a purpose sentence, a model-and-depth string and a live
+   stats line. One interval repeated three times gives four children and no
+   grouping, so the row read as a loose column of text rather than as name,
+   purpose, metadata. The ladder that replaces it is derived on .agent-row-desc
+   and on the metadata band below.
+
+   Zeroed rather than kept and topped up with margins, which is how the same
+   relationship is expressed on the Appearance card: one rung of this ladder is
+   NOTHING AT ALL, and a nonzero gap can only reach zero through a negative
+   margin. Every interval is stated once, as a margin, in the positive.
+
+   Dock-scoped on purpose: .session-row-btn and .command-row-btn keep the shared
+   2px untouched, and nothing in the sessions rail moves. */
 .agent-row-btn {
+  gap: 0;
   transition: background 150ms var(--ease);
 }
 
@@ -714,8 +767,32 @@
   color: var(--text);
 }
 
+/* The purpose line. Its wrapping AND its leading live in shared.css's two-line
+   clamp group, not here, so the other docks join the same treatment instead of
+   each inventing one; this rule owns only the size and the colour. The lines
+   either side of it stay in shared.css's ONE-line group on purpose: .agent-row-type
+   above is a label and .agent-row-meta below is a model and depth string, and a
+   label that wraps spends a second row saying nothing new.
+
+   THE BAND INTERVAL IS 8px AND IT IS NOT A NEW NUMBER. appearance.css derives it
+   for this exact relationship — a name above a wrapped 11px sentence in a 248px
+   dock — and the derivation transfers verbatim because every input is the same
+   here: the clamp group leads this sentence at 1.45, so 11 x 1.45 = 15.95 and
+   the leading INSIDE it is 15.95 - 11 = 4.95px. The space ABOVE a wrapped
+   sentence has to out-rank the space between its own lines or the name stops
+   reading as the heading of the sentence and becomes one more line of it. This
+   row shipped 2px above 4.95px — the inversion appearance.css named, measured in
+   the narrower column. 8px clears it at the same 1.62x that card settled on, and
+   answering one relationship with two numbers is the drift these files exist to
+   stop.
+
+   It sits on the description rather than on the button because only a row that
+   HAS one takes it — a row with no description hands the same 8px to whichever
+   metadata line comes first, so every band break in this dock is 8px whatever
+   the row happens to carry. */
 .agent-row-desc {
   font-size: var(--fs-micro);
+  margin-top: 8px;
   color: var(--text-muted);
 }
 
@@ -742,6 +819,46 @@
   font-size: var(--fs-micro);
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
+}
+
+/* THE METADATA BAND. The model-and-depth string and the live stats line are two
+   facts about one agent, not two more lines of its purpose, so they are bound
+   into ONE block and that block is opened at the row's 8px band interval —
+   whichever of the two happens to be present, since either can be absent on its
+   own. The pair is what made the top gap uncloseable alone: opening the name
+   above the sentence while leaving 2px under it hands the tighter interval to
+   the bottom of the row, and the metadata re-groups onto the sentence instead.
+
+   INSIDE the band the interval is nothing at all, and it lands on the number the
+   sentence above already uses. 1.45 shrinks each box from 11 x 1.6 = 17.6 to
+   11 x 1.45 = 15.95, which leaves 15.95 - 11 = 4.95px of leading; with the two
+   boxes touching, the air between the two metadata lines is that same 4.95px the
+   two lines of the wrapped description have between them. One "inside a block"
+   interval, derived once and used twice, against an 8px band break and an 18px
+   row break — 8px of row padding at each end plus the list's 2px.
+
+   1.45 is the sessions rail's own answer to this question in this column:
+   .bg-sessions-empty-hint records that body's 1.6 spaces two 11px lines "far
+   enough apart to read as two separate remarks", and closes them into one. Two
+   metadata lines are one remark. Unitless, so it still tracks --fs-micro.
+
+   Written on the two dock-only selectors rather than as a group in shared.css:
+   both are members of that file's one-line truncation list, which also paints
+   .session-row-meta and .bg-session-state, and a leading declared there would
+   move the sessions rail's scrolling list. There is exactly one metadata strip
+   in the app, and a shared group with one member is indirection, not a system. */
+.agent-row-meta,
+.agent-row-stats {
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+/* The stats line only opens the band when it is the one opening it. Stats always
+   render immediately after meta when both are present, so the adjacency is the
+   whole test, and the higher specificity makes it independent of where these two
+   rules sit relative to each other. */
+.agent-row-meta + .agent-row-stats {
+  margin-top: 0;
 }
 
 /* Only live rows carry a dot — a disk row has no status to show. The dock row
@@ -771,46 +888,317 @@
   background: var(--tint-3);
 }
 
+/* THE MODE SWITCH'S OWN SHELL, and the reason the head needed one. All three
+   head buttons sat on `.sidebar-head-actions`' single 4px gap, so the two
+   intervals in this 44px band were the SAME NUMBER and the geometry said nothing
+   about which two belonged together — a two-option view switch and a dismiss
+   read as one undifferentiated run of three icons.
+
+   ARITHMETIC, off this file and titlebar.css, by hand. The housing is 28px
+   (titlebar.css `.sidebar-toggle`) and every 12-grid mark inks 10.4, so a glyph
+   clears (28 - 10.4) / 2 = 8.8px of housing on each side. BEFORE: ink-to-ink was
+   8.8 + 4 + 8.8 = 21.6px between the two modes and 21.6px between map and close,
+   identically. AFTER: the pair goes flush inside this shell at 8.8 + 0 + 8.8 =
+   17.6px, and `.agents-dock-close` opens the seam to 8.8 + 8 + 8.8 = 26.6px —
+   1.51x the inside interval, with this shell's hairline standing in the larger
+   one. The whole run grows from 28x3 + 4x2 = 92px to 58 + 8 + 28 = 94px; the
+   head's content box runs x=16 to x=240 in a 248px dock, so the run's left edge
+   moves 148 -> 146 and the title (six 11px uppercase glyphs off the 16px edge)
+   is nowhere near it. Vertically the shell is 1 + 28 + 1 = 30px against the
+   close's 28px, centred in a fixed 44px head: 7px of air above and below rather
+   than 8px, and no dock's head changes height.
+
+   NOT A NEW CONSTRUCTION. The four SHELL declarations are `.appearance-stepper`'s
+   exactly — 1px of --border, an 8px radius, a --tint-1 ground, overflow hidden —
+   and that strip is the app's ONE existing "several buttons bound into one
+   control". Inventing a second shell for the same relationship is the drift these
+   files exist to stop. The two rules are not byte-identical and should not be:
+   the stepper also carries `align-items: stretch`, which it needs because its
+   middle child is a readout with no height of its own, and which would be inert
+   here where both segments are `.sidebar-toggle` at an explicit 28px. Copy the
+   four, not the five. (Checked against appearance.css as it stands, not as it was
+   cited: that file was being edited in the same pass this shell was written, and
+   the stepper's declarations came through it untouched.) It does not
+   contradict `.session-scope` above, which deliberately spends no border on its
+   chips: those carry WORDS, sit directly above the list they describe, and have
+   no lookalike beside them. This switch is icon-only and shares its exact 28px
+   housing with an unrelated action — the condition a shell answers and a chip
+   row never had.
+
+   THE GROUND DOES NOT EAT THE PRESSED STATE, which is the obvious objection to
+   putting anything behind a --tint-3 fill. The tints are translucent (themes.css:
+   --tint-1 at 0.05, --tint-2 at 0.06, --tint-3 at 0.08, in all four themes), so
+   they STACK rather than replace. A pressed segment was 0.08 over bare --surface
+   against an unpressed 0.00 — a step of 0.080. It is now 0.08 + 0.05(1 - 0.08) =
+   0.126 over an unpressed 0.05 — a step of 0.076, 5% less, while the control as
+   a whole gains a 0.05 ground that lifts it off the head. Hover behaves the same
+   way: 0.06 + 0.05(0.94) = 0.107 against its own 0.05 ground, a step of 0.057
+   where it was 0.060 on bare surface. --tint-3 is untouched and is still the
+   app's one pressed treatment.
+
+   NO INNER DIVIDER, unlike the stepper this borrows from. That strip has three
+   segments and its middle one is a readout that is never filled, so it needs
+   lines. `mode` is always 'list' or 'map', so exactly one half of this control
+   carries the --tint-3 fill in every state it can be in, and the fill edge IS
+   the boundary; a hairline over it would be a second line saying the same thing.
+   It would also cost centring — box-sizing is border-box globally, so a
+   border-left on a 28px segment leaves a 27px content box starting 1px in and
+   puts the glyph at 1 + 13.5 = 14.5 rather than 14.0, half a pixel off its
+   housing's centre on a mark the previous wave cut to two decimals.
+
+   THE SEGMENTS KEEP `.sidebar-toggle`'s 6px radius rather than being squared at
+   the seam. Squaring them would make the three head buttons disagree on
+   border-radius, and that uniformity is measured. The shell's inner radius is
+   8 - 1 = 7 against the segment's 6, so the widest sliver of ground visible
+   behind a pressed corner is (7 - 7/1.414) - (6 - 6/1.414) = 2.05 - 1.76 =
+   0.29px, and overflow hidden stops the fill escaping the other way. The focus
+   ring is inset, so overflow hidden cannot clip it. */
+.agents-dock-switch {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--tint-1);
+  overflow: hidden;
+}
+
+/* The odd one out. `.sidebar-head-actions` contributes 4px and this states the
+   other 4, for 8px total between the switch's shell and this button's box. Not a
+   new number: 8px is `.agents-dock-head`'s own padding-right, and it is this
+   file's band interval (.agent-row-desc, .agent-row-meta, .background-tasks,
+   .sidebar-foot). So the close ends up in a slot inset 8px from the group on its
+   left and 8px from the dock edge on its right — the one control in this head
+   that stands alone, spaced like it from both sides.
+
+   Dock-scoped, and it has to be: the commands and appearance docks share
+   `.agents-dock-head` but hang a bare close with nothing to be separated from,
+   and the sessions rail never sees this class at all. */
+.agents-dock-close {
+  margin-left: 4px;
+}
+
 /* Map mode. Encoding: shape = kind (rounded square = session, circle = agent,
    diamond = failed), colour = status. Diamonds read smaller than circles at equal
    radius, so failed nodes stay unmistakable even at 4px and in greyscale. Toggle
-   stays in the head at all times so empty states don't reflow the chrome. */
-.agents-dock-modes {
-  display: flex;
-  gap: 2px;
-  margin-left: auto;
-  margin-right: 4px;
-}
+   stays in the head at all times so empty states don't reflow the chrome.
 
-.agents-dock-mode {
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border: none;
-  background: transparent;
-  border-radius: 5px;
-  color: var(--text-faint);
-  cursor: pointer;
-  padding: 0;
-  transition: background 150ms var(--ease), color 150ms var(--ease);
-}
+   THE SEGMENTS SHARE THE APP'S ONE ICON HOUSING; the SWITCH has a shell of its
+   own as well, and the two facts are separate — this rule owns only the pressed
+   fill. Three actions once sat in this 44px head in two shapes: a 22px pair on a
+   5px radius resting at --text-faint, whose hover moved the glyph colour and
+   painted no ground, beside a 28px close on a 6px radius resting at
+   --text-muted, whose hover washed --tint-2. Two hit areas, two containers and
+   two hover languages inside 90px of head, so the switch read as chrome hung off
+   the close rather than as its equal. Both mode buttons wear `.sidebar-toggle`
+   alongside the close now, which is titlebar.css's ONE icon-button rule and the
+   centred 28px rounded square DESIGN.md names in Layout; the hover wash and the
+   focus hairline arrive with it, and the hairline is still the right ring here
+   because these are icon buttons and one of them paints a fill.
 
-.agents-dock-mode:hover {
-  color: var(--text-muted);
-}
+   That settled the SHAPES and left the GROUPING flat — one housing, three
+   buttons, one 4px rhythm between all of them. `.agents-dock-switch` above is
+   what answers that, and the fill this rule paints now composites over that
+   shell's --tint-1 ground; the compositing arithmetic is stated there.
 
+   Rails.css loads after titlebar.css and this selector matches that file's
+   `:hover` on specificity, so a pressed button keeps its --tint-3 under the
+   pointer instead of dropping to the --tint-2 wash. --tint-3 is unchanged and
+   stays deliberately shared with `.session-scope-btn` above, which cites this
+   switch as the source of the app's one pressed treatment. */
 .agents-dock-mode[aria-pressed='true'] {
   background: var(--tint-3);
   color: var(--text);
 }
 
-.agents-dock-mode:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 1px var(--tint-6);
+/* ── commands dock (#39) — shares .agents-dock layout; rows mirror agent rows ── */
+
+/* The row system. Three optional children stacked in a column gave this list
+   three different row shapes at once — name over hint over description for
+   /preset, name over description for /trace, and for /wrap-up a bare name with
+   nothing under it — so a 248px column of controls read as a loose text stack
+   instead of one deliberate group. Two moves close that, and neither reaches
+   into the two children the composer's popover shares.
+
+   ONE: the argument hint stops being a line of its own. It is a fragment of the
+   command's signature, not a second fact about the command, so it belongs beside
+   the name; moving it there takes a whole line off the tallest rows and leaves
+   every row with the same identity band on top. Baseline rather than
+   .agent-row-head's centre because both children here are type, and the smaller
+   one should sit on the larger one's baseline rather than float in the middle of
+   its box — which is what the composer's popover already does with these exact
+   two spans, so the two surfaces that render them now agree instead of each
+   holding them a different way.
+
+   The wrapper is a NEW class rather than a rule on the children on purpose. #94
+   recorded that .command-row-name and .command-row-hint are shared with that
+   popover and must not be reached into; a parent that exists only in this dock
+   keeps that promise, and the popover's own markup is untouched.
+
+   TWO: the row gets a floor, so a command with nothing to add still occupies a
+   row rather than a stray line of text. The floor is the whole box, padding
+   included — base.css sets box-sizing: border-box globally — so it is the row
+   height it names and not that height plus an inset pair. WHAT that floor is
+   measured against is the question the rule itself answers, below. */
+.command-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
 }
 
-/* ── commands dock (#39) — shares .agents-dock layout; rows mirror agent rows ── */
+/* THE FLOOR IS THE DESCRIPTION'S OWN SLOT, RESERVED — and 40px was not that.
+   A row that carries a description comes to its head, plus the column's 2px,
+   plus a clamped 11px line led at 1.45, plus the 8px inset at each end; the
+   SHORTEST one of those — a description that fits on one line — already lands
+   near 49px, which the wave that built the 40px pin measured and recorded. So
+   the pin never brought a bare row up into the range the rows around it
+   occupy. It stopped it reading as a stray line of text and no more, and
+   `/wrap-up` still sat as a visibly smaller object between two full rows.
+
+   That is the LIST'S BEAT breaking rather than one short row. This dock is read
+   down the mono `/name` at the left edge of every row, and the pin moved that
+   anchor twice over: the row was ~9px short of the shortest real row, AND the
+   centring it came with pushed the lone name down into the middle of what was
+   left. The interval above the bare row opened past the list's own pace and the
+   interval below it closed to a little over half of it, which is `/hp` reading
+   as pulled up against `/llm-kb` with a short row swallowed between them.
+
+   The reservation replaces the pin and is DERIVED rather than measured. 8px is
+   this row's own bottom inset and 2px is its column gap, both from the
+   three-row group at the top of this file — the gap being exactly what a
+   description would have consumed — and the third term is one line of
+   `.command-row-desc`, which shared.css's two-line clamp group leads at 1.45.
+   A row with nothing to add therefore comes to EXACTLY the height of a row
+   carrying one line of description, to the sub-pixel, whatever the mono face
+   resolves `line-height: normal` to. That last part is why this is not a
+   number: the note on the line-height rule above records that a px pin taken
+   against this machine's Cascadia Code becomes a shift on a machine that falls
+   back to Consolas, and a floor STATED as a height would have had to carry that
+   same unknown inside it.
+
+   Still a floor and not a target. It lands on the shortest a row that says
+   something can be, so no description row is ever padded out to meet it, and a
+   row with nothing to say stops sitting below the range instead of being grown
+   to the top of it. Reserving the clamp's SECOND line as well would have made
+   every row in the dock one height — that is a grid, not a floor, and it would
+   spend the second line on every short description in the list.
+
+   `:has` rather than a modifier class in the markup: the condition is "this row
+   emitted no description", which is a fact about the DOM, so it is read off the
+   DOM. The selector names the command row and only the command row, so the
+   sessions rail this file also paints cannot see it.
+
+   The 40px pin stays as the hard backstop under all of this, which the
+   reservation clears by a wide margin; its `justify-content` does not. That
+   centring existed only to distribute the pin's slack, there is no slack left
+   to distribute, and left in place it would drop a name off the rhythm again
+   the moment anything created some. Every name in this dock now sits one 8px
+   inset from the top of its own row, which is the anchor the beat is read on. */
+.command-row-btn {
+  min-height: 40px;
+}
+
+.command-row-btn:not(:has(.command-row-desc)) {
+  padding-bottom: calc(8px + 2px + 1.45 * var(--fs-micro));
+}
+
+/* Separate the outlined targets optically: 1px shell + 6px ground + 1px shell.
+   The shared 2px list gap deliberately stays untouched for sessions and agents. */
+.command-list {
+  gap: 6px;
+}
+
+/* THE ROW'S OWN BOUNDARY — the thing that makes this a picker rather than a
+   printed list, and the reason it was missing is structural rather than sloppy.
+   Every other list in the app paints a row only to report a STATE: the sessions
+   rail fills its active row with --mint-wash and a mint bar, the agents dock
+   fills its selected row with --tint-3. A command row has no state to report.
+   Clicking one hands a name up to the composer and returns; this dock keeps no
+   selection, no active row, nothing that survives the click. So under the shared
+   grammar this one list was transparent in EVERY state it can reach, and the
+   only ink it ever spent arrived under a pointer — which a still frame does not
+   have. Seven rows of type on bare surface is a page of documentation, and that
+   is what it read as.
+
+   A LINE AND NO FILL, which is the whole of "a row shell rather than a card". A
+   card has a ground of its own; these rows keep the dock's, and this rule spends
+   exactly one inset hairline on the button's existing box. Not a new box: it
+   takes the 8px radius from the three-row group at the top of this file and
+   lands on the same rectangle `:focus-visible` already rings, so the hit target
+   and the visible object are one shape by construction rather than by two
+   numbers happening to agree. (The header's "the row shells the three lists
+   share" means that shared LAYOUT group; this is the command row's boundary
+   alone, and the other two lists do not get one — they have states to paint.)
+
+   THIS COMMAND LIST RENDERS ON A SECOND SURFACE, WHICH DELIBERATELY DOES NOT
+   JOIN. The composer's slash popover (`.command-option`, composer.css) lists the
+   same commands, and the two rows already share their hover ground and their
+   focus ring out of shared.css. They now differ at rest for the first time, and
+   that is this rule working rather than a gap in it: BOTH premises above fail on
+   that surface. The popover row sits inside `.command-popover` — an actual card,
+   1px of --border over --surface under a drop shadow — so a boundary is already
+   drawn around that list, and a per-row line inside it would be the
+   tiles-inside-a-pane inversion this note rejects two paragraphs down. And that
+   list is not stateless: `.command-option--active` tracks the keyboard cursor
+   and fills --tint-3, so it never reaches the all-rows-transparent still frame
+   this rule exists to answer. Same commands, two surfaces, one rule — a row is
+   inked when nothing else in its frame is doing the job.
+
+   WEIGHT, off the ladder in tokens.css, which is one ink at seven alphas. This
+   line has to sit between two rungs that are already spoken for. --tint-1 (0.05)
+   is the ground this same row paints on hover, so the boundary cannot be lighter
+   than that without the resting row out-quieting its own hover. --border (0.08 —
+   tokens.css records step 3 as "--color-border's twin", and they are the same
+   oklch(0.92 0.01 H) ink at the same alpha) is what every real container edge in
+   the app is cut from, including this dock's border-left and its head's
+   border-bottom; a row boundary as strong as a pane boundary is the inversion
+   that reads as tiles inside a pane instead of rows inside a list. --tint-2
+   (0.06) is the single step between the two. Compositing one ink over one ground
+   is lift = a x (ink - ground) whatever space it happens in, so the ratio of
+   lifts is the ratio of alphas exactly: this line is 0.06 / 0.08 = 0.75 of the
+   visible lift the dock's own edge produces. The same hairline, three quarters
+   of it — present, and permanently subordinate to the pane holding it.
+
+   WHICH LEAVES THIS FILE HOLDING TWO BOUNDARY ANSWERS, and they are one system
+   rather than two tastes that arrived separately. `.agents-dock-switch` spends
+   --border PLUS a --tint-1 ground to bind several buttons into a single control;
+   this spends --tint-2 and no ground to bound a single target. Container against
+   target — and the weights are ordered to say which is which: 0.08 with a fill
+   for the thing that holds, 0.06 with none for the thing held, the same
+   subordination the arithmetic above derives against the dock's own edge. Both
+   land on the 8px radius, so they are one rectangle at two ranks rather than two
+   vocabularies. A grouping shell drawn at a target's weight, or a row bounded at
+   a container's, is the inversion either half of this pair exists to prevent.
+
+   THE FOCUS RING STILL OUT-RANKS IT, which is the obvious objection to giving a
+   control a permanent hairline when it already draws one when focused. They do
+   not stack: shared.css's `.command-row-btn:focus-visible` is 0,2,0 against this
+   rule's 0,1,0, so it REPLACES this shadow in either file order, and a focused
+   row draws a single hairline at --tint-6 (0.18) — 3x this one — over a --tint-3
+   ground. Hover DOES stack, correctly: it sets only `background`, and an inset
+   shadow paints above the background, so a hovered row is this line plus a 0.05
+   ground arriving where there was none. Rest 0.06 line / hover +0.05 ground /
+   focus 0.18 line + 0.08 ground, and nothing in shared.css was re-authored.
+
+   BOX-SHADOW RATHER THAN A BORDER, AND THAT IS FORCED. Hand arithmetic: the dock
+   is 248px with a 1px left edge and box-sizing is border-box globally (base.css),
+   so `.command-list` gets 247px; its 6px padding a side leaves 235px; seven rows
+   come to roughly 420px inside an 807px list so `overflow-y: auto` raises no
+   scrollbar; `.command-row` is a full-width flex line and `.command-row-btn` is
+   `flex: 1` in it — a 235px band, clientWidth 235. A real border would hold the
+   band at 235 and pull clientWidth to 233, and the cross-dock text-column check
+   reads `clientWidth - 20` on one row in each of the three docks and allows 1px
+   of spread — 213 here against 215 in the agents dock, a 2px disagreement about
+   a text column that did not move. `.agent-row--nested` above is the codebase's
+   answer to a bordered row (take the 1px border, give the pixel back in padding)
+   and it does not rescue this, because the check subtracts a literal 20 rather
+   than reading the inset. A painted shadow is not laid out at all: same width,
+   same height, same text column, same 40px floor, same descriptionless
+   reservation, to the pixel. Closing a visibility gap by moving nothing is the
+   cheapest version of this fix available, and it is the one the geometry allows. */
+.command-row-btn {
+  box-shadow: inset 0 0 0 1px var(--tint-2);
+}
 
 .command-row-name {
   font-size: var(--fs-ui);
@@ -824,21 +1212,29 @@
   color: var(--text-faint);
 }
 
-/* The one child that changes: it sets a size but no family, so #94's `font:
-   inherit` repaints it from the UA button font to --font. That is the intended
-   change; the line box moving with it is not. `normal` is resolved from the
-   FAMILY's metrics, so the repaint alone grew this box from 12px to 14.4px
-   (Arial 1.09 → Segoe UI Variable Text 1.31) and the row with it. The ratio
-   holds the row where it was, and unlike a px it still tracks --fs-micro — every
-   other line-height in this app is unitless for the same reason. 1.1 lands
-   0.1px off the 12px it rendered before, an eighth of a device pixel here.
+/* The description. Its wrapping AND its leading live in shared.css's two-line
+   clamp group alongside the agent row's, so this rule owns only the size and the
+   colour — the docks share one treatment for a secondary line rather than
+   inventing one apiece.
 
-   Whether 12px is the RIGHT box for 11px muted text is a separate, taste
-   question — Segoe's own 14.4px is closer to the app's other micro text. This
-   ticket's contract is a family repaint that moves nothing, so it holds the old
-   geometry and leaves that call open. */
+   The line box is the taste question #94 left open, and this ticket closes it by
+   handing the answer to that group rather than writing it here. #94 pinned 1.1 on
+   this selector to stop a family repaint from moving a 12px box (`normal`
+   resolves off the FAMILY's metrics, so the repaint alone would have grown it to
+   14.4px, Arial 1.09 → Segoe UI Variable Text 1.31), and said in the same breath
+   that whether 12px was the RIGHT box for 11px muted text was a separate call it
+   was not making. Two lines make the call for us: what #94 held was a ONE-line
+   box, where a tight ratio only trims the leading above and below a single line
+   and costs nothing. The moment the description clamps to two, that same ratio
+   closes the gap BETWEEN them and 11px muted text starts to crowd itself in the
+   narrowest column in the app — which is exactly why the number sits with the
+   rule that grants the second line and not with one of the two rows that took it.
+
+   This deliberately moves the box #94 froze. That freeze was the contract of a
+   family repaint that was meant to change nothing; a row rebuild is not, and the
+   #94 GUI driver measures this child against a one-line UA-font probe, so its
+   expectation for .command-row-desc is now stale rather than violated. */
 .command-row-desc {
   font-size: var(--fs-micro);
-  line-height: 1.1;
   color: var(--text-muted);
 }

@@ -247,61 +247,157 @@ const AgentsDock = ({
       />
       <div className="agents-dock-head">
         <span className="agents-dock-title">Agents</span>
-        <div className="agents-dock-modes">
+        {/* THREE ACTIONS, TWO GROUPS — and the second half of that is new. Every
+            button here still wears `.sidebar-toggle`, the app's single
+            icon-button housing, already worn by the close beside them and by the
+            two docks that share this head, so the hit area, the radius, the
+            resting colour, the hover wash and the focus ring are matched by
+            construction rather than by three rules agreeing today.
+            `.agents-dock-mode` survives on the pair for the one thing the
+            housing has no opinion on: the pressed fill.
+
+            What the shared housing could not fix is that all three then sat on
+            the mirrored rail's ONE 4px rhythm, so the two intervals in this head
+            were the same number and nothing in the geometry said which two
+            buttons belong together. A 12-grid mark inks 10.4 in a 28px housing,
+            clearing (28 - 10.4) / 2 = 8.8px each side, so ink-to-ink was
+            8.8 + 4 + 8.8 = 21.6px between the two modes AND between map and
+            close, identically — a view switch and a dismiss reading as one
+            undifferentiated icon run.
+
+            The pair is now bound into `.agents-dock-switch`, which is the
+            appearance dock's zoom-stepper shell verbatim rather than a second
+            construction: the two segments go flush inside one bordered box at
+            17.6px ink-to-ink, and `.agents-dock-close` pushes the close out to
+            26.6px, 1.51x the inside interval, with the shell's hairline standing
+            in the larger gap. Same three buttons, same housing, same glyphs; the
+            full derivation is on both rules in rails.css.
+
+            `role="group"` because the pairing a sighted reader now gets from the
+            box would otherwise be lost — a screen reader reads three sibling
+            buttons in a row and hears no switch. */}
+        <div className="sidebar-head-actions">
+          <div className="agents-dock-switch" role="group" aria-label="Agent view">
+            <button
+              type="button"
+              className="sidebar-toggle agents-dock-mode"
+              aria-label="List view"
+              aria-pressed={mode === 'list'}
+              onClick={() => setMode('list')}
+            >
+              {/* Coordinates are a uniform 1.125x scale of the drawing that was
+                  here, taken about the grid centre — three bars, same 1.4 stroke,
+                  same 12 viewBox, nothing about the mark changed except its size.
+                  Ink 9.4x7.4 -> 10.4x8.2. See the extent note on the mark below. */}
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                <path
+                  d="M1.5 2.6h9M1.5 6h9M1.5 9.4h9"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="sidebar-toggle agents-dock-mode"
+              aria-label="Map view"
+              aria-pressed={mode === 'map'}
+              onClick={() => setMode('map')}
+            >
+              {/* An org-chart bracket: one node above, a rail, two hanging off its
+                  ends. Judged by rasterising it at 12px rather than by eye at 4x,
+                  because everything wrong with the mark it replaces only shows at
+                  actual size. That one was a Y of 45-degree legs between three
+                  r1.1 dots, and almost none of it survived: the stem was buried
+                  under the parent dot, each diagonal ran about 2px before vanishing
+                  into a child dot, and stem plus both legs met in a blob at the
+                  fork. What painted was a small filled triangle, which is why a
+                  reader has to be told it means a tree.
+
+                  Three things changed, each for a measured reason. The legs went
+                  ORTHOGONAL, so the longest run in the box is now the 7.6-unit rail
+                  and the silhouette is the sitemap shape rather than an arrowhead.
+                  The dots went to r1.4, because a 1.1 dot is 2.2 across against a
+                  1.4 stroke and cannot bulge past its own stalk at this size — the
+                  children read as bare legs. And the connectors were given 1.2px of
+                  clear stroke at both ends, so each dot sits ON a stalk instead of
+                  swallowing it.
+
+                  Weight still matches its twin, which is a claim about the pair and
+                  not about either alone: both marks took the SAME normalization
+                  below, so neither gained on the other, and the old mark's problem
+                  — reading lighter than the button beside it — stays fixed.
+                  Vocabulary is untouched — same 12 viewBox at 12px, same 1.4
+                  stroke, same filled-circle accent. strokeLinejoin is new to this
+                  glyph only because it is the first one here with a corner to join.
+
+                  EXTENT, and the one number every 12-grid tenant is now cut to.
+                  A unit is a pixel here (12 viewBox at 12px), so a mark's optical
+                  extent is its path extent plus one whole stroke. The 14 grid's
+                  plus — `M7 2.5v9M2.5 7h9` at 1.4 in a 14 box — is 9 of path plus
+                  1.4 of stroke, exactly 10.4, and the 16 grid's marks sit at 11.2
+                  to 12.1. The 12 grid ran 7.4 to 9.4, so the smallest housing
+                  tenant carried barely six tenths of the largest, on ONE 28px
+                  button shared by all thirteen. Every 12-grid tenant is now built
+                  the way the 14 grid's plus is: path extent 9 across its larger
+                  dimension, 1.5 to 10.5, inking 0.8 to 11.2 for 10.4. That leaves
+                  0.8 of clear ground inside the viewBox, so nothing clips.
+
+                  This mark: dot centres moved out by 0.5 to ±3.8, radius held at
+                  1.4 (the dot-versus-stroke bulge derived above is a ratio and had
+                  to survive), so the dots alone ink 0.8 to 11.2 on both axes.
+                  Ink 9.4 square -> 10.4 square. The connectors were re-laid to
+                  keep the same relationship to the dots they had: visible clear
+                  stroke 1.9 -> 2.4 on the stem and on each leg, still equal, and
+                  each cap still buried in its dot by the same 0.3 (stem) and 0.5
+                  (legs). */}
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                <path
+                  d="M6 4V6M2.2 8.2V6h7.6v2.2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle cx="6" cy="2.2" r="1.4" fill="currentColor" stroke="none" />
+                <circle cx="2.2" cy="9.8" r="1.4" fill="currentColor" stroke="none" />
+                <circle cx="9.8" cy="9.8" r="1.4" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
+          </div>
+          {/* `.agents-dock-close` carries no appearance of its own — only the
+              interval that keeps this button out of the switch beside it. It is
+              stated on the button rather than on `.sidebar-head-actions`,
+              because that cluster's gap is the sessions rail's too and widening
+              it there would move a pane this ticket must not touch. */}
           <button
             type="button"
-            className="agents-dock-mode"
-            aria-label="List view"
-            aria-pressed={mode === 'list'}
-            onClick={() => setMode('list')}
+            className="sidebar-toggle agents-dock-close"
+            aria-label="Close agents panel"
+            onClick={onClose}
           >
+            {/* The one that was furthest off: 6 of path plus 1.4 of stroke is
+                7.4 square, against 10.4 for the plus on the 14 grid. Now cut to
+                the same 1.5-to-10.5 span as the two marks in the switch beside
+                it, so the dock's three head buttons share one 10.4 envelope —
+                which is what lets the head be regrouped by SPACING alone, with
+                every glyph in it still the same size. The three docks draw this
+                X from identical coordinates: one mark on three surfaces, and it
+                moves as one. */}
             <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
               <path
-                d="M2 3h8M2 6h8M2 9h8"
+                d="M1.5 1.5l9 9M10.5 1.5l-9 9"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.4"
                 strokeLinecap="round"
               />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="agents-dock-mode"
-            aria-label="Map view"
-            aria-pressed={mode === 'map'}
-            onClick={() => setMode('map')}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-              <path
-                d="M6 3.4v2.2M6 5.6L3.4 8M6 5.6L8.6 8"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-              <circle cx="6" cy="2.6" r="1.1" fill="currentColor" stroke="none" />
-              <circle cx="3" cy="9" r="1.1" fill="currentColor" stroke="none" />
-              <circle cx="9" cy="9" r="1.1" fill="currentColor" stroke="none" />
             </svg>
           </button>
         </div>
-        <button
-          type="button"
-          className="sidebar-toggle"
-          aria-label="Close agents panel"
-          onClick={onClose}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-            <path
-              d="M3 3l6 6M9 3l-6 6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
       </div>
       {rows.length === 0 && state.status === 'loading' ? (
         <div className="agents-dock-empty" role="status">
