@@ -1,0 +1,13 @@
+
+> claude-wrapper@1.0.0 test:dom
+> node .claude/skills/run-desktop/dom-phase.mjs --only gui-124.mjs
+
+=== DOM phase: 1 driver(s), 9 skipped, timeout 300000ms ===
+screenshots: C:\Users\S.D\AppData\Local\Temp\claude-wrapper-dom-phase
+profiles:    C:\Users\S.D\AppData\Local\Temp\dom-phase-profiles-JWYLOY (one per driver, removed on exit)
+
+gui-124.mjs ... PASS (exit 0, 32.7s)
+
+=== 1/1 drivers passed ===
+
+DOM PHASE PASS

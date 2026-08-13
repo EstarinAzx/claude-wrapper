@@ -573,98 +573,113 @@
   transition: background 150ms var(--ease), opacity 150ms var(--ease);
 }
 
-/* THE CORNER, AND WHY IT IS NO LONGER THE GROUP'S 8px. This row grew from 57px to
-   74px when its title took a second line, and the radius did not move with it —
-   which is how a corner ends up unowned rather than chosen: heights change for
-   content reasons, and the bare-literal radii in these sheets change for none.
-   Measured off the rendered active row, it paints a 207x74 box on an 8px arc, so
-   8 / 74 = 0.108, flatter than the tool card's 12 / 108 = 0.111 and the flattest
-   box in the app. Nobody picked that.
+/* THE CORNER, AND WHY IT IS THE GROUP'S 8px AGAIN. This value was 8, went to 16
+   for three waves, and is back. That is not churn, it is a question that got an
+   answer the first move could not have had: the 16 was derived on a rail row
+   alone, and it was only once the token reached the two DOCK row types that
+   there was anything to measure it against.
 
-   THE NUMBER IS DERIVED FROM THIS RAIL, not from the chat column. `.session-more`
-   is the last child of `.session-groups`, directly under these rows: 8px of inset
-   at each end around one 13px line at body's 1.6 leading is 8 + 20.8 + 8 = 36.8px,
-   on the SAME 8px radius, so 8 / 36.8 = 0.217. One list, one corner, and the row
-   is twice the height of the control beneath it, so the row's corner reads half as
-   round as its own list's. 74 x 0.217 = 16.09px closes that. The user bubble
-   arrives at the same place from the other direction — 456x72 on 16px is 0.222, and
-   74 x 0.222 = 16.44 — which is the cross-check and not the reason: two boxes of
-   near-identical height wearing one corner.
+   THE RATIO LAW THAT CHOSE 16 DOES NOT SURVIVE ITS OWN GENERALISATION. It read:
+   `.session-more` is 8 / 36.8 = 0.217, the user bubble is 16 / 72 = 0.222, so a
+   74px row wants 74 x 0.217 = 16.09. Two points, and they are two boxes with
+   DIFFERENT radii at opposite ends of the scale — any two points fit a line. The
+   moment the same declaration governed three heights the law had to predict all
+   three, and it predicts 74 x 0.217 = 16.1, 65 x 0.217 = 14.1 and 49 x 0.217 =
+   10.6. One declaration cannot pay three numbers. The arithmetic was never wrong;
+   the premise that a corner should track its box was, and one rule over three
+   heights is the experiment that showed it.
 
-   SO IT TAKES `--r-bubble`, AND THE NAME IS A STRETCH THIS RULE OWNS. That token
-   is named for the surface that first needed it and had exactly ONE caller, which
-   tokens.css itself calls indirection rather than a system. A second caller, at
-   the value two independent derivations land on, is how a one-off becomes a step;
-   a tenth bare literal reading 16px would paint the same and buy none of it. Read
-   the token as the app's block radius whose canonical caller is the bubble.
+   SO A SHARED CORNER IS SIZED BY ITS SHORTEST MEMBER, NOT ITS TALLEST, and the
+   measurement is straight-run length rather than ratio. An arc consumes 2r of a
+   box's vertical edge, so the fraction left straight is 1 - 2r/h and it falls
+   fastest on the shortest box. Measured off the captures at one threshold, both
+   waves:
 
-   REJECTED: 12px, the tool card's. 12 / 74 = 0.162 matches nothing — not this
-   rail's 0.217, not the card's own 0.111 — so it would be a value taken because it
-   exists elsewhere rather than because anything derives it. That card is a 568x108
-   container in a 760px column; this is a 207x74 target in a 248px rail.
+       height   at r16          at r8
+       74px     73.0%           89.2%      the rail's active row
+       65px     66.2%           87.7%      five command rows
+       49px     55.1%           83.7%      two command rows
 
-   THE MINT STRIPE IS UNTOUCHED AND ITS SHAPE DOES CHANGE, which is worth stating
-   because DESIGN.md grants it as a named exception. An inset shadow offset 2px with
-   no blur paints where the rounded rect is and its own 2px-right copy is not,
-   clipped to that same rect — so at the box's leftmost column it survives only
-   along the STRAIGHT part of the left edge, height - 2r, which goes 74 - 16 = 58px
-   to 74 - 32 = 42px. The bar keeps its 2px, its offset and its mint token; the
-   16px at each end stops being a butt end and tapers into the corner. Rejected
-   holding 8px to protect the longer run: that spends the row's corner on the
-   indicator's end cap, and either way the indicator is a bar down the whole left
-   edge of the one selected row.
+   THE SPREAD IS THE POINT: 17.9 percentage points at 16, 5.5 at 8. At 16 the
+   short row showed barely half its edge straight while the tall one showed three
+   quarters — one token painting two visibly different shapes, which is the exact
+   failure the sentence about `.session-delete` below already names. That sentence
+   was applied to WIDTH and never to HEIGHT, and the 49px row is the case it would
+   have caught. This table is that argument's answer, measured.
 
-   `.session-delete` KEEPS 8px, AND THAT IS NOT AN OVERSIGHT. It declares that 8px
-   itself rather than inheriting anything, which is why it is untouched by everything
-   below. It is the sibling that stretches to this row's full height, so it is a
-   235 - 207 = 28px by 74px box, and a browser clamps a radius to half the shorter
-   side: 16px on a 28px width renders as 14px and the control reads as a lozenge
-   instead of a rounded square. A narrow box and a wide one cannot share one corner.
-   Their grounds are co-visible only on the active row with the pointer on that
-   control, since `.session-row-btn:hover` is false while the pointer sits on a
-   sibling.
+   IT MATTERS MOST ON THE ROW THAT HAS NOTHING ELSE. A command row's outline is
+   its only indicator — no tint, no stripe, no fill. The rail's active row at
+   least carries a mint bar.
 
-   IT IS NO LONGER SESSION-SCOPED, AND THAT IS THE REPAIR. For one wave it was, on
-   purpose: scoping the corner to `.session-row-btn` alone kept the three dock captures
-   byte-identical, and that byte-identity was the only evidence that two builders
-   sharing one stylesheet had not leaked into each other. The control was worth more
-   than the consistency that wave. The cost was that the rail row and the two dock rows
-   wore 16px against 8px where they had been IDENTICAL at 8px, while DESIGN.md's Layout
-   section calls the Agents dock the rail's mirror with the "same 44px head, same row
-   shell" — so that sentence was false for as long as the split stood, and no critic
-   could see it, because the rail's critic has no dock rows in frame and the dock
-   surfaces were byte-identical so nobody was looking at them.
+   ⚠️ THE OBVIOUS CHECK REPORTS THIS BACKWARDS, AND HAS DONE SO THREE TIMES NOW.
+   Mint pixels in the rail FELL 173 -> 165 (-4.6%) across this change while the
+   stripe got better, because an inset shadow paints the difference of two rounded
+   rects and a bigger arc smears more tinted pixels around the ends. What actually
+   moved is the straight, legible bar: 52 -> 64 rows, +23%. Count and share say
+   the opposite of run length here, and run length is the one that describes what
+   a person sees. Measure the run.
 
-   The corner is therefore declared ONCE, here, for all three rows, and the group at
-   the top of this file no longer states one.
+   ⚠️ AND THE GEOMETRIC NUMBERS IN THIS FILE WERE NEVER THE MEASURED ONES. The
+   clean form is `height - 2r`, giving 58 at r8 and 42 at r16 for a 74px row, and
+   an earlier version of this comment stated exactly those. The pixels have always
+   read about 8px higher — 66 and 54 — because the shadow's edge fades through
+   antialiasing rather than stopping. Both readings agree on the 12px difference
+   and on the direction; only the absolutes differ. Anyone predicting from
+   `height - 2r` should expect to land 8px low, and a builder did.
 
-   WHAT THAT COSTS, MEASURED RATHER THAN WAVED AT, because a token is not a shape. The
-   16px arc now sits on boxes of 74px (this rail row), 65px and 49px (command rows). The
-   arc eats 2r of each row's vertical edge, so the straight run falls from 87.7% to
-   66.2% of a 65px row and from 83.7% to 55.1% of a 49px one — and on a command row that
-   outline is the ONLY indicator it has. `DESIGN.md` calls the dock the rail's mirror
-   with the "same row shell"; after this the two share a token while their shells still
-   differ by 25px of height, which is a nearer thing than 8-against-16 and is not the
-   same thing as one shape. The argument three paragraphs up for exempting
-   `.session-delete` — a narrow box and a wide one cannot share one corner — was applied
-   to WIDTH and never to HEIGHT, and the 49px row is the case that would have failed it.
-   The value it settles on may yet be 8 rather than 16; what this rule buys either way is
-   that the question is now ONE edit instead of three.
+   WHAT THIS COSTS, STATED PLAINLY. The 74px row goes back to r/h 0.108, which an
+   earlier note called the flattest-cornered box in the app and complained that
+   nobody had chosen. Both halves of that are now answered: 0.108 is an OUTPUT
+   rather than an input, exactly as 0.217 was, and the 74px height is not a shape
+   decision either — it is `min-height: 2.9em`, a reservation for a second title
+   line most rows never show, so the ratio measures a corner against reserved
+   emptiness. What WAS chosen, five times in this file, is 8.
 
-   AND THE AGENT ROW'S CORNER IS NOT AS INVISIBLE AS IT LOOKS. In the default state it
-   is: `background: transparent`, no border, so the dock pixels carry no row box, and
-   `agents-dock.png` is byte-identical across all five gauntlet waves. But
-   `.agent-row--selected > .agent-row-btn` sets `background: var(--tint-3)` further down
-   this file, so a SELECTED agent row paints a ground and does show its corner, and
-   `.agent-row--nested > .agent-row-btn` carries a `border-left` in every state with its
-   two left corners pinned at 3px — an asymmetry that went from 3:8 to 3:16, doubling
-   from 2.7x to 5.3x. No capture in the run holds a selected agent row, so that part of
-   this change is justified on evidence the capture set cannot supply. Stated here rather
-   than left implied. */
+   A BARE 8px RATHER THAN A TOKEN, deliberately. It matches the four other box
+   corners in this file exactly, and those five are now the rail's whole corner
+   vocabulary with `.sidebar-toggle`'s 6px the only neighbour. REJECTED: ~11px,
+   the honest third value from 49 x 0.22 — it is a fourth radius no box in this
+   app wears, it re-opens the seam with `.session-more` directly beneath these
+   rows, and its straight run on the 49px row is still worse than 8's.
+
+   ⚠️ OPEN, AND NOT DECIDED HERE: `--r-bubble` IS BACK TO ONE CALLER. This rule
+   was its second, and with the rule on a literal the token is again called only
+   by the chat user bubble — the "one caller is indirection rather than a system"
+   condition `tokens.css` names for itself. The app now reads 8px chrome / 16px
+   content, which is coherent, but nothing in the source says so and this comment
+   is not the place to declare it.
+
+   `.session-delete` KEEPS ITS OWN 8px, AND THAT IS NOW UNREMARKABLE. It declares
+   8 itself rather than inheriting anything. The reason it was EXEMPT was that a
+   browser clamps a radius to half the shorter side, so 16 on its 28px width
+   rendered as 14 and the control read as a lozenge beside a rounded square: a
+   narrow box and a wide one cannot share one corner. At 8 the row and the control
+   agree naturally and the special case stops being special. Left as it is.
+
+   TWO THINGS HEAL FOR FREE. `DESIGN.md` calls the Agents dock the rail's mirror
+   with the "same 44px head, same row shell"; for three waves that sentence was
+   false, because the rail's rows wore 16 while the dock's wore 8, and no critic
+   could see it — the rail's critic has no dock rows in frame. Rail and dock read
+   one corner again. And `.agent-row--nested > .agent-row-btn` carries a
+   `border-left` with its two left corners pinned at 3px, an asymmetry that had
+   gone 3:8 to 3:16 and doubled from 2.7x to 5.3x; it is 2.7x again.
+
+   THE GROUPING IS PRESERVED AND IT IS WHAT MADE THIS ONE EDIT. The corner is
+   declared ONCE, here, for all three row types. The previous wave's repair bought
+   exactly that and said so in its own closing line — that the value it settled on
+   might yet be 8, and what the rule buys either way is that the question is one
+   edit instead of three. This is that one edit.
+
+   THE PROOF THAT IT IS A REVERT RATHER THAN AN APPROXIMATION: `commands-dock.png`
+   is byte-identical to waves 1, 2, 3 and 4 of this run. `agents-dock.png` and
+   `appearance-dock.png` never moved at all, because an agent row paints
+   `background: transparent` with no border in its default state and no capture in
+   the run holds a selected one — so the corner is genuinely unobservable there,
+   and their byte-identity is not evidence about this change either way. */
 .session-row-btn,
 .agent-row-btn,
 .command-row-btn {
-  border-radius: var(--r-bubble);
+  border-radius: 8px;
 }
 
 /* Busy = blocked (#14): a streaming turn disables switching + New chat. Dim to

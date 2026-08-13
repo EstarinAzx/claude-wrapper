@@ -76,15 +76,22 @@ under a loop is not a bar.
 1. **~~It reaches two surfaces.~~ CLOSED by #131, 2026-08-10, and widened twice
    since.** `driver.mjs` never picked a project folder, so Welcome and Titlebar
    were all it could see. `inspect.mjs` now captures every surface in the list
-   below into `SCREENSHOT_DIR`, plus `window-welcome.png` and
-   `window-session.png` as whole-window frames for composition questions a
-   clipped surface cannot answer. It seeds a conversation into the CLI's store
-   and replays it, so the chat carries real message rhythm and two tool cards at
-   **zero CLI turns**.
+   below into `SCREENSHOT_DIR`, plus `window-welcome.png`, `window-session.png`
+   and `window-session-short.png` as whole-window frames for composition
+   questions a clipped surface cannot answer. It seeds a conversation into the
+   CLI's store and replays it, so the chat carries real message rhythm and two
+   tool cards at **zero CLI turns**.
+
+   *(The third frame was added at run 3 wave 6. It is the session frame with the
+   transcript not overflowing, which is the only state holding the transcript's
+   date divider — an element `linear-changelog` is assigned to judge and that no
+   capture had ever shown. **This paragraph describes the instrument and is not
+   part of the standard**; the surface list below, the reference table and the
+   scoping sentence above are the standard and were not touched.)*
 
    **A missing surface is a loud failure, never a silently absent file** — every
    surface is proven present, painted and non-empty before it is photographed,
-   and the run prints `CAPTURED n/11`. **If a file you expected is not in the
+   and the run prints `CAPTURED n/12`. **If a file you expected is not in the
    directory, the run failed; read its output rather than judging the surface.**
    Three surfaces are still unreachable — AgentMap, SubagentDrawer, ToolCard —
    and are a later run's problem, as scoped.
