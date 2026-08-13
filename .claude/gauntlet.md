@@ -15,46 +15,44 @@ pieces:
   # and every one was measured DIFFERENT at seed from the pixels run 1 judged.
   # Per-piece seed evidence is in "Why this run exists" below; do not re-derive it.
   - name: Welcome
-    verdict: BAR WINS
+    verdict: BAR WINS           # WAVE 8 — HELD on a byte-identical capture. Its critic moved off
+                                # mark depth to a NEW product-shaped ask: add recent-project rows
+                                # with open actions under the empty state. That is a feature plane,
+                                # not refinement of the existing empty state, and gets no builder.
     open: true
   - name: Titlebar
-    verdict: BAR WINS           # WAVE 7 — HELD for the second wave running on a changed
-                                # capture. Its critic DROPPED the mark-to-name half of
-                                # wave 6's two-part gap (built, 4 -> 9px painted, inside
-                                # the 8-10 asked) and re-raised ONLY the unclosed half.
-                                # A within-gap partial close is the cleanest attribution
-                                # signal the run has produced. See 7.3.
+    verdict: BAR WINS           # WAVE 8 — HELD on 1,037 RGB-changed pixels. The break repair hit
+                                # 9 / 16 / 4 painted, 1.78x against the file's 1.63x
+                                # threshold, with gui-136 green. New critic asks to relocate both
+                                # pills beside the centred workspace title — owner-shaped, not
+                                # another safe spacing edit. See 8.2 and 8.9.
     open: true
   - name: Sidebar
-    verdict: BAR WINS           # WAVE 7 — HELD, and its critic moved OFF the filter axis
-                                # entirely to a fifth distinct axis in five waves. Same
-                                # signal wave 6 got on the corner: a gap that stops being
-                                # raised is the cleanest evidence a build closed it.
+    verdict: BAR WINS           # WAVE 8 — HELD on a byte-identical capture. Wave 7's basename ask
+                                # was refuted pre-build against green gui-45/gui-47: full-path
+                                # text and head-truncation are shipped, authored, pinned behaviour.
+                                # New ask adds 16-20px into the compressed pre-list stack and would
+                                # undo y202. Refused. See 8.6 and 8.9.
     open: true
   - name: Chat
-    verdict: BAR WINS           # WAVE 7 — FELL from TOO CLOSE on a capture that CHANGED
-                                # for the first time since wave 4 (129,167px, its fourth
-                                # distinct value in seven waves). THIS IS THE RUN'S FIRST
-                                # VERDICT MOVEMENT ON A SUBSTANTIALLY CHANGED CAPTURE THAT
-                                # IS ALSO CORROBORATED BY INDEPENDENT MEASUREMENT — the
-                                # smoothing pass measured this wave's own Chat build as a
-                                # regression on three axes. The critic was RIGHT. Read 7.1
-                                # before citing 6.1: wave 7 refutes 6.1's strongest form.
+    verdict: TOO CLOSE          # WAVE 8 — ROSE on 148,485 RGB-changed pixels, after the direct
+                                # repair to wave 7's corroborated regression: cards 134/135 ->
+                                # 112/113, inside the critic's 110-115 ask, and 36,702 row-box
+                                # pixels now paint. New gap is wave 3's refuted top-inset artifact:
+                                # source ships 24px and autoscroll hides ~89px. No builder. See 8.3-8.4, 8.8.
     open: true
   # Its seed delta is the SMALLEST of the five and may be pure 6px reflow. That
   # is a caveat on the delta, NOT a reason to discount its verdict — the critic
   # grades the artifact, never the diff. See "Why these five" note 3.
   - name: InputBar
-    verdict: TOO CLOSE          # WAVE 7 — ROSE from BAR WINS on a capture BYTE-IDENTICAL
-                                # to waves 5 AND 6, while asking the EIGHTH distribution
-                                # rearrangement across three runs. This is the run's fifth
-                                # verdict movement on unchanged pixels and it is the half
-                                # of 6.1 that SURVIVES wave 7. Refused under 5.8's
-                                # standing instruction; the rise is not about the artifact.
+    verdict: TOO CLOSE          # WAVE 8 — HELD on a byte-identical capture and asked the NINTH
+                                # distribution rearrangement across three runs (compact 260-320px
+                                # cluster). Refused under 5.8. Its real -5px short-frame jog remains
+                                # measured and owner-shaped. See 8.8 and 8.9.
     open: true
-critic: sonnet                 # WAVE 6 re-resolved live to the same landing,
-                               # `codex/gpt-5.6-sol` — now SEVEN consecutive waves, still
-                               # luck rather than stability. And wave 6 SHARPENED 5.1's
+critic: sonnet                 # WAVE 8 re-resolved live to the same landing,
+                               # `codex/gpt-5.6-sol` — now NINE consecutive waves, still
+                               # luck rather than stability. Wave 6 SHARPENED 5.1's
                                # variance result rather than softening it: on the SAME
                                # bytes this family returned TOO CLOSE (w4), BAR WINS (w5),
                                # TOO CLOSE (w6). See 6.1.
@@ -85,8 +83,14 @@ critic_degraded: false         # wave 1: one critic died on context length and w
                                # same file (window-session.png as 1440x912, truth 900), so
                                # that error is reproducible rather than random (4.8).
 branch: gauntlet/core-after-docks
-wave: 7
-plateau: 0                     # WAVE 7: 0 -> 0. InputBar improved BAR WINS -> TOO CLOSE,
+wave: 8
+plateau: 0                     # WAVE 8: 0 -> 0. Chat improved BAR WINS -> TOO CLOSE on
+                               # 148,485 RGB-changed pixels after its cards hit the prior critic's
+                               # 110-115px ask exactly (112/113). Unlike five prior resets, this
+                               # movement is on a substantially changed artifact and is directionally
+                               # consistent with the measured repair. The counter resets literally,
+                               # though the new gap is wave 3's refuted autoscroll artifact.
+                               # PREVIOUS NOTE, kept: WAVE 7: 0 -> 0. InputBar improved BAR WINS -> TOO CLOSE,
                                # so the contract resets, for the FIFTH consecutive wave in
                                # which the counter has been moved by something other than
                                # a measured improvement to the artifact. The reset was
@@ -403,6 +407,11 @@ applied to its wave 1 and run 2 applied twice (wave 1, and wave 4 for a piece ad
 | 7 | Sidebar | BAR WINS | **HELD, and the critic moved OFF the filter axis entirely — the same closure signal wave 6 got on the corner. Fifth distinct axis in five waves.** New gap *(as returned)*: "The scope line is a raw Windows path clipped to `C:\Users\S.D\AppData\Local\Temp\inspect...`, so it reads like unfinished diagnostic output… Replace it with the project basename in the existing 11px metadata style, keep that scope row to roughly 24px high, and expose the full path only on hover or focus." **ADMISSIBLE AND CONFIRMED IN SOURCE: `Titlebar.tsx:4` already defines a `basename()` helper and line 305 renders `basename(cwd)`, while the rail renders the raw `cwd`. The same value ships two ways on two surfaces and the helper already exists.** ⚠️ Caveat for wave 8: the *specific ugliness* is partly an instrument artifact — `inspect` runs in a temp workspace — but the inconsistency is real for any path and the fix improves real ones. |
 | 7 | Chat | **BAR WINS** | **FELL from TOO CLOSE on a capture that CHANGED by 129,167px — and this is the run's FIRST verdict movement that is both on a substantially changed capture AND corroborated by independent measurement (7.1).** New gap *(as returned)*: "each secondary, collapsed artifact occupies about 136px of height, so the cards outweigh the surrounding prose… Compress each to roughly 110–115px by tightening only the vertical gaps." **THE CRITIC IS NAMING THIS WAVE'S OWN BUILD, AND THE SMOOTHING PASS INDEPENDENTLY AGREES** — cards went 108→134 and 109→135 (+24%), `align-self: stretch` painted **zero** pixels, and the disclosure pair's grouping inverted (13/13 = 1.00x → 20/26 and 19/26). **NOT REVERTED, on 4.5's rule that this run reverts on a FENCE and not on a verdict — but 7.9 records the full case, because this is the closest the run has come to a warranted non-fence revert.** |
 | 7 | InputBar | **TOO CLOSE** | **ROSE on a capture BYTE-IDENTICAL to waves 5 and 6 — the run's seventh verdict movement and its FIFTH on unchanged pixels.** Gap *(as returned)*: "Place the two groups in one compact right-aligned row with about 24px between them directly beneath the pill." **REFUSED — the EIGHTH distribution rearrangement asked by the EIGHTH critic across three runs**, under 5.8's standing instruction rather than re-argued. Exhausted at 2.5, refused against the spec at 3.8, 4.10, 5.9 and 6.10. **Its real gap is still 6.2's −5px jog, re-confirmed unchanged this wave as a control** (transcript x464..1223, composer x459..1218, −5.00px in the short frame; 0.00px in the overflowing one). Owner-shaped: the fix needs `chat.css` AND `composer.css` together. |
+| 8 | Welcome | BAR WINS | **HELD on a byte-identical capture.** New gap: add a 480–560px recent-project action plane under the welcome button. **PRODUCT-SHAPED, not a refinement of the current empty state** — it adds a second functional plane and needs a product decision about what data and actions belong there. No builder in wave 9. |
+| 8 | Titlebar | BAR WINS | **HELD on 1,037 RGB-changed pixels.** The built break hit **9 / 16 / 4 painted**, 1.78x against the file's 1.63x threshold, and gui-136 stayed green. New gap: move both status pills beside the centred `inspect-ws` title. **OWNER-SHAPED:** it relocates runtime state across the titlebar after six waves tuning the left cluster, and the centre already carries two unresolved spec conflicts (4.3). No safe spacing builder remains. |
+| 8 | Sidebar | BAR WINS | **HELD on a byte-identical capture.** New gap: add 8–12px after live status and another 8px before the first session. **REFUSED:** it asks to undo the landed pre-list compression and move the y202 fence. Wave 7's basename ask was separately refuted pre-build against green gui-45/gui-47, which pin full-path text and long-heading truncation. |
+| 8 | Chat | **TOO CLOSE** | **ROSE on 148,485 RGB-changed pixels after a direct repair to wave 7's corroborated regression.** Cards fell 134/135 -> **112/113**, exactly inside the prior critic's 110–115 ask, and 36,702 row-box pixels now paint. New gap: add ~19px above the first visible bubble. **REFUTED by 4.7:** `.chat-column` already ships the spec's 24px and autoscroll hides ~89px above the viewport; the first visible corner is whole, not clipped. |
+| 8 | InputBar | **TOO CLOSE** | **HELD on a byte-identical capture.** Gap: compact both utility groups into 260–320px. **REFUSED — the NINTH distribution rearrangement across three runs**, under 5.8. The real −5px jog remains measured in the short frame and owner-shaped. |
 
 ## Wave 1 adjudications
 
@@ -2580,7 +2589,246 @@ on the column centre, label displacement −1.00px, left/right air 11/13px). One
 **corrected**: the clear above and below the divider is **45px, not 40** — and the symmetry claim
 holds exactly, 45 and 45.
 
+## Wave 8 adjudications
+
+### 8.1 THE WAVE WAS ALMOST MEASURED AGAINST THE WRONG BUNDLE, AND THE ACCIDENT PRODUCED THE RUN'S STRONGEST DETERMINISM CONTROL
+
+`inspect.mjs` renders `out/`, not `src/`. Its own line 132 says so — *"Needs `npm run build` first (a launch
+timeout at 30s means `out/` is stale)"* — and **no section of this state file has ever recorded it.** Wave 8's
+first capture ran straight after the builders returned, so it photographed **wave 7's bundle**, and all twelve
+files came back byte-identical to wave 7. The wave was one unchecked assumption away from sending five critics
+at last wave's pixels and adjudicating the result.
+
+**It was caught by the control, not by suspicion.** The wave's own ownership check — controls must be identical,
+built surfaces must differ — reported `titlebar.png`, `chat.png` and `window-session.png` as SAME, which is
+impossible for a wave with two landed builds. Running `npm run build` (bundle
+`index-DULPqiQ_.css` -> `index-DTnEAz7L.css`, so the edits were never bundle-neutral) and re-capturing produced
+the correct split immediately.
+
+**The accident is worth more than the mistake cost.** That failed capture ran `inspect` against the *exact*
+bundle wave 7 captured, one wave and one machine-state later, and returned **all twelve files byte-identical**.
+This run has leaned on cross-wave capture comparability for eight waves and had never demonstrated it directly;
+a byte-identical twelve-file reproduction on the same bundle is the strongest form of that demonstration, and it
+arrived free. **`sha` comparability across waves 1-8 is now measured, not assumed.**
+
+⚠️ **CARRY THIS: `npm run build` BETWEEN THE BUILDERS RETURNING AND `inspect` RUNNING, ALWAYS.** A wave that
+skips it does not fail loudly — it produces a complete, plausible, entirely stale wave.
+
+### 8.2 BOTH BUILDS HIT EVERY NUMERIC PREDICTION EXACTLY, WHICH HAS NOT HAPPENED BEFORE
+
+Nine predictions between two builders, all confirmed by the leg's own measurement:
+
+| build | predicted | measured |
+|---|---|---|
+| Titlebar | break painted 16px | **16** |
+| Titlebar | intervals 9 / 16 / 4 | **9 / 16 / 4** |
+| Titlebar | break/tick ratio 1.78x painted | **1.78x** |
+| Titlebar | break/pill ratio 4.0x | **4.0x** |
+| Titlebar | group right edge x272 -> x275 | **x275** |
+| Titlebar | tick and pill channel unmoved | **unmoved** |
+| Chat | card inner heights ~112 / ~113 | **112 / 113** |
+| Chat | row border box exactly 17px | **17px** |
+| Chat | clearance SIGN flips (rows pair) | **9 above / 6 between** |
+
+**The titlebar break's ratio is back above the file's own threshold**: 1.44x painted at wave 7, **1.78x** now,
+against the 1.63x `titlebar.css` records as "enough" and the 1.3x it calls "far too weak". The interval that
+grew to meet the break was never touched.
+
+**Both builders refused something, and both refusals were arithmetic.** The Titlebar builder declined the full
+5.5px of headroom: `margin-left: 16px` would have put the flank floor at 279 against a 279.25 equal share —
+**0.25px of margin** against a 1.0px driver tolerance — and it stopped at 13.5px (floor 276.5, 2.75px of slack)
+anchored on the file's record that *"this flank carried 276 when gui-136 was already green"*. The Chat builder
+refuted the bleed form on the card's own padding budget: bleed 10 + `outline-offset` 3 + 2px stroke = **15px
+against 14px of card padding**, so the focus ring would paint outside the card. It took the indent instead and
+named the cost.
+
+### 8.3 THE CHAT BUILDER RECOVERED THE ARITHMETIC BEHIND WAVE 7'S GROUPING INVERSION, AND IT WAS ONE NUMBER COUNTED TWICE
+
+7.4(b) recorded that reserving 28px per row inverted the disclosure pair's grouping (13/13 -> 20/26 and 19/26)
+and called it an accident. **It was not an accident and it was fully determined.** The row's natural line box is
+15px (11px micro-caps at ~1.35), so `min-height: 28px` left **13px of surplus**, and `align-items: center` split
+it **6.5px above and 6.5px below each row's ink**. Body-to-row-1 therefore received one helping (13 + 6.5 = 19.5,
+measured 19/20) and row-1-to-row-2 received **two** (13 + 6.5 + 6.5 = 26, measured 26). The 1.30x crossing was
+6.5 counted twice.
+
+That model then predicted its own removal to the pixel: 28 - 17 = **11px reclaimed per row**, two rows per card,
+**22px per card**. Measured: card inner heights **134 -> 112** and **135 -> 113**, both exactly -22. The
+bottom-anchored stack propagates it exactly — card 3's bottom edge is **y545 in both waves**, its top moved
++22, card 2's bottom moved +22 and its top +44 (its own 22 plus card 3's). **The vertical arithmetic closes at
+zero remainder independently of the pixel attribution.**
+
+### 8.4 THE PAINT IS THE HAIRLINE, NOT THE FILL, AND THE BUILDER SAID SO BEFORE IT WAS MEASURED
+
+The brief demanded a nonzero number of pixels change colour — the exact thing wave 7's build failed at. The
+builder derived, before building, that `--well` over `--surface` composites to about a **3/255** step and would
+therefore repeat wave 7's failure on its own, and that `--border` gives about **17/255**. So it spent both: a
+`--well` ground *and* a `1px solid var(--border)` hairline.
+
+Measured against the card ground `11,15,17`: band fill **8,12,14 = -3/255**, band border line **25,29,31 =
++14/255**. The fill is very nearly invisible exactly as predicted; **the hairline is what the eye gets.** Four
+bands at 540 x 17px now paint where wave 7 painted zero.
+
+⚠️ **The builder passed on a tokens-level consequence it could not act on and it is worth carrying:** the ~3/255
+figure is a property of the two token values, not of this card, so **any surface spending a flat `--well` ground
+with no hairline is likely painting near-nothing there too.** `tokens.css` was fenced this wave. This is a gate
+question, not a build.
+
+### 8.5 THE ATTRIBUTION CLOSED AT ZERO REMAINDER FOR THE SIXTH CONSECUTIVE WAVE
+
+Two builds, two surfaces: **1,037 + 148,485 = 149,522 = `window-session.png` exactly.** Remainder **0**. The leg's first count was 149,533 because it counted RGBA differences; the established run instrument counts RGB, and the 11px difference is alpha-only. **The RGBA count is voided rather than mixed into a seven-wave RGB series.** Zero remainder holds under either definition.
+
+The ownership control is the cleanest form it has taken. `window-welcome.png` — a frame containing a surface with
+no builder — changed by **exactly 1,037 pixels, confined to y13..33, identical to the titlebar surface's own
+change**. So the titlebar build touched the titlebar and nothing else, in a frame that shares no other element
+with it. Seven capture files were byte-identical to wave 7 (`welcome`, `welcome-min-window`, `sidebar`,
+`input-bar` and all three docks).
+
+The titlebar's changed region is `x155..275`, which is the two pills relocating +3px; the mark (`x14..35`) and
+the app name (`x45..141`) did not move a pixel.
+
+### 8.6 THE SIDEBAR ASK WAS REFUTED BEFORE THE FAN-OUT, AGAINST A SHIPPED AND TESTED BEHAVIOUR
+
+7.13 handed wave 8 a Sidebar gap it called "confirmed in source": render `basename(cwd)` in the rail as the
+titlebar already does. **The leg refused to build it, and the reason is not the one 7.13 anticipated.**
+
+7.13's trap note warned this "likely needs `Sidebar.tsx`, not only `rails.css`". The real block is further down.
+`gui-45` — **green on the pre-wave baseline** — asserts two things this change would break:
+
+1. `fails.push('the open workspace has no group of its own')` when no `.session-group-head` has `textContent`
+   folding to the **full directory path**. A basename never matches.
+2. `fails.push('no long group heading engaged head-truncation')` when **no heading overflows its box**. Basenames
+   do not overflow. This one is not a technicality: it exists to prove a deliberate behaviour.
+
+`.session-group-head` carries authored `direction: rtl` and `unicode-bidi: plaintext` **specifically so a long
+path clips at the START and keeps its meaningful tail**, with a comment saying so. `gui-47` additionally uses the
+same full-path match to identify which group is the current project.
+
+**So the ask does not fix a defect — it deletes a decision the app made, documented and pinned.** A form that
+keeps the full path in `textContent` while showing only a basename exists (hidden span; `textContent`
+concatenates), but it satisfies criterion 1 while still failing criterion 2, and building a hidden element purely
+to clear a text assertion is softening a fence in everything but letter. Not built.
+
+**The substitutes were all "undo last wave's build".** 7.6's three recorded costs of the filter field are real,
+but wave 7's Sidebar critic **moved off that axis entirely**, which this run reads as its cleanest closure
+signal, and 6.3 forbids reversing a landed build on a smoothing finding alone. **Sidebar got no builder**, and
+the piece is now blocked the same way Welcome is: on a decision, not on the instrument.
+
+⚠️ **This is the FIRST gap in the run refuted against a DRIVER rather than against arithmetic or source**, and it
+was found by the leg checking the file map before choosing builders — which 7.13 itself instructed. The check
+cost minutes; the build would have cost a red wave and a revert.
+
+### 8.7 A SPEC DIVERGENCE NOBODY HAD CHECKED, HANDED TO THE SMOOTHING PASS
+
+7.13 corrected a carried number: the clear above and below the chat's date divider is **45px, not 40**. It was
+recorded as a stale note being fixed. **But `DESIGN.md`'s Layout section itself says "24px vertical gaps, 40px
+around the date divider"** — so the *spec* also says 40 while the app paints 45, and the correction quietly
+turned a stale-note fix into a possible 5px divergence from the design system. Handed to the smoothing pass to
+resolve rather than assumed either way; if it is real it is an owner call about which number is right, not
+something a wave should silently "fix".
+
+### 8.8 THE SMOOTHING PASS CORRECTED TWO QUESTIONS, AND FOUND THAT THE SEAM MOVED RATHER THAN CLOSED
+
+**First correction — the possible date-divider spec break is NOT one.** The glyph/rule ink has 45px clear above
+and below, while `DESIGN.md` says 40px around the divider. Those are different boxes: the divider's 18px line box
+is y88..105, with exactly **40 clear rows** outside it on each side (y48..87, y106..145); glyph/rule ink is only
+y93..100, leaving **5px of internal half-leading** above and below. 40 box clearance + 5 internal = 45 painted-
+ink clearance exactly. No divergence. The rule remains 348 / 348, 0px segment asymmetry; only the known 1.00px
+label tracking debt remains.
+
+**Second correction — the quiet-control seam MOVED rather than closed.** Both controls now paint at rest, which
+closes the ground-versus-air contradiction wave 7 found. But they speak two ground grammars:
+
+| control | treatment |
+|---|---|
+| Rail filter | `--border` fill, **+0.0823 L**, r8, placeholder flush at the ground edge |
+| Tool disclosure | `--well` fill **−0.0142 L** + `--border` outline **+0.0625 L**, r4, label +11px inset |
+
+So the app no longer disagrees about WHETHER a quiet control paints; it disagrees about HOW. This is the wave's
+largest coherence finding. The pass proposed one new piece — an authored quiet-control ground contract shared by
+the rail filter and tool disclosures — but **it is PARKED rather than added**. Adding a sixth piece at wave 9 of
+12 would consume at least 13 agents and, more importantly, reset that piece's baseline with only three waves
+left; it cannot reach the written three-wave plateau signal before max_waves. The decomposition has room, the
+run budget does not.
+
+**The tool-card repair is strong but not complete.** It removed 22 of the 26 pixels wave 7 added per card; inner
+heights are 112/113, still 4px over the 108/109 pre-reservation control. The grouping's sign is repaired, not its
+equality: 9px body-to-row-1, 6px row-to-row (0.67x), against the former 13/13. This is not the new critic's gap,
+and smoothing alone does not warrant another build; recorded as the cost of painting a bordered row.
+
+**Path treatment remains a real seam under a valid fence.** Titlebar paints the basename `inspect-ws` in 70px;
+the rail's full path consumes 213 of its 216px content box under head-truncation. The leg's driver refutation is
+factually sound AND the application still presents one value two ways. That is an owner call about semantic role:
+workspace identity versus filesystem record.
+
+### 8.9 ALL FIVE CRITIC GAPS ARE BLOCKED, REFUTED OR OWNER-SHAPED — WAVE 9 INHERITS A THIN QUEUE
+
+| piece | wave 8 critic gap | adjudication for wave 9 |
+|---|---|---|
+| Welcome | Add recent-project rows/action plane under the button | **PRODUCT-SHAPED.** Adds a second functional plane and a data/action contract, not refinement of the current empty state. |
+| Titlebar | Move both pills beside the centred workspace title | **OWNER-SHAPED.** Relocates runtime state after six waves tuning the left lockup; the centre slot already holds two unresolved spec conflicts (4.3). |
+| Sidebar | Add 8–12px after live status and 8px before first row | **REFUSED.** Undoes landed compression and moves the y202 fence. |
+| Chat | Add ~19px top inset above first visible bubble | **REFUTED by 4.7.** Source already ships 24px; autoscroll hides ~89px; first visible rounded corner is whole. |
+| InputBar | Compact two utility groups into 260–320px | **REFUSED — ninth distribution request** under 5.8. |
+
+**This is the run's first zero-builder inheritance.** Do not turn it into speculative work. Wave 9 still runs the
+five fixed critics and smoothing pass, because the plateau signal is the product of their verdicts, not of build
+count. If a critic returns a genuinely new, buildable gap, wave 10 may act on it. If none improves, plateau goes
+0 -> 1.
+
+Chat rose BAR WINS -> TOO CLOSE, so the written contract resets `plateau: 0 -> 0`. This is the run's first reset
+since wave 4 that follows a large changed artifact in the expected direction after an independently measured
+repair — and unlike wave 7's noisy InputBar rise, it is credible signal. The new Chat gap itself is still an
+instrument artifact; verdict signal and gap quality are separate questions.
+
+### 8.10 THE GATE IS GREEN AGAINST ITS OWN BASELINE, AND THE COMMENTS ARE BUNDLE-NEUTRAL
+
+D7 GREEN: typecheck exit 0; **96 test files, 1,412 passed / 43 skipped**; build exit 0. The built CSS bundle is
+`index-DTnEAz7L.css` before and after the leg's comment rewrites — byte-identical, fourth consecutive proof that
+comment debt is bundle-neutral.
+
+Rendered half: **36/39 before and 36/39 after**, with the exact same non-PASS set: `gui-94` FAIL, `gui-95` FAIL,
+`gui-123` UNSCORED. `gui-94`'s full failure message is byte-identical pre/post (sha256
+`a9e2f241fe2e3a3c33b4310cacf89334c4b191d9ec68f6cd28343122de298957`), so the Sidebar revert trigger did not
+fire. `gui-136` passed, directly clearing the Titlebar flank fence; `gui-61/62/63/118` passed, clearing the tool-
+card surface. Zero new rendered-half failures.
+
+All eight agents returned first time — third consecutive fully clean wave, after wave 5 lost eighteen. Nothing
+pushed.
+
+### 8.11 What wave 9 inherits
+
+**Zero safe builders; cost: 0 + 5 + 1 = 6 agents.** Run the critics and smoothing as a measurement wave. The fixed
+five pieces stay open, and no new piece is added for the budget reason in 8.8.
+
+| piece | wave 9 build | live question |
+|---|---|---|
+| Welcome | **NONE** | Does the product-shaped action-plane ask repeat, or move? |
+| Titlebar | **NONE** | Does the critic recognise the 16px break closure, or ask another relocation? |
+| Sidebar | **NONE** | Full path vs basename is an owner call under green gui-45/gui-47. |
+| Chat | **NONE** | Top-inset ask is 4.7's autoscroll artifact; cards are now 112/113 and painted. |
+| InputBar | **NONE** | Ninth distribution ask refused; −5px short-frame jog remains owner-shaped. |
+
+⚠️ **BUILD BEFORE CAPTURE.** `inspect.mjs` renders `out/`, not `src/`; skipping `npm run build` produces a
+complete, plausible, entirely stale wave. Wave 8 caught this only because its ownership control required built
+surfaces to differ. Even a zero-builder measurement wave should run build before inspect so `out/` and HEAD are
+proven aligned.
+
+⚠️ **RGB IS THE CANONICAL PIXEL-DIFF DEFINITION.** The established series ignores alpha. Wave 8's leg counted
+149,533 RGBA changes; smoothing counted 149,522 RGB changes. The 11px difference is alpha-only and the RGB value
+is canonical. Do not mix definitions across waves.
+
+⚠️ **THE CHAT CRITIC'S FRAME IS STILL HELD FOR COMPARABILITY.** Wave 8 directly answered the same critic's
+wave-7 gap and Chat rose on changed pixels. Swapping to the short frame now would destroy that attribution. The
+short frame remains smoothing/leg evidence only.
+
+⚠️ **BAR UNTOUCHED:** re-check all nine files. **CRITIC_SHARED stays byte-identical** at
+`f89141c58449127c`. Re-resolve `wisp routing` live. Build before inspect. Keep the twelve-file capture. Run the
+pre-wave rendered-half baseline before any mutation even though no builders are planned; a new gate red still
+needs its own baseline.
+
 ## Log
+
+- [wave 8] **TWO BUILDS HIT EVERY NUMERIC PREDICTION, CHAT ROSE ON CHANGED PIXELS, AND THE SEAM MOVED RATHER THAN CLOSED.** Titlebar break 13 -> 16px painted, ratio 1.44x -> **1.78x** above the file's 1.63x threshold; cards 134/135 -> **112/113**, exactly inside the prior critic's 110-115 ask; **36,702** baseline-aligned row pixels now paint where wave 7 painted zero. Chat rose BAR WINS -> TOO CLOSE on **148,485 RGB-changed pixels**, so `plateau: 0 -> 0` — the first credible reset since wave 4, though its new top-inset gap is 4.7's refuted autoscroll artifact. Smoothing found both quiet controls now paint but use two grammars (rail +0.0823 L/r8/flush; tool row -0.0142 L + outline/r4/+11 inset), so the seam moved. It also closed the apparent divider spec break exactly: 40px box clearance + 5px internal half-leading = 45px ink clearance. Attribution ZERO REMAINDER for the sixth wave: 1,037 + 148,485 = **149,522** RGB pixels, 257/257 components. Pre/post rendered half **36/39 -> 36/39**, same three non-PASS, gui-94 message byte-identical; D7 green, 1,412 passed. **First zero-builder inheritance**: all five new gaps are refuted, blocked or owner/product-shaped. Eight agents returned first time. Nothing pushed. Adjudications 8.1-8.11.
 
 - [wave 7] **THE DECISIVE TEST RESOLVED AND SPLIT THE INSTRUMENT IN TWO, IN ONE WAVE.** Chat got a
   builder AND changed pixels for the first time since wave 4 — **129,167px, its fourth distinct

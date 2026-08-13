@@ -94,10 +94,10 @@
   white-space: nowrap;
 }
 
-/* THE GROUP BREAK — the left group is declared 9 / 14.5 / 4, not 10 / 10 / 10.
+/* THE GROUP BREAK — the left group is declared 9 / 17.5 / 4, not 10 / 10 / 10.
    Every box edge in this group is recoverable to the pixel off the capture at
    zoom 1, and these are the current ones: mark x14..35, app name x45..141,
-   backend pill x155..213, permission pill x218..272. The item WIDTHS have never
+   backend pill x158..216, permission pill x221..275. The item WIDTHS have never
    moved (22 / 96 / 58 / 56); only the intervals have. It began as three intervals
    of 10, so identity, backend state and permission state were four things in one
    undifferentiated run — the same defect `.titlebar-actions` had before its
@@ -105,16 +105,14 @@
    rather than taste. It records 39 against a 30px rhythm, a 1.3x crossing, as
    "far too weak to break the run", and 1.63x as enough.
 
-   ⚠️ AND BY ITS OWN TEST THIS GROUP NO LONGER CLEARS IT. When the intervals were
-   4 / 13 / 4 the break crossed at 3.25x declared and 3.00x painted, comfortably
-   past 1.63. At 9 / 14.5 / 4 it crosses at 1.61x declared and 1.44x painted —
-   below the ratio this paragraph accepts and barely above the one it rejects.
-   The break did not shrink; the interval beside it grew to meet it. Read the
-   COST paragraph further down before touching either number, because the two
-   are now coupled and the next move is to widen the break, not the tick. Both
-   sides of the break were meant to tighten, which was the point:
-   mark and wordmark are one lockup, the two pills are one state pair, and only
-   the crossing between them is wide.
+   THE GROUP CLEARS ITS OWN TEST AGAIN. When the intervals were 4 / 13 / 4 the
+   break crossed at 3.25x declared and 3.00x painted, comfortably past 1.63.
+   Growing the flat mark-to-name tick to 9 temporarily pulled it down to 1.44x
+   painted. The current 9 / 16 / 4 painted clearances restore it to 16/9 = 1.78x,
+   above the ratio this paragraph accepts, without reopening the tick the prior
+   critic closed. Both sides of the break remain intentionally tight: mark and
+   wordmark are one lockup, the two pills are one state pair, and only the
+   crossing between them is wide.
 
    THE SECOND TIGHTENING WAS NOT BUDGET-NEUTRAL AND WAS NOT MEANT TO BE. The
    first, 10 -> 7 with the 9px break, re-cut the group without moving its floor.
@@ -122,15 +120,13 @@
    put the group's edge at 267, down from 276. `.titlebar-left`'s note carries
    why lowering it is safe where raising it was not.
 
-   THE THIRD MOVE PARTLY UNWOUND THE SECOND, and the numbers below are the live
-   ones. The intervals are no longer one `gap`: the flat mark-to-name tick is
-   funded separately by `margin-left: 5px` on `.app-name`, and the break is 10.5.
-   Declared 9 / 14.5 / 4, sum 27.5, so the floor is 246 + 27.5 = 273.5 and the
-   painted extent is x14..272. Both are inside the 279.25 equal share, and 273.5
-   is under the 276 this flank carried when gui-136 was already green, so the
-   equal-flank assertion is not close. Project-open slot at 640 is
-   640 - 273.5 - 233 = 133.5 against a 60-char fixture painting 451, so it still
-   truncates.
+   THE FOURTH MOVE FINISHED THE REPAIR, and the numbers below are the live ones.
+   The intervals are no longer one `gap`: the flat mark-to-name tick is funded
+   separately by `margin-left: 5px` on `.app-name`, and the break is 13.5.
+   Declared 9 / 17.5 / 4, sum 30.5, so the floor is 246 + 30.5 = 276.5 and the
+   painted extent is x14..275. Both are inside the 279.25 equal share, with
+   2.75px of slack. Project-open slot at 640 is 640 - 276.5 - 233 = 130.5 against
+   a 60-char fixture painting 451, so it still truncates.
 
    WHY IT WAS SPENT, AND WHAT IT DID NOT BUY. A critic reading the whole window
    observed that this group crosses a structural column: the sessions rail below
@@ -151,11 +147,11 @@
    ⚠️ AND THE TARGET WAS THEN WITHDRAWN, WHICH MATTERS MORE THAN THE ARITHMETIC.
    x247 is a 1px hairline sitting 48px BELOW this strip, so a box edge landing
    exactly on it reads as a collision rather than an alignment. Do not aim at it.
-   The group's painted extent is now x272, an overrun of +25, and that is an
-   accepted cost rather than a regression against a live fence — but it IS 6px
-   worse than the 4 / 13 / 4 state, so a titlebar-local spacing fix did give back
-   two thirds of what the second tightening bought here. Nothing but this comment
-   can see that trade, because no per-surface critic reads both surfaces.
+   The group's painted extent is now x275, an overrun of +28, and that is an
+   accepted cost rather than a regression against a live fence — 9px worse than
+   the 4 / 13 / 4 state. A titlebar-local spacing fix gave back the rail alignment
+   it had bought so the lockup could clear its own grouping threshold. Nothing but
+   this comment can see that trade, because no per-surface critic reads both surfaces.
 
    ⚠️ THE THREE INTERVALS DO NOT PAINT ALIKE, AND THAT IS WHY THEY ARE NO LONGER
    ONE `gap`. `--r-pill` rounds each pill to a semicircular cap of radius
@@ -166,15 +162,12 @@
    clearance and read as the tightest thing in the group; the next critic asked
    for 8-10px there. It is now declared 9 and measures 9.
 
-   ⚠️ WHAT THAT COST, MEASURED, AND IT IS THE REASON THE NEXT WAVE IS BACK HERE.
-   Column clearances went 4 / 12 / 4 to 9 / 13 / 4. The break's ratio to the
-   wider interval beside it therefore fell from 12/4 = 3.00x to 13/9 = 1.44x
-   painted (14.5/9 = 1.61x declared) — and the paragraph above records 1.3x as
-   far too weak to break a run and 1.63x as enough. So the tick got the air it
-   was asked for and the lockup the break exists to protect stopped reading as a
-   lockup: the group now reads as three uneven intervals rather than
-   [mark name] BREAK [pill pill]. Widening the break is the fix and there is room
-   for it — the intervals may sum to 33 and currently sum to 27.5.
+   WHAT THE REPAIR COST, MEASURED. Column clearances went 4 / 12 / 4 to
+   9 / 13 / 4 and then 9 / 16 / 4. The intermediate break-to-tick ratio fell
+   from 3.00x to 1.44x, below the 1.63x this file accepts; widening only the break
+   restored it to 1.78x. The three declared intervals now sum to 30.5 against the
+   33px ceiling, leaving 2.5px of headroom. Spending the full ceiling would leave
+   only 0.25px against gui-136's 1px tolerance, so that remainder is deliberate.
 
    A BARE `margin-left: 16px`, the obvious form of the FIRST break, REDS gui-136,
    and the margin for error was 3.25px. The binding state is WELCOME at the 640
@@ -184,21 +177,21 @@
    freezes there, the right takes 266.5, and gui-136's equal-flank assertion reds
    by 25.5 against a 1.0 tolerance with the midpoint 12.75 off centre — on an
    UNCLIPPED title, so the driver's full-row branch never absorbs it. At 640 with
-   a project OPEN the slot is 640 - 273.5 - 233 = 133.5, and the 60-char fixture
-   paints 451 so it still truncates, as gui-136 requires.
+   a project OPEN the current slot is 640 - 276.5 - 233 = 130.5, and the 60-char
+   fixture paints 451 so it still truncates, as gui-136 requires.
 
    THE FLOOR IS THE EXTENT PLUS THE INSET, NOT THE EXTENT. The group's painted
-   extent is x14..272, which is 259 columns; the floor is that plus the mark's own
+   extent is x14..275, which is 262 columns; the floor is that plus the mark's own
    14px inset, because the inset is content inside this flank rather than padding
    on its box. `.session-title`'s band arithmetic uses the painted extent AS the
    floor, so its `page - 2 x extent` opens later than the real thing. Its
    conclusion survives, since the fixture paints 451.
 
    MEASURED AFTER THE RETUNE, and this is the non-event worth recording: the
-   group's painted right edge moved +6px and the session title did not move at
-   all. Ink x685..754, midpoint dead on the window centre, displacement 0.00px —
-   the fourth consecutive wave at those exact numbers. It holds because 273.5 is
-   the floor while the flank's equal share at 1440 is far larger, so neither
+   group's painted right edge moved another +3px and the session title did not
+   move at all. Ink x685..754, midpoint dead on the window centre, displacement
+   0.00px — the fifth consecutive wave at those exact numbers. It holds because
+   276.5 is the floor while the flank's equal share at 1440 is far larger, so neither
    flank is frozen and the flex split never sees the change. Growing this group
    is only a centring risk when the floor exceeds the share, which is the 640
    case above.
@@ -214,7 +207,7 @@
    window's left inset, and spending it moves the whole group off the window edge
    to solve a spacing problem two items further right. */
 .app-name + * {
-  margin-left: 10.5px;
+  margin-left: 13.5px;
 }
 
 /* titlebar toggles: backend indicator (native vs wisped) + permission mode.

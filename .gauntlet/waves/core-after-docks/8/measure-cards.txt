@@ -1,0 +1,27 @@
+
+===== WAVE 7  chat.png 1192x721  transcript ground=3,6,6,163  probe x=700
+  CARD 1: y0..32  outer h=33  inner h=31  cardGround=33,36,38,246
+    non-ground bands inside: NONE (rows paint nothing)
+  CARD 2: y169..304  outer h=136  inner h=134  cardGround=11,15,17,216
+    non-ground bands inside: y169..169(h1)  y213..222(h10)  y304..304(h1)
+    clearances (cardTop->b1, b1->b2, ..., last->cardBottom): -1 / 43 / 81 / 0
+  CARD 3: y409..545  outer h=137  inner h=135  cardGround=11,15,17,216
+    non-ground bands inside: y409..409(h1)  y545..545(h1)
+    clearances (cardTop->b1, b1->b2, ..., last->cardBottom): -1 / 135 / 0
+  CARD 4: y586..633  outer h=48  inner h=46  cardGround=33,36,38,246
+    non-ground bands inside: y608..609(h2)  y614..615(h2)
+    clearances (cardTop->b1, b1->b2, ..., last->cardBottom): 21 / 4 / 18
+
+===== WAVE 8  chat.png 1192x721  transcript ground=3,6,6,163  probe x=700
+  CARD 1: y5..76  outer h=72  inner h=70  cardGround=33,36,38,246
+    non-ground bands inside: y23..24(h2)  y27..34(h8)
+    clearances (cardTop->b1, b1->b2, ..., last->cardBottom): 17 / 2 / 42
+  CARD 2: y213..326  outer h=114  inner h=112  cardGround=11,15,17,216
+    non-ground bands inside: y213..213(h1)  y257..266(h10)  y276..292(h17)  y299..315(h17)  y326..326(h1)
+    clearances (cardTop->b1, b1->b2, ..., last->cardBottom): -1 / 43 / 9 / 6 / 10 / 0
+  CARD 3: y431..545  outer h=115  inner h=113  cardGround=11,15,17,216
+    non-ground bands inside: y431..431(h1)  y495..511(h17)  y518..534(h17)  y545..545(h1)
+    clearances (cardTop->b1, b1->b2, ..., last->cardBottom): -1 / 63 / 6 / 10 / 0
+  CARD 4: y586..633  outer h=48  inner h=46  cardGround=33,36,38,246
+    non-ground bands inside: y608..609(h2)  y614..615(h2)
+    clearances (cardTop->b1, b1->b2, ..., last->cardBottom): 21 / 4 / 18

@@ -1,0 +1,14 @@
+
+WAVE 7  1440x48  ground=11,15,17,216  band y14..33
+  ink runs: x14..35(w22)  x45..77(w33)  x79..85(w7)  x89..112(w24)  x114..120(w7)  x122..141(w20)  x155..213(w59)  x218..272(w55)
+  all clearances: 9 / 1 / 3 / 1 / 1 / 13 / 4
+  group clearances: 9 / 13 / 4
+  group right edge (last inked col in x0..400): 272
+  RATIO break/tick = 1.44x   break/pill = 3.25x
+
+WAVE 8  1440x48  ground=11,15,17,216  band y14..33
+  ink runs: x14..35(w22)  x45..77(w33)  x79..85(w7)  x89..112(w24)  x114..120(w7)  x122..141(w20)  x158..216(w59)  x221..275(w55)
+  all clearances: 9 / 1 / 3 / 1 / 1 / 16 / 4
+  group clearances: 9 / 16 / 4
+  group right edge (last inked col in x0..400): 275
+  RATIO break/tick = 1.78x   break/pill = 4.00x

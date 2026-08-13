@@ -1,0 +1,47 @@
+
+TITLEBAR surface  titlebar.png  1440x48
+  changed pixels: 1037
+  bbox x155..275  y13..33
+
+CHAT surface  chat.png  1192x721
+  changed pixels: 148485
+  bbox x211..1188  y0..534
+
+WINDOW-SESSION frame  window-session.png  1440x900
+  changed pixels: 149522
+  bbox x155..1436  y13..582
+
+WINDOW-WELCOME frame  window-welcome.png  1440x900
+  changed pixels: 1037
+  bbox x155..275  y13..33
+
+==== ATTRIBUTION ====
+  titlebar 1037 + chat 148485 = 149522
+  window-session total       = 149522
+  REMAINDER                  = 0
+
+==== WINDOW-WELCOME CONFINEMENT (must be y0..47 only) ====
+  changed rows y13..33  -> CONFINED to the titlebar
+  welcome-only change: 1037 vs titlebar surface 1037 -> IDENTICAL
+
+==== CHAT COMPONENTS (top 12) ====
+  n=  28305  x251..820  y156..224  (570x69)
+  n=  24442  x502..970  y0..77  (469x78)
+  n=  15883  x251..820  y293..328  (570x36)
+  n=  14213  x251..820  y401..442  (570x42)
+  n=   9227  x266..805  y517..534  (540x18)
+  n=   9173  x266..805  y495..511  (540x17)
+  n=   9172  x266..805  y276..292  (540x17)
+  n=   1173  x251..368  y107..125  (118x19)
+  n=   1124  x532..658  y350..365  (127x16)
+  n=   1043  x290..409  y446..462  (120x17)
+  n=   1029  x362..482  y350..365  (121x16)
+  n=   1013  x646..749  y108..122  (104x15)
+
+==== TITLEBAR COMPONENTS (top 8) ====
+  n=    307  x165..206  y18..29  (42x12)
+  n=    271  x228..265  y19..29  (38x11)
+  n=    130  x218..231  y13..33  (14x21)
+  n=    130  x262..275  y13..33  (14x21)
+  n=    100  x203..216  y13..33  (14x21)
+  n=     99  x155..168  y13..33  (14x21)

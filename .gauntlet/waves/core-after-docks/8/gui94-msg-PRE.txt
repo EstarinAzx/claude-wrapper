@@ -1,0 +1,12 @@
+    | .command-row-hint        12.8       12.8        0                 normal   "Cascadia Code", Consolas, "SF Mono", ui-monospace, monospace
+    | .command-row-desc          12       31.9     19.9                15.95px   "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif
+    | .command-row-btn           60       65.1      5.1                 normal   "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif
+    | .command-list height 532px over 125 rows
+    | rest of the shorthand — button: weight 400, style normal, variant normal, stretch 100%
+    |                           body: weight 400, style normal, variant normal, stretch 100%
+    | surface 2 — slash popover: 125 options, option 27.2px, popover 260px
+    |   .command-row-name        15.2px   "Cascadia Code", Consolas, "SF Mono", ui-monospace, monospace
+    |   .command-row-hint        12.8px   "Cascadia Code", Consolas, "SF Mono", ui-monospace, monospace
+    | screenshot (dock, the changed surface): C:\Users\S.D\AppData\Local\Temp\claude-wrapper-dom-phase\gui-94\gui-94-commands-dock.png
+    | screenshot (slash popover, surface 2):  C:\Users\S.D\AppData\Local\Temp\claude-wrapper-dom-phase\gui-94\gui-94-slash-popover.png
+    | FAIL: AC3 .command-row-desc line box moved: 12px before → 31.9px after (19.9px) | AC4 row height moved: 60px before → 65.1px after (tolerance 0.8px)
