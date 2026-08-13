@@ -435,7 +435,41 @@
 .effort-range {
   -webkit-appearance: none;
   appearance: none;
-  width: 68px;
+  /* THE WIDTH IS THE STOP COUNT'S, not a round number. This control carries SIX
+     stops — Default plus the five levels — and a range parks the first and last
+     stop centres at the two ends of the travel, which is the width minus one
+     thumb. So the usable travel is width - 10, and the spacing between two
+     neighbouring stops is that travel over FIVE intervals, not six stops.
+
+     At the old 68px that came out as 68 - 10 = 58px of travel and 58 / 5 = 11.6px
+     between neighbours — barely more than the 10px thumb, so adjacent stops
+     nearly touched and landing a drag on a NAMED level meant releasing inside
+     about 6px. The scale read as a scale and did not work as a picker.
+
+     24px per interval is the floor, and it is WCAG 2.5.8's number rather than a
+     preference. That rule's SPACING allowance is this exact geometry: an
+     undersized target passes when a 24px circle centred on it does not intersect
+     the circle of the next one, which for stops on a line means their centres
+     sit at least 24px apart. So one interval is one 24px circle. It is also the
+     practical figure, because a range snaps to whichever stop is nearest and the
+     catch zone for a level is therefore one whole interval wide.
+
+     Hence travel = 24 x 5 = 120, and width = 120 + 10 = 130. Reading it back the
+     way the top of this comment does: 130 - 10 = 120 of travel, 120 / 5 = 24.0px
+     per interval, exactly the floor.
+
+     What this does NOT buy, said plainly so a later reader does not over-credit
+     it: the thumb is still 10px, so 2.5.8 is being used for the SPACING between
+     stops and this is not a conformance claim about the thumb's own size. And
+     the number is the spacing's alone — the 68px sitting next to it belongs to
+     `.effort-value`, derived independently from the widest word it has to hold.
+     The two agreeing at 68px was always a coincidence of two separate sums, so
+     the track leaving 68 behind takes nothing with it.
+
+     There is room: the strip is a 760px space-between measure carrying roughly
+     250px of content, so the extra 62px comes out of free space that is already
+     empty, and the model side keeps the right edge it is anchored to. */
+  width: 130px;
   /* Taller than the 2px track on purpose: the pointer target is the element,
      and a 2px-high one is unhittable. */
   height: 14px;

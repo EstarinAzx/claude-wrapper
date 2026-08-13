@@ -1,0 +1,25 @@
+welcome: 1440x852 ch4 rgb_changed=0 alpha_changed=0
+window-welcome: 1440x900 ch4 rgb_changed=0 alpha_changed=0
+welcome-min-window: 640x432 ch4 rgb_changed=0 alpha_changed=0
+titlebar: 1440x48 ch4 rgb_changed=0 alpha_changed=0
+sidebar: 248x852 ch4 rgb_changed=3 alpha_changed=2 bbox x16-18 y139-141
+chat: 1192x721 ch4 rgb_changed=0 alpha_changed=0
+input-bar: 1192x132 ch4 rgb_changed=0 alpha_changed=0
+window-session: 1440x900 ch4 rgb_changed=3 alpha_changed=2 bbox x16-18 y187-189
+window-session-short: 1440x1017 ch4 rgb_changed=0 alpha_changed=0
+agents-dock: 248x852 ch4 rgb_changed=0 alpha_changed=0
+commands-dock: 248x852 ch4 rgb_changed=0 alpha_changed=0
+appearance-dock: 248x852 ch4 rgb_changed=0 alpha_changed=0
+rgb_changed_total = 6
+bd48b6dbded87cc40e01b9044f68e1521258632f21f6554c51448e2e64c059fd *.gauntlet/waves/core-after-docks/12/agents-dock.png
+acddc564b236c680df5ca885790f453274e8178752502f94ffb441ffe5ceea3e *.gauntlet/waves/core-after-docks/12/appearance-dock.png
+785237724e98ffd726a8dd434c79be7c47ad04ad33f01e3fcd07929cf33f3659 *.gauntlet/waves/core-after-docks/12/chat.png
+b9fa0168d66ed862cb8636b9a56c3dc221be8029d0f31fc384c9a9d4fad269ef *.gauntlet/waves/core-after-docks/12/commands-dock.png
+83d7d2e31a958735e4af85e9fc481afc88be513e19f1bc4977359d325517e9e0 *.gauntlet/waves/core-after-docks/12/input-bar.png
+69d78477c852cdd4b2b8847592b2203579de6cefcdfea7ab23195a91246a766a *.gauntlet/waves/core-after-docks/12/sidebar.png
+644136a9aaa778aaefadb53274175d2290fbdb9805bff2a34f9c116185aef014 *.gauntlet/waves/core-after-docks/12/titlebar.png
+a5b0f42b38233a632470c4ef70ec9600fbf359d5cc3db98ccc9cf1d120415e8c *.gauntlet/waves/core-after-docks/12/welcome-min-window.png
+3ddc6cac8193ced8cab57ff9c60862140502b3dffca249c1dade50da2e2b9683 *.gauntlet/waves/core-after-docks/12/welcome.png
+c4514b0d6ac3579c3872086ca767c121407c3aa0a221be345e8686f7ecd92d0d *.gauntlet/waves/core-after-docks/12/window-session-short.png
+7454b5d5cf4625f492669b25be2f6e15d52e9fd3be66546387bcb7e7a63e8084 *.gauntlet/waves/core-after-docks/12/window-session.png
+519e99f90080588908ed343090d15fd982802c0247acdf0dd5d882bab13f0f0f *.gauntlet/waves/core-after-docks/12/window-welcome.png

@@ -1,0 +1,101 @@
+WAVE 12 PREFLIGHT — FINAL WAVE OF RUN 3
+branch: gauntlet/core-after-docks
+HEAD at boot: b826725
+boot_leg: 13
+binary: claude-wisp (state file already pinned)
+
+critic_family: sonnet
+critic_target_boot: anthropic/claude-fable-5
+critic_target_launch: anthropic/claude-fable-5
+target_held: n/a — TARGET CHANGED FROM WAVES 9-11 (was xai/grok-4.6)
+critic_degraded: TRUE
+
+  WHY. Live `wisp routing` at boot returned ALL FOUR families on Anthropic, which is what
+  11.11 warned about. This leg first read that as router drift and rebound the row to
+  preserve the instrument:
+
+    wisp snapshot sonnet          -> snapshot sonnet = anthropic/claude-fable-5
+    wisp routing set sonnet xai/grok-4.6   -> EXIT 0, verified, no warning line
+
+  The OWNER then said the grok and codex quotas are EXHAUSTED and that fable was allocated
+  to sonnet deliberately. So the all-Anthropic reading is a standing configuration, not a
+  blip, and no amount of waiting brings the cross-vendor critic back.
+
+    wisp snapshot revert sonnet   -> revert sonnet -> anthropic/claude-fable-5 (was xai/grok-4.6)
+
+  NO AGENT EVER RAN ON THE REBOUND ROW. It was reverted before the fan-out launched. Recorded
+  because a reader would otherwise find a snapshot in the history and wonder what it graded.
+
+  The panel then ran under the preset's step-2 fallback. The wave's builder ran on
+  `opus -> anthropic/claude-opus-5`, so this is NOT literal self-grading — different model,
+  fresh context, never sees the builder's reasoning or diff. It IS same-vendor, on the wave
+  that closes the run, and every wave-12 verdict is weaker evidence than waves 1-11's.
+
+bar: 9/9 hash-identical to wave 11
+CRITIC_SHARED: byte-identical to wave 11 (4823 incl. the 24-char declaration wrapper = the
+  same 4799-char block waves 4-11 used)
+BAR_WIN: byte-identical to wave 11 (413 incl. wrapper)
+
+BUILD BEFORE CAPTURE: honoured twice. A first build+capture was taken pre-builder as the null
+  control; the builder then landed; a second build+capture produced the graded artifact.
+
+build 1 (pre-builder): EXIT=0, bundle index-DTnEAz7L.css / index-BPhhb00U.js (held from wave 8)
+inspect 1: PASS, 12/12 written
+  vs wave 11: 9/12 byte-identical. sidebar.png +1 byte, window-session.png +5 bytes.
+  RGB: 6 changed pixels total (3 in sidebar at x16-18 y139-141, the same 3 in window-session
+  at x16-18 y187-189). Every delta is +/-1 on a single channel.
+  -> pre-build capture preserved at .gauntlet/waves/core-after-docks/12-prebuild-control/
+
+BUILDER: ONE, on InputBar only.
+  src/renderer/src/styles/composer.css  .effort-range  width: 68px -> 130px
+  one declaration + a 33-line derivation comment. Nothing else in the repository touched.
+  Derivation: 6 stops, 10px thumb, travel = width - 10, interval = travel / 5.
+    68 -> travel 58 -> 11.60px per interval
+    130 -> travel 120 -> 24.00px per interval (WCAG 2.5.8 spacing allowance)
+  D4 discharged by an EXISTING driver: gui-124.mjs phase 7 reads .effort-range via
+  getBoundingClientRect in live Chromium. Ran it: GEOMETRY width 130 height 14, PAINT w131
+  h15 distinct 25 midDiffers true, driver PASS end to end. No new driver needed.
+
+build 2 (post-builder): EXIT=0, bundle index-DTnEAz7L.css -> index-B0MFIfz0.css
+  (JS index-BPhhb00U.js -> index-Dku73YM4.js follows the CSS import specifier; identical
+  1,419.45 kB and the diff is CSS-only)
+inspect 2: PASS, 12/12 written
+
+ATTRIBUTION (leg measurement, then independently reproduced and CORRECTED by smoothing):
+  leg said pre-build -> post-build = 2709; smoothing measured 2715.
+  The 6-pixel difference is the nondeterminism pixels REVERTING inside window-session.png,
+  which the leg's per-leg figure did not carry.
+  NET wave 11 -> wave 12 = 2709 RGB = 903 x 3 exactly, REMAINDER ZERO.
+  Smoothing proved the three 903-sets are ONE event rendered three times rather than three
+  equal counts: the full (x, y, before-RGB, after-RGB) tuple list of input-bar.png is
+  identical to window-session.png shifted (-248,-768) and to window-session-short.png
+  shifted (-248,-885), before AND after values included.
+
+RASTERISATION NONDETERMINISM — NEW INSTRUMENT FINDING, and it is now settled:
+  the 3 sidebar pixels ROUND-TRIP to byte-identical values across the two legs
+  (w11 [13,18,19,217] -> pre-build [12,17,18,216] -> w12 [13,18,19,217], same at the other
+  two sites). Max absolute channel delta 1. Content does not round-trip; rasterisation does.
+  So the capture pipeline is exact to within +/-1 on ~3 of 211,296 sidebar pixels, NOT
+  bit-exact, and waves 9-11's "12/12 byte-identical" was luck holding rather than a guarantee.
+
+gate (post-build):
+  npm run typecheck  EXIT=0
+  npm test           EXIT=0 — 96 files passed, 1412 passed / 43 skipped
+  npm run build      EXIT=0
+D3 re-verified by hand: backdrop-filter count in styles/ still exactly ONE (subagent.css);
+  zero closing braces inside the new comment; chat.css untouched; no @import reordered.
+
+dom: 36/39, the SAME three non-PASS as waves 8-11
+  UNSCORED  gui-123
+  FAIL      gui-94 (command-row-desc 12->31.9 / row 60->65.1) — message byte-identical to w11
+  FAIL      gui-95 (.session-group-head timeout)
+  UNCOVERED gui-119 (accounted, desktop-exclusive)
+  DEVIATION: this is a POST reading only. The leg built before taking a wave-12 PRE baseline,
+  so it is compared against wave 11's standing PRE/POST figure rather than its own matched
+  pair. Recorded rather than papered over. The change is CSS-only and npm test came back
+  identical to the builder's own pre-edit baseline, so the comparison is sound but it is not
+  the same control waves 8-11 ran.
+
+workflow: wf_aaae044a-86e — six agents, SIX returned, ZERO errors, no retries
+script: .gauntlet/waves/core-after-docks/12/wave12-critics.mjs
+nothing pushed

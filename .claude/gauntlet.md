@@ -15,51 +15,77 @@ pieces:
   # and every one was measured DIFFERENT at seed from the pixels run 1 judged.
   # Per-piece seed evidence is in "Why this run exists" below; do not re-derive it.
   - name: Welcome
-    verdict: BAR WINS           # WAVE 11 — HELD for the FOURTH consecutive wave on the SAME
-                                # bytes (waves 8=9=10=11 are one capture). New gap asks to
-                                # centre the stack and widen the button to the deck's measure.
-                                # The centring half is REFUSED on measurement (the stack is
-                                # already centred to +0.50px); the left-alignment is wave 2's
-                                # landed build. No builder. See 11.4.
+    verdict: BAR WINS           # WAVE 12 (FINAL) — HELD for the FIFTH consecutive wave on the
+                                # SAME bytes (waves 8=9=10=11=12 are one capture for this
+                                # piece). 5/5 BAR WINS, and the fifth reading came from a
+                                # DIFFERENT VENDOR, which makes it the strongest stability
+                                # result in the run. New gap is the CTA pill's padding-to-label
+                                # ratio — a genuinely new axis, arriving on the last wave with
+                                # no wave left to test it. No builder. See 12.4.
     open: true
   - name: Titlebar
-    verdict: BAR WINS           # WAVE 11 — HELD for the FOURTH consecutive wave on the same
-                                # bytes. New gap asks 32px between wordmark and first chip
-                                # (painted is 16) and the 11px micro rung for both chips.
-                                # The break clause is a THIRD raising of an axis wave 8 built
-                                # and 9/10 re-asked; 32px overruns the 33px interval ceiling
-                                # when summed. Shrink clause owner-shaped since 9.5. See 11.5.
+    verdict: TOO CLOSE          # WAVE 12 (FINAL) — ROSE BAR WINS -> TOO CLOSE on a
+                                # titlebar.png that is BYTE-IDENTICAL across waves 8-12.
+                                # ⚠️ THIS IS THE RUN'S CLEANEST VENDOR ISOLATION. Four panels
+                                # on non-Anthropic Targets returned BAR WINS 4/4 on these exact
+                                # bytes; the one panel on anthropic/claude-fable-5 returned
+                                # TOO CLOSE. Only the vendor changed. n=1 on the new
+                                # instrument, so it is an isolation and not a proof.
+                                # Its gap (16px name-to-chip break) is ALREADY PAINTED and was
+                                # refused at 9.5, 10.5, 11.5. No builder. See 12.1, 12.5.
     open: true
   - name: Sidebar
-    verdict: BAR WINS           # WAVE 11 — HELD for the FOURTH consecutive wave on the same
-                                # bytes. New gap asks to collapse the background-sessions
-                                # empty state to one 28px row — the EXACT mechanism wave 4
-                                # built and REVERTED on a test fence, and refuted on width
-                                # arithmetic. Product-shaped. See 11.6.
+    verdict: BAR WINS           # WAVE 12 (FINAL) — HELD for the FIFTH consecutive wave on the
+                                # same bytes. 5/5 BAR WINS across two vendors. New gap is the
+                                # SIXTH raising of the pre-list compression axis, plus the
+                                # duplicate-refresh observation. Product-shaped, and the fold
+                                # half is the exact mechanism wave 4 built and reverted on a
+                                # test fence. No builder. See 12.6.
     open: true
   - name: Chat
-    verdict: TOO CLOSE          # WAVE 11 — ROSE BAR WINS -> TOO CLOSE on a 12/12
-                                # byte-identical, 0-RGB capture. Same piece, same bytes,
-                                # third distinct answer in four waves (w8 TOO CLOSE,
-                                # w9 BAR WINS, w10 BAR WINS, w11 TOO CLOSE). Gap is the
-                                # SHOW-row disclosure ask a THIRD time (9.7, 10.7), still
-                                # a ToolCard JSX/state change. No builder. See 11.1, 11.7.
+    verdict: TOO CLOSE          # WAVE 12 (FINAL) — HELD TOO CLOSE on the same frozen bytes,
+                                # and it held ACROSS THE VENDOR CHANGE. Series on one capture:
+                                # w8 TOO CLOSE, w9 BAR WINS, w10 BAR WINS, w11 TOO CLOSE,
+                                # w12 TOO CLOSE. Gap is the SHOW-row disclosure ask a FOURTH
+                                # time (9.7, 10.7, 11.7) — still a ToolCard JSX/state change,
+                                # not CSS. No builder. See 12.7.
     open: true
   # Its seed delta is the SMALLEST of the five and may be pure 6px reflow. That
   # is a caveat on the delta, NOT a reason to discount its verdict — the critic
   # grades the artifact, never the diff. See "Why these five" note 3.
   - name: InputBar
-    verdict: TOO CLOSE          # WAVE 11 — ROSE BAR WINS -> TOO CLOSE on the same frozen
-                                # bytes, IN LOCKSTEP WITH CHAT for the second time (both
-                                # fell together at wave 9, both rose together here).
-                                # ⚠️ ITS GAP IS A NEW AXIS, THE FIRST ON THIS SURFACE SINCE
-                                # WAVE 1 — the Effort control's internal grammar, NOT a
-                                # distribution rearrangement, so 5.8 does not reach it.
-                                # BUT TWO OF ITS THREE CLAUSES ARE REFUTED IN SOURCE and
-                                # the third rests on an ambiguous measurement. Wave 12's
-                                # job here is to MEASURE, not to build. See 11.8.
+    verdict: TOO CLOSE          # WAVE 12 (FINAL) — HELD TOO CLOSE, AND IT IS THE ONLY PIECE
+                                # WHOSE PIXELS MOVED. 11.8's mandated measurement resolved
+                                # "which box is 68px?" as BOTH — `.effort-range { width: 68px }`
+                                # and `.effort-value { min-width: 68px }` are two independently
+                                # derived numbers that coincided — so the wave-11 critic was
+                                # reading the right element. The surviving clause was real:
+                                # 6 stops, 10px thumb, travel 58px, 11.60px per interval.
+                                # BUILT: track 68 -> 130px, interval 24.00px. 903 RGB pixels,
+                                # attribution remainder ZERO.
+                                # ⚠️ THE VERDICT DID NOT MOVE, and the new critic asks to make
+                                # the group roughly HALF its width — the direct opposite of the
+                                # wave-11 ask this wave just built. Confounded by the vendor
+                                # change. Its other clauses re-raise three things 11.8 already
+                                # refuted in source. See 12.2, 12.3, 12.8.
     open: true
-critic: sonnet                 # WAVE 11 re-resolved live at boot AND at launch to the same
+critic: sonnet                 # ⚠️⚠️ WAVE 12 (FINAL): THE CROSS-VENDOR CRITIC IS GONE, AND NOT
+                               # BECAUSE THE ROUTES DRIFTED. Live `wisp routing` at boot showed
+                               # all four families on Anthropic — the exact reading 11.11
+                               # warned about. This leg first read it as drift and rebound the
+                               # row to preserve waves 9-11's Target:
+                               #   wisp snapshot sonnet -> anthropic/claude-fable-5
+                               #   wisp routing set sonnet xai/grok-4.6  (EXIT 0, verified)
+                               # THE OWNER THEN SAID THE GROK AND CODEX QUOTAS ARE EXHAUSTED
+                               # and that fable was allocated to sonnet DELIBERATELY. So the
+                               # all-Anthropic reading is a standing configuration, not a blip,
+                               # and waiting brings nothing back. The row was reverted
+                               # (`wisp snapshot revert sonnet`) BEFORE the fan-out launched;
+                               # NO AGENT EVER RAN ON IT. Recorded so a reader finding the
+                               # snapshot in the history knows it graded nothing.
+                               # Wave 12's panel ran on `sonnet -> anthropic/claude-fable-5`
+                               # under the preset's step-2 fallback. See 12.1 and 12.9.
+                               # PREVIOUS NOTE, kept: WAVE 11 re-resolved live at boot AND at launch to the same
                                # landing as waves 9 and 10: `sonnet -> xai/grok-4.6`.
                                # Family name held; Target held for the THIRD wave running.
                                # ⚠️⚠️ BUT THE ROUTE MOVED IMMEDIATELY AFTER THE WAVE. Measured
@@ -77,7 +103,19 @@ critic: sonnet                 # WAVE 11 re-resolved live at boot AND at launch 
                                # THE RULE, NOT THE VALUE. Re-resolve with live
                                # `wisp routing` every wave and take the first
                                # non-Anthropic family.
-critic_degraded: false         # WAVE 11: five critics + smoothing all returned, zero errors.
+critic_degraded: true          # ⚠️ WAVE 12 (FINAL): TRUE, and it is the ONLY degraded wave of
+                               # the run. Two things stated precisely, because "degraded" is
+                               # doing real work here:
+                               #   * NOT literal self-grading. The wave's one builder ran on
+                               #     `opus -> anthropic/claude-opus-5`; the critics ran on
+                               #     fable-5. Different model, fresh context, never saw the
+                               #     builder's reasoning or diff.
+                               #   * IS same-vendor, which is exactly what the run's central
+                               #     claim was built to avoid, and it landed on the wave that
+                               #     closes the run. Every wave-12 verdict is weaker evidence
+                               #     than waves 1-11's, and 12.1 does not average it in.
+                               # Six agents returned, zero errors, zero retries.
+                               # PREVIOUS NOTE, kept: WAVE 11: five critics + smoothing all returned, zero errors.
                                # The Chat critic STALLED at 209s with no progress and
                                # returned on retry 1 with a byte-identical prompt; a retry
                                # is not degradation (wave 9 recorded the same for smoothing).
@@ -88,8 +126,23 @@ critic_degraded: false         # WAVE 11: five critics + smoothing all returned,
                                # WAVE 4: Titlebar critic repeated wave 3's exact
                                # window-session.png 1440x912 slip (truth 900) — 4.8.
 branch: gauntlet/core-after-docks
-wave: 11
-plateau: 0                     # WAVE 11: 2 -> 0. TWO pieces IMPROVED — Chat and InputBar
+wave: 12
+plateau: 0                     # ⚠️ WAVE 12 (FINAL): 0 -> 0. ONE piece improved — TITLEBAR,
+                               # BAR WINS -> TOO CLOSE — so the written contract resets, for
+                               # the SEVENTH time the counter has been moved by something that
+                               # cannot be about the artifact. titlebar.png is BYTE-IDENTICAL
+                               # across waves 8, 9, 10, 11 AND 12.
+                               # ⚠️ THE RUN ENDS HERE ON `wave >= max_waves`, NOT ON PLATEAU.
+                               # THE COUNTER FINISHES AT 0 AND NEVER EXCEEDED 2 IN TWELVE
+                               # WAVES. 6.1's prediction at wave 6 is confirmed in full: this
+                               # run was CUT OFF, NOT CONVERGED — the same ending run 2 had,
+                               # and the second run in a row where the plateau signal never
+                               # fired once.
+                               # ⚠️ AND WAVE 12 ISOLATES WHY, better than any wave before it.
+                               # The movement that reset the counter came from a piece whose
+                               # pixels have not changed in five waves, on the one wave that
+                               # changed the critic's VENDOR. See 12.1.
+                               # PREVIOUS NOTE, kept: WAVE 11: 2 -> 0. TWO pieces IMPROVED — Chat and InputBar
                                # both BAR WINS -> TOO CLOSE — on a capture that is 12/12
                                # byte-identical to wave 10 and 0 RGB pixels different, with
                                # the SAME Target (`xai/grok-4.6`) as waves 9 and 10.
@@ -174,9 +227,9 @@ plateau: 0                     # WAVE 11: 2 -> 0. TWO pieces IMPROVED — Chat a
                                # wave 4 Titlebar improved -> 0; wave 5 both of those
                                # reversed -> 1. The run needs plateau >= 3 to stop, so
                                # it is two waves from its stop condition at wave 5 of 12.
-max_waves: 12                  # budget backstop
+max_waves: 12                  # budget backstop — REACHED. This is the stop condition that fired.
 page: false
-stop: false
+stop: true                     # RUN 3 CLOSED at wave 12 on the budget backstop, not on plateau.
 ---
 
 ## Where things are
@@ -463,6 +516,11 @@ applied to its wave 1 and run 2 applied twice (wave 1, and wave 4 for a piece ad
 | 11 | Sidebar | BAR WINS | **HELD for the FOURTH consecutive wave on the same bytes.** Gap: collapse the idle Background-sessions block to one 28px row so the first session starts by ~120px. **THIS IS THE EXACT MECHANISM WAVE 4 BUILT AND REVERTED ON A TEST FENCE**, and 4.5 refuted it on width arithmetic (224px content row; title ~105 + Refresh ~58 + gaps 16 = 179, leaving ~45 against the ~92 "None running here" needs). Pure in-place tightening was priced at ~175px, not 120. Fifth raising of the compression axis. Product-shaped. No builder. |
 | 11 | Chat | **TOO CLOSE** | **ROSE from BAR WINS on a 12/12 byte-identical, 0-RGB capture — the run's EIGHTH verdict movement and its SIXTH on unchanged pixels.** Its critic is also the wave's only one that stalled and ran twice (209s, retry 1). Gap: drop the two empty SHOW rows from the rest state, leaving one 13px inline disclosure so a resting card is ~64px. **THIRD RAISING OF THE SAME DISCLOSURE ASK (9.7, 10.7) AND STILL NOT CSS** — `ToolCard.tsx` mounts up to three buttons with three independent open states. Cards already sit at 112/113 after wave 8 answered the height ask. Owner-shaped. No builder. |
 | 11 | InputBar | **TOO CLOSE** | **ROSE from BAR WINS on the same frozen bytes, IN LOCKSTEP WITH CHAT** — both fell together at wave 9 and both rose together here. **ITS GAP IS THE FIRST GENUINELY NEW AXIS ON THIS SURFACE SINCE WAVE 1**: not where Effort and Model sit, but the Effort control's own grammar — a 68px track whose thumb sits at the left end, plus a "Default" chip restating the value. **5.8 DOES NOT REACH IT** (it refuses distribution rearrangements). **BUT TWO OF ITS THREE CLAUSES ARE REFUTED IN SOURCE — see 11.8.** The thumb at stop 0 is CORRECT (stop 0 *is* Default, the null pick the app opens in); "make it a chip like Model" is refuted by #124's recorded decision that effort is ORDINAL so the control is a range, not a menu; deleting the readout would leave the value invisible to sighted users. What survives is only "the track may be too narrow for its stop count" — and its 68px collides with `.effort-value { min-width: 68px }`, which is the READOUT's floor, not the track. **Wave 12 must MEASURE the two boxes apart before any builder.** |
+| 12 | Welcome | BAR WINS | **HELD for the FIFTH consecutive wave on the SAME bytes — and the fifth reading came from a DIFFERENT VENDOR.** 5/5 BAR WINS. Gap: the CTA pill is the heaviest object on the surface while carrying its smallest type (~200×52px around a ~13px label); cut it to ~38–40px tall or lift the label to the 15px rung. **A GENUINELY NEW AXIS, ARRIVING WITH NO WAVE LEFT TO TEST IT.** Never asked in eleven prior waves; not refuted, not owner-shaped, just late. Filed for a future run. No builder. See 12.4. |
+| 12 | Titlebar | **TOO CLOSE** | **ROSE from BAR WINS on a capture that is BYTE-IDENTICAL across waves 8–12 — the run's NINTH verdict movement and its SEVENTH on unchanged pixels.** ⚠️ **THE RUN'S CLEANEST VENDOR ISOLATION.** Four panels on non-Anthropic Targets (gpt-5.6-sol at w8, grok-4.6 at w9/10/11) returned BAR WINS **4/4** on these exact bytes; the single panel on `anthropic/claude-fable-5` returned TOO CLOSE. The artifact, the prompt, the images and the three-image rule were all held fixed; only the vendor moved. **n=1 on the new instrument, so this is an isolation, not a proof.** Gap: double the wordmark-to-first-chip gap to ~16px. **ALREADY PAINTED** — intervals are 9 / 16 / 4 at 1.78× — making this the FOURTH raising of a break that exists (9.5, 10.5, 11.5). No builder. See 12.1, 12.5. |
+| 12 | Sidebar | BAR WINS | **HELD for the FIFTH consecutive wave on the same bytes, across two vendors.** 5/5 BAR WINS. Gap: collapse the five-zone pre-list stack to three, and replace the left-truncated raw path with the leaf folder name. **SIXTH RAISING OF THE COMPRESSION AXIS** — the fold half is the exact mechanism wave 4 built and REVERTED on a test fence, refuted on width arithmetic at 4.5. The duplicate-refresh observation (icon in the title row plus a "Refresh" button 30px below) is new and fair, and is product-shaped. No builder. See 12.6. |
+| 12 | Chat | TOO CLOSE | **HELD TOO CLOSE on the same frozen bytes, and it held ACROSS THE VENDOR CHANGE** — the first time this piece has repeated a verdict on a changed instrument. Series on one capture: w8 TOO CLOSE, w9 BAR WINS, w10 BAR WINS, w11 TOO CLOSE, w12 TOO CLOSE. Gap: the four full-width SHOW rows outweigh each card's single content line; collapse each pair into content-width inline toggles. **FOURTH RAISING OF THE SAME DISCLOSURE ASK** (9.7, 10.7, 11.7) and still `ToolCard.tsx` JSX/state rather than CSS. No builder. See 12.7. |
+| 12 | InputBar | TOO CLOSE | **HELD TOO CLOSE — AND IT IS THE ONLY PIECE WHOSE PIXELS MOVED ALL WAVE.** 11.8's mandated measurement resolved as **BOTH**: `.effort-range { width: 68px }` and `.effort-value { min-width: 68px }` are two independently derived numbers that coincided, so wave 11's critic was reading the right element and the surviving clause was real (6 stops, 10px thumb, travel 58px → **11.60px per interval**). **BUILT:** track 68 → 130px, interval **24.00px**, 903 RGB pixels, attribution remainder **ZERO**, gate green. ⚠️ **THE VERDICT DID NOT MOVE, AND THE NEW CRITIC ASKS FOR THE OPPOSITE OF WHAT THIS WAVE JUST BUILT** — "target roughly half the group's current width". Second time in the run two critics moved the same property in opposite directions (2.1 was the first). Confounded by the vendor change. Its remaining clauses re-raise three things 11.8 already refuted in source. See 12.2, 12.3, 12.8. |
 
 ## Wave 1 adjudications
 
@@ -3337,7 +3395,274 @@ is that the thing which builds never grades; on the closing wave, a silent same-
 retro-actively weaken every comparison in 11.1's table. And **do not delay the wave waiting for the
 route to come back** — a degraded-but-declared critic is worth more than a stalled chain.
 
+## Wave 12 adjudications — THE FINAL WAVE
+
+### 12.1 THE RUN'S CLEANEST INSTRUMENT RESULT ARRIVED ON ITS LAST WAVE: THE VENDOR MOVED AND A FIVE-WAVE-FROZEN VERDICT MOVED WITH IT
+
+Wave 12 changed exactly two things about the grading: the critic's vendor, and the InputBar's pixels.
+It changed nothing else — `CRITIC_SHARED` and `BAR_WIN` are byte-identical to waves 4–11 (verified by
+extraction, not by file hash, because line endings differ), the bar is 9/9 hash-identical, the
+three-image rule held, and the twelfth capture stayed withheld.
+
+**Titlebar rose BAR WINS → TOO CLOSE on a `titlebar.png` that is byte-identical across waves 8, 9,
+10, 11 and 12.** The smoothing pass, which never sees a verdict, independently confirmed it: *"Titlebar
+did NOT move. Intervals 9/16/4 sum 29, break ratio 1.78x, group edge x275, title midpoint 720.00
+displacement 0.00, mark 22x22 at x14. titlebar.png sha256 identical."*
+
+Set against the four prior panels, this is the isolation the run has been reaching for since wave 5:
+
+| piece | w8 (sol) | w9 (grok) | w10 (grok) | w11 (grok) | w12 (**fable**) | reading |
+|---|---|---|---|---|---|---|
+| Welcome | BAR WINS | BAR WINS | BAR WINS | BAR WINS | BAR WINS | 5/5 across two vendors |
+| Titlebar | BAR WINS | BAR WINS | BAR WINS | BAR WINS | **TOO CLOSE** | 4/4, then moved on vendor change |
+| Sidebar | BAR WINS | BAR WINS | BAR WINS | BAR WINS | BAR WINS | 5/5 across two vendors |
+| Chat | TOO CLOSE | BAR WINS | BAR WINS | TOO CLOSE | TOO CLOSE | bistable, held across the change |
+| InputBar | TOO CLOSE | BAR WINS | BAR WINS | TOO CLOSE | TOO CLOSE | bistable; **pixels moved this wave** |
+
+**What this does and does not establish.** It establishes that a verdict in this run can move on an
+artifact that provably did not, driven by the identity of the grader — measured, on five waves of one
+capture, rather than argued. That was owner call 20's suspicion from wave 5; it is now an observation.
+It does **not** establish a general "vendor effect": **n=1 on fable-5**, and the same wave shows two
+pieces holding BAR WINS 5/5 straight through the vendor change, which is the converse and is just as
+informative. The honest summary is that the panel is reproducible on some surfaces and boundary-
+sensitive on others, and that *which* surfaces sit on the boundary is itself instrument-dependent —
+grok's boundary pair was {Chat, InputBar}, fable's is {Titlebar, Chat, InputBar}.
+
+**And it is the seventh time in twelve waves that the plateau counter was moved by something that
+cannot be about the artifact.** That is the run's central negative result, and 12.10 states it plainly.
+
+### 12.2 THE ONE BUILD DID EXACTLY WHAT WAVE 11'S CRITIC ASKED, AND WAVE 12'S CRITIC ASKED FOR THE OPPOSITE
+
+11.8 left wave 12 a single instruction: measure `.effort-range` and `.effort-value` as two separate
+painted boxes before building anything, because the wave-11 critic's "68px slider" collided with
+`.effort-value { min-width: 68px }` and only one of them could be the track.
+
+**The measurement resolved it as BOTH.** `composer.css` declares `.effort-range { width: 68px }`
+literally, and `.effort-value { min-width: 68px }` literally. Two numbers, two independent
+derivations, one coincidence. So the wave-11 critic was reading the right element, the surviving
+clause was not aimed at the wrong box, and the build was authorised by the inheritance rather than
+by the leg's preference.
+
+The arithmetic behind the clause checks out exactly. `InputBar.tsx` renders `min={0}
+max={levels.length} step={1}` with five levels, so the control carries **six stops**; the thumb is
+10px, so travel is 68 − 10 = 58px and neighbouring stops sit **11.60px** apart. The wave-11 critic
+said "~11px per stop". It was right to the tenth.
+
+**Then wave 12's critic, looking at the widened track, asked to make the group roughly half its
+width.** Its exact words: *"target roughly half the group's current width so the left cluster reads
+as one bound control"*. Wave 11 asked to widen the track to ~160px; wave 12 asked to shrink the group
+it sits in. **This is the second time in the run that two critics have moved the same property in
+opposite directions** — 2.1 was the first, on Welcome's centring, and that one was resolvable because
+both critics turned out to be describing different axes of one stack. This one is not obviously
+resolvable, and it is confounded: the vendor changed in the same wave, so "the build overshot" and
+"the new grader wants something else" cannot be separated. **With no wave 13, they stay unseparated.**
+That is a real cost of closing on the budget rather than on a plateau, and it is recorded rather than
+resolved.
+
+### 12.3 THE BUILD IS THE BEST-ATTRIBUTED OF THE RUN, AND THE SMOOTHING PASS PROVED IT RATHER THAN COUNTING IT
+
+One declaration in one file: `.effort-range` width 68px → 130px, plus a 33-line derivation comment.
+Nothing else in the repository was touched. Derivation: travel = width − 10, interval = travel ÷ 5,
+target 24px per interval from WCAG 2.5.8's **spacing** allowance (not a claim about the 10px thumb's
+own size, which the comment says explicitly), giving travel 120 and width 130.
+
+**Attribution closed at zero remainder for the seventh consecutive wave, and this time by a stronger
+test than any previous wave used.** Net wave 11 → wave 12 is **2,709 RGB pixels = 903 × 3 exactly**.
+Nine of twelve captures are byte-identical; the three that differ are `input-bar.png` and its two
+window composites. The smoothing pass did not merely observe three equal counts — it collected the
+full `(x, y, before-RGB, after-RGB)` tuple list for each file, offset-mapped and sorted them, and
+showed that `input-bar` **is** `window-session` shifted (−248, −768) and **is** `window-session-short`
+shifted (−248, −885), *before and after values included*. Three renderings of one event, proven
+rather than inferred.
+
+The build's own arithmetic verified in the pixels, not just in the CSS: thumb measured 10×10 at
+x243–252 with 79 ink pixels and byte-identical between waves; track x243–310 (68px) → x243–372
+(130px), matching the declaration to the pixel; interval **11.60 → 24.00px**, landing exactly on the
+target rather than near it.
+
+**Three claims the pass checked that the leg would have taken on trust:**
+
+1. **The model side did not move, in the strongest available sense.** The change bbox terminates at
+   x446, so *no pixel right of x446 differs on any channel*. Model label x876–906 and pill x913–970
+   are byte-identical. The builder's claim was correct.
+2. **The readout translated rather than resized** — x317–384 → x379–446, +62px on both edges, width
+   constant at 68px, and the 6px gaps flanking the track preserved on both sides. So the `min-width`
+   floor did its job and the two 68px values parting company cost nothing.
+3. **The 68:68 equality that broke was declared on one side only.** `git show` of the wave-11
+   stylesheet shows a bare `width: 68px;` on `.effort-range` with no derivation — the only comment in
+   that block explains the 14px height — while `.effort-value`'s 68px carries its sum. Breaking a
+   coincidence between a derived number and an undeclared one costs nothing, which is the cleanest
+   possible answer to 11.8's worry.
+
+**And the new number rhymes outward.** 24px is already this app's base interval — `appearance.css`
+gap 24px and its 24×24 button squares, `chat.css` gap and `padding: 0 24px`, where line 74 calls 24px
+"the base interval". 130px appears nowhere else in the stylesheets, but it is 120 + 10 and 120 = 24 × 5.
+The build landed on the system's own number without being told to, which is the strongest thing that
+can be said for a value picked by derivation.
+
+### 12.4 WELCOME FOUND A NEW AXIS ON THE LAST WAVE, WHICH IS THE WORST POSSIBLE TIMING
+
+Welcome held BAR WINS for the fifth consecutive wave on the same bytes, across two vendors — 5/5, the
+most stable result in the run alongside Sidebar. Its gap, though, is **new**: the CTA pill is the
+heaviest object on the surface while carrying its smallest type (~200×52px around a ~13px label), so
+the label floats in padding and the single action outweighs the 46px headline it serves. Remedy: cut
+the pill to ~38–40px tall, or lift the label one rung to 15px.
+
+**This was never asked in eleven prior waves.** It is not refuted, not owner-shaped, not a re-raising
+of anything — it is simply late. Filed here for a future run rather than built, because a build on
+the closing wave gets no critic, and an unjudged build is exactly the self-grading the whole preset
+exists to prevent.
+
+### 12.5 TITLEBAR'S GAP IS THE FOURTH RAISING OF A BREAK THAT ALREADY PAINTS
+
+The gap asks for ~16px between the wordmark and the first chip, against a currently-equal ~8px. The
+painted intervals are **9 / 16 / 4** at a 1.78× break ratio, above the 1.63× threshold `titlebar.css`
+itself records as "enough" — wave 8 *built* the 16, and waves 9, 10 and 11 each re-asked it. This is
+the fourth re-ask of a landed axis, and the first from a new vendor, which is mildly interesting: the
+axis survives a change of grader, so it is a property of the capture rather than of grok's taste. It
+is still already built. No builder.
+
+### 12.6 SIDEBAR'S GAP IS THE SIXTH RAISING OF THE COMPRESSION AXIS, WITH ONE NEW AND FAIR OBSERVATION
+
+The ask is to collapse five pre-list zones to three and replace the left-truncated raw path with the
+leaf folder name. The fold half is **the exact mechanism wave 4 built and reverted on a test fence**,
+refuted at 4.5 on width arithmetic. Product-shaped, and refused for the sixth time.
+
+**One clause is new and is fair:** the rail offers refresh twice — a circular-arrow icon in the
+`SESSIONS` title row and a "Refresh" text button ~30px below it. Nothing in the run has raised the
+duplicate-affordance point before. It is still product-shaped (which affordance survives is a
+product call, not a spacing tweak), and it is filed rather than built.
+
+### 12.7 CHAT REPEATED ITSELF ACROSS THE VENDOR CHANGE, WHICH IS THE FIRST TIME IT HAS REPEATED ANYTHING
+
+Chat held TOO CLOSE. Its five-wave series on one capture is w8 TOO CLOSE, w9 BAR WINS, w10 BAR WINS,
+w11 TOO CLOSE, w12 TOO CLOSE — so this is the **first back-to-back repeat** the piece has produced,
+and it produced it *through* an instrument change. Weak evidence, being one wave, but it points the
+opposite way from Titlebar and is recorded for that reason.
+
+Its gap is the SHOW-row disclosure ask a **fourth** time (9.7, 10.7, 11.7). The new framing is
+sharper than the old ones — it prices the chrome at ~30px per card and asks for content-width inline
+toggles rather than full-width row shells — but it remains a `ToolCard.tsx` JSX and state change, not
+CSS, exactly as the three prior refusals found. No builder.
+
+### 12.8 WAVE 12'S INPUTBAR GAP RE-RAISES THREE CLAUSES 11.8 ALREADY REFUTED IN SOURCE
+
+Beyond the width contradiction in 12.2, the new gap restates three things wave 11 settled:
+
+1. *"the thumb-at-minimum position visually contradicts the chip's 'Default' claim"* — **refuted.**
+   `InputBar.tsx` documents that stop 0 **is** Default, the null pick the app opens in, and the
+   shift-by-one exists because five bare stops made `low` unreachable by one gesture.
+2. *"drop the track and keep a single cycling value chip"* — **refuted** by #124's recorded decision:
+   a range, not a menu, because effort is ordinal, chosen so arrow keys / Home / End come free.
+3. *"dropping the chip"* — **refuted**; the readout is the only visible carrier of the value, and
+   `composer.css` records that both settings were unified into one `.control-value` object precisely
+   because the strip previously printed "Default" twice in two unrelated shells.
+
+That a fresh vendor, with no access to the run's history, reproduced three already-refuted clauses is
+worth noting on its own: these are things the *capture* suggests and the *source* forbids, which is
+the standing limitation of grading pixels without reading code. It is also the argument for keeping
+adjudications like 11.8 — the refutations survive the critic that cannot see them.
+
+### 12.9 A NEW INSTRUMENT FINDING: THE CAPTURE PIPELINE IS NOT BIT-EXACT, AND WAVES 9–11 WERE LUCK HOLDING
+
+The pre-builder capture was **not** byte-identical to wave 11: `sidebar.png` differed by 1 byte and
+`window-session.png` by 5. Measured, that is **6 RGB pixels** — three in the sidebar at x16–18
+y139–141, and the same three re-photographed in the window frame at x16–18 y187–189 (sidebar y + the
+48px titlebar offset, exact).
+
+**Every delta is ±1 on a single channel**, and the smoothing pass then applied a test the leg had not
+thought of: the pixels **round-trip**. w11 `[13,18,19,217]` → pre-build `[12,17,18,216]` → post-build
+`[13,18,19,217]`, and likewise at the other two sites. **Content does not return to its exact prior
+value; rasterisation noise does.**
+
+So the capture instrument is exact to within ±1 on ~3 of 211,296 sidebar pixels, **not bit-exact**.
+Waves 9, 10 and 11 each reported "12/12 byte-identical" and read it as a guarantee of the pipeline.
+It was a property of those three runs, not of the instrument. **This does not weaken those waves'
+conclusions** — a 3-pixel ±1 wobble cannot produce a verdict flip, and 11.1's table stands — but any
+future run should compare RGB with a tolerance rather than trusting sha256 to stay clean, and should
+not treat one byte of drift as evidence that something changed.
+
+### 12.10 HOW THE RUN ENDS, STATED PLAINLY
+
+**Run 3 was cut off, not converged.** It stopped because `wave >= max_waves`, the budget backstop —
+never because the artifact stopped improving. `plateau` finishes at **0** and never exceeded **2** in
+twelve waves. 6.1 predicted this at wave 6 and was correct.
+
+**This is the second run in a row to end that way**, and the reason is now measured rather than
+suspected. The stop condition asks "did any verdict improve?", and across twelve waves the counter
+was moved **seven times by movements that cannot be about the artifact** — verdict changes on
+captures that were byte-identical or ±1-pixel identical. A counter that resets on those can never
+reach 3 unless the panel happens to sit still for three consecutive waves, and this panel has never
+managed it.
+
+**What the run actually delivered, separated honestly:**
+
+- **On the artifact:** eleven builds across waves 2–8 and one at wave 12, every one gate-green, every
+  one attributed at zero remainder from wave 6 onward. The wave-12 build is the cleanest single build
+  of the run — one declaration, derived, landing on the app's own 24px base interval, verified in
+  pixels by an agent that never saw the builder.
+- **On the instrument:** the more valuable output, and not what the run was pointed at. Five waves on
+  one set of pixels, graded by five independent panels across two vendors, produced 12/12 identical
+  verdicts on three surfaces under one vendor, 5/5 on two surfaces across both, and a boundary pair
+  that flips in lockstep. Wave 12 added the vendor isolation in 12.1.
+- **On the method:** the ordinal scale has no state for "on the line", so pieces that genuinely sit
+  on the BAR WINS / TOO CLOSE boundary get rounded to whichever side a panel lands on, and the
+  plateau counter reads that rounding as progress. **That is owner call 20, and it is now the run's
+  headline rather than a footnote.** A future run wanting a working stop signal needs either a
+  fourth "ON THE LINE" state, or a rule that only counts a movement corroborated by an independent
+  measurement — wave 7 is the one wave that separated signal from noise, and it did so with the
+  smoothing pass, not with the counter.
+
+**What is left open, and it is a thin queue by design rather than by neglect:** Welcome's CTA
+padding ratio (new, 12.4), the Sidebar's duplicate refresh affordance (new, 12.6), the Chat
+disclosure state model (four times asked, needs a `ToolCard.tsx` decision), and whether the widened
+effort track is right or overshot (12.2, unresolvable without a wave 13). None of these is blocked
+on code. All of them are owner calls or product calls.
+
 ## Log
+
+- [wave 12 — **FINAL, RUN CLOSED**] **THE RUN ENDS ON THE BUDGET BACKSTOP: CUT OFF, NOT CONVERGED.**
+  `wave >= max_waves` fired; `plateau` finishes at **0** and never exceeded 2 in twelve waves,
+  confirming 6.1's wave-6 prediction in full and making this the second run running whose plateau
+  signal never fired. ⚠️ **CRITIC_DEGRADED: TRUE, and NOT from router drift** — the owner allocated
+  `sonnet -> anthropic/claude-fable-5` deliberately because the grok and codex quotas are exhausted,
+  so 11.11's "may have no cross-vendor critic" resolved as a standing configuration. This leg rebound
+  `sonnet -> xai/grok-4.6` at boot to preserve waves 9–11's Target and **reverted it before launching
+  anything**; no agent ran on it. The builder ran on `opus`, so this is not literal self-grading, but
+  it is same-vendor on the closing wave and 12.1 does not average it in.
+  ⚠️ **THE WAVE'S REAL RESULT IS THE VENDOR ISOLATION (12.1):** Titlebar ROSE BAR WINS -> TOO CLOSE on
+  a `titlebar.png` that is **byte-identical across waves 8–12**, after four consecutive panels on
+  non-Anthropic Targets returned BAR WINS **4/4** on those exact bytes. Only the vendor moved, and the
+  smoothing pass — which never sees a verdict — independently confirmed the surface did not (intervals
+  9/16/4, ratio 1.78x, midpoint displacement 0.00, sha256 identical). n=1 on fable-5, so it is an
+  isolation and not a proof, and the converse rode the same wave: Welcome and Sidebar held BAR WINS
+  **5/5 across both vendors**. That improvement reset the counter for the **seventh** time on a
+  movement that cannot be about the artifact — the run's central negative result.
+  **ONE BUILD, THE CLEANEST OF THE RUN.** 11.8's mandated measurement resolved "which box is 68px?"
+  as **BOTH** — `.effort-range { width: 68px }` and `.effort-value { min-width: 68px }` are two
+  independently derived numbers that coincided — so wave 11's critic read the right element and the
+  surviving clause was real: 6 stops, 10px thumb, travel 58px, **11.60px per interval**. Track widened
+  68 -> **130px**, interval **24.00px**, which turns out to be the app's own base interval
+  (`chat.css` line 74). **903 RGB pixels, attribution remainder ZERO for the seventh consecutive
+  wave**, and the smoothing pass proved the three 903-sets are ONE event by offset-mapping every
+  tuple including before/after values. Model side unmoved to the channel (no pixel differs right of
+  x446); readout translated +62px without resizing. Gate green: typecheck 0, 96 files / 1412 tests,
+  build 0; dom 36/39 with the same three non-PASS and `gui-94`'s message byte-identical. D4 discharged
+  by the existing `gui-124.mjs`, which PASSes at width 130.
+  ⚠️ **BUT THE NEW CRITIC ASKED FOR THE OPPOSITE OF WHAT THE WAVE BUILT** — "roughly half the group's
+  current width" — the second time in the run two critics moved one property in opposite directions,
+  and confounded by the vendor change with no wave 13 to separate them (12.2). Its other clauses
+  re-raise three things 11.8 refuted in source (12.8).
+  **NEW INSTRUMENT FINDING (12.9): the capture pipeline is NOT bit-exact.** The pre-builder capture
+  differed from wave 11 by 6 RGB pixels, every delta ±1 on one channel, and they **round-trip** to
+  byte-identical values after the build. Waves 9–11's "12/12 byte-identical" was luck holding, not a
+  guarantee; future runs should diff RGB with a tolerance rather than trust sha256.
+  Smoothing returned `SEAMS VISIBLE`, confirmed every settled control, **corrected the leg twice**
+  (leg-1 attribution undercounted by 3; the builder's strip-content estimate was 19px light), found a
+  third position on the ground-vocabulary seam but refused to file it as new because it predates the
+  build, proposed **NO** new piece with three measured reasons, and **did not score the plateau** —
+  11.3's failure not repeated. Six agents, zero errors, zero retries. Nothing pushed.
+  Adjudications 12.1–12.10.
 
 - [wave 11] **THIRD ZERO-PIXEL WAVE, TWO VERDICTS ROSE, PLATEAU 2 -> 0 ONE WAVE BEFORE THE STOP.**
   12/12 captures byte-identical to wave 10, **0 RGB pixels** on every file including the withheld
