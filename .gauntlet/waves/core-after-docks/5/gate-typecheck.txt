@@ -1,0 +1,5 @@
+
+> claude-wrapper@1.0.0 typecheck
+> tsc -p tsconfig.node.json && tsc -p tsconfig.web.json
+
+TYPECHECK=0

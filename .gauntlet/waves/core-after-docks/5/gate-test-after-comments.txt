@@ -1,0 +1,13 @@
+
+> claude-wrapper@1.0.0 test
+> vitest run
+
+
+ RUN  v4.1.10 D:/.claude/claude projects/playground/4
+
+
+ Test Files  96 passed (96)
+      Tests  1412 passed | 43 skipped (1455)
+   Start at  15:32:47
+   Duration  62.29s (transform 3.49s, setup 0ms, import 96.08s, tests 82.65s, environment 446.20s)
+

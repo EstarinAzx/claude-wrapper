@@ -119,15 +119,32 @@
      --mint-press stop would introduce hue 182, and the app's mint floor is
      counted by hue.
 
-     Arithmetic. A linear ramp's interior standard deviation is range / sqrt 12,
-     and range ~= alpha x 255 x L with L the mint's own lightness, 0.87. At
-     alpha 0.1 that is range 22.19 and stddev 6.41. The identity reference this
-     is judged against measures 9.02 / 7.01 / 3.65 and 9.40 / 7.33 / 3.83 at its
-     equivalent marks, so 6.41 is aimed at the MIDDLE of that band on purpose: a
-     ramp's stddev does not depend on the box it fills, so one alpha has to serve
-     a 22px chip and a 44px plate at once, and the middle is the value that reads
-     as lit at both instead of heavy at the small one. All three sites read
-     0.00-0.09 before this. */
+     Arithmetic, corrected against the rendered pixels. An earlier version of
+     this note predicted a stddev of 6.41 from range = alpha x 255 x L, taking
+     L as the mint's OKLCH lightness of 0.87. That is a unit error: OKLCH
+     lightness is not an sRGB channel scale. Compositing black at alpha 0.1 over
+     RGB(160, 226, 212) gives per-channel ranges of 16.0 / 22.6 / 21.2, so the
+     stddev ceilings are R 4.62 / G 6.52 / B 6.12 and 6.41 was never reachable on
+     R at any box size. Measured on the real captures, interior stddev reads
+     3.49 / 4.81 / 4.66 — short of those ceilings only because the measurement
+     erodes a fixed 2px, which samples about 82% of a 22px box against 91% of a
+     44px one.
+
+     That erosion is also why this token was once reported as painting THREE
+     finishes at its three sizes. It does not. Correcting for the sampled span
+     gives implied ramp ranges of 22.8 / 23.4 / 23.2, a least-squares fit of the
+     interior slope gives -21.80 / -22.77 / -22.34, and the 22px and 44px marks
+     have identical top AND bottom rows. One ramp, three sizes.
+
+     DO NOT RE-AIM THIS AT THE IDENTITY REFERENCE'S OWN NUMBERS. Its marks are
+     not at this hue: they measure OKLCH hue 192.7-193.4 at the top row against
+     this mark's 179.9-180.5, so their per-channel R/G/B spread is a property of
+     their base colour rather than a target for ours. And their depth works by
+     ROTATING HUE about +11.3 to +12.5 degrees toward blue down the face, with
+     chroma rising, where this ramp holds hue to within 0.23 degrees and lets
+     chroma fall. Copying the reference's mechanism means moving hue, and the
+     one-accent floor above is counted BY hue. The mechanisms differ on purpose,
+     and that is the end of the question rather than an unmet target. */
   --mark-depth: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.1));
 
   --danger-line: var(--color-danger-line);

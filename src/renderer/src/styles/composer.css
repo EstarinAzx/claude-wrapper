@@ -33,7 +33,20 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 12px 24px 16px;
+  /* ASYMMETRIC ON PURPOSE — 34px right against 24px left, and the 10px
+     difference is not a taste call. The transcript directly above centres its
+     own 760px column inside a scroll pane that reserves 10px on the right for
+     the scrollbar, so it centres in an effective 1182px while this container,
+     which never scrolls, centred in the full 1192px. Two locally-correct
+     centrings, 5px apart at both edges of the app's most-repeated measure.
+     Mirroring the reserve here rather than dropping it there is deliberate:
+     `.chat` is reused inside the subagent drawer at a narrower width where the
+     760px column is already at its limit, so horizontal room cannot be spent
+     on that side. Everything in this column centres together, so the pill, the
+     controls strip and the footer line all move the same 5px and their 0.00px
+     alignment to each other is untouched. Content box drops 1144 -> 1134px,
+     still well clear of the 760px cap, so nothing shrinks. */
+  padding: 12px 34px 16px 24px;
 }
 
 .input-pill {

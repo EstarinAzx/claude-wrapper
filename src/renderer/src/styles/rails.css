@@ -140,7 +140,6 @@
   gap: 2px;
   padding: 8px 10px;
   border: none;
-  border-radius: 8px;
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -297,7 +296,7 @@
   flex-direction: column;
   max-height: 40%;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 /* Same left edge as the rail head, the filter placeholder, the group headings
@@ -309,7 +308,7 @@
   justify-content: space-between;
   flex-shrink: 0;
   gap: 8px;
-  padding: 6px 8px 2px 16px;
+  padding: 4px 8px 2px 16px;
 }
 
 /* The stored list's group-heading treatment, deliberately: both name what the
@@ -365,8 +364,8 @@
 .bg-sessions-empty {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 2px 16px 4px;
+  gap: 2px;
+  padding: 0 16px 2px;
   font-size: var(--fs-micro);
   color: var(--text-faint);
 }
@@ -443,7 +442,12 @@
 
 .sidebar-filter-input {
   width: 100%;
-  height: 34px;
+  /* The rail's own control housing height, not a shave: .sidebar-toggle is an
+     explicit 28px and DESIGN.md names that square in Layout. 34px was this
+     band's alone, and the pre-list stack could not afford a control scale no
+     other control in the rail uses. A 13px face at body 1.6 is a 20.8px line
+     box, so 28 still leaves 3.6px of air each side. */
+  height: 28px;
   border: none;
   background: transparent;
   outline: none;
@@ -464,9 +468,16 @@
 }
 
 /* Which projects the rail is listing. Deliberately carries NO hairline of its
-   own: the head and the filter band already stack two in the first 78px, and a
-   third would be chrome competing with the rows. Sitting flush above the list
-   reads correctly anyway, because these chips describe what the list contains.
+   own: THREE already stack above these chips, not two — the rail head's, the
+   background-sessions section's, and the filter band's. That middle one is easy
+   to forget because it is a section rather than a band, but it renders directly
+   after the head and directly before the filter and it draws its own
+   border-bottom, so a fourth here would be chrome competing with the rows.
+   The COUNT is the argument, deliberately not a depth: the middle section sizes
+   itself to what is running, capped at 40% of the rail, so the filter's hairline
+   and these chips ride up and down with it and no pixel figure written here
+   would stay true. Sitting flush above the list reads correctly anyway,
+   because these chips describe what the list contains.
    Chips rather than a boxed segmented track for the same reason — the rail
    spends no border on a control the list itself can explain. That is a
    rail-local call and no longer an unopposed one: `.agents-dock-switch` below
@@ -480,7 +491,7 @@
   flex-shrink: 0;
   display: flex;
   gap: 4px;
-  padding: 8px 8px 2px;
+  padding: 4px 8px 2px;
 }
 
 /* Pressed treatment is the agents-dock mode switch's, so the two rails keep one
@@ -518,7 +529,10 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 6px;
+  /* Longhand, not the 6px square it was: the top is the only side the pre-list
+     stack can spend, and the 6px left MUST stay — it is the gutter that pairs
+     with the row's own 10px inset to make the rail's shared 16px edge. */
+  padding: 4px 6px 6px;
 }
 
 /* A project directory is long and its meaningful end is the tail, so overflow
@@ -529,7 +543,7 @@
    (Truncation itself comes from the shared rule above.) */
 .session-group-head {
   margin: 0;
-  padding: 4px 10px;
+  padding: 3px 10px;
   font-size: var(--fs-micro);
   font-weight: 400;
   color: var(--text-faint);
@@ -600,17 +614,56 @@
    indicator's end cap, and either way the indicator is a bar down the whole left
    edge of the one selected row.
 
-   `.session-delete` KEEPS THE GROUP'S 8px, AND THAT IS NOT AN OVERSIGHT. It is the
-   sibling that stretches to this row's full height, so it is a 235 - 207 = 28px by
-   74px box, and a browser clamps a radius to half the shorter side: 16px on a 28px
-   width renders as 14px and the control reads as a lozenge instead of a rounded
-   square. A narrow box and a wide one cannot share one corner. Their grounds are
-   co-visible only on the active row with the pointer on that control, since
-   `.session-row-btn:hover` is false while the pointer sits on a sibling.
+   `.session-delete` KEEPS 8px, AND THAT IS NOT AN OVERSIGHT. It declares that 8px
+   itself rather than inheriting anything, which is why it is untouched by everything
+   below. It is the sibling that stretches to this row's full height, so it is a
+   235 - 207 = 28px by 74px box, and a browser clamps a radius to half the shorter
+   side: 16px on a 28px width renders as 14px and the control reads as a lozenge
+   instead of a rounded square. A narrow box and a wide one cannot share one corner.
+   Their grounds are co-visible only on the active row with the pointer on that
+   control, since `.session-row-btn:hover` is false while the pointer sits on a
+   sibling.
 
-   Session-scoped for the reason the transition above is: the three-row group at the
-   top of this file also paints the agent and command rows, and neither moves. */
-.session-row-btn {
+   IT IS NO LONGER SESSION-SCOPED, AND THAT IS THE REPAIR. For one wave it was, on
+   purpose: scoping the corner to `.session-row-btn` alone kept the three dock captures
+   byte-identical, and that byte-identity was the only evidence that two builders
+   sharing one stylesheet had not leaked into each other. The control was worth more
+   than the consistency that wave. The cost was that the rail row and the two dock rows
+   wore 16px against 8px where they had been IDENTICAL at 8px, while DESIGN.md's Layout
+   section calls the Agents dock the rail's mirror with the "same 44px head, same row
+   shell" — so that sentence was false for as long as the split stood, and no critic
+   could see it, because the rail's critic has no dock rows in frame and the dock
+   surfaces were byte-identical so nobody was looking at them.
+
+   The corner is therefore declared ONCE, here, for all three rows, and the group at
+   the top of this file no longer states one.
+
+   WHAT THAT COSTS, MEASURED RATHER THAN WAVED AT, because a token is not a shape. The
+   16px arc now sits on boxes of 74px (this rail row), 65px and 49px (command rows). The
+   arc eats 2r of each row's vertical edge, so the straight run falls from 87.7% to
+   66.2% of a 65px row and from 83.7% to 55.1% of a 49px one — and on a command row that
+   outline is the ONLY indicator it has. `DESIGN.md` calls the dock the rail's mirror
+   with the "same row shell"; after this the two share a token while their shells still
+   differ by 25px of height, which is a nearer thing than 8-against-16 and is not the
+   same thing as one shape. The argument three paragraphs up for exempting
+   `.session-delete` — a narrow box and a wide one cannot share one corner — was applied
+   to WIDTH and never to HEIGHT, and the 49px row is the case that would have failed it.
+   The value it settles on may yet be 8 rather than 16; what this rule buys either way is
+   that the question is now ONE edit instead of three.
+
+   AND THE AGENT ROW'S CORNER IS NOT AS INVISIBLE AS IT LOOKS. In the default state it
+   is: `background: transparent`, no border, so the dock pixels carry no row box, and
+   `agents-dock.png` is byte-identical across all five gauntlet waves. But
+   `.agent-row--selected > .agent-row-btn` sets `background: var(--tint-3)` further down
+   this file, so a SELECTED agent row paints a ground and does show its corner, and
+   `.agent-row--nested > .agent-row-btn` carries a `border-left` in every state with its
+   two left corners pinned at 3px — an asymmetry that went from 3:8 to 3:16, doubling
+   from 2.7x to 5.3x. No capture in the run holds a selected agent row, so that part of
+   this change is justified on evidence the capture set cannot supply. Stated here rather
+   than left implied. */
+.session-row-btn,
+.agent-row-btn,
+.command-row-btn {
   border-radius: var(--r-bubble);
 }
 

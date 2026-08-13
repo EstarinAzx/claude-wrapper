@@ -1,0 +1,117 @@
+
+> claude-wrapper@1.0.0 test:dom
+> node .claude/skills/run-desktop/dom-phase.mjs
+
+=== 1 declared build requirement(s) — run here because `npm test` does not build ===
+  PASS gui-75.mjs › criterion 0: the built main bundle still calls setAppUserModelId (BUILD ARTIFACT grep)
+
+=== DOM phase: 39 driver(s), 9 skipped, timeout 300000ms ===
+screenshots: C:\Users\S.D\AppData\Local\Temp\claude-wrapper-dom-phase
+profiles:    C:\Users\S.D\AppData\Local\Temp\dom-phase-profiles-QMogpa (one per driver, removed on exit)
+
+gui-110.mjs ... PASS (exit 0, 9.7s)
+gui-118.mjs ... FAIL (exit 1, 9.5s)
+    | WORKSPACE   {"picked":true,"dir":"C:\\Users\\S.D\\AppData\\Local\\Temp\\at118-ws-up8HJs"}
+    | OPEN        {"mounted":false}
+    | FAIL
+    |   - typing @ opened no file popover — the feature is absent from this build, or `files:list` never answered
+gui-122.mjs ... PASS (exit 0, 11.9s)
+gui-123.mjs ... UNSCORED (exit 2, 20.4s)
+    | ENV         {"protocol":"file:","isSecureContext":true}
+    | SENDPATH    {"before":1,"after":0}
+    | WORKSPACE   {"dir":"gui123-seJz2I"}
+    | RAILPIN     {"scope":"This project","rows":0,"pinnedHere":false}
+    | UNSCORED
+    |   ? the app rendered no user message at all after 15s ({"userMessages":0,"bubbles":0,"controls":0,"composerStillHolds":true}) — this run never reached the reuse control, so it is UNSCORED rather than a finding about it. A first-run profile not sending is #155, not this driver's subject
+    | SHOTS       C:/Users/S.D/AppData/Local/Temp/claude-wrapper-dom-phase/gui-123
+gui-124.mjs ... PASS (exit 0, 34.6s)
+gui-126.mjs ... PASS (exit 0, 9.1s)
+gui-136.mjs ... PASS (exit 0, 12.8s)
+gui-138.mjs ... PASS (exit 0, 7.8s)
+gui-42.mjs ... PASS (exit 0, 8.7s)
+gui-45.mjs ... PASS (exit 0, 8.6s)
+gui-47.mjs ... PASS (exit 0, 15.5s)
+gui-49.mjs ... FAIL (exit 1, 12.0s)
+    | INSTRUMENT{"mainSideCounter":true}
+    | BRIDGE    {"titleHint":true}
+    | STORE     {"sessions":990,"bareTitles":77,"rowsRendered":100,"visibleBare":0}
+    | ASKED     {"calls":1,"unique":1,"derivedLabels":1,"sample":["Set model to sol — gpt-5.6-sol and saved as your default for"]}
+    | IN-DOM    {"derived":1,"showing":1}
+    | PROBE     {"ran":true,"ok":true,"type":"string"}
+    | SHOT C:\Users\S.D\AppData\Local\Temp\claude-wrapper-dom-phase\gui-49\title-enrichment.png
+    | SKIPPED the enrichment path itself (no bare-command row on this page)
+    | FAIL 1 unrendered sessions were read — the store is being scanned | read 1 sessions but only 0 rows qualify
+    | DONE
+gui-51.mjs ... PASS (exit 0, 10.7s)
+gui-54.mjs ... PASS (exit 0, 28.4s)
+gui-55.mjs ... PASS (exit 0, 8.4s)
+gui-61.mjs ... PASS (exit 0, 8.2s)
+gui-62.mjs ... PASS (exit 0, 9.1s)
+gui-63.mjs ... PASS (exit 0, 9.3s)
+gui-66.mjs ... PASS (exit 0, 10.0s)
+gui-69.mjs ... PASS (exit 0, 15.1s)
+gui-70.mjs ... PASS (exit 0, 15.7s)
+gui-72.mjs ... PASS (exit 0, 8.3s)
+gui-78.mjs ... PASS (exit 0, 12.7s)
+gui-79.mjs ... PASS (exit 0, 19.0s)
+gui-91.mjs ... PASS (exit 0, 22.0s)
+gui-93.mjs ... PASS (exit 0, 14.1s)
+gui-94.mjs ... FAIL (exit 1, 12.1s)
+    | .command-row-hint        12.8       12.8        0                 normal   "Cascadia Code", Consolas, "SF Mono", ui-monospace, monospace
+    | .command-row-desc          12       31.9     19.9                15.95px   "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif
+    | .command-row-btn           60       65.1      5.1                 normal   "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif
+    | .command-list height 532px over 125 rows
+    | rest of the shorthand — button: weight 400, style normal, variant normal, stretch 100%
+    |                           body: weight 400, style normal, variant normal, stretch 100%
+    | surface 2 — slash popover: 125 options, option 27.2px, popover 260px
+    |   .command-row-name        15.2px   "Cascadia Code", Consolas, "SF Mono", ui-monospace, monospace
+    |   .command-row-hint        12.8px   "Cascadia Code", Consolas, "SF Mono", ui-monospace, monospace
+    | screenshot (dock, the changed surface): C:\Users\S.D\AppData\Local\Temp\claude-wrapper-dom-phase\gui-94\gui-94-commands-dock.png
+    | screenshot (slash popover, surface 2):  C:\Users\S.D\AppData\Local\Temp\claude-wrapper-dom-phase\gui-94\gui-94-slash-popover.png
+    | FAIL: AC3 .command-row-desc line box moved: 12px before → 31.9px after (19.9px) | AC4 row height moved: 60px before → 65.1px after (tolerance 0.8px)
+gui-95.mjs ... FAIL (exit 1, 22.3s)
+    | node:internal/modules/run_main:123
+    |     triggerUncaughtException(
+    |     ^
+    | page.waitForSelector: Timeout 20000ms exceeded.
+    | Call log:
+    | [2m  - waiting for locator('.session-group-head') to be visible[22m
+    |     at [90mD:\.claude\claude projects\playground\4\[39m.claude\skills\run-desktop\gui-95.mjs:116:12 {
+    |   log: [ [32m"  - waiting for locator('.session-group-head') to be visible"[39m ],
+    |   name: [32m'TimeoutError'[39m
+    | }
+    | Node.js v22.17.0
+gui-96.mjs ... PASS (exit 0, 7.9s)
+gui-98.mjs ... PASS (exit 0, 8.3s)
+gui-agents-dock.mjs ... PASS (exit 0, 8.3s)
+gui-gauntlet-wave10.mjs ... PASS (exit 0, 8.7s)
+gui-gauntlet-wave2.mjs ... PASS (exit 0, 12.3s)
+gui-gauntlet-wave3.mjs ... PASS (exit 0, 8.6s)
+gui-gauntlet-wave4.mjs ... PASS (exit 0, 9.4s)
+gui-gauntlet-wave5.mjs ... PASS (exit 0, 8.6s)
+gui-gauntlet-wave6.mjs ... PASS (exit 0, 8.6s)
+gui-gauntlet-wave7.mjs ... PASS (exit 0, 8.2s)
+gui-gauntlet-wave8.mjs ... PASS (exit 0, 8.3s)
+
+=== 34/39 drivers passed, 1/1 build requirement(s) + 1 uncovered contract (gui-119.mjs, desktop-exclusive) ===
+  FAIL      gui-118.mjs — FAIL
+  UNSCORED  gui-123.mjs
+  FAIL      gui-49.mjs — FAIL 1 unrendered sessions were read — the store is being scanned | read 1 sessions but only 0 rows qualify
+  FAIL      gui-94.mjs — FAIL: AC3 .command-row-desc line box moved: 12px before → 31.9px after (19.9px) | AC4 row height moved: 60px before → 65.1px after (tolerance 0.8px)
+  FAIL      gui-95.mjs
+  UNCOVERED gui-119.mjs — not launched here. Run it alone on an idle desktop:
+      npm run test:dom -- --only gui-119.mjs
+
+not launched (9), each for a stated reason:
+  gui-48.mjs — api-cost: drives one real CLI turn — a refusal is only a refusal if the turn it refused against actually ran
+  gui-52.mjs — api-cost: drives a real CLI turn, because the model pill moves on the NEXT turn rather than on the pick
+  gui-73.mjs — api-cost: drives three real CLI turns (plant a number, resume it, continue it through a rebuilt engine)
+  gui-74.mjs — api-cost: drives one real CLI turn through the contextBridge under `sandbox: true`
+  gui-75.mjs — api-cost: drives real turns ending minimised, blurred and focused, to prove the notification fires exactly once and only when unseen
+  gui-80.mjs — api-cost: drives two real CLI turns and budgets ten minutes for them
+  gui-129.mjs — api-cost: drives one real CLI turn, because there is nothing to rewind until a turn has edited a file
+  gui-119.mjs — desktop-exclusive: both witnesses are the real desktop — a genuine focus loss, and a PowerShell CopyFromScreen of the window rectangle. Passes alone (blur calls x3, stress 8/8) and fails in the batch (zero calls, 7/8), so what a batch run measures is the foreground, not the keeper
+  gui-scope-zoom-pill.mjs — no-verdict: logs pill metrics and screenshots and never computes a pass/fail, so its exit code would report a green that measured nothing
+
+DOM PHASE FAIL: gui-118.mjs (FAIL), gui-123.mjs (UNSCORED), gui-49.mjs (FAIL), gui-94.mjs (FAIL), gui-95.mjs (FAIL) — and 1 contract(s) never checked: gui-119.mjs
+DOM_EXIT=1
