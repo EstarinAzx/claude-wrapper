@@ -1,0 +1,33 @@
+WAVE 11 PREFLIGHT
+branch: gauntlet/core-after-docks
+HEAD: 894c16a
+boot_leg: 12
+duplicate_sessions: none live except this working relay·gauntlet·leg12
+binary: claude-wisp (state file already pinned)
+
+critic_family: sonnet
+critic_target_boot: xai/grok-4.6
+critic_target_launch: xai/grok-4.6
+target_held: true
+critic_degraded: false
+
+bar: 9/9 hash-identical to wave 10
+CRITIC_SHARED: byte-identical to wave 10 (len 4799)
+BAR_WIN: byte-identical to wave 10 (len 395)
+
+build: EXIT=0
+bundle: index-DTnEAz7L.css / index-BPhhb00U.js (held)
+
+inspect: PASS, 12/12 written
+byte-control vs wave 10: 12/12 IDENTICAL
+
+dom PRE: 36/39, same three non-PASS
+  UNSCORED gui-123
+  FAIL gui-94 (command-row-desc 12->31.9 / row 60->65.1)
+  FAIL gui-95 (.session-group-head timeout)
+  UNCOVERED gui-119
+
+builders: NONE (10.10 inheritance)
+workflow: wf_f00cc00c-ead
+script: .gauntlet/waves/core-after-docks/11/wave11-critics.mjs
+do_not_mutate_until_all_six_return: true

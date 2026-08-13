@@ -1,0 +1,12 @@
+IDENTICAL  welcome.png
+IDENTICAL  window-welcome.png
+IDENTICAL  welcome-min-window.png
+IDENTICAL  titlebar.png
+IDENTICAL  sidebar.png
+IDENTICAL  chat.png
+IDENTICAL  input-bar.png
+IDENTICAL  window-session.png
+IDENTICAL  window-session-short.png
+IDENTICAL  agents-dock.png
+IDENTICAL  commands-dock.png
+IDENTICAL  appearance-dock.png
