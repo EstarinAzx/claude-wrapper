@@ -1,0 +1,33 @@
+﻿FRAME       {"width":1440,"height":900,"zoom":1}
+CONTROL     {"hit":"welcome","bytes":1103,"density":10.77,"floor":10.77}
+SURFACE     {"name":"welcome","box":{"x":0,"y":48,"w":1440,"h":852},"text":148,"bytes":33193,"density":27.05}
+MINIMUM     {"asked":{"width":640,"height":480},"got":{"width":640,"height":480}}
+MIN-PANE    {"pane":{"w":640,"h":432},"padding":{"top":32,"bottom":81.6},"parts":[{"cls":"welcome-mark","h":44},{"cls":"welcome-title","h":57.5},{"cls":"welcome-hint","h":55.19},{"cls":"pick-folder-btn","h":52}]}
+HEADROOM    {"measured":69.71,"claimed":70,"drift":-0.29,"content":248.69,"overflow":0,"intrusion":{"top":-34.86,"bottom":-34.85,"left":-80.5,"right":-15.5}}
+SURFACE     {"name":"welcome-min-window","box":{"x":0,"y":48,"w":640,"h":432},"text":148,"bytes":26809,"density":96.97}
+RESTORED    {"width":1440,"height":900}
+RAIL        {"rows":5,"foot":"12 sessions outside this project","bgRows":0,"expect":{"rows":5,"outside":12}}
+SURFACE     {"name":"titlebar","box":{"x":0,"y":0,"w":1440,"h":48},"text":36,"bytes":8921,"density":129.07}
+SURFACE     {"name":"sidebar","box":{"x":0,"y":48,"w":248,"h":852},"text":550,"bytes":47725,"density":225.87}
+SURFACE     {"name":"chat","box":{"x":248,"y":48,"w":1192,"h":720},"text":923,"bytes":91678,"density":106.82}
+SURFACE     {"name":"input-bar","box":{"x":248,"y":768,"w":1192,"h":132},"text":80,"bytes":14584,"density":92.69}
+SHORT       {"overflowBefore":93,"grewBy":117,"asked":1017,"got":1017,"width":1440,"overflowAfter":0}
+SURFACE     {"name":"agents-dock","box":{"x":1192,"y":48,"w":248,"h":852},"text":262,"bytes":25019,"density":118.41}
+SURFACE     {"name":"commands-dock","box":{"x":1192,"y":48,"w":248,"h":852},"text":377,"bytes":39070,"density":184.91}
+SURFACE     {"name":"appearance-dock","box":{"x":1192,"y":48,"w":248,"h":852},"text":206,"bytes":23442,"density":110.94}
+DIR         D:\.claude\claude projects\playground\4\.gauntlet\waves\core-after-docks\10
+FILE        .gauntlet/waves/core-after-docks/10/welcome.png
+FILE        .gauntlet/waves/core-after-docks/10/window-welcome.png
+FILE        .gauntlet/waves/core-after-docks/10/welcome-min-window.png
+FILE        .gauntlet/waves/core-after-docks/10/titlebar.png
+FILE        .gauntlet/waves/core-after-docks/10/sidebar.png
+FILE        .gauntlet/waves/core-after-docks/10/chat.png
+FILE        .gauntlet/waves/core-after-docks/10/input-bar.png
+FILE        .gauntlet/waves/core-after-docks/10/window-session.png
+FILE        .gauntlet/waves/core-after-docks/10/window-session-short.png
+FILE        .gauntlet/waves/core-after-docks/10/agents-dock.png
+FILE        .gauntlet/waves/core-after-docks/10/commands-dock.png
+FILE        .gauntlet/waves/core-after-docks/10/appearance-dock.png
+PASS
+
+EXIT=0

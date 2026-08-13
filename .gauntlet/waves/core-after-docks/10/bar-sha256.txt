@@ -1,0 +1,10 @@
+3d284fa051a3ea6841bafc7eb3cc7747de92e0d9a6bd74b1e34567f28b43776b *.gauntlet/bar/README.md
+2d5c28a81f446ad68889892323014c7cc9fd8f0f2c5f0ea72d0a0fdbba7bcc0f *.gauntlet/bar/identity/current-welcome-2026-08-10.png
+c1678ee2cc0253f1a14cd9a1757b35c997ec289af29344b06a72c691e3a57b85 *.gauntlet/bar/identity/frost-mono-reference.png
+4e8ffde5bacb14557d1bce06fe17813b900706c6b0c2d2a3924eb32ce5db5a04 *.gauntlet/bar/linear/linear-changelog.png
+9f1ec5a14935ecd376a5da6355a8f676cff216b9052aefbc1436f19960c95c17 *.gauntlet/bar/linear/linear-features.png
+71aa8850d3a155bc8ad8a9dc30a0502d0831e36bbd23440bb98d8f0a21e7abab *.gauntlet/bar/linear/linear-home-hero.png
+8677f2b8e3ab51c892faf8cd4bf50b0b81dd201d9f90d0b4fb381aa5f4d5994b *.gauntlet/bar/linear/linear-home-product.png
+80753d0c73412ba9cc49cc11de8ba43160a216544d78cfb5301be15bbaa9df31 *.gauntlet/bar/linear/linear-method.png
+139dc31143bc35769dd477e63964211b49690a49caecf3d8c3462cb20a8c40da *.gauntlet/bar/linear/manifest.json
+BAR_FILES=9
