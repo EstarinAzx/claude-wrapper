@@ -424,9 +424,44 @@
   color: var(--text-faint);
 }
 
-/* Filter band under the head: a second toolbar row, same hairline language, no
-   control chrome of its own. The rail already supplies --surface, so the input
-   is bare and the band brightens on focus the way the composer pill does. */
+/* Filter band under the head: a second toolbar row, same hairline language. The
+   BAND still carries no control chrome of its own — but the input inside it now
+   does, and that is a reversal of this rule's original bareness rather than a
+   detail. A critic reading the rail against an external reference found the
+   control "visually indistinguishable from passive muted copy", which was
+   literally true: at rest the field's ground WAS the rail's ground, so a 28px
+   hit area existed and nothing announced it. The fill answers that. The band
+   still brightens on focus the way the composer pill does; see the caveat below,
+   because that sentence is now only half coherent.
+
+   ⚠️ WHAT THE FILL COSTS, MEASURED AFTER IT LANDED. Three things, none fatal and
+   all real, recorded so the next hand does not rediscover them:
+
+   1. THE FILL IS THE SAME TOKEN AS THE HAIRLINES IT TOUCHES. `var(--border)`
+      renders the same value as the section rule above this band and as this
+      band's own `border-bottom`. The band has zero vertical padding, so the 28px
+      field sits flush between the two, and a vertical slice through the band now
+      reads as one continuous 30-row block of that colour where it used to read
+      as two isolated 1px rules with clear ground between. Three full-width rules
+      still exist in the DOM; only the rail head's still reads as one. The field
+      gained a ground and the band lost two edges.
+   2. IT INVERTS THE HOUSE FORM THIS COMMENT NAMES AS ITS MODEL. Every other
+      resting input housing in the app is surface fill plus a 1px border — the
+      composer pill and the tool card both. This field is now the only control
+      whose resting ground is the border token and which carries no border.
+   3. THE PLACEHOLDER HAS 0px INSET INSIDE ITS OWN GROUND. Its left edge and the
+      field's left edge are the same column. That was correct while the field was
+      invisible, because that column is the shared content edge the group
+      headings and row titles also sit on. With a visible box under it, the text
+      now touches the edge, and the two constraints have started to disagree.
+
+   The unbuilt halves are refuted rather than skipped. An inset hairline needs
+   vertical padding on the band to avoid doubling a rule that is already there,
+   which costs height the pre-list stack does not have. A leading search glyph
+   does not fit the band's left padding without either breaking that shared edge
+   or getting no inset at all, and a background-image glyph cannot take
+   `currentColor`, so it would hardcode a theme. Both would need the rail's
+   shared left edge widened, which is a rail-wide decision and not a band one. */
 /* Left padding matches .sidebar-head and the 6px list gutter + 10px row inset,
    so the placeholder, the group headings and the row titles share one edge. */
 .sidebar-filter {
@@ -449,7 +484,8 @@
      box, so 28 still leaves 3.6px of air each side. */
   height: 28px;
   border: none;
-  background: transparent;
+  background: var(--border);
+  border-radius: 8px;
   outline: none;
   font: inherit;
   font-size: var(--fs-ui);

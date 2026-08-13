@@ -59,11 +59,44 @@
   color: oklch(0.55 0.16 25);
 }
 
-/* Disclosure (#61). Quiet by default — the card must read exactly as it did
-   before when nobody is looking at it — and the caret is the only always-on
-   hint that there is more. (Micro-caps type comes from the shared rule above.) */
+/* Disclosure (#61). Still quiet in COLOUR — nothing here is filled, bordered or
+   tinted, and hover remains the only thing that changes a colour — but the two
+   older claims in this note are now false and the correction is the useful part.
+   The row is no longer as wide as its own label and no longer as tall as its own
+   line box: it stretches to the card's content box and reserves the app's 28px
+   control housing, the same square `.sidebar-toggle` and the rail's filter input
+   take. So the caret is NOT the only always-on hint any more — the row's height
+   is a second one — and the card does NOT read exactly as it did before, because
+   it is 26px taller per pair of rows. (Micro-caps type comes from the shared rule
+   above; no size, weight or tracking was touched.)
+
+   ⚠️ WHAT IT COST, MEASURED, AND THE NEXT HAND SHOULD READ THIS BEFORE ADDING TO
+   IT. The change was made to answer a critic that found these rows read as
+   captions rather than operable rows. Against the captures:
+
+   1. `align-self: stretch` PAINTS NOTHING. The label's ink box is identical
+      before and after — same left edge, same width — because the row keeps a
+      transparent background and no border. The full width is hit area, not a
+      visible band, so 100% of the visible change is negative space.
+   2. THE PAIR STOPPED READING AS A PAIR. Clearance from the card body to row 1
+      and from row 1 to row 2 was equal before. It is not now: the two rows sit
+      further from each other than the first sits from the content above them.
+      Reserving height per row spends it between the rows as well as around them,
+      so a uniform interval became a 1.3x crossing — the ratio `titlebar.css`
+      records as far too weak to break a run, arriving here by accident.
+   3. THE ROWS TOOK 24% OF THE CARD. Inner height went 108 to 134 and 109 to 135,
+      and the two quiet rows now occupy about 42% of the card's inner height where
+      they occupied about 28%. A secondary, collapsed artifact now outweighs the
+      prose it sits beside.
+
+   The honest reading is that the height bought an affordance nobody can see and
+   spent it on the card's most valuable axis. Either make the row visible so the
+   28px is doing work, or give the height back — do not add more of it. Note that
+   the bleed form, which reaches the card's own edges, also needs the focus rule's
+   `outline-offset` reworked or the outline paints outside the card. */
 .tool-card-toggle {
-  align-self: flex-start;
+  align-self: stretch;
+  min-height: 28px;
   display: flex;
   align-items: center;
   gap: 6px;
