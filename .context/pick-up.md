@@ -78,23 +78,55 @@ Both cost real time on 2026-08-19; neither is hypothetical.
   "do these two trees agree?", use **two-dot**: `git diff origin/main <branch> -- src/`.
   The three-dot form answers a different question — "what did this branch do?"
 
-## Ticket queue: dry, and no leg may refill it
+## Ticket queue: ONE ticket, and CI is live now
 
-**`ready-for-agent` = 0**, verified via the API, not the label filter:
+**Triaged 2026-08-19.** 18 open issues: **1 `ready-for-agent`**, 1 `needs-info`, 16
+`needs-triage`. Verify with the **API**, never the label filter (its search index
+lags right after a close):
 
 ```bash
 gh api "repos/EstarinAzx/claude-wrapper/issues?state=open&labels=ready-for-agent" --jq 'length'
 ```
 
-**19 issues open**, all `needs-triage` / `needs-info`, several filed by legs
-(#162–#167). **They are the owner's to triage — promoting any of them makes a
-chain's stop condition unreachable by construction.**
+- **#163 is the queue** — `gui-124`'s hardcoded 12-press Tab budget, the last of
+  #143's class. Promoted because it carries **no open design question**: three
+  enumerated moves, both precedents already on `main` (`1c42d3c` #143,
+  `454e8de` #154). Everything else turns on a decision that is the owner's.
+  Reverse with `gh issue edit 163 --add-label needs-triage --remove-label ready-for-agent`.
+- **#155 is `needs-info` correctly** and is the highest-severity item open: a
+  profile the app has never run in sends **no messages at all**, which is every new
+  user's first launch. It is blocked on one thing only — *a human opening the app by
+  hand on a clean profile*, since everything measured so far went through
+  `playwright-core` with a stubbed dialog. One run decides whether it is a shipping
+  bug or a harness artifact.
+- **#150 CLOSED** — the `fast-gate` workflow was delivered and its acceptance 2
+  ("confirm it actually runs rather than assuming it will") is now discharged by
+  execution.
 
-Run 3's four leftovers (Welcome CTA padding ratio, Sidebar duplicate-refresh
-affordance, Chat disclosure state model, whether the widened effort track overshot)
-were **deliberately not filed as tickets** — 19 untriaged issues already exist, and
-adding four more to a queue nobody is draining is noise, not progress. They are
-recorded in `.claude/gauntlet.md` under `### 12.10`.
+**Do not promote the other sixteen to refill this queue.** A chain's stop condition
+is "queue empty"; promoting to keep it fed makes the stop unreachable by
+construction. They are the owner's to triage.
+
+## CI EXISTS NOW, AND IT CHANGES THE GATE
+
+`.github/workflows/fast-gate.yml` runs `typecheck`, `test`, `build` on every push to
+`main`. Before 2026-08-19 nothing had ever been pushed from this checkout, so it had
+**never run**. It has now run five times.
+
+- **The local gate is no longer the last word.** `.claude/skills/` is NOT outside the
+  suite — `tests/inspect-published-list.test.ts` reads `inspect.mjs` and pins its
+  `EXPECTED_FILES` expression against the counts quoted in `SKILL.md` **and**
+  `.gauntlet/bar/README.md`. A commit that reasons "this path is outside tsconfig and
+  vitest" instead of re-running `npm test` will red main. That happened at `259b70e`
+  and was fixed at `d53fa22`. **Run the suite; do not deduce its coverage.**
+- **CI runs four fewer tests than you do, by design.** Runner **1408 passed / 47
+  skipped**; local **1412 / 43**; same 1455 total.
+  `tests/transcript-rewind-real-store.test.ts` skips where there is no `~/.claude`
+  store. Measured on run `32225857209`, not predicted. That is #157's subject.
+- **CI does NOT cover the DOM phase**, and the job name says so. `npm run test:dom`
+  is separately **already red on `main`'s lineage** for four environment reasons
+  (`gui-49`, `gui-95`, `gui-94`, `gui-123`/#155) — see #168. **Re-baseline before
+  blaming your change.**
 
 ## Before starting a gauntlet run 4
 
