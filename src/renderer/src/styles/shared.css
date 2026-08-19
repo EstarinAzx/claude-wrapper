@@ -15,9 +15,11 @@
    least as specific and comes later, so the cascade resolves to whatever the
    component already said. */
 
-/* One-line truncation. Every row title, meta line and key that must not wrap. */
+/* One-line truncation. Every row title, meta line and key that must not wrap —
+   with one named departure, `.session-row-title`, which left for the group below
+   because its text turned out to be a sentence rather than a name. The next
+   paragraph is where that is argued. */
 .session-group-head,
-.session-row-title,
 .session-row-meta,
 .agent-row-type,
 .agent-row-meta,
@@ -37,8 +39,9 @@
   text-overflow: ellipsis;
 }
 
-/* Two-line clamp. The other half of the truncation story, for the SECONDARY
-   line of a "name plus description" row.
+/* Two-line clamp. The other half of the truncation story, for whichever line
+   CARRIES the row — usually the secondary line of a "name plus description"
+   pair, and now also the sessions rail's title.
 
    The group above is right for a title, a key or a meta string: the first few
    words identify the thing and the rest is confirmation, so an ellipsis costs
@@ -48,6 +51,29 @@
    into fragments. Two lines is a ceiling and not a target: a short description
    still sits on one line, the clamp only bites past the second, and the rows
    that grow taller sit in lists that already scroll.
+
+   THE SESSIONS RAIL'S TITLE JOINED, and it is why the group above no longer
+   claims "every row title". That premise — the first few words identify the
+   thing — is a claim about the TEXT, not about what the element is called, and
+   in the rail it was simply false. Read off the real store, all five visible
+   rows ended mid-word: "Why does the sessions rail go ...", "Rewriting the tool
+   card so a lo...", "Add the queued send flag to t...", "Why does the Agents
+   dock bla...", "Window bounds are remembe...". They read that way because an
+   enriched row's label is the session's first user PROMPT verbatim — a
+   description wearing the word "title", in a row that carries nothing else. So
+   the sentence this group already wrote about a 248px column applies unchanged,
+   and the rail was fragmenting its own primary reading matter while most of the
+   column stayed empty. It joins here rather than authoring its own -webkit-box
+   in rails.css, which is exactly what this comment asks of anything needing a
+   second line.
+
+   TWO LINES IS STILL A CEILING IN THIS BODY. The sessions rail additionally
+   RESERVES the two-line area, and it does that locally on `.session-row-title`
+   in rails.css rather than here, because it is the one member whose rows are
+   scanned as a COLUMN: the timestamps under the titles are the recency read, and
+   a one-line title that shortened its own row would step every timestamp below
+   it out of line. The two descriptions are read one row at a time and keep the
+   ceiling.
 
    This is a named group rather than a rule next to the one description that
    first needed it because THREE docks grow the same name-plus-description row.
@@ -69,20 +95,33 @@
    248px column, at 17.6px and 15.95px, because one of them took the clamp and
    left the leading behind. 1.45 is not a new number either — the sessions rail's
    `.bg-sessions-empty-hint` answers this exact question in this exact column,
-   where body's 1.6 read as two separate remarks. Unitless, so it tracks
-   `--fs-micro`.
+   where body's 1.6 read as two separate remarks. Unitless, so it tracks whatever
+   size its tenant carries: `--fs-micro` for the two descriptions, `--fs-ui` for
+   the session title.
+
+   IT WAS CHECKED AT 13px RATHER THAN ASSUMED. 13 x 1.45 = 18.85px, so 5.85px
+   sits between the two lines of one title, against 8.2px between the title block
+   and the timestamp under it — the row's 2px gap plus the two half-leadings
+   either side of it, the title's 2.925 and the 11px meta's 3.3. The break BETWEEN
+   the blocks still out-ranks the interval INSIDE one, at 1.41x, which is the same
+   relationship `.agent-row-desc` derives at 1.62x one dock over. So 13px takes
+   the shared number and no local override; a tighter local ratio would be a
+   second answer to this group's one question, and it is not needed.
 
    The Appearance dock's `.appearance-choice-desc` is the third of the three
    name-plus-description rows and deliberately does NOT join, so "joins this
    list" reads as the default rather than the rule. Its sentence is the reason
    to pick the other backdrop: a reader who cannot finish it cannot choose, and
-   unlike these two it hangs no title attribute behind itself to recover the
-   rest. It takes this leading locally and no clamp at all.
+   unlike every member of this list it hangs no title attribute behind itself to
+   recover the rest. It takes this leading locally and no clamp at all.
 
-   Nothing is lost outright — both rows hand their full description to a title
-   attribute, so the clamp costs at most a hover. */
+   Nothing is lost outright — all three rows hand their full text to a title
+   attribute, so the clamp costs at most a hover. The session row hangs its own
+   one level up, on the row button that wraps the title and the timestamp
+   together, and it already did before joining. */
 .agent-row-desc,
-.command-row-desc {
+.command-row-desc,
+.session-row-title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;

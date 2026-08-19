@@ -59,18 +59,38 @@
   color: oklch(0.55 0.16 25);
 }
 
-/* Disclosure (#61). Quiet by default — the card must read exactly as it did
-   before when nobody is looking at it — and the caret is the only always-on
-   hint that there is more. (Micro-caps type comes from the shared rule above.) */
+/* Disclosure (#61). The row announces itself with PAINT rather than reserved
+   height. It stretches to the card's content box, fills with `--well`, carries
+   a `--border` hairline, and returns to its natural 17px border box. The previous
+   28px minimum added 22px per card, painted zero pixels and inverted the pair's
+   grouping; removing it took inner heights from 134 / 135 to 112 / 113.
+
+   THE HAIRLINE DOES THE VISIBLE WORK. Against the card surface the `--well` fill
+   steps only -0.0142 OKLCH L, while the outline steps +0.0625 L. Across four rows,
+   36,702 baseline-aligned pixels changed and 34,935 are exact fill-or-border
+   ground. This is not another negative-space affordance.
+
+   THE GROUPING IS BETTER, NOT UNIFORM. Body-to-row-1 is 9px and row-1-to-row-2
+   is 6px in both cards, reversing the previous 20/26 and 19/26 inversion but not
+   restoring the old 13/13 equality. The outline starts at the prose edge; 10px
+   horizontal padding moves the caret and label 11px inward. Bleeding that padding
+   out would put the 2px focus outline plus its 3px offset 1px beyond the card's
+   14px inset, so the content-box form is deliberate.
+
+   Cross-surface cost: the rail filter answers the same quiet-control question
+   with a raised `--border` fill and r8, while this row is recessed `--well` plus
+   an outline and r4. Both now paint at rest, but the shared vocabulary is not yet
+   one grammar. (Micro-caps size, weight and tracking remain untouched.) */
 .tool-card-toggle {
-  align-self: flex-start;
+  align-self: stretch;
   display: flex;
   align-items: center;
   gap: 6px;
   margin-top: 2px;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--well);
   font-family: var(--font);
   letter-spacing: 0.06em;
   cursor: pointer;

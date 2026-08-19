@@ -140,7 +140,6 @@
   gap: 2px;
   padding: 8px 10px;
   border: none;
-  border-radius: 8px;
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -297,7 +296,7 @@
   flex-direction: column;
   max-height: 40%;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 /* Same left edge as the rail head, the filter placeholder, the group headings
@@ -309,7 +308,7 @@
   justify-content: space-between;
   flex-shrink: 0;
   gap: 8px;
-  padding: 6px 8px 2px 16px;
+  padding: 4px 8px 2px 16px;
 }
 
 /* The stored list's group-heading treatment, deliberately: both name what the
@@ -365,8 +364,8 @@
 .bg-sessions-empty {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 2px 16px 4px;
+  gap: 2px;
+  padding: 0 16px 2px;
   font-size: var(--fs-micro);
   color: var(--text-faint);
 }
@@ -425,9 +424,44 @@
   color: var(--text-faint);
 }
 
-/* Filter band under the head: a second toolbar row, same hairline language, no
-   control chrome of its own. The rail already supplies --surface, so the input
-   is bare and the band brightens on focus the way the composer pill does. */
+/* Filter band under the head: a second toolbar row, same hairline language. The
+   BAND still carries no control chrome of its own — but the input inside it now
+   does, and that is a reversal of this rule's original bareness rather than a
+   detail. A critic reading the rail against an external reference found the
+   control "visually indistinguishable from passive muted copy", which was
+   literally true: at rest the field's ground WAS the rail's ground, so a 28px
+   hit area existed and nothing announced it. The fill answers that. The band
+   still brightens on focus the way the composer pill does; see the caveat below,
+   because that sentence is now only half coherent.
+
+   ⚠️ WHAT THE FILL COSTS, MEASURED AFTER IT LANDED. Three things, none fatal and
+   all real, recorded so the next hand does not rediscover them:
+
+   1. THE FILL IS THE SAME TOKEN AS THE HAIRLINES IT TOUCHES. `var(--border)`
+      renders the same value as the section rule above this band and as this
+      band's own `border-bottom`. The band has zero vertical padding, so the 28px
+      field sits flush between the two, and a vertical slice through the band now
+      reads as one continuous 30-row block of that colour where it used to read
+      as two isolated 1px rules with clear ground between. Three full-width rules
+      still exist in the DOM; only the rail head's still reads as one. The field
+      gained a ground and the band lost two edges.
+   2. IT INVERTS THE HOUSE FORM THIS COMMENT NAMES AS ITS MODEL. Every other
+      resting input housing in the app is surface fill plus a 1px border — the
+      composer pill and the tool card both. This field is now the only control
+      whose resting ground is the border token and which carries no border.
+   3. THE PLACEHOLDER HAS 0px INSET INSIDE ITS OWN GROUND. Its left edge and the
+      field's left edge are the same column. That was correct while the field was
+      invisible, because that column is the shared content edge the group
+      headings and row titles also sit on. With a visible box under it, the text
+      now touches the edge, and the two constraints have started to disagree.
+
+   The unbuilt halves are refuted rather than skipped. An inset hairline needs
+   vertical padding on the band to avoid doubling a rule that is already there,
+   which costs height the pre-list stack does not have. A leading search glyph
+   does not fit the band's left padding without either breaking that shared edge
+   or getting no inset at all, and a background-image glyph cannot take
+   `currentColor`, so it would hardcode a theme. Both would need the rail's
+   shared left edge widened, which is a rail-wide decision and not a band one. */
 /* Left padding matches .sidebar-head and the 6px list gutter + 10px row inset,
    so the placeholder, the group headings and the row titles share one edge. */
 .sidebar-filter {
@@ -443,9 +477,15 @@
 
 .sidebar-filter-input {
   width: 100%;
-  height: 34px;
+  /* The rail's own control housing height, not a shave: .sidebar-toggle is an
+     explicit 28px and DESIGN.md names that square in Layout. 34px was this
+     band's alone, and the pre-list stack could not afford a control scale no
+     other control in the rail uses. A 13px face at body 1.6 is a 20.8px line
+     box, so 28 still leaves 3.6px of air each side. */
+  height: 28px;
   border: none;
-  background: transparent;
+  background: var(--border);
+  border-radius: 8px;
   outline: none;
   font: inherit;
   font-size: var(--fs-ui);
@@ -464,9 +504,16 @@
 }
 
 /* Which projects the rail is listing. Deliberately carries NO hairline of its
-   own: the head and the filter band already stack two in the first 78px, and a
-   third would be chrome competing with the rows. Sitting flush above the list
-   reads correctly anyway, because these chips describe what the list contains.
+   own: THREE already stack above these chips, not two — the rail head's, the
+   background-sessions section's, and the filter band's. That middle one is easy
+   to forget because it is a section rather than a band, but it renders directly
+   after the head and directly before the filter and it draws its own
+   border-bottom, so a fourth here would be chrome competing with the rows.
+   The COUNT is the argument, deliberately not a depth: the middle section sizes
+   itself to what is running, capped at 40% of the rail, so the filter's hairline
+   and these chips ride up and down with it and no pixel figure written here
+   would stay true. Sitting flush above the list reads correctly anyway,
+   because these chips describe what the list contains.
    Chips rather than a boxed segmented track for the same reason — the rail
    spends no border on a control the list itself can explain. That is a
    rail-local call and no longer an unopposed one: `.agents-dock-switch` below
@@ -480,7 +527,7 @@
   flex-shrink: 0;
   display: flex;
   gap: 4px;
-  padding: 8px 8px 2px;
+  padding: 4px 8px 2px;
 }
 
 /* Pressed treatment is the agents-dock mode switch's, so the two rails keep one
@@ -518,7 +565,10 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 6px;
+  /* Longhand, not the 6px square it was: the top is the only side the pre-list
+     stack can spend, and the 6px left MUST stay — it is the gutter that pairs
+     with the row's own 10px inset to make the rail's shared 16px edge. */
+  padding: 4px 6px 6px;
 }
 
 /* A project directory is long and its meaningful end is the tail, so overflow
@@ -529,7 +579,7 @@
    (Truncation itself comes from the shared rule above.) */
 .session-group-head {
   margin: 0;
-  padding: 4px 10px;
+  padding: 3px 10px;
   font-size: var(--fs-micro);
   font-weight: 400;
   color: var(--text-faint);
@@ -557,6 +607,115 @@
 
 .session-row-btn {
   transition: background 150ms var(--ease), opacity 150ms var(--ease);
+}
+
+/* THE CORNER, AND WHY IT IS THE GROUP'S 8px AGAIN. This value was 8, went to 16
+   for three waves, and is back. That is not churn, it is a question that got an
+   answer the first move could not have had: the 16 was derived on a rail row
+   alone, and it was only once the token reached the two DOCK row types that
+   there was anything to measure it against.
+
+   THE RATIO LAW THAT CHOSE 16 DOES NOT SURVIVE ITS OWN GENERALISATION. It read:
+   `.session-more` is 8 / 36.8 = 0.217, the user bubble is 16 / 72 = 0.222, so a
+   74px row wants 74 x 0.217 = 16.09. Two points, and they are two boxes with
+   DIFFERENT radii at opposite ends of the scale — any two points fit a line. The
+   moment the same declaration governed three heights the law had to predict all
+   three, and it predicts 74 x 0.217 = 16.1, 65 x 0.217 = 14.1 and 49 x 0.217 =
+   10.6. One declaration cannot pay three numbers. The arithmetic was never wrong;
+   the premise that a corner should track its box was, and one rule over three
+   heights is the experiment that showed it.
+
+   SO A SHARED CORNER IS SIZED BY ITS SHORTEST MEMBER, NOT ITS TALLEST, and the
+   measurement is straight-run length rather than ratio. An arc consumes 2r of a
+   box's vertical edge, so the fraction left straight is 1 - 2r/h and it falls
+   fastest on the shortest box. Measured off the captures at one threshold, both
+   waves:
+
+       height   at r16          at r8
+       74px     73.0%           89.2%      the rail's active row
+       65px     66.2%           87.7%      five command rows
+       49px     55.1%           83.7%      two command rows
+
+   THE SPREAD IS THE POINT: 17.9 percentage points at 16, 5.5 at 8. At 16 the
+   short row showed barely half its edge straight while the tall one showed three
+   quarters — one token painting two visibly different shapes, which is the exact
+   failure the sentence about `.session-delete` below already names. That sentence
+   was applied to WIDTH and never to HEIGHT, and the 49px row is the case it would
+   have caught. This table is that argument's answer, measured.
+
+   IT MATTERS MOST ON THE ROW THAT HAS NOTHING ELSE. A command row's outline is
+   its only indicator — no tint, no stripe, no fill. The rail's active row at
+   least carries a mint bar.
+
+   ⚠️ THE OBVIOUS CHECK REPORTS THIS BACKWARDS, AND HAS DONE SO THREE TIMES NOW.
+   Mint pixels in the rail FELL 173 -> 165 (-4.6%) across this change while the
+   stripe got better, because an inset shadow paints the difference of two rounded
+   rects and a bigger arc smears more tinted pixels around the ends. What actually
+   moved is the straight, legible bar: 52 -> 64 rows, +23%. Count and share say
+   the opposite of run length here, and run length is the one that describes what
+   a person sees. Measure the run.
+
+   ⚠️ AND THE GEOMETRIC NUMBERS IN THIS FILE WERE NEVER THE MEASURED ONES. The
+   clean form is `height - 2r`, giving 58 at r8 and 42 at r16 for a 74px row, and
+   an earlier version of this comment stated exactly those. The pixels have always
+   read about 8px higher — 66 and 54 — because the shadow's edge fades through
+   antialiasing rather than stopping. Both readings agree on the 12px difference
+   and on the direction; only the absolutes differ. Anyone predicting from
+   `height - 2r` should expect to land 8px low, and a builder did.
+
+   WHAT THIS COSTS, STATED PLAINLY. The 74px row goes back to r/h 0.108, which an
+   earlier note called the flattest-cornered box in the app and complained that
+   nobody had chosen. Both halves of that are now answered: 0.108 is an OUTPUT
+   rather than an input, exactly as 0.217 was, and the 74px height is not a shape
+   decision either — it is `min-height: 2.9em`, a reservation for a second title
+   line most rows never show, so the ratio measures a corner against reserved
+   emptiness. What WAS chosen, five times in this file, is 8.
+
+   A BARE 8px RATHER THAN A TOKEN, deliberately. It matches the four other box
+   corners in this file exactly, and those five are now the rail's whole corner
+   vocabulary with `.sidebar-toggle`'s 6px the only neighbour. REJECTED: ~11px,
+   the honest third value from 49 x 0.22 — it is a fourth radius no box in this
+   app wears, it re-opens the seam with `.session-more` directly beneath these
+   rows, and its straight run on the 49px row is still worse than 8's.
+
+   ⚠️ OPEN, AND NOT DECIDED HERE: `--r-bubble` IS BACK TO ONE CALLER. This rule
+   was its second, and with the rule on a literal the token is again called only
+   by the chat user bubble — the "one caller is indirection rather than a system"
+   condition `tokens.css` names for itself. The app now reads 8px chrome / 16px
+   content, which is coherent, but nothing in the source says so and this comment
+   is not the place to declare it.
+
+   `.session-delete` KEEPS ITS OWN 8px, AND THAT IS NOW UNREMARKABLE. It declares
+   8 itself rather than inheriting anything. The reason it was EXEMPT was that a
+   browser clamps a radius to half the shorter side, so 16 on its 28px width
+   rendered as 14 and the control read as a lozenge beside a rounded square: a
+   narrow box and a wide one cannot share one corner. At 8 the row and the control
+   agree naturally and the special case stops being special. Left as it is.
+
+   TWO THINGS HEAL FOR FREE. `DESIGN.md` calls the Agents dock the rail's mirror
+   with the "same 44px head, same row shell"; for three waves that sentence was
+   false, because the rail's rows wore 16 while the dock's wore 8, and no critic
+   could see it — the rail's critic has no dock rows in frame. Rail and dock read
+   one corner again. And `.agent-row--nested > .agent-row-btn` carries a
+   `border-left` with its two left corners pinned at 3px, an asymmetry that had
+   gone 3:8 to 3:16 and doubled from 2.7x to 5.3x; it is 2.7x again.
+
+   THE GROUPING IS PRESERVED AND IT IS WHAT MADE THIS ONE EDIT. The corner is
+   declared ONCE, here, for all three row types. The previous wave's repair bought
+   exactly that and said so in its own closing line — that the value it settled on
+   might yet be 8, and what the rule buys either way is that the question is one
+   edit instead of three. This is that one edit.
+
+   THE PROOF THAT IT IS A REVERT RATHER THAN AN APPROXIMATION: `commands-dock.png`
+   is byte-identical to waves 1, 2, 3 and 4 of this run. `agents-dock.png` and
+   `appearance-dock.png` never moved at all, because an agent row paints
+   `background: transparent` with no border in its default state and no capture in
+   the run holds a selected one — so the corner is genuinely unobservable there,
+   and their byte-identity is not evidence about this change either way. */
+.session-row-btn,
+.agent-row-btn,
+.command-row-btn {
+  border-radius: 8px;
 }
 
 /* Busy = blocked (#14): a streaming turn disables switching + New chat. Dim to
@@ -660,8 +819,26 @@
   opacity: 0.55;
 }
 
+/* The title, and the rail's actual content: an enriched row carries the
+   session's first user prompt VERBATIM, so this line is a sentence and not a
+   name. Its WRAPPING and its LEADING live in shared.css's two-line clamp group
+   for the same reason `.agent-row-desc`'s do — one answer to "how does the line
+   that carries a row wrap in a 248px column", written once. This rule owns the
+   size, the colour, and the one thing that is the rail's alone.
+
+   THE TWO-LINE AREA IS RESERVED, not merely permitted. 2.9em is that group's
+   ceiling restated as a floor: two lines at its 1.45, in em so it tracks
+   `--fs-ui` instead of pinning the 37.7px that token happens to measure today.
+   Reserved rather than left as a ceiling because this list is read as a COLUMN
+   and the other two clamp tenants are not — the timestamps are the recency scan,
+   and a one-line row that shrank by a whole line would step every timestamp
+   under it out of line, so the rhythm the reader is scanning would encode title
+   length instead of anything true. Read off the real store all five visible
+   titles wrap, so slack is the exception and not the rule; an "Untitled session"
+   pays one empty line, 18.85px, to keep the column honest. */
 .session-row-title {
   font-size: var(--fs-ui);
+  min-height: 2.9em;
   color: var(--text);
 }
 

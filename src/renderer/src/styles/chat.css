@@ -92,7 +92,8 @@
    column writes an interval tighter than its own gap. The transcript now keeps
    four, every one a multiple of 8 — 8 inside a run of cards, 16 from prose to
    the cards it launched, 24 between successive steps of one answer, 40 at an
-   exchange boundary.
+   exchange boundary. (The THIRD of those four is retired by the rule below; see
+   THE PROSE THAT READS THE RESULT BINDS BACK DOWN.)
 
    `.msg-assistant` and NOT `.msg`. A tool card can follow a user bubble
    directly, when the model calls a tool with no preamble, and it can follow a
@@ -113,6 +114,51 @@
    last line box since that rule shipped. Measured at 0px in Electron. Adding a
    `p:last-child` reset here would change nothing at all. */
 .msg-assistant + .tool-card {
+  margin-top: -8px;
+}
+
+/* THE PROSE THAT READS THE RESULT BINDS BACK DOWN, and this supersedes half of
+   the note above. That rule pulled prose-to-card to 16 and deliberately LEFT
+   card-to-prose at the base 24, so a card would sit nearer the message that
+   launched it than the one that reads its result. The asymmetry rested entirely
+   on the base 24 meaning "the next step of one answer" — the third of the four
+   intervals listed above.
+
+   That category is now empty. `useChat` clears its assistant id on every tool
+   call, so prose after a card is a new ROW but not a new message: same speaker,
+   same turn, and since `avatarRun` in Chat.tsx it does not redraw the avatar
+   either. 24px was the column's full message interval, 16 short of an exchange
+   boundary, spent inside one answer — so a turn of prose, tool call and
+   read-back paid message spacing twice and read as three messages that happened
+   to be adjacent.
+
+   THE EXCURSION IS BRACKETED INSTEAD: 16 above the cards, 16 below them, 8
+   inside a run of them. The measured floor the note above sets is untouched —
+   nothing goes below 16 except the card run, which was already 8 — and the
+   grouping that floor protects survives, because 16 is still double the 8 that
+   binds one card to the next. What is given up is only the claim that a card is
+   nearer its cause than its consequence, and a turn that reads as one block has
+   no use for that claim: the reader is following one answer through an
+   excursion, not deciding which side of the card owns it.
+
+   Four intervals still, every one a multiple of 8: 8 inside a run of cards, 16
+   between a turn's prose and its cards in BOTH directions, 24 between rows that
+   are not one turn, and 40 at an exchange boundary.
+
+   TWO SELECTORS, one relationship. `.tool-card + .msg-assistant` is the
+   read-back after a tool excursion. `.msg-assistant + .msg-assistant` is the
+   same turn arriving as two prose rows, which is not hypothetical: the CLI
+   writes a turn as several records and `transcript.ts` pushes one message per
+   text block, so a replayed answer is routinely two or three assistant rows.
+   Both are one turn continuing, so both take the within-turn interval.
+
+   `.tool-card + .msg-assistant` and NOT `.msg + .msg-assistant`, mirroring the
+   reason the rule above is written against `.msg-assistant`: the assistant row
+   that follows a user bubble, a notice or an error is the turn OPENING, not a
+   turn continuing. It keeps the base 24 — the interval below the question is
+   where the answer starts, and it is the one row that does draw an avatar. */
+.tool-card + .msg-assistant,
+.msg-assistant + .msg-assistant {
   margin-top: -8px;
 }
 
@@ -188,9 +234,28 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--mint);
+  background: var(--mark-depth), var(--mint);
   flex-shrink: 0;
   margin-top: 2px;
+}
+
+/* ONE AVATAR PER TURN — the mint circle stops, the 28px box stays. Carried by
+   `avatarRun` in Chat.tsx, which decides WHICH row leads a turn; that comment
+   holds the reasoning.
+
+   `visibility` and not `display: none`, `width: 0` or a dropped element, and the
+   distinction is the whole point of the rule. `.msg-assistant` is a 12px flex
+   gap over a 28px avatar, so this box IS the 40px gutter `.tool-card` indents
+   itself to and `.msg-command` copies. Keep it and a turn's continuation prose
+   registers to the same left edge as its first line and its cards, and resolves
+   its own `max-width: 75%` against the same row width, so the right edge holds
+   too. Remove it and both edges move — which is the alignment the transcript
+   was measured on.
+
+   It paints nothing, so the accent budget only ever falls here: one turn now
+   spends one avatar's worth of mint rather than one per segment. */
+.avatar--continued {
+  visibility: hidden;
 }
 
 /* THE MEASURE IS THE LEVER, because the leading is spoken for. DESIGN.md pins
@@ -409,6 +474,60 @@
    holding the pair together; here nothing is bought — the surplus beat is
    returned. The deck still locks to the headline by mass, not air.
 
+   THE FOUR ITEMS REGISTER TO ONE LEFT EDGE NOW, AND THE BLOCK IS CENTRED ON
+   ITS INK. The critic read this field as a small centred stack and asked for a
+   two-column hero: headline, deck and action left-aligned, with a large
+   identity mark set opposite them. Half of that is built here and half is
+   refused two paragraphs down. What is built is the axis: `justify-items:
+   start` inside a single `max-content` column, which comes out 415px wide
+   because the deck's contribution is the widest thing in it, and
+   `justify-content: center` puts that column in the pane. The mark, the
+   headline and the button slide left to the deck's left edge and nothing slides
+   out. A centred stack has an axis of symmetry and no measure; this one has a
+   measure, and four objects of very different widths now differ against a
+   shared EDGE instead of around a shared centre.
+
+   415px AND NOT 480, WHICH IS THE WHOLE OF THE CENTRING. A `max-content` column
+   takes the widest max-content CONTRIBUTION among its items, and a contribution
+   is a MARGIN box. Every item here paints what it contributes except the deck,
+   which caps its measure at 480 and paints a balanced pair of about 410 and 403
+   inside it, so a column sized to that 480 carried 65px of empty measure and
+   centred it along with the ink. The block sat 32.5px, half of the 65, left of
+   centre: at 1440 the ink was 415 wide with 480px of pane to its left and 545px
+   to its right. `.welcome-hint` now hands 65 of its measure back with a negative
+   right margin, so it contributes 415 while still wrapping inside 480, the
+   column is the ink, and both margins read 512.5. The arithmetic for the 65, why
+   it is px and not an `em`, and why lowering the cap instead would be the
+   fragile version are all in that rule.
+
+   GRID, AND NOT ONE MORE ELEMENT. Flex cannot say "left-aligned inside a
+   centred block" on a column axis: `align-items` centres or starts every item
+   against the PANE, so a shared left edge inside a centred group needs a
+   wrapper element to BE the group. Grid already has the group — the column
+   track — so this costs two keywords and no DOM node. Every vertical term
+   below survives the swap because margins do not collapse in grid either: the
+   rows are 44 plus 8, 57.5 plus 8, 55.2, and 24 plus 51.99, the same 248.69px
+   of content, and the measured intervals are still 8, 8 and 24.
+   `gui-gauntlet-wave7.mjs` W1 reads those three intervals and `inspect.mjs`
+   reads the sum against `CLAIMED_HEADROOM_PX`; both live in files this change
+   does not touch, and both still hold. The new edge is photographed twice —
+   `welcome.png` and `welcome-min-window.png` — and the minimum-window capture
+   measures the hero's box against the pane's content box on the left and right
+   as well as top and bottom, which is where a left edge could intrude.
+
+   THE TWO-COLUMN HALF IS REFUSED, BY MEASUREMENT RATHER THAN TASTE. A mark set
+   OPPOSITE the text makes `title.top - mark.bottom` negative — about -120px at
+   the mark's current size — where `gui-gauntlet-wave7.mjs` W1 pins that exact
+   figure at 8 with 0.75px of tolerance, so a two-column hero reds the DOM
+   phase rather than merely disagreeing with this comment. Enlarging the mark
+   is refused on the height budget instead: 44 to the ~96 asked for spends 52
+   of the 69.71px this rule has left at the 640x480 minimum, and `inspect.mjs`
+   fails the run when the measured headroom drifts more than 1px from the 70 it
+   claims. Gating a larger mark to wide windows only would clear both, and it
+   is still declined: it would make the identity three sizes instead of two
+   (22 in the titlebar, 44 here) and no driver measures the mark's box, so the
+   enlargement would be the one unpinned thing on the screen.
+
    THE STACK IS LIFTED OFF TRUE CENTRE, and the lift is exactly half the
    padding difference: centring inside the remainder moves the block up by
    `(bottom - top) / 2`. The shipped pair is 32 top against 152 bottom, so 120
@@ -500,16 +619,20 @@
 .welcome {
   flex: 1;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-columns: max-content;
   justify-content: center;
+  justify-items: start;
+  align-content: center;
   padding: 32px 32px min(152px, 17vh);
 }
 
-/* Solid by design and stays that way. 44px is exactly twice the titlebar mark,
-   which is the relationship that makes it read as the same identity enlarged
-   rather than a second shape.
+/* Solid by design and stays that way — solid meaning glyph-free and one
+   continuous fill, which is all that claim was ever about. That fill now
+   composites --mark-depth, the shared black ramp all three identity marks take;
+   its note in tokens.css carries the arithmetic and the hue guard. 44px is
+   exactly twice the titlebar mark, which is the relationship that makes it read
+   as the same identity enlarged rather than a second shape.
 
    The CORNER has to scale with it or the claim is only half true. This was a
    literal 12px against .logo-mark's 22px at --r-mark, which is a corner ratio
@@ -523,7 +646,7 @@
   width: 44px;
   height: 44px;
   border-radius: calc(var(--r-mark) * 2);
-  background: var(--mint);
+  background: var(--mark-depth), var(--mint);
   /* 8, where it was 16 and 24 before that. See `.welcome`'s THE MARK CAME DOWN
      FROM 24 AND THEN FROM 16 note above for the optical arithmetic. Short
      version: a gap here reads about 15.6px wider than it measures, because the
@@ -638,17 +761,71 @@
    about 820 — so a font metric several percent off these estimates can push
    the wrap to neither one line nor three.
 
-   CENTRED, WHICH ONE LINE NEVER HAD TO BE. A single line is its own box and
-   its alignment is unobservable; two lines are not, and the inherited value is
-   the left the rest of the app sets, which would hang a ragged edge under a
-   centred headline and a centred mark. */
+   THE CENTRING IS GONE, AND ITS OWN ARGUMENT IS WHAT RETIRED IT. This rule
+   carried `text-align: center` for one stated reason: a single line's alignment
+   is unobservable, two lines' is not, and the inherited left "would hang a
+   ragged edge under a centred headline and a centred mark". The headline and the
+   mark are not centred any more — `.welcome` registers every item to the left
+   edge of one column — so that declaration now hangs a CENTRED block under two
+   left-aligned ones and argues against the composition it was written to serve.
+   Removed rather than restated as `left`, because the inherited value is the
+   left the rest of the app sets and there is nothing here to correct.
+
+   THE BOX IS UNTOUCHED BY THE REMOVAL, which is what keeps the wrap argument
+   above true: alignment moves ink inside a line box and moves no line box.
+   Width is still 480, the balanced break is still the sentence's own comma, and
+   `gui-gauntlet-wave3.mjs` W1 and W2 read the same two line boxes and the same
+   binding measure they were written against.
+
+   THE NEGATIVE RIGHT MARGIN BUYS THE CENTRING WITHOUT SPENDING THE TOLERANCE.
+   `.welcome` sizes its one column to the widest max-content CONTRIBUTION among
+   the four items, and a contribution is a MARGIN box, not a content box. So
+   this rule can spend 480px of measure while contributing only 415px of track:
+   480 plus the negative 65 is 415. The column then centres at 415 wide instead
+   of 480, and because every item registers to its left edge the whole hero
+   moves right by half the difference, 32.5px, which was exactly the ink's
+   displacement. Measured at 1440 the ink is 415 wide and sat with 480px of pane
+   to its left and 545px to its right; it now reads 512.5 on both sides.
+
+   THE MEASURE ITSELF DOES NOT MOVE, so nothing above is falsified. A grid item
+   under a non-stretch `justify-items` is shrink-to-fit inside its area, and the
+   space available to it is the area MINUS its margins: 415 minus the negative
+   65 gives back exactly 480. The content box is still 480 at 1440 and still 480
+   at the 640px minimum, where the column is 415 in a 576px field. The balanced
+   break is still the sentence's own comma, the pair is still two line boxes,
+   and the entire clearance the paragraph above argues for is still held. What
+   overflows the column is the empty 65px to the right of the shorter line.
+   Nothing paints there, `.welcome` does not clip, and the column holds one item
+   per row so there is no neighbour to overlap.
+
+   65px AND NOT AN `em`, BECAUSE THE `em` WOULD TRACK THE WRONG TERM. The
+   quantity is the cap minus the painted line, 480 minus 415, and those two
+   scale differently: the cap is a fixed px, the painted line moves with the
+   font metric. If the metric moved by a factor k the value wanted is 480 minus
+   415k, which is not proportional to k, so an `em` would scale the 65 itself
+   and read 71.5 where 23.5 was wanted at k of 1.1. Held in px the column stays
+   415 and the residual asymmetry is only the ink's own drift, 415 times k minus
+   1: about 21px at a 5 percent metric error, against the flat 65px this
+   replaces, and it does not reach today's error until the metric is off by
+   15.7 percent. The wrap tolerance is not in that trade at all, which is the
+   point of paying with the margin rather than the measure.
+
+   REJECTED, ALL FOR THE SAME REASON. Lowering the cap to 415 centres the ink
+   and then wraps the text inside 415, which is BELOW the band the paragraph
+   above reserves on purpose, so a font a few percent wide flips the deck to
+   three lines and spends another 27.6px of the vertical reserve. `min-content`
+   sizes the column to the longest word; `fit-content(480px)` and `auto` both
+   resolve through this same 480px contribution and change nothing; dropping the
+   cap sizes it to the 820px unwrapped sentence; centring the items inside the
+   column throws away the shared left edge. Only the margin separates the number
+   that sizes the column from the number that wraps the text. */
 .welcome-hint {
   font-size: calc(var(--fs-body) * 1.15);
   color: var(--text-muted);
   line-height: 1.6;
   max-width: 480px;
+  margin-right: -65px;
   text-wrap: balance;
-  text-align: center;
 }
 
 .pick-folder-btn {

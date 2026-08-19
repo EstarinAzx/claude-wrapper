@@ -85,7 +85,10 @@
 }
 
 :root {
-  /* legacy aliases: existing component CSS keeps these short names, zero churn */
+  /* legacy aliases: existing component CSS keeps these short names, zero churn.
+     One entry — --mark-depth — is a composed value rather than an alias; it is
+     here and not in @theme because it names a LAYER, not a palette key, and
+     only palette keys are validated against @theme. */
   --wash: var(--color-wash);
   --surface: var(--color-surface);
   --bubble: var(--color-bubble);
@@ -104,6 +107,46 @@
   --mint-press: var(--color-mint-press);
   --mint-ink: var(--color-mint-ink);
   --mint-wash: var(--color-mint-wash);
+
+  /* The identity mark's ONE depth cue, composited over var(--mint) at all three
+     sites the mark paints: .logo-mark 22px, .welcome-mark 44px, .avatar 28px.
+     Three callers, so it is a system by the note above rather than indirection,
+     and it is one edit for all three — treating a single site would ship the
+     identity at two finishes.
+
+     BLACK, and deliberately not a second mint. Compositing black scales the
+     mint's RGB toward zero, so the hue angle stays at ~180deg exactly; a
+     --mint-press stop would introduce hue 182, and the app's mint floor is
+     counted by hue.
+
+     Arithmetic, corrected against the rendered pixels. An earlier version of
+     this note predicted a stddev of 6.41 from range = alpha x 255 x L, taking
+     L as the mint's OKLCH lightness of 0.87. That is a unit error: OKLCH
+     lightness is not an sRGB channel scale. Compositing black at alpha 0.1 over
+     RGB(160, 226, 212) gives per-channel ranges of 16.0 / 22.6 / 21.2, so the
+     stddev ceilings are R 4.62 / G 6.52 / B 6.12 and 6.41 was never reachable on
+     R at any box size. Measured on the real captures, interior stddev reads
+     3.49 / 4.81 / 4.66 — short of those ceilings only because the measurement
+     erodes a fixed 2px, which samples about 82% of a 22px box against 91% of a
+     44px one.
+
+     That erosion is also why this token was once reported as painting THREE
+     finishes at its three sizes. It does not. Correcting for the sampled span
+     gives implied ramp ranges of 22.8 / 23.4 / 23.2, a least-squares fit of the
+     interior slope gives -21.80 / -22.77 / -22.34, and the 22px and 44px marks
+     have identical top AND bottom rows. One ramp, three sizes.
+
+     DO NOT RE-AIM THIS AT THE IDENTITY REFERENCE'S OWN NUMBERS. Its marks are
+     not at this hue: they measure OKLCH hue 192.7-193.4 at the top row against
+     this mark's 179.9-180.5, so their per-channel R/G/B spread is a property of
+     their base colour rather than a target for ours. And their depth works by
+     ROTATING HUE about +11.3 to +12.5 degrees toward blue down the face, with
+     chroma rising, where this ramp holds hue to within 0.23 degrees and lets
+     chroma fall. Copying the reference's mechanism means moving hue, and the
+     one-accent floor above is counted BY hue. The mechanisms differ on purpose,
+     and that is the end of the question rather than an unmet target. */
+  --mark-depth: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.1));
+
   --danger-line: var(--color-danger-line);
   --danger-fill: var(--color-danger-fill);
   --danger-text: var(--color-danger-text);

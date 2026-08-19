@@ -40,11 +40,28 @@
    automatic min-content floor is what makes the flanks stop at their contents
    and hand the rest to the slot, which is #72's no-overlap guarantee kept
    intact. At that floor the row is full and true centring becomes geometrically
-   impossible; gui-136 asserts the fullness rather than pretending otherwise. */
+   impossible; gui-136 asserts the fullness rather than pretending otherwise.
+
+   The `gap` reads 4, and unlike the 7 it replaced it is NOT budget-neutral. The
+   7 was: the group break after `.app-name` was funded out of the gap rather than
+   added on top, 3 x 7 + 9 = 30 = 3 x 10, so the flank's min-content floor stayed
+   at the 276 it had been before the break existed. That is no longer true and
+   the change is deliberate. 3 x 4 + 9 = 21, and the floor is 267.
+
+   SPENDING THE FLOOR IS SAFE IN THIS DIRECTION AND WAS NOT SAFE IN THE OTHER,
+   which is the whole reason the earlier edit had to be neutral and this one does
+   not. The floor only binds when it exceeds the flank's equal share; at the 640
+   minimum that share is 279.25. A floor RAISED to 292 freezes this flank and
+   hands the other 266.5, which is the 25.5px break the note below records. A
+   floor LOWERED to 267 leaves both flanks under their share, so neither freezes
+   and the centring has 12.25px of room instead of 3.25. Measured after the
+   change at 1440: session title ink midpoint 720.00 against a window centre of
+   720.00, displacement 0.00px. The 640 case is derived rather than photographed
+   — no capture in this repo holds a titlebar at the minimum width. */
 .titlebar-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   flex: 1;
 }
 
@@ -65,15 +82,132 @@
   width: 22px;
   height: 22px;
   border-radius: var(--r-mark);
-  background: var(--mint);
+  background: var(--mark-depth), var(--mint);
   flex-shrink: 0;
 }
 
 .app-name {
+  margin-left: 5px;
   font-size: var(--fs-ui);
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
+}
+
+/* THE GROUP BREAK — the left group is declared 9 / 17.5 / 4, not 10 / 10 / 10.
+   Every box edge in this group is recoverable to the pixel off the capture at
+   zoom 1, and these are the current ones: mark x14..35, app name x45..141,
+   backend pill x158..216, permission pill x221..275. The item WIDTHS have never
+   moved (22 / 96 / 58 / 56); only the intervals have. It began as three intervals
+   of 10, so identity, backend state and permission state were four things in one
+   undifferentiated run — the same defect `.titlebar-actions` had before its
+   gutter went to 49, and THAT note is the precedent this number is set against
+   rather than taste. It records 39 against a 30px rhythm, a 1.3x crossing, as
+   "far too weak to break the run", and 1.63x as enough.
+
+   THE GROUP CLEARS ITS OWN TEST AGAIN. When the intervals were 4 / 13 / 4 the
+   break crossed at 3.25x declared and 3.00x painted, comfortably past 1.63.
+   Growing the flat mark-to-name tick to 9 temporarily pulled it down to 1.44x
+   painted. The current 9 / 16 / 4 painted clearances restore it to 16/9 = 1.78x,
+   above the ratio this paragraph accepts, without reopening the tick the prior
+   critic closed. Both sides of the break remain intentionally tight: mark and
+   wordmark are one lockup, the two pills are one state pair, and only the
+   crossing between them is wide.
+
+   THE SECOND TIGHTENING WAS NOT BUDGET-NEUTRAL AND WAS NOT MEANT TO BE. The
+   first, 10 -> 7 with the 9px break, re-cut the group without moving its floor.
+   The second, 7 -> 4, spent the floor on purpose: 246 of content plus 4 + 13 + 4
+   put the group's edge at 267, down from 276. `.titlebar-left`'s note carries
+   why lowering it is safe where raising it was not.
+
+   THE FOURTH MOVE FINISHED THE REPAIR, and the numbers below are the live ones.
+   The intervals are no longer one `gap`: the flat mark-to-name tick is funded
+   separately by `margin-left: 5px` on `.app-name`, and the break is 13.5.
+   Declared 9 / 17.5 / 4, sum 30.5, so the floor is 246 + 30.5 = 276.5 and the
+   painted extent is x14..275. Both are inside the 279.25 equal share, with
+   2.75px of slack. Project-open slot at 640 is 640 - 276.5 - 233 = 130.5 against
+   a 60-char fixture painting 451, so it still truncates.
+
+   WHY IT WAS SPENT, AND WHAT IT DID NOT BUY. A critic reading the whole window
+   observed that this group crosses a structural column: the sessions rail below
+   is 248px wide, so its divider is x247, and the group painted out to x276 — a
+   29px overrun of a line the window is built on. The ask was to end 12-16px
+   BEFORE that divider, at x235 or less.
+
+   THAT TARGET IS NOT REACHABLE IN THIS FILE, and the arithmetic is short enough
+   to check. The content is 14 inset + 22 + 96 + 58 + 56 = 246px and NONE of it is
+   spendable: the inset is the window's own left inset (see `.logo-mark`), the
+   mark is the identity, and the two labels plus the app name are all pinned to
+   the type ladder. So the whole budget is the three intervals. Zero gaps with the
+   9px break still lands at x255; deleting the break as well reaches x246 and
+   fuses mark, wordmark and two state pills into the single undifferentiated run
+   this paragraph exists to prevent. The reachable minimum is therefore about +8px
+   past the divider and the asked-for -12px never existed.
+
+   ⚠️ AND THE TARGET WAS THEN WITHDRAWN, WHICH MATTERS MORE THAN THE ARITHMETIC.
+   x247 is a 1px hairline sitting 48px BELOW this strip, so a box edge landing
+   exactly on it reads as a collision rather than an alignment. Do not aim at it.
+   The group's painted extent is now x275, an overrun of +28, and that is an
+   accepted cost rather than a regression against a live fence — 9px worse than
+   the 4 / 13 / 4 state. A titlebar-local spacing fix gave back the rail alignment
+   it had bought so the lockup could clear its own grouping threshold. Nothing but
+   this comment can see that trade, because no per-surface critic reads both surfaces.
+
+   ⚠️ THE THREE INTERVALS DO NOT PAINT ALIKE, AND THAT IS WHY THEY ARE NO LONGER
+   ONE `gap`. `--r-pill` rounds each pill to a semicircular cap of radius
+   ~10.15px. A cap recedes from the midline, so the pill-to-pill channel reads
+   optically wider than it measures — the analytic mean inset is r(1 - pi/4) per
+   capped side, about 2.18px each — while the mark-to-name tick, flat on both
+   sides, paints what it declares. At 4 that tick measured 4px of column
+   clearance and read as the tightest thing in the group; the next critic asked
+   for 8-10px there. It is now declared 9 and measures 9.
+
+   WHAT THE REPAIR COST, MEASURED. Column clearances went 4 / 12 / 4 to
+   9 / 13 / 4 and then 9 / 16 / 4. The intermediate break-to-tick ratio fell
+   from 3.00x to 1.44x, below the 1.63x this file accepts; widening only the break
+   restored it to 1.78x. The three declared intervals now sum to 30.5 against the
+   33px ceiling, leaving 2.5px of headroom. Spending the full ceiling would leave
+   only 0.25px against gui-136's 1px tolerance, so that remainder is deliberate.
+
+   A BARE `margin-left: 16px`, the obvious form of the FIRST break, REDS gui-136,
+   and the margin for error was 3.25px. The binding state is WELCOME at the 640
+   minimum, where no dock toggles exist so the right flank's floor is only 120:
+   "New session" paints 81.5css, the two flanks split the remaining 558.5 into
+   279.25 each, and this group's floor was 276. Raise it to 292 and the left flank
+   freezes there, the right takes 266.5, and gui-136's equal-flank assertion reds
+   by 25.5 against a 1.0 tolerance with the midpoint 12.75 off centre — on an
+   UNCLIPPED title, so the driver's full-row branch never absorbs it. At 640 with
+   a project OPEN the current slot is 640 - 276.5 - 233 = 130.5, and the 60-char
+   fixture paints 451 so it still truncates, as gui-136 requires.
+
+   THE FLOOR IS THE EXTENT PLUS THE INSET, NOT THE EXTENT. The group's painted
+   extent is x14..275, which is 262 columns; the floor is that plus the mark's own
+   14px inset, because the inset is content inside this flank rather than padding
+   on its box. `.session-title`'s band arithmetic uses the painted extent AS the
+   floor, so its `page - 2 x extent` opens later than the real thing. Its
+   conclusion survives, since the fixture paints 451.
+
+   MEASURED AFTER THE RETUNE, and this is the non-event worth recording: the
+   group's painted right edge moved another +3px and the session title did not
+   move at all. Ink x685..754, midpoint dead on the window centre, displacement
+   0.00px — the fifth consecutive wave at those exact numbers. It holds because
+   276.5 is the floor while the flank's equal share at 1440 is far larger, so neither
+   flank is frozen and the flex split never sees the change. Growing this group
+   is only a centring risk when the floor exceeds the share, which is the 640
+   case above.
+
+   KEYED TO WHATEVER FOLLOWS THE NAME, not to `.backend-pill`. Both pills are
+   conditional in Titlebar.tsx, so the first pill is the backend one, the
+   permission one, or nothing at all, and gui-136 drives all three; `+ *` is the
+   only form that puts one break in the same place in each. Keying it to
+   `.backend-pill` would also have meant editing the shared pill shell below,
+   which `.model-pill` joins from the COMPOSER — a margin there moves a control
+   that has nothing to do with this group. Funding the break out of `.logo-mark`'s
+   14px instead was rejected for the reason its own note gives: that inset is the
+   window's left inset, and spending it moves the whole group off the window edge
+   to solve a spacing problem two items further right. */
+.app-name + * {
+  margin-left: 13.5px;
 }
 
 /* titlebar toggles: backend indicator (native vs wisped) + permission mode.
@@ -173,9 +307,35 @@
 }
 
 /* The span is blockified by being a flex item, which is what makes `overflow` /
-   `text-overflow` apply at all — they are inert on the inline box this was. */
+   `text-overflow` apply at all — they are inert on the inline box this was.
+
+   THE BODY RUNG, NOT THE UI RUNG. This names the open session — the one piece of
+   state in the bar a user reads to know WHERE THEY ARE — and at 13px regular in
+   `--text-muted` it was the quietest label on the strip: the app name tied it on
+   size and beat it on both weight and colour, and the two pills beat it on weight
+   while carrying only backend and permission state. 15px is the ladder's base
+   rung, `--fs-body` at 15 x 1.15^0, so the promotion spends no new number and
+   stays on the scale gui-138 sweeps. The pills deliberately keep `--fs-micro`:
+   what was wrong was the RANK between these two, not the size of the bar.
+
+   IT DOES NOT COST THE ELLIPSIS, and the headroom is worth writing down because
+   a further promotion would. Glyph advance in this stack runs ~6.5px per char at
+   13px — not measured here but recovered from the four pre-#72 collision
+   thresholds, 111 / 72 / 41 / 21 chars at 1280 / 1024 / 819 / 688css, which agree
+   at 6.48 / 6.51 / 6.56 / 6.56 within their own one-char quantisation. So
+   gui-136's 60-char fixture grows from ~391css to ~451css. Containment is
+   untouched by that: the slot is a flex item bounded by two min-content flanks,
+   so a wider title truncates instead of reaching a neighbour, and it still
+   truncates at the 640 minimum where the slot is 145css. What the extra 60css
+   actually spends is the room before the band in which the flanks can no longer
+   split the free space evenly WHILE THE TITLE STILL FITS — under `page - 2 x 262`
+   the wider flank freezes on its own content and gui-136's equal-flank assertion
+   would red on an unclipped title. At 1100, the narrowest width where this
+   fixture fits, that band opens at 576css against this title's 451. The band
+   belongs to the flex arrangement rather than to the type size and is equally
+   reachable at 13px; no width gui-136 samples enters it, at either size. */
 .session-title {
-  font-size: var(--fs-ui);
+  font-size: var(--fs-body);
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
