@@ -22,19 +22,25 @@ believing anything.
 
 ## What just finished
 
-**Gauntlet run 3's code pass is landed on local `main` as `1d919fb`.**
+**Gauntlet run 3 is fully wound up. Its code is on `origin/main`; its evidence is on
+a closed-PR branch; nothing is queued.**
 
-The twelve-wave design pass over the five core surfaces squashed to what it actually
-changed in the app: **9 files, +879 / −72**, tree-identical to
-`gauntlet/core-after-docks` for `src/` and `tests/`. D7 gate green on the commit —
-typecheck clean, **96 files / 1412 passed / 43 skipped**, build clean at
+| commit | on `origin/main` | what |
+|---|---|---|
+| `1d919fb` | yes | the design pass over the five core surfaces — 9 files, +879 / −72 |
+| `259b70e` | yes | wave 6's twelfth capture, `window-session-short.png` |
+
+Both were verified **tree-identical** to `gauntlet/core-after-docks` before
+committing — two-dot `git diff <branch> -- <paths>`, not three-dot. D7 gate green on
+`1d919fb`: typecheck clean, **96 files / 1412 passed / 43 skipped**, build clean at
 `index-B0MFIfz0.css` (seed was `index-DOI17h8g.css`, which independently confirms
 `src/` moved).
 
-**The run evidence was deliberately NOT merged.** ~694 files of captured PNGs and
-wave state stay on `gauntlet/core-after-docks`, which is pushed. Merging them would
-put ~24MB into `main`'s history permanently and preserve nothing the branch does not
-already hold.
+**PR #171 is CLOSED, unmerged, on purpose**, with the reasoning recorded as a comment
+on the PR itself. `gauntlet/core-after-docks` survives on the remote at `358ab96`
+holding **357 capture PNGs** plus `.claude/gauntlet.md`. That branch is now the
+run's only record — **do not delete it.** Merging it would have put ~24MB into
+`main`'s history permanently and preserved nothing the branch does not already hold.
 
 Run 3 ended on `max_waves`, **cut off not converged** — `plateau` finished at 0 and
 never exceeded 2 in twelve waves:
@@ -42,19 +48,35 @@ never exceeded 2 in twelve waves:
 
 ## The single next task
 
-**Two owner calls, both about publishing. Nothing is blocked on code.**
+**Nothing is queued and nothing is blocked on code.** Two things you might pick up,
+neither urgent:
 
-1. **`main` is 61 commits ahead of `origin/main` and has never been pushed.** That
-   is not new breakage — it predates run 3 by 60 commits — but `1d919fb` now sits on
-   top of it. **D6: no agent pushes on its own initiative.**
-2. **PR #171 is still open**, and its meaning has changed. Its code is now redundant
-   with `main`; what remains is purely the evidence bundle. Close it, or leave it as
-   the record of the run.
+1. **Triage the 19 open issues** (see below). Only the owner may promote to
+   `ready-for-agent`.
+2. **Start a gauntlet run 4** — but read the section below first; two of its
+   preconditions are currently unmet.
 
-**Beware the commit arithmetic on that PR.** The old baton said the branch was "13
-commits ahead of `main`" — true against *local* main. PR #171 on GitHub is measured
-against `origin/main`, so it shows **72 commits / 703 files / +46,741 −2,261**. The
-number that describes the design work is neither: it is 9 files, +879 / −72.
+Run 3's four leftovers (Welcome CTA padding ratio, Sidebar duplicate-refresh
+affordance, Chat disclosure state model, whether the widened effort track overshot)
+are recorded in `.claude/gauntlet.md` under `### 12.10` **on the branch, not on
+`main`** — `git show gauntlet/core-after-docks:.claude/gauntlet.md`. All four are
+owner or product calls.
+
+## Two git-arithmetic traps this handoff already sprang
+
+Both cost real time on 2026-08-19; neither is hypothetical.
+
+- **"N commits ahead of `main`" does not predict a PR's size.** The prior baton said
+  the branch was "13 commits ahead of `main`" — true against *local* main, which was
+  then 60 commits unpushed. The PR measured against `origin/main` showed **72 commits
+  / 703 files**. Run all three and say which you mean:
+  `git rev-list --count origin/main..main`, `git rev-list --count main..HEAD`,
+  `gh pr view N --json commits,changedFiles`.
+- **Three-dot diffs measure from the merge base, which does not move when you push
+  the base branch.** PR #171 kept displaying a full `src/` diff after that code was
+  already identical on `main`, because its merge base stayed at `ce90dc7`. To ask
+  "do these two trees agree?", use **two-dot**: `git diff origin/main <branch> -- src/`.
+  The three-dot form answers a different question — "what did this branch do?"
 
 ## Ticket queue: dry, and no leg may refill it
 
