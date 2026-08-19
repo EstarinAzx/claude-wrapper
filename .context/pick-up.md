@@ -1,7 +1,7 @@
 ---
 type: pick-up
 project: claude-wrapper
-updated: 2026-08-14
+updated: 2026-08-19
 tags: [context, pick-up]
 ---
 
@@ -12,40 +12,67 @@ Start: read [[overview]] + [[active-work]].
 **Landmines, gate shapes and standing constraints live in [[active-work]]**, not
 here. This file is the baton: what just finished, and what is next.
 
+## Read this on `main`, and only on `main`
+
+**A baton committed to `main` is invisible to a session sitting on a branch.** The
+previous pick-up cost a session exactly that: `gauntlet/core-after-docks` still
+carries the *seed-time* baton claiming "wave 1 is running", nine waves after wave 1
+finished. If you booted on a branch, `git show main:.context/pick-up.md` before
+believing anything.
+
 ## What just finished
 
-**Gauntlet run 3 — twelve waves over the five core surfaces — is closed, committed,
-pushed and PR'd.**
+**Gauntlet run 3's code pass is landed on local `main` as `1d919fb`.**
 
-- Commit `358ab96` on `gauntlet/core-after-docks`, 13 commits ahead of `main`.
-- **PR #171** open against `main`. Not merged.
-- `stop: true` in **both** `.claude/gauntlet.md` and `.claude/relay/gauntlet.md`.
-  **No leg 14 will spawn**, and re-invoking `/relay N=1 /preset gauntlet` will not
-  resume this run.
+The twelve-wave design pass over the five core surfaces squashed to what it actually
+changed in the app: **9 files, +879 / −72**, tree-identical to
+`gauntlet/core-after-docks` for `src/` and `tests/`. D7 gate green on the commit —
+typecheck clean, **96 files / 1412 passed / 43 skipped**, build clean at
+`index-B0MFIfz0.css` (seed was `index-DOI17h8g.css`, which independently confirms
+`src/` moved).
 
-**The run ended on its budget, not on plateau — cut off, not converged.** The
-`plateau` counter finished at 0 and never exceeded 2 in twelve waves. That is the
-run's headline and it is about the instrument, not the app:
+**The run evidence was deliberately NOT merged.** ~694 files of captured PNGs and
+wave state stay on `gauntlet/core-after-docks`, which is pushed. Merging them would
+put ~24MB into `main`'s history permanently and preserve nothing the branch does not
+already hold.
+
+Run 3 ended on `max_waves`, **cut off not converged** — `plateau` finished at 0 and
+never exceeded 2 in twelve waves:
 [[2026-08-14-a-stop-signal-that-resets-on-grader-noise-can-never-fire]].
-
-Final wave landed one code change — `.effort-range` **68px → 130px** — on the
-owner's explicit go, after being shown that wave 12's critic asked for the opposite
-of what wave 11's critic had asked for.
 
 ## The single next task
 
-**Nothing is queued. The next move is the owner's, on PR #171.** Three shapes, and
-they are genuinely different decisions:
+**Two owner calls, both about publishing. Nothing is blocked on code.**
 
-1. **Merge it** — takes the design pass plus 24MB of run evidence onto `main`.
-2. **Merge the code only** — cherry-pick or squash `src/` + `tests/` and leave the
-   `.gauntlet/` record on the branch. The real diff is **9 files, +879 / −72**:
-   `git diff main...gauntlet/core-after-docks -- src/ tests/`
-3. **Close it** and keep the branch as the record.
+1. **`main` is 61 commits ahead of `origin/main` and has never been pushed.** That
+   is not new breakage — it predates run 3 by 60 commits — but `1d919fb` now sits on
+   top of it. **D6: no agent pushes on its own initiative.**
+2. **PR #171 is still open**, and its meaning has changed. Its code is now redundant
+   with `main`; what remains is purely the evidence bundle. Close it, or leave it as
+   the record of the run.
 
-If the owner asks to act on the run's leftovers instead, all four open items are in
-[[active-work]] under "Open" — every one is an owner or product call, **none is
-blocked on code**, and none has a ticket yet.
+**Beware the commit arithmetic on that PR.** The old baton said the branch was "13
+commits ahead of `main`" — true against *local* main. PR #171 on GitHub is measured
+against `origin/main`, so it shows **72 commits / 703 files / +46,741 −2,261**. The
+number that describes the design work is neither: it is 9 files, +879 / −72.
+
+## Ticket queue: dry, and no leg may refill it
+
+**`ready-for-agent` = 0**, verified via the API, not the label filter:
+
+```bash
+gh api "repos/EstarinAzx/claude-wrapper/issues?state=open&labels=ready-for-agent" --jq 'length'
+```
+
+**19 issues open**, all `needs-triage` / `needs-info`, several filed by legs
+(#162–#167). **They are the owner's to triage — promoting any of them makes a
+chain's stop condition unreachable by construction.**
+
+Run 3's four leftovers (Welcome CTA padding ratio, Sidebar duplicate-refresh
+affordance, Chat disclosure state model, whether the widened effort track overshot)
+were **deliberately not filed as tickets** — 19 untriaged issues already exist, and
+adding four more to a queue nobody is draining is noise, not progress. They are
+recorded in `.claude/gauntlet.md` under `### 12.10`.
 
 ## Before starting a gauntlet run 4
 
@@ -58,6 +85,9 @@ Two things that will waste a night if skipped:
   to make.
 - **Budget `max_waves` as the real stop condition.** `plateau >= 3` has now failed
   to fire across two consecutive runs; do not plan around it.
+- Run 4 means a **fresh slug and a fresh `/preset bar` decision**. `stop: true` is
+  set in both `.claude/gauntlet.md` and `.claude/relay/gauntlet.md`; run 3 cannot be
+  revived.
 
 ## One measurement trap worth carrying
 
