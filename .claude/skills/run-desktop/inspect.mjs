@@ -37,6 +37,7 @@
 //   agents-dock.png   commands-dock.png        appearance-dock.png
 //
 //   window-welcome.png   window-session.png    ← whole-window frames, not surfaces
+//   window-session-short.png                   ← the session frame, transcript not overflowing
 //
 // `welcome-min-window.png` is #137 and is the ONE surface photographed twice.
 // It is the same `.welcome` pane as `welcome.png`, at the window's enforced
@@ -574,7 +575,11 @@ const watchdog = setTimeout(() => {
 }, 240000)
 watchdog.unref?.()
 
-const EXPECTED_FILES = SURFACES.length + 2
+// SURFACES + `window-welcome` + `window-session` + `window-session-short`. The
+// third frame is the twelfth file and was ADDED rather than substituted for one
+// of the eleven — see its own block in stage 2b for why, and note that adding is
+// what keeps every earlier wave's SHA null-control comparable.
+const EXPECTED_FILES = SURFACES.length + 3
 
 const finish = async () => {
   // The count is asserted, not inferred. Every failure above also pushes a
@@ -1232,6 +1237,100 @@ try {
 
   for (const s of SURFACES.filter((s) => s.stage === 'session')) await capture(s)
   await captureWindow('session')
+
+  // ---- stage 2b: the same session with its transcript NOT overflowing -------
+  //
+  // A TWELFTH FILE, ADDED AND NOT SUBSTITUTED. Both of the things it holds are
+  // things the other eleven structurally cannot, and four consecutive smoothing
+  // passes named one of them as the artifact this instrument was missing.
+  //
+  // (1) THE DATE DIVIDER. `.gauntlet/bar/linear/manifest.json` picked
+  //     `linear-changelog` to judge "Chat transcript: long-form reading, date
+  //     dividers" — and `window-session.png` can never show one. The pane opens
+  //     scrolled to the latest turn, so the divider `Chat.tsx` renders (`TODAY`
+  //     between two hairlines) sits above the fold with roughly 89px of transcript.
+  //     Critics have graded this surface for waves against a reference chosen for
+  //     an element none of them could see, and one measurably spent its whole
+  //     axis budget inside what was left.
+  //
+  // (2) THE SCROLLBAR SEAM. `.chat` is `overflow-y: auto`, `scrollbar-gutter`
+  //     appears nowhere in `src/`, and the global `::-webkit-scrollbar` is a
+  //     CLASSIC scrollbar — it occupies layout space only WHILE the content
+  //     overflows. So whether the composer aligns with the transcript is a
+  //     function of a state no capture held, and a wave that "closed" a 5px seam
+  //     could only have moved it into the unphotographed half. This frame is that
+  //     half, which turns a modelled 5px into a measured one.
+  //
+  // THE WINDOW GROWS INSTEAD OF THE CONVERSATION SHRINKING, and that is the
+  // choice that makes this safe to add in the middle of a run rather than at a
+  // seam between two. The obvious form — seed a shorter session — moves the
+  // sessions rail, and the rail is a surface this instrument is used to attribute
+  // builder changes on; it would buy one capture by contaminating five. Height is
+  // also the only axis that is free here: nothing in this frame's two questions is
+  // about height, while WIDTH is the axis both of them are measured on, so growing
+  // downward leaves every x-coordinate directly comparable to `window-session.png`.
+  //
+  // THE HEIGHT IS MEASURED AND THEN VERIFIED, NOT PICKED. It asks the pane how far
+  // it overflows, grows by that plus a margin, and ASSERTS the overflow is gone
+  // before photographing. A hardcoded number would go stale the first time the
+  // fixture's prose rewrapped, and it would go stale SILENTLY — by photographing
+  // the overflowing state under a name that promises the opposite, which is worse
+  // than not having the capture at all.
+  //
+  // Bounds are borrowed state (#79, #110), so the restore is in a `finally` for
+  // the same reason the minimum-window block above gives: everything after this
+  // needs the standard frame back, and the docks are captured after it.
+  try {
+    const chat = await page.evaluate(() => {
+      const el = document.querySelector('.chat')
+      return el ? { over: el.scrollHeight - el.clientHeight, client: el.clientHeight } : null
+    })
+    if (!chat) {
+      fails.push(
+        'window-session-short: there is no `.chat` pane to measure, so the non-overflowing frame was never captured — an instrument failure, NOT a finding about the transcript'
+      )
+    } else {
+      const grewBy = Math.max(0, chat.over) + 24
+      const sized = await app.evaluate(({ BrowserWindow }, add) => {
+        const w = BrowserWindow.getAllWindows()[0]
+        const b = w.getBounds()
+        w.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height + add })
+        const after = w.getBounds()
+        return { asked: b.height + add, got: after.height, width: after.width }
+      }, grewBy)
+      await settle(900)
+      const left = await page.evaluate(() => {
+        const el = document.querySelector('.chat')
+        return el ? el.scrollHeight - el.clientHeight : null
+      })
+      log('SHORT', { overflowBefore: chat.over, grewBy, ...sized, overflowAfter: left })
+      if (sized.width !== WANT_WIDTH) {
+        fails.push(
+          `window-session-short: the window came to rest ${sized.width}px wide instead of ${WANT_WIDTH} — this frame's whole purpose is that its x-coordinates compare to window-session.png, and they no longer would`
+        )
+      } else if (left === null || left > 0) {
+        fails.push(
+          `window-session-short: the transcript still overflows by ${left}px after the window grew ${grewBy}px, so the frame would be the OVERFLOWING state filed under a name that says it is not`
+        )
+      } else {
+        // Same hygiene as every other capture: no hover wash, no focus ring.
+        await page.evaluate(() => document.activeElement?.blur?.())
+        await page.mouse.move(4, 4)
+        await settle(400)
+        await captureWindow('session-short')
+      }
+    }
+  } finally {
+    await app.evaluate(
+      ({ BrowserWindow }, want) => {
+        const w = BrowserWindow.getAllWindows()[0]
+        const b = w.getBounds()
+        w.setBounds({ x: b.x, y: b.y, width: want.width, height: want.height })
+      },
+      { width: WANT_WIDTH, height: WANT_HEIGHT }
+    )
+    await settle(900)
+  }
 
   // ---- stage 3: the three right-hand docks ----------------------------------
   //

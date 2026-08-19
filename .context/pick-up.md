@@ -85,6 +85,13 @@ Two things that will waste a night if skipped:
   to make.
 - **Budget `max_waves` as the real stop condition.** `plateau >= 3` has now failed
   to fire across two consecutive runs; do not plan around it.
+- **The instrument on `main` now captures TWELVE files, not eleven.** Wave 6 added
+  `window-session-short.png` — the same session with the transcript NOT overflowing,
+  which is the only frame that can show the `TODAY` date divider (`linear-changelog`
+  was picked to judge exactly that, and every other capture has it above the fold)
+  and the only one that measures the scrollbar seam rather than modelling it. It ran
+  green for seven consecutive waves (6–12, 12 PNGs each; wave 5 had 11). A null
+  control against a run older than wave 6 compares 11 files, not 12.
 - Run 4 means a **fresh slug and a fresh `/preset bar` decision**. `stop: true` is
   set in both `.claude/gauntlet.md` and `.claude/relay/gauntlet.md`; run 3 cannot be
   revived.

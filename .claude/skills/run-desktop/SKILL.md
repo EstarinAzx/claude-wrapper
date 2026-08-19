@@ -58,11 +58,23 @@ agents-dock.png   commands-dock.png        appearance-dock.png
 
 <!-- surfaces:end -->
 
-Plus two whole-window frames, `window-welcome.png` and `window-session.png`.
-They are **not surfaces**: a surface clipped to its own bounding box cannot
-answer a composition question ("does this float in dead space"), and every
-reference in `.gauntlet/bar/linear/` is a whole-page frame, so a critic
-comparing composition needs a comparable unit.
+Plus three whole-window frames: `window-welcome.png`, `window-session.png` and
+`window-session-short.png`. They are **not surfaces**: a surface clipped to its
+own bounding box cannot answer a composition question ("does this float in dead
+space"), and every reference in `.gauntlet/bar/linear/` is a whole-page frame, so
+a critic comparing composition needs a comparable unit.
+
+`window-session-short.png` is the session frame with the transcript **not
+overflowing**, and it holds two things the other frames structurally cannot. The
+standard session frame opens scrolled to the latest turn, so the transcript's
+**date divider** is always above the fold — an element `linear-changelog` was
+chosen to judge and that no capture has ever shown. And `.chat` is
+`overflow-y: auto` behind a **classic** scrollbar, which takes layout space only
+while the content overflows, so whether the composer aligns with the transcript
+differs between the two states; only one of them was ever photographed. The
+window is grown by the measured overflow rather than the conversation being
+shortened, because a shorter fixture would move the sessions rail — and growing
+downward leaves every x-coordinate comparable to `window-session.png`.
 
 - **The three docks are #133**, and they exist because a mirror with one side
   unwatched drifts. `DESIGN.md` defines the Agents dock as the sessions rail's
@@ -90,7 +102,7 @@ comparing composition needs a comparable unit.
 - **A capture failure is loud.** Each surface is proven present, painted, on
   screen and carrying the content that makes it that surface *before* it is
   photographed; anything missing exits non-zero naming the surface, and prints
-  `CAPTURED n/11` so a half-empty output directory cannot pass for a complete one.
+  `CAPTURED n/12` so a half-empty output directory cannot pass for a complete one.
 - Cleans up its fixture and its Electron process on both the pass and fail path.
 
 `SCREENSHOT_DIR` is required in practice — it defaults to
